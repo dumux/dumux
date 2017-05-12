@@ -43,9 +43,9 @@ class CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::oMe
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using InteractionVolumeSeed = typename InteractionVolume::Seed;
+    using InteractionVolumeSeed = typename InteractionVolume::Traits::Seed;
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Traits::Seed;
 
     using IndexType = typename GridView::IndexSet::IndexType;
 

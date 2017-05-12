@@ -42,9 +42,9 @@ class CCMpfaOLocalScv
     // we use the seed types of the boundary interaction volume to be compatible with other mpfa
     // methods that use o-type interaction volumes on the boundary but differing ones inside the domain.
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using LocalScvSeed = typename InteractionVolume::Seed::LocalScvSeed;
-    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using LocalScvSeed = typename InteractionVolume::Traits::Seed::LocalScvSeed;
+    using GlobalIndexType = typename InteractionVolume::Traits::GlobalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -123,11 +123,11 @@ struct CCMpfaOLocalScvf
     // we use the seed types of the boundary interaction volume to be compatible with other mpfa
     // methods that use o-type interaction volumes on the boundary but differing ones inside the domain.
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using LocalScvfSeed = typename InteractionVolume::Seed::LocalScvfSeed;
-    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
-    using GlobalIndexSet = typename InteractionVolume::GlobalIndexSet;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
-    using LocalIndexSet = typename InteractionVolume::LocalIndexSet;
+    using LocalScvfSeed = typename InteractionVolume::Traits::Seed::LocalScvfSeed;
+    using GlobalIndexType = typename InteractionVolume::Traits::GlobalIndexType;
+    using GlobalIndexSet = typename InteractionVolume::Traits::GlobalIndexSet;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
+    using LocalIndexSet = typename InteractionVolume::Traits::LocalIndexSet;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;

@@ -43,7 +43,7 @@ class InteriorBoundaryData
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
 
     using IndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename BoundaryInteractionVolume::LocalIndexType;
+    using LocalIndexType = typename BoundaryInteractionVolume::Traits::LocalIndexType;
 
 public:
     //! the constructor

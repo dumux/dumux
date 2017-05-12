@@ -57,15 +57,15 @@ class MpfaMethodHelper<TypeTag, MpfaMethods::lMethod, /*dim*/2, /*dimWorld*/2>
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using InteractionVolumeSeed = typename InteractionVolume::Seed;
+    using InteractionVolumeSeed = typename InteractionVolume::Traits::Seed;
     using ScvSeed = typename InteractionVolumeSeed::LocalScvSeed;
     using OuterScvSeed = typename InteractionVolumeSeed::LocalOuterScvSeed;
-    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Traits::Seed;
 
-    using GlobalIndexSet = typename InteractionVolume::GlobalIndexSet;
-    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
-    using Matrix = typename InteractionVolume::Matrix;
+    using GlobalIndexSet = typename InteractionVolume::Traits::GlobalIndexSet;
+    using GlobalIndexType = typename InteractionVolume::Traits::GlobalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
+    using Matrix = typename InteractionVolume::Traits::Matrix;
 public:
     static InteractionVolumeSeed makeInnerInteractionVolumeSeed(const Problem& problem,
                                                                 const Element& element,

@@ -61,7 +61,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
+    using CoefficientVector = typename BoundaryInteractionVolume::Traits::Vector;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -75,9 +75,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-         // We always use the dynamic types here to be compatible on the boundary
-        using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
-        using PositionVector = typename BoundaryInteractionVolume::PositionVector;
+        // We always use the dynamic types here to be compatible on the boundary
+        using Stencil = typename BoundaryInteractionVolume::Traits::GlobalIndexSet;
+        using PositionVector = typename BoundaryInteractionVolume::Traits::PositionVector;
 
     public:
         //! The constructor. Initializes the Neumann flux to zero

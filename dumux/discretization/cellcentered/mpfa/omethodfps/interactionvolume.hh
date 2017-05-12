@@ -83,11 +83,14 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethodFps>
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename LocalScvType::Geometry::JacobianInverseTransposed;
 
+    using DataHandle = typename Traits::DataHandle;
+    using LocalIndexType = typename Traits::LocalIndexType;
     using LocalPosition = typename LocalScvType::Geometry::LocalCoordinate;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DynamicVector = typename Traits::Vector;
     using DynamicMatrix = typename Traits::Matrix;
     using Tensor = typename Traits::Tensor;
+    using Seed = typename Traits::Seed;
 
     enum
     {

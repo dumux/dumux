@@ -45,7 +45,7 @@ class CCMpfaGlobalInteractionVolumeSeedsImplementation<TypeTag, MpfaMethods::lMe
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
 
-    using IndexType = typename InteractionVolume::GlobalIndexSet::value_type;
+    using IndexType = typename InteractionVolume::Traits::GlobalIndexSet::value_type;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
@@ -72,7 +72,7 @@ public:
                                    + this->problem().model().globalFvGeometry().numBranchingPointVertices();
 
         if (numLMethodIVs > 0)
-            seeds.reserve( numLMethodIVs );
+            seeds.reserve(numLMethodIVs);
         boundarySeeds.reserve(numOMethodIVs);
         scvfIndexMap.resize(numScvf);
 

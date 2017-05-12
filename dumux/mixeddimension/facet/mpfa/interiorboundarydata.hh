@@ -47,7 +47,7 @@ class CCMpfaFacetCouplingInteriorBoundaryData
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
 
     using IndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename BoundaryInteractionVolume::LocalIndexType;
+    using LocalIndexType = typename BoundaryInteractionVolume::Traits::LocalIndexType;
 
     using LowDimProblem = typename GET_PROP_TYPE(LowDimProblemTypeTag, Problem);
     using LowDimSpatialParams = typename GET_PROP_TYPE(LowDimProblemTypeTag, SpatialParams);

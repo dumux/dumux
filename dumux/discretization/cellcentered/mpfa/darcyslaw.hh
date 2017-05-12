@@ -64,7 +64,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
+    using CoefficientVector = typename BoundaryInteractionVolume::Traits::Vector;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
@@ -74,8 +74,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     class MpfaDarcysLawCache
     {
         // We always use the dynamic types here to be compatible on the boundary
-        using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
-        using PositionVector = typename BoundaryInteractionVolume::PositionVector;
+        using Stencil = typename BoundaryInteractionVolume::Traits::GlobalIndexSet;
+        using PositionVector = typename BoundaryInteractionVolume::Traits::PositionVector;
 
     public:
         //! update cached objects

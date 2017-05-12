@@ -90,22 +90,21 @@ class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::lMethod>
     using LocalBasis = std::array<GlobalPosition, dim>;
     using InteractionRegion = Dumux::InteractionRegion<TypeTag>;
 
-    using CoefficientVector = typename Traits::Vector;
-    using Tensor = typename Traits::Tensor;
-
-public:
+    using LocalIndexType = typename Traits::LocalIndexType;
+    using GlobalIndexSet = typename Traits::GlobalIndexSet;
+    using DataHandle = typename Traits::DataHandle;
+    using TransmissibilityMatrix = typename Traits::TransmissibilityMatrix;
     using Matrix = typename Traits::Matrix;
-    using typename ParentType::GlobalLocalFaceDataPair;
-    using typename ParentType::LocalIndexType;
-    using typename ParentType::LocalIndexSet;
-    using typename ParentType::LocalFaceData;
-    using typename ParentType::GlobalIndexType;
-    using typename ParentType::GlobalIndexSet;
-    using typename ParentType::PositionVector;
-    using typename ParentType::Seed;
-
+    using Vector = typename Traits::Vector;
+    using Tensor = typename Traits::Tensor;
+    using Seed = typename Traits::Seed;
     using ScvSeedType = typename Seed::LocalScvSeed;
     using OuterScvSeedType = typename Seed::LocalOuterScvSeed;
+
+public:
+    using typename ParentType::GlobalLocalFaceDataPair;
+    using typename ParentType::LocalFaceData;
+
 
     CCMpfaInteractionVolumeImplementation(const Seed& seed,
                                           const Problem& problem,

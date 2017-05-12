@@ -44,8 +44,8 @@ private:
     static const int dimWorld = GridView::dimensionworld;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
-    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
+    using GlobalIndexType = typename InteractionVolume::Traits::GlobalIndexType;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using LocalBasis = std::array<GlobalPosition, dim>;
 

@@ -39,6 +39,7 @@ class CCMpfaInteractionVolumeTraitsBase
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    //! Data types for the indices and index sets
     using LocalIndexType = std::uint8_t;
     using LocalIndexSet = std::vector<LocalIndexType>;
     using GlobalIndexType = typename GridView::IndexSet::IndexType;
@@ -56,22 +57,28 @@ public:
  * \brief Base class for the interaction volumes of mpfa methods.
  *        It defines the interface. Actual implementations should derive from this class.
  */
-template<class TypeTag, typename Traits>
+template<class TypeTag, typename T>
 class CCMpfaInteractionVolumeBase
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
+
+    // export types from the traits class
+    using LocalIndexType = typename T::LocalIndexType;
+    using LocalIndexSet = typename T::LocalIndexSet;
+    using GlobalIndexType = typename T::GlobalIndexType;
+    using GlobalIndexSet = typename T::GlobalIndexSet;
+    using PositionVector = typename T::PositionVector;
+    using Tensor = typename T::Tensor;
+    using Matrix = typename T::Matrix;
+    using Vector = typename T::Vector;
+    using DataHandle = typename T::DataHandle;
+    using Seed = typename T::Seed;
 
 public:
-    // some types to be exported
-    using BoundaryInteractionVolume = typename Traits::BoundaryInteractionVolume;
-    using LocalIndexType = typename Traits::LocalIndexType;
-    using LocalIndexSet = typename Traits::LocalIndexSet;
-    using GlobalIndexType = typename Traits::GlobalIndexType;
-    using GlobalIndexSet = typename Traits::GlobalIndexSet;
-    using Vector = typename Traits::Vector;
-    using PositionVector = typename Traits::PositionVector;
-    using Seed = typename Traits::Seed;
+    // state the traits class for other classes to export types
+    using Traits = T;
 
     struct LocalFaceData
     {

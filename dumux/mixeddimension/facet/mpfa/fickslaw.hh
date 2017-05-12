@@ -41,11 +41,7 @@ template <class TypeTag>
 class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -55,7 +51,6 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -132,6 +127,7 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
         // diffusive neumann flux for single-phasic models
         std::array<Scalar, numComponents> componentNeumannFluxes_;
     };
+    using CoefficientVector = typename BoundaryInteractionVolume::Traits::Vector;
 
 public:
     // state the discretization method this implementation belongs to

@@ -55,7 +55,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
+    using CoefficientVector = typename BoundaryInteractionVolume::Traits::Vector;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -69,7 +69,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     //! The cache used in conjunction with the mpfa Fourier's Law
     class MpfaFouriersLawCache
     {
-        using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
+        using Stencil = typename BoundaryInteractionVolume::Traits::GlobalIndexSet;
+        using PositionVector = typename BoundaryInteractionVolume::Traits::PositionVector;
     public:
         // update cached objects for heat conduction
         template<typename InteractionVolume>

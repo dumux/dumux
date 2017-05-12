@@ -41,7 +41,6 @@ template <class TypeTag>
 class CCMpfaFacetCouplingFouriersLaw : public FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -52,7 +51,6 @@ class CCMpfaFacetCouplingFouriersLaw : public FouriersLawImplementation<TypeTag,
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -105,6 +103,7 @@ class CCMpfaFacetCouplingFouriersLaw : public FouriersLawImplementation<TypeTag,
         CoefficientVector heatConductionCij_;
         Scalar heatNeumannFlux_;
     };
+    using CoefficientVector = typename BoundaryInteractionVolume::Traits::Vector;
 
 public:
     // state the discretization method this implementation belongs to
