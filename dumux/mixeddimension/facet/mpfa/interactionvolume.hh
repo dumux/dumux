@@ -64,7 +64,6 @@ class CCMpfaOFacetCouplingInteractionVolume : public CCMpfaOInteractionVolume<Ty
 
     using LocalScvfType = typename Traits::LocalScvfType;
     using LocalIndexType = typename Traits::LocalIndexType;
-    using Seed = typename Traits::Seed;
 
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
 
