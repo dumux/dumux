@@ -124,7 +124,9 @@ public:
         flux = (upWindWeight * upstreamVolVars.density() +
                (1.0 - upWindWeight) * downstreamVolVars.density()) * velocity;
 
-        return flux * scvf.area() * sign(scvf.outerNormalScalar());
+        flux *= scvf.area() * sign(scvf.outerNormalScalar());
+
+        return flux;
     }
 
     void computeCellCenterToCellCenterStencil(Stencil& stencil,
