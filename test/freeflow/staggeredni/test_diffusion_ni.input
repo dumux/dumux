@@ -1,14 +1,13 @@
 [TimeManager]
-DtInitial = 5e-3 # [s]
-TEnd = 1e-2 # [s]
+DtInitial = 1e-0 # [s]
+TEnd = 1.2e6 # [s]
 
 [Grid]
-UpperRight = 5 1
-Cells = 50 25
+UpperRight = 5 5
+Cells =  15 15
 
 [Problem]
 Name = test_diffusion_ni # name passed to the output routines
-InletVelocity = 5 #1000
 InletTemp = 293.15
 EnableGravity = false
 

@@ -97,7 +97,7 @@ public:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         // effective conductivity tensors
         auto insideLambda = insideVolVars.thermalConductivity();
