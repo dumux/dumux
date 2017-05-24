@@ -1,0 +1,20 @@
+[TimeManager]
+DtInitial = 5e-3 # [s]
+TEnd = 1e-2 # [s]
+
+[Grid]
+UpperRight = 5 1
+Cells = 50 25
+
+[Problem]
+Name = test_channel_ni # name passed to the output routines
+EnableGravity = false
+InletVelocity = 5 #1000
+InletTemp = 293.15
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false
