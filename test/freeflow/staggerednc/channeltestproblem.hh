@@ -239,7 +239,10 @@ public:
     {
         BoundaryValues values = initialAtPos(globalPos);
 
-        if(isInlet(globalPos))
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+
+        // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
+        if(isInlet(globalPos) && time > 20.0)
             values[transportCompIdx] = 1e-3;
 
         return values;
@@ -270,6 +273,30 @@ public:
         values[velocityYIdx] = 0.0;
 
         return values;
+    }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {
+        auto& deltaP = outputModule.createScalarField("deltaP", 0);
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto ccDofIdx = scv.dofIndex();
+
+                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                elemVolVars.bind(element, fvGeometry, this->model().curSol());
+
+                deltaP[ccDofIdx] = elemVolVars[scv].pressure() - 1.1e5;
+            }
+        }
     }
 
     // \}

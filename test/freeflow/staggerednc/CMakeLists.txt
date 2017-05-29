@@ -19,7 +19,7 @@ add_dumux_test(test_advection test_channel test_channel.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-advection.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_advection-00002.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_advection-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel test_advection.input")
 
 
