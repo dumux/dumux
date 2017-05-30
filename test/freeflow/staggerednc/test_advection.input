@@ -1,6 +1,6 @@
 [TimeManager]
-DtInitial = 5e-3 # [s]
-TEnd = 1e-2 # [s]
+DtInitial = 5 # [s]
+TEnd = 400 # [s]
 
 [Grid]
 UpperRight = 5 1
@@ -8,7 +8,7 @@ Cells = 50 25
 
 [Problem]
 Name = test_advection # name passed to the output routines
-InletVelocity = 1000
+InletVelocity = 1e-2
 EnableGravity = false
 
 [ Newton ]
