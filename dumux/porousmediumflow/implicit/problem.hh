@@ -41,25 +41,25 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
 template<class TypeTag>
 class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>
 {
-    typedef ImplicitProblem<TypeTag> ParentType;
+    using ParentType = ImplicitProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
