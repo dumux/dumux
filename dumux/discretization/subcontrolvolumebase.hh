@@ -57,16 +57,16 @@ public:
         return asImp_().volume();
     }
 
-    //! The global index of this scv
-    IndexType index() const
-    {
-        return asImp_().index();
-    }
-
-    //! The index of the dof this scv is embedded in
+    //! The index of the dof this scv is embedded in (ccfv)
     IndexType dofIndex() const
     {
         return asImp_().dofIndex();
+    }
+
+        //! The index of the dof this scv is embedded in (box)
+    IndexType indexInElement() const
+    {
+        return asImp_().indexInElement();
     }
 
     // The position of the dof this scv is embedded in
