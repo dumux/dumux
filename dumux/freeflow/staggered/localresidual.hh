@@ -90,6 +90,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::Staggere
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
 
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -129,8 +130,12 @@ public:
                                                         const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
-        return fluxVars.computeFluxForCellCenter(this->problem(), element, fvGeometry, elemVolVars,
+        CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(this->problem(), element, fvGeometry, elemVolVars,
                                                  globalFaceVars, scvf, elemFluxVarsCache[scvf]);
+
+        EnergyFluxVariables::energyFlux(flux, this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache[scvf]);
+
+        return flux;
     }
 
     CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,

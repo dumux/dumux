@@ -24,8 +24,6 @@
 #define DUMUX_FREELOW_IMPLICIT_NI_FLUXVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
-#include <dumux/discretization/fluxvariablesbase.hh>
-#include "../staggered/fluxvariables.hh"
 
 namespace Dumux
 {
@@ -34,7 +32,6 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(EnableEnergyBalanceStokes);
-NEW_PROP_TAG(EnableInertiaTerms);
 }
 
 /*!
@@ -44,9 +41,45 @@ NEW_PROP_TAG(EnableInertiaTerms);
  * \note  Not all specializations are currently implemented
  */
 
-// specialization for immiscible, non-isothermal flow
+// forward declaration
+template<class TypeTag, bool enableEnergyBalance>
+class FreeFlowEnergyFluxVariablesImplementation;
+
 template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, false, true> : public FreeFlowFluxVariablesImpl<TypeTag, false, false>
+using FreeFlowEnergyFluxVariables = FreeFlowEnergyFluxVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalanceStokes)>;
+
+// specialization for isothermal flow
+template<class TypeTag>
+class FreeFlowEnergyFluxVariablesImplementation<TypeTag, false>
+{
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+
+public:
+
+    static void energyFlux(CellCenterPrimaryVariables& flux,
+                           const Problem& problem,
+                           const Element &element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const GlobalFaceVars& globalFaceVars,
+                           const SubControlVolumeFace &scvf,
+                           const FluxVariablesCache& fluxVarsCache)
+    { }
+
+};
+
+// specialization for non-isothermal flow
+template<class TypeTag>
+class FreeFlowEnergyFluxVariablesImplementation<TypeTag, true>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -63,40 +96,21 @@ class FreeFlowFluxVariablesImpl<TypeTag, false, true> : public FreeFlowFluxVaria
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
-
-    enum {
-         // grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
-        energyBalanceIdx = Indices::energyBalanceIdx
-    };
+    enum { energyBalanceIdx = Indices::energyBalanceIdx };
 
 public:
-    /*!
-    * \brief Returns the fluxes for the cell center primary variables
-    * \param problem The problem
-    * \param element The element
-    * \param fvGeometry The finite-volume geometry
-    * \param elemVolVars All volume variables for the element
-    * \param globalFaceVars The face variables
-    * \param scvf The sub control volume face
-    * \param fluxVarsCache The flux variables cache
-    */
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
-                                                        const Element &element,
-                                                        const FVElementGeometry& fvGeometry,
-                                                        const ElementVolumeVariables& elemVolVars,
-                                                        const GlobalFaceVars& globalFaceVars,
-                                                        const SubControlVolumeFace &scvf,
-                                                        const FluxVariablesCache& fluxVarsCache)
+
+    static void energyFlux(CellCenterPrimaryVariables& flux,
+                           const Problem& problem,
+                           const Element &element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const GlobalFaceVars& globalFaceVars,
+                           const SubControlVolumeFace &scvf,
+                           const FluxVariablesCache& fluxVarsCache)
     {
-        CellCenterPrimaryVariables flux(0.0);
-        flux = ParentType::computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, globalFaceVars, scvf, fluxVarsCache);
-        flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
-        flux += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
-        return flux;
+        flux[energyBalanceIdx] += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
+        flux[energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
     }
 
 private:
@@ -108,13 +122,13 @@ private:
     * \param globalFaceVars The face variables
     * \param scvf The sub control volume face
     */
-    CellCenterPrimaryVariables advectiveFluxForCellCenter_(const Problem& problem,
-                                                          const FVElementGeometry& fvGeometry,
-                                                          const ElementVolumeVariables& elemVolVars,
-                                                          const GlobalFaceVars& globalFaceVars,
-                                                          const SubControlVolumeFace &scvf)
+    static Scalar advectiveFluxForCellCenter_(const Problem& problem,
+                                              const FVElementGeometry& fvGeometry,
+                                              const ElementVolumeVariables& elemVolVars,
+                                              const GlobalFaceVars& globalFaceVars,
+                                              const SubControlVolumeFace &scvf)
     {
-        CellCenterPrimaryVariables flux(0.0);
+        Scalar flux(0.0);
 
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
@@ -143,7 +157,7 @@ private:
         const Scalar upstreamEnthalpy = upstreamVolVars.enthalpy();
         const Scalar downstreamEnthalpy = downstreamVolVars.enthalpy();
 
-        flux[energyBalanceIdx] = (upWindWeight * upstreamDensity * upstreamEnthalpy
+        flux = (upWindWeight * upstreamDensity * upstreamEnthalpy
                                  + (1.0 - upWindWeight) * downstreamDensity * downstreamEnthalpy)
                                  * velocity;
         flux *= scvf.area() * sign(scvf.outerNormalScalar());

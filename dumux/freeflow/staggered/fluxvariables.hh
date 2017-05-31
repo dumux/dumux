@@ -38,7 +38,7 @@ NEW_PROP_TAG(EnableInertiaTerms);
 }
 
 // forward declaration
-template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
+template<class TypeTag, bool enableComponentTransport>
 class FreeFlowFluxVariablesImpl;
 
 /*!
@@ -48,8 +48,7 @@ class FreeFlowFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
-                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalanceStokes)>;
+using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport)>;
 
 /*!
  * \ingroup Discretization
@@ -58,7 +57,7 @@ using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(
  */
 // specialization for immiscible, isothermal flow
 template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, false, false>
+class FreeFlowFluxVariablesImpl<TypeTag, false>
 : public FluxVariablesBase<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
