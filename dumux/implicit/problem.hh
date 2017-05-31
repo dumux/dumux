@@ -422,32 +422,31 @@ public:
     void pointSourceAtPos(PointSource& pointSource,
                           const GlobalPosition &globalPos) const {}
 
+
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial value for a control volume (for box).
      *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
+     * \param Vertex The vertex
      */
-    PrimaryVariables initial(const SubControlVolume &scv) const
+    PrimaryVariables initial(const Vertex& vertex)
     {
-        // forward to generic interface
-        return asImp_().initialAtPos(scv.dofPosition());
+         return asImp_().initialAtPos(vertex.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the initial value for a control volume (for cc)
+     *
+     * \param Element The element
+     */
+    PrimaryVariables initial(const Element& element)
+    {
+        return asImp_().initialAtPos(element.geometry().center());
     }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
-     * \param globalPos The position of the center of the finite volume
-     *            for which the initial values ought to be
-     *            set (in global coordinates)
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
