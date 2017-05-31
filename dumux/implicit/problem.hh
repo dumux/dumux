@@ -424,23 +424,16 @@ public:
 
 
     /*!
-     * \brief Evaluate the initial value for a control volume (for box).
+     * \brief Evaluate the initial value for an element (for cc models) or vertex (for box models)
      *
-     * \param Vertex The vertex
+     * \param entity The entity (element or vertex)
      */
-    PrimaryVariables initial(const Vertex& vertex)
+    template<class Entity>
+    PrimaryVariables initial(const Entity& entity)
     {
-         return asImp_().initialAtPos(vertex.geometry().center());
-    }
+        static_assert(int(Entity::codimension) == 0 || int(Entity::codimension) == dim, "Entity must be element or vertex");
 
-    /*!
-     * \brief Evaluate the initial value for a control volume (for cc)
-     *
-     * \param Element The element
-     */
-    PrimaryVariables initial(const Element& element)
-    {
-        return asImp_().initialAtPos(element.geometry().center());
+        return asImp_().initialAtPos(entity.geometry().center());
     }
 
     /*!
