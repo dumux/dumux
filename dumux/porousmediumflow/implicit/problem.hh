@@ -101,23 +101,16 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial phase state at a vertex (for box models)
+     * \brief Evaluate the initial phase state at an element (for cc models) or vertex (for box models)
      *
-     * \param Vertex The vertex
+     * \param entity The entity (element or vertex)
      */
-    int initialPhasePresence(const Vertex& vertex)
+    template<class Entity>
+    int initialPhasePresence(const Entity& entity)
     {
-        return asImp_().initialPhasePresenceAtPos(vertex.geometry().center());
-    }
+        static_assert(int(Entity::codimension) == 0 || int(Entity::codimension) == dim, "Entity must be element or vertex");
 
-    /*!
-     * \brief Evaluate the initial phase state at an element (for cc models)
-     *
-     * \param Element The element
-     */
-    int initialPhasePresence(const Element& element)
-    {
-        return asImp_().initialPhasePresenceAtPos(element.geometry().center());
+        return asImp_().initialPhasePresenceAtPos(entity.geometry().center());
     }
 
     /*!
@@ -128,7 +121,8 @@ public:
     int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
     {
        DUNE_THROW(Dune::InvalidStateException,
-                  "The problem does not provide a initialPhasePresenceAtPos() method.");
+                  "The problem does not provide a initialPhasePresence() "
+                   "or initialPhasePresenceAtPos() method.");
        return 0;
     }
 
