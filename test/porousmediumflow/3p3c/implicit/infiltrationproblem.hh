@@ -318,14 +318,12 @@ public:
     }
 
     /*!
-     * \brief Return the initial phase state inside a control volume.
+     * \brief Evaluate the initial phase state at a given position
      *
      * \param globalPos The global position
      */
-    int initialPhasePresence(const SubControlVolume& scv) const
-    {
-        return wgPhaseOnly;
-    }
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
+    { return wgPhaseOnly; }
 
 private:
     // internal method for the initial condition

@@ -261,18 +261,13 @@ public:
     }
 
     /*!
-     * \brief Return the initial phase state inside a control volume.
+     * \brief Evaluate the initial phase state at a given position
      *
-     * \param vertex The vertex
-     * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vertex,
-                             int &vIdxGlobal,
-                             const GlobalPosition &globalPos) const
-    {
-        return threePhases;
-    }
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
+    { return threePhases; }
+
 
        /*!
      * \brief Append all quantities of interest which can be derived
