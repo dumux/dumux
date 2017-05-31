@@ -554,7 +554,7 @@ protected:
     template<class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
     getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return this->model_().nonConstCurGlobalVolVars().volVars(scv.index()); }
+    { return this->model_().nonConstCurGlobalVolVars().volVars(scv()); }
 
     //! When global volume variables caching is disabled, return the local volvar object
     template<class T = TypeTag>

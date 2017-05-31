@@ -89,7 +89,7 @@ public:
                 PrimaryVariables priVars(0.0);
                 priVars[cellCenterIdx] = sol[cellCenterIdx][scv.dofIndex()];
                 ElementSolutionVector elemSol{std::move(priVars)};
-                volumeVariables_[scv.index()].update(elemSol, problem, element, scv);
+                volumeVariables_[scv.dofIndex()].update(elemSol, problem, element, scv);
             }
 
             // handle the boundary volume variables

@@ -99,13 +99,7 @@ public:
         return geometry_.value();
     }
 
-    //! The global index of this scv
-    IndexType index() const
-    {
-        return elementIndex();
-    }
-
-    //! The index of the dof this scv is embedded in
+    //! The index of the dof this scv is embedded in (the global index of this scv)
     IndexType dofIndex() const
     {
         return elementIndex();
