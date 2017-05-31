@@ -323,13 +323,11 @@ public:
     }
 
     /*!
-     * \brief Returns the initial phase state for a control volume.
+     * \brief Evaluate the initial phase state at a given position
      *
-     * \param vertex The vertex
-     * \param vIdxGlobal The global index of the vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const SubControlVolume& scv) const
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
     { return Indices::wPhaseOnly; }
 
     // \}
