@@ -24,10 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FOURIERS_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-
 #include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -35,12 +32,6 @@
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(CellCenterPrimaryVariables);
-}
 
 /*!
  * \ingroup StaggeredFouriersLaw
@@ -57,18 +48,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Staggered >
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        energyBalanceIdx = Indices::energyBalanceIdx,
-        phaseIdx = Indices::phaseIdx
-    };
+    enum { energyBalanceIdx = Indices::energyBalanceIdx };
 
 public:
     // state the discretization method this implementation belongs to
@@ -79,13 +61,13 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
-    static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
-                                                           const Element& element,
-                                                           const FVElementGeometry& fvGeometry,
-                                                           const ElementVolumeVariables& elemVolVars,
-                                                           const SubControlVolumeFace &scvf)
+    static Scalar diffusiveFluxForCellCenter(const Problem& problem,
+                                             const Element& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const SubControlVolumeFace &scvf)
     {
-        CellCenterPrimaryVariables flux(0.0);
+        Scalar flux(0.0);
 
         if(scvf.boundary())
         {
@@ -115,8 +97,8 @@ public:
         const Scalar distance = scvf.boundary() ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
                                                 : (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
 
-        flux[energyBalanceIdx] = -1.0 * (insideTemp - outsideTemp);
-        flux[energyBalanceIdx] *= lambda / distance;
+        flux = -1.0 * (insideTemp - outsideTemp);
+        flux *= lambda / distance;
         flux *= scvf.area() * sign(scvf.outerNormalScalar());
         return flux;
     }
