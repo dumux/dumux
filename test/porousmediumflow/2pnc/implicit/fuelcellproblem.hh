@@ -254,14 +254,14 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     { return initial_(globalPos); }
 
-    /*!
-     * \brief Return the initial phase state inside a sub control volume.
-     *
-     * \param scv The sub control volume
-     */
 
-    int initialPhasePresence(const SubControlVolume& scv) const
-    { return Indices::bothPhases; }
+     /*!
+      * \brief Evaluate the initial phase state at a given position
+      *
+      * \param globalPos The global position
+      */
+     int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
+     { return Indices::bothPhases; }
 
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.

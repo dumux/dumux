@@ -41,23 +41,25 @@ NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered i
 template<class TypeTag>
 class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>
 {
-    typedef ImplicitProblem<TypeTag> ParentType;
+    using ParentType = ImplicitProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
+
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
@@ -97,6 +99,32 @@ public:
      * \name Problem parameters
      */
     // \{
+
+    /*!
+     * \brief Evaluate the initial phase state at an element (for cc models) or vertex (for box models)
+     *
+     * \param entity The entity (element or vertex)
+     */
+    template<class Entity>
+    int initialPhasePresence(const Entity& entity)
+    {
+        static_assert(int(Entity::codimension) == 0 || int(Entity::codimension) == dim, "Entity must be element or vertex");
+
+        return asImp_().initialPhasePresenceAtPos(entity.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the initial phase state at a given position
+     *
+     * \param globalPos The global position
+     */
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
+    {
+       DUNE_THROW(Dune::InvalidStateException,
+                  "The problem does not provide a initialPhasePresence() "
+                   "or initialPhasePresenceAtPos() method.");
+       return 0;
+    }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.

@@ -118,8 +118,6 @@ public:
 
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
-        if (isBox)
-            boxVolume_.resize(numDofs);
 
         // apply initial solution
         // for compositional models initial the phase presence herein
@@ -233,25 +231,6 @@ public:
 
         if (gridView_().comm().size() > 1)
             storage = gridView_().comm().sum(storage);
-    }
-
-    /*!
-     * \brief Returns the volume \f$\mathrm{[m^3]}\f$ of a given control volume.
-     *
-     * \param vIdxGlobal The global index of the control volume's
-     *                  associated vertex
-     */
-    Scalar boxVolume(const int vIdxGlobal) const
-    {
-        if (isBox)
-        {
-            return boxVolume_[vIdxGlobal][0];
-        }
-        else
-        {
-            DUNE_THROW(Dune::InvalidStateException,
-                       "requested box volume for cell-centered model");
-        }
     }
 
     void adaptVariableSize()
@@ -429,9 +408,6 @@ public:
         {
             // update boundary indices
             updateBoundaryIndices_();
-
-            if (isBox)
-                boxVolume_.resize(asImp_().numDofs());
 
             // update the fv geometry
             globalFvGeometryPtr_->update(problem_());
@@ -727,61 +703,33 @@ protected:
     {
         // first set the whole domain to zero
         uCur_ = Scalar(0.0);
-        boxVolume_ = Scalar(0.0);
 
-        // iterate through leaf grid and evaluate initial
-        // condition at the center of each sub control volume
-        for (const auto& element : elements(gridView_()))
+        // set the initial values
+        if(isBox)
         {
-            // deal with the current element, bind FVGeometry to it
-            auto fvGeometry = localView(globalFvGeometry());
-            fvGeometry.bindElement(element);
-
-            // loop over sub control volumes
-            for (auto&& scv : scvs(fvGeometry))
+            for (const auto& vertex : vertices(problem_().gridView()))
             {
-                // let the problem do the dirty work of nailing down
-                // the initial solution.
-                auto initPriVars = problem_().initial(scv);
-
-                auto dofIdxGlobal = scv.dofIndex();
-                if (isBox)
-                {
-                    // add up the initial values of all sub-control
-                    // volumes. If the initial values disagree for
-                    // different sub control volumes, the initial value
-                    // will be the arithmetic mean.
-                    initPriVars *= scv.volume();
-                    boxVolume_[dofIdxGlobal] += scv.volume();
-                }
-
-                uCur_[dofIdxGlobal] += initPriVars;
+                const auto dofIdxGlobal = dofMapper().index(vertex);
+                uCur_[dofIdxGlobal] = problem_().initial(vertex);
+            }
+        }
+        else
+        {
+            for (const auto& element : elements(problem_().gridView()))
+            {
+                const auto dofIdxGlobal = dofMapper().index(element);
+                uCur_[dofIdxGlobal] = problem_().initial(element);
             }
         }
 
-        // add up the primary variables and the volumes of the boxes
-        // which cross process borders
-        if (isBox && gridView_().comm().size() > 1) {
-            VertexHandleSum<Dune::FieldVector<Scalar, 1>,
-                Dune::BlockVector<Dune::FieldVector<Scalar, 1> >,
-                VertexMapper> sumVolumeHandle(boxVolume_, vertexMapper());
-            gridView_().communicate(sumVolumeHandle,
-                                    Dune::InteriorBorder_InteriorBorder_Interface,
-                                    Dune::ForwardCommunication);
-
+        // add up the primary variables which cross process borders
+        if (isBox && gridView_().comm().size() > 1)
+        {
             VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
                 sumPVHandle(uCur_, vertexMapper());
             gridView_().communicate(sumPVHandle,
                                     Dune::InteriorBorder_InteriorBorder_Interface,
                                     Dune::ForwardCommunication);
-        }
-
-        if (isBox)
-        {
-            // divide all primary variables by the volume of their boxes
-            for (unsigned int i = 0; i < uCur_.size(); ++i) {
-                uCur_[i] /= boxVolume(i);
-            }
         }
     }
 
@@ -859,9 +807,6 @@ protected:
 
     // the finite volume element geometries
     std::shared_ptr<GlobalFVGeometry> globalFvGeometryPtr_;
-
-    // container to store the box volumes
-    Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
 
 private:
     /*!

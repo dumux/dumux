@@ -54,6 +54,8 @@ class PrimaryVariableSwitch
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
 public:
 
     void init(Problem& problem)
@@ -62,16 +64,20 @@ public:
         phasePresence_.resize(numDofs);
         wasSwitched_.resize(numDofs, false);
 
-        for (const auto& element : elements(problem.gridView()))
+        if(isBox)
         {
-            // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
-            fvGeometry.bindElement(element);
-
-            for (auto&& scv : scvs(fvGeometry))
+            for (const auto& vertex : vertices(problem.gridView()))
             {
-                auto dofIdxGlobal = scv.dofIndex();
-                phasePresence_[dofIdxGlobal] = problem.initialPhasePresence(scv);
+                const auto dofIdxGlobal = problem.model().dofMapper().index(vertex);
+                phasePresence_[dofIdxGlobal] = problem.initialPhasePresence(vertex);
+            }
+        }
+        else
+        {
+            for (const auto& element : elements(problem.gridView()))
+            {
+                const auto dofIdxGlobal = problem.model().dofMapper().index(element);
+                phasePresence_[dofIdxGlobal] = problem.initialPhasePresence(element);
             }
         }
 

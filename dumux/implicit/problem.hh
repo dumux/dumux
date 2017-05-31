@@ -422,32 +422,24 @@ public:
     void pointSourceAtPos(PointSource& pointSource,
                           const GlobalPosition &globalPos) const {}
 
+
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluate the initial value for an element (for cc models) or vertex (for box models)
      *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
+     * \param entity The entity (element or vertex)
      */
-    PrimaryVariables initial(const SubControlVolume &scv) const
+    template<class Entity>
+    PrimaryVariables initial(const Entity& entity)
     {
-        // forward to generic interface
-        return asImp_().initialAtPos(scv.dofPosition());
+        static_assert(int(Entity::codimension) == 0 || int(Entity::codimension) == dim, "Entity must be element or vertex");
+
+        return asImp_().initialAtPos(entity.geometry().center());
     }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
-     * \param globalPos The position of the center of the finite volume
-     *            for which the initial values ought to be
-     *            set (in global coordinates)
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
@@ -456,33 +448,6 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The problem does not provide "
                    "an initial() or an initialAtPos() method.");
-    }
-
-    /*!
-     * \brief Evaluate the initial phase state inside a control volume.
-     *
-     * \param vertex The vertex
-     * \param vIdxGlobal The global index of the vertex
-     * \param globalPos The global position
-     */
-    int initialPhasePresence(const Vertex &vertex,
-                             int &vIdxGlobal,
-                             const GlobalPosition &globalPos) const
-    {
-        // forward to generic interface
-        return asImp_().initialPhasePresenceAtPos(globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
-    {
-        //! As a default, i.e. if the user's problem does not overload any initialPhasePresence method
-        //! return 0 (the default phase state is depending on the model context)
-        return 0;
     }
 
     /*!
