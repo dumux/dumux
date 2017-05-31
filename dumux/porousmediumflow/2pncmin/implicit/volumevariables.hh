@@ -126,7 +126,7 @@ public:
         /////////////
         // calculate the remaining quantities
         /////////////
-        auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
+        auto&& priVars = isBox ? elemSol[scv.indexInElement()] : elemSol[0];
 
         sumPrecipitates_ = 0.0;
         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
@@ -173,7 +173,7 @@ public:
         fluidState.setTemperature(t);
 
         auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
-        auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
+        auto&& priVars = isBox ? elemSol[scv.indexInElement()] : elemSol[0];
 
         /////////////
         // set the saturations

@@ -146,7 +146,7 @@ public:
             VolumeVariables origVolVars(curVolVars);
 
             // add precalculated residual for this scv into the global container
-            residual[dofIdx] += this->residual_[scv.index()];
+            residual[dofIdx] += this->residual_[scv.indexInElement()];
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -166,7 +166,7 @@ public:
                 curVolVars = origVolVars;
 
                 // restore the original element solution
-                curElemSol[scv.index()][pvIdx] = this->model_().curSol()[scv.dofIndex()][pvIdx];
+                curElemSol[scv.indexInElement()][pvIdx] = this->model_().curSol()[scv.dofIndex()][pvIdx];
             }
 
             // TODO: what if we have an extended source stencil????
@@ -242,7 +242,7 @@ protected:
             // calculate f(x + \epsilon)
 
             // deflect primary variables
-            curElemSol[scv.index()][pvIdx] += eps;
+            curElemSol[scv.indexInElement()][pvIdx] += eps;
             delta += eps;
 
             // update the volume variables connected to the dof
@@ -268,7 +268,7 @@ protected:
             // need to calculate f(x - \epsilon)
 
             // deflect the primary variables
-            curElemSol[scv.index()][pvIdx] -= delta + eps;
+            curElemSol[scv.indexInElement()][pvIdx] -= delta + eps;
             delta += eps;
 
             // update the volume variables connected to the dof
@@ -301,7 +301,7 @@ protected:
     template<class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
     getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return this->model_().nonConstCurGlobalVolVars().volVars(scv.elementIndex(), scv.index()); }
+    { return this->model_().nonConstCurGlobalVolVars().volVars(scv.elementIndex(), scv.indexInElement()); }
 
     //! When global volume variables caching is disabled, return the local volvar object
     template<class T = TypeTag>

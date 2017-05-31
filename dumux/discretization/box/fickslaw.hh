@@ -115,12 +115,12 @@ public:
             const auto& volVars = elemVolVars[scv];
 
             // density interpolation
-            rho += useMoles ? volVars.molarDensity(phaseIdx)*shapeValues[scv.index()][0]
-                            : volVars.density(phaseIdx)*shapeValues[scv.index()][0];
+            rho += useMoles ? volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0]
+                            : volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
             // the mole/mass fraction gradient
             GlobalPosition gradI;
-            jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
+            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradI);
             gradI *= useMoles ? volVars.moleFraction(phaseIdx, compIdx)
                               : volVars.massFraction(phaseIdx, compIdx);
             gradX += gradI;

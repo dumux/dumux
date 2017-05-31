@@ -194,7 +194,8 @@ public:
                     visited_[dofIdxGlobal] = true;
                     // Compute temporary volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    auto&& volVars = curGlobalVolVars.volVars(scv.index());
+                    //auto&& volVars = curGlobalVolVars.volVars(scv.index());
+                    auto&& volVars = curGlobalVolVars.volVars(scv());
                     volVars.update(curElemSol, problem, element, scv);
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))

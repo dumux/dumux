@@ -110,11 +110,11 @@ public:
             const auto& volVars = elemVolVars[scv];
 
             if (enableGravity)
-                rho += volVars.density(phaseIdx)*shapeValues[scv.index()][0];
+                rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
             // the global shape function gradient
             DimVector gradN;
-            jacInvT.mv(shapeJacobian[scv.index()][0], gradN);
+            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN);
             gradP.axpy(volVars.pressure(phaseIdx), gradN);
         }
 

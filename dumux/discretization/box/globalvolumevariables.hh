@@ -80,7 +80,7 @@ public:
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
             {
-                volumeVariables_[eIdx][scv.index()].update(elemSol,
+                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol,
                                                            problem,
                                                            element,
                                                            scv);

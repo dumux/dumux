@@ -981,7 +981,7 @@ public:
                                      const SubControlVolume &scv) const
     {
         PrimaryVariables source(0);
-        auto scvIdx = isBox ? scv.index() : 0;
+        auto scvIdx = isBox ? scv.indexInElement() : 0;
         auto key = std::make_pair(this->gridView().indexSet().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {

@@ -108,7 +108,7 @@ protected:
                 if (scvf.boundary())
                 {
                     auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, scv, bcTypes[scv.index()], elemFluxVarsCache);
+                    this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, scv, bcTypes[scv.indexInElement()], elemFluxVarsCache);
                 }
             }
         }
@@ -118,7 +118,7 @@ protected:
         {
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto scvBcTypes = bcTypes[scv.index()];
+                auto scvBcTypes = bcTypes[scv.indexInElement()];
                 if (scvBcTypes.hasDirichlet())
                     this->asImp_().evalDirichlet_(element, fvGeometry, elemVolVars, scv, scvBcTypes);
             }
@@ -149,7 +149,7 @@ protected:
                 // get the primary variables
                 const auto& priVars = elemVolVars[scv].priVars();
 
-                this->residual_[scv.index()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
+                this->residual_[scv.indexInElement()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
             }
         }
     }

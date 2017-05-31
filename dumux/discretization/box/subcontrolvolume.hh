@@ -86,7 +86,7 @@ public:
     }
 
     //! The global index of this scv
-    IndexType index() const
+    IndexType indexInElement() const
     {
         return scvIdx_;
     }

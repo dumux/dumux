@@ -215,7 +215,7 @@ public:
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
                         const auto elemSol = this->elementSolution(element, this->curSol());
-                        this->nonConstCurGlobalVolVars().volVars(scv.index()).update(elemSol,
+                        this->nonConstCurGlobalVolVars().volVars(scv()).update(elemSol,
                                                                                      this->problem_(),
                                                                                      element,
                                                                                      scv);

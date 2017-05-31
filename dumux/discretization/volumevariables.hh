@@ -91,7 +91,7 @@ public:
      */
     static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
                                                      const SubControlVolume& scv)
-    { return isBox ? elemSol[scv.index()] : elemSol[0]; }
+    { return isBox ? elemSol[scv.indexInElement()] : elemSol[0]; }
 
     /*!
      * \brief Return the vector of primary variables
