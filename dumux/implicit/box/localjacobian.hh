@@ -294,7 +294,7 @@ protected:
 
         // update the global stiffness matrix with the current partial derivatives
         for (auto&& scvJ : scvs(fvGeometry))
-            this->updateGlobalJacobian_(matrix, scvJ.dofIndex(), dofIdx, pvIdx, partialDeriv[scvJ.index()]);
+            this->updateGlobalJacobian_(matrix, scvJ.dofIndex(), dofIdx, pvIdx, partialDeriv[scvJ.indexInElement()]);
     }
 
     //! If the global vol vars caching is enabled we have to modify the global volvar object

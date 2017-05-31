@@ -89,8 +89,8 @@ protected:
 
                 auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-                this->residual_[insideScv.index()] += flux;
-                this->residual_[outsideScv.index()] -= flux;
+                this->residual_[insideScv.indexInElement()] += flux;
+                this->residual_[outsideScv.indexInElement()] -= flux;
             }
         }
     }
@@ -168,7 +168,7 @@ protected:
 
         // evaluate the Neumann conditions at the boundary face
         if (bcTypes.hasNeumann())
-            this->residual_[insideScv.index()] += this->asImp_().evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, insideScv, bcTypes);
+            this->residual_[insideScv.indexInElement()] += this->asImp_().evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, insideScv, bcTypes);
 
         // TODO: evaluate the outflow conditions at the boundary face
         //if (bcTypes.hasOutflow())
