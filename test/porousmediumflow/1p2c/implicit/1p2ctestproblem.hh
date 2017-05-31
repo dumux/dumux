@@ -125,6 +125,7 @@ class OnePTwoCTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
+
     // copy some indices for convenience
     enum
     {
@@ -226,10 +227,14 @@ public:
     {
         PrimaryVariables values = initial_(globalPos);
 
+
         // condition for the N2 molefraction at left boundary
         if (globalPos[0] < eps_)
         {
-            values[massOrMoleFracIdx] = 2.0e-5;
+            if (useMoles)
+                values[massOrMoleFracIdx] = 2.0e-5 ;
+            else
+                values[massOrMoleFracIdx] = 2.0e-5*FluidSystem::molarMass(massOrMoleFracIdx)/(2.0e-5*FluidSystem::molarMass(massOrMoleFracIdx)+ (1-2.0e-5)*FluidSystem::molarMass(pressureIdx));
 #if NONISOTHERMAL
             values[temperatureIdx] = 300.;
 #endif

@@ -59,9 +59,11 @@ class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidua
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
@@ -82,8 +84,7 @@ public:
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
     PrimaryVariables computeStorage(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars,
-                                    bool useMoles = true) const
+                                    const VolumeVariables& volVars) const
     {
         PrimaryVariables storage(0.0);
 
@@ -161,12 +162,10 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache,
-                                 bool useMoles = true) const
+                                 const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
         fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
         // get upwind weights into local scope
         PrimaryVariables flux(0.0);
 
@@ -176,6 +175,7 @@ public:
             // advective fluxes
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
+                const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
                     // get equation index
@@ -185,19 +185,17 @@ public:
                     auto upwindTerm = [phaseIdx, compIdx](const auto& volVars)
                     { return volVars.molarDensity(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
-                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-
                     if (eqIdx != replaceCompEqIdx)
-                        flux[eqIdx] += advFlux;
+                        flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
                     // diffusive fluxes (only for the component balances)
                     if (phaseIdx != compIdx)
                     {
-                        const auto diffFlux = fluxVars.molecularDiffusionFlux(phaseIdx, compIdx);
+                        //one of these if is always true
                         if (eqIdx != replaceCompEqIdx)
-                            flux[eqIdx] += diffFlux;
+                            flux[eqIdx] += diffusiveFluxes[eqIdx];
                         if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
-                            flux[conti0EqIdx + phaseIdx] -= diffFlux;
+                            flux[conti0EqIdx + phaseIdx] -= diffusiveFluxes[conti0EqIdx+ phaseIdx];
                     }
                 }
 
@@ -223,6 +221,7 @@ public:
             // advective fluxes
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             {
+                const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
                 {
                     // get equation index
@@ -240,11 +239,10 @@ public:
                     // diffusive fluxes (only for the component balances)
                     if (phaseIdx != compIdx)
                     {
-                        const auto diffFlux = fluxVars.molecularDiffusionFlux(phaseIdx, compIdx);
                         if (eqIdx != replaceCompEqIdx)
-                            flux[eqIdx] += diffFlux;
+                            flux[eqIdx] +=  diffusiveFluxes[eqIdx]*FluidSystem::molarMass(compIdx);
                         if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
-                            flux[conti0EqIdx + phaseIdx] -= diffFlux;
+                            flux[conti0EqIdx + phaseIdx] -=  diffusiveFluxes[conti0EqIdx+ phaseIdx]*FluidSystem::molarMass(compIdx);
                     }
                 }
 
@@ -255,6 +253,7 @@ public:
                     { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
 
                     flux[replaceCompEqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTermTotalBalance);
+
                 }
 
                 //! Add advective phase energy fluxes. For isothermal model the contribution is zero.

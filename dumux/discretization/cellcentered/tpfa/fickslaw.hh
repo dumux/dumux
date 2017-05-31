@@ -63,10 +63,13 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    enum { conti0EqIdx = Indices::conti0EqIdx };
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -80,39 +83,44 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
-    static Scalar flux(const Problem& problem,
-                       const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
-                       int phaseIdx, int compIdx,
-                       const ElementFluxVariablesCache& elemFluxVarsCache,
-                       bool useMoles = true)
+    static Dune::FieldVector<Scalar, numComponents+conti0EqIdx> flux(const Problem& problem,
+                                                                        const Element& element,
+                                                                        const FVElementGeometry& fvGeometry,
+                                                                        const ElementVolumeVariables& elemVolVars,
+                                                                        const SubControlVolumeFace& scvf,
+                                                                        int phaseIdx,
+                                                                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        // diffusion tensors are always solution dependent
-        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+        Dune::FieldVector<Scalar, numComponents+conti0EqIdx> componentFlux(0.0);
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            // diffusion tensors are always solution dependent
+            Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
 
-        // get inside/outside volume variables
-        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+            // get inside/outside volume variables
+            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        // lambdas to get mole/mass fractions & densities
-        auto getX = [useMoles, phaseIdx, compIdx] (const VolumeVariables& volVars)
-        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+            // lambdas to get mole/mass fractions & densities
+            auto getX = [phaseIdx, compIdx] (const VolumeVariables& volVars)
+            { return  volVars.moleFraction(phaseIdx, compIdx) ; };
 
-        auto getRho = [useMoles, phaseIdx](const VolumeVariables& volVars)
-        { return useMoles? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+            auto getRho = [phaseIdx](const VolumeVariables& volVars)
+            { return volVars.molarDensity(phaseIdx);};
 
-        // interpolate density
-        const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(getRho(insideVolVars)+ getRho(outsideVolVars))
-                         : branchingFacetDensity_(elemVolVars, scvf, getRho, getRho(insideVolVars));
+            // interpolate density
+            const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(getRho(insideVolVars)+ getRho(outsideVolVars))
+                            : branchingFacetDensity_(elemVolVars, scvf, getRho, getRho(insideVolVars));
 
-        // the inside and outside mole/mass fractions
-        auto xInside = getX(insideVolVars);
-        auto xOutside = scvf.numOutsideScvs() == 1 ? getX(outsideVolVars)
-                        : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, getX, xInside, tij, phaseIdx, compIdx);
+            // the inside and outside mole/mass fractions
+            auto xInside = getX(insideVolVars);
+            auto xOutside = scvf.numOutsideScvs() == 1 ? getX(outsideVolVars)
+                            : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, getX, xInside, tij, phaseIdx, compIdx);
 
-        return rho*tij*(xInside - xOutside);
+            componentFlux[compIdx] = rho*tij*(xInside - xOutside);
+        }
+        return componentFlux ;
+
     }
 
 private:
