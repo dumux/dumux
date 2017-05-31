@@ -86,6 +86,9 @@ public:
                   "The model is restricted to two phases, thus number of major components must also be two.");
 };
 
+//! Set the primary variables mole fractions for the wetting or non-wetting phase
+SET_BOOL_PROP(TwoPNC, SetMoleFractionsForWettingPhase, true);
+
 /*!
  * \brief Set the property for the number of fluid phases.
  *

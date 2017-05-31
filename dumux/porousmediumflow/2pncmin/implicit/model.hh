@@ -185,11 +185,11 @@ public:
 
         for (int i = 0; i < numPhases; ++i)
             for (int j = 0; j < numComponents; ++j)
-                vtkOutputModule.addSecondaryVariable("x" + FluidSystem::componentName(j) + FluidSystem::phaseName(i),
+                vtkOutputModule.addSecondaryVariable("x_" + FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j),
                                                      [i,j](const VolumeVariables& v){ return v.moleFraction(i,j); });
 
         for (int j = 0; j < numComponents; ++j)
-            vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(j),
+            vtkOutputModule.addSecondaryVariable("m_" + FluidSystem::phaseName(wPhaseIdx) + "^" + FluidSystem::componentName(j),
                                                  [j](const VolumeVariables& v){ return v.molarity(wPhaseIdx,j); });
     }
 

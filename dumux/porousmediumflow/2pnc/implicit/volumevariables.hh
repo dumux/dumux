@@ -258,34 +258,39 @@ public:
 
             // set the known mole fractions in the fluidState so that they
             // can be used by the Miscible2pNCComposition constraint solver
+            unsigned int knownPhaseIdx = nPhaseIdx;
+            if (GET_PROP_VALUE(TypeTag, SetMoleFractionsForWettingPhase))
+            {
+                knownPhaseIdx = wPhaseIdx;
+            }
+
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
             {
-                fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
+                fluidState.setMoleFraction(knownPhaseIdx, compIdx, priVars[compIdx]);
             }
 
             Miscible2pNCComposition::solve(fluidState,
                                            paramCache,
-                                           wPhaseIdx,  //known phaseIdx
+                                           knownPhaseIdx,
                                            /*setViscosity=*/true,
-                                           /*setInternalEnergy=*/false);
+                                           /*setEnthalpy=*/false);
+
         }
         else if (phasePresence == nPhaseOnly)
         {
             Dune::FieldVector<Scalar, numComponents> moleFrac;
 
-            moleFrac[wCompIdx] =  priVars[switchIdx];
+            moleFrac[wCompIdx] = priVars[switchIdx];
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
                 moleFrac[compIdx] = priVars[compIdx];
 
-
             Scalar sumMoleFracOtherComponents = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                    sumMoleFracOtherComponents+=moleFrac[compIdx];
+                sumMoleFracOtherComponents += moleFrac[compIdx];
 
             sumMoleFracOtherComponents += moleFrac[wCompIdx];
             moleFrac[nCompIdx] = 1 - sumMoleFracOtherComponents;
-
 
             // Set fluid state mole fractions
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
@@ -297,12 +302,13 @@ public:
             // of the "ComputeFromReferencePhase" constraint solver
             ComputeFromReferencePhase::solve(fluidState,
                                              paramCache,
-                                              nPhaseIdx,
+                                             nPhaseIdx,
                                              /*setViscosity=*/true,
                                              /*setEnthalpy=*/false);
 
         }
-        else if (phasePresence == wPhaseOnly){
+        else if (phasePresence == wPhaseOnly)
+        {
         // only the wetting phase is present, i.e. wetting phase
         // composition is stored explicitly.
         // extract _mass_ fractions in the nonwetting phase
@@ -372,7 +378,6 @@ public:
     {
         if (phaseIdx < numPhases)
             return fluidState_.density(phaseIdx);
-
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -387,7 +392,6 @@ public:
     {
         if (phaseIdx < numPhases)
             return fluidState_.viscosity(phaseIdx);
-
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -402,7 +406,6 @@ public:
     {
         if (phaseIdx < numPhases)
             return fluidState_.molarDensity(phaseIdx);
-
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
@@ -456,7 +459,7 @@ public:
 
 
     /*!
-     * \brief Returns the diffusion coeffiecient
+     * \brief Returns the diffusion coefficient
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
