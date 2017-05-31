@@ -193,11 +193,9 @@ public:
                                                  [this](const VolumeVariables& v){ return this->perm_(v.permeability())[2][2]; });
 
         for (int i = 0; i < numPhases; ++i)
-        {
             for (int j = 0; j < numComponents; ++j)
                 vtkOutputModule.addSecondaryVariable("x_" + FluidSystem::phaseName(i) + "^" + FluidSystem::componentName(j),
                                                      [i,j](const VolumeVariables& v){ return v.moleFraction(i,j); });
-        }
 
         for (int j = 0; j < numComponents; ++j)
             vtkOutputModule.addSecondaryVariable("m_" + FluidSystem::phaseName(wPhaseIdx) + "^" + FluidSystem::componentName(j),
