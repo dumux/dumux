@@ -47,13 +47,15 @@ class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
+
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
 
     typedef typename GridView::ctype CoordScalar;
     typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
@@ -97,6 +99,38 @@ public:
      * \name Problem parameters
      */
     // \{
+
+    /*!
+     * \brief Evaluate the initial phase state at a vertex (for box models)
+     *
+     * \param Vertex The vertex
+     */
+    int initialPhasePresence(const Vertex& vertex)
+    {
+        return asImp_().initialPhasePresenceAtPos(vertex.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the initial phase state at an element (for cc models)
+     *
+     * \param Element The element
+     */
+    int initialPhasePresence(const Element& element)
+    {
+        return asImp_().initialPhasePresenceAtPos(element.geometry().center());
+    }
+
+    /*!
+     * \brief Evaluate the initial phase state at a given position
+     *
+     * \param globalPos The global position
+     */
+    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
+    {
+       DUNE_THROW(Dune::InvalidStateException,
+                  "The problem does not provide a initialPhasePresenceAtPos() method.");
+       return 0;
+    }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
