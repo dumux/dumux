@@ -27,35 +27,16 @@
 #ifndef DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 #define DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 
-// TODO clean-up
 #include "properties.hh"
-
 #include "model.hh"
 #include "volumevariables.hh"
 #include "indices.hh"
-#include "localresidual.hh"
-#include "fluxvariables.hh"
-#include "../staggered/problem.hh"
-#include "../staggered/propertydefaults.hh"
-
-#include <dumux/implicit/staggered/localresidual.hh>
-//#include <dumux/material/fluidsystems/gasphase.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-//#include <dumux/material/components/nullcomponent.hh>
-//#include <dumux/material/fluidsystems/1p.hh>
-
-#include <dumux/material/fluidstates/immiscible.hh>
+#include "../staggered/propertydefaults.hh" //TODO: why do we need this include?
 
 
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(FluxVariables);
-NEW_PROP_TAG(FluxVariablesCache);
-}
 // \{
 
 ///////////////////////////////////////////////////////////////////////////
@@ -63,20 +44,28 @@ NEW_PROP_TAG(FluxVariablesCache);
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
-SET_INT_PROP(NavierStokesNI, NumEqCellCenter, 2);
+SET_PROP(StaggeredNonIsothermal, NumEqCellCenter)
+{
+private:
+    static constexpr auto isothermalNumEqCellCenter = GET_PROP_VALUE(TypeTag, IsothermalNumEqCellCenter);
+public:
+    static constexpr auto value = isothermalNumEqCellCenter + 1;
+};
 
-//! the VolumeVariables property
-SET_TYPE_PROP(NavierStokesNI, VolumeVariables, NavierStokesNIVolumeVariables<TypeTag>);
-SET_TYPE_PROP(NavierStokesNI, Model, NavierStokesNIModel<TypeTag>);
-SET_TYPE_PROP(NavierStokesNI, Indices, NavierStokesNIIndices<TypeTag>);
-
-SET_BOOL_PROP(NavierStokesNI, EnableEnergyBalanceStokes, true);
-
-SET_BOOL_PROP(NavierStokesNI, UseMoles, true);
-
-SET_TYPE_PROP(NavierStokesNI, HeatConductionType, FouriersLaw<TypeTag>);
-
-SET_INT_PROP(NavierStokesNI, PhaseIdx, 0); //!< Defines the phaseIdx
+// SET_INT_PROP(StaggeredNonIsothermal, NumEqCellCenter, 2);
+//
+// //! the VolumeVariables property
+SET_TYPE_PROP(StaggeredNonIsothermal, VolumeVariables, NavierStokesNIVolumeVariables<TypeTag>);
+SET_TYPE_PROP(StaggeredNonIsothermal, Model, StaggeredNonIsothermalModel<TypeTag>);
+SET_TYPE_PROP(StaggeredNonIsothermal, Indices, StaggeredNonIsothermalIndices<TypeTag>);
+//
+SET_BOOL_PROP(StaggeredNonIsothermal, EnableEnergyBalanceStokes, true);
+//
+SET_BOOL_PROP(StaggeredNonIsothermal, UseMoles, true);
+//
+SET_TYPE_PROP(StaggeredNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
+//
+SET_INT_PROP(StaggeredNonIsothermal, PhaseIdx, 0); //!< Defines the phaseIdx
 
 } // end namespace Properties
 

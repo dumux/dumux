@@ -27,7 +27,7 @@
 #ifndef DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 
-#include <dumux/freeflow/staggered/properties.hh>
+// #include <dumux/freeflow/staggered/properties.hh>
 
 namespace Dumux
 {
@@ -42,7 +42,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the non-isothermal Navier Stokes problems
-NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes));
+NEW_TYPE_TAG(StaggeredNonIsothermal);
 
 NEW_PROP_TAG(EnableEnergyBalanceStokes);
 
@@ -53,6 +53,29 @@ NEW_PROP_TAG(EnableEnergyBalanceStokes);
 // Property tags
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG(PhaseIdx); //!< Defines the phaseIdx
+
+
+//////////////////////////////////////////////////////////////////
+// Property tags required for the non-isothermal models
+//////////////////////////////////////////////////////////////////
+
+//TODO cleanup
+
+NEW_PROP_TAG(IsothermalModel);
+NEW_PROP_TAG(IsothermalFluxVariables);
+NEW_PROP_TAG(IsothermalVolumeVariables);
+NEW_PROP_TAG(IsothermalIndices);
+NEW_PROP_TAG(IsothermalNumEqCellCenter);
+NEW_PROP_TAG(IsothermalNumEqFace);
+NEW_PROP_TAG(HaveVariableFormulation);
+NEW_PROP_TAG(ThermalConductivityModel);
+NEW_PROP_TAG(NiOutputLevel);
+
+// forward declaration of other property tags
+NEW_PROP_TAG(Indices);
+NEW_PROP_TAG(NumPhases);
+NEW_PROP_TAG(FluidSystem);
+
 
 // \}
 }
