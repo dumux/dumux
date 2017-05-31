@@ -24,12 +24,10 @@
  *        Adaption of the fully implicit scheme to the one-phase flow model.
  */
 
-#ifndef DUMUX_NAVIERSTOKES_NI_MODEL_HH
-#define DUMUX_NAVIERSTOKES_NI_MODEL_HH
+#ifndef DUMUX_STAGGERED_NI_MODEL_HH
+#define DUMUX_STAGGERED_NI_MODEL_HH
 
-// #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "properties.hh"
-#include "../staggered/model.hh"
 
 namespace Dumux
 {
@@ -42,37 +40,11 @@ namespace Dumux
  * The model supports compressible as well as incompressible fluids.
  */
 template<class TypeTag >
-class NavierStokesNIModel : public NavierStokesModel<TypeTag>
+class StaggeredNonIsothermalModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
 {
-    using ParentType = NavierStokesModel<TypeTag>;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry) GlobalFVGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    enum { phaseIdx = Indices::phaseIdx };
+    using ParentType = typename GET_PROP_TYPE(TypeTag, IsothermalModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
 public:
 
