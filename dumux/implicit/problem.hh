@@ -459,33 +459,6 @@ public:
     }
 
     /*!
-     * \brief Evaluate the initial phase state inside a control volume.
-     *
-     * \param vertex The vertex
-     * \param vIdxGlobal The global index of the vertex
-     * \param globalPos The global position
-     */
-    int initialPhasePresence(const Vertex &vertex,
-                             int &vIdxGlobal,
-                             const GlobalPosition &globalPos) const
-    {
-        // forward to generic interface
-        return asImp_().initialPhasePresenceAtPos(globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the initial value for a control volume.
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
-    {
-        //! As a default, i.e. if the user's problem does not overload any initialPhasePresence method
-        //! return 0 (the default phase state is depending on the model context)
-        return 0;
-    }
-
-    /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.
      *
      * This means the factor by which a lower-dimensional (1D or 2D)
