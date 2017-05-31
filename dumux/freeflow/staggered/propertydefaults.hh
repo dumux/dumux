@@ -40,6 +40,7 @@
 #include "vtkoutputmodule.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/freeflow/staggeredni/localresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
@@ -184,6 +185,7 @@ SET_TYPE_PROP(NavierStokes, VtkOutputModule, FreeFlowStaggeredVtkOutputModule<Ty
 
 SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
+SET_TYPE_PROP(NavierStokes, EnergyLocalResidual, FreeFlowEnergyLocalResidual<TypeTag>);
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)
 // { private :

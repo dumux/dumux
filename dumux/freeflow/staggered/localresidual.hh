@@ -54,19 +54,15 @@ NEW_PROP_TAG(ReplaceCompEqIdx);
 
 
 // forward declaration
-template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
+template<class TypeTag, bool enableComponentTransport>
 class StaggeredNavierStokesResidualImpl;
 
 template<class TypeTag>
-using StaggeredNavierStokesResidual = StaggeredNavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
-                                                                 GET_PROP_VALUE(TypeTag, EnableEnergyBalanceStokes)>;
+using StaggeredNavierStokesResidual = StaggeredNavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport)>;
 
 
-// template<class TypeTag>
-// class StaggeredNavierStokesResidual : public Dumux::StaggeredLocalResidual<TypeTag>
-// {
 template<class TypeTag>
-class StaggeredNavierStokesResidualImpl<TypeTag, false, false> : public Dumux::StaggeredLocalResidual<TypeTag>
+class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::StaggeredLocalResidual<TypeTag>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
@@ -93,6 +89,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false, false> : public Dumux::S
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -161,6 +158,7 @@ public:
     {
         CellCenterPrimaryVariables storage;
         storage[0] = volVars.density();
+        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
         return storage;
     }
 
