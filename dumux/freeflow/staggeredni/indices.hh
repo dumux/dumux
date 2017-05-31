@@ -23,9 +23,6 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
 
-//#include <dumux/freeflow/staggered/indices.hh>
-//#include "properties.hh"
-
 namespace Dumux
 {
 // \{
@@ -37,7 +34,7 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-class NavierStokesNIIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
+class StaggeredNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
 {
 public:
     static const int numEqCC = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
