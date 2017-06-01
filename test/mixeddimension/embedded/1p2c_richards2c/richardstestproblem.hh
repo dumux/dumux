@@ -50,7 +50,8 @@ NEW_TYPE_TAG(RichardsTestBoxProblem, INHERITS_FROM(BoxModel, RichardsTestProblem
 NEW_TYPE_TAG(RichardsTestCCProblem, INHERITS_FROM(CCTpfaModel, RichardsTestProblem));
 
 // Set the grid type
-SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<double, 3> >);
+//SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<double, 3> >);
+SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::UGGrid<3>);
 
 SET_BOOL_PROP(RichardsTestProblem, EnableGlobalFVGeometryCache, true);
 SET_BOOL_PROP(RichardsTestProblem, EnableGlobalVolumeVariablesCache, true);
