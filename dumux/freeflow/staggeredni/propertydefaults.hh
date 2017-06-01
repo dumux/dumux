@@ -29,10 +29,9 @@
 
 #include "properties.hh"
 #include "model.hh"
-#include "volumevariables.hh"
+#include "../staggered/volumevariables.hh"
 #include "indices.hh"
 #include "../staggered/propertydefaults.hh" //TODO: why do we need this include?
-
 
 namespace Dumux
 {
@@ -55,7 +54,7 @@ public:
 // SET_INT_PROP(StaggeredNonIsothermal, NumEqCellCenter, 2);
 //
 // //! the VolumeVariables property
-SET_TYPE_PROP(StaggeredNonIsothermal, VolumeVariables, NavierStokesNIVolumeVariables<TypeTag>);
+SET_TYPE_PROP(StaggeredNonIsothermal, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
 SET_TYPE_PROP(StaggeredNonIsothermal, Model, StaggeredNonIsothermalModel<TypeTag>);
 SET_TYPE_PROP(StaggeredNonIsothermal, Indices, StaggeredNonIsothermalIndices<TypeTag>);
 //
@@ -66,6 +65,7 @@ SET_BOOL_PROP(StaggeredNonIsothermal, UseMoles, true);
 SET_TYPE_PROP(StaggeredNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
 //
 SET_INT_PROP(StaggeredNonIsothermal, PhaseIdx, 0); //!< Defines the phaseIdx
+
 
 } // end namespace Properties
 
