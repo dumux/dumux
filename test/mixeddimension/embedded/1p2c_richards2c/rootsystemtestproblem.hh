@@ -94,6 +94,7 @@ class RootsystemTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // copy some indices for convenience
     enum {
@@ -370,6 +371,19 @@ public:
     bool shouldWriteRestartFile() const
     {
         return false;
+    }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {
+        auto& r = outputModule.createScalarField("radius", 0);
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto dofIndex = this->elementMapper().index(element);
+            r[dofIndex] = this->spatialParams().radius(dofIndex);
+        }
     }
 
     //! Set the coupling manager

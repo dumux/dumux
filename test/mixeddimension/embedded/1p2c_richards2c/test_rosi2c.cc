@@ -23,7 +23,7 @@
  */
 #include "config.h"
 #include "rositestproblem.hh"
-#include <dumux/mixeddimension/embedded/start.hh>
+#include "start.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with

@@ -13,7 +13,8 @@ Refinement = 0
 [SoilGrid]
 LowerLeft = -0.05 -0.05 -0.1
 UpperRight = 0.05 0.05 0
-Cells = 20 20 20
+Cells = 15 15 15
+ClosureType = None
 
 [Problem]
 Name = rosi2c
@@ -34,3 +35,6 @@ Kr = 2.04e-13
 InitialRootPressure = -1.2e6 # [Pa]
 TranspirationRate = 2.15e-8 # [kg / s]
 CriticalCollarPressure = -1.5e6 # [Pa]
+
+[Vtk]
+AddVelocity = false
