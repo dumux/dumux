@@ -64,8 +64,6 @@ class ImplicitVolumeVariablesImplementation<TypeTag, false>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-
 public:
 
     /*!
@@ -91,7 +89,7 @@ public:
      */
     static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
                                                      const SubControlVolume& scv)
-    { return isBox ? elemSol[scv.indexInElement()] : elemSol[0]; }
+    { return elemSol[scv.indexInElement()]; }
 
     /*!
      * \brief Return the vector of primary variables
@@ -160,7 +158,6 @@ class ImplicitVolumeVariablesImplementation<TypeTag, true>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static const int temperatureIdx = Indices::temperatureIdx;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
 

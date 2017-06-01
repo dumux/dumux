@@ -105,6 +105,12 @@ public:
         return elementIndex();
     }
 
+    //! The global index of this scv
+    IndexType indexInElement() const
+    {
+        return 0;
+    }
+
     // The position of the dof this scv is embedded in
     GlobalPosition dofPosition() const
     {
