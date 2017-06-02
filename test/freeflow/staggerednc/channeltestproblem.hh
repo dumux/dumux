@@ -45,7 +45,12 @@ namespace Capabilities
 
 namespace Properties
 {
+
+#if !NONISOTHERMAL
 NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
+#else
+NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNCNI));
+#endif
 
 NEW_PROP_TAG(FluidSystem);
 

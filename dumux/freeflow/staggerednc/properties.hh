@@ -27,8 +27,8 @@
 #ifndef DUMUX_NAVIERSTOKES_NC_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_NC_PROPERTIES_HH
 
-// #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 #include <dumux/freeflow/staggered/properties.hh>
+#include <dumux/freeflow/staggeredni/properties.hh>
 
 namespace Dumux
 {
@@ -44,9 +44,7 @@ namespace Properties {
 
 //! The type tags for the implicit single-phase problems
 NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(NavierStokes));
-
-//! The type tags for the corresponding non-isothermal problems
-// NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NonIsothermal));
+NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC, NavierStokesNonIsothermal));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

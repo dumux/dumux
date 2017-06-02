@@ -35,7 +35,6 @@
 #include "localresidual.hh"
 #include "fluxvariables.hh"
 #include "../staggered/problem.hh"
-// #include "../staggered/model.hh"
 #include "../staggered/propertydefaults.hh"
 
 
@@ -127,7 +126,7 @@ SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 //////////////////////////////////////////////////////////////////
 
 // set isothermal Model
-// SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
+SET_TYPE_PROP(NavierStokesNCNI, IsothermalModel, NavierStokesNCModel<TypeTag>);
 
 //set isothermal VolumeVariables
 // SET_TYPE_PROP(NavierStokesNI, IsothermalVolumeVariables, NavierStokesVolumeVariables<TypeTag>);

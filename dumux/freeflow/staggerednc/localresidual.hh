@@ -53,12 +53,12 @@ NEW_PROP_TAG(ReplaceCompEqIdx);
 
 
 // // forward declaration
-template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
+template<class TypeTag, bool enableComponentTransport>
 class StaggeredNavierStokesResidualImpl;
 
 // specialization for miscible, isothermal flow
 template<class TypeTag>
-class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
+class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false>
 {
     friend class StaggeredLocalResidual<TypeTag>;
 
