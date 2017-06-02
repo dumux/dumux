@@ -33,7 +33,6 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(EnableComponentTransport);
-NEW_PROP_TAG(EnableEnergyBalanceStokes);
 NEW_PROP_TAG(EnableInertiaTerms);
 }
 
