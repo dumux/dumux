@@ -193,9 +193,9 @@ public:
                     {
                         //one of these if is always true
                         if (eqIdx != replaceCompEqIdx)
-                            flux[eqIdx] += diffusiveFluxes[eqIdx];
+                            flux[eqIdx] += diffusiveFluxes[compIdx];
                         if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
-                            flux[conti0EqIdx + phaseIdx] -= diffusiveFluxes[conti0EqIdx+ phaseIdx];
+                            flux[conti0EqIdx + phaseIdx] -= diffusiveFluxes[compIdx];
                     }
                 }
 
@@ -240,9 +240,9 @@ public:
                     if (phaseIdx != compIdx)
                     {
                         if (eqIdx != replaceCompEqIdx)
-                            flux[eqIdx] +=  diffusiveFluxes[eqIdx]*FluidSystem::molarMass(compIdx);
+                            flux[eqIdx] +=  diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
                         if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
-                            flux[conti0EqIdx + phaseIdx] -=  diffusiveFluxes[conti0EqIdx+ phaseIdx]*FluidSystem::molarMass(compIdx);
+                            flux[conti0EqIdx + phaseIdx] -=  diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
                     }
                 }
 

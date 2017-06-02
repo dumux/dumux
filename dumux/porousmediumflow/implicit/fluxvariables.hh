@@ -272,7 +272,7 @@ public:
         return this->applyUpwindScheme(upwindTerm, advPreFlux_[phaseIdx], phaseIdx);
     }
 
-    Scalar molecularDiffusionFlux(const int phaseIdx)
+    Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx)
     {
         return MolecularDiffusionType::flux(this->problem(),
                                             this->element(),
