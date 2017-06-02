@@ -176,6 +176,29 @@ public:
     }
 
     /**
+      * \brief Estimates the dissipation rate based on a formula given
+      *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
+      * \f[ \omega = \frac{k^{1/2}}{C_{\mu}^{1/4}L} \f]
+      */
+    Scalar dissipationRate(const Scalar velocity,
+                           const Scalar diameter,
+                           const Scalar kinematicViscosity,
+                           bool print=verbose) const
+    {
+        using std::pow;
+         const Scalar k = turbulentKineticEnergy(velocity, diameter, kinematicViscosity, false);
+         const Scalar factor = 0.54772; // = cMu^(1/4) = 0.09^(1/4)
+         const Scalar L = turbulenceLengthScale(diameter , false);
+         const Scalar omega = pow(k, 0.5) / (L*factor);
+        if (print)
+        {
+            std::cout << "estimated Omega : " << omega << " [1/s]" << std::endl;
+
+        }
+        return omega;
+    }
+
+    /**
       * \brief Estimates the viscosity tilde based on a formula given in
       *        in the ANSYS Fluent user guide \cite ANSYSUserGuide12
       */
