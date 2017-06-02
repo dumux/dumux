@@ -63,7 +63,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension} ;
@@ -77,17 +77,15 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    static std::vector<Scalar> flux(const Problem& problem,
-                                    const Element& element,
-                                    const FVElementGeometry& fvGeometry,
-                                    const ElementVolumeVariables& elemVolVars,
-                                    const SubControlVolumeFace& scvf,
-                                    int phaseIdx,
-                                    const ElementFluxVariablesCache& elemFluxVarsCache,
-                                    bool useMoles = true)
+    static Dune::FieldVector<Scalar, numComponents> flux(const Problem& problem,
+                                                                const Element& element,
+                                                                const FVElementGeometry& fvGeometry,
+                                                                const ElementVolumeVariables& elemVolVars,
+                                                                const SubControlVolumeFace& scvf,
+                                                                int phaseIdx,
+                                                                const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        std::vector<Scalar> componentFlux(0.0);
-        componentFlux.resize(numComponents);
+        Dune::FieldVector<Scalar, numComponents> componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             // get inside and outside diffusion tensors and calculate the harmonic mean
@@ -122,14 +120,12 @@ public:
                 const auto& volVars = elemVolVars[scv];
 
                 // density interpolation
-                rho += useMoles ? volVars.molarDensity(phaseIdx)*shapeValues[scv.index()][0]
-                                : volVars.density(phaseIdx)*shapeValues[scv.index()][0];
+                rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.index()][0];
 
                 // the mole/mass fraction gradient
                 GlobalPosition gradI;
                 jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
-                gradI *= useMoles ? volVars.moleFraction(phaseIdx, compIdx)
-                                : volVars.massFraction(phaseIdx, compIdx);
+                gradI *= volVars.moleFraction(phaseIdx, compIdx);
                 gradX += gradI;
             }
 

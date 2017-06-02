@@ -26,7 +26,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
 
 #include <memory>
-
+//
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
@@ -36,6 +36,7 @@
 
 namespace Dumux
 {
+
 /*!
  * \ingroup CCMpfaFicksLaw
  * \brief Specialization of Fick's Law for the CCMpfa method.
@@ -68,13 +69,12 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
+    static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
 
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-        static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
-        // We always use the dynamic types here to be compatible on the boundary
+         // We always use the dynamic types here to be compatible on the boundary
         using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
         using PositionVector = typename BoundaryInteractionVolume::PositionVector;
 
@@ -162,67 +162,71 @@ public:
     using Cache = MpfaFicksLawCache;
     using CacheFiller = MpfaFicksLawCacheFiller;
 
-    static Scalar flux(const Problem& problem,
-                       const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
-                       int phaseIdx, int compIdx,
-                       const ElementFluxVariablesCache& elemFluxVarsCache,
-                       bool useMoles = true)
+    static Dune::FieldVector<Scalar, numComponents> flux (const Problem& problem,
+                                                          const Element& element,
+                                                          const FVElementGeometry& fvGeometry,
+                                                          const ElementVolumeVariables&  elemVolVars,
+                                                          const SubControlVolumeFace& scvf,
+                                                          int phaseIdx,
+                                                          const ElementFluxVariablesCache&    elemFluxVarsCache)
     {
-        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& volVarsStencil = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx);
-        const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
+        Dune::FieldVector<Scalar, numComponents> componentFlux(0.0);
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+            const auto& volVarsStencil = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx);
+            const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
 
-        const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
-        // For interior Neumann boundaries when using Tpfa for Neumann boundary conditions, we simply
-        // return the user-specified flux. Note that for compositional models we attribute the influxes
-        // to the major components, thus we do it per phase in Darcy's law. However, for single-phasic models
-        // wesolve the phase mass balance equation AND the transport equation, thus, in that case we incorporate
-        // the Neumann BCs here. We assume compIdx = eqIdx.
-        // Note that this way of including interior Neumann fluxes fails for mpnc models where n != m.
-        if (numPhases == 1
-            && isInteriorBoundary
-            && useTpfaBoundary
-            && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
-            return scvf.area()*
-                   elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
-                   problem.neumann(element, fvGeometry, elemVolVars, scvf)[compIdx];
+            const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
+            // For interior Neumann boundaries when using Tpfa for Neumann boundary conditions, we simply
+            // return the user-specified flux. Note that for compositional models we attribute the influxes
+            // to the major components, thus we do it per phase in Darcy's law. However, for single-phasic models
+            // wesolve the phase mass balance equation AND the transport equation, thus, in that case we incorporate
+            // the Neumann BCs here. We assume compIdx = eqIdx.
+            // Note that this way of including interior Neumann fluxes fails for mpnc models where n != m.
+            if (numPhases == 1
+                && isInteriorBoundary
+                && useTpfaBoundary
+                && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
+                return scvf.area()*
+                    elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
+                    problem.neumann(element, fvGeometry, elemVolVars, scvf)[compIdx];
 
 
-        // get the scaling factor for the effective diffusive fluxes
-        const auto effFactor = Implementation::computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
+            // get the scaling factor for the effective diffusive fluxes
+            const auto effFactor = Implementation::computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
 
-        // if factor is zero, the flux will end up zero anyway
-        if (effFactor == 0.0)
-            return 0.0;
+            // if factor is zero, the flux will end up zero anyway
+            if (effFactor == 0.0)
+                return 0.0;
 
-        // lambda functions depending on if we use mole or mass fractions
-        auto getX = [useMoles, phaseIdx, compIdx] (const auto& volVars)
-        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+            // lambda functions depending on if we use mole or mass fractions
+             auto getX = [phaseIdx, compIdx] (const auto& volVars)
+            { return volVars.moleFraction(phaseIdx, compIdx); };
 
-        auto getRho = [useMoles, phaseIdx] (const auto& volVars)
-        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+            auto getRho = [phaseIdx] (const auto& volVars)
+            { return volVars.molarDensity(phaseIdx); };
 
-        // calculate the density at the interface
-        const auto rho = Implementation::interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, getRho, isInteriorBoundary);
+            // calculate the density at the interface
+            const auto rho = Implementation::interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, getRho, isInteriorBoundary);
 
-        // calculate Tij*xj
-        Scalar flux(0.0);
-        unsigned int localIdx = 0;
-        for (const auto volVarIdx : volVarsStencil)
-            flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
+            // calculate Tij*xj
+            Scalar flux(0.0);
+            unsigned int localIdx = 0;
+            for (const auto volVarIdx : volVarsStencil)
+                flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
 
-        // if no interior boundaries are present, return effective mass flux
-        if (!enableInteriorBoundaries)
-            return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+            // if no interior boundaries are present, return effective mass flux
+            if (!enableInteriorBoundaries)
+                return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
 
-        // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
+            // Handle interior boundaries
+            flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
 
-        // return overall resulting flux
-        return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+            // return overall resulting flux
+            componentFlux[compIdx] = useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+        }
+        return componentFlux;
     }
 
     template<typename GetRhoFunction>

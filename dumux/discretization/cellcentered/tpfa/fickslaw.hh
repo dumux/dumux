@@ -63,13 +63,12 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
-    enum { conti0EqIdx = Indices::conti0EqIdx };
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -83,7 +82,7 @@ public:
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
     using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
 
-    static Dune::FieldVector<Scalar, numComponents+conti0EqIdx> flux(const Problem& problem,
+    static Dune::FieldVector<Scalar, numComponents> flux(const Problem& problem,
                                                                         const Element& element,
                                                                         const FVElementGeometry& fvGeometry,
                                                                         const ElementVolumeVariables& elemVolVars,
@@ -91,7 +90,7 @@ public:
                                                                         int phaseIdx,
                                                                         const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        Dune::FieldVector<Scalar, numComponents+conti0EqIdx> componentFlux(0.0);
+        Dune::FieldVector<Scalar, numComponents> componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             // diffusion tensors are always solution dependent
