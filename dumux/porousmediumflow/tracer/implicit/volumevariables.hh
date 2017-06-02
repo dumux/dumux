@@ -82,7 +82,16 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            moleFraction_[compIdx] = this->priVars()[compIdx];
+            if (useMoles)
+            {
+                moleFraction_[compIdx] = this->priVars()[compIdx];
+                massFraction_[compIdx] = moleFraction_[compIdx]*FluidSystem::molarMass(compIdx)/fluidMolarMass_;
+            }
+            else
+            {
+                massFraction_[compIdx] = this->priVars()[compIdx];
+                moleFraction_[compIdx] = massFraction_[compIdx]/FluidSystem::molarMass(compIdx)*fluidMolarMass_;
+            }
             diffCoeff_[compIdx] =
                 FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
         }
@@ -132,7 +141,7 @@ public:
      * \param compIdx The index of the component
      */
     Scalar massFraction(int pIdx, int compIdx) const
-    { return moleFraction_[compIdx]*FluidSystem::molarMass(compIdx)/fluidMolarMass_; }
+    { return massFraction_[compIdx]; }
 
     /*!
      * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
@@ -165,6 +174,7 @@ protected:
     GlobalPosition dispersivity_;
     std::array<Scalar, numComponents> diffCoeff_;
     std::array<Scalar, numComponents> moleFraction_;
+    std::array<Scalar, numComponents> massFraction_;
 
 private:
     const Problem* problem_;
