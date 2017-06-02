@@ -28,12 +28,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(EnableEnergyBalanceStokes);
-}
-
 /*!
  * \ingroup ImplicitModel
  * \brief The flux variables class
@@ -46,7 +40,7 @@ template<class TypeTag, bool enableEnergyBalance>
 class FreeFlowEnergyFluxVariablesImplementation;
 
 template<class TypeTag>
-using FreeFlowEnergyFluxVariables = FreeFlowEnergyFluxVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalanceStokes)>;
+using FreeFlowEnergyFluxVariables = FreeFlowEnergyFluxVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 // specialization for isothermal flow
 template<class TypeTag>
@@ -94,7 +88,6 @@ class FreeFlowEnergyFluxVariablesImplementation<TypeTag, true>
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { energyBalanceIdx = Indices::energyBalanceIdx };
 
@@ -152,8 +145,8 @@ private:
         const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
 
         const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
-        const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
-        const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
+        const Scalar upstreamDensity = upstreamVolVars.density();
+        const Scalar downstreamDensity = downstreamVolVars.density();
         const Scalar upstreamEnthalpy = upstreamVolVars.enthalpy();
         const Scalar downstreamEnthalpy = downstreamVolVars.enthalpy();
 

@@ -206,9 +206,6 @@ SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<Typ
 // set isothermal Model
 SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
 
-//set isothermal VolumeVariables
-SET_TYPE_PROP(NavierStokesNI, IsothermalVolumeVariables, NavierStokesVolumeVariables<TypeTag>);
-
 //set isothermal Indices
 SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
 

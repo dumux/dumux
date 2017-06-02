@@ -34,7 +34,7 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-class StaggeredNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
+class NavierStokesNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
 {
 public:
     static const int numEqCC = GET_PROP_VALUE(TypeTag, NumEqCellCenter);

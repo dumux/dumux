@@ -29,9 +29,8 @@
 
 #include "properties.hh"
 #include "model.hh"
-#include "../staggered/volumevariables.hh"
 #include "indices.hh"
-#include "../staggered/propertydefaults.hh" //TODO: why do we need this include?
+#include "../staggered/propertydefaults.hh"
 
 namespace Dumux
 {
@@ -43,7 +42,7 @@ namespace Dumux
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
-SET_PROP(StaggeredNonIsothermal, NumEqCellCenter)
+SET_PROP(NavierStokesNonIsothermal, NumEqCellCenter)
 {
 private:
     static constexpr auto isothermalNumEqCellCenter = GET_PROP_VALUE(TypeTag, IsothermalNumEqCellCenter);
@@ -51,21 +50,13 @@ public:
     static constexpr auto value = isothermalNumEqCellCenter + 1;
 };
 
-// SET_INT_PROP(StaggeredNonIsothermal, NumEqCellCenter, 2);
-//
-// //! the VolumeVariables property
-SET_TYPE_PROP(StaggeredNonIsothermal, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
-SET_TYPE_PROP(StaggeredNonIsothermal, Model, StaggeredNonIsothermalModel<TypeTag>);
-SET_TYPE_PROP(StaggeredNonIsothermal, Indices, StaggeredNonIsothermalIndices<TypeTag>);
-//
-SET_BOOL_PROP(StaggeredNonIsothermal, EnableEnergyBalanceStokes, true);
-//
-SET_BOOL_PROP(StaggeredNonIsothermal, UseMoles, true);
-//
-SET_TYPE_PROP(StaggeredNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
-//
-SET_INT_PROP(StaggeredNonIsothermal, PhaseIdx, 0); //!< Defines the phaseIdx
+SET_TYPE_PROP(NavierStokesNonIsothermal, Model, NavierStokesNonIsothermalModel<TypeTag>);
 
+SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
+
+SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
 
 } // end namespace Properties
 

@@ -46,7 +46,7 @@ class FreeFlowEnergyLocalResidualImplementation;
  * \brief Element-wise calculation of the energy residual for non-isothermal problems.
  */
 template<class TypeTag>
-using FreeFlowEnergyLocalResidual = FreeFlowEnergyLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalanceStokes)>;
+using FreeFlowEnergyLocalResidual = FreeFlowEnergyLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 template<class TypeTag>
 class FreeFlowEnergyLocalResidualImplementation<TypeTag, false>

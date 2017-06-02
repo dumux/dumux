@@ -40,7 +40,7 @@ namespace Dumux
  * The model supports compressible as well as incompressible fluids.
  */
 template<class TypeTag >
-class StaggeredNonIsothermalModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
+class NavierStokesNonIsothermalModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
 {
     using ParentType = typename GET_PROP_TYPE(TypeTag, IsothermalModel);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

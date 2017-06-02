@@ -42,40 +42,20 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the non-isothermal Navier Stokes problems
-NEW_TYPE_TAG(StaggeredNonIsothermal);
-
-NEW_PROP_TAG(EnableEnergyBalanceStokes);
-
-//! The type tags for the corresponding non-isothermal problems
-// NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NonIsothermal));
-
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(PhaseIdx); //!< Defines the phaseIdx
-
+NEW_TYPE_TAG(NavierStokesNonIsothermal);
 
 //////////////////////////////////////////////////////////////////
 // Property tags required for the non-isothermal models
 //////////////////////////////////////////////////////////////////
 
-//TODO cleanup
-
 NEW_PROP_TAG(IsothermalModel);
 NEW_PROP_TAG(IsothermalFluxVariables);
-NEW_PROP_TAG(IsothermalVolumeVariables);
 NEW_PROP_TAG(IsothermalIndices);
 NEW_PROP_TAG(IsothermalNumEqCellCenter);
 NEW_PROP_TAG(IsothermalNumEqFace);
 NEW_PROP_TAG(HaveVariableFormulation);
 NEW_PROP_TAG(ThermalConductivityModel);
 NEW_PROP_TAG(NiOutputLevel);
-
-// forward declaration of other property tags
-NEW_PROP_TAG(Indices);
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidSystem);
-
 
 // \}
 }
