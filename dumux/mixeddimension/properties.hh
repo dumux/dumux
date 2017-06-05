@@ -125,9 +125,9 @@ SET_PROP(MixedDimension, SolutionVector)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag) BulkProblemTypeTag;
     typedef typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag) LowDimProblemTypeTag;
+public:
     typedef typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector) SolutionVectorBulk;
     typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector) SolutionVectorLowDim;
-public:
     typedef typename Dune::MultiTypeBlockVector<SolutionVectorBulk, SolutionVectorLowDim> type;
 };
 
