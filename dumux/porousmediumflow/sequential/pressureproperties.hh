@@ -70,6 +70,9 @@ NEW_PROP_TAG(Velocity);
 
 namespace Dumux
 {
+template<class TypeTag>
+class ILU0BiCGSTABBackend;
+
 namespace Properties
 {
 //! Faces are only regarded from one side and not from both cells
