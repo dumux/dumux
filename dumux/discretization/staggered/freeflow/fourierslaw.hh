@@ -94,12 +94,12 @@ public:
 
         const Scalar insideTemp = insideVolVars.temperature();
         const Scalar outsideTemp = outsideVolVars.temperature();
-        const Scalar distance = scvf.boundary() ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
-                                                : (outsideScv.dofPosition() - scvf.ipGlobal()).two_norm();
 
-        flux = -1.0 * (insideTemp - outsideTemp);
-        flux *= lambda / distance;
-        flux *= scvf.area() * sign(scvf.outerNormalScalar());
+        const Scalar distance = scvf.boundary() ? (insideScv.dofPosition() - scvf.ipGlobal()).two_norm()
+                                                : (outsideScv.dofPosition() - insideScv.dofPosition()).two_norm();
+
+        flux = lambda / distance * (insideTemp - outsideTemp);
+        flux *= scvf.area();
         return flux;
     }
 
