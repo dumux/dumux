@@ -468,7 +468,7 @@ public:
         else if (compIdx > phaseIdx)
             return diffCoefficient_[phaseIdx][compIdx-1];
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+            return diffCoefficient_[phaseIdx][compIdx];
     }
 
     /*!
@@ -513,7 +513,7 @@ private:
         else if (compIdx > phaseIdx)
             diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
         else
-            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
+            diffCoefficient_[phaseIdx][compIdx] = 0;
     }
 
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
