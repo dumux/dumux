@@ -84,6 +84,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -121,7 +122,8 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
             if(replaceCompEqIdx < numComponents)
                 storage[replaceCompEqIdx] = density;
 
-        //TODO: energy balance
+        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
+
         return storage;
     }
 };
