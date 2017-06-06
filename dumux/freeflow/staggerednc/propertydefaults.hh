@@ -128,18 +128,12 @@ SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 // set isothermal Model
 SET_TYPE_PROP(NavierStokesNCNI, IsothermalModel, NavierStokesNCModel<TypeTag>);
 
-//set isothermal VolumeVariables
-// SET_TYPE_PROP(NavierStokesNI, IsothermalVolumeVariables, NavierStokesVolumeVariables<TypeTag>);
-
-//set isothermal LocalResidual
-// SET_TYPE_PROP(NavierStokesNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
-
 //set isothermal Indices
-// SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>);
 
 //set isothermal NumEq
-// SET_INT_PROP(NavierStokesNI, IsothermalNumEq, 1);
-
+SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqCellCenter, 2); //!< set the number of equations to 1
+SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqFace, 1); //!< set the number of equations
 
 // \}
 } // end namespace Properties
