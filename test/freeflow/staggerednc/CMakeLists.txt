@@ -22,13 +22,20 @@ add_dumux_test(test_advection test_channel test_channel.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/test_advection-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel test_advection.input")
 
-add_dumux_test(test_stokes2cni test_stokes2cni test_channel.cc
+add_dumux_test(test_stokes2cni_advection test_stokes2cni test_channel.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-advection.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_advection-00002.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel test_advection.input")
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-advection.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_advection-00009.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni test_stokes2cni_advection.input")
 target_compile_definitions(test_stokes2cni PUBLIC "NONISOTHERMAL=1")
+
+add_dumux_test(test_stokes2cni_diffusion test_stokes2cni test_channel.cc
+               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                 --script fuzzy
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-diffusion.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_diffusion-00014.vtu
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni test_stokes2cni_diffusion.input")
 
 
 #install sources
