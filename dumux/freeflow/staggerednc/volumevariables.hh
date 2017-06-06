@@ -25,7 +25,8 @@
 #define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 
 #include "properties.hh"
-#include <dumux/discretization/volumevariables.hh>
+
+#include "../staggered/volumevariables.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
 
@@ -39,9 +40,9 @@ namespace Dumux
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class NavierStokesNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class NavierStokesNCVolumeVariables : public NavierStokesVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = NavierStokesVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -53,6 +54,8 @@ class NavierStokesNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
            numPhases = FluidSystem::numPhases,
@@ -77,25 +80,25 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, this->fluidState_);
 
 
-                typename FluidSystem::ParameterCache paramCache;
-        paramCache.updateAll(fluidState_);
-            int compIIdx = phaseIdx;
-            for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(this->fluidState_);
+        int compIIdx = phaseIdx;
+        for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
+        {
+            // binary diffusion coefficents
+            if(compIIdx!= compJIdx)
             {
-                // binary diffusion coefficents
-                if(compIIdx!= compJIdx)
-                {
-                    setDiffusionCoefficient_(phaseIdx, compJIdx,
-                                             FluidSystem::binaryDiffusionCoefficient(fluidState_,
-                                                                                     paramCache,
-                                                                                     phaseIdx,
-                                                                                     compIIdx,
-                                                                                     compJIdx));
-                }
+                setDiffusionCoefficient_(phaseIdx, compJIdx,
+                                         FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
+                                                                                 paramCache,
+                                                                                 phaseIdx,
+                                                                                 compIIdx,
+                                                                                 compJIdx));
             }
+        }
     };
 
     /*!
@@ -107,10 +110,17 @@ public:
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
+        const Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
+        fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(/*phaseIdx=*/0, elemSol[0][Indices::pressureIdx]);
+
+        // saturation in a single phase is always 1 and thus redundant
+        // to set. But since we use the fluid state shared by the
+        // immiscible multi-phase models, so we have to set it here...
+        fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
+
         Scalar fracMinor = 0.0;
         int transportEqIdx = 1;
 
@@ -131,12 +141,6 @@ public:
         else
             fluidState.setMassFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
 
-
-        // saturation in a single phase is always 1 and thus redundant
-        // to set. But since we use the fluid state shared by the
-        // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(phaseIdx, 1.0);
-
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updatePhase(fluidState, phaseIdx);
 
@@ -147,46 +151,10 @@ public:
         fluidState.setViscosity(phaseIdx, value);
 
         // compute and set the enthalpy
-        value = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
-        fluidState.setEnthalpy(phaseIdx, value);
+        const Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+        fluidState.setEnthalpy(phaseIdx, h);
     }
 
-    /*!
-     * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
-     *
-     * Note that we assume thermodynamic equilibrium, i.e. the
-     * temperatures of the rock matrix and of all fluid phases are
-     * identical.
-     */
-    Scalar temperature() const
-    { return fluidState_.temperature(); }
-
-    /*!
-     * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
-     *        the control volume.
-     */
-    Scalar pressure() const
-    { return fluidState_.pressure(phaseIdx); }
-
-    /*!
-     * \brief Return the saturation
-     */
-    Scalar saturation() const
-    { return 1.0; }
-
-    /*!
-     * \brief Return the mass density \f$\mathrm{[kg/m^3]}\f$ of a given phase within the
-     *        control volume.
-     */
-    Scalar density() const
-    { return fluidState_.density(phaseIdx); }
-
-    /*!
-     * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
-     *        control volume.
-     */
-    Scalar viscosity() const
-    { return fluidState_.viscosity(phaseIdx); }
 
      /*!
       * \brief Returns the mass fraction of a component in the phase
@@ -195,7 +163,7 @@ public:
       * \param compIdx the index of the component
       */
      Scalar massFraction(int phaseIdx, int compIdx) const
-     { return fluidState_.massFraction(phaseIdx, compIdx); }
+     { return this->fluidState_.massFraction(phaseIdx, compIdx); }
 
      /*!
       * \brief Returns the mole fraction of a component in the phase
@@ -204,7 +172,7 @@ public:
       * \param compIdx the index of the component
       */
      Scalar moleFraction(int phaseIdx, int compIdx) const
-     { return fluidState_.moleFraction(phaseIdx, compIdx); }
+     { return this->fluidState_.moleFraction(phaseIdx, compIdx); }
 
      /*!
      * \brief Returns the mass density of a given phase within the
@@ -214,7 +182,7 @@ public:
      */
     Scalar molarDensity() const
     {
-        return fluidState_.molarDensity(phaseIdx);
+        return this->fluidState_.molarDensity(phaseIdx);
     }
 
      /*!
@@ -230,14 +198,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
     }
 
-    /*!
-     * \brief Return the fluid state of the control volume.
-     */
-    const FluidState &fluidState() const
-    { return fluidState_; }
-
 protected:
-    FluidState fluidState_;
 
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }

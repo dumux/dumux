@@ -200,6 +200,25 @@ public:
     const FluidState &fluidState() const
     { return fluidState_; }
 
+    //! The temperature is obtained from the problem as a constant for isothermal models
+    static Scalar temperature(const ElementSolutionVector &elemSol,
+                              const Problem& problem,
+                              const Element &element,
+                              const SubControlVolume &scv)
+    {
+        return problem.temperatureAtPos(scv.dofPosition());
+    }
+
+    //! The phase enthalpy is zero for isothermal models
+    //! This is needed for completing the fluid state
+    template<class FluidState, class ParameterCache>
+    static Scalar enthalpy(const FluidState& fluidState,
+                           const ParameterCache& paramCache,
+                           const int phaseIdx)
+    {
+        return 0;
+    }
+
 protected:
     FluidState fluidState_;
     PrimaryVariables priVars_;
@@ -227,6 +246,7 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, true>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     static const int phaseIdx = Indices::phaseIdx;
+    static const int temperatureIdx = Indices::temperatureIdx;
 
 public:
 
@@ -305,12 +325,25 @@ public:
     Scalar thermalConductivity() const
     { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); }
 
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$
-     *        of the fluid phase in the sub-control volume.
-     */
-    Scalar temperature() const
-     { return this->fluidState_.temperature(phaseIdx); }
+    //! The temperature is a primary variable for non-isothermal models
+    using ParentType::temperature;
+    static Scalar temperature(const ElementSolutionVector &elemSol,
+                              const Problem& problem,
+                              const Element &element,
+                              const SubControlVolume &scv)
+    {
+        return ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
+    }
+
+    //! The phase enthalpy is zero for isothermal models
+    //! This is needed for completing the fluid state
+    template<class FluidState, class ParameterCache>
+    static Scalar enthalpy(const FluidState& fluidState,
+                           const ParameterCache& paramCache,
+                           const int phaseIdx)
+    {
+        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+    }
 
 };
 }
