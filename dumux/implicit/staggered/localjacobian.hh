@@ -168,7 +168,7 @@ public:
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
 
-        auto curGlobalFaceVars = this->model_().curGlobalFaceVars();
+        auto& curGlobalFaceVars = this->model_().nonConstCurFaceVars();
         auto& prevGlobalFaceVars = this->model_().prevGlobalFaceVars();
 
         // calculate the local residual for all dofs of this element
