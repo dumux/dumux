@@ -35,7 +35,8 @@ add_dumux_test(test_channel_stokesni_conduction test_channel_stokesni test_chann
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/stokesni-conduction-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni_conduction-00004.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni test_channel_stokesni_conduction.input")
+                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni test_channel_stokesni_conduction.input"
+                 --zeroThreshold {"velocity_H2O \(m/s\)":1e-20})
 
 add_dumux_test(test_channel_navierstokes test_channel_navierstokes test_channel.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
