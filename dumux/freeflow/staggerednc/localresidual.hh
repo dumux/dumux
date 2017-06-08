@@ -53,12 +53,12 @@ NEW_PROP_TAG(ReplaceCompEqIdx);
 
 
 // // forward declaration
-template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
+template<class TypeTag, bool enableComponentTransport>
 class StaggeredNavierStokesResidualImpl;
 
 // specialization for miscible, isothermal flow
 template<class TypeTag>
-class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public StaggeredNavierStokesResidualImpl<TypeTag, false, false>
+class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false>
 {
     friend class StaggeredLocalResidual<TypeTag>;
 
@@ -84,6 +84,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -121,7 +122,8 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true, false> : public Staggered
             if(replaceCompEqIdx < numComponents)
                 storage[replaceCompEqIdx] = density;
 
-        //TODO: energy balance
+        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
+
         return storage;
     }
 };

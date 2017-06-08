@@ -48,13 +48,10 @@ NEW_PROP_TAG(EnableInertiaTerms);
  *        specializations are provided for combinations of physical processes
  * \note  Not all specializations are currently implemented
  */
-// template<class TypeTag>
-// using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport),
-//                                                                  GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 // specialization for miscible, isothermal flow
 template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true, false> : public FreeFlowFluxVariablesImpl<TypeTag, false, false>
+class FreeFlowFluxVariablesImpl<TypeTag, true> : public FreeFlowFluxVariablesImpl<TypeTag, false>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -81,7 +78,7 @@ class FreeFlowFluxVariablesImpl<TypeTag, true, false> : public FreeFlowFluxVaria
     //! The index of the component balance equation that gets replaced with the total mass balance
     static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 
-    using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false, false>;
+    using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false>;
 
     enum {
          // grid and world dimension

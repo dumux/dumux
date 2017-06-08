@@ -30,6 +30,7 @@
 // #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "properties.hh"
 #include "../staggered/model.hh"
+#include "../staggeredni/model.hh"
 
 namespace Dumux
 {

@@ -18,33 +18,47 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ *
+ * \brief Base class for all models which use the one-phase,
+ *        fully implicit model.
+ *        Adaption of the fully implicit scheme to the one-phase flow model.
  */
-#ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
-#define DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
 
-#include <dumux/discretization/methods.hh>
+#ifndef DUMUX_STAGGERED_NI_MODEL_HH
+#define DUMUX_STAGGERED_NI_MODEL_HH
+
+#include "properties.hh"
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class FouriersLawImplementation
-{};
-
 /*!
- * \ingroup FouriersLaw
- * \brief Evaluates the heat conduction flux according to Fouriers's law
+ * \ingroup NavierStokesModel
+ * \brief A single-phase, non-isothermal flow model using the fully implicit scheme.
+ *
+ * All equations are discretized using a staggered grid as spatial
+ * and the implicit Euler method as time discretization.
+ * The model supports compressible as well as incompressible fluids.
  */
-template <class TypeTag>
-using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template<class TypeTag >
+class NavierStokesNonIsothermalModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
+{
+    using ParentType = typename GET_PROP_TYPE(TypeTag, IsothermalModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-} // end namespace Dumux
+public:
 
-#include <dumux/discretization/cellcentered/tpfa/fourierslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/fourierslaw.hh>
-#include <dumux/discretization/box/fourierslaw.hh>
-#include <dumux/discretization/staggered/freeflow/fourierslaw.hh>
+    void init(Problem& problem)
+    {
+        ParentType::init(problem);
+
+        // add temperature to output
+        auto& vtkOutputModule = problem.vtkOutputModule();
+        vtkOutputModule.addPrimaryVariable("temperature", Indices::temperatureIdx);
+    }
+};
+}
+
+#include "propertydefaults.hh"
 
 #endif

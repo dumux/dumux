@@ -40,6 +40,9 @@
 #include "vtkoutputmodule.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/freeflow/staggeredni/localresidual.hh>
+#include <dumux/freeflow/staggeredni/fluxvariables.hh>
+
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
@@ -116,9 +119,6 @@ SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
 //! The one-phase model has no molecular diffusion
 SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false);
 
-//! Isothermal model by default
-SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
-
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
 
@@ -184,6 +184,10 @@ SET_TYPE_PROP(NavierStokes, VtkOutputModule, FreeFlowStaggeredVtkOutputModule<Ty
 
 SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
+SET_TYPE_PROP(NavierStokes, EnergyLocalResidual, FreeFlowEnergyLocalResidual<TypeTag>);
+
+SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<TypeTag>);
+
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)
 // { private :
@@ -197,19 +201,14 @@ SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<Type
 //////////////////////////////////////////////////////////////////
 
 // set isothermal Model
-// SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
-
-//set isothermal VolumeVariables
-// SET_TYPE_PROP(NavierStokesNI, IsothermalVolumeVariables, NavierStokesVolumeVariables<TypeTag>);
-
-//set isothermal LocalResidual
-// SET_TYPE_PROP(NavierStokesNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
 
 //set isothermal Indices
-// SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
 
 //set isothermal NumEq
-// SET_INT_PROP(NavierStokesNI, IsothermalNumEq, 1);
+SET_INT_PROP(NavierStokesNI, IsothermalNumEqCellCenter, 1); //!< set the number of equations to 1
+SET_INT_PROP(NavierStokesNI, IsothermalNumEqFace, 1); //!< set the number of equations to 1
 
 // \}
 } // end namespace Properties

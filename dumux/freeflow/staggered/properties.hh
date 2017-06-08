@@ -27,7 +27,8 @@
 #ifndef DUMUX_NAVIERSTOKES_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_PROPERTIES_HH
 
-// #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/freeflow/staggeredni/properties.hh>
+
 
 namespace Dumux
 {
@@ -45,7 +46,7 @@ namespace Properties {
 NEW_TYPE_TAG(NavierStokes);
 
 //! The type tags for the corresponding non-isothermal problems
-// NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NonIsothermal));
+NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsothermal));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -66,6 +67,8 @@ NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider compone
 NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
 NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport or not
 NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
+NEW_PROP_TAG(EnergyLocalResidual); //!<  The energy local residual
+NEW_PROP_TAG(EnergyFluxVariables); //!<  The energy flux variables
 // \}
 }
 

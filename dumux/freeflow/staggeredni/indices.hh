@@ -18,33 +18,30 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ * \brief  Defines the indices for the staggered Navier-Stokes NI model.
  */
-#ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
-#define DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
-
-#include <dumux/discretization/methods.hh>
+#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
+#define DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class FouriersLawImplementation
-{};
-
+// \{
 /*!
- * \ingroup FouriersLaw
- * \brief Evaluates the heat conduction flux according to Fouriers's law
+ * \ingroup NavierStokesNIModel
+ * \ingroup ImplicitIndices
+ * \brief Indices for the staggered Navier-Stokes NI model model.
+ *
+ * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag>
-using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template <class TypeTag, int PVOffset = 0>
+class NavierStokesNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
+{
+public:
+    static const int numEqCC = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
-} // end namespace Dumux
-
-#include <dumux/discretization/cellcentered/tpfa/fourierslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/fourierslaw.hh>
-#include <dumux/discretization/box/fourierslaw.hh>
-#include <dumux/discretization/staggered/freeflow/fourierslaw.hh>
+    static constexpr int energyBalanceIdx = PVOffset + numEqCC -1;
+    static constexpr int temperatureIdx = energyBalanceIdx;
+};
+} // end namespace
 
 #endif

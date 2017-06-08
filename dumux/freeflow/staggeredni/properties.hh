@@ -17,34 +17,49 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
+ * \ingroup NavierStokesModel
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ *
+ * \brief Defines the properties required for the one-phase fully implicit model.
  */
-#ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
-#define DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
+#ifndef DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
+#define DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 
-#include <dumux/discretization/methods.hh>
+#include <dumux/implicit/properties.hh>
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class FouriersLawImplementation
-{};
+// \{
+///////////////////////////////////////////////////////////////////////////
+// properties for the isothermal Navier-Stokes model
+///////////////////////////////////////////////////////////////////////////
+namespace Properties {
 
-/*!
- * \ingroup FouriersLaw
- * \brief Evaluates the heat conduction flux according to Fouriers's law
- */
-template <class TypeTag>
-using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+//////////////////////////////////////////////////////////////////
+// Type tags
+//////////////////////////////////////////////////////////////////
 
-} // end namespace Dumux
+//! The type tags for the non-isothermal Navier Stokes problems
+NEW_TYPE_TAG(NavierStokesNonIsothermal);
 
-#include <dumux/discretization/cellcentered/tpfa/fourierslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/fourierslaw.hh>
-#include <dumux/discretization/box/fourierslaw.hh>
-#include <dumux/discretization/staggered/freeflow/fourierslaw.hh>
+//////////////////////////////////////////////////////////////////
+// Property tags required for the non-isothermal models
+//////////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(IsothermalModel);
+NEW_PROP_TAG(IsothermalFluxVariables);
+NEW_PROP_TAG(IsothermalIndices);
+NEW_PROP_TAG(IsothermalNumEqCellCenter);
+NEW_PROP_TAG(IsothermalNumEqFace);
+NEW_PROP_TAG(HaveVariableFormulation);
+NEW_PROP_TAG(ThermalConductivityModel);
+NEW_PROP_TAG(NiOutputLevel);
+
+// \}
+}
+
+} // end namespace
 
 #endif

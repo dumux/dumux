@@ -45,14 +45,22 @@ namespace Capabilities
 
 namespace Properties
 {
+#if !NONISOTHERMAL
 NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
+#else
+NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNI));
+#endif
 
 SET_PROP(ChannelTestProblem, Fluid)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+#if NONISOTHERMAL
+    using type = FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > ;
+#else
+    using type = FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > ;
+#endif
 };
 
 // Set the grid type
@@ -77,7 +85,7 @@ SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
 }
 
 /*!
- * \brief  Test problem for the one-phase model:
+ * \brief  Test problem for the one-phase (Navier-) Stokes problem in a channel:
    \todo doc me!
  */
 template <class TypeTag>
@@ -101,20 +109,24 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
         momentumXBalanceIdx = Indices::momentumXBalanceIdx,
         momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
+#if NONISOTHERMAL
+        temperatureIdx = Indices::temperatureIdx,
+        energyBalanceIdx = Indices::energyBalanceIdx,
+#endif
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -136,6 +148,11 @@ public:
                                              Scalar,
                                              Problem,
                                              InletVelocity);
+
+#if NONISOTHERMAL
+    if(inletVelocity_ > eps_)
+        this->timeManager().startNextEpisode(200.0);
+#endif
     }
 
     /*!
@@ -152,6 +169,17 @@ public:
     {
         return name_;
     }
+
+#if NONISOTHERMAL
+    void episodeEnd()
+    {
+        if(inletVelocity_ > eps_)
+        {
+            this->timeManager().startNextEpisode(50.0);
+            this->timeManager().setTimeStepSize(10.0);
+        }
+    }
+#endif
 
     bool shouldWriteRestartFile() const
     {
@@ -194,6 +222,13 @@ public:
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
 
+#if NONISOTHERMAL
+        if(isInlet(globalPos))
+            values.setDirichlet(energyBalanceIdx);
+        else
+            values.setOutflow(energyBalanceIdx);
+#endif
+
         // set a fixed pressure in one cell
         if (isOutlet(globalPos))
         {
@@ -214,23 +249,18 @@ public:
      */
     BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryValues values;
-        values[pressureIdx] = 1.1e+5;
+        BoundaryValues values = initialAtPos(globalPos);
 
         if(isInlet(globalPos))
         {
             values[velocityXIdx] = inletVelocity_;
-            values[velocityYIdx] = 0.0;
-        }
-        else if(isWall(globalPos))
-        {
-            values[velocityXIdx] = 0.0;
-            values[velocityYIdx] = 0.0;
-        }
-        else if(isOutlet(globalPos))
-        {
-            values[velocityXIdx] = 1.0;
-            values[velocityYIdx]= 0.0;
+#if NONISOTHERMAL
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+
+        // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
+        if(time > 200.0)
+            values[temperatureIdx] = 293.15;
+#endif
         }
 
         return values;
@@ -254,6 +284,10 @@ public:
         values[pressureIdx] = 1.1e+5;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
+
+#if NONISOTHERMAL
+        values[temperatureIdx] = 283.15;
+#endif
 
         return values;
     }

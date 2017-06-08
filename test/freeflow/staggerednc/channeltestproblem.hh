@@ -45,7 +45,12 @@ namespace Capabilities
 
 namespace Properties
 {
+
+#if !NONISOTHERMAL
 NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
+#else
+NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNCNI));
+#endif
 
 NEW_PROP_TAG(FluidSystem);
 
@@ -114,6 +119,10 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx,
+#if NONISOTHERMAL
+        temperatureIdx = Indices::temperatureIdx,
+        energyBalanceIdx = Indices::energyBalanceIdx,
+#endif
         transportCompIdx = 1/*FluidSystem::wCompIdx*/
     };
 
@@ -210,12 +219,18 @@ public:
             values.setDirichlet(momentumBalanceIdx);
             values.setOutflow(massBalanceIdx);
             values.setDirichlet(transportEqIdx);
+#if NONISOTHERMAL
+            values.setDirichlet(energyBalanceIdx);
+#endif
         }
         else if(isOutlet(globalPos))
         {
             values.setOutflow(momentumBalanceIdx);
             values.setDirichlet(massBalanceIdx);
             values.setOutflow(transportEqIdx);
+#if NONISOTHERMAL
+            values.setOutflow(energyBalanceIdx);
+#endif
         }
 
         else
@@ -224,6 +239,9 @@ public:
             values.setDirichlet(momentumBalanceIdx);
             values.setOutflow(massBalanceIdx);
             values.setOutflow(transportEqIdx);
+#if NONISOTHERMAL
+            values.setOutflow(energyBalanceIdx);
+#endif
         }
 
         return values;
@@ -243,7 +261,12 @@ public:
 
         // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
         if(isInlet(globalPos) && time > 20.0)
+        {
             values[transportCompIdx] = 1e-3;
+#if NONISOTHERMAL
+            values[temperatureIdx] = 293.15;
+#endif
+        }
 
         return values;
     }
@@ -265,6 +288,9 @@ public:
         InitialValues values;
         values[pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;
+#if NONISOTHERMAL
+        values[temperatureIdx] = 283.15;
+#endif
 
         // parabolic velocity profile
         values[velocityXIdx] =  inletVelocity_*(globalPos[1] - this->bBoxMin()[1])*(this->bBoxMax()[1] - globalPos[1])

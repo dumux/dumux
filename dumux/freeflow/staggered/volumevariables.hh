@@ -32,27 +32,41 @@
 namespace Dumux
 {
 
+// forward declaration
+template <class TypeTag, bool enableEnergyBalance>
+class NavierStokesVolumeVariablesImplementation;
+
+/*!
+ * \ingroup ImplicitVolumeVariables
+ * \brief Base class for the model specific class which provides
+ *        access to all volume averaged quantities for the free flow.
+ *        The volume variables base class
+ *        is specialized for isothermal and non-isothermal models.
+ */
+template <class TypeTag>
+using NavierStokesVolumeVariables = NavierStokesVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+
 /*!
  * \ingroup NavierStokesModel
  * \ingroup ImplicitVolumeVariables
- * \brief Contains the quantities which are constant within a
+ * \brief Isothermal base class, contains the quantities which are constant within a
  *        finite volume in the one-phase model.
  */
 template <class TypeTag>
-class NavierStokesVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class NavierStokesVolumeVariablesImplementation<TypeTag, false>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static const int phaseIdx = Indices::phaseIdx;
 
 public:
 
@@ -66,10 +80,18 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(elemSol, problem, element, scv);
+        priVars_ = extractDofPriVars(elemSol, scv);
+        extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
 
         completeFluidState(elemSol, problem, element, scv, fluidState_);
     };
+
+    /*!
+     * \brief Returns the primary variables at the dof associated with a given scv.
+     */
+    static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
+                                                     const SubControlVolume& scv)
+    { return elemSol[0]; }
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
@@ -80,7 +102,7 @@ public:
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = ParentType::temperature(elemSol, problem, element, scv);
+        Scalar t = problem.temperatureAtPos(scv.dofPosition());
         fluidState.setTemperature(t);
         fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
@@ -99,11 +121,19 @@ public:
 
         value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
         fluidState.setViscosity(/*phaseIdx=*/0, value);
-
-        // compute and set the enthalpy
-        value = ParentType::enthalpy(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setEnthalpy(/*phaseIdx=*/0, value);
     }
+
+    /*!
+     * \brief Return how much the sub-control volume is extruded.
+     *
+     * This means the factor by which a lower-dimensional (1D or 2D)
+     * entity needs to be expanded to get a full dimensional cell. The
+     * default is 1.0 which means that 1D problems are actually
+     * thought as pipes with a cross section of 1 m^2 and 2D problems
+     * are assumed to extend 1 m to the back.
+     */
+    Scalar extrusionFactor() const
+    { return extrusionFactor_; }
 
     /*!
      * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
@@ -136,6 +166,28 @@ public:
     { return fluidState_.density(phaseIdx); }
 
     /*!
+    * \brief Returns the mass density of a given phase within the
+    *        control volume.
+    *
+    * \param phaseIdx The phase index
+    */
+   Scalar molarDensity() const
+   {
+       return fluidState_.molarDensity(phaseIdx);
+   }
+
+   /*!
+   * \brief Returns the molar mass of a given phase within the
+   *        control volume.
+   *
+   * \param phaseIdx The phase index
+   */
+  Scalar molarMass() const
+  {
+      return fluidState_.averageMolarMass(phaseIdx);
+  }
+
+    /*!
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
      */
@@ -148,16 +200,152 @@ public:
     const FluidState &fluidState() const
     { return fluidState_; }
 
+    //! The temperature is obtained from the problem as a constant for isothermal models
+    static Scalar temperature(const ElementSolutionVector &elemSol,
+                              const Problem& problem,
+                              const Element &element,
+                              const SubControlVolume &scv)
+    {
+        return problem.temperatureAtPos(scv.dofPosition());
+    }
+
+    //! The phase enthalpy is zero for isothermal models
+    //! This is needed for completing the fluid state
+    template<class FluidState, class ParameterCache>
+    static Scalar enthalpy(const FluidState& fluidState,
+                           const ParameterCache& paramCache,
+                           const int phaseIdx)
+    {
+        return 0;
+    }
+
 protected:
     FluidState fluidState_;
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
+    PrimaryVariables priVars_;
+    Scalar extrusionFactor_;
 };
 
+/*!
+ * \ingroup NavierStokesModel
+ * \ingroup ImplicitVolumeVariables
+ * \brief Non-isothermal base class
+ */
+template <class TypeTag>
+class NavierStokesVolumeVariablesImplementation<TypeTag, true>
+: public NavierStokesVolumeVariablesImplementation<TypeTag, false>
+{
+    using ParentType = NavierStokesVolumeVariablesImplementation<TypeTag, false>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+
+    static const int phaseIdx = Indices::phaseIdx;
+    static const int temperatureIdx = Indices::temperatureIdx;
+
+public:
+
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+
+    /*!
+     * \copydoc ImplicitVolumeVariables::update
+     */
+    void update(const ElementSolutionVector &elemSol,
+                const Problem &problem,
+                const Element &element,
+                const SubControlVolume &scv)
+    {
+        this->priVars_ = ParentType::extractDofPriVars(elemSol, scv);
+        this->extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
+
+        completeFluidState(elemSol, problem, element, scv, this->fluidState_);
+    }
+
+    /*!
+     * \copydoc ImplicitModel::completeFluidState
+     */
+    static void completeFluidState(const ElementSolutionVector& elemSol,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const SubControlVolume& scv,
+                                   FluidState& fluidState)
+    {
+        fluidState.setTemperature(elemSol[0][Indices::temperatureIdx]);
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
+
+        // saturation in a single phase is always 1 and thus redundant
+        // to set. But since we use the fluid state shared by the
+        // immiscible multi-phase models, so we have to set it here...
+        fluidState.setSaturation(phaseIdx, 1.0);
+
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updatePhase(fluidState, phaseIdx);
+
+        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
+
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
+
+        // compute and set the enthalpy
+        value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+        fluidState.setEnthalpy(phaseIdx, value);
+    }
+
+    /*!
+     * \brief Returns the total internal energy of the fluid phase in the
+     *        sub-control volume.
+     */
+    Scalar internalEnergy() const
+    { return this->fluidState_.internalEnergy(phaseIdx); }
+
+    /*!
+     * \brief Returns the total enthalpy of the fluid phase in the sub-control
+     *        volume.
+     */
+    Scalar enthalpy() const
+    { return this->fluidState_.enthalpy(phaseIdx); }
+
+    /*!
+     * \brief Return the specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$
+     *        in the sub-control volume.
+     */
+    Scalar heatCapacity() const
+    { return FluidSystem::heatCapacity(this->fluidState_, phaseIdx); }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the fluid phase in the sub-control volume.
+     */
+    Scalar thermalConductivity() const
+    { return FluidSystem::thermalConductivity(this->fluidState_, phaseIdx); }
+
+    //! The temperature is a primary variable for non-isothermal models
+    using ParentType::temperature;
+    static Scalar temperature(const ElementSolutionVector &elemSol,
+                              const Problem& problem,
+                              const Element &element,
+                              const SubControlVolume &scv)
+    {
+        return ParentType::extractDofPriVars(elemSol, scv)[temperatureIdx];
+    }
+
+    //! The phase enthalpy is zero for isothermal models
+    //! This is needed for completing the fluid state
+    template<class FluidState, class ParameterCache>
+    static Scalar enthalpy(const FluidState& fluidState,
+                           const ParameterCache& paramCache,
+                           const int phaseIdx)
+    {
+        return FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
+    }
+
+};
 }
 
 #endif

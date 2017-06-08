@@ -17,34 +17,46 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Properties
+ * \ingroup ImplicitProperties
+ * \ingroup OnePModel
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ *
+ * \brief Defines the properties required for the one-phase fully implicit model.
  */
-#ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
-#define DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
+#ifndef DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
+#define DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 
-#include <dumux/discretization/methods.hh>
+#include "indices.hh"
 
 namespace Dumux
 {
-// forward declaration
-template <class TypeTag, DiscretizationMethods Method>
-class FouriersLawImplementation
-{};
 
-/*!
- * \ingroup FouriersLaw
- * \brief Evaluates the heat conduction flux according to Fouriers's law
- */
-template <class TypeTag>
-using FouriersLaw = FouriersLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+// \{
+
+///////////////////////////////////////////////////////////////////////////
+// default property values for the non-isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+namespace Properties {
+
+SET_PROP(NavierStokesNonIsothermal, NumEqCellCenter)
+{
+private:
+    static constexpr auto isothermalNumEqCellCenter = GET_PROP_VALUE(TypeTag, IsothermalNumEqCellCenter);
+public:
+    static constexpr auto value = isothermalNumEqCellCenter + 1;
+};
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, Model, NavierStokesNonIsothermalModel<TypeTag>);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
+
+SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
+
+} // end namespace Properties
 
 } // end namespace Dumux
-
-#include <dumux/discretization/cellcentered/tpfa/fourierslaw.hh>
-#include <dumux/discretization/cellcentered/mpfa/fourierslaw.hh>
-#include <dumux/discretization/box/fourierslaw.hh>
-#include <dumux/discretization/staggered/freeflow/fourierslaw.hh>
 
 #endif
