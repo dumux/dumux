@@ -27,10 +27,7 @@
 #ifndef DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 #define DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 
-#include "properties.hh"
-#include "model.hh"
 #include "indices.hh"
-#include "../staggered/propertydefaults.hh"
 
 namespace Dumux
 {
