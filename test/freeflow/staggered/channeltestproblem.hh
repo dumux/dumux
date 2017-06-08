@@ -148,6 +148,11 @@ public:
                                              Scalar,
                                              Problem,
                                              InletVelocity);
+
+#if NONISOTHERMAL
+    if(inletVelocity_ > eps_)
+        this->timeManager().startNextEpisode(200.0);
+#endif
     }
 
     /*!
@@ -164,6 +169,17 @@ public:
     {
         return name_;
     }
+
+#if NONISOTHERMAL
+    void episodeEnd()
+    {
+        if(inletVelocity_ > eps_)
+        {
+            this->timeManager().startNextEpisode(50.0);
+            this->timeManager().setTimeStepSize(10.0);
+        }
+    }
+#endif
 
     bool shouldWriteRestartFile() const
     {
@@ -242,7 +258,7 @@ public:
         const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
 
         // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
-        if(time > 20.0)
+        if(time > 200.0)
             values[temperatureIdx] = 293.15;
 #endif
         }

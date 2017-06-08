@@ -25,16 +25,16 @@ add_dumux_test(test_channel_stokes test_channel_stokes test_channel.cc
 add_dumux_test(test_channel_stokesni_convection test_channel_stokesni test_channel.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/channel-stokes.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes-00002.vtu
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokesni-convection-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni_convection-00006.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni test_channel_stokesni_convection.input")
 target_compile_definitions(test_channel_stokesni PUBLIC "NONISOTHERMAL=1")
 
 add_dumux_test(test_channel_stokesni_conduction test_channel_stokesni test_channel.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/channel-stokes.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes-00002.vtu
+                 --files ${CMAKE_SOURCE_DIR}/test/references/stokesni-conduction-reference.vtu
+                         ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni_conduction-00004.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokesni test_channel_stokesni_conduction.input")
 
 add_dumux_test(test_channel_navierstokes test_channel_navierstokes test_channel.cc
