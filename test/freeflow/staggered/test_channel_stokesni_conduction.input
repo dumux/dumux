@@ -1,0 +1,19 @@
+[TimeManager]
+DtInitial = 1e7 # [s]
+TEnd = 1e8 # [s]
+
+[Grid]
+UpperRight = 10 1
+Cells = 100 50
+
+[Problem]
+Name = test_channel_stokesni_conduction # name passed to the output routines
+InletVelocity = 0
+EnableGravity = false
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false

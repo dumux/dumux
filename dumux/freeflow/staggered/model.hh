@@ -28,6 +28,7 @@
 #define DUMUX_NAVIERSTOKES_MODEL_HH
 
 // #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
+#include "../staggeredni/model.hh"
 #include "properties.hh"
 
 namespace Dumux

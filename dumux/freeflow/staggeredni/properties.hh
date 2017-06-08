@@ -27,7 +27,7 @@
 #ifndef DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 
-// #include <dumux/freeflow/staggered/properties.hh>
+#include <dumux/implicit/properties.hh>
 
 namespace Dumux
 {
