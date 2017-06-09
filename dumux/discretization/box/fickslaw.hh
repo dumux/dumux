@@ -125,7 +125,7 @@ public:
                 // the mole/mass fraction gradient
                 GlobalPosition gradI;
                 jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
-                gradI *= volVars.moleFraction(phaseIdx, compIdx);
+                gradI *= volVars.moleFraction(phaseIdx, compIdx)*rho;
                 gradX += gradI;
             }
 

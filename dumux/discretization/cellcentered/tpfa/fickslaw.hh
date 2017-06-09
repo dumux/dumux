@@ -107,16 +107,19 @@ public:
             auto getRho = [phaseIdx](const VolumeVariables& volVars)
             { return volVars.molarDensity(phaseIdx);};
 
-            // interpolate density
-            const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(getRho(insideVolVars)+ getRho(outsideVolVars))
-                            : branchingFacetDensity_(elemVolVars, scvf, getRho, getRho(insideVolVars));
+//             // interpolate density
+//             const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(getRho(insideVolVars)+ getRho(outsideVolVars))
+//                             : branchingFacetDensity_(elemVolVars, scvf, getRho, getRho(insideVolVars));
 
             // the inside and outside mole/mass fractions
             auto xInside = getX(insideVolVars);
             auto xOutside = scvf.numOutsideScvs() == 1 ? getX(outsideVolVars)
                             : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, getX, xInside, tij, phaseIdx, compIdx);
+            auto rhoInside = getRho(insideVolVars);
+            auto rhoOutside = scvf.numOutsideScvs() == 1 ? getRho(outsideVolVars)
+                            : branchingFacetDensity_(elemVolVars, scvf, getRho, getRho(insideVolVars));
 
-            componentFlux[compIdx] = rho*tij*(xInside - xOutside);
+        componentFlux[compIdx] = tij*(rhoInside*xInside - rhoOutside*xOutside);
         }
         return componentFlux ;
 
