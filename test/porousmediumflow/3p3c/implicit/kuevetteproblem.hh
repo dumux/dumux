@@ -29,7 +29,7 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
-
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/3p3c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
@@ -46,7 +46,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(KuevetteProblem, INHERITS_FROM(ThreePThreeCNI, KuevetteSpatialParams));
 NEW_TYPE_TAG(KuevetteBoxProblem, INHERITS_FROM(BoxModel, KuevetteProblem));
-NEW_TYPE_TAG(KuevetteCCProblem, INHERITS_FROM(CCModel, KuevetteProblem));
+NEW_TYPE_TAG(KuevetteCCProblem, INHERITS_FROM(CCTpfaModel, KuevetteProblem));
 
 // Set the grid type
 SET_TYPE_PROP(KuevetteProblem, Grid, Dune::YaspGrid<2>);
@@ -137,6 +137,10 @@ class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -178,11 +182,11 @@ public:
      * \param values The source values for the primary variables
      * \param globalPos The position of the center of the finite volume
      */
-    void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0;
+        return PrimaryVariables(0.0);
     }
+
 
 
     // \}
@@ -199,13 +203,14 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes bcTypes;
         if(globalPos[0] > this->bBoxMax()[0] - eps_)
-            values.setAllDirichlet();
+            bcTypes.setAllDirichlet();
         else
-            values.setAllNeumann();
+            bcTypes.setAllNeumann();
+         return bcTypes;
     }
 
     /*!
@@ -217,24 +222,31 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos( const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+       return initial_(globalPos);
     }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the primary variables
-     * \param globalPos The position for which the bc type should be evaluated
+     * \param element The finite element
+     * \param fvGeomtry The finite-volume geometry in the box scheme
+     * \param intersection The intersection between element and boundary
+     * \param scvIdx The local vertex index
+     * \param boundaryFaceIdx The index of the boundary face
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumannAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
     {
-        values = 0;
+        PrimaryVariables values(0.0);
+        const auto& globalPos = scvf.ipGlobal();
 
         // negative values for injection
         if (globalPos[0] < eps_)
@@ -244,6 +256,7 @@ public:
             values[Indices::contiNEqIdx] =  0.0;
             values[Indices::energyEqIdx] = -6929.;
         }
+        return values;
     }
 
     // \}
@@ -262,9 +275,9 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos( const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+       return initial_(globalPos);
     }
 
     /*!
@@ -339,9 +352,9 @@ private:
 
     // internal method for the initial condition (reused for the
     // dirichlet conditions!)
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values;
         values[pressureIdx] = 1e5 ;
         values[switch1Idx] = 0.12;
         values[switch2Idx] = 1.e-6;
@@ -351,6 +364,7 @@ private:
         {
             values[switch2Idx] = 0.07;
         }
+         return values;
     }
 
     static constexpr Scalar eps_ = 1e-6;

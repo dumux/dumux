@@ -101,7 +101,8 @@ class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
 
 
 public:
-    using PermeabilityType = Scalar;
+
+   using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
@@ -138,6 +139,7 @@ public:
      *
      * \param globalPos The global position
      */
+
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         if (isFineMaterial_(globalPos))
@@ -161,9 +163,7 @@ public:
     /*!
      * \brief return the parameter object for the material law which depends on the position
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     *  \param globalPos The global position
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
