@@ -49,6 +49,8 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -56,6 +58,7 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // constraint solvers
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -121,6 +124,7 @@ public:
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, scv, elemSol);
+
 
         Scalar temp = ParentType::temperature(elemSol, problem, element, scv);
         fluidState_.setTemperature(temp);
@@ -664,6 +668,12 @@ public:
     Scalar bulkDensTimesAdsorpCoeff() const
     { return bulkDensTimesAdsorpCoeff_; }
 
+        /*!
+     * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
+     */
+    const PermeabilityType& permeability() const
+    { return permeability_; }
+
     /*!
      * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
      */
@@ -691,7 +701,7 @@ protected:
     Scalar massFrac_[numPhases][numComponents];
 
     Scalar porosity_;        //!< Effective porosity within the control volume
-    PermeabilityType permeability_; //!< Effective permeability within the control volume
+    PermeabilityType permeability_; //!> Effective permeability within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     FluidState fluidState_;
@@ -703,6 +713,8 @@ private:
             diffCoefficient_[phaseIdx][compIdx] = std::move(d);
         else if (compIdx > phaseIdx)
             diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
+        else if (phaseIdx == nPhaseIdx)
+            diffCoefficient_[phaseIdx][compIdx-1] = 0;
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }
