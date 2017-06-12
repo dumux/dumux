@@ -233,7 +233,7 @@ public:
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
-                        this->nonConstCurGlobalVolVars().volVars(scv()).update(this->curSol()[dofIdxGlobal],
+                        this->nonConstCurGlobalVolVars().volVars(scv).update(this->curSol()[dofIdxGlobal],
                                                                                      this->problem_(),
                                                                                      element,
                                                                                      scv);

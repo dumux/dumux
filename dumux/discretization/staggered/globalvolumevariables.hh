@@ -136,6 +136,13 @@ public:
 
     VolumeVariables& volVars(const IndexType scvIdx)
     { return volumeVariables_[scvIdx]; }
+
+    const VolumeVariables& volVars(const SubControlVolume scv) const
+    { return volumeVariables_[scv.dofIndex()]; }
+
+    VolumeVariables& volVars(const SubControlVolume scv)
+    { return volumeVariables_[scv.dofIndex()]; }
+
 private:
     const Problem& problem_() const
     { return *problemPtr_; }
