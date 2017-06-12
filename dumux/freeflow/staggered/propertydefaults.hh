@@ -38,6 +38,7 @@
 #include "fluxvariablescache.hh"
 #include "velocityoutput.hh"
 #include "vtkoutputmodule.hh"
+#include "boundarytypes.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/freeflow/staggeredni/localresidual.hh>
@@ -179,6 +180,11 @@ private:
 public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
 };
+
+//! Boundary types at a single degree of freedom
+SET_TYPE_PROP(NavierStokes,
+              BoundaryTypes,
+              StaggeredFreeFlowBoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
 
 SET_TYPE_PROP(NavierStokes, VtkOutputModule, FreeFlowStaggeredVtkOutputModule<TypeTag>);
 

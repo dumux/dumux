@@ -274,14 +274,28 @@ protected:
 
                 this->ccResidual_ += boundaryFlux;
 
-                // set a fixed pressure for cells adjacent to a wall
-                if(bcTypes.isDirichlet(massBalanceIdx) && bcTypes.isDirichlet(momentumBalanceIdx))
-                {
-                    const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                    const auto& insideVolVars = elemVolVars[insideScv];
-                    this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
-                }
+                asImp_().setFixedCell_(fvGeometry.scv(scvf.insideScvIdx()), elemVolVars, bcTypes);
             }
+        }
+    }
+
+    /*!
+     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
+     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
+     *
+     * \param insideScv The sub control volume
+     * \param elemVolVars The current or previous element volVars
+     * \param bcTypes The boundary types
+     */
+    void setFixedCell_(const SubControlVolume& insideScv,
+                       const ElementVolumeVariables& elemVolVars,
+                       const BoundaryTypes& bcTypes)
+    {
+        // set a fixed pressure for cells adjacent to a wall
+        if(bcTypes.isDirichletCell(massBalanceIdx))
+        {
+            const auto& insideVolVars = elemVolVars[insideScv];
+            this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
         }
     }
 
@@ -353,6 +367,14 @@ private:
         }
         return result;
     }
+
+    //! Returns the implementation of the problem (i.e. static polymorphism)
+    Implementation &asImp_()
+    { return *static_cast<Implementation *>(this); }
+
+    //! \copydoc asImp_()
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation *>(this); }
 };
 }
 
