@@ -77,8 +77,11 @@ for curFile in args['files']:
     vtuFile = XMLUnstructuredGridReader(FileName=curFile)
     if args['parameter'] == '':
         print "\nNo parameter was specified, use '-p PARAMETER' to specify it. Available parameters are:"
-        print vtuFile.CellArrayStatus
-        args['parameter'] = raw_input('Parameter: ')
+        if args['parameterType'] == 'CELLS':
+            print vtuFile.CellArrayStatus
+        else:
+            print vtuFile.PointArrayStatus
+        exit(1)
 
     # get active view
     renderView1 = GetActiveView()
