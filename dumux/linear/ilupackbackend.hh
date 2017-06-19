@@ -415,6 +415,13 @@ public:
     // number reduces the memory, while a larger number can improve the
     // convergence.
     // param.nrestart=30;
+    param.nrestart = 30;
+    try { param.nrestart = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                                                int,
+                                                LinearSolver.ILUPack,
+                                                NRestart);
+    }
+    catch(Dumux::ParameterException& e) { }
 
     // 22. require the computation of the preconditioner in
     //     single precision
