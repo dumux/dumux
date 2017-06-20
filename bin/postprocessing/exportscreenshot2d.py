@@ -44,8 +44,11 @@ parser.add_argument('-pt', '--parameterType', choices=parameterType, default='CE
 parser.add_argument('-lo', '--legendOrientation', choices=legendOrientation, default='Horizontal', help='The name of the parameter to be plotted')
 parser.add_argument('-lp', '--legendPosition', type=float, nargs=2, default=[0.25, 0.0], help='The position of the legend')
 parser.add_argument('-lz', '--legendZoom', type=float, nargs=2, default=[0.5, 0.5], help='The zoom of the legend')
+parser.add_argument('-lt', '--legendTitle', default='', help="Title of the legend")
+parser.add_argument('-lct', '--legendComponentTitle', default='none', help="Title of the legend component")
 parser.add_argument('--size', type=int, nargs=2, default=[600, 400], help="The pixel size of the png file (default: 600x400)")
 parser.add_argument('--scale', type=float, nargs=3, default=[1.0, 1.0, 1.0], help="Scaling factors in each direction")
+parser.add_argument('--whiteBackground', dest='whiteBackground', action='store_true', help="Sets a white background")
 parser.add_argument('-v', '--verbosity', type=int, default=2, help='Verbosity of the output')
 args = vars(parser.parse_args())
 
@@ -147,6 +150,26 @@ for curFile in args['files']:
     legend.Position = args['legendPosition']
     legend.Position2 = args['legendZoom']
     legend.Orientation = args['legendOrientation']
+
+    # rename the legend if desired
+    if args['legendTitle'] != '':
+        legend.Title = args['legendTitle']
+    if args['legendComponentTitle'] != 'none':
+        legend.ComponentTitle = args['legendComponentTitle']
+
+    # set a white background color and black color for fonts and the grid
+    if args['whiteBackground'] == True:
+        renderView1.Background = [255, 255, 255]
+        legend.TitleColor = [0.0, 0.0, 0.0]
+        legend.LabelColor = [0.0, 0.0, 0.0]
+        if args['showAxesGrid'] == True:
+            renderView1.AxesGrid.GridColor = [0.0, 0.0, 0.0]
+            renderView1.AxesGrid.XTitleColor = [0.0, 0.0, 0.0]
+            renderView1.AxesGrid.YTitleColor = [0.0, 0.0, 0.0]
+            renderView1.AxesGrid.ZTitleColor = [0.0, 0.0, 0.0]
+            renderView1.AxesGrid.XLabelColor = [0.0, 0.0, 0.0]
+            renderView1.AxesGrid.YLabelColor = [0.0, 0.0, 0.0]
+            renderView1.AxesGrid.ZLabelColor = [0.0, 0.0, 0.0]
 
     # current camera placement for renderView1
     renderView1.InteractionMode = '2D'
