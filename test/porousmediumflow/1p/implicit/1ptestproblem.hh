@@ -253,7 +253,7 @@ public:
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const SubControlVolume& scv) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables priVars(0);
         priVars[pressureIdx] = 1.0e+5;

@@ -253,7 +253,7 @@ public:
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const SubControlVolume& scv) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         return PrimaryVariables(0.0);
     }
