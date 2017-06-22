@@ -4,7 +4,7 @@ TEnd = 2 # [s]
 
 [Grid]
 UpperRight = 1 1
-Cells = 40 40
+Cells = 400 400
 
 [Problem]
 Name = test_donea # name passed to the output routines
@@ -15,3 +15,15 @@ PrintL2Error = false
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
+
+[LinearSolver.ILUPack]
+ResTol = 1e-4
+DropTol = 2e-2
+DropTolS = 2e-2
+Ordering = amf
+NRestart = 80
+#MultiGrid = amli
+
+[LinearSolver]
+GMResRestart = 100
+#PreconditionerRelaxation = 1e-2

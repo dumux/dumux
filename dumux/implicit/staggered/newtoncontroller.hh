@@ -201,6 +201,55 @@ public:
 
             // printmatrix(std::cout, M, "", "");
 
+            // testing stuff:
+            BlockVector yTestUMFPack;
+            yTestUMFPack.resize(A[faceIdx][faceIdx].N());
+            auto yTestBICGSTAB = yTestUMFPack;
+            auto yTestgmres = yTestUMFPack;
+            auto yTestSUPERLU = yTestUMFPack;
+            auto yTestILUPack = yTestUMFPack;
+            const auto bTmpTest = b[faceIdx];
+
+            Dune::Timer timer;
+            std::cout << std::endl;
+
+            UMFPackBackend<TypeTag> umfSolver(this->problem_());
+            umfSolver.solve(A[faceIdx][faceIdx], yTestUMFPack, bTmpTest);
+            std::cout << "solving velo with UMFPackBackend took " << timer.elapsed() << std::endl;
+            timer.reset();
+
+            auto getDiff = [&yTestUMFPack] (const auto& v)
+            {
+                Scalar diff = 0.0;
+
+                for(int i = 0; i < yTestUMFPack.size(); ++i)
+                    diff += (yTestUMFPack[i] - v[i])*(yTestUMFPack[i] - v[i]);
+
+                return diff;
+            };
+
+            ILUPackBackend<TypeTag> iluSolver(this->problem_());
+            iluSolver.solve(A[faceIdx][faceIdx], yTestILUPack, bTmpTest);
+            std::cout << "solving velo with ILUPackBackend took " << timer.elapsed() << "; difference to UMFPACK: "  << getDiff(yTestILUPack) << std::endl;
+            timer.reset();
+
+            ILU0BiCGSTABBackend<TypeTag> bicgstabSolver(this->problem_());
+            bicgstabSolver.solve(A[faceIdx][faceIdx], yTestBICGSTAB, bTmpTest);
+            std::cout << "solving velo with ILU0BiCGSTABBackend took " << timer.elapsed()  << "; difference to UMFPACK: "  << getDiff(yTestBICGSTAB) << std::endl;
+            timer.reset();
+
+            ILU0RestartedGMResBackend<TypeTag> gmresSolver(this->problem_());
+            gmresSolver.solve(A[faceIdx][faceIdx], yTestgmres, bTmpTest);
+            std::cout << "solving velo with ILU0RestartedGMResBackend took " << timer.elapsed() << "; difference to UMFPACK: "  << getDiff(yTestgmres) << std::endl;
+            timer.reset();
+
+
+            SuperLUBackend<TypeTag> superluSolver(this->problem_());
+            superluSolver.solve(A[faceIdx][faceIdx], yTestSUPERLU, bTmpTest);
+            std::cout << "solving velo with SuperLUBackend took " << timer.elapsed() << "; difference to UMFPACK: "  << getDiff(yTestSUPERLU) << std::endl;
+            timer.reset();
+
+
             // solve
             bool converged = this->linearSolver_.solve(M, y, bTmp);
 
