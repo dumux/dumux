@@ -60,13 +60,17 @@ class StaggeredNavierStokesResidualImpl;
 template<class TypeTag>
 class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false>
 {
+    using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false>;
     friend class StaggeredLocalResidual<TypeTag>;
+    friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -125,6 +129,38 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
         EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
 
         return storage;
+    }
+
+protected:
+
+    /*!
+     * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
+     *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
+     *
+     * \param insideScv The sub control volume
+     * \param elemVolVars The current or previous element volVars
+     * \param bcTypes The boundary types
+     */
+    void setFixedCell_(const SubControlVolume& insideScv,
+                       const ElementVolumeVariables& elemVolVars,
+                       const BoundaryTypes& bcTypes)
+    {
+        ParentType::setFixedCell_(insideScv, elemVolVars, bcTypes);
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            // get equation index
+            const auto eqIdx = conti0EqIdx + compIdx;
+
+            // set a fixed mole fraction for cells
+            if(eqIdx != conti0EqIdx && bcTypes.isDirichletCell(eqIdx))
+            {
+                const auto& insideVolVars = elemVolVars[insideScv];
+                const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(phaseIdx, compIdx) : insideVolVars.massFraction(phaseIdx, compIdx);
+                this->ccResidual_[eqIdx] = massOrMoleFraction - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][eqIdx];
+            }
+        }
+
     }
 };
 }

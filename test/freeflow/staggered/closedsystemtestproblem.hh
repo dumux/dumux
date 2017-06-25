@@ -201,7 +201,7 @@ public:
 
         // set a fixed pressure in one cell
         if (isLowerLeftCell_(globalPos))
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichletCell(massBalanceIdx);
         else
             values.setNeumann(massBalanceIdx);
 

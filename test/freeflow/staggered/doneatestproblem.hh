@@ -229,7 +229,7 @@ public:
 
         // set Dirichlet values for the velocity and pressure everywhere
         values.setDirichlet(momentumBalanceIdx);
-        values.setDirichlet(massBalanceIdx);
+        values.setDirichletCell(massBalanceIdx);
 
         return values;
     }

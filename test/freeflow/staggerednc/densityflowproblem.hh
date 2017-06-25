@@ -212,7 +212,7 @@ public:
         values.setOutflow(massBalanceIdx);
 
         if(globalPos[1] <  eps_)
-            values.setDirichlet(massBalanceIdx);
+            values.setDirichletCell(massBalanceIdx);
 
         if(globalPos[1] > this->bBoxMax()[1] - eps_)
         {
