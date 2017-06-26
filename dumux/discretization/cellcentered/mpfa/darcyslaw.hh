@@ -88,14 +88,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
             // update the quantities that are equal for all phases
             advectionSwitchFluxSign_ = localFaceData.isOutside;
-            advectionTij_ = &iv.getTransmissibilities(localFaceData, dataHandle);
-            advectionCij_ = &iv.getNeumannFluxTransformationCoefficients(localFaceData, dataHandle);
+            advectionTij_ = &iv.getTransmissibilities(scvf, localFaceData, dataHandle);
+            advectionCij_ = &iv.getNeumannFluxTransformationCoefficients(scvf, localFaceData, dataHandle);
             advectionVolVarsStencil_ = &dataHandle.volVarsStencil();
             advectionVolVarsPositions_ = &dataHandle.volVarsPositions();
 
             // The neumann fluxes always have to be set per phase
             for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                phaseNeumannFluxes_[phaseIdx] = iv.getNeumannFlux(localFaceData, dataHandle, phaseIdx);
+                phaseNeumannFluxes_[phaseIdx] = iv.getNeumannFlux(scvf, localFaceData, dataHandle, phaseIdx);
         }
 
         //! Returns the stencil for advective scvf flux computation

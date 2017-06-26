@@ -181,7 +181,7 @@ public:
     }
 
     //! returns the transmissibilities corresponding to the bound scvf
-    const Vector& getTransmissibilities(const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
+    const Vector& getTransmissibilities(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
     { return dataHandle.T()[localFaceData.localScvfIndex]; }
 
     //! returns the vector of data pairs storing the local face data for each global scvf
@@ -190,11 +190,11 @@ public:
 
     //! Boundaries will be treated by a different mpfa method (e.g. o method). Thus, on
     //! faces in l-method interaction volumes there will never be a Neumann flux contribution.
-    Scalar getNeumannFlux(const LocalFaceData& localFaceData, const DataHandle& dataHandle, unsigned int eqIdx) const
+    Scalar getNeumannFlux(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle, unsigned int eqIdx) const
     { return 0.0; }
 
     //! See comment of getNeumannFlux()
-    const Vector& getNeumannFluxTransformationCoefficients(const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
+    const Vector& getNeumannFluxTransformationCoefficients(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
     { return dataHandle.CA()[localFaceData.localScvfIndex]; }
 
     //! returns the container storing the data on interior boundaries

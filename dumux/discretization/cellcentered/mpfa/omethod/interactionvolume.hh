@@ -184,79 +184,41 @@ public:
         dataHandle.setVolVarsPositionsPointer(volVarsPositions());
 
         // store A-1B only when gradient reconstruction is necessary
-        static const bool reconstructGradients = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity) || dim < dimWorld;
-        if (reconstructGradients)
+        if (requireABMatrix_())
             dataHandle.AB() = B_.leftmultiply(A_);
+
+        // on surface grids, additionally prepare the outside transmissibilities
+        if (dim < dimWorld)
+            computeOutsideTransmissibilities_(dataHandle);
     }
 
     //! Gets the transmissibilities for a sub-control volume face within the interaction volume.
     //! specialization for dim == dimWorld
     template<int d = dim, int dw = dimWorld>
     typename std::enable_if< (d == dw), const Vector& >::type
-    getTransmissibilities(const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
+    getTransmissibilities(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
     { return dataHandle.T()[localFaceData.localScvfIndex]; }
 
     //! Gets the transmissibilities for a sub-control volume face within the interaction volume.
     //! specialization for dim < dimWorld.
     template<int d = dim, int dw = dimWorld>
     typename std::enable_if< (d < dw), const Vector& >::type
-    getTransmissibilities(const LocalFaceData& localFaceData, DataHandle& dataHandle) const
+    getTransmissibilities(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
     {
         // If we come from the inside, simply return tij
         if (!localFaceData.isOutside)
             return dataHandle.T()[localFaceData.localScvfIndex];
-
-        // compute the outside transmissibilities and store in the container in the handle
-        dataHandle.outsideTij().emplace_back(dataHandle.volVarsStencil() + interiorDirichletScvfIndexSet().size(), 0.0);
-        auto& tij = dataHandle.outsideTij().back();
-
-        // get the local scv and iterate over local coordinates
-        const auto numLocalScvs = localScvs_.size();
-        const auto numDirichletScvfs = dirichletScvfIndexSet().size();
-        const auto& localScv = localScv(localFaceData.localScvIndex);
-        const auto& localScvf = localScvf(localFaceData.localScvfIndex);
-
-        const auto idxInOutside = this->findIndexInVector(localScvf.outsideLocalScvIndices(), localFaceData.localScvIndex);
-        const auto& wijk = wijk_[localFaceData.localScvfIndex][idxInOutside+1];
-        for (int localDir = 0; localDir < dim; localDir++)
-        {
-            const auto localScvfIdx = localScv.localScvfIndex(localDir);
-            const auto& localScvf = localScvf(localScvfIdx);
-
-            const auto faceType = localScvf.faceType();
-            if (faceType != MpfaFaceTypes::dirichlet && faceType != MpfaFaceTypes::interiorDirichlet)
-            {
-                const auto fluxFaceIndex = this->findIndexInVector(fluxScvfIndexSet(), localScvfIdx);
-                auto tmp = dataHandle.AB()[fluxFaceIndex];
-                tmp *= wijk[localDir];
-
-                tij -= tmp;
-            }
-            else if (faceType == MpfaFaceTypes::dirichlet)
-            {
-                const auto idxInDiriFaces = this->findIndexInVector(dirichletScvfIndexSet(), localScvfIdx);
-                tij[numLocalScvs + idxInDiriFaces] -= wijk[localDir];
-            }
-            else if (faceType == MpfaFaceTypes::interiorDirichlet)
-            {
-                const auto idxInInteriorDiriFaces = this->findIndexInVector(interiorDirichletScvfIndexSet(), localScvfIdx);
-                tij[numLocalScvs + numDirichletScvfs + idxInInteriorDiriFaces] -= wijk[localDir];
-            }
-
-            // add entry from the scv unknown
-            tij[localFaceData.localScvIndex] += wijk[localDir];
-        }
-
-        return tij;
+        else
+            return dataHandle.outsideTij()[this->findIndexInVector(outsideScvfIndices_, scvf.index())];
     }
 
     //! Returns the vector of coefficients with which the vector of (interior) neumann boundary conditions
     //! have to be multiplied in order to transform them on the scvf this cache belongs to
-    const Vector& getNeumannFluxTransformationCoefficients(const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
+    const Vector& getNeumannFluxTransformationCoefficients(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
     { return dataHandle.CA()[localFaceData.localScvfIndex]; }
 
     //! Returns the boundary neumann flux for a given face
-    Scalar getNeumannFlux(const LocalFaceData& localFaceData, const DataHandle& dataHandle, unsigned int eqIdx) const
+    Scalar getNeumannFlux(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle, unsigned int eqIdx) const
     {
         if (!onDomainOrInteriorBoundary() || useTpfaBoundary || fluxScvfIndexSet().size() == 0 )
             return 0.0;
@@ -376,6 +338,13 @@ public:
     { return *elemVolVarsPtr_; }
 
 private:
+    //! returns a boolean whether or not the AB matrix has to be passed to the handles
+    bool requireABMatrix_() const
+    {
+        static const bool requireAB = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity) || dim < dimWorld;
+        return requireAB;
+    }
+
     //! clears all the containers
     void reset_()
     {
@@ -384,6 +353,7 @@ private:
         localScvfs_.clear();
         globalLocalScvfPairedData_.clear();
         globalScvfIndices_.clear();
+        outsideScvfIndices_.clear();
         dirichletFaceIndexSet_.clear();
         interiorDirichletFaceIndexSet_.clear();
         interiorBoundaryFaceIndexSet_.clear();
@@ -409,6 +379,10 @@ private:
         localScvfs_.reserve(numFaces_);
         globalLocalScvfPairedData_.reserve(numGlobalScvfs);
         globalScvfIndices_.reserve(numGlobalScvfs);
+
+        // store outside scvf idx set on surface grids
+        if (dim < dimWorld)
+            outsideScvfIndices_.reserve(numGlobalScvfs);
 
         //! prepare interior boundary datadata handle
         interiorBoundaryData_.reserve(numFaces_);
@@ -461,6 +435,8 @@ private:
                     const auto& outsideScvf = fvGeometry().scvf(curLocalScvf.outsideGlobalScvfIndex(i));
                     globalLocalScvfPairedData_.emplace_back(&outsideScvf, LocalFaceData(localFaceIdx, scvfSeed.outsideLocalScvIndex(i), true));
                     globalScvfIndices_.push_back(outsideScvf.index());
+                    if (dim < dimWorld)
+                        outsideScvfIndices_.push_back(outsideScvf.index());
                 }
                 fluxFaceIndexSet_.push_back(localFaceIdx++);
             }
@@ -509,13 +485,18 @@ private:
         // resize the matrices in the data handle
         dataHandle.resizeT(numFaces_, numPotentials_);
         dataHandle.resizeCA(numFaces_, numFluxFaces_);
-        dataHandle.resizeAB(numFluxFaces_, numPotentials_);
+        if (requireABMatrix_())
+            dataHandle.resizeAB(numFluxFaces_, numPotentials_);
 
         // resize the local matrices
         A_.resize(numFluxFaces_, numFluxFaces_);
         B_.resize(numFluxFaces_, numPotentials_);
         C_.resize(numFaces_, numFluxFaces_);
         D_.resize(numFaces_, numPotentials_);
+
+        // on surface grids, resize the vector containing the "outside" transmissibilities
+        if (dim < dimWorld)
+            dataHandle.resizeOutsideTij(outsideScvfIndices_.size(), numPotentials_);
     }
 
     //! Assembles the local matrices that define the local system of equations and flux expressions
@@ -754,6 +735,63 @@ private:
         }
     }
 
+    //! computes the transmissibilities associated with "outside" faces on surface grids
+    void computeOutsideTransmissibilities_(DataHandle& dataHandle) const
+    {
+        if (!(dim < dimWorld))
+            DUNE_THROW(Dune::InvalidStateException, "transmissibilities for outside scvfs can only be computed for surface grids!");
+
+        // get the local scv and iterate over local coordinates
+        const auto numLocalScvs = localScvs_.size();
+        const auto numDirichletScvfs = dirichletScvfIndexSet().size();
+
+        for (const auto& globalLocalData : globalLocalScvfPairedData())
+        {
+            const auto& localFaceData = globalLocalData.second;
+
+            // continue only for "outside" faces
+            if (!localFaceData.isOutside)
+                continue;
+
+            const auto& posLocalScv = localScv(localFaceData.localScvIndex);
+            const auto& posLocalScvf = localScvf(localFaceData.localScvfIndex);
+
+            const auto idxInOutside = this->findIndexInVector(posLocalScvf.outsideLocalScvIndices(), localFaceData.localScvIndex);
+            const auto& wijk = wijk_[localFaceData.localScvfIndex][idxInOutside+1];
+
+            // store the calculated transmissibilities in the data handle
+            auto& tij = dataHandle.outsideTij()[this->findIndexInVector(outsideScvfIndices_, globalLocalData.first->index())];
+            tij = 0.0;
+
+            for (int localDir = 0; localDir < dim; localDir++)
+            {
+                const auto localScvfIdx = posLocalScv.localScvfIndex(localDir);
+                const auto faceType = localScvf(localScvfIdx).faceType();
+                if (faceType != MpfaFaceTypes::dirichlet && faceType != MpfaFaceTypes::interiorDirichlet)
+                {
+                    const auto fluxFaceIndex = this->findIndexInVector(fluxScvfIndexSet(), localScvfIdx);
+                    auto tmp = dataHandle.AB()[fluxFaceIndex];
+                    tmp *= wijk[localDir];
+
+                    tij -= tmp;
+                }
+                else if (faceType == MpfaFaceTypes::dirichlet)
+                {
+                    const auto idxInDiriFaces = this->findIndexInVector(dirichletScvfIndexSet(), localScvfIdx);
+                    tij[numLocalScvs + idxInDiriFaces] -= wijk[localDir];
+                }
+                else if (faceType == MpfaFaceTypes::interiorDirichlet)
+                {
+                    const auto idxInInteriorDiriFaces = this->findIndexInVector(interiorDirichletScvfIndexSet(), localScvfIdx);
+                    tij[numLocalScvs + numDirichletScvfs + idxInInteriorDiriFaces] -= wijk[localDir];
+                }
+
+                // add entry from the scv unknown
+                tij[localFaceData.localScvIndex] += wijk[localDir];
+            }
+        }
+    }
+
     // calculates n_i^T*K_j*nu_k
     DimVector calculateOmegas_(const LocalScvType& localScv,
                                const GlobalPosition normal,
@@ -816,6 +854,7 @@ private:
     std::vector<LocalScvfType> localScvfs_;
     std::vector<GlobalLocalFaceDataPair> globalLocalScvfPairedData_;
     GlobalIndexSet globalScvfIndices_;
+    GlobalIndexSet outsideScvfIndices_;
 
     LocalIndexSet fluxFaceIndexSet_;
     LocalIndexSet dirichletFaceIndexSet_;

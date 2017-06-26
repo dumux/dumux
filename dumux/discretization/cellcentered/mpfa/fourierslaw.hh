@@ -82,9 +82,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
             heatConductionSwitchFluxSign_ = localFaceData.isOutside;
             heatConductionVolVarsStencil_ = &dataHandle.volVarsStencil();
             heatConductionVolVarsPositions_ = &dataHandle.volVarsPositions();
-            heatConductionTij_ = &iv.getTransmissibilities(localFaceData, dataHandle);
-            heatConductionCij_ = &iv.getNeumannFluxTransformationCoefficients(localFaceData, dataHandle);
-            heatNeumannFlux_ = iv.getNeumannFlux(localFaceData, dataHandle, energyEqIdx);
+            heatConductionTij_ = &iv.getTransmissibilities(scvf, localFaceData, dataHandle);
+            heatConductionCij_ = &iv.getNeumannFluxTransformationCoefficients(scvf, localFaceData, dataHandle);
+            heatNeumannFlux_ = iv.getNeumannFlux(scvf, localFaceData, dataHandle, energyEqIdx);
         }
 
         //! Returns the stencil for advective scvf flux computation

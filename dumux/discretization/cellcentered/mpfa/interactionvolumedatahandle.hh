@@ -74,6 +74,7 @@ namespace Dumux
         void resizeT(unsigned int n, unsigned int m) { T_.resize(n, m); }
         void resizeCA(unsigned int n, unsigned int m) { CA_.resize(n, m); }
         void resizeAB(unsigned int n, unsigned int m) { AB_.resize(n, m); }
+        void resizeOutsideTij(unsigned int n, unsigned int m) { tijOut_.resize(n, m); }
 
         //! functions to set the pointers to stencil and positions
         void setVolVarsStencilPointer(const GlobalIndexSet& stencil) { volVarsStencil_ = &stencil; }
@@ -92,8 +93,8 @@ namespace Dumux
         const Matrix& AB() const { return AB_; }
         Matrix& AB() { return AB_; }
 
-        const std::vector<Vector>& outsideTij() const { return tijOut_; }
-        std::vector<Vector>& outsideTij() { return tijOut_; }
+        const Matrix& outsideTij() const { return tijOut_; }
+        Matrix& outsideTij() { return tijOut_; }
 
     private:
         const GlobalIndexSet* volVarsStencil_;        //! Pointer to the global volvar indices (stored in the interaction volume)
@@ -102,7 +103,7 @@ namespace Dumux
         Matrix T_;                                    //! The transmissibilities
         Matrix CA_;                                   //! The coefficients for the neumann flux transformations
         Matrix AB_;                                   //! Coefficients for gradient reconstruction
-        std::vector<Vector> tijOut_;                  //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+        Matrix tijOut_;                               //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
     };
 
     //! Specialization for advective-diffusive problems
@@ -177,6 +178,14 @@ namespace Dumux
                     matrix.resize(n, m);
         }
 
+        void resizeOutsideTij(unsigned int n, unsigned int m)
+        {
+            advectionTout_.resize(n, m);
+            for (auto& array : diffusionTout_)
+                for (auto& matrix : array)
+                    matrix.resize(n, m);
+        }
+
         //! functions to set the pointers to stencil and positions
         void setVolVarsStencilPointer(const GlobalIndexSet& stencil)
         {
@@ -241,13 +250,13 @@ namespace Dumux
             return context_ == Contexts::advection ? advectionAB_ : diffusionAB_[contextPhaseIdx_][contextCompIdx_];
         }
 
-        const std::vector<Vector>& outsideTij() const
+        const Matrix& outsideTij() const
         {
             assert(context_ != Contexts::undefined && "No valid context set!");
             return context_ == Contexts::advection ? advectionTout_ : diffusionTout_[contextPhaseIdx_][contextCompIdx_];
         }
 
-        std::vector<Vector>& outsideTij()
+        Matrix& outsideTij()
         {
             assert(context_ != Contexts::undefined && "No valid context set!");
             return context_ == Contexts::advection ? advectionTout_ : diffusionTout_[contextPhaseIdx_][contextCompIdx_];
@@ -262,7 +271,7 @@ namespace Dumux
         Matrix advectionT_;                                  //! The transmissibilities
         Matrix advectionCA_;                                 //! The coefficients for the neumann flux transformations
         Matrix advectionAB_;                                 //! Coefficients for gradient reconstruction
-        std::vector<Vector> advectionTout_;                  //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+        Matrix advectionTout_;                               //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
 
         // diffusion-related variables (see comments above)
         unsigned int contextPhaseIdx_;                       //! The phase index set for the context
@@ -272,7 +281,7 @@ namespace Dumux
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionT_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionCA_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionAB_;
-        std::array<std::array<std::vector<Vector>, numComponents>, numPhases> diffusionTout_;
+        std::array<std::array<Matrix, numComponents>, numPhases> diffusionTout_;
     };
 
     //! Specialization for problems involving advection, diffusion and heat conduction
@@ -355,6 +364,15 @@ namespace Dumux
             advectionAB_.resize(n, m);
             heatConductionAB_.resize(n, m);
             for (auto& array : diffusionAB_)
+                for (auto& matrix : array)
+                    matrix.resize(n, m);
+        }
+
+        void resizeOutsideTij(unsigned int n, unsigned int m)
+        {
+            advectionTout_.resize(n, m);
+            heatConductionTout_.resize(n, m);
+            for (auto& array : diffusionTout_)
                 for (auto& matrix : array)
                     matrix.resize(n, m);
         }
@@ -472,7 +490,7 @@ namespace Dumux
                 return heatConductionAB_;
         }
 
-        const std::vector<Vector>& outsideTij() const
+        const Matrix& outsideTij() const
         {
             assert(context_ != Contexts::undefined && "No valid context set!");
             if (context_ == Contexts::diffusion)
@@ -483,7 +501,7 @@ namespace Dumux
                 return heatConductionTout_;
         }
 
-        std::vector<Vector>& outsideTij()
+        Matrix& outsideTij()
         {
             assert(context_ != Contexts::undefined && "No valid context set!");
             if (context_ == Contexts::diffusion)
@@ -503,7 +521,7 @@ namespace Dumux
         Matrix advectionT_;                                  //! The transmissibilities
         Matrix advectionCA_;                                 //! The coefficients for the neumann flux transformations
         Matrix advectionAB_;                                 //! Coefficients for gradient reconstruction
-        std::vector<Vector> advectionTout_;                  //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+        Matrix advectionTout_;                  //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
 
         // diffusion-related variables (see comments above)
         unsigned int contextPhaseIdx_;                       //! The phase index set for the context
@@ -513,7 +531,7 @@ namespace Dumux
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionT_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionCA_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionAB_;
-        std::array<std::array<std::vector<Vector>, numComponents>, numPhases> diffusionTout_;
+        std::array<std::array<Matrix, numComponents>, numPhases> diffusionTout_;
 
         // heat conduction-related variables (see comments above)
         const GlobalIndexSet* heatConductionVolVarsStencil_;
@@ -521,7 +539,7 @@ namespace Dumux
         Matrix heatConductionT_;
         Matrix heatConductionCA_;
         Matrix heatConductionAB_;
-        std::vector<Vector> heatConductionTout_;
+        Matrix heatConductionTout_;
     };
 } // end namespace
 
