@@ -95,15 +95,15 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
             diffusionSwitchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside;
             diffusionVolVarsStencil_[phaseIdx][compIdx] = &dataHandle.volVarsStencil();
             diffusionVolVarsPositions_[phaseIdx][compIdx] = &dataHandle.volVarsPositions();
-            diffusionTij_[phaseIdx][compIdx] = &iv.getTransmissibilities(localFaceData, dataHandle);
-            diffusionCij_[phaseIdx][compIdx] = &iv.getNeumannFluxTransformationCoefficients(localFaceData, dataHandle);
+            diffusionTij_[phaseIdx][compIdx] = &iv.getTransmissibilities(scvf, localFaceData, dataHandle);
+            diffusionCij_[phaseIdx][compIdx] = &iv.getNeumannFluxTransformationCoefficients(scvf, localFaceData, dataHandle);
 
             //! For compositional models, we associate neumann fluxes with the phases (main components)
             //! This is done in the AdvectionCache. However, in single-phasic models we solve the phase AND
             //! the component mass balance equations. Thus, in this case we have diffusive neumann contributions.
             //! we assume compIdx = eqIdx
             if (numPhases == 1 && phaseIdx != compIdx)
-                componentNeumannFluxes_[compIdx] = iv.getNeumannFlux(localFaceData, dataHandle, compIdx);
+                componentNeumannFluxes_[compIdx] = iv.getNeumannFlux(scvf, localFaceData, dataHandle, compIdx);
 
         }
 
@@ -243,9 +243,9 @@ public:
         if (!enableInteriorBoundaries)
         {
             if (fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx))
-                return useTpfaBoundary ? scvfFlux*rho*effFactor : scvfFlux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
-            else
                 return useTpfaBoundary ? -scvfFlux*rho*effFactor : -scvfFlux*rho*effFactor - fluxVarsCache.componentNeumannFlux(compIdx);
+            else
+                return useTpfaBoundary ? scvfFlux*rho*effFactor : scvfFlux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
         }
 
         // Handle interior boundaries
@@ -253,9 +253,9 @@ public:
 
         // return overall resulting flux
         if (fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx))
-            return useTpfaBoundary ? scvfFlux*rho*effFactor : scvfFlux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
-        else
             return useTpfaBoundary ? -scvfFlux*rho*effFactor : -scvfFlux*rho*effFactor - fluxVarsCache.componentNeumannFlux(compIdx);
+        else
+            return useTpfaBoundary ? scvfFlux*rho*effFactor : scvfFlux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
     }
 
     template<typename GetRhoFunction>
