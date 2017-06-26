@@ -599,6 +599,9 @@ private:
         neighborScvfIndices_.clear();
         neighborScvs_.clear();
         neighborScvfs_.clear();
+
+        flipScvfIndices_.clear();
+        neighborFlipScvfIndices_.clear();
     }
 
     const GlobalFVGeometry* globalFvGeometryPtr_;
