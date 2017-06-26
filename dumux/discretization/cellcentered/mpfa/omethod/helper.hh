@@ -607,16 +607,16 @@ class MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, /*dim*/3, /*dimWorld*/3>
     // most probably differ. We use the fact here, that for the o-method, boundary and interior
     // interaction volumes are identical, which is always given.
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using InteractionVolumeSeed = typename InteractionVolume::Seed;
+    using InteractionVolumeSeed = typename InteractionVolume::Traits::Seed;
     using ScvSeed = typename InteractionVolumeSeed::LocalScvSeed;
     using ScvfSeed = typename InteractionVolumeSeed::LocalScvfSeed;
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using GlobalIndexType = typename InteractionVolume::Traits::GlobalIndexType;
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
-    using GlobalIndexSet = typename InteractionVolume::GlobalIndexSet;
-    using LocalIndexSet = typename InteractionVolume::LocalIndexSet;
+    using GlobalIndexSet = typename InteractionVolume::Traits::GlobalIndexSet;
+    using LocalIndexSet = typename InteractionVolume::Traits::LocalIndexSet;
 
 public:
     static InteractionVolumeSeed makeInnerInteractionVolumeSeed(const Problem& problem,
