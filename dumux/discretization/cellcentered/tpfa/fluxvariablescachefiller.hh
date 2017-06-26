@@ -54,13 +54,6 @@ class CCTpfaFluxVariablesCacheFiller
     static constexpr bool soldependentDiffusion = GET_PROP_VALUE(TypeTag, SolutionDependentMolecularDiffusion);
     static constexpr bool soldependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
 
-    enum ProcessIndices : unsigned int
-    {
-        advectionIdx,
-        diffusionIdx,
-        heatConductionIdx
-    };
-
 public:
     //! The constructor. Sets the problem pointer
     CCTpfaFluxVariablesCacheFiller(const Problem& problem) : problemPtr_(&problem) {}
@@ -83,15 +76,24 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace& scvf,
-              const std::array<bool, 3>& doSubCaches = std::array<bool, 3>({true, true, true}))
+              bool isUpdate = false)
     {
         // fill the physics-related quantities of the caches
-        if (doSubCaches[ProcessIndices::advectionIdx])
-          fillAdvection(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
-        if (doSubCaches[ProcessIndices::diffusionIdx])
-          fillDiffusion(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
-        if (doSubCaches[ProcessIndices::heatConductionIdx])
-          fillHeatConduction(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+        if (!isUpdate)
+        {
+            fillAdvection(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+            fillDiffusion(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+            fillHeatConduction(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+        }
+        else
+        {
+            if (doAdvection && soldependentAdvection)
+                fillAdvection(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+            if (doDiffusion && soldependentDiffusion)
+                fillDiffusion(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+            if (doHeatConduction && soldependentHeatConduction)
+                fillHeatConduction(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
+        }
     }
 
     /*!
@@ -107,19 +109,8 @@ public:
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolumeFace& scvf)
     {
-        // array of bool with which we indicate the sub-caches which have to be
-        // filled. During update, we only update solution-dependent quantities.
-        static const std::array<bool, 3> updateSubCaches = []()
-        {
-            std::array<bool, 3> tmp;
-            tmp[ProcessIndices::advectionIdx] = doAdvection && soldependentAdvection;
-            tmp[ProcessIndices::diffusionIdx] = doDiffusion && soldependentDiffusion;
-            tmp[ProcessIndices::heatConductionIdx] = doHeatConduction && soldependentHeatConduction;
-            return tmp;
-        } ();
-
         // forward to fill routine
-        fill(fluxVarsCacheContainer, scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf, updateSubCaches);
+        fill(fluxVarsCacheContainer, scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf, true);
     }
 
     static bool isSolutionIndependent()
