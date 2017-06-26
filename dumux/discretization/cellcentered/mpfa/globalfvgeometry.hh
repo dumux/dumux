@@ -63,8 +63,8 @@ class CCMpfaGlobalFVGeometry<TypeTag, true>
     using GlobalInteractionVolumeSeeds = typename GET_PROP_TYPE(TypeTag, GlobalInteractionVolumeSeeds);
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using InteractionVolumeSeed = typename InteractionVolume::Seed;
-    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Seed;
+    using InteractionVolumeSeed = typename InteractionVolume::Traits::Seed;
+    using BoundaryInteractionVolumeSeed = typename BoundaryInteractionVolume::Traits::Seed;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -110,6 +110,14 @@ public:
     //! The total number of vertices on interior and domain boundaries
     std::size_t numInteriorOrDomainBoundaryVertices() const
     { return numInteriorOrDomainBoundaryVertices_; }
+
+    //! The total number of inner interaction volumes needed for this grid
+    std::size_t numInteractionVolumeSeeds() const
+    { return globalInteractionVolumeSeeds_.numInteractionVolumeSeeds(); }
+
+    //! The total number of boundary interaction volumes needed for this grid
+    std::size_t numBoundaryInteractionVolumeSeeds() const
+    { return globalInteractionVolumeSeeds_.numBoundaryInteractionVolumeSeeds(); }
 
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
@@ -508,6 +516,14 @@ public:
     //! The total number of vertices on the boundary
     std::size_t numInteriorOrDomainBoundaryVertices() const
     { return numInteriorOrDomainBoundaryVertices_; }
+
+    //! The total number of inner interaction volumes needed for this grid
+    std::size_t numInteractionVolumeSeeds() const
+    { return globalInteractionVolumeSeeds_.numInteractionVolumeSeeds(); }
+
+    //! The total number of boundary interaction volumes needed for this grid
+    std::size_t numBoundaryInteractionVolumeSeeds() const
+    { return globalInteractionVolumeSeeds_.numBoundaryInteractionVolumeSeeds(); }
 
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
