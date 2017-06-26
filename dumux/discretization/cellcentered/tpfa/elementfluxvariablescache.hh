@@ -76,6 +76,11 @@ public:
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf) {}
 
+    // Specialization for the global caching being enabled - do nothing here
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars) {}
+
     // access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
@@ -86,11 +91,6 @@ public:
 
 private:
     const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
-
-    // Specialization for the global caching being enabled - do nothing here
-    void update(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars) {}
 };
 
 /*!
@@ -201,20 +201,6 @@ public:
         globalScvfIndices_[0] = scvf.index();
     }
 
-    // access operators in the case of no caching
-    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
-
-    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
-    { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
-
-    //! The global object we are a restriction of
-    const GlobalFluxVariablesCache& globalFluxVarsCache() const
-    {  return *globalFluxVarsCachePtr_; }
-
-private:
-    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
-
     // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
     void update(const Element& element,
                 const FVElementGeometry& fvGeometry,
@@ -244,6 +230,20 @@ private:
             }
         }
     }
+
+    // access operators in the case of no caching
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
+
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
+    { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
+
+    //! The global object we are a restriction of
+    const GlobalFluxVariablesCache& globalFluxVarsCache() const
+    {  return *globalFluxVarsCachePtr_; }
+
+private:
+    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
 
     // get index of scvf in the local container
     int getLocalScvfIdx_(const int scvfIdx) const
