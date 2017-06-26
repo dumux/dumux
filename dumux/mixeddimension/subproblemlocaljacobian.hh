@@ -346,7 +346,7 @@ protected:
 
             // derivatives in the neighbors with repect to the current elements
             PrimaryVariables partialDeriv;
-            for (int pvIdx = 0; pvIdx < partialDeriv.size(); pvIdx++)
+            for (int pvIdx = 0; pvIdx < otherPriVars.size(); pvIdx++)
             {
                 const Scalar eps = this->numericEpsilon(otherPriVars[pvIdx]);
                 Scalar delta = 0;
