@@ -83,6 +83,9 @@ class CCMpfaFacetCouplingManager
         BulkIndexType bulkElementIndex;
         std::vector<LowDimFVElementGeometry> lowDimFvGeometries;
         std::vector<LowDimVolumeVariables> lowDimVolVars;
+
+        BulkCouplingContext(const LowDimProblem& lowDimProblem)
+        : lowDimFvGeometries(1, lowDimProblem.model().globalFvGeometry()) {}
     };
 
     //! The low dim coupling context stores all data required
@@ -100,14 +103,6 @@ class CCMpfaFacetCouplingManager
         : bulkFVGeometry(bulkProblem.model().globalFvGeometry()),
           bulkElemVolVars(bulkProblem.model().curGlobalVolVars()),
           bulkElemFluxVarsCache(bulkProblem.model().globalFluxVarsCache()) {}
-
-        //! updates the global pointers in the local views
-        void init(const BulkProblem& bulkProblem)
-        {
-            bulkFVGeometry = localView(bulkProblem.model().globalFvGeometry()),
-            bulkElemVolVars = localView(bulkProblem.model().curGlobalVolVars()),
-            bulkElemFluxVarsCache = localView(bulkProblem.model().globalFluxVarsCache());
-        }
     };
 
 public:
@@ -121,7 +116,7 @@ public:
       couplingMapper_(bulkProblem, lowDimProblem),
       bulkLocalResidual_(),
       lowDimLocalResidual_(),
-      bulkCouplingContext_(),
+      bulkCouplingContext_(lowDimProblem),
       lowDimCouplingContext_(bulkProblem)
     {
         // initialize the local residuals
@@ -145,11 +140,8 @@ public:
     //! Called after the sub problems have been initialized
     void postInit()
     {
-        // abfrage ob no flow tip??
+        // in case of not using no flow tips, we should prepare this here??
         couplingMapper_.init();
-
-        // initialize the lowdim context now after all classes of the model are instantiated
-        lowDimCouplingContext_.init(bulkProblem());
     }
 
     //! evaluates if an intersection is on an interior boundary
@@ -186,11 +178,12 @@ public:
                                               const LowDimElement& lowDimElement)
     {
         // ensure this is only called for the element the context is set for
+        if (bulkCouplingContext_.bulkElementIndex != bulkProblem().elementMapper().index(element)) std::cout << "Context has not been set to the given element!\n";
         assert(bulkCouplingContext_.bulkElementIndex == bulkProblem().elementMapper().index(element) && "Context has not been set to the given element!");
-
         const auto& couplingData = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex);
-        if (!couplingData.isCoupled)
-            return BulkPrimaryVariables(0.0);
+
+        // This should never be called for non-coupled elements. But if so, derivative is zero
+        if (!couplingData.isCoupled) return BulkPrimaryVariables(0.0);
 
         // obtain the corresponding volvars in the coupling context (store copy)
         const auto lowDimElementIndex = lowDimProblem().elementMapper().index(lowDimElement);
@@ -202,14 +195,32 @@ public:
         bulkCouplingContext_.lowDimVolVars[idxInContext].update(lowDimProblem().model().elementSolution(lowDimElement, lowDimCurSol),
                                                                 lowDimProblem(),
                                                                 lowDimElement,
-                                                                *scvs(bulkCouplingContext_.lowDimFvGeometries[idxInContext]).begin());
+                                                                bulkCouplingContext_.lowDimFvGeometries[idxInContext].scv(lowDimElementIndex));
 
         // calculate the sum of the fluxes of the scvfs that touch an interior boundary
         static const bool bulkUseTpfaBoundary = GET_PROP_VALUE(BulkProblemTypeTag, UseTpfaBoundary);
         BulkPrimaryVariables flux(0.0);
         for (const auto& scvf : scvfs(fvGeometry))
-            if (bulkProblem().model().globalFvGeometry().touchesInteriorBoundary(scvf) && (!scvf.boundary() || !bulkUseTpfaBoundary))
+        {
+            // if the scvf does not touch an interior boundary, skip the rest
+            if (!bulkProblem().model().globalFvGeometry().touchesInteriorBoundary(scvf))
+                continue;
+
+            if (bulkUseTpfaBoundary)
+            {
+                // do not calculate fluxes on neumann boundary scvfs using tpfa
+                if (scvf.boundary())
+                {
+                    const auto bcTypes = bulkProblem().boundaryTypes(element, scvf);
+                    if (!bcTypes.hasOnlyNeumann())
+                        flux += bulkLocalResidual_.computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+                }
+                else
+                    flux += bulkLocalResidual_.computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            }
+            else
                 flux += bulkLocalResidual_.computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        }
 
         // restore the vol vars
         bulkCouplingContext_.lowDimVolVars[idxInContext] = origVolVars;
@@ -229,11 +240,10 @@ public:
     {
         // ensure this is only called for the element the context is set for
         assert(lowDimCouplingContext_.lowDimElementIndex == lowDimProblem().elementMapper().index(element) && "Context has not been set to the given element!");
-
-        // check if element is coupled at all and if not return 0
         const auto& couplingData = couplingMapper_.getLowDimCouplingData(lowDimCouplingContext_.lowDimElementIndex);
-        if (!couplingData.isCoupled)
-            return LowDimPrimaryVariables(0.0);
+
+        // This should never be called for non-coupled elements. But if so, derivative is zero
+        if (!couplingData.isCoupled) return LowDimPrimaryVariables(0.0);
 
         // update the corresponding vol vars in the coupling context
         const auto bulkElementIndex = bulkProblem().elementMapper().index(bulkElement);
@@ -254,7 +264,7 @@ public:
         // Calculate the sources stemming from the bulk domain.
         // We call the private routine directly, as we know we do not have to update
         // the bulk coupling context, because the low dim solution has not been deflected.
-        auto sources = evalSourcesFromBulk_(element, fvGeometry, curElemVolVars, *scvs(fvGeometry).begin());
+        auto sources = evalSourcesFromBulk_(element, fvGeometry, curElemVolVars, fvGeometry.scv(lowDimCouplingContext_.lowDimElementIndex));
         sources *= -1.0;
 
         // reset the corresponding volume variables in the coupling context
@@ -276,9 +286,7 @@ public:
         assert(lowDimCouplingContext_.lowDimElementIndex == lowDimProblem().elementMapper().index(element) && "Context has not been set to the given element!");
 
         const auto& couplingData = couplingMapper_.getLowDimCouplingData(lowDimCouplingContext_.lowDimElementIndex);
-
-        if (!couplingData.isCoupled)
-            return BulkPrimaryVariables(0.0);
+        if (!couplingData.isCoupled) return BulkPrimaryVariables(0.0);
 
         // update the volvars of the coupling context (store original ones for reset)
         const auto& couplingStencil = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex).couplingStencil;
@@ -289,7 +297,7 @@ public:
         bulkCouplingContext_.lowDimVolVars[idxInContext].update(lowDimProblem().model().elementSolution(element, lowDimCurSol),
                                                                 lowDimProblem(),
                                                                 element,
-                                                                *scvs(bulkCouplingContext_.lowDimFvGeometries[idxInContext]).begin());
+                                                                scv);
 
         // let the private method evaluate the actual sources
         const auto flux = evalSourcesFromBulk_(element, fvGeometry, curElemVolVars, scv);
@@ -340,8 +348,7 @@ public:
         const auto& couplingData = couplingMapper_.getLowDimCouplingData(lowDimCouplingContext_.lowDimElementIndex);
 
         // if low dim element is not coupled, do nothing
-        if (couplingData.elementList.size() == 0)
-            return;
+        if (couplingData.elementList.size() == 0) return;
 
         // set the bulk element in the context
         lowDimCouplingContext_.bulkElement = bulkProblem().model().globalFvGeometry().element(couplingData.elementList[0]);
@@ -351,6 +358,10 @@ public:
         setCouplingContext(lowDimCouplingContext_.bulkElement);
 
         // set the remaining variables in the low dim context
+        lowDimCouplingContext_.bulkFVGeometry = localView(bulkProblem().model().globalFvGeometry());
+        lowDimCouplingContext_.bulkElemVolVars = localView(bulkProblem().model().curGlobalVolVars());
+        lowDimCouplingContext_.bulkElemFluxVarsCache = localView(bulkProblem().model().globalFluxVarsCache());
+
         lowDimCouplingContext_.bulkFVGeometry.bind(lowDimCouplingContext_.bulkElement);
         lowDimCouplingContext_.bulkElemVolVars.bind(lowDimCouplingContext_.bulkElement,
                                                     lowDimCouplingContext_.bulkFVGeometry,
@@ -368,21 +379,20 @@ public:
         const auto& couplingStencil = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex).couplingStencil;
         const auto numLowDimElements = couplingStencil.size();
 
-        bulkCouplingContext_.lowDimFvGeometries.resize(numLowDimElements);
+        bulkCouplingContext_.lowDimFvGeometries.resize(numLowDimElements, lowDimProblem().model().globalFvGeometry());
         bulkCouplingContext_.lowDimVolVars.resize(numLowDimElements);
 
         for (unsigned int i = 0; i < numLowDimElements; ++i)
         {
-            const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(couplingStencil[i]);
-
-            bulkCouplingContext_.lowDimFvGeometries[i] = localView(lowDimProblem().model().globalFvGeometry());
+            const auto lowDimElementIndex = couplingStencil[i];
+            const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(lowDimElementIndex);
             bulkCouplingContext_.lowDimFvGeometries[i].bindElement(lowDimElement);
 
             const auto& lowDimCurSol = lowDimProblem().model().curSol();
             bulkCouplingContext_.lowDimVolVars[i].update(lowDimProblem().model().elementSolution(lowDimElement, lowDimCurSol),
                                                          lowDimProblem(),
                                                          lowDimElement,
-                                                         *scvs(bulkCouplingContext_.lowDimFvGeometries[i]).begin());
+                                                         bulkCouplingContext_.lowDimFvGeometries[i].scv(lowDimElementIndex));
         }
     }
 
