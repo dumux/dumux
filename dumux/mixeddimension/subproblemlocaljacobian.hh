@@ -334,12 +334,12 @@ protected:
         for (auto globalJ : couplingStencil)
         {
             const auto otherElement = otherProblem_().model().globalFvGeometry().element(globalJ);
-            const auto otherResidual = globalProblem_().couplingManager().evalCouplingResidual(element,
-                                                                                                fvGeometry,
-                                                                                                curElemVolVars,
-                                                                                                elemBcTypes,
-                                                                                                elemFluxVarsCache,
-                                                                                                otherElement);
+            const auto originalResidual = globalProblem_().couplingManager().evalCouplingResidual(element,
+                                                                                                  fvGeometry,
+                                                                                                  curElemVolVars,
+                                                                                                  elemBcTypes,
+                                                                                                  elemFluxVarsCache,
+                                                                                                  otherElement);
 
             auto& otherPriVars = otherProblem_().model().curSol()[globalJ];
             auto originalOtherPriVars = otherPriVars;
@@ -373,7 +373,7 @@ protected:
                     // we are using backward differences, i.e. we don't need
                     // to calculate f(x + \epsilon) and we can recycle the
                     // (already calculated) residual f(x)
-                    partialDeriv = otherResidual;
+                    partialDeriv = originalResidual;
                 }
 
 
@@ -399,7 +399,7 @@ protected:
                     // we are using forward differences, i.e. we don't need to
                     // calculate f(x - \epsilon) and we can recycle the
                     // (already calculated) residual f(x)
-                    partialDeriv -= otherResidual;
+                    partialDeriv -= originalResidual;
                 }
 
                 // divide difference in residuals by the magnitude of the
