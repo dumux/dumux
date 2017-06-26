@@ -20,11 +20,12 @@
  * \file
  * \ingroup MixedDimension
  * \brief Base properties for the bulk problems in mixed dimensional models
- *        with a lower dimensional model living on the element facets.
+ *        with a lower dimensional model living on the element facets using
+ *        multi-point flux approximation.
  */
 
-#ifndef DUMUX_FACET_MIXEDDIMENSION_PROPERTIES_HH
-#define DUMUX_FACET_MIXEDDIMENSION_PROPERTIES_HH
+#ifndef DUMUX_FACET_MIXEDDIMENSION_MPFA_PROPERTIES_HH
+#define DUMUX_FACET_MIXEDDIMENSION_MPFA_PROPERTIES_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
@@ -41,6 +42,7 @@ namespace Dumux
 
 namespace Properties
 {
+//! The type tag for the bulk model
 NEW_TYPE_TAG(FacetCouplingBulkMpfaModel, INHERITS_FROM(CCMpfaModel));
 
 //! The GlobalFvGeometry class
