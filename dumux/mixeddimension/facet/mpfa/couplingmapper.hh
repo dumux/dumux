@@ -127,14 +127,14 @@ public:
 
     /*!
      * \brief initializes the maps
-     *
-     * \param bulkProblem The bulk sub problem
-     * \param lowDimProblem The lower-dimensional sub problem
      */
     void init()
     {
         if (isInitialized())
             return;
+
+        std::cout << "Setting up the coupling maps for the sub-problems...";
+        Dune::Timer timer;
 
         const auto& bulkGridView = bulkProblem_().gridView();
         const auto& lowDimGridView = lowDimProblem_().gridView();
@@ -224,6 +224,9 @@ public:
 
         // state the initialization status
         isInitialized_ = true;
+
+        // state the time that it took to set this up
+        std::cout << " done. It took " << timer.elapsed() << " seconds." << std::endl;
     }
 
     const LowDimDataInBulk& getBulkCouplingData(const BulkElement& bulkElement) const
