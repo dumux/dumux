@@ -163,24 +163,32 @@ public:
                 // get the scvf corresponding to actual interior neumann face
                 const auto& curScvf = fvGeometry.scvf(data.scvfIndex());
 
-                // get the volume variables of the actual interior neumann face
-                const auto facetVolVars = data.facetVolVars(fvGeometry);
+                // get the complete data of the actual interior neumann face
+                const auto completeFacetData = data.completeCoupledFacetData(fvGeometry);
 
                 // calculate "leakage factor"
                 const auto n = curScvf.unitOuterNormal();
                 const auto v = [&] ()
                                 {
                                     auto res = n;
-                                    res *= -0.5*facetVolVars.extrusionFactor();
+                                    res *= -0.5*completeFacetData.volVars().extrusionFactor();
                                     res /= res.two_norm2();
                                     return res;
                                 } ();
 
+                // get the diffusion coefficient from the lamda factory
+                using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
+                const auto D = LambdaFactory::getDiffusionLambda(phaseIdx, compIdx)(completeFacetData.problem(),
+                                                                                    completeFacetData.element(),
+                                                                                    completeFacetData.volVars(),
+                                                                                    completeFacetData.fvGeometry(),
+                                                                                    completeFacetData.scv());
+
                 // add value to vector of interior neumann fluxes
-                facetCouplingFluxes[data.localIndexInInteractionVolume()] += getX(facetVolVars)*
+                facetCouplingFluxes[data.localIndexInInteractionVolume()] += getX(completeFacetData.volVars())*
                                                                              curScvf.area()*
                                                                              elemVolVars[curScvf.insideScvIdx()].extrusionFactor()*
-                                                                             MpfaHelper::nT_M_v(n, facetVolVars.diffusionCoefficient(phaseIdx, compIdx), v);
+                                                                             MpfaHelper::nT_M_v(n, D, v);
             }
             // Add additional Dirichlet fluxes for interior Dirichlet faces
             else if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
