@@ -33,9 +33,11 @@
 #include "volumevariables.hh"
 #include "properties.hh"
 
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/1pnc/implicit/newtoncontroller.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 namespace Dumux

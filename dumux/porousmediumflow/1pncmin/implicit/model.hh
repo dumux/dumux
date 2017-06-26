@@ -127,11 +127,6 @@ class OnePNCMinModel: public OnePNCModel<TypeTag>
 //     typedef Dumux::Constants<Scalar> Constant;
 //     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CoordScalar = typename GridView::ctype;
-    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
@@ -147,6 +142,11 @@ class OnePNCMinModel: public OnePNCModel<TypeTag>
 
         phaseIdx = Indices::phaseIdx,
     };
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using CoordScalar = typename GridView::ctype;
+    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
 
     //old
 //     typedef typename GridView::template Codim<dim>::Entity Vertex;
@@ -387,34 +387,34 @@ public:
      * \param curGlobalSol The current global solution
      * \param oldGlobalSol The previous global solution
      */
-    void updateStaticData(SolutionVector &curGlobalSol,
-                          const SolutionVector &oldGlobalSol)
-    {
-        for (unsigned i = 0; i < this->staticDat_.size(); ++i)
-            this->staticDat_[i].visited = false;
-
-        for (const auto& element : elements(this->gridView_()))
-        {
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView_(), element);
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-            {
-                auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-
-                if (this->staticDat_[dofIdxGlobal].visited)
-                    continue;
-
-                this->staticDat_[dofIdxGlobal].visited = true;
-                VolumeVariables volVars;
-                volVars.update(curGlobalSol[dofIdxGlobal],
-                               this->problem_(),
-                               element,
-                               fvGeometry,
-                               scvIdx,
-                               false);
-            }
-        }
-    }
+//     void updateStaticData(SolutionVector &curGlobalSol,
+//                           const SolutionVector &oldGlobalSol)
+//     {
+//         for (unsigned i = 0; i < this->staticDat_.size(); ++i)
+//             this->staticDat_[i].visited = false;
+//
+//         for (const auto& element : elements(this->gridView_()))
+//         {
+//             FVElementGeometry fvGeometry;
+//             fvGeometry.update(this->gridView_(), element);
+//             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+//             {
+//                 auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
+//
+//                 if (this->staticDat_[dofIdxGlobal].visited)
+//                     continue;
+//
+//                 this->staticDat_[dofIdxGlobal].visited = true;
+//                 VolumeVariables volVars;
+//                 volVars.update(curGlobalSol[dofIdxGlobal],
+//                                this->problem_(),
+//                                element,
+//                                fvGeometry,
+//                                scvIdx,
+//                                false);
+//             }
+//         }
+//     }
 
        /*!
      * \brief Write the current solution to a restart file.

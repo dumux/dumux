@@ -40,17 +40,17 @@ namespace Dumux
  * This class is used to fill the gaps in ImplicitLocalResidual for the one-phase n-component flow.
  */
 template<class TypeTag>
-class OnePNCMinLocalResidual: public OnePNCLocalResidual<TypeTag>
+class OnePNCMinLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
 protected:
 //     typedef OnePNCLocalResidual<TypeTag> ParentType;
     using ParentType = CompositionalLocalResidual<TypeTag>;
-    using ThisType = TwoPNCMinLocalResidual<TypeTag>;
+    using ThisType = OnePNCMinLocalResidual<TypeTag>;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables)
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 //     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
 //     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 //     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

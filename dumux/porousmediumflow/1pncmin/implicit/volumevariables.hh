@@ -56,6 +56,7 @@ class OnePNCMinVolumeVariables : public OnePNCVolumeVariables<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -128,39 +129,6 @@ public:
 
         }
 
-        // TODO/FIXME: The salt crust porosity is not clearly defined. However form literature review it is
-        // found that the salt crust have porosity of approx. 10 %. Thus we restrict the decrease in porosity
-        // to this limit. Moreover in the Problem files the precipitation should also be made dependent on local
-        // porosity value, as the porous media media properties change related to salt precipitation will not be
-        // accounted otherwise.
-
-        this->porosity_ = 1 - sumPrecipitates_;
-
-        permeabilityFactor_  =  std::pow(((1-initialPorosity_)/(1-this->porosity_)), 2)
-                                * std::pow((this->porosity_/initialPorosity_), 3);
-
-        // Verma-Pruess relation
-        // permeabilityFactor_  =  100 * std::pow(((this->porosity_/initialPorosity_)-0.9),2);
-
-        // Modified Fair-Hatch relation with final porosity set to 0.2 and E1=1
-        // permeabilityFactor_  =  std::pow((this->porosity_/initialPorosity_),3)
-        //                         * std::pow((std::pow((1 - initialPorosity_),2/3))+(std::pow((0.2 - initialPorosity_),2/3)),2)
-        //                         / std::pow((std::pow((1 -this->porosity_),2/3))+(std::pow((0.2 -this->porosity_),2/3)),2);
-
-        //Timur relation with residual water saturation set to 0.001
-        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (2000 * (std::pow(0.001,2)));
-
-        //Timur relation1 with residual water saturation set to 0.001
-        // permeabilityFactor_ =  0.136 * (std::pow(this->porosity_,4.4)) / (200000 * (std::pow(0.001,2)));
-
-        // Bern. relation
-        // permeabilityFactor_ = std::pow((this->porosity_/initialPorosity_),8);
-
-        //Tixier relation with residual water saturation set to 0.001
-        // permeabilityFactor_ = (std::pow((250 * (std::pow(this->porosity_,3)) / 0.001),2)) / initialPermeability_;
-
-        //Coates relation with residual water saturation set to 0.001
-        // permeabilityFactor_ = (std::pow((100 * (std::pow(this->porosity_,2)) * (1-0.001) / 0.001,2))) / initialPermeability_ ;
 
 //         energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(elemSol, problem, element, scv);
