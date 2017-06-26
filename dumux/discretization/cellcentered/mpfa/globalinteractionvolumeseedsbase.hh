@@ -75,6 +75,12 @@ public:
     const GridView& gridView() const
     { return gridView_; }
 
+    std::size_t numInteractionVolumeSeeds() const
+    { return seeds_.size(); }
+
+    std::size_t numBoundaryInteractionVolumeSeeds() const
+    { return boundarySeeds_.size(); }
+
 private:
 
     const Implementation& asImp_() const
