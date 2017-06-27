@@ -2,7 +2,7 @@
 
 add_input_file_links()
 
-add_executable(test_box2pnc test_box2pnc.cc)
+add_executable(test_box1pncmin test_box1pncmin.cc)
 
 #add_executable_all(test_box1p2c test_box1p2c.cc)
 #

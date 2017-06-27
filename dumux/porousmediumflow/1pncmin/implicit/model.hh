@@ -131,7 +131,7 @@ class OnePNCMinModel: public OnePNCModel<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+//         numEq = GET_PROP_VALUE(TypeTag, NumEq),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
@@ -194,9 +194,9 @@ public:
         for (int i = 0; i < numComponents; ++i)
                 vtkOutputModule.addSecondaryVariable("x_" + FluidSystem::componentName(i),[i](const VolumeVariables& v){ return     v.moleFraction(phaseIdx,i); });
 
-        for (int i = 0; i < numComponents; ++i)
-           vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(i),
-                                                 [i](const VolumeVariables& v){ return v.molarity(phaseIdx,i); });
+//         for (int i = 0; i < numComponents; ++i)
+//            vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(i),
+//                                                  [i](const VolumeVariables& v){ return v.molarity(phaseIdx,i); });
     }
 
     /*!
