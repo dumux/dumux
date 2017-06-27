@@ -250,6 +250,15 @@ public:
      Scalar moleFraction(int phaseIdx, int compIdx) const
      { return fluidState_.moleFraction(phaseIdx, compIdx); }
 
+     /*!
+      * \brief Returns the mass fraction of a component in the phase
+      *
+      * \param phaseIdx the index of the fluid phase
+      * \param compIdx the index of the component
+      */
+     Scalar massFraction(int phaseIdx, int compIdx) const
+     { return fluidState_.massFraction(phaseIdx, compIdx); }
+
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
      *        the control volume.
@@ -299,7 +308,7 @@ public:
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
     Scalar diffusionCoefficient(int pIdx, int compIdx) const
-    { return diffCoeff_; }
+    { return diffCoeff_[compIdx]; }
 
     /*!
      * \brief Returns the molarity of a component in the phase
