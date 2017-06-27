@@ -166,7 +166,13 @@ SET_PROP(OnePNC, ThermalConductivityModel)
     typedef ThermalConductivityAverage<Scalar> type;
 };
 
-
+//! The model after Millington (1961) is used for the effective diffusivity
+SET_PROP(OnePNC, EffectiveDiffusivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+ public:
+    typedef DiffusivityMillingtonQuirk<Scalar> type;
+};
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////

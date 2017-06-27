@@ -143,9 +143,9 @@ public:
            vtkOutputModule.addSecondaryVariable("x" + FluidSystem::componentName(i),
                                                 [i](const VolumeVariables& v){ return v.moleFraction(phaseIdx, i); });
 
-       for (int i = 0; i < numComponents; ++i)
-           vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(i),
-                                                 [i](const VolumeVariables& v){ return v.molarity(phaseIdx,i); });
+//        for (int i = 0; i < numComponents; ++i)
+//            vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(i),
+//                                                  [i](const VolumeVariables& v){ return v.molarity(phaseIdx,i); });
 
         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }

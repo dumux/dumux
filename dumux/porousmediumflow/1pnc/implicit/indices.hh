@@ -37,7 +37,7 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-class OnePNCIndices
+struct OnePNCIndices
 {
     //! Set the default phase used by the fluid system to the first one
     static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
