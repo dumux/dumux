@@ -79,6 +79,11 @@ public:
     static const int value = FluidSystem::numSPhases;
 };
 
+//physical processes to be considered by the isothermal model
+SET_BOOL_PROP(OnePNCMin, EnableAdvection, true);
+SET_BOOL_PROP(OnePNCMin, EnableMolecularDiffusion, true);
+SET_BOOL_PROP(OnePNCMin, EnableEnergyBalance, false);
+
 /*!
  * \brief Set the property for the number of equations.
  * For each component and each precipitated mineral/solid phase one equation has to

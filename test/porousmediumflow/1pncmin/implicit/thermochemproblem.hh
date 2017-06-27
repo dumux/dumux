@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Definition of a problem for water management in PEM fuel cells.
+ * \brief Definition of a problem for thermochemical heat storage using CaO, Ca(OH)2.
  */
 #ifndef DUMUX_THERMOCHEM_PROBLEM_HH
 #define DUMUX_THERMOCHEM_PROBLEM_HH
@@ -67,10 +67,10 @@ SET_PROP(ThermoChemProblem, FluidSystem)
 
 SET_TYPE_PROP(ThermoChemProblem, LinearSolver, UMFPackBackend<TypeTag>);
 
-}
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialparams<TypeTag>);
+SET_TYPE_PROP(ThermoChemProblem, SpatialParams, Dumux::ThermoChemSpatialParams<TypeTag>);
+}
 
 /*!
  * \ingroup OnePNCModel
@@ -78,7 +78,7 @@ SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialparams<TypeTag>
  * \brief Problem or water management in PEM fuel cells.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box2pnc</tt>
+ * <tt>./test_box1pncmin</tt>
  */
 template <class TypeTag>
 class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
@@ -96,7 +96,7 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     enum
     {
-        replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx),
+//         replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx),
 
         numComponents = FluidSystem::numComponents,
         numSComponents = FluidSystem::numSComponents,
@@ -111,7 +111,7 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
         //Equation Indices
         conti0EqIdx = Indices::conti0EqIdx,
         firstTransportEqIdx = Indices::firstTransportEqIdx,
-        solidEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
+//         solidEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
 
         // Phase Indices
         phaseIdx = FluidSystem::gPhaseIdx,
@@ -163,13 +163,14 @@ public:
         temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
         name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
 
+        isCharge_               = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
 
-        FluidSystem::init(/*Tmin=*/temperatureLow_,
-                          /*Tmax=*/temperatureHigh_,
-                          /*nT=*/nTemperature_,
-                          /*pmin=*/pressureLow_,
-                          /*pmax=*/pressureHigh_,
-                          /*np=*/nPressure_);
+//         FluidSystem::init(/*Tmin=*/temperatureLow_,
+//                           /*Tmax=*/temperatureHigh_,
+//                           /*nT=*/nTemperature_,
+//                           /*pmin=*/pressureLow_,
+//                           /*pmax=*/pressureHigh_,
+//                           /*np=*/nPressure_);
     }
 
     /*!
@@ -247,7 +248,7 @@ public:
       Scalar vapor;
 
       // read input parameters
-      if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge)){
+      if (isCharge_ == true){
       pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureIn);
       pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureOut);
       tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureIn);
@@ -304,8 +305,8 @@ public:
 
         if(globalPos[0] < eps_)
         {
-        //if(isCharge == true){
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge)){
+
+        if (isCharge_ == true){
             priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, InFlow); //[mol/s] gas inflow; negative sign: inflow
         }
         else
@@ -336,8 +337,8 @@ public:
         Scalar CaOInit;
         Scalar CaO2H2Init;
 
-        //if(isCharge == true){
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge)){
+        if (isCharge_ == true){
+
         std::cout << "true " << "\n";
         pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureInitial);
         tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureInitial);
@@ -386,8 +387,7 @@ public:
         Scalar maxPrecipitateVolumeCaO;
         Scalar maxPrecipitateVolumeCaO2H2;
 
-        //if(isCharge == true){
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge)){
+        if (isCharge_ == true){
         Initial_Precipitate_Volume = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaO2H2Initial);
         maxPrecipitateVolumeCaO =  0.3960;
         maxPrecipitateVolumeCaO2H2 = Initial_Precipitate_Volume;
@@ -562,7 +562,7 @@ private:
     Scalar reservoirSaturation_;
     std::ofstream outfile;
 
-//     bool isCharge_ ;
+    bool isCharge_ ;
 
 };
 

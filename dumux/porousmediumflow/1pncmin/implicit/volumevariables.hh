@@ -117,9 +117,9 @@ public:
         auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
 
         // porosity evaluation
-        initialPorosity_ = problem.spatialParams().porosity(element, scv);
-        minimumPorosity_ = problem.spatialParams().porosityMin(element, scv);
-        maximumPorosity_ = problem.spatialParams().porosityMax(element, scv);
+        initialPorosity_ = problem.spatialParams().initialPorosity(element, scv);
+//         minimumPorosity_ = problem.spatialParams().porosityMin(element, scv);
+//         maximumPorosity_ = problem.spatialParams().porosityMax(element, scv);
 
         sumPrecipitates_ = 0.0;
         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
