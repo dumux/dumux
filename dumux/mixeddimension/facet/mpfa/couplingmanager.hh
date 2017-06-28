@@ -178,7 +178,6 @@ public:
                                               const LowDimElement& lowDimElement)
     {
         // ensure this is only called for the element the context is set for
-        if (bulkCouplingContext_.bulkElementIndex != bulkProblem().elementMapper().index(element)) std::cout << "Context has not been set to the given element!\n";
         assert(bulkCouplingContext_.bulkElementIndex == bulkProblem().elementMapper().index(element) && "Context has not been set to the given element!");
         const auto& couplingData = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex);
 
