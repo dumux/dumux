@@ -51,7 +51,7 @@ add_dumux_test(test_box1pniconduction test_box1pniconduction test_box1pniconduct
                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconduction-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/box1pniconduction-00006.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pniconduction"
-                 --zeroThreshold {"velocity":1e-8})
+                 --zeroThreshold {"velocity_H2O":1e-8})
 
 add_dumux_test(test_box1pniconvection test_box1pniconvection test_box1pniconvection.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
