@@ -541,6 +541,205 @@ namespace Dumux
         Matrix heatConductionAB_;
         Matrix heatConductionTout_;
     };
+
+    //! Specialization for problems involving advection, diffusion and heat conduction
+    template<class TypeTag>
+    struct InteractionVolumeDataHandleImplementation<TypeTag, true, false, true>
+    {
+    private:
+        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+        using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+        using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
+
+        //! we use the types from the boundary interaction volume traits to be compatible on the boundary
+        using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
+        using GlobalIndexSet = typename BoundaryInteractionVolume::Traits::GlobalIndexSet;
+        using PositionVector = typename BoundaryInteractionVolume::Traits::PositionVector;
+        using Matrix = typename BoundaryInteractionVolume::Traits::Matrix;
+        using Vector = typename BoundaryInteractionVolume::Traits::Vector;
+
+    public:
+        enum class Contexts : unsigned int
+        {
+            undefined,
+            advection,
+            heatConduction
+        };
+
+        //! The constructor
+        InteractionVolumeDataHandleImplementation() : context_(Contexts::undefined) {}
+
+        //! sets the context of the cache to advection
+        void setAdvectionContext()
+        {
+            context_ = Contexts::advection;
+        }
+
+        //! sets the context of the cache to advection
+        void setHeatConductionContext()
+        {
+            context_ = Contexts::heatConduction;
+        }
+
+        //! returns the current context
+        Contexts getContext() const
+        { return context_; }
+
+        //! functions to set the size of the matrices
+        void resizeT(unsigned int n, unsigned int m)
+        {
+            advectionT_.resize(n, m);
+            heatConductionT_.resize(n, m);
+        }
+
+        void resizeCA(unsigned int n, unsigned int m)
+        {
+            advectionCA_.resize(n, m);
+            heatConductionCA_.resize(n, m);
+        }
+
+        void resizeAB(unsigned int n, unsigned int m)
+        {
+            advectionAB_.resize(n, m);
+            heatConductionAB_.resize(n, m);
+        }
+
+        void resizeOutsideTij(unsigned int n, unsigned int m)
+        {
+            advectionTout_.resize(n, m);
+            heatConductionTout_.resize(n, m);
+        }
+
+        //! functions to set the pointers to stencil and positions
+        void setVolVarsStencilPointer(const GlobalIndexSet& stencil)
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                advectionVolVarsStencil_ = &stencil;
+            else
+                heatConductionVolVarsStencil_ = &stencil;
+        }
+
+        void setVolVarsPositionsPointer(const PositionVector& pos)
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                advectionVolVarsPositions_ = &pos;
+            else
+                heatConductionVolVarsPositions_ = &pos;
+        }
+
+        //! return functions for the stored data
+        const GlobalIndexSet& volVarsStencil() const
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return *advectionVolVarsStencil_;
+            else
+                return *heatConductionVolVarsStencil_;
+        }
+
+        const PositionVector& volVarsPositions() const
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return *advectionVolVarsPositions_;
+            else
+                return *heatConductionVolVarsPositions_;
+        }
+
+        //! return functions for the stored matrices
+        const Matrix& T() const
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionT_;
+            else
+                return heatConductionT_;
+        }
+
+        Matrix& T()
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionT_;
+            else
+                return heatConductionT_;
+        }
+
+        const Matrix& CA() const
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionCA_;
+            else
+                return heatConductionCA_;
+        }
+
+        Matrix& CA()
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionCA_;
+            else
+                return heatConductionCA_;
+        }
+
+        const Matrix& AB() const
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionAB_;
+            else
+                return heatConductionAB_;
+        }
+
+        Matrix& AB()
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionAB_;
+            else
+                return heatConductionAB_;
+        }
+
+        const Matrix& outsideTij() const
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionTout_;
+            else
+                return heatConductionTout_;
+        }
+
+        Matrix& outsideTij()
+        {
+            assert(context_ != Contexts::undefined && "No valid context set!");
+            if (context_ == Contexts::advection)
+                return advectionTout_;
+            else
+                return heatConductionTout_;
+        }
+
+    private:
+        Contexts context_;                                   //! The context variable
+
+        // advection-related variables
+        const GlobalIndexSet* advectionVolVarsStencil_;      //! Pointer to the global volvar indices (stored in the interaction volume)
+        const PositionVector* advectionVolVarsPositions_;    //! Pointer to the positions of the vol vars (stored in the interaction volume)
+        Matrix advectionT_;                                  //! The transmissibilities
+        Matrix advectionCA_;                                 //! The coefficients for the neumann flux transformations
+        Matrix advectionAB_;                                 //! Coefficients for gradient reconstruction
+        Matrix advectionTout_;                  //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+
+        // heat conduction-related variables (see comments above)
+        const GlobalIndexSet* heatConductionVolVarsStencil_;
+        const PositionVector* heatConductionVolVarsPositions_;
+        Matrix heatConductionT_;
+        Matrix heatConductionCA_;
+        Matrix heatConductionAB_;
+        Matrix heatConductionTout_;
+    };
 } // end namespace
 
 #endif
