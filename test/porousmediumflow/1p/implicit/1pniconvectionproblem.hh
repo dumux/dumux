@@ -106,6 +106,7 @@ class OnePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
@@ -164,7 +165,7 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
