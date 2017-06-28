@@ -29,7 +29,9 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/implicit/cellcentered/propertydefaults.hh>
 
 #include "fracturespatialparams.hh"
