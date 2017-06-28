@@ -28,6 +28,7 @@
 
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
@@ -112,6 +113,7 @@ class OnePTwoCNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
     using IapwsH2O =  H2O<Scalar>;
 
@@ -175,7 +177,7 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
