@@ -27,6 +27,8 @@
 #include <math.h>
 
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
@@ -108,6 +110,7 @@ class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using IapwsH2O = H2O<Scalar>;
+    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -164,7 +167,7 @@ public:
      /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule<TypeTag>& outputModule) const
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
 
