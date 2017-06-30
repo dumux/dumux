@@ -685,6 +685,9 @@ private:
     template<typename GetTensorFunction>
     void assemblePureDirichletSystem_(const GetTensorFunction& getTensor, Matrix& T)
     {
+        // reset the transmissibility matrix beforehand
+        T = 0.0;
+
         const auto numLocalScvs = localScvs_.size();
         const auto numInteriorDirichletFaces = interiorDirichletScvfIndexSet().size();
 
