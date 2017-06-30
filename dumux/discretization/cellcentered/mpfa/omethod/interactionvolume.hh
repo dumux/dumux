@@ -730,8 +730,6 @@ private:
                 }
             }
 
-            // go to the next face
-            rowIdx++;
         }
     }
 
