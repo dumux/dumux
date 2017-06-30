@@ -86,6 +86,12 @@ class CCMpfaFacetCouplingManager
 
         BulkCouplingContext(const LowDimProblem& lowDimProblem)
         : lowDimFvGeometries(1, lowDimProblem.model().globalFvGeometry()) {}
+
+        void clear()
+        {
+            lowDimFvGeometries.clear();
+            lowDimVolVars.clear();
+        }
     };
 
     //! The low dim coupling context stores all data required
@@ -378,14 +384,16 @@ public:
         const auto& couplingStencil = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex).couplingStencil;
         const auto numLowDimElements = couplingStencil.size();
 
-        bulkCouplingContext_.lowDimFvGeometries.resize(numLowDimElements, lowDimProblem().model().globalFvGeometry());
+        bulkCouplingContext_.clear();
+        bulkCouplingContext_.lowDimFvGeometries.reserve(numLowDimElements);
         bulkCouplingContext_.lowDimVolVars.resize(numLowDimElements);
 
         for (unsigned int i = 0; i < numLowDimElements; ++i)
         {
             const auto lowDimElementIndex = couplingStencil[i];
             const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(lowDimElementIndex);
-            bulkCouplingContext_.lowDimFvGeometries[i].bindElement(lowDimElement);
+            bulkCouplingContext_.lowDimFvGeometries.push_back(localView(lowDimProblem().model().globalFvGeometry()));
+            bulkCouplingContext_.lowDimFvGeometries.back().bindElement(lowDimElement);
 
             const auto& lowDimCurSol = lowDimProblem().model().curSol();
             bulkCouplingContext_.lowDimVolVars[i].update(lowDimProblem().model().elementSolution(lowDimElement, lowDimCurSol),
