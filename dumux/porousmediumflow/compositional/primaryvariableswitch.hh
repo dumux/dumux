@@ -84,9 +84,9 @@ public:
         oldPhasePresence_ = phasePresence_;
     }
 
-    int phasePresence(IndexType dofIdxGlobal) const
+    int phasePresence(IndexType dofIdxGlobal, const bool isOldSol = false) const
     {
-        return phasePresence_[dofIdxGlobal];
+        return isOldSol ? oldPhasePresence_[dofIdxGlobal] : phasePresence_[dofIdxGlobal];
     }
 
     bool wasSwitched(IndexType dofIdxGlobal) const

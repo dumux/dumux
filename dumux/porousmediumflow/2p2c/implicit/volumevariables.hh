@@ -116,11 +116,12 @@ public:
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume& scv)
+                const SubControlVolume& scv,
+                const bool isOldSol = false)
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        completeFluidState(elemSol, problem, element, scv, fluidState_, isOldSol);
 
         /////////////
         // calculate the remaining quantities
@@ -165,12 +166,13 @@ public:
                                    const Problem& problem,
                                    const Element& element,
                                    const SubControlVolume& scv,
-                                   FluidState& fluidState)
+                                   FluidState& fluidState,
+                                   const bool isOldSol)
     {
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
-        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
+        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex(), isOldSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
         /////////////

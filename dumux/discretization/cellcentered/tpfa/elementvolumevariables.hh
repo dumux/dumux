@@ -76,7 +76,8 @@ public:
     // function to prepare the vol vars within the element
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionVector& sol,
+                     const bool isOldSol = false)
     {}
 
     //! The global volume variables object we are a restriction of
@@ -201,7 +202,8 @@ public:
     // specialization for cc models
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionVector& sol,
+                     const bool isOldSol = false)
     {
         clear();
 
@@ -214,7 +216,8 @@ public:
         volumeVariables_[0].update(globalVolVars().problem_().model().elementSolution(element, sol),
                                    globalVolVars().problem_(),
                                    element,
-                                   scv);
+                                   scv,
+                                   isOldSol);
         volVarIndices_[0] = scv.index();
     }
 
