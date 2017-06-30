@@ -266,6 +266,17 @@ public:
                                                             lowDimCouplingContext_.bulkFVGeometry,
                                                             lowDimCouplingContext_.bulkElemVolVars);
 
+        // update the volvars of the bulk coupling context (store original ones for reset)
+        const auto& couplingStencil = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex).couplingStencil;
+        const auto idxInContext = findIndexInVector(couplingStencil, lowDimCouplingContext_.lowDimElementIndex);
+
+        const auto origLowDimVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
+        const auto& lowDimCurSol = lowDimProblem().model().curSol();
+        bulkCouplingContext_.lowDimVolVars[idxInContext].update(lowDimProblem().model().elementSolution(element, lowDimCurSol),
+                                                                lowDimProblem(),
+                                                                element,
+                                                                bulkCouplingContext_.lowDimFvGeometries[idxInContext].scv(lowDimCouplingContext_.lowDimElementIndex));
+
         // Calculate the sources stemming from the bulk domain.
         // We call the private routine directly, as we know we do not have to update
         // the bulk coupling context, because the low dim solution has not been deflected.
@@ -274,6 +285,9 @@ public:
 
         // reset the corresponding volume variables in the coupling context
         bulkVolVars = origVolVars;
+
+        // restore the low dim vol vars
+        bulkCouplingContext_.lowDimVolVars[idxInContext] = origLowDimVolVars;
 
         // return sources
         return sources;
