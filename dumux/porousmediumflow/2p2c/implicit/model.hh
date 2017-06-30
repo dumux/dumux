@@ -230,20 +230,20 @@ public:
               // handle the boundary volume variables
               for (auto&& scvf : scvfs(fvGeometry))
               {
-                  // if we are not on a boundary, skip the rest
-                  if (!scvf.boundary())
-                      continue;
+                // if we are not on a boundary, skip the rest
+                if (!scvf.boundary())
+                    continue;
 
-                      // check if boundary is a pure dirichlet boundary
-                      const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
-                      if (bcTypes.hasOnlyDirichlet())
-                      {
-                        const auto insideScvIdx = scvf.insideScvIdx();
-                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                        const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
+                // check if boundary is a pure dirichlet boundary
+                const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
+                if (bcTypes.hasOnlyDirichlet())
+                {
+                    const auto insideScvIdx = scvf.insideScvIdx();
+                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                    const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
 
-                        this->nonConstCurGlobalVolVars().volVars(eIdx, scvf.outsideScvIdx()).update(elemSol, this->problem_(), element, insideScv);
-                      }
+                    this->nonConstCurGlobalVolVars().volVars(eIdx, scvf.outsideScvIdx()).update(elemSol, this->problem_(), element, insideScv);
+                }
               }
             }
         }
