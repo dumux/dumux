@@ -195,12 +195,7 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
-                if (!visited_[dofIdxGlobal])
-                {
-                    // Note this implies that volume variables don't differ
-                    // in any sub control volume associated with the dof!
-                    visited_[dofIdxGlobal] = true;
-                    // Compute temporary volVars on which grounds we decide
+                    // get volVars on which grounds we decide
                     // if we need to switch the primary variables
                     auto&& volVars = curGlobalVolVars.volVars(eIdx, scv.index());
                     volVars.update(curElemSol, problem, element, scv);
@@ -208,7 +203,6 @@ public:
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
                         switched = true;
 
-                }
             }
         }
 
