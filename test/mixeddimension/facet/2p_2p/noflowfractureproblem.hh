@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief A test problem for the one-dimensional single-phase fracture model
+ * \brief A test problem for the one-dimensional two-phase fracture model
  */
-#ifndef DUMUX_1P2C_FRACTURE_PROBLEM_HH
-#define DUMUX_1P2C_FRACTURE_PROBLEM_HH
+#ifndef DUMUX_2P_FRACTURE_PROBLEM_HH
+#define DUMUX_2P_FRACTURE_PROBLEM_HH
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/mixeddimension/subproblemproperties.hh>
@@ -30,13 +30,11 @@
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include "noflowfracturespatialparams.hh"
 
-#define COMPLEXPHYSICS 0
 
 namespace Dumux
 {
@@ -50,13 +48,9 @@ namespace Properties
 NEW_TYPE_TAG(NoFlowDomainFractureProblem, INHERITS_FROM(CCTpfaModel, TwoP, FractureSpatialParams));
 
 // Set fluid configuration
-#if COMPLEXPHYSICS
-SET_TYPE_PROP(NoFlowDomainFractureProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
-#else
 SET_TYPE_PROP(NoFlowDomainFractureProblem, FluidSystem, FluidSystems::TwoPImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                                      FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>>,
                                                                                      FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), DNAPL<typename GET_PROP_TYPE(TypeTag, Scalar)>>>);
-#endif
 
 // Set the problem property
 SET_TYPE_PROP(NoFlowDomainFractureProblem, Problem, NoFlowDomainFractureProblem<TypeTag>);

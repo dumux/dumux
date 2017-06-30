@@ -2,6 +2,8 @@ add_subdirectory(pointsources)
 add_input_file_links()
 
 add_executable(noflowdomain_2p_ed noflowdomain_2p_ed.cc)
+dune_symlink_to_source_files(FILES "convergencestudy.sh")
+
 # isothermal tests
 add_dumux_test(test_box2p test_box2p test_box2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

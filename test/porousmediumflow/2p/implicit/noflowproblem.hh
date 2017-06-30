@@ -19,6 +19,8 @@
 #ifndef DUMUX_2P_NOFLOW_PROBLEM_HH
 #define DUMUX_2P_NOFLOW_PROBLEM_HH
 
+#include <cstdio>
+
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
@@ -31,7 +33,6 @@
 #include <dumux/material/components/dnapl.hh>
 #include "noflowspatialparams.hh"
 
-#define COMPLEXPHYSICS 0
 
 namespace Dumux
 {
@@ -66,13 +67,9 @@ SET_BOOL_PROP(NoFlowProblem, VtkAddVelocity, true);
 SET_BOOL_PROP(NoFlowProblem, ProblemEnableGravity, false);
 
 // Set fluid configuration
-#if COMPLEXPHYSICS
-SET_TYPE_PROP(NoFlowProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
-#else
 SET_TYPE_PROP(NoFlowProblem, FluidSystem, FluidSystems::TwoPImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                                        FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>>,
                                                                        FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar), DNAPL<typename GET_PROP_TYPE(TypeTag, Scalar)>>>);
-#endif
 }
 
 template <class TypeTag>
@@ -129,21 +126,24 @@ public:
         // write caption into output file
         std::ofstream outputFile;
         const auto apertureString = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, SpatialParams, FractureAperture);
-        outputFile.open(name() + "_timedata_ed_a_" + apertureString + ".log", std::ios::out);
-        outputFile << "t  \t | \t  advective phase transfer into fracture [kg/s] \t | \t "
-                   << "advective component transfer [kg/s] into fracture \t | \t "
-                   << "diffusive component transfer [kg/s] into fracture \t | \t "
-                   << "concentration in producer\t | \t "
-                   << "advective phase transfer from fracture [kg/s] \t | \t "
-                   << "advective component transfer [kg/s] from fracture \t | \t "
-                   << "diffusive component transfer [kg/s] from fracture \t | \t "
-                   << "advective phase inflow [kg/s] through boundary \t | \t "
-                   << "advective component inflow [kg/s] through boundary \t | \t "
-                   << "diffusive component inflow [kg/s] through boundary \t | \t "
-                   << "advective phase outflow [kg/s] through boundary \t | \t "
-                   << "advective component outflow [kg/s] through boundary \t | \t "
-                   << "diffusive component outflow [kg/s] through boundary \n\n";;
+        outputFile.open(name() + "_timedata_a_" + apertureString + ".log", std::ios::out);
+        outputFile << "time  \t | \t  K*gradP*n into fracture [kg/s] \t | \t "
+                   << "phase transfer [kg/s] into fracture \t | \t "
+                   << "K*gradP*n from fracture [kg/s] \t | \t "
+                   << "phase transfer [kg/s] from fracture \n\n";
         outputFile.close();
+    }
+
+    void init()
+    {
+        ParentType::init();
+        this->timeManager().startNextEpisode(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeTime));
+    }
+
+    void episodeEnd()
+    {
+        static const Scalar episodeTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeTime);
+        this->timeManager().startNextEpisode(episodeTime);
     }
 
     /*!
@@ -161,40 +161,31 @@ public:
         return name_;
     }
 
+    bool shouldWriteOutput() const
+    {
+        return this->timeManager().time() < 0 || (this->timeManager().episodeWillBeFinished() || this->timeManager().willBeFinished());
+    }
+
     void postTimeStep() const
     {
+        if (!this->timeManager().episodeWillBeFinished())
+            return;
+
         using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+        const auto apertureString = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, SpatialParams, FractureAperture);
 
+        Scalar kgradpInFracture = 0.0;
         Scalar phaseFluxInFracture = 0.0;
-        Scalar advCompFluxInFracture = 0.0;
-        Scalar diffCompFluxInFracture = 0.0;
-
-        Scalar x_outlet;
-
+        Scalar kgradpFromFracture = 0.0;
         Scalar phaseFluxFromFracture = 0.0;
-        Scalar advCompFluxFromFracture = 0.0;
-        Scalar diffCompFluxFromFracture = 0.0;
 
-        Scalar boundaryInfluxPhase = 0.0;
-        Scalar boundaryInfluxAdvective = 0.0;
-        Scalar boundaryInfluxDiffusive = 0.0;
-        Scalar boundaryOutfluxPhase = 0.0;
-        Scalar boundaryOutfluxAdvective = 0.0;
-        Scalar boundaryOutfluxDiffusive = 0.0;
-
-        // at a given time we want to plot -(K gradP)*n and - (D gradC)*n along the fracture sides
+        // we want to plot -(K gradP)*nalong the fracture sides
         std::ofstream lowerFluxPlotFile, upperFluxPlotFile;
-        const Scalar dt = this->timeManager().timeStepSize();
-        const Scalar time = this->timeManager().time();
-        const bool plotFlux = this->timeManager().willBeFinished();
-
-        if (plotFlux)
-        {
-            const auto a = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, SpatialParams, FractureAperture);
-            const auto t = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, TimeForFractureEdgePlots);
-            lowerFluxPlotFile.open(name() + "_fluxplotdata_ed_loweredge_a_" + a + "_t_" + t + ".log", std::ios::out);
-            upperFluxPlotFile.open(name() + "_fluxplotdata_ed_upperedge_a_" + a + "_t_" + t + ".log", std::ios::out);
-        }
+        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        const std::string lowerFluxPlotFileNameBody = name() + "_fluxplotdata_loweredge_a_" + apertureString + "_t_" + std::to_string(int(time));
+        const std::string upperFluxPlotFileNameBody = name() + "_fluxplotdata_upperedge_a_" + apertureString + "_t_" + std::to_string(int(time));
+        lowerFluxPlotFile.open(lowerFluxPlotFileNameBody + "_rank_" + std::to_string(this->gridView().comm().rank()) + ".log", std::ios::out);
+        upperFluxPlotFile.open(upperFluxPlotFileNameBody + "_rank_" + std::to_string(this->gridView().comm().rank()) + ".log", std::ios::out);
 
         // calculate outflow on the right side
         for (const auto& element : elements(this->gridView()))
@@ -211,6 +202,9 @@ public:
             // check for scvfs at the lower fracture interface
             for (const auto& scvf : scvfs(fvGeometry))
             {
+                if (element.partitionType() == Dune::OverlapEntity)
+                    continue;
+
                 const auto pos = scvf.ipGlobal();
                 const auto x = pos[0];
                 const auto y = pos[1];
@@ -226,24 +220,20 @@ public:
                     { return 1; };
 
                     auto compUpwindTerm = [](const auto& volVars)
-                    { return volVars.density(nPhaseIdx)*volVars.saturation(nPhaseIdx)*volVars.mobility(nPhaseIdx); };
+                    { return volVars.density(nPhaseIdx)*volVars.mobility(nPhaseIdx); };
 
-                    const auto KGradP = fluxVars.advectiveFlux(0, dummyUpwindTerm);
-                    const auto DGradX = 0.0;
+                    const auto KGradP = fluxVars.advectiveFlux(nPhaseIdx, dummyUpwindTerm);
+                    const auto q = fluxVars.advectiveFlux(nPhaseIdx, compUpwindTerm);
 
-                    phaseFluxInFracture += KGradP;
-                    advCompFluxInFracture += fluxVars.advectiveFlux(0, compUpwindTerm);
-                    diffCompFluxInFracture += 0.0;
+                    kgradpInFracture += KGradP;
+                    phaseFluxInFracture += q;
 
-                    if (plotFlux)
-                    {
-                        const GlobalPosition interceptFracture = [&] () { GlobalPosition tmp(0.0); tmp[1] = this->spatialParams().yLowerFracture(0.0); return tmp; } ();
-                        const Scalar arc_length = (pos-interceptFracture).two_norm();
-                        lowerFluxPlotFile << std::setprecision(8)
-                                          << arc_length << '\t'
-                                          << KGradP/scvf.area() << '\t'
-                                          << DGradX/scvf.area() << '\n';
-                    }
+                    static const GlobalPosition fractureOriginLow = [&] () { GlobalPosition tmp({-0.5, yFractureLow}); return tmp; } ();
+                    const Scalar arc_length = (pos-fractureOriginLow).two_norm();
+                    lowerFluxPlotFile << std::setprecision(8)
+                                      << arc_length << '\t'
+                                      << KGradP/scvf.area() << '\t'
+                                      << q/scvf.area() << '\n';
                 }
 
                 if (y > yFractureUp - eps_ && y < yFractureUp + eps_ && scvf.unitOuterNormal()[1] < 0.0)
@@ -255,85 +245,87 @@ public:
                     { return 1; };
 
                     auto compUpwindTerm = [](const auto& volVars)
-                    { return volVars.density(nPhaseIdx)*volVars.saturation(nPhaseIdx)*volVars.mobility(nPhaseIdx); };
+                    { return volVars.density(nPhaseIdx)*volVars.mobility(nPhaseIdx); };
 
-                    const auto KGradP = fluxVars.advectiveFlux(0, dummyUpwindTerm);
-                    const auto DGradX = 0.0;
+                    const auto KGradP = fluxVars.advectiveFlux(nPhaseIdx, dummyUpwindTerm);
+                    const auto q = fluxVars.advectiveFlux(nPhaseIdx, compUpwindTerm);
 
-                    phaseFluxFromFracture += KGradP;
-                    advCompFluxFromFracture += fluxVars.advectiveFlux(nPhaseIdx, compUpwindTerm);
-                    diffCompFluxFromFracture += 0.0;
+                    kgradpFromFracture += KGradP;
+                    phaseFluxFromFracture += q;
 
-                    if (plotFlux)
-                    {
-                        const GlobalPosition interceptFracture = [&] () { GlobalPosition tmp(0.0); tmp[1] = this->spatialParams().yUpperFracture(0.0); return tmp; } ();
-                        const Scalar arc_length = (pos-interceptFracture).two_norm();
-                        upperFluxPlotFile << std::setprecision(8)
-                                          << arc_length << '\t'
-                                          << KGradP/scvf.area() << '\t'
-                                          << DGradX/scvf.area() << '\n';
-                    }
-                }
-
-                if (isOnOutlet(pos))
-                {
-                    FluxVariables fluxVars;
-                    fluxVars.init(*this, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
-                    auto phaseUpwindTerm = [](const auto& volVars)
-                    { return 1; /*volVars.density(0)*volVars.mobility(0);*/ };
-
-                    auto compUpwindTerm = [](const auto& volVars)
-                    { return volVars.density(nPhaseIdx)*volVars.saturation(nPhaseIdx)*volVars.mobility(nPhaseIdx); };
-
-                    boundaryOutfluxPhase += fluxVars.advectiveFlux(nPhaseIdx, phaseUpwindTerm);
-                    boundaryOutfluxAdvective += fluxVars.advectiveFlux(nPhaseIdx, compUpwindTerm);
-                    boundaryOutfluxDiffusive += 0.0;
-
-                    x_outlet = elemVolVars[scvf.insideScvIdx()].saturation(nPhaseIdx);
-                }
-
-                if (isOnInlet(pos))
-                {
-                    FluxVariables fluxVars;
-                    fluxVars.init(*this, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
-                    auto phaseUpwindTerm = [](const auto& volVars)
-                    { return 1; /*volVars.density(0)*volVars.mobility(0);*/ };
-
-                    auto compUpwindTerm = [](const auto& volVars)
-                    { return volVars.density(nPhaseIdx)*volVars.saturation(nPhaseIdx)*volVars.mobility(nPhaseIdx); };
-
-                    boundaryInfluxPhase += fluxVars.advectiveFlux(nPhaseIdx, phaseUpwindTerm);
-                    boundaryInfluxAdvective += fluxVars.advectiveFlux(nPhaseIdx, compUpwindTerm);
-                    boundaryInfluxDiffusive += 0.0;
+                    static const GlobalPosition fractureOriginUp = [&] () { GlobalPosition tmp({-0.5, yFractureUp}); return tmp; } ();
+                    const Scalar arc_length = (pos-fractureOriginUp).two_norm();
+                    upperFluxPlotFile << std::setprecision(8)
+                                      << arc_length << '\t'
+                                      << KGradP/scvf.area() << '\t'
+                                      << q/scvf.area() << '\n';
                 }
             }
         }
 
+        lowerFluxPlotFile.close();
+        upperFluxPlotFile.close();
+
         // write output to file
-        std::ofstream outputFile;
-        const auto apertureString = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, SpatialParams, FractureAperture);
-        outputFile.open(name() + "_timedata_ed_a_" + apertureString + ".log", std::ios::out | std::ios::app);
-        outputFile << std::setprecision(8)
-                   << this->timeManager().time() + this->timeManager().timeStepSize() << "\t\t"
-                   << phaseFluxInFracture << '\t'
-                   << advCompFluxInFracture << '\t'
-                   << diffCompFluxInFracture << '\t'
-                   << x_outlet << '\t'
-                   << phaseFluxFromFracture << '\t'
-                   << advCompFluxFromFracture << '\t'
-                   << diffCompFluxFromFracture << '\t'
-                   << boundaryInfluxPhase << '\t'
-                   << boundaryInfluxAdvective << '\t'
-                   << boundaryInfluxDiffusive << '\t'
-                   << boundaryOutfluxPhase << '\t'
-                   << boundaryOutfluxAdvective << '\t'
-                   << boundaryOutfluxDiffusive << '\n';
-        outputFile.close();
+        Scalar data1 = this->gridView().comm().sum(kgradpInFracture);
+        Scalar data2 = this->gridView().comm().sum(phaseFluxInFracture);
+        Scalar data3 = this->gridView().comm().sum(kgradpFromFracture);
+        Scalar data4 = this->gridView().comm().sum(phaseFluxFromFracture);
+        if (this->gridView().comm().rank() == 0)
+        {
+            std::ofstream outputFile;
+            outputFile.open(name() + "_timedata_a_" + apertureString + ".log", std::ios::out | std::ios::app);
+            outputFile << std::setprecision(8)
+                       << time << "\t\t"
+                       << data1 << '\t'
+                       << data2 << '\t'
+                       << data3 << '\t'
+                       << data4 << '\n';
+            outputFile.close();
+
+            // merge data from the flux plot files and delete rank-specific files
+            std::ofstream finalLowerFluxPlotFile, finalUpperFluxPlotFile;
+            finalLowerFluxPlotFile.open(lowerFluxPlotFileNameBody + ".log", std::ios::out);
+            finalUpperFluxPlotFile.open(upperFluxPlotFileNameBody + ".log", std::ios::out);
+
+            // open the rank-specific files and copy content
+            for (unsigned int i = 0; i < this->gridView().comm().size(); ++i)
+            {
+                // handle upper flux plot data
+                std::ifstream upperLogFile(upperFluxPlotFileNameBody + "_rank_" + std::to_string(i) + ".log");
+                if (upperLogFile.fail())
+                    DUNE_THROW(Dune::InvalidStateException, "Could not open the log file for rank " << i);
+
+                // read file and copy to global file
+                std::string line;
+                while (std::getline(upperLogFile, line))
+                    finalUpperFluxPlotFile << line << '\n';
+
+                // delete rank-specific file
+                upperLogFile.close();
+                if (std::remove(std::string(upperFluxPlotFileNameBody + "_rank_" + std::to_string(i) + ".log").c_str()) != 0)
+                    DUNE_THROW(Dune::InvalidStateException, "Could not delete the file " + upperFluxPlotFileNameBody + "_rank_" + std::to_string(i) + ".log");
+
+                // handle lower flux plot data
+                std::ifstream lowerLogFile(lowerFluxPlotFileNameBody + "_rank_" + std::to_string(i) + ".log");
+                if (lowerLogFile.fail())
+                    DUNE_THROW(Dune::InvalidStateException, "Could not open the log file for rank " << i);
+
+                // read file and copy to global file
+                while (std::getline(lowerLogFile, line))
+                    finalLowerFluxPlotFile << line << '\n';
+
+                // delete rank-specific file
+                lowerLogFile.close();
+                if (std::remove(std::string(lowerFluxPlotFileNameBody + "_rank_" + std::to_string(i) + ".log").c_str()) != 0)
+                    DUNE_THROW(Dune::InvalidStateException, "Could not delete the file " + lowerFluxPlotFileNameBody + "_rank_" + std::to_string(i) + ".log");
+            }
+
+            finalLowerFluxPlotFile.close();
+            finalUpperFluxPlotFile.close();
+        }
     }
 
-#if !NONISOTHERMAL
     /*!
      * \brief Returns the temperature within the domain [K].
      *
@@ -341,8 +333,6 @@ public:
      */
     Scalar temperature() const
     { return 273.15 + 20; } // in [K]
-
-#endif
 
     // \}
 
@@ -467,11 +457,11 @@ public:
     Scalar aperture() const
     { return aperture_; }
 
-    bool isOnOutlet(const GlobalPosition& globalPos) const
-    { return globalPos[1] > this->bBoxMax()[1] - eps_; }
-
     bool isOnInlet(const GlobalPosition& globalPos) const
-    { return globalPos[1] < this->bBoxMin()[1] + eps_; }
+    { return globalPos[0] < this->bBoxMin()[0] + eps_ && globalPos[1] < -0.4; }
+
+    bool isOnOutlet(const GlobalPosition& globalPos) const
+    { return globalPos[0] > this->bBoxMax()[0] - eps_ && globalPos[1] > 0.4; }
 
     // \}
 

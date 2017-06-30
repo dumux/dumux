@@ -35,7 +35,7 @@ namespace Dumux
 {
 // forward declaration
 template<class TypeTag>
-class NoFLowSpatialParams;
+class TwoPNoFlowSpatialParams;
 
 namespace Properties
 {
@@ -43,7 +43,7 @@ namespace Properties
 NEW_TYPE_TAG(TwoPSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TwoPSpatialParams, SpatialParams, NoFLowSpatialParams<TypeTag>);
+SET_TYPE_PROP(TwoPSpatialParams, SpatialParams, TwoPNoFlowSpatialParams<TypeTag>);
 
 // Set the material Law
 SET_PROP(TwoPSpatialParams, MaterialLaw)
@@ -66,7 +66,7 @@ public:
  * \brief The spatial parameters class for the matrix problem
  */
 template<class TypeTag>
-class NoFLowSpatialParams : public ImplicitSpatialParams<TypeTag>
+class TwoPNoFlowSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
 
@@ -90,7 +90,7 @@ class NoFLowSpatialParams : public ImplicitSpatialParams<TypeTag>
 public:
     using PermeabilityType = Scalar;
 
-    NoFLowSpatialParams(const Problem& problem, const GridView& gridView)
+    TwoPNoFlowSpatialParams(const Problem& problem, const GridView& gridView)
     : ParentType(problem, gridView)
     {
         km_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MatrixPermeability);

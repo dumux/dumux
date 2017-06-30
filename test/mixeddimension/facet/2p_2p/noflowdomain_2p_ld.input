@@ -4,16 +4,14 @@ TEnd = 40000 # [s]
 MaxTimeStepSize = 250 # [s]
 DtInitialBulkProblem = 1 # [s]
 DtInitialLowDimProblem = 1 # [s]
-EpisodeTime = 1e6 # [s]
+EpisodeTime = 500 # [s]
 
 [Grid]
 File = ./grids/singlefracturequadrilateral0.msh
 
 [Problem]
 Name = noflowdomain_2p
-NumLowDimElements = 15
 OverPressure = 1e5
-TimeForFractureEdgePlots = 10000
 
 [MixedDimension]
 UseIterativeSolver = False

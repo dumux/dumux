@@ -85,8 +85,8 @@ public:
     : ParentType(timeManager, bulkGridView, lowDimGridView)
     {}
 
-    bool shouldWriteOutput() const
-    { return true; }
+    // bool shouldWriteOutput() const
+    // { return this->timeManager().episodeWillBeFinished(); }
 };
 
 } //end namespace
