@@ -207,6 +207,8 @@ public:
             auto fvGeometry = localView(this->globalFvGeometry());
             fvGeometry.bindElement(element);
 
+            const auto eIdx = this->problem_().elementMapper().index(element);
+
             if (switchFlag_)
             {
                 for (auto&& scv : scvs(fvGeometry))
@@ -215,7 +217,7 @@ public:
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
                         const auto elemSol = this->elementSolution(element, this->curSol());
-                        this->nonConstCurGlobalVolVars().volVars(scv.index()).update(elemSol,
+                        this->nonConstCurGlobalVolVars().volVars(eIdx, scv.index()).update(elemSol,
                                                                                      this->problem_(),
                                                                                      element,
                                                                                      scv);
@@ -223,23 +225,26 @@ public:
                 }
             }
 
-            // handle the boundary volume variables
-            for (auto&& scvf : scvfs(fvGeometry))
+            if(!isBox)
             {
-                // if we are not on a boundary, skip the rest
-                if (!scvf.boundary())
-                    continue;
+              // handle the boundary volume variables
+              for (auto&& scvf : scvfs(fvGeometry))
+              {
+                  // if we are not on a boundary, skip the rest
+                  if (!scvf.boundary())
+                      continue;
 
-                // check if boundary is a pure dirichlet boundary
-                const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
-                if (bcTypes.hasOnlyDirichlet())
-                {
-                    const auto insideScvIdx = scvf.insideScvIdx();
-                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
+                      // check if boundary is a pure dirichlet boundary
+                      const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
+                      if (bcTypes.hasOnlyDirichlet())
+                      {
+                        const auto insideScvIdx = scvf.insideScvIdx();
+                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                        const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
 
-                    this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx()).update(elemSol, this->problem_(), element, insideScv);
-                }
+                        this->nonConstCurGlobalVolVars().volVars(eIdx, scvf.outsideScvIdx()).update(elemSol, this->problem_(), element, insideScv);
+                      }
+              }
             }
         }
     }

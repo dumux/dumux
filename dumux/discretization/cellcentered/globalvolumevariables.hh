@@ -118,6 +118,15 @@ public:
 
     VolumeVariables& volVars(const IndexType scvIdx)
     { return volumeVariables_[scvIdx]; }
+
+    // required for compatibility with the box method
+    const VolumeVariables& volVars(const IndexType dummyElementIdx, const IndexType scvIdx) const
+    { return volumeVariables_[scvIdx]; }
+
+    // required for compatibility with the box method
+    VolumeVariables& volVars(const IndexType dummyElementIdx, const IndexType scvIdx)
+    { return volumeVariables_[scvIdx]; }
+
 private:
     const Problem& problem_() const
     { return *problemPtr_; }
