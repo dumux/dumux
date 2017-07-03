@@ -65,6 +65,9 @@ SET_PROP(ThermoChemProblem, FluidSystem)
 // Set the transport equation that is replaced by the total mass balance
 // SET_INT_PROP(ThermoChemProblem, ReplaceCompEqIdx, 1 /*3*/ /*1*/);
 
+// Enable velocity output
+SET_BOOL_PROP(ThermoChemProblem, VtkAddVelocity, false);
+
 SET_TYPE_PROP(ThermoChemProblem, LinearSolver, UMFPackBackend<TypeTag>);
 
 
@@ -137,9 +140,6 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using DimVector = Dune::FieldVector<Scalar, dim> ;
 
-
-    // Select the electrochemistry method
-//     typedef typename Dumux::ElectroChemistry<TypeTag, Dumux::ElectroChemistryModel::Ochs> ElectroChemistry;
 //     typedef Dumux::Constants<Scalar> Constant;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -219,11 +219,8 @@ public:
 
         if (globalPos[0] > this->bBoxMax()[0] - eps_){
             values.setDirichlet(pressureIdx);
-//             values.setDirichlet(firstMoleFracIdx);
-//             values.setDirichlet(temperatureIdx);
-            values.setOutflow(temperatureIdx);
-            values.setOutflow(firstMoleFracIdx);
-//             values.setDirichlet(firstMoleFracIdx);
+            values.setDirichlet(firstMoleFracIdx);
+            values.setDirichlet(temperatureIdx);
         }
         return values;
     }
@@ -241,42 +238,42 @@ public:
       PrimaryVariables priVars(0.0);
 
       //input parameters
-      Scalar pIn;
+//       Scalar pIn;
       Scalar pOut;
       Scalar tIn;
-      Scalar tOut;
-      Scalar vapor;
+       Scalar tOut;
+       Scalar vaporIn;
 
       // read input parameters
       if (isCharge_ == true){
-      pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureIn);
+//       pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureIn);
       pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureOut);
       tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureIn);
       tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureOut);
-      vapor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporIn);
+      vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporIn);
 
       }
       else{
-      pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureIn);
+//       pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureIn);
       pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureOut);
       tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureIn);
       tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureOut);
-      vapor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporIn);
+      vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporIn);
       }
 
         if(globalPos[0] < eps_)
         {
-//           priVars[pressureIdx]   = pIn;
-            priVars[firstMoleFracIdx]     = vapor; // Saturation outer boundary
+            priVars[firstMoleFracIdx]     = vaporIn; // Saturation outer boundary
             priVars[temperatureIdx] = tIn;
         }
         if(globalPos[0] > this->bBoxMax()[0] - eps_)
         {
             priVars[pressureIdx] = pOut;
-//             priVars[firstMoleFracIdx] = 0.01; // Saturation inner boundary
-//             priVars[temperatureIdx] = tOut;
-//             priVars[firstMoleFracIdx]     = 0;
+            priVars[firstMoleFracIdx] = 0.01; // Saturation inner boundary
+            priVars[temperatureIdx] = tOut;
+
         }
+
         return priVars;
     }
 
@@ -312,7 +309,7 @@ public:
         else
         priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, InFlow); //[mol/s] gas inflow
         }
-
+//           std::cout << " test neumann " << "\n";
         return priVars;
     }
 
@@ -338,8 +335,6 @@ public:
         Scalar CaO2H2Init;
 
         if (isCharge_ == true){
-
-        std::cout << "true " << "\n";
         pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureInitial);
         tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureInitial);
         h2oInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporInitial);
@@ -355,7 +350,7 @@ public:
         CaOInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaOInitial);
         CaO2H2Init = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaO2H2Initial);
         }
-
+        std::cout << "CaO2H2Init =  " << CaO2H2Init << "\n";
         priVars[pressureIdx] = pInit;
         priVars[firstMoleFracIdx]   = h2oInit;
 #if NONISOTHERMAL
@@ -374,7 +369,7 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The sub control volume index
      */
-    PrimaryVariables solDependentSource(const Element &element,
+    PrimaryVariables source(const Element &element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
@@ -383,29 +378,15 @@ public:
         PrimaryVariables source(0.0);
         const auto& volVars = elemVolVars[scv];
 
-        Scalar Initial_Precipitate_Volume;
-        Scalar maxPrecipitateVolumeCaO;
-        Scalar maxPrecipitateVolumeCaO2H2;
-
-        if (isCharge_ == true){
-        Initial_Precipitate_Volume = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaO2H2Initial);
-        maxPrecipitateVolumeCaO =  0.3960;
-        maxPrecipitateVolumeCaO2H2 = Initial_Precipitate_Volume;
-        }
-        else {
-        Initial_Precipitate_Volume = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaOInitial);
-        maxPrecipitateVolumeCaO = Initial_Precipitate_Volume;
-        maxPrecipitateVolumeCaO2H2 = 0.3960;
-        }
 
         Scalar T= volVars.temperature();
         Scalar Teq = 0;
 
         Scalar moleFractionVapor = 1e-3;
 
-        if(volVars.moleFraction(firstMoleFracIdx) > 1e-3)
-            moleFractionVapor = volVars.moleFraction(firstMoleFracIdx) ;
-        if(volVars.moleFraction(firstMoleFracIdx) >= 1.0){
+        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) > 1e-3)
+            moleFractionVapor = volVars.moleFraction(phaseIdx, firstMoleFracIdx) ;
+        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) >= 1.0){
             moleFractionVapor = 1;
 //           std::cout << " test vapor = " << "\n";
         }
@@ -416,14 +397,7 @@ public:
         Teq = -12845;
         Teq /= (pFactor - 16.508);        //the equilibrium temperature
 
-//         if(isCharge == false) {
-//             if (Teq < 573.15) {
-//                 std::cout << "Teq = " << Teq<< "\n";
-//                 // Teq=573.15;
-//             }
-//         }
-
-        Scalar moleFracH2O_fPhase = volVars.moleFraction(firstMoleFracIdx);
+        Scalar moleFracH2O_fPhase = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
 
         Scalar moleFracCaO_sPhase = volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.molarDensity(cPhaseIdx)
                                      /(volVars.precipitateVolumeFraction(hPhaseIdx)*volVars.molarDensity(hPhaseIdx)
@@ -478,7 +452,7 @@ public:
 
             if (- q*this->timeManager().timeStepSize() + moleFracCaO2H2_sPhase*volVars.molarDensity(hPhaseIdx) < 0){
                 q = moleFracCaO2H2_sPhase/this->timeManager().timeStepSize();
-            // std::cout << "q_charge " << q << "\n";
+
             }
 
             source[conti0EqIdx+CaO2H2Idx] = -q;
