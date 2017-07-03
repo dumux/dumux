@@ -146,7 +146,7 @@ SET_TYPE_PROP(OnePNC, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
 SET_BOOL_PROP(OnePNC, ProblemEnableGravity, false);
 
 //! Disable velocity output by default
-// SET_BOOL_PROP(OnePNC, VtkAddVelocity, false);
+SET_BOOL_PROP(OnePNC, VtkAddVelocity, false);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(OnePNCNI, ThermalConductivityModel)

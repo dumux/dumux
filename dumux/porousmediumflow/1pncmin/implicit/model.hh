@@ -122,16 +122,11 @@ class OnePNCMinModel: public OnePNCModel<TypeTag>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    //old
-//     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-//     typedef Dumux::Constants<Scalar> Constant;
-//     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-//         numEq = GET_PROP_VALUE(TypeTag, NumEq),
+
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
@@ -147,10 +142,6 @@ class OnePNCMinModel: public OnePNCModel<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using CoordScalar = typename GridView::ctype;
     using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-
-    //old
-//     typedef typename GridView::template Codim<dim>::Entity Vertex;
-//     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -169,252 +160,17 @@ public:
 
        // register standardized vtk output fields
         auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addSecondaryVariable("p", [](const VolumeVariables& v){ return v.pressure(phaseIdx); });
-        vtkOutputModule.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(phaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rho", [](const VolumeVariables& v){ return v.density(phaseIdx); });
-        vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
-        vtkOutputModule.addSecondaryVariable("permeabilityFactor", [](const VolumeVariables& v){ return v.permeabilityFactor(); });
 
-        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+        vtkOutputModule.addSecondaryVariable("permeabilityFactor", [](const VolumeVariables& v)
+                                             { return v.permeabilityFactor(); });
+
 
         for (int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
             vtkOutputModule.addSecondaryVariable("precipitateVolumeFraction_" + FluidSystem::phaseName(numPhases + sPhaseIdx),
                                                  [sPhaseIdx](const VolumeVariables& v)
                                                  { return v.precipitateVolumeFraction(numPhases + sPhaseIdx); });
-
-        vtkOutputModule.addSecondaryVariable("Kxx",
-                                             [this](const VolumeVariables& v){ return this->perm_(v.permeability())[0][0]; });
-        if (dim >= 2)
-            vtkOutputModule.addSecondaryVariable("Kyy",
-                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[1][1]; });
-        if (dim >= 3)
-            vtkOutputModule.addSecondaryVariable("Kzz",
-                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[2][2]; });
-
-        for (int i = 0; i < numComponents; ++i)
-                vtkOutputModule.addSecondaryVariable("x_" + FluidSystem::componentName(i),[i](const VolumeVariables& v){ return     v.moleFraction(phaseIdx,i); });
-
-//         for (int i = 0; i < numComponents; ++i)
-//            vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(i),
-//                                                  [i](const VolumeVariables& v){ return v.molarity(phaseIdx,i); });
     }
 
-    /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
-     *
-     * \param sol The solution vector
-     * \param writer The writer for multi-file VTK datasets
-     */
-//     template<class MultiWriter>
-//     //additional output of the permeability and the precipitate volume fractions
-//     void addOutputVtkFields(const SolutionVector &sol, MultiWriter &writer)
-//     {
-//         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-//         typedef Dune::BlockVector<Dune::FieldVector<double, dim> > VectorField;
-//
-//         // get the number of degrees of freedom
-//         auto numDofs = this->numDofs();
-//         ScalarField *p           = writer.allocateManagedBuffer (numDofs);
-//         ScalarField *rho         = writer.allocateManagedBuffer (numDofs);
-//         ScalarField *temperature  = writer.allocateManagedBuffer (numDofs);
-//         ScalarField *poro         = writer.allocateManagedBuffer (numDofs);
-//         ScalarField *permeabilityFactor = writer.allocateManagedBuffer (numDofs);
-//         ScalarField *precipitateVolumeFraction[numSPhases];
-//
-//         for (int i = 0; i < numSPhases; ++i)
-//             precipitateVolumeFraction[i] = writer.allocateManagedBuffer(numDofs);
-//
-// //         ScalarField *massFraction[numPhases][numComponents];
-// //         for (int i = 0; i < numPhases; ++i)
-// //             for (int j = 0; j < numComponents; ++j)
-// //                 massFraction[i][j] = writer.allocateManagedBuffer(numDofs);
-//
-//         ScalarField *molarity[numComponents];
-//         for (int j = 0; j < numComponents ; ++j)
-//             molarity[j] = writer.allocateManagedBuffer(numDofs);
-//
-//         ScalarField *moleFraction[numComponents];
-//             for (int j = 0; j < numComponents; ++j)
-//                 moleFraction[j] = writer.allocateManagedBuffer(numDofs);
-//
-//        ScalarField *moleFractionSolid[numSComponents];
-//             for (int j = numComponents; j < numSComponents; ++j)
-//                 moleFractionSolid[j] = writer.allocateManagedBuffer(numDofs);
-//
-//         ScalarField *Perm[dim];
-//         for (int j = 0; j < dim; ++j) //Permeability only in main directions xx and yy
-//             Perm[j] = writer.allocateManagedBuffer(numDofs);
-//
-//         VectorField *velocity = writer.template allocateManagedBuffer<double, dim>(numDofs);
-//
-//         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
-//
-//         if (velocityOutput.enableOutput()) // check if velocity output is demanded
-//         {
-//             // initialize velocity fields
-//             for (unsigned int i = 0; i < numDofs; ++i)
-//             {
-//                 (*velocity)[i] = Scalar(0);
-//             }
-//         }
-//
-//         auto numElements = this->gridView_().size(0);
-//         ScalarField *rank = writer.allocateManagedBuffer(numElements);
-//
-//         for (const auto& element : elements(this->gridView_()))
-//         {
-//             auto eIdxGlobal = this->problem_().elementMapper().index(element);
-//             (*rank)[eIdxGlobal] = this->gridView_().comm().rank();
-//             FVElementGeometry fvGeometry;
-//             fvGeometry.update(this->gridView_(), element);
-//
-//             ElementVolumeVariables elemVolVars;
-//             elemVolVars.update(this->problem_(),
-//                                element,
-//                                fvGeometry,
-//                                false /* oldSol? */);
-//
-//             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-//             {
-//                 auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-//
-//                 (*p)[dofIdxGlobal] = elemVolVars[scvIdx].pressure(phaseIdx);
-//                 (*rho)[dofIdxGlobal] = elemVolVars[scvIdx].density(phaseIdx);
-//                 (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].porosity();
-//
-//                 for (int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx){
-//                     (*precipitateVolumeFraction[sPhaseIdx])[dofIdxGlobal] = elemVolVars[scvIdx].precipitateVolumeFraction(sPhaseIdx + numPhases);
-//                  }
-//
-//                 (*temperature)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
-//                 (*permeabilityFactor)[dofIdxGlobal] = elemVolVars[scvIdx].permeabilityFactor();
-//
-// //                     for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-// //                         (*massFraction[phaseIdx][compIdx])[dofIdxGlobal]= elemVolVars[scvIdx].massFraction(phaseIdx,compIdx);
-//
-//                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-//                     (*molarity[compIdx])[dofIdxGlobal] = (elemVolVars[scvIdx].molarity(compIdx));
-//
-//                 for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-//                     (*moleFraction[compIdx])[dofIdxGlobal]= elemVolVars[scvIdx].moleFraction(compIdx);
-//
-//                  for (int compIdx = numComponents; compIdx < numSComponents; ++compIdx)
-//                     (*moleFractionSolid[compIdx])[dofIdxGlobal]= elemVolVars[scvIdx].moleFraction(compIdx);
-//
-//                 Tensor K = this->perm_(this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx));
-//
-//                 for (int j = 0; j<dim; ++j)
-//                     (*Perm[j])[dofIdxGlobal] = K[j][j] * elemVolVars[scvIdx].permeabilityFactor();
-//             };
-//
-//             // velocity output
-//             if(velocityOutput.enableOutput()){
-//                 velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
-//             }
-//         }  // loop over element
-//
-//         writer.attachDofData(*p, "pressure", isBox);
-//         writer.attachDofData(*rho, "rho", isBox);
-//         writer.attachDofData(*poro, "porosity", isBox);
-//         writer.attachDofData(*permeabilityFactor, "permeabilityFactor", isBox);
-//         writer.attachDofData(*temperature, "temperature", isBox);
-//
-//         for (int i = 0; i < numSPhases; ++i)
-//         {
-//             std::cout << "test1" <<  "\n";
-//             std::ostringstream oss;
-//             oss << "precipitateVolumeFraction_" << FluidSystem::componentName(numComponents + i);
-//             writer.attachDofData(*precipitateVolumeFraction[i], oss.str(), isBox);
-//         }
-//
-//         writer.attachDofData(*Perm[0], "Kxx", isBox);
-//         if (dim >= 2)
-//             writer.attachDofData(*Perm[1], "Kyy", isBox);
-//         if (dim == 3)
-//             writer.attachDofData(*Perm[2], "Kzz", isBox);
-//
-//
-// //             for (int j = 0; j < numComponents; ++j)
-// //             {
-// //                 std::ostringstream oss;
-// //                 oss << "X^" << FluidSystem::phaseName(i) << "_" << FluidSystem::componentName(j);
-// //                 writer.attachDofData(*massFraction[i][j], oss.str(), isBox);
-// //             }
-//
-//         for (int j = 0; j < numComponents; ++j)
-//         {
-//             std::ostringstream oss;
-//             oss << "m^w_" << FluidSystem::componentName(j);
-//             writer.attachDofData(*molarity[j], oss.str(), isBox);
-//         }
-//
-//         for (int j = 0; j < numComponents; ++j)
-//             {
-//                 std::ostringstream oss;
-//                 oss << "x"
-//                     << FluidSystem::componentName(j);
-//                 writer.attachDofData(*moleFraction[j], oss.str(), isBox);
-//             }
-//
-//         for (int j = numComponents; j < numSComponents; ++j)
-//         {
-//             std::ostringstream oss;
-//             oss << "m^w_" << FluidSystem::componentName(j);
-//             writer.attachDofData(*molarity[j], oss.str(), isBox);
-//         }
-//
-//         for (int j = numComponents; j < numSComponents; ++j)
-//             {
-//                 std::ostringstream oss;
-//                 oss << "x"
-//                     << FluidSystem::componentName(j);
-//                 writer.attachDofData(*moleFraction[j], oss.str(), isBox);
-//             }
-//
-//         if (velocityOutput.enableOutput()) // check if velocity output is demanded
-//         {
-//             writer.attachDofData(*velocity,  "velocity", isBox, dim);
-//         }
-//
-//         writer.attachCellData(*rank, "process rank");
-//     }
-
-    /*!
-     * \brief Update the static data of all vertices in the grid.
-     *
-     * \param curGlobalSol The current global solution
-     * \param oldGlobalSol The previous global solution
-     */
-//     void updateStaticData(SolutionVector &curGlobalSol,
-//                           const SolutionVector &oldGlobalSol)
-//     {
-//         for (unsigned i = 0; i < this->staticDat_.size(); ++i)
-//             this->staticDat_[i].visited = false;
-//
-//         for (const auto& element : elements(this->gridView_()))
-//         {
-//             FVElementGeometry fvGeometry;
-//             fvGeometry.update(this->gridView_(), element);
-//             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-//             {
-//                 auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
-//
-//                 if (this->staticDat_[dofIdxGlobal].visited)
-//                     continue;
-//
-//                 this->staticDat_[dofIdxGlobal].visited = true;
-//                 VolumeVariables volVars;
-//                 volVars.update(curGlobalSol[dofIdxGlobal],
-//                                this->problem_(),
-//                                element,
-//                                fvGeometry,
-//                                scvIdx,
-//                                false);
-//             }
-//         }
-//     }
 
        /*!
      * \brief Write the current solution to a restart file.
