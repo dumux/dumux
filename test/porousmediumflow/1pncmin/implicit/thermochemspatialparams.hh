@@ -191,6 +191,18 @@ public:
          return phi;
     }
 
+    /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
+     *  on the position in the domain
+     *
+     *  \param element The finite volume element
+     *  \param scv The sub-control volume
+     *
+     *  Solution dependent permeability function
+     */
+    Scalar permeability(const Element& element,
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
+    { return permLaw_.evaluatePermeability(element, scv, elemSol); }
 
     /*!
      *  \brief Define the minimum porosity \f$[-]\f$ distribution
@@ -273,7 +285,7 @@ private:
     Scalar eps_;
 //     MaterialLawParams materialParams_;
     Scalar lambdaSolid_;
-   bool isCharge_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, isCharge);
+   bool isCharge_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
    PorosityLaw poroLaw_;
    PermeabilityLaw permLaw_;
 };
