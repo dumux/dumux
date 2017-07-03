@@ -130,9 +130,12 @@ public:
      */
      static std::string phaseName(int phaseIdx)
     {
-        assert(0 <= phaseIdx && phaseIdx < numPhases);
-
-        return "gas";
+        switch (phaseIdx) {
+        case nPhaseIdx: return "gas";
+        case cPhaseIdx : return "CaO";
+        case hPhaseIdx : return "CaOH2";
+        }
+        DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
      /*!
