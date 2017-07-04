@@ -236,21 +236,21 @@ protected:
                                  const CellCenterPrimaryVariables& ccResidual,
                                  const FaceSolutionVector& faceResidualCache)
     {
-        // compute the derivatives of the cell center dofs with respect to cell center dofs
+        // compute the derivatives of the cell center residuals with respect to cell center dofs
         dCCdCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
-        // compute the derivatives of the cell center dofs with respect to face dofs
+        // compute the derivatives of the cell center residuals with respect to face dofs
         dCCdFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
-        // compute the derivatives of the face dofs with respect to cell center dofs
+        // compute the derivatives of the face residuals with respect to cell center dofs
         dFacedCC_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
 
-        // compute the derivatives of the face dofs with respect to face dofs
+        // compute the derivatives of the face residuals with respect to face dofs
         dFacedFace_(element, fvGeometry, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
     }
 
      /*!
-     * \brief Computes the derivatives of the cell center dofs with respect to cell center dofs
+     * \brief Computes the derivatives of the cell center residuals with respect to cell center dofs
      */
     void dCCdCC_(const Element& element,
                  const FVElementGeometry& fvGeometry,
@@ -302,7 +302,7 @@ protected:
     }
 
      /*!
-     * \brief Computes the derivatives of the cell center dofs with respect to face dofs
+     * \brief Computes the derivatives of the cell center residuals with respect to face dofs
      */
     void dCCdFace_(const Element& element,
                    const FVElementGeometry& fvGeometry,
@@ -350,7 +350,7 @@ protected:
     }
 
      /*!
-     * \brief Computes the derivatives of the face dofs with respect to cell center dofs
+     * \brief Computes the derivatives of the face residuals with respect to cell center dofs
      */
     void dFacedCC_(const Element& element,
                    const FVElementGeometry& fvGeometry,
@@ -405,7 +405,7 @@ protected:
     }
 
      /*!
-     * \brief Computes the derivatives of the face dofs with respect to cell center dofs
+     * \brief Computes the derivatives of the face residuals with respect to cell center dofs
      */
     void dFacedFace_(const Element& element,
                      const FVElementGeometry& fvGeometry,
