@@ -1,0 +1,26 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = ../implicit/grids/2dTwistedCubic_5.dgf
+#UpperRight = 1 1
+#Cells = 100 100
+Refinement = 0
+
+[Problem]
+Name = 1panisotropic_mimetic
+TestCase = 1
+
+#[Newton]
+#EnableShiftCriterion = 0
+#EnableResidualCriterion = 1
+#UseAbsoluteResidualCriterion = 1
+#MaxAbsoluteResidual = 1.0e-5
+#UseLineSearch = 0
+#MaxSteps = 100
+
+[SpatialParams]
+k1 = 1.0
+k2 = 1.0e-3
+k12 = 0.0

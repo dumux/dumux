@@ -186,13 +186,13 @@ public:
             {
                 const auto xFace = scvfIt.ipGlobal();
                 const auto gFace = problem.gravityAtPos(xFace);
-                Scalar hFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx] - rho*(gFace*xFace);
+                Scalar hFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0] - rho*(gFace*xFace);
                 flux += W[indexFace][indexLocal] * (hInside - hFace);
                 indexLocal++;
             }
 //            const auto xFace = scvf.ipGlobal();
 //            const auto gFace = problem.gravityAtPos(xFace);
-//            Scalar hFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[phaseIdx] - rho*(gFace*xFace);
+//            Scalar hFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[0] - rho*(gFace*xFace);
 //            flux = fluxVarsCache.tij()* (hInside - hFace);
         }
         else // no gravity
@@ -204,12 +204,12 @@ public:
             int indexLocal = 0;
             for (auto&& scvfIt : scvfs(fvGeometry))
             {
-                Scalar pFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx];
+                Scalar pFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
                 flux += W[indexFace][indexLocal] * (pInside - pFace);
                 indexLocal++;
             }
 
-//            Scalar pFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[phaseIdx];
+//            Scalar pFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[0];
 //            flux = fluxVarsCache.tij()* (pInside - pFace);
         }
 
@@ -227,9 +227,9 @@ public:
         auto getPermeability = [&problem](const VolumeVariables& volVars,
                                           const GlobalPosition& scvfIpGlobal)
                                {
-                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
-                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
-                                    else
+//                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
+//                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
+//                                    else
                                         return volVars.permeability();
                                };
 
@@ -296,9 +296,9 @@ public:
         auto getPermeability = [&problem](const VolumeVariables& volVars,
                                           const GlobalPosition& scvfIpGlobal)
                                {
-                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
-                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
-                                    else
+//                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
+//                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
+//                                    else
                                         return volVars.permeability();
                                };
 

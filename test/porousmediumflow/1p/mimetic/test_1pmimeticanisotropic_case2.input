@@ -1,0 +1,27 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = ../implicit/grids/2dRandCubic_6.dgf
+#UpperRight = 1.0 1.0
+#Cells = 10 10
+Refinement = 0
+
+[Problem]
+Name = 1pmimeticanisotropic_case2
+TestCase = 2
+Alpha = 1.0e-3
+
+#[Newton]
+#EnableShiftCriterion = 0
+#EnableResidualCriterion = 1
+#UseAbsoluteResidualCriterion = 1
+#MaxAbsoluteResidual = 1.0e-5
+#UseLineSearch = 1
+#MaxSteps = 100
+
+[SpatialParams]
+k1 = 1.0
+k2 = 1.0e-3
+k12 = 0.0

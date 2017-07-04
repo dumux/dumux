@@ -1,0 +1,21 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = ../implicit/grids/northEastGermanBasinI169_2D_ref2.dgf
+#File = ../implicit/grids/northEastGermanBasin.dgf
+Refinement = 0
+
+[Problem]
+Name = 1pgermanbasin_2D_mimetic_ref2
+
+[Newton]
+#EnableShiftCriterion = 0
+#EnableResidualCriterion = 1
+#UseLineSearch = 1
+MaxSteps = 100
+
+[LinearSolver]
+MaxIterations = 250
+#ResidualReduction = 1.0e-2
