@@ -77,7 +77,7 @@ public:
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.index()].update(problem.model().elementSolution(element, sol),
+                volumeVariables_[scv.dofIndex()].update(problem.model().elementSolution(element, sol),
                                                      problem, element, scv);
 
             // handle the boundary volume variables

@@ -76,7 +76,7 @@ public:
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.index()].update(problem.model().elementSolution(element, sol),
+                volumeVariables_[scv.dofIndex()].update(problem.model().elementSolution(element, sol),
                                                      problem,
                                                      element,
                                                      scv);
@@ -118,6 +118,12 @@ public:
 
     VolumeVariables& volVars(const IndexType scvIdx)
     { return volumeVariables_[scvIdx]; }
+
+    const VolumeVariables& volVars(const SubControlVolume scv) const
+    { return volumeVariables_[scv.dofIndex()]; }
+
+    VolumeVariables& volVars(const SubControlVolume scv)
+    { return volumeVariables_[scv.dofIndex()]; }
 private:
     const Problem& problem_() const
     { return *problemPtr_; }

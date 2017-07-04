@@ -112,7 +112,7 @@ public:
 
             // the mole/mass fraction gradient
             GlobalPosition gradI;
-            jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
+            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradI);
             gradI *= volVars.temperature();
             gradTemp += gradI;
         }

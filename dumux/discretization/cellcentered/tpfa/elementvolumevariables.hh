@@ -59,7 +59,7 @@ public:
     : globalVolVarsPtr_(&globalVolVars) {}
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return globalVolVars().volVars(scv.index()); }
+    { return globalVolVars().volVars(scv.dofIndex()); }
 
     // operator for the access with an index
     // needed for cc methods for the access to the boundary volume variables
@@ -135,7 +135,7 @@ public:
                                           problem,
                                           element,
                                           scvI);
-        volVarIndices_[localIdx] = scvI.index();
+        volVarIndices_[localIdx] = scvI.dofIndex();
         ++localIdx;
 
         // Update the volume variables of the neighboring elements
@@ -147,7 +147,7 @@ public:
                                               problem,
                                               elementJ,
                                               scvJ);
-            volVarIndices_[localIdx] = scvJ.index();
+            volVarIndices_[localIdx] = scvJ.dofIndex();
             ++localIdx;
         }
 
@@ -191,7 +191,7 @@ public:
                                                   problem,
                                                   elementJ,
                                                   scvJ);
-                volVarIndices_[localIdx] = scvJ.index();
+                volVarIndices_[localIdx] = scvJ.dofIndex();
                 ++localIdx;
             }
         }
@@ -215,14 +215,14 @@ public:
                                    globalVolVars().problem_(),
                                    element,
                                    scv);
-        volVarIndices_[0] = scv.index();
+        volVarIndices_[0] = scv.dofIndex();
     }
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return volumeVariables_[getLocalIdx_(scv.index())]; }
+    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
     VolumeVariables& operator [](const SubControlVolume& scv)
-    { return volumeVariables_[getLocalIdx_(scv.index())]; }
+    { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
     const VolumeVariables& operator [](IndexType scvIdx) const
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }

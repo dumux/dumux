@@ -124,7 +124,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            std::cout << "-- scv " << scv.index() << " center at: " << scv.center() << std::endl;
+            std::cout << "-- scv " << scv.dofIndex() << " center at: " << scv.center() << std::endl;
         }
 
         auto range2 = scvfs(fvGeometry);

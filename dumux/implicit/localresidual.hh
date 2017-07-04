@@ -61,9 +61,6 @@ class ImplicitLocalResidual
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? GridView::dimension : 0 };
-
 public:
     // copying the local residual class is not a good idea
     ImplicitLocalResidual(const ImplicitLocalResidual &) = delete;
@@ -313,7 +310,7 @@ protected:
         // all sub control volumes
         for (auto&& scv : scvs(fvGeometry))
         {
-            auto localScvIdx = isBox ? scv.index() : 0;
+            auto localScvIdx = scv.indexInElement();
             const auto& volVars = curElemVolVars[scv];
             storageTerm_[localScvIdx] = asImp_().computeStorage(scv, volVars);
             storageTerm_[localScvIdx] *= scv.volume() * volVars.extrusionFactor();
@@ -352,7 +349,7 @@ protected:
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : scvs(fvGeometry))
         {
-            auto localScvIdx = isBox ? scv.index() : 0;
+            auto localScvIdx = scv.indexInElement();
             auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
 
             // subtract the source term from the local rate
@@ -379,7 +376,7 @@ protected:
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : scvs(fvGeometry))
         {
-            auto localScvIdx = isBox ? scv.index() : 0;
+            auto localScvIdx = scv.indexInElement();
 
             const auto& curVolVars = curElemVolVars[scv];
             const auto& prevVolVars = prevElemVolVars[scv];

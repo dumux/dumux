@@ -65,7 +65,7 @@ public:
     { return globalVolVars().volVars(eIdx_, scvIdx); }
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return globalVolVars().volVars(eIdx_, scv.index()); }
+    { return globalVolVars().volVars(eIdx_, scv.indexInElement()); }
 
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
@@ -137,7 +137,7 @@ public:
         {
             // TODO: INTERFACE SOLVER
             // globalVolVars().problem_().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
-            volumeVariables_[scv.index()].update(elemSol, globalVolVars().problem_(), element, scv);
+            volumeVariables_[scv.indexInElement()].update(elemSol, globalVolVars().problem_(), element, scv);
         }
     }
 
@@ -148,10 +148,10 @@ public:
     { return volumeVariables_[scvIdx]; }
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return volumeVariables_[scv.index()]; }
+    { return volumeVariables_[scv.indexInElement()]; }
 
     VolumeVariables& operator [](const SubControlVolume& scv)
-    { return volumeVariables_[scv.index()]; }
+    { return volumeVariables_[scv.indexInElement()]; }
 
     //! The global volume variables object we are a restriction of
     const GlobalVolumeVariables& globalVolVars() const

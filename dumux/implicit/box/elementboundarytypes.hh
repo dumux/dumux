@@ -91,7 +91,7 @@ public:
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            int scvIdxLocal = scv.index();
+            int scvIdxLocal = scv.indexInElement();
             (*this)[scvIdxLocal].reset();
 
             if (problem.model().onBoundary(scv))

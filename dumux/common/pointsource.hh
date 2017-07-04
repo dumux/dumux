@@ -389,7 +389,7 @@ public:
                     for (auto&& scv : scvs(fvGeometry))
                     {
                         if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(scv.geometry(), globalPos))
-                            scvIndices.push_back(scv.index());
+                            scvIndices.push_back(scv.indexInElement());
                     }
                     // for all scvs that where tested positiv add the point sources
                     // to the element/scv to point source map

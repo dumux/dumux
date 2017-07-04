@@ -257,7 +257,7 @@ protected:
             VolumeVariables origVolVars(curVolVars);
 
             // add precalculated residual for this scv into the global container
-            residual[dofIdx] += this->residual_[scv.index()];
+            residual[dofIdx] += this->residual_[scv.indexInElement()];
 
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
@@ -277,7 +277,7 @@ protected:
                 curVolVars = origVolVars;
 
                 // restore the original element solution
-                curElemSol[scv.index()][pvIdx] = this->problem_().model().curSol()[scv.dofIndex()][pvIdx];
+                curElemSol[scv.indexInElement()][pvIdx] = this->problem_().model().curSol()[scv.dofIndex()][pvIdx];
             }
             // TODO: what if we have an extended source stencil????
         }
@@ -506,7 +506,7 @@ protected:
                 // this->updateGlobalJacobian_(couplingMatrix, scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.dofIndex()]);
 
                 for (auto&& scv : scvs(fvGeometry))
-                    this->updateGlobalJacobian_(couplingMatrix, scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.index()]);
+                    this->updateGlobalJacobian_(couplingMatrix, scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.indexInElement()]);
             }
         }
     }
