@@ -1,4 +1,5 @@
 dune_add_test(SOURCES test_fracture_2p2c_2p2c.cc)
 dune_add_test(SOURCES test_fracture_2p2cni_2p2cni.cc)
-dune_symlink_to_source_files(FILES "grids" "test_fracture_2p2c_2p2c.input" "test_fracture_2p2cni_2p2cni.input")
+dune_add_test(SOURCES noflowdomain_2p2cni_ld.cc)
+dune_symlink_to_source_files(FILES "grids" "test_fracture_2p2c_2p2c.input" "test_fracture_2p2cni_2p2cni.input" "noflowdomain_2p2cni_ld.input" "convergencestudy.sh")
 set(CMAKE_BUILD_TYPE Release)
