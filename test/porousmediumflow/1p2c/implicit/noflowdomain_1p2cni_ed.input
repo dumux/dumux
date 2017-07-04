@@ -1,0 +1,28 @@
+[TimeManager]
+DtInitial = 250 # [s]
+MaxTimeStepSize = 250 # [s]
+TEnd = 40000 # [s]
+EpisodeTime = 500
+
+[Grid]
+LowerLeft = -0.5 -0.5
+UpperRight = 0.5 0.5
+Cells = 200 200
+
+[Problem]
+Name = noflow # name passed to the output routines
+EnableGravity = 0 # disable gravity
+OverPressure = 1e5
+
+[SpatialParams]
+FractureAperture = 1e-2 # [m]
+MatrixPermeability = 1e-13
+FracturePermeability = 1e-9
+MatrixPorosity = 0.2
+FracturePorosity = 0.8
+
+[Mpfa]
+Q = 0.0
+
+[Vtk]
+AddVelocity = 0 # enable velocity output

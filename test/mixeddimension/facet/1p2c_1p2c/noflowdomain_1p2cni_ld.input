@@ -1,0 +1,40 @@
+[TimeManager]
+DtInitial = 250 # [s]
+TEnd = 40000 # [s]
+MaxTimeStepSize = 250 # [s]
+DtInitialBulkProblem = 1 # [s]
+DtInitialLowDimProblem = 1 # [s]
+EpisodeTime = 500 # [s]
+
+[Grid]
+File = ./grids/noflowdomain.msh
+
+[Problem]
+Name = noflow_1p2c_ld
+OverPressure = 1e5
+
+[MixedDimension]
+UseIterativeSolver = False
+
+[IterativeAlgorithm]
+MaxIterations = 100
+Tolerance = 1.0e-8
+Verbose = 1
+
+[SpatialParams]
+FractureAperture = 1e-2 # [m]
+MatrixPermeability = 1e-13
+FracturePermeability = 1e-9
+MatrixPorosity = 0.2
+FracturePorosity = 0.8
+
+[Mpfa]
+Q = 0.0
+Xi = 0.66
+
+[Vtk]
+AddVelocity = False
+
+[Newton]
+MaxRelativeShift = 1e-8
+MaxSteps = 30
