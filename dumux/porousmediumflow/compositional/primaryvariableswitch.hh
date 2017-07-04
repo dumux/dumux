@@ -151,24 +151,24 @@ public:
                 auto dofIdxGlobal = scv.dofIndex();
                 if (!visited_[dofIdxGlobal])
                 {
+                    visited_[dofIdxGlobal] = true;
+
                     // Note this implies that volume variables don't differ
                     // in any sub control volume associated with the dof!
-                    visited_[dofIdxGlobal] = true;
                     // Compute temporary volVars on which grounds we decide
                     // if we need to switch the primary variables
                     auto&& volVars = elemVolVars[scv];
                     volVars.update(curElemSol, problem, element, scv);
 
-                    if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
+                    if(asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
                         switched = true;
-
                 }
             }
         }
 
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag for our partition.
-        if (problem.gridView().comm().size() > 1)
+        if(problem.gridView().comm().size() > 1)
             switched = problem.gridView().comm().max(switched);
 
         return switched;
@@ -195,14 +195,19 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
-                    // get volVars on which grounds we decide
-                    // if we need to switch the primary variables
-                    auto&& volVars = curGlobalVolVars.volVars(eIdx, scv.index());
-                    volVars.update(curElemSol, problem, element, scv);
 
-                    if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
-                        switched = true;
+                // get volVars on which grounds we decide
+                // if we need to switch the primary variables
+                auto&& volVars = curGlobalVolVars.volVars(eIdx, scv.index());
+                volVars.update(curElemSol, problem, element, scv);
 
+                if(!visited_[dofIdxGlobal])
+                {
+                    visited_[dofIdxGlobal] = true;
+
+                    if(asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
+                       switched = true;
+                }
             }
         }
 
