@@ -9,6 +9,7 @@ from __future__ import absolute_import
 import argparse
 import xml.etree.ElementTree as ET
 from operator import attrgetter, itemgetter
+import json
 import sys
 from six.moves import range
 from six.moves import zip
@@ -343,7 +344,8 @@ if __name__ == "__main__":
     parser.add_argument('vtk_file_2', type=str, help='second file to compare')
     parser.add_argument('-r', '--relative', type=float, default=1e-2, help='maximum relative error (default=1e-2)')
     parser.add_argument('-a', '--absolute', type=float, default=1.5e-7, help='maximum absolute error (default=1.5e-7)')
+    parser.add_argument('-z', '--zeroThreshold', type=json.loads, default='{}', help='Thresholds for treating numbers as zero for a parameter as a python dict e.g. {"vel":1e-7,"delP":1.0}')
     parser.add_argument('-v', '--verbose', type=bool, default=True, help='verbosity of the script')
     args = vars(parser.parse_args())
 
-    sys.exit(compare_vtk(args["vtk_file_1"], args["vtk_file_2"], args["absolute"], args["relative"], args["verbose"]))
+    sys.exit(compare_vtk(args["vtk_file_1"], args["vtk_file_2"], args["absolute"], args["relative"], args["zeroThreshold"], args["verbose"]))
