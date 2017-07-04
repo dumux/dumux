@@ -108,7 +108,7 @@ public:
         curElemVolVars.bind(element, fvGeometry, problem().model().curSol());
 
         auto prevElemVolVars = localView(problem().model().prevGlobalVolVars());
-        prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
+        prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol(), true);
 
         auto elemFluxVarsCache = localView(problem().model().globalFluxVarsCache());
         elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
@@ -138,7 +138,7 @@ public:
         curElemVolVars.bindElement(element, fvGeometry, problem().model().curSol());
 
         auto prevElemVolVars = localView(problem().model().prevGlobalVolVars());
-        prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
+        prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol(), true);
 
         asImp_().evalStorage_(fvGeometry, prevElemVolVars, curElemVolVars);
     }

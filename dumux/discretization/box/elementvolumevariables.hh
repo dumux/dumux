@@ -79,7 +79,8 @@ public:
     // function to prepare the vol vars within the element
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionVector& sol,
+                     const bool isOldSol = false)
     {
         eIdx_ = globalVolVars().problem_().elementMapper().index(element);
     }
@@ -126,7 +127,8 @@ public:
     // specialization for box models
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol)
+                     const SolutionVector& sol,
+                     const bool isOldSol = false)
     {
         // get the solution at the dofs of the element
         auto elemSol = globalVolVars().problem_().model().elementSolution(element, sol);
@@ -137,7 +139,7 @@ public:
         {
             // TODO: INTERFACE SOLVER
             // globalVolVars().problem_().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
-            volumeVariables_[scv.index()].update(elemSol, globalVolVars().problem_(), element, scv);
+            volumeVariables_[scv.index()].update(elemSol, globalVolVars().problem_(), element, scv, isOldSol);
         }
     }
 
