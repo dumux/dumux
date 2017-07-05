@@ -227,6 +227,12 @@ public:
      */
     bool newtonConverged() const
     {
+        if (problem_().bulkProblem().model().switched())
+            return false;
+
+        if (problem_().lowDimProblem().model().switched())
+            return false;
+
         if (enableShiftCriterion_ && !enableResidualCriterion_)
         {
             return shift_ <= shiftTolerance_;

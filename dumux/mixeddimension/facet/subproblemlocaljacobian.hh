@@ -152,7 +152,7 @@ public:
         curElemVolVars.bind(element, fvGeometry, this->model_().curSol());
 
         auto prevElemVolVars = localView(this->model_().prevGlobalVolVars());
-        prevElemVolVars.bindElement(element, fvGeometry, this->model_().prevSol());
+        prevElemVolVars.bindElement(element, fvGeometry, this->model_().prevSol(), true);
 
         auto elemFluxVarsCache = localView(this->model_().globalFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);

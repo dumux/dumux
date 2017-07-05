@@ -118,6 +118,12 @@ public:
 
     VolumeVariables& volVars(const IndexType scvIdx)
     { return volumeVariables_[scvIdx]; }
+
+    const VolumeVariables& volVars(const IndexType dummyElementIdx, const IndexType scvIdx) const
+    { return volumeVariables_[scvIdx]; }
+
+    VolumeVariables& volVars(const IndexType dummyElementIdx, const IndexType scvIdx)
+    { return volumeVariables_[scvIdx]; }
 private:
     const Problem& problem_() const
     { return *problemPtr_; }
