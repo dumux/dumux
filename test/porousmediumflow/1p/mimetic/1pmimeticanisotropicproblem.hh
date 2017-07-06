@@ -34,6 +34,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 #include "1pmimeticanisotropicspatialparams.hh"
+#include "resultevaluation.hh"
 
 namespace Dumux
 {
@@ -79,6 +80,8 @@ SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalVolumeVariablesCache, t
 SET_BOOL_PROP(OnePMimeticAnisotropicProblem, ProblemEnableGravity, false);
 
 SET_TYPE_PROP(OnePMimeticAnisotropicProblem, LinearSolver, SuperLUBackend<TypeTag> );
+
+SET_BOOL_PROP(OnePMimeticAnisotropicProblem, VtkWriteFaceData, false);
 }
 
 template <class TypeTag>
@@ -318,71 +321,34 @@ public:
     }
 
 
-//    void resultEvaluation()
-//    {
-//        result.evaluate(*this);
-//
-//        std::ofstream file;
-//        std::string outname = name_;
-//        outname.append("_rates.txt");
-//        file.open(outname, std::ios::out | std::ios::app);
-//        if (file.fail())
-//            throw std::ios_base::failure(std::strerror(errno));
-//
-//        file    << "\t\t " << result.absL2Error  << "\t\t " << result.relativeL2Error  << "\t\t "<< result.absH1Error << "\t\t "
-//                << result.absH1ErrorApproxMin << "\t\t " << result.absH1ErrorDiffMin << "\t\t "
-//                << result.bilinearFormApprox <<"\t\t " << result.bilinearFormDiffApprox << "\t\t "
-//                << result.residualTermApprox <<"\t\t " << result.residualTermDiff << "\t\t "
-//                << result.residualTermError << "\t\t "
-//                << this->newtonController().newtonNumSteps() << "\t\t " << this->model().jacobianAssembler().matrix().nonzeroes() << "\t\t "
-//                << result.hMax << "\t\t " << result.hMin << "\t\t "
-//                << result.uMax << "\t\t " << result.uMin << "\t\ "
-//                << this->gridView().size(0) << "\t " << std::endl;
-//
-//        std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
-//        std::cout.precision(2);
-//
-//        std::cout
-//                << "\t absL2Error \t pRelErrorL2 \t absH1Error \t absH1ErrorApproxMin \t absH1ErrorDiffMin \t bilinearFormApprox \t bilinearFormDiffApprox \t hMax \t\t hMin \t\t numEle"
-//                << std::endl;
-//        std::cout << "\t " << result.absL2Error  << "\t "
-//                << result.relativeL2Error  << "\t " << result.absH1Error << "\t "
-//                << result.absH1ErrorApproxMin << "\t\t " << result.absH1ErrorDiffMin << "\t\t "
-//                <<  result.bilinearFormApprox <<"\t\t " << result.bilinearFormDiffApprox << "\t\t\t "
-//                << result.hMax << "\t " << result.hMin << "\t " << this->gridView().size(0) << "\t " << std::endl;
-//    }
+    void resultEvaluation()
+    {
+        result.evaluate(*this);
 
-//    void addOutputVtkFields()
-//    {
-//        //resultEvaluation();
-//        ScalarField *exactPressure = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
-//        ScalarField *localDiff = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
-//        ScalarField *volume = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
-//        ScalarField *globalIdx = this->resultWriter().allocateManagedBuffer(this->gridView().size(0));
-//        Scalar pressureLTwo = 0.0;
-//
-//        for (const auto& element : elements(this->gridView()))
-//        {
-//            int eIdx = this->elementMapper().index(element);
-//            Scalar exactP = exact(element.geometry().center());
-//            Scalar approxPressure = this->model().curSol()[eIdx][0];
-//            (*exactPressure)[eIdx][0] = exactP;
-//            (*localDiff)[eIdx][0] = std::abs(exactP-approxPressure);
-//            (*volume)[eIdx] = element.geometry().volume();
-//            (*globalIdx)[eIdx] = eIdx;
-//            pressureLTwo += (exactP-approxPressure)*(exactP-approxPressure)*(*volume)[eIdx];
-//        }
-//
-//        this->resultWriter().attachCellData(*localDiff, "localDiff");
-//        this->resultWriter().attachCellData(*exactPressure, "exact pressure");
-//        this->resultWriter().attachDofData(*volume, "volume", false); //element data
-//        this->resultWriter().attachDofData(*globalIdx, "globalIdx", false); //element data
-//
-//        std::cout << "L2 error of pressure: " << std::sqrt(pressureLTwo) << std::endl;
-//
-//        return;
-//    }
+        std::ofstream file;
+        std::string outname = name_;
+        outname.append("_rates.txt");
+        file.open(outname, std::ios::out | std::ios::app);
+        if (file.fail())
+            throw std::ios_base::failure(std::strerror(errno));
 
+        file    << result.absL2Error  << "\t\t " << result.relativeL2Error  << "\t\t "
+                << result.absH1ErrorApproxMin << "\t\t " << result.absH1ErrorDiffMin << "\t\t "
+                << this->newtonController().newtonNumSteps() << "\t\t "
+                << result.hMax << "\t\t " << result.hMin << "\t\t "
+                << result.uMax << "\t\t " << result.uMin << "\t\ "
+                << this->gridView().size(0) << "\t " << std::endl;
+
+        std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+        std::cout.precision(2);
+
+        std::cout
+                << "\t absL2Error \t pRelErrorL2  \t absH1ErrorApproxMin \t absH1ErrorDiffMin \t hMax \t\t hMin \t\t numEle"
+                << std::endl;
+        std::cout << "\t " << result.absL2Error  << "\t " << result.relativeL2Error  << "\t "
+                << result.absH1ErrorApproxMin << "\t\t " << result.absH1ErrorDiffMin << "\t\t "
+                << result.hMax << "\t " << result.hMin << "\t " << this->gridView().size(0) << "\t " << std::endl;
+    }
 
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
@@ -450,13 +416,27 @@ public:
         return grad;
     }
 
+    bool shouldWriteOutput() const
+    {
+        return
+            this->timeManager().willBeFinished();
+    }
+
+    void postTimeStep()
+    {
+        ParentType::postTimeStep();
+
+        if(this->timeManager().willBeFinished())
+            this->resultEvaluation();
+    }
+
     // \}
 
 private:
     std::string name_;
     Scalar pi_;
     unsigned int testCase_;
-    //Dumux::ResultEvaluation<TypeTag> result;
+    Dumux::ResultEvaluation<TypeTag> result;
 };
 } //end namespace
 

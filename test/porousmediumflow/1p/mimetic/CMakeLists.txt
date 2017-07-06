@@ -1,5 +1,14 @@
 add_input_file_links()
 
+add_input_file_links()
+
+dune_symlink_to_source_files(FILES runAllTestsAnisotropic.sh)
+dune_symlink_to_source_files(FILES runAllTestsAnisotropicCase2.sh)
+dune_symlink_to_source_files(FILES runAllTestsAnisotropicCase3.sh)
+dune_symlink_to_source_files(FILES runTestAnisotropic.sh)
+dune_symlink_to_source_files(FILES runTestAnisotropicCase2.sh)
+dune_symlink_to_source_files(FILES runTestAnisotropicCase3.sh)
+
 # isothermal tests
 add_dumux_test(test_mimetic1p test_mimetic1p test_mimetic1p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py

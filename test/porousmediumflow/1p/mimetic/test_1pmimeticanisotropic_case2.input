@@ -3,7 +3,7 @@ DtInitial = 1 # [s]
 TEnd = 1 # [s]
 
 [Grid]
-File = ../implicit/grids/2dRandCubic_6.dgf
+File = ../implicit/grids/2dRandCubic_4.dgf
 #UpperRight = 1.0 1.0
 #Cells = 10 10
 Refinement = 0

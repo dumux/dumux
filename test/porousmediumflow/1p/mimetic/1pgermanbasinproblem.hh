@@ -87,6 +87,7 @@ SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalFVGeometryCache, true);
 SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalVolumeVariablesCache, true);
 
+SET_BOOL_PROP(OnePGermanBasinProblem, VtkWriteFaceData, false);
 }
 
 template<class TypeTag>
