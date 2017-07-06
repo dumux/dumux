@@ -238,6 +238,7 @@ public:
         DynamicMatrix R(numFaces, dim, 0.0);
         DynamicMatrix N(numFaces, dim, 0.0);
         DynamicMatrix Id(numFaces, numFaces, 0.0);
+        DynamicMatrix C(numFaces, numFaces, 0.0);
         std::vector<Scalar> coNormalNorms(numFaces);
 
         for(int i=0; i<numFaces; i++)
@@ -252,21 +253,39 @@ public:
             auto coNormal = calculateCoNormal_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()));
             coNormalNorms[index] = coNormal.two_norm();
             N[index] = coNormal;
-            N[index] /= coNormalNorms[index];
-            N[index] *= scvf.area();
+            //N[index] /= coNormalNorms[index];
+            //N[index] *= scvf.area();
             R[index] =  scvf.ipGlobal();
             R[index] -= insideScv.center();
-            //R[index] *= scvf.area();
+            C[index][index] = scvf.area();
+            R[index] *= scvf.area();
         }
+
+//        DynamicMatrix LocalK = getPermeability(elemVolVars[0], element.geometry().center());
+//                      LocalK *= element.geometry().volume();
+
+//        DynamicMatrix LocalK = multiplyMatrices(getTransposed(N),R);
+//        LocalK.invert();
+//        DynamicMatrix DTrans = Id;
+//        DTrans -= multiplyMatrices(multiplyMatrices(R,LocalK),getTransposed(N));
+
+
+        DynamicMatrix LocalR = multiplyMatrices(getTransposed(R),R);
+        LocalR.invert();
+        //DynamicMatrix DTrans = multiplyMatrices(C,C);
+        //DynamicMatrix DTrans_2 = multiplyMatrices(multiplyMatrices(R,LocalR),getTransposed(R));
+
+        DynamicMatrix DTrans = Id;
+        DTrans -= multiplyMatrices(multiplyMatrices(R,LocalR),getTransposed(R));
 
         DynamicMatrix LocalK = multiplyMatrices(getTransposed(N),R);
         LocalK.invert();
-        DynamicMatrix DTrans = Id;
-        DTrans -= multiplyMatrices(multiplyMatrices(R,LocalK),getTransposed(N));
         W = multiplyMatrices(multiplyMatrices(N,LocalK),getTransposed(N));
-        DynamicMatrix StabMatrix = multiplyMatrices(getTransposed(DTrans),DTrans);
+        DynamicMatrix StabMatrix = DTrans; //multiplyMatrices(getTransposed(DTrans),DTrans);
         StabMatrix *= 0.5*trace(W);
         W += StabMatrix;
+
+        DynamicMatrix sol = multiplyMatrices(C,multiplyMatrices(W,C));
 
         for (auto&& scvf : scvfs(fvGeometry))
         {
@@ -274,10 +293,10 @@ public:
             const auto& insideVolVars = elemVolVars[insideScv];
 
             int index = scvf.localFaceIdx();
-            W[index] *= coNormalNorms[index];
+            //W[index] *= coNormalNorms[index];
         }
 
-        return W;
+        return sol;
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations

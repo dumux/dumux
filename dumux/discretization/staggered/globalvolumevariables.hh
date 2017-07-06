@@ -107,7 +107,7 @@ public:
 
                 for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
-                    if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
+                    if(bcTypes.isDirichlet(eqIdx))
                         boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichlet(element, scvf)[cellCenterIdx][eqIdx];
                     else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx))
                         boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
