@@ -46,47 +46,50 @@ SET_PROP(CC2PCornerPointSpatialParams, MaterialLaw)
 private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<EffectiveLaw>;
 };
 }
 
 template<class TypeTag>
 class CC2PCornerPointSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dimWorld,dimWorld> DimWorldMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
-    //get the material law from the property system
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    // export permeability type
+    using PermeabilityType = Tensor;
 
+    //get the material law from the property system
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    CC2PCornerPointSpatialParams(const GridView& gridView)
-    : ParentType(gridView)
+    CC2PCornerPointSpatialParams(const Problem& problem, const GridView& gridView)
+    : ParentType(problem, gridView)
     {
         homogeneous_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, Homogeneous);
 
@@ -142,20 +145,13 @@ public:
         materialParams_.setVgn(7.3);
     }
 
-    /*!
-     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     */
-    const DimWorldMatrix intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeometry,
-                                       int scvIdx) const
+    PermeabilityType permeability(const Element& element,
+                                      const SubControlVolume& scv,
+                                      const ElementSolutionVector& elemSol) const
     {
         int eIdx = GridCreator::grid().leafGridView().indexSet().index(element);
 
-        DimWorldMatrix K(0);
+        Tensor K(0);
         K[0][0] = K[1][1] = permX_[eIdx];
         K[2][2] = permZ_[eIdx];
 
@@ -169,9 +165,9 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    Scalar porosity(const Element& element,
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
     {
         int eIdx = GridCreator::grid().leafGridView().indexSet().index(element);
 
@@ -179,15 +175,16 @@ public:
     }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvGeometry,
-                                                int scvIdx) const
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                                const SubControlVolume& scv,
+                                                const ElementSolutionVector& elemSol) const
     {
         return materialParams_;
     }

@@ -24,14 +24,10 @@
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/implicit/cellcentered/propertydefaults.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/linear/amgbackend.hh>
 
-#include <dune/grid/CpGrid.hpp>
 #include <dumux/io/cpgridcreator.hh>
-#include <dumux/implicit/cornerpoint/elementvolumevariables.hh>
-#include <dumux/implicit/cornerpoint/fvelementgeometry.hh>
-#include <dumux/porousmediumflow/implicit/cpdarcyfluxvariables.hh>
 
 #include "cc2pcornerpointspatialparams.hh"
 
@@ -43,7 +39,7 @@ class CC2PCornerPointProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(CC2PCornerPointProblem, INHERITS_FROM(CCTwoP, CC2PCornerPointSpatialParams));
+NEW_TYPE_TAG(CC2PCornerPointProblem, INHERITS_FROM(CCTpfaModel, TwoP, CC2PCornerPointSpatialParams));
 
 // Set the grid type
 SET_TYPE_PROP(CC2PCornerPointProblem, Grid, Dune::CpGrid);
@@ -53,11 +49,6 @@ SET_TYPE_PROP(CC2PCornerPointProblem, Problem, CC2PCornerPointProblem<TypeTag>);
 
 // Set the grid creator
 SET_TYPE_PROP(CC2PCornerPointProblem, GridCreator, CpGridCreator<TypeTag>);
-
-// Set properties that are specific for CpGrid
-SET_TYPE_PROP(CC2PCornerPointProblem, ElementVolumeVariables, CpElementVolumeVariables<TypeTag>);
-SET_TYPE_PROP(CC2PCornerPointProblem, FVElementGeometry, CpFVElementGeometry<TypeTag>);
-SET_TYPE_PROP(CC2PCornerPointProblem, FluxVariables, CpDarcyFluxVariables<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(CC2PCornerPointProblem, WettingPhase)
@@ -81,44 +72,36 @@ public:
 template <class TypeTag >
 class CC2PCornerPointProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    // Grid and world dimension
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
-
         // primary variable indices
         pwIdx = Indices::pwIdx,
         snIdx = Indices::snIdx,
 
         // equation indices
         contiNEqIdx = Indices::contiNEqIdx,
-
-        // phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-
-        // world dimension
-        dimWorld = GridView::dimensionworld
     };
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dimWorld,dimWorld> DimWorldMatrix;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!
@@ -189,26 +172,32 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
+     * \param elemVolVars All volume variables for the element
+     * \param scv The sub control volume
      *
-     * For this method, the \a values parameter stores the rate mass
+     * For this method, the \a values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
-     * that mass is created, negative ones mean that it vanishes.
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx) const
+    PrimaryVariables source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume &scv) const
     {
-        values = 0.0;
+        PrimaryVariables values(0.0);
 
         int eIdx = GridCreator::grid().leafGridView().indexSet().index(element);
         if (eIdx == injectionElement_)
             values[contiNEqIdx] = injectionRate_/element.geometry().volume();
+
+        return values;
     }
 
     // \}
@@ -220,22 +209,22 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment
-     *
-     * \param values Stores the value of the boundary type
-     * \param intersection The intersection
+     *        used for which equation on a given boundary control volume.
      */
-    void boundaryTypes(BoundaryTypes &values,
-                       const Intersection &intersection) const
+    BoundaryTypes boundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     {
+        BoundaryTypes values;
+
         // set no-flux on top and bottom, hydrostatic on the rest
         // use the intersection normal to decide
-        const GlobalPosition normal = intersection.centerUnitOuterNormal();
+        const GlobalPosition normal = scvf.unitOuterNormal();
         using std::abs;
         if (abs(normal[dimWorld-1]) > 0.5 - eps_)
             values.setAllNeumann();
         else
             values.setAllDirichlet();
+
+        return values;
     }
 
     /*!
@@ -246,13 +235,16 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
-    void dirichletAtPos(PrimaryVariables &values,
-                        const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0);
+
         // hydrostatic pressure
         Scalar densityW = 1000;
         values[pwIdx] = 1e5 + densityW*(this->gravity()*globalPos);
         values[snIdx] = 0.0;
+
+        return values;
     }
 
     /*!
@@ -266,10 +258,11 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void neumannAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0.0;
+        PrimaryVariables values(0.0);
+
+        return values;
     }
     // \}
 
@@ -286,47 +279,47 @@ public:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values;
+
         // hydrostatic pressure
         Scalar densityW = 1000;
         values[pwIdx] = 1e5 + densityW*(this->gravity()*globalPos);
         values[snIdx] = 0.0;
+
+        return values;
     }
     // \}
 
+
     /*!
-     * \brief Append all quantities of interest which can be derived
-     *        from the solution of the current time step to the VTK
-     *        writer.
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addOutputVtkFields()
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-
-        unsigned numElements = this->gridView().size(0);
-
-        //create required scalar fields
-        ScalarField *permX = this->resultWriter().allocateManagedBuffer(numElements);
-        ScalarField *permZ = this->resultWriter().allocateManagedBuffer(numElements);
+        auto& permX = outputModule.createScalarField("PERMX [mD]", 0);
+        auto& permZ = outputModule.createScalarField("PERMZ [mD]", 0);
 
         for (const auto& element : elements(this->gridView()))
         {
-            FVElementGeometry fvGeometry;
-            fvGeometry.update(this->gridView(), element);
             int eIdx = this->elementMapper().index(element);
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
 
-            const DimWorldMatrix K = this->spatialParams().intrinsicPermeability(element, fvGeometry, /*element data*/ 0);
-            // transfer output to mD = 9.86923e-16 m^2
-            (*permX)[eIdx] = K[0][0]/9.86923e-16;
-            (*permZ)[eIdx] = K[2][2]/9.86923e-16;
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto K = this->spatialParams().permeability(element, scv,
+                        this->model().elementSolution(element, this->model().curSol()));
+
+                // transfer output to mD = 9.86923e-16 m^2
+                permX[eIdx] = K[0][0]/9.86923e-16;
+                permZ[eIdx] = K[dimWorld-1][dimWorld-1]/9.86923e-16;
+            }
         }
-
-        //pass the scalar fields to the vtkwriter
-        this->resultWriter().attachDofData(*permX, "PERMX [mD]", false); //element data
-        this->resultWriter().attachDofData(*permZ, "PERMZ [mD]", false); //element data
     }
+
 
 private:
     Scalar temperature_;
