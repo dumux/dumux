@@ -40,9 +40,6 @@
 /* Define to the revision of dumux */
 #define DUMUX_VERSION_REVISION ${DUMUX_VERSION_REVISION}
 
-/* Define to 1 if OPM-Grid was found */
-#cmakedefine HAVE_OPM_GRID 1
-
 /* Define to 1 if Valgrind was found */
 #cmakedefine HAVE_VALGRIND 1
 

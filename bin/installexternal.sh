@@ -359,6 +359,7 @@ installOPM()
     echo "  -Dopm-parser_PREFIX=/path/to/opm-parser \\"
     echo "  -Dopm-output_PREFIX=/path/to/opm-output \\"
     echo "  -DUSE_MPI=ON \\"
+    echo "  -DHAVE_OPM_GRID=1 \\"
 
     cd $TOPDIR
 }
