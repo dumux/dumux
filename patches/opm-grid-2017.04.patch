@@ -1,0 +1,101 @@
+diff --git a/dune/grid/cpgrid/Entity.hpp b/dune/grid/cpgrid/Entity.hpp
+index eadcb33..290fbb0 100644
+--- a/dune/grid/cpgrid/Entity.hpp
++++ b/dune/grid/cpgrid/Entity.hpp
+@@ -182,7 +182,7 @@ namespace Dune
+             /// The count of subentities of codimension cc
+             unsigned int subEntities ( const unsigned int cc ) const
+             {
+-                static_assert(codim == 0, "");
++//                static_assert(codim == 0, "");
+                 if (cc == 0) {
+                     return 1;
+                 } else if (cc == 3) {
+diff --git a/dune/grid/cpgrid/Geometry.hpp b/dune/grid/cpgrid/Geometry.hpp
+index 86d82a5..10c7e14 100644
+--- a/dune/grid/cpgrid/Geometry.hpp
++++ b/dune/grid/cpgrid/Geometry.hpp
+@@ -41,8 +41,13 @@
+ 
+ #include <dune/common/version.hh>
+ #include <dune/geometry/referenceelements.hh>
++
++#if DUNE_VERSION_NEWER(DUNE_COMMON, 2, 5 )
++#include <dune/geometry/type.hh>
++#else
+ #include <dune/geometry/genericgeometry/geometrytraits.hh>
+ #include <dune/geometry/genericgeometry/matrixhelper.hh>
++#endif
+ 
+ #include <opm/common/utility/platform_dependent/reenable_warnings.h>
+ 
+@@ -99,6 +104,12 @@ namespace Dune
+             /// Type of the inverse of the transposed Jacobian matrix
+             typedef FieldMatrix< ctype, coorddimension, mydimension >         JacobianInverseTransposed;
+ 
++#if DUNE_VERSION_NEWER(DUNE_GRID,2,5)
++            typedef Dune::Impl::FieldMatrixHelper< double >  MatrixHelperType;
++#else
++            typedef Dune::GenericGeometry::MatrixHelper< Dune::GenericGeometry::DuneCoordTraits<double> >  MatrixHelperType;
++#endif
++
+             /// @brief Construct from centroid, volume (1- and 0-moments) and
+             ///        corners.
+             /// @param pos the centroid of the entity
+@@ -189,12 +200,11 @@ namespace Dune
+                 LocalCoordinate x = refElement.position(0,0);
+                 LocalCoordinate dx;
+                 do {
+-                    using namespace GenericGeometry;
+                     // DF^n dx^n = F^n, x^{n+1} -= dx^n
+                     JacobianTransposed JT = jacobianTransposed(x);
+                     GlobalCoordinate z = global(x);
+                     z -= y;
+-                    MatrixHelper<DuneCoordTraits<double> >::template xTRightInvA<3, 3>(JT, z, dx );
++                    MatrixHelperType::template xTRightInvA<3, 3>(JT, z, dx );
+                     x -= dx;
+                 } while (dx.two_norm2() > epsilon*epsilon);
+                 return x;
+@@ -206,9 +216,8 @@ namespace Dune
+             /// and {u_j} are the reference coordinates.
+             double integrationElement(const LocalCoordinate& local_coord) const
+             {
+-                FieldMatrix<ctype, coorddimension, mydimension> Jt = jacobianTransposed(local_coord);
+-                using namespace GenericGeometry;
+-                return MatrixHelper<DuneCoordTraits<double> >::template sqrtDetAAT<3, 3>(Jt);
++                JacobianTransposed Jt = jacobianTransposed(local_coord);
++                return MatrixHelperType::template sqrtDetAAT<3, 3>(Jt);
+             }
+ 
+             /// Using the cube type for all entities now (cells and vertices),
+diff --git a/dune/grid/polyhedralgrid/geometry.hh b/dune/grid/polyhedralgrid/geometry.hh
+index 64a15fc..9c3c0b4 100644
+--- a/dune/grid/polyhedralgrid/geometry.hh
++++ b/dune/grid/polyhedralgrid/geometry.hh
+@@ -42,6 +42,12 @@ namespace Dune
+     typedef typename Grid::Traits::ExtraData  ExtraData;
+     typedef typename Grid::Traits::template Codim<codimension>::EntitySeed EntitySeed;
+ 
++#if DUNE_VERSION_NEWER(DUNE_GRID,2,5)
++            typedef Dune::Impl::FieldMatrixHelper< double >  MatrixHelperType;
++#else
++            typedef Dune::GenericGeometry::MatrixHelper< Dune::GenericGeometry::DuneCoordTraits<double> >  MatrixHelperType;
++#endif
++
+     explicit PolyhedralGridBasicGeometry ( ExtraData data )
+     : data_( data ),
+       seed_( )
+@@ -136,12 +142,11 @@ namespace Dune
+         LocalCoordinate x = refElement.position(0,0);
+         LocalCoordinate dx;
+         do {
+-          using namespace GenericGeometry;
+           // DF^n dx^n = F^n, x^{n+1} -= dx^n
+           JacobianTransposed JT = jacobianTransposed(x);
+           GlobalCoordinate z = global(x);
+           z -= y;
+-          MatrixHelper<DuneCoordTraits<double> >::template xTRightInvA<mydimension,coorddimension>(JT, z, dx );
++          MatrixHelperType::template xTRightInvA<mydimension,coorddimension>(JT, z, dx );
+           x -= dx;
+         } while (dx.two_norm2() > epsilon*epsilon);
+         return x;
