@@ -79,7 +79,7 @@ public:
 
           dofIdx_ = geometryHelper.dofIndex();
 
-          localFaceIdx_ = is.indexInInside();
+          localFaceIdx_ = geometryHelper.localIndex();
       }
 
 

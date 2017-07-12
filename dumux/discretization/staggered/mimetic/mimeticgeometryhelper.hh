@@ -39,8 +39,8 @@ class MimeticGeometryHelper
 
 
 public:
-    MimeticGeometryHelper(const Intersection& intersection, const GridView& gridView)
-    : intersection_(intersection), gridView_(gridView)
+    MimeticGeometryHelper(const int dofIndex, const int localIndex, const GridView& gridView)
+    : dofIndex_(dofIndex), localIndex_(localIndex),  gridView_(gridView)
     {
     }
 
@@ -49,15 +49,22 @@ public:
     */
    int dofIndex() const
    {
-       //TODO: use proper intersection mapper!
-       const auto inIdx = intersection_.indexInInside();
-       return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
+       return dofIndex_;
    }
+
+   /*!
+   * \brief Returns the local index of the intersection itself
+   */
+  int localIndex() const
+  {
+      return localIndex_;
+  }
 
 protected:
 
     // TODO: check whether to use references here or not
-    const Intersection intersection_; //! The intersection of interest
+    const int dofIndex_; //! The global dofIdx of the intersectio
+    const int localIndex_; //! The local index of the intersection
     const GridView gridView_;
 };
 
