@@ -75,17 +75,18 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
-    static Dune::FieldVector<Scalar, numComponents> flux(const Problem& problem,
-                                                                const Element& element,
-                                                                const FVElementGeometry& fvGeometry,
-                                                                const ElementVolumeVariables& elemVolVars,
-                                                                const SubControlVolumeFace& scvf,
-                                                                int phaseIdx,
-                                                                const ElementFluxVariablesCache& elemFluxVarsCache)
+    static ComponentFluxVector flux(const Problem& problem,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const SubControlVolumeFace& scvf,
+                                    const int phaseIdx,
+                                    const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        Dune::FieldVector<Scalar, numComponents> componentFlux(0.0);
+        ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             // get inside and outside diffusion tensors and calculate the harmonic mean
@@ -123,10 +124,9 @@ public:
                 rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
                 // the mole/mass fraction gradient
-                GlobalPosition gradI;
-                jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradI);
-                gradI *= volVars.moleFraction(phaseIdx, compIdx)*rho;
-                gradX += gradI;
+                GlobalPosition gradN;
+                jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN);
+                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN);
             }
 
             // apply the diffusion tensor and return the flux
