@@ -67,9 +67,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
-    static const int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
+    using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
@@ -162,15 +163,15 @@ public:
     using Cache = MpfaFicksLawCache;
     using CacheFiller = MpfaFicksLawCacheFiller;
 
-    static Dune::FieldVector<Scalar, numComponents> flux (const Problem& problem,
-                                                          const Element& element,
-                                                          const FVElementGeometry& fvGeometry,
-                                                          const ElementVolumeVariables&  elemVolVars,
-                                                          const SubControlVolumeFace& scvf,
-                                                          int phaseIdx,
-                                                          const ElementFluxVariablesCache&    elemFluxVarsCache)
+    static ComponentFluxVector flux (const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables&  elemVolVars,
+                                     const SubControlVolumeFace& scvf,
+                                     const int phaseIdx,
+                                     const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        Dune::FieldVector<Scalar, numComponents> componentFlux(0.0);
+        ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
             const auto& fluxVarsCache = elemFluxVarsCache[scvf];
@@ -201,7 +202,7 @@ public:
                 return 0.0;
 
             // lambda functions depending on if we use mole or mass fractions
-             auto getX = [phaseIdx, compIdx] (const auto& volVars)
+            auto getX = [phaseIdx, compIdx] (const auto& volVars)
             { return volVars.moleFraction(phaseIdx, compIdx); };
 
             auto getRho = [phaseIdx] (const auto& volVars)
