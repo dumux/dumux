@@ -69,16 +69,14 @@ public:
                                const GeometryHelper& geometryHelper
                            )
     : ParentType(),
-      area_(isGeometry.volume()),
+      area_(geometryHelper.area()),
       center_(isGeometry.center()),
-      unitOuterNormal_(is.centerUnitOuterNormal()),
+      unitOuterNormal_(geometryHelper.unitOuterNormal()),
       scvfIndex_(scvfIndex),
       scvIndices_(scvIndices),
       boundary_(is.boundary())
       {
-
           dofIdx_ = geometryHelper.dofIndex();
-
           localFaceIdx_ = geometryHelper.localIndex();
       }
 

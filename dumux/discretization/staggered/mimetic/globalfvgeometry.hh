@@ -83,6 +83,12 @@ public:
         return scvfs_.size();
     }
 
+    //! The total number of sub control volume faces
+    std::size_t numFaces() const
+    {
+        return intersectionMapper_.size();
+    }
+
     //! The total number of boundary sub control volume faces
     std::size_t numBoundaryScvf() const
     {
@@ -146,10 +152,12 @@ public:
             std::vector<IndexType> scvfsIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
 
+            GeometryHelper geometryHelper(gridView_);
+
             int localFIdx = 0;
             for (const auto& intersection : intersections(gridView_, element))
             {
-                GeometryHelper geometryHelper(intersectionMapper_.subIndex(eIdx, localFIdx), localFIdx, gridView_);
+                geometryHelper.updateLocalFace(intersectionMapper_.subIndex(eIdx, localFIdx), localFIdx, intersection);
                 // inner sub control volume faces
                 if (intersection.neighbor())
                 {
@@ -267,6 +275,12 @@ public:
     std::size_t numScvf() const
     {
         return numScvf_;
+    }
+
+    //! The total number of sub control volume faces
+    std::size_t numFaces() const
+    {
+        return gridView_.size(1);
     }
 
     //! The total number of boundary sub control volume faces

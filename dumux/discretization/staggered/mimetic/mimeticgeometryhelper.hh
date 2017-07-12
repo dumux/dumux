@@ -34,13 +34,21 @@ class MimeticGeometryHelper
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Geometry = typename Element::Geometry;
     using Intersection = typename GridView::Intersection;
     static constexpr int codimIntersection =  1;
 
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
 
 public:
-    MimeticGeometryHelper(const int dofIndex, const int localIndex, const GridView& gridView)
-    : dofIndex_(dofIndex), localIndex_(localIndex),  gridView_(gridView)
+    MimeticGeometryHelper(const GridView& gridView)
+    :gridView_(gridView),
+     dofIndex_(0),
+     localIndex_(0),
+     area_(0),
+     unitOuterNormal_(0)
     {
     }
 
@@ -60,11 +68,32 @@ public:
       return localIndex_;
   }
 
+  //! The area of the sub control volume face
+  Scalar area() const
+  {
+      return area_;
+  }
+
+  GlobalPosition unitOuterNormal() const
+  {
+      return unitOuterNormal_;
+  }
+
+  void updateLocalFace(const int dofIndex, const int localIndex, const Intersection& intersection)
+  {
+      dofIndex_ = dofIndex;
+      localIndex_ = localIndex;
+      unitOuterNormal_ = intersection.centerUnitOuterNormal();
+      area_ = intersection.geometry().volume();
+  }
+
 protected:
 
     // TODO: check whether to use references here or not
-    const int dofIndex_; //! The global dofIdx of the intersectio
-    const int localIndex_; //! The local index of the intersection
+    int dofIndex_; //! The global dofIdx of the intersectio
+    int localIndex_; //! The local index of the intersection
+    Scalar area_;
+    GlobalPosition unitOuterNormal_;
     const GridView gridView_;
 };
 
