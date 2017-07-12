@@ -99,8 +99,7 @@ public:
                 * volVars.saturation(wPhaseIdx);
 
         // non-wetting phase mass
-        storage[contiNEqIdx] = volVars.density(nPhaseIdx) * volVars.porosity()
-                * volVars.saturation(nPhaseIdx);
+        storage[contiNEqIdx] = 0;
     }
 
     /*!
@@ -147,12 +146,24 @@ public:
 
             // add advective flux of current phase
             int eqIdx = (phaseIdx == wPhaseIdx) ? contiWEqIdx : contiNEqIdx;
-            flux[eqIdx] +=
-                fluxVars.volumeFlux(phaseIdx)
-                *
-                ((    massUpwindWeight_)*up.density(phaseIdx)
-                 +
-                 (1 - massUpwindWeight_)*dn.density(phaseIdx));
+            if (eqIdx==contiWEqIdx)
+            {
+                flux[eqIdx] +=
+                    fluxVars.volumeFlux(phaseIdx)
+                    *
+                    ((    massUpwindWeight_)*up.density(phaseIdx)
+                     +
+                     (1 - massUpwindWeight_)*dn.density(phaseIdx));
+             }
+             else
+             {
+                flux[eqIdx] +=
+                    fluxVars.volumeFlux(phaseIdx)
+                    *
+                    ((    massUpwindWeight_)*up.density(phaseIdx)
+                     +
+                     (1 - massUpwindWeight_)*dn.density(phaseIdx)) + flux[contiWEqIdx];
+             }
         }
     }
 
