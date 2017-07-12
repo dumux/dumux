@@ -120,18 +120,18 @@ public:
                 const auto& volVars = elemVolVars[scv];
 
                 // density interpolation
-                rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.index()][0];
+                rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
                 // the mole/mass fraction gradient
                 GlobalPosition gradI;
-                jacInvT.mv(shapeJacobian[scv.index()][0], gradI);
+                jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradI);
                 gradI *= volVars.moleFraction(phaseIdx, compIdx)*rho;
                 gradX += gradI;
             }
 
             // apply the diffusion tensor and return the flux
             auto DGradX = applyDiffusionTensor_(D, gradX);
-            componentFlux[compIdx] = -1.0*(DGradX*scvf.unitOuterNormal())*scvf.area();
+            componentFlux[compIdx] = -1.0*rho*(DGradX*scvf.unitOuterNormal())*scvf.area();
         }
         return componentFlux;
     }
