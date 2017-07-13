@@ -152,7 +152,7 @@ public:
             std::vector<IndexType> scvfsIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
 
-            GeometryHelper geometryHelper(gridView_);
+            GeometryHelper geometryHelper(element, gridView_);
 
             int localFIdx = 0;
             for (const auto& intersection : intersections(gridView_, element))

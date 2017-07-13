@@ -43,7 +43,7 @@ class MimeticGeometryHelper
 
 
 public:
-    MimeticGeometryHelper(const GridView& gridView)
+    MimeticGeometryHelper(const Element& element, const GridView& gridView)
     :gridView_(gridView),
      dofIndex_(0),
      localIndex_(0),
