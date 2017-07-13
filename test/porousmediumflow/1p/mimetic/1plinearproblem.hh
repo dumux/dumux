@@ -22,8 +22,8 @@
  * \brief A test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  */
-#ifndef DUMUX_1PMIMETICANISOTROPIC_PROBLEM_HH
-#define DUMUX_1PMIMETICANISOTROPIC_PROBLEM_HH
+#ifndef DUMUX_1PLINEAR_MIMETIC_PROBLEM_HH
+#define DUMUX_1PLINEAR_MIMETIC_PROBLEM_HH
 
 //#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 //#include <dumux/implicit/cellcentered/mpfa/properties.hh>
@@ -33,27 +33,31 @@
 #include <dumux/material/components/unit.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include "1pmimeticanisotropicspatialparams.hh"
+#include <dumux/discretization/staggered/mimetic/mimeticcpgeometryhelper.hh>
+
+#include <dumux/io/cpgridcreator.hh>
+
+#include "1plinearspatialparams.hh"
 #include "resultevaluationmimetic.hh"
 
 namespace Dumux
 {
 template <class TypeTag>
-class OnePMimeticAnisotropicProblem;
+class OnePLinearProblem;
 
 namespace Capabilities
 {
     template<class TypeTag>
-    struct isStationary<OnePMimeticAnisotropicProblem<TypeTag>>
+    struct isStationary<OnePLinearProblem<TypeTag>>
     { static const bool value = true; };
 }
 
 namespace Properties
 {
-//NEW_TYPE_TAG(OnePMimeticAnisotropicProblem, INHERITS_FROM(CCMpfaModel, OneP, OnePMimeticTestSpatialParams));
-NEW_TYPE_TAG(OnePMimeticAnisotropicProblem, INHERITS_FROM(OnePMimetic, OnePMimeticTestSpatialParams));
+//NEW_TYPE_TAG(OnePLinearProblem, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(OnePLinearProblem, INHERITS_FROM(OnePMimetic));
 
-SET_PROP(OnePMimeticAnisotropicProblem, Fluid)
+SET_PROP(OnePLinearProblem, Fluid)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -62,30 +66,69 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(OnePLinearProblem, Grid, Dune::CpGrid);
+//SET_TYPE_PROP(OnePLinearProblem, Grid, Dune::PolyhedralGrid< 3, 3 >);
+//SET_TYPE_PROP(OnePLinearProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+
+// Set the grid creator
+SET_TYPE_PROP(OnePLinearProblem, GridCreator, Dumux::CpGridCreator<TypeTag>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, Problem, Dumux::OnePMimeticAnisotropicProblem<TypeTag> );
+SET_TYPE_PROP(OnePLinearProblem, Problem, Dumux::OnePLinearProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, SpatialParams, Dumux::OnePMimeticTestSpatialParams<TypeTag> );
+SET_TYPE_PROP(OnePLinearProblem, SpatialParams, Dumux::OnePLinearSpatialParams<TypeTag> );
 
 
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(OnePLinearProblem, EnableGlobalFVGeometryCache, true);
 
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(OnePLinearProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(OnePLinearProblem, EnableGlobalVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePLinearProblem, ProblemEnableGravity, false);
 
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, LinearSolver, SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(OnePLinearProblem, LinearSolver, UMFPackBackend<TypeTag> );
 
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, VtkWriteFaceData, false);
+SET_BOOL_PROP(OnePLinearProblem, VtkWriteFaceData, false);
+
+// The geometry helper required for the stencils, etc.
+SET_PROP(OnePLinearProblem, StaggeredGeometryHelper)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = MimeticCPGeometryHelper<GridView>;
+};
+
 }
 
+/*!
+ * \ingroup OnePModel
+ * \ingroup ImplicitTestProblems
+ * \brief  Test problem for the one-phase model:
+ * water is flowing from bottom to top through and around a low permeable lens.
+ *
+ * The domain is box shaped. All sides are closed (Neumann 0 boundary)
+ * except the top and bottom boundaries (Dirichlet), where water is
+ * flowing from bottom to top.
+ *
+ * In the middle of the domain, a lens with low permeability (\f$K=10e-12\f$)
+ * compared to the surrounding material (\f$ K=10e-10\f$) is defined.
+ *
+ * To run the simulation execute the following line in shell:
+ * <tt>./test_box1p -parameterFile test_box1p.input</tt> or
+ * <tt>./test_cc1p -parameterFile test_cc1p.input</tt>
+ *
+ * The same parameter file can be also used for 3d simulation but you need to change line
+ * <tt>typedef Dune::YaspGrid<2> type;</tt> to
+ * <tt>typedef Dune::YaspGrid<3> type;</tt> in the problem file
+ * and use <tt>test_1p_3d.dgf</tt> in the parameter file.
+ */
+
+
 template <class TypeTag>
-class OnePMimeticAnisotropicProblem : public ImplicitPorousMediaProblem<TypeTag>
+class OnePLinearProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     using ParentType = ImplicitPorousMediaProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -119,24 +162,10 @@ class OnePMimeticAnisotropicProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
 
-    //quadrature Rule
-    typedef Dune::QuadratureRule<Scalar, dim> Quad;
-    typedef typename Quad::iterator QuadIterator;
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-
-    typedef Dune::QuadratureRule<Scalar, dim-1> QuadFace;
-    typedef typename QuadFace::iterator QuadIteratorFace;
-    typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceElementsFace;
-    typedef typename Dune::ReferenceElement<Scalar, dim-1> ReferenceElementFace;
-
-    typedef typename GridView::ctype CoordScalar;
-
-    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
-    typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
+    typedef std::array<Scalar, dim+1> CoeffArray;
 
 public:
-    OnePMimeticAnisotropicProblem(TimeManager &timeManager, const GridView &gridView)
+    OnePLinearProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
@@ -144,12 +173,20 @@ public:
                                              Problem,
                                              Name);
 
-        testCase_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                                int,
-                                                Problem,
-                                                TestCase);
+        testCase_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, TestCase);
 
-        pi_ = 4.0*atan(1.0);
+        a_ = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CoeffArray, "Problem", a);
+        b_ = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CoeffArray, "Problem", b);
+
+        pLow_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                        Scalar,
+                        Problem,
+                        Plow);
+
+        pHigh_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
+                        Scalar,
+                        Problem,
+                        Phigh);
     }
 
     /*!
@@ -175,78 +212,13 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-
     PrimaryVariables source(const Element &element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars,
                 const SubControlVolume &scv) const
     {
-        Scalar source = 0.0;
-
-        if(testCase_ == 1)
-        {
-            auto K = this->spatialParams().permeability(element, scv,
-                    this->model().elementSolution(element, this->model().curSol()));
-
-            //get the Gaussian quadrature rule for intervals
-            const ReferenceElement& referenceElement = ReferenceElements::general(element.geometry().type());
-            const Quad &quad = Dune::QuadratureRules<Scalar, dim>::rule(referenceElement.type(), 5);
-            //std::cout << "Using quadrature rule of order: " << quad.order() << std::endl;
-            const QuadIterator qend = quad.end();
-
-            QuadIterator qp = quad.begin();
-            for(; qp != qend; ++qp)
-            {
-                GlobalPosition globalPos = element.geometry().global(qp->position());
-
-                Scalar integrationElement = element.geometry().integrationElement(qp->position());
-                source += (pi_*pi_*((K[0][0]+K[1][1])*sin(pi_*globalPos[0])*sin(pi_*globalPos[1]) - (K[0][1]+K[1][0])*cos(pi_*globalPos[0])*cos(pi_*globalPos[1])))*qp->weight()*integrationElement;
-            }
-
-            source /=element.geometry().volume();
-        }
-        else if(testCase_ == 2)
-        {
-            //get the Gaussian quadrature rule for intervals
-            const ReferenceElement& referenceElement = ReferenceElements::general(element.geometry().type());
-            const Quad &quad = Dune::QuadratureRules<Scalar, dim>::rule(referenceElement.type(), 5);
-            //std::cout << "Using quadrature rule of order: " << quad.order() << std::endl;
-            const QuadIterator qend = quad.end();
-
-            Scalar alpha = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                    Scalar,
-                    Problem,
-                    Alpha);
-
-            QuadIterator qp = quad.begin();
-            for(; qp != qend; ++qp)
-            {
-                GlobalPosition globalPos = element.geometry().global(qp->position());
-                Scalar x = globalPos[0];
-                Scalar y = globalPos[1];
-                Scalar integrationElement = element.geometry().integrationElement(qp->position());
-                Scalar val = (pi_*(x*cos(pi_*x)*sin(pi_*y) + y*cos(pi_*y)*sin(pi_*x) -
-                              alpha*x*cos(pi_*x)*sin(pi_*y) - alpha*y*cos(pi_*y)*sin(pi_*x) +
-                              x*x*pi_*sin(pi_*x)*sin(pi_*y) + y*y*pi_*sin(pi_*x)*sin(pi_*y) +
-                              alpha*x*x*pi_*sin(pi_*x)*sin(pi_*y) + alpha*y*y*pi_*sin(pi_*x)*sin(pi_*y) +
-                              2.0*x*y*pi_*cos(pi_*x)*cos(pi_*y) - 2.0*alpha*x*y*pi_*cos(pi_*x)*cos(pi_*y)))/(x*x + y*y);
-
-                source += val*qp->weight()*integrationElement;
-            }
-            source /=element.geometry().volume();
-        }
-        else if(testCase_ == 3)
-        {
-            const GlobalPosition& globalPos = element.geometry().center();
-
-            if(globalPos[0] > 0.5 + 1.0e-4 && globalPos[1] > 0.5 + 1.0e-4)
-                source = 10.0;
-        }
-
-        PrimaryVariables values(source);
-
+        PrimaryVariables values(0.0);
         return values;
-
     }
 
     /*!
@@ -282,21 +254,6 @@ public:
 
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return PrimaryVariables(0);
-    }
-
-    // \}
-
-    /*!
      * \name Volume terms
      */
     // \{
@@ -309,13 +266,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables priVars(0);
-        if(testCase_ == 1)
-            priVars[pressureIdx] = 1.0;//exact(element.geometry().center());
-        else if(testCase_ == 3)
-            priVars[pressureIdx] = 0.0;//exact(element.geometry().center());
-        else
-            priVars[pressureIdx] = 1.0;//exact(element.geometry().center());
+        PrimaryVariables priVars(1.0);
 
         return priVars;
     }
@@ -366,8 +317,6 @@ public:
             auto fvGeometry = localView(this->model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
-            int bla = 0;
-
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto ccDofIdx = scv.dofIndex();
@@ -391,27 +340,72 @@ public:
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
+        Scalar z = globalPos[2];
 
-        Scalar press = 0.0;
-        if(testCase_ != 3)
+        Scalar p_ex = 0.0;
+
+        if(testCase_ == 1)
         {
-            press = 1.0 + sin(pi_*x)*sin(pi_*y);
+            if(x < 0.6 +1.0e-6)
+            {
+                p_ex = a_[0]*x + a_[1]*y + a_[2]*z + a_[3];
+            }
+            else
+            {
+                p_ex = b_[0]*x + b_[1]*y + b_[2]*z + b_[3];
+            }
+        }
+        else
+        {
+            Scalar x_max = this->bBoxMax()[0];
+            Scalar x_min = this->bBoxMin()[0];
+            Scalar y_max = this->bBoxMax()[1];
+            Scalar y_min = this->bBoxMin()[1];
+            Scalar z_max = this->bBoxMax()[2];
+            Scalar z_min = this->bBoxMin()[2];
+
+            p_ex = 1.0/3.0*((x - x_min)/(x_max - x_min) + (y - y_min)/(y_max - y_min) + (z - z_min)/(z_max - z_min))*pLow_
+                   - 1.0/3.0*((x - x_max)/(x_max - x_min) + (y - y_max)/(y_max - y_min) + (z - z_max)/(z_max - z_min))*pHigh_;
         }
 
-        return press;
-
+        return p_ex;
     }
 
-    Dune::FieldVector<Scalar,dim> exactGrad (const GlobalPosition& evalPos, const GlobalPosition& regionPos) const
+    Dune::FieldVector<Scalar,dim> exactGrad(const GlobalPosition& evalPos, const GlobalPosition& regionPos) const
     {
 
-        Scalar x = evalPos[0];
-        Scalar y = evalPos[1];
+        Scalar x = regionPos[0];
 
-        GlobalPosition grad(0);
+        Dune::FieldVector<Scalar,dim> grad(0);
+        if(testCase_ == 1)
+        {
+            if(x < 0.6 +1.0e-6)
+            {
+                grad[0] = a_[0];
+                grad[1] = a_[1];
+                grad[2] = a_[2];
+            }
+            else
+            {
+                grad[0] = b_[0];
+                grad[1] = b_[1];
+                grad[2] = b_[2];
+            }
+        }
+        else
+        {
+            Scalar x_max = this->bBoxMax()[0];
+            Scalar x_min = this->bBoxMin()[0];
+            Scalar y_max = this->bBoxMax()[1];
+            Scalar y_min = this->bBoxMin()[1];
+            Scalar z_max = this->bBoxMax()[2];
+            Scalar z_min = this->bBoxMin()[2];
 
-        grad[0] =  pi_*cos(pi_*x)*sin(pi_*y);
-        grad[1] =  pi_*sin(pi_*x)*cos(pi_*y);
+            grad[0] = 1.0/3.0*(pLow_-pHigh_)/(x_max - x_min);
+            grad[1] = 1.0/3.0*(pLow_-pHigh_)/(y_max - y_min);
+            grad[2] = 1.0/3.0*(pLow_-pHigh_)/(z_max - z_min);
+
+        }
 
         return grad;
     }
@@ -434,9 +428,12 @@ public:
 
 private:
     std::string name_;
-    Scalar pi_;
-    unsigned int testCase_;
+    int testCase_;
     Dumux::ResultEvaluation<TypeTag> result;
+    CoeffArray a_;
+    CoeffArray b_;
+    Scalar pLow_;
+    Scalar pHigh_;
 };
 } //end namespace
 

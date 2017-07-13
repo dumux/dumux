@@ -99,7 +99,7 @@ public:
          * \param elemSol The element solution vector
          * \return the intrinsic permeability
          */
-    PermeabilityType permeability(const Element& element,
+        PermeabilityType permeability(const Element& element,
                                       const SubControlVolume& scv,
                                       const ElementSolutionVector& elemSol) const
         {

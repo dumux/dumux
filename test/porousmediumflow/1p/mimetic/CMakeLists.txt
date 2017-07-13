@@ -23,6 +23,9 @@ add_dumux_test(test_1pgermanbasin test_1pgermanbasin test_1pgermanbasin.cc
 add_dumux_test(test_1pmimeticanisotropic test_1pmimeticanisotropic test_1pmimeticanisotropic.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pmimeticanisotropic)
 
+add_dumux_test(test_1plinear test_1plinear test_1plinear.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/test_1plinear)
+
 #install sources
 install(FILES
 1ptestproblem.hh

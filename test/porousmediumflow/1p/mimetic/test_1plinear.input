@@ -1,0 +1,24 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = ../implicit/grids/flat_fault_refTwo.grdecl
+#File = ../implicit/grids/testModel1.grdecl
+#File = ../implicit/grids/WellMesh_5.msh.dgf
+
+[Problem]
+Name = test_1PLinearityPreservation_mimetic
+TestCase = 2
+a = 14 1 1 0
+b = 4 1 1 6
+Plow = 1.0e5
+Phigh = 2.0e5
+
+#[Newton]
+#EnableShiftCriterion = 0
+#EnableResidualCriterion = 1
+#UseAbsoluteResidualCriterion = 1
+#MaxAbsoluteResidual = 1.0e-5
+#UseLineSearch = 0
+#MaxSteps = 100
