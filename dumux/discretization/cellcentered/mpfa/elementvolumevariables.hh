@@ -137,7 +137,7 @@ public:
                                           problem,
                                           element,
                                           scvI);
-        volVarIndices_[localIdx] = scvI.index();
+        volVarIndices_[localIdx] = scvI.dofIndex();
         ++localIdx;
 
         // Update the volume variables of the neighboring elements
@@ -149,7 +149,7 @@ public:
                                               problem,
                                               elementJ,
                                               scvJ);
-            volVarIndices_[localIdx] = scvJ.index();
+            volVarIndices_[localIdx] = scvJ.dofIndex();
             ++localIdx;
         }
 
@@ -250,7 +250,7 @@ public:
                                                   problem,
                                                   elementJ,
                                                   scvJ);
-                volVarIndices_[localIdx] = scvJ.index();
+                volVarIndices_[localIdx] = scvJ.dofIndex();
                 ++localIdx;
             }
         }
