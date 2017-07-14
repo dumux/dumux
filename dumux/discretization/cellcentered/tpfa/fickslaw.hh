@@ -101,20 +101,13 @@ public:
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
             const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-            // lambdas to get mole/mass fractions & densities
-            auto getX = [phaseIdx, compIdx] (const VolumeVariables& volVars)
-            { return  volVars.moleFraction(phaseIdx, compIdx) ; };
-
-            auto getRho = [phaseIdx](const VolumeVariables& volVars)
-            { return volVars.molarDensity(phaseIdx);};
-
-            // the inside and outside mole/mass fractions
-            auto xInside = getX(insideVolVars);
-            auto xOutside = scvf.numOutsideScvs() == 1 ? getX(outsideVolVars)
-                            : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, getX, xInside, tij, phaseIdx, compIdx);
-            auto rhoInside = getRho(insideVolVars);
-            auto rhoOutside = scvf.numOutsideScvs() == 1 ? getRho(outsideVolVars)
-                            : branchingFacetDensity_(elemVolVars, scvf, getRho, getRho(insideVolVars));
+            // the inside and outside mole fractions
+            const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
+            const auto xOutside = scvf.numOutsideScvs() == 1 ? outsideVolVars.moleFraction(phaseIdx, compIdx)
+                                : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, xInside, tij, phaseIdx, compIdx);
+            const auto rhoInside = insideVolVars.molarDensity(phaseIdx);
+            const auto rhoOutside = scvf.numOutsideScvs() == 1 ? outsideVolVars.molarDensity(phaseIdx)
+                                  : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = tij*(rhoInside*xInside - rhoOutside*xOutside);
         }
@@ -124,13 +117,11 @@ public:
 private:
 
     //! compute the mole/mass fraction at branching facets for network grids
-    template<typename GetXFunction>
     static Scalar branchingFacetX_(const Problem& problem,
                                    const Element& element,
                                    const FVElementGeometry& fvGeometry,
                                    const ElementVolumeVariables& elemVolVars,
                                    const SubControlVolumeFace& scvf,
-                                   const GetXFunction& getX,
                                    const Scalar insideX, const Scalar insideTi,
                                    const int phaseIdx, const int compIdx)
     {
@@ -146,16 +137,15 @@ private:
 
             auto outsideTi = calculateTransmissibility_(problem, outsideElement, fvGeometry, elemVolVars, flippedScvf, phaseIdx, compIdx);
             sumTi += outsideTi;
-            sumXTi += outsideTi*getX(outsideVolVars);
+            sumXTi += outsideTi*outsideVolVars.moleFraction(phaseIdx, compIdx);
         }
         return sumXTi/sumTi;
     }
 
     //! compute the density at branching facets for network grids as arithmetic mean
-    template<typename GetRhoFunction>
     static Scalar branchingFacetDensity_(const ElementVolumeVariables& elemVolVars,
                                          const SubControlVolumeFace& scvf,
-                                         const GetRhoFunction& getRho,
+                                         const int phaseIdx,
                                          const Scalar insideRho)
     {
         Scalar rho(insideRho);
@@ -163,7 +153,7 @@ private:
         {
             const auto outsideScvIdx = scvf.outsideScvIdx(i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            rho += getRho(outsideVolVars);
+            rho += outsideVolVars.molarDensity(phaseIdx);
         }
         return rho/(scvf.numOutsideScvs()+1);
     }
