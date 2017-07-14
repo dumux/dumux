@@ -120,6 +120,8 @@ public:
         // the first entry is always the cc dofIdx itself
         if(stencil.empty())
             stencil.push_back(scvf.insideScvIdx());
+        if(!scvf.boundary())
+            stencil.push_back(scvf.outsideScvIdx());
     }
 
     void computeCellCenterToFaceStencil(Stencil& stencil,

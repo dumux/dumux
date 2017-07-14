@@ -325,11 +325,14 @@ protected:
 
 //                std::cout << "neumannFlux" << neumannFlux << std::endl;
 //
-                for(int faceEqIdx = 0; faceEqIdx < neumannFlux.size(); ++faceEqIdx)
-                {
-                    this->faceResiduals_[scvf.localFaceIdx()][faceEqIdx] = flux[faceEqIdx];
-                    this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux[faceEqIdx];
-                }
+//                for(int faceEqIdx = 0; faceEqIdx < neumannFlux.size(); ++faceEqIdx)
+//                {
+//                    this->faceResiduals_[scvf.localFaceIdx()] = flux[faceEqIdx];
+//                    this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux[faceEqIdx];
+//                }
+
+                this->faceResiduals_[scvf.localFaceIdx()] = flux;
+                this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux;
             }
             else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
             {

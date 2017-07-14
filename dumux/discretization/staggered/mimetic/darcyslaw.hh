@@ -186,13 +186,13 @@ public:
             {
                 const auto xFace = scvfIt.ipGlobal();
                 const auto gFace = problem.gravityAtPos(xFace);
-                Scalar hFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0] - rho*(gFace*xFace);
+                Scalar hFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx] - rho*(gFace*xFace);
                 flux += W[indexFace][indexLocal] * (hInside - hFace);
                 indexLocal++;
             }
 //            const auto xFace = scvf.ipGlobal();
 //            const auto gFace = problem.gravityAtPos(xFace);
-//            Scalar hFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[0] - rho*(gFace*xFace);
+//            Scalar hFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[phaseIdx] - rho*(gFace*xFace);
 //            flux = fluxVarsCache.tij()* (hInside - hFace);
         }
         else // no gravity
@@ -204,12 +204,12 @@ public:
             int indexLocal = 0;
             for (auto&& scvfIt : scvfs(fvGeometry))
             {
-                Scalar pFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[0];
+                Scalar pFace = globalFaceVars.faceVars(scvfIt.dofIndex()).facePriVars()[phaseIdx];
                 flux += W[indexFace][indexLocal] * (pInside - pFace);
                 indexLocal++;
             }
 
-//            Scalar pFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[0];
+//            Scalar pFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[phaseIdx];
 //            flux = fluxVarsCache.tij()* (pInside - pFace);
         }
 
@@ -260,15 +260,6 @@ public:
             C[index][index] = scvf.area();
             R[index] *= scvf.area();
         }
-
-//        DynamicMatrix LocalK = getPermeability(elemVolVars[0], element.geometry().center());
-//                      LocalK *= element.geometry().volume();
-
-//        DynamicMatrix LocalK = multiplyMatrices(getTransposed(N),R);
-//        LocalK.invert();
-//        DynamicMatrix DTrans = Id;
-//        DTrans -= multiplyMatrices(multiplyMatrices(R,LocalK),getTransposed(N));
-
 
         DynamicMatrix LocalR = multiplyMatrices(getTransposed(R),R);
         LocalR.invert();
