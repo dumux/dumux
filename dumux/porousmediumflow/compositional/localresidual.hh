@@ -171,97 +171,54 @@ public:
         // get upwind weights into local scope
         PrimaryVariables flux(0.0);
 
-        // formulation with mole balances
-        if (useMoles)
+        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+
+        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+
+        // advective fluxes
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // advective fluxes
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    // get equation index
-                    auto eqIdx = conti0EqIdx + compIdx;
+                // get equation index
+                const auto eqIdx = conti0EqIdx + compIdx;
 
-                    // the physical quantities for which we perform upwinding
-                    auto upwindTerm = [phaseIdx, compIdx](const auto& volVars)
-                    { return volVars.molarDensity(phaseIdx)*volVars.moleFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
+                // the physical quantities for which we perform upwinding
+                const auto upwindTerm = [&massOrMoleDensity, &massOrMoleFraction, phaseIdx, compIdx] (const auto& volVars)
+                { return massOrMoleDensity(volVars, phaseIdx)*massOrMoleFraction(volVars, phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
-                    if (eqIdx != replaceCompEqIdx)
-                        flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+                if (eqIdx != replaceCompEqIdx)
+                    flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
-                    // diffusive fluxes (only for the component balances)
-                    if(eqIdx != replaceCompEqIdx)
-                      flux[eqIdx] += diffusiveFluxes[compIdx];
-                }
-
-                // in case one balance is substituted by the total mole balance
-                if (useTotalMoleOrMassBalance)
-                {
-                  // if the diffusion model assumes that each mole of substance B (minor component)
-                  // replaces exactly one mole of substance A (bulk phase major component),
-                  // just consider the advective bulk phase movement
-                  if(MolecularDiffusionType::totalMolarFluxesCancelOut())
-                  {
-                    auto upwindTermTotalBalance = [phaseIdx](const auto& volVars)
-                    { return volVars.molarDensity(phaseIdx)*volVars.mobility(phaseIdx); };
-
-                    flux[replaceCompEqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTermTotalBalance);
-                  }
-                  else
-                  {
-                    for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                      flux[replaceCompEqIdx] += diffusiveFluxes[compIdx];
-                  }
-                }
-
-                //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-                EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+                // diffusive fluxes (only for the component balances)
+                if(eqIdx != replaceCompEqIdx)
+                    flux[eqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                                            : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
             }
 
-            //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-            EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
-        }
-        // formulation with mass balances
-        else
-        {
-            // advective fluxes
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            // in case one balance is substituted by the total mole balance
+            if (useTotalMoleOrMassBalance)
             {
-                const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(phaseIdx);
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    // get equation index
-                    auto eqIdx = conti0EqIdx + compIdx;
+                // the physical quantities for which we perform upwinding
+                const auto upwindTerm = [&massOrMoleDensity, phaseIdx] (const auto& volVars)
+                { return massOrMoleDensity(volVars, phaseIdx)*volVars.mobility(phaseIdx); };
 
-                    // the physical quantities for which we perform upwinding
-                    auto upwindTerm = [phaseIdx, compIdx](const auto& volVars)
-                    { return volVars.density(phaseIdx)*volVars.massFraction(phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
+                flux[replaceCompEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
-                    const auto advFlux = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-
-                    if (eqIdx != replaceCompEqIdx)
-                        flux[eqIdx] += advFlux;
-
-                    // diffusive fluxes (only for the component balances)
-                    if(eqIdx != replaceCompEqIdx)
-                      flux[eqIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                }
-
-                // in case one balance is substituted by the total mass balance
-                if (useTotalMoleOrMassBalance)
-                {
-                  for(int compIdx = 0; compIdx < numComponents; ++compIdx)
-                    flux[replaceCompEqIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                }
-
-                //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-                EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+                for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    flux[replaceCompEqIdx] += useMoles ? diffusiveFluxes[compIdx]
+                                                       : diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
             }
 
-            //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-            EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
         }
+
+        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
         return flux;
     }
