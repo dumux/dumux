@@ -90,63 +90,37 @@ public:
     {
         PrimaryVariables storage(0.0);
 
-        // formulation with mole balances
-        if (useMoles)
+        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+
+        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+
+        // compute storage term of all components within all phases
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // compute storage term of all components within all phases
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    auto eqIdx = conti0EqIdx + compIdx;
-                    if (eqIdx != replaceCompEqIdx)
-                        storage[eqIdx] += volVars.porosity()
-                                          * volVars.saturation(phaseIdx)
-                                          * volVars.molarDensity(phaseIdx)
-                                          * volVars.moleFraction(phaseIdx, compIdx);
-                }
-
-                // in case one balance is substituted by the total mole balance
-                if (useTotalMoleOrMassBalance)
-                    storage[replaceCompEqIdx] = volVars.molarDensity(phaseIdx)
-                                                * volVars.porosity()
-                                                * volVars.saturation(phaseIdx);
-
-                //! The energy storage in the fluid phase with index phaseIdx
-                EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
+                auto eqIdx = conti0EqIdx + compIdx;
+                if (eqIdx != replaceCompEqIdx)
+                    storage[eqIdx] += volVars.porosity()
+                                      * volVars.saturation(phaseIdx)
+                                      * massOrMoleDensity(volVars, phaseIdx)
+                                      * massOrMoleFraction(volVars, phaseIdx, compIdx);
             }
 
-            //! The energy storage in the solid matrix
-            EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
+            // in case one balance is substituted by the total mole balance
+            if (useTotalMoleOrMassBalance)
+                storage[replaceCompEqIdx] += massOrMoleDensity(volVars, phaseIdx)
+                                             * volVars.porosity()
+                                             * volVars.saturation(phaseIdx);
+
+            //! The energy storage in the fluid phase with index phaseIdx
+            EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
         }
-        // formulation with mass balances
-        else
-        {
-            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-            {
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    auto eqIdx = conti0EqIdx + compIdx;
-                    if (eqIdx != replaceCompEqIdx)
-                        storage[eqIdx] += volVars.porosity()
-                                          * volVars.saturation(phaseIdx)
-                                          * volVars.density(phaseIdx)
-                                          * volVars.massFraction(phaseIdx, compIdx);
-                }
 
-                // in case one balance is substituted by the total mass balance
-                if (useTotalMoleOrMassBalance)
-                    storage[replaceCompEqIdx] = volVars.density(phaseIdx)
-                                                * volVars.porosity()
-                                                * volVars.saturation(phaseIdx);
-
-                //! The energy storage in the fluid phase with index phaseIdx
-                EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
-            }
-
-            //! The energy storage in the solid matrix
-            EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
-        }
+        //! The energy storage in the solid matrix
+        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
     }
