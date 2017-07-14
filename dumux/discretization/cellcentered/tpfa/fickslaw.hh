@@ -78,9 +78,6 @@ public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    static constexpr bool totalMolarFluxesCancelOut()
-    { return true; }
-
     //! state the type for the corresponding cache and its filler
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache;
