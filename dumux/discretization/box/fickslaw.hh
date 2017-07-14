@@ -78,6 +78,10 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
+
+    static constexpr bool totalMolarFluxesCancelOut()
+    { return true; }
+
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,

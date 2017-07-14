@@ -60,15 +60,17 @@ class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidua
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
 
     //! The index of the component balance equation that gets replaced with the total mass balance
-    static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
 
 public:
 
@@ -105,7 +107,7 @@ public:
                 }
 
                 // in case one balance is substituted by the total mole balance
-                if (replaceCompEqIdx < numComponents)
+                if (useTotalMoleOrMassBalance)
                     storage[replaceCompEqIdx] = volVars.molarDensity(phaseIdx)
                                                 * volVars.porosity()
                                                 * volVars.saturation(phaseIdx);
@@ -133,7 +135,7 @@ public:
                 }
 
                 // in case one balance is substituted by the total mass balance
-                if (replaceCompEqIdx < numComponents)
+                if (useTotalMoleOrMassBalance)
                     storage[replaceCompEqIdx] = volVars.density(phaseIdx)
                                                 * volVars.porosity()
                                                 * volVars.saturation(phaseIdx);
@@ -189,23 +191,28 @@ public:
                         flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
                     // diffusive fluxes (only for the component balances)
-                    if (phaseIdx != compIdx)
-                    {
-                        //one of these if is always true
-                        if (eqIdx != replaceCompEqIdx)
-                            flux[eqIdx] += diffusiveFluxes[compIdx];
-                        if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
-                            flux[conti0EqIdx + phaseIdx] -= diffusiveFluxes[compIdx];
-                    }
+                    if(eqIdx != replaceCompEqIdx)
+                      flux[eqIdx] += diffusiveFluxes[compIdx];
                 }
 
                 // in case one balance is substituted by the total mole balance
-                if (replaceCompEqIdx < numComponents)
+                if (useTotalMoleOrMassBalance)
                 {
+                  // if the diffusion model assumes that each mole of substance B (minor component)
+                  // replaces exactly one mole of substance A (bulk phase major component),
+                  // just consider the advective bulk phase movement
+                  if(MolecularDiffusionType::totalMolarFluxesCancelOut())
+                  {
                     auto upwindTermTotalBalance = [phaseIdx](const auto& volVars)
                     { return volVars.molarDensity(phaseIdx)*volVars.mobility(phaseIdx); };
 
                     flux[replaceCompEqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTermTotalBalance);
+                  }
+                  else
+                  {
+                    for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                      flux[replaceCompEqIdx] += diffusiveFluxes[compIdx];
+                  }
                 }
 
                 //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
@@ -237,23 +244,15 @@ public:
                         flux[eqIdx] += advFlux;
 
                     // diffusive fluxes (only for the component balances)
-                    if (phaseIdx != compIdx)
-                    {
-                        if (eqIdx != replaceCompEqIdx)
-                            flux[eqIdx] +=  diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                        if (conti0EqIdx + phaseIdx != replaceCompEqIdx)
-                            flux[conti0EqIdx + phaseIdx] -=  diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
-                    }
+                    if(eqIdx != replaceCompEqIdx)
+                      flux[eqIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
                 }
 
                 // in case one balance is substituted by the total mass balance
-                if (replaceCompEqIdx < numComponents)
+                if (useTotalMoleOrMassBalance)
                 {
-                    auto upwindTermTotalBalance = [phaseIdx](const auto& volVars)
-                    { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
-
-                    flux[replaceCompEqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTermTotalBalance);
-
+                  for(int compIdx = 0; compIdx < numComponents; ++compIdx)
+                    flux[replaceCompEqIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
                 }
 
                 //! Add advective phase energy fluxes. For isothermal model the contribution is zero.

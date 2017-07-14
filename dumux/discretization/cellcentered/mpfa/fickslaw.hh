@@ -159,6 +159,9 @@ public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
 
+    static constexpr bool totalMolarFluxesCancelOut()
+    { return true; }
+
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;
     using CacheFiller = MpfaFicksLawCacheFiller;
