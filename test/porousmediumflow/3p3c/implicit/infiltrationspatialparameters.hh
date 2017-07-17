@@ -69,41 +69,39 @@ SET_PROP(InfiltrationSpatialParams, MaterialLaw)
 template<class TypeTag>
 class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CoordScalar = typename Grid::ctype;
     enum {
         dim = GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dim> DimVector;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
+    using DimVector = Dune::FieldVector<CoordScalar,dim>;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using Element = typename GridView::template Codim<0>::Entity;
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    //get the material law from the property system
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 
 public:
-    //get the material law from the property system
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
@@ -136,17 +134,13 @@ public:
     }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    Scalar intrinsicPermeability(const SubControlVolume &scv,
-                                 const VolumeVariables& volVars) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        if (isFineMaterial_(scv.dofPosition()))
+        if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }

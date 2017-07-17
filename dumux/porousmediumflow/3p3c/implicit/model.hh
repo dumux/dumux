@@ -179,7 +179,7 @@ public:
     {
         auto& phasePresence = outputModule.createScalarField("phase presence", dofCodim);
         for (std::size_t i = 0; i < phasePresence.size(); ++i)
-            phasePresence[i] = priVarSwitch().phasePresence(i);
+            phasePresence[i] = this->curSol()[i].state();
     }
 
     /*!
@@ -266,9 +266,8 @@ public:
     void updateFailed()
     {
         ParentType::updateFailed();
-
+        // reset privar switch flag
         switchFlag_ = false;
-        priVarSwitch_().resetPhasePresence();
     }
 
     /*!
@@ -281,9 +280,7 @@ public:
     void advanceTimeLevel()
     {
         ParentType::advanceTimeLevel();
-
-        // update the phase state
-        priVarSwitch_().updateOldPhasePresence();
+        // reset privar switch flag
         switchFlag_ = false;
     }
 
@@ -313,7 +310,7 @@ public:
         if (!outStream.good())
             DUNE_THROW(Dune::IOError, "Could not serialize entity " << dofIdxGlobal);
 
-        outStream << priVarSwitch().phasePresence(dofIdxGlobal) << " ";
+        outStream << this->curSol()[dofIdxGlobal].state() << " ";
     }
 
     /*!
@@ -337,8 +334,8 @@ public:
         int phasePresence;
         inStream >> phasePresence;
 
-        priVarSwitch_().setPhasePresence(dofIdxGlobal, phasePresence);
-        priVarSwitch_().setOldPhasePresence(dofIdxGlobal, phasePresence);
+        this->curSol()[dofIdxGlobal].setState(phasePresence);
+        this->prevSol()[dofIdxGlobal].setState(phasePresence);
     }
 
     const Dumux::ThreePThreeCPrimaryVariableSwitch<TypeTag>& priVarSwitch() const

@@ -52,12 +52,14 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
 
     // constraint solvers
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -105,23 +107,22 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolution &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(priVars, problem, element, scv);
+        ParentType::update(elemSol, problem, element, scv);
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
 
         bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
 
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, scv);
+            problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        // get the phase presence of the dof this scv is related too
-        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
-
-        Scalar temp = ParentType::temperature(priVars, problem, element, scv);
+        Scalar temp = ParentType::temperature(elemSol, problem, element, scv);
         fluidState_.setTemperature(temp);
 
         /* first the saturations */
@@ -550,9 +551,9 @@ public:
         setDiffusionCoefficient_(nPhaseIdx, wCompIdx, 0.0);
         setDiffusionCoefficient_(nPhaseIdx, gCompIdx, 0.0);
 
-        // porosity
-        porosity_ = problem.spatialParams().porosity(scv);
-        Valgrind::CheckDefined(porosity_);
+        // porosity & permeabilty
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // compute and set the enthalpy
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -664,6 +665,12 @@ public:
     { return bulkDensTimesAdsorpCoeff_; }
 
     /*!
+     * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
+     */
+    const PermeabilityType& permeability() const
+    { return permeability_; }
+
+    /*!
      * \brief Returns the diffusion coeffiecient
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
@@ -684,6 +691,7 @@ protected:
     Scalar massFrac_[numPhases][numComponents];
 
     Scalar porosity_;        //!< Effective porosity within the control volume
+    PermeabilityType permeability_; //!< Effective permeability within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     FluidState fluidState_;
