@@ -170,8 +170,8 @@ public:
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
-        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
 
         /////////////
         // set the saturations

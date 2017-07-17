@@ -323,14 +323,6 @@ public:
         return initial_(globalPos);
     }
 
-    /*!
-     * \brief Evaluate the initial phase state at a given position
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
-    { return Indices::wPhaseOnly; }
-
     // \}
 
 private:
@@ -346,6 +338,8 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
+        priVars.setState(Indices::wPhaseOnly);
+
         Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 
         Scalar pl = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);
