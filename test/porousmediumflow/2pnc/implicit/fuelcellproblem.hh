@@ -85,6 +85,7 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -178,12 +179,12 @@ public:
     { return temperature_; }
 
     //! \copydoc Dumux::ImplicitProblem::source()
-    PrimaryVariables source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
+    Sources source(const Element &element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume &scv) const
     {
-        PrimaryVariables values(0.0);
+        Sources values(0.0);
         const auto& globalPos = scv.dofPosition();
 
         //reaction sources from electro chemistry
@@ -255,14 +256,6 @@ public:
     { return initial_(globalPos); }
 
 
-     /*!
-      * \brief Evaluate the initial phase state at a given position
-      *
-      * \param globalPos The global position
-      */
-     int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
-     { return Indices::bothPhases; }
-
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
@@ -315,6 +308,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
+        priVars.setState(Indices::bothPhases);
 
         Scalar pg = 1.0e5;
         priVars[pressureIdx] = pg;
