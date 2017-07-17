@@ -112,8 +112,9 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         contiN2EqIdx = Indices::contiNEqIdx
     };
 
-
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
@@ -218,15 +219,15 @@ public:
     { return temperature_; }
 
     /*!
-     * \brief Returns the source term
+     * \brief Returns the source terms for each equation
      *
      * \param values Stores the source values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return Sources(0.0);
     }
 
     // \}
@@ -284,12 +285,12 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    PrimaryVariables neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+    NeumannFluxes neumann(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
 
         const auto& globalPos = scvf.ipGlobal();
 

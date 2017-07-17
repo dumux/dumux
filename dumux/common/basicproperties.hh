@@ -27,6 +27,7 @@
 #define DUMUX_BASIC_PROPERTIES_HH
 
 #include <dune/common/parametertree.hh>
+#include <dune/common/fvector.hh>
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -66,6 +67,16 @@ NEW_PROP_TAG(GridCreator);
 //! The DUNE grid type
 NEW_PROP_TAG(Grid);
 
+//! The number of equations to solve (equal to number of primary variables)
+NEW_PROP_TAG(NumEq);
+
+//! A vector of primary variables
+NEW_PROP_TAG(PrimaryVariables);
+
+//! A vector of size number equations that can be used for
+//! Neumann fluxes, sources, residuals, ...
+NEW_PROP_TAG(NumEqVector);
+
 //! The type of the grid view according to the grid type
 NEW_PROP_TAG(GridView);
 
@@ -97,6 +108,13 @@ NEW_PROP_TAG(VtkOutputLevel);
 
 //! Set the default type of scalar values to double
 SET_TYPE_PROP(NumericModel, Scalar, double);
+
+//! Set the default vector with size number of equations to a field vector
+SET_TYPE_PROP(NumericModel, NumEqVector, Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                           GET_PROP_VALUE(TypeTag, NumEq) >);
+
+//! Set the default primary variable vector to a vector of size of number of equations
+SET_TYPE_PROP(NumericModel, PrimaryVariables, typename GET_PROP_TYPE(TypeTag, NumEqVector));
 
 //! use an unlimited time step size by default
 SET_SCALAR_PROP(NumericModel, TimeManagerMaxTimeStepSize, std::numeric_limits<typename GET_PROP_TYPE(TypeTag,Scalar)>::max());
