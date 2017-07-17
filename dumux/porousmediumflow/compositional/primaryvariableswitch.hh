@@ -60,68 +60,13 @@ public:
 
     void init(Problem& problem)
     {
-        auto numDofs = problem.model().numDofs();
-        phasePresence_.resize(numDofs);
-        wasSwitched_.resize(numDofs, false);
-
-        if(isBox)
-        {
-            for (const auto& vertex : vertices(problem.gridView()))
-            {
-                const auto dofIdxGlobal = problem.model().dofMapper().index(vertex);
-                phasePresence_[dofIdxGlobal] = problem.initialPhasePresence(vertex);
-            }
-        }
-        else
-        {
-            for (const auto& element : elements(problem.gridView()))
-            {
-                const auto dofIdxGlobal = problem.model().dofMapper().index(element);
-                phasePresence_[dofIdxGlobal] = problem.initialPhasePresence(element);
-            }
-        }
-
-        oldPhasePresence_ = phasePresence_;
+        wasSwitched_.resize(problem.model().numDofs(), false);
     }
 
-    int phasePresence(IndexType dofIdxGlobal) const
-    {
-        return phasePresence_[dofIdxGlobal];
-    }
-
+    //! If the primary variables were recently switched
     bool wasSwitched(IndexType dofIdxGlobal) const
     {
         return wasSwitched_[dofIdxGlobal];
-    }
-
-    void setPhasePresence(IndexType dofIdxGlobal, int phasePresence)
-    {
-        phasePresence_[dofIdxGlobal] = phasePresence;
-    }
-
-    void setOldPhasePresence(IndexType dofIdxGlobal, int phasePresence)
-    {
-        oldPhasePresence_[dofIdxGlobal] = phasePresence;
-    }
-
-    /*!
-     * \brief Resets the current phase presence to the old one.
-     * This is done after an update failed.
-     */
-    void resetPhasePresence()
-    {
-        phasePresence_ = oldPhasePresence_;
-        wasSwitched_.assign(phasePresence_.size(), false);
-    }
-
-    /*!
-     * \brief Sets the old phase presence state to the current one.
-     * This is done when advancing to the next time step (problem post processing)
-     */
-    void updateOldPhasePresence()
-    {
-        oldPhasePresence_ = phasePresence_;
-        wasSwitched_.assign(phasePresence_.size(), false);
     }
 
     /*!
@@ -134,7 +79,7 @@ public:
     update(Problem& problem, SolutionVector& curSol)
     {
         bool switched = false;
-        visited_.assign(phasePresence_.size(), false);
+        visited_.assign(wasSwitched_.size(), false);
         for (const auto& element : elements(problem.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
@@ -179,7 +124,7 @@ public:
     update(Problem& problem, SolutionVector& curSol)
     {
         bool switched = false;
-        visited_.assign(phasePresence_.size(), false);
+        visited_.assign(wasSwitched_.size(), false);
         for (const auto& element : elements(problem.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
@@ -240,8 +185,6 @@ protected:
         DUNE_THROW(Dune::NotImplemented, "This model seems to use a primary variable switch but none is implemented!");
     }
 
-    std::vector<int> phasePresence_;
-    std::vector<int> oldPhasePresence_;
     std::vector<bool> wasSwitched_;
     std::vector<bool> visited_;
 };
