@@ -172,8 +172,8 @@ public:
         Scalar t = BaseType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
-        auto phasePresence = problem.model().priVarSwitch().phasePresence(scv.dofIndex());
-        auto&& priVars = isBox ? elemSol[scv.indexInElement()] : elemSol[0];
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
 
         /////////////
         // set the saturations
