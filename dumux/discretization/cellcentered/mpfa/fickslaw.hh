@@ -174,6 +174,9 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            if(compIdx == phaseIdx)
+              continue;
+
             const auto& fluxVarsCache = elemFluxVarsCache[scvf];
             const auto& volVarsStencil = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx);
             const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
@@ -189,9 +192,9 @@ public:
                 && isInteriorBoundary
                 && useTpfaBoundary
                 && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
-                return scvf.area()*
-                    elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
-                    problem.neumann(element, fvGeometry, elemVolVars, scvf)[compIdx];
+                componentFlux[compIdx] = scvf.area()*
+                                         elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
+                                         problem.neumann(element, fvGeometry, elemVolVars, scvf)[compIdx];
 
 
             // get the scaling factor for the effective diffusive fluxes
@@ -199,7 +202,10 @@ public:
 
             // if factor is zero, the flux will end up zero anyway
             if (effFactor == 0.0)
-                return 0.0;
+            {
+                componentFlux[compIdx] = 0.0;
+                continue;
+            }
 
             // lambda functions depending on if we use mole or mass fractions
             auto getX = [phaseIdx, compIdx] (const auto& volVars)
@@ -219,14 +225,23 @@ public:
 
             // if no interior boundaries are present, return effective mass flux
             if (!enableInteriorBoundaries)
-                return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+                componentFlux[compIdx] = useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
 
-            // Handle interior boundaries
-            flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
+            else
+            {
+              // Handle interior boundaries
+              flux += Implementation::computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
 
-            // return overall resulting flux
-            componentFlux[compIdx] = useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+              // return overall resulting flux
+              componentFlux[compIdx] = useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+            }
         }
+
+        // accumulate the phase component flux
+        for(int compIdx = 0; compIdx < numComponents; compIdx++)
+          if(compIdx != phaseIdx)
+            componentFlux[phaseIdx] -= componentFlux[compIdx];
+
         return componentFlux;
     }
 
