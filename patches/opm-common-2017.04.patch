@@ -1,5 +1,5 @@
 diff --git a/cmake/Modules/Findopm-parser.cmake b/cmake/Modules/Findopm-parser.cmake
-index cb08ade..612f669 100644
+index a0b0b08..eb142dd 100644
 --- a/cmake/Modules/Findopm-parser.cmake
 +++ b/cmake/Modules/Findopm-parser.cmake
 @@ -38,8 +38,8 @@ string(REGEX REPLACE "${PROJECT_SOURCE_DIR}/?(.*)" "\\1"  BUILD_DIR_SUFFIX "${PR
