@@ -43,9 +43,6 @@ class CCTpfaElementFluxVariablesCache;
 template<class TypeTag>
 class CCTpfaElementFluxVariablesCache<TypeTag, true>
 {
-    // the local jacobian needs to be able to update the cache during assembly
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -100,9 +97,6 @@ private:
 template<class TypeTag>
 class CCTpfaElementFluxVariablesCache<TypeTag, false>
 {
-    // the local jacobian needs to be able to update the cache during assembly
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
