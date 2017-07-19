@@ -270,10 +270,17 @@ public:
         }
     }
 
+    /*!
+    * \brief Returns the element solution
+    *
+    * \param element The element
+    * \param sol The solution vector
+    * \NOTE: Only returns cell-center related values. Might be revised if face data are needed as well.
+    */
     ElementSolution elementSolution(const Element& element, const SolutionVector& sol) const
     {
         PrimaryVariables priVars(0.0);
-        priVars[0] = sol[cellCenterIdx][this->elementMapper().index(element)];
+        priVars[cellCenterIdx] = sol[cellCenterIdx][this->elementMapper().index(element)];
         return ElementSolution{std::move(priVars)};
     }
 
