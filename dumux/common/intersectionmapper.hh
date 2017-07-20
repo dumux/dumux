@@ -33,6 +33,36 @@
 namespace Dumux
 {
 
+template<class TypeTag>
+class ConformingGridIntersectionMapper
+{
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = unsigned int;
+
+    static constexpr int codimIntersection =  1;
+public:
+
+    ConformingGridIntersectionMapper(const GridView& gridView) : gridView_(gridView) { }
+
+    void update()
+    {}
+
+    //! The total number of intersections
+    std::size_t numIntersections() const
+    {
+        return gridView_.size(1);
+    }
+
+    IndexType globalIntersectionIndex(const Element& element, const IndexType localFaceIdx) const
+    {
+        return gridView_.indexSet().subIndex(element, localFaceIdx, codimIntersection);
+    }
+
+private:
+    const GridView gridView_;
+};
+
 /*!
  * \brief defines an intersection mapper for mapping of global DOFs assigned
  *        to faces which also works for adaptive grids.
