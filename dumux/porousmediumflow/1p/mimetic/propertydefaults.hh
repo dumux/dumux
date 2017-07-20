@@ -39,6 +39,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 
 namespace Dumux
@@ -123,24 +124,38 @@ public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
 };
 
+//! average is used as default model to compute the effective thermal heat conductivity
+SET_PROP(OnePNIMimetic, ThermalConductivityModel)
+{ private :
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+  public:
+    typedef ThermalConductivityAverage<Scalar> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(OnePNIMimetic, NiOutputLevel, 0);
+
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
 // set isothermal Model
-// SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
+SET_TYPE_PROP(OnePNIMimetic, IsothermalModel, OnePMimeticModel<TypeTag>);
 
 //set isothermal VolumeVariables
-// SET_TYPE_PROP(NavierStokesNI, IsothermalVolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+SET_TYPE_PROP(OnePNIMimetic, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-// SET_TYPE_PROP(NavierStokesNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePNIMimetic, IsothermalLocalResidual, ImmiscibleMimeticLocalResidual<TypeTag>);
 
 //set isothermal Indices
-// SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+//! The indices required by the isothermal 1p model
+SET_TYPE_PROP(OnePNIMimetic, IsothermalIndices, OnePMimeticIndices<TypeTag>);
 
 //set isothermal NumEq
-// SET_INT_PROP(NavierStokesNI, IsothermalNumEq, 1);
+SET_INT_PROP(OnePNIMimetic, IsothermalNumEqCellCenter, 1);
+
+SET_INT_PROP(OnePNIMimetic, IsothermalNumEqFace, 1);
 
 // \}
 } // end namespace Properties

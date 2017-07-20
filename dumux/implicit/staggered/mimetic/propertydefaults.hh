@@ -38,6 +38,7 @@
 #include <dumux/discretization/staggered/mimetic/mimeticgeometryhelper.hh>
 #include <dumux/discretization/staggered/mimetic/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/mimetic/facevariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/localresidual.hh>
 
 namespace Dumux {
 
@@ -82,6 +83,11 @@ SET_TYPE_PROP(MimeticModel, GlobalFluxVariablesCache, Dumux::MimeticGlobalFluxVa
 SET_TYPE_PROP(MimeticModel, GlobalFVGeometry, MimeticGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
 
 SET_TYPE_PROP(MimeticModel, VelocityOutput, MimeticVelocityOutput<TypeTag>);
+
+//! Per default we have assume isothermal problems. Set this to true to solve an energy equation
+SET_BOOL_PROP(MimeticModel, EnableEnergyBalance, false);
+
+SET_TYPE_PROP(MimeticModel, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 } // namespace Properties
 
 } // namespace Dumux

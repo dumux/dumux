@@ -27,6 +27,7 @@
 #ifndef DUMUX_1P_MIMETIC_MODEL_HH
 #define DUMUX_1P_MIMETIC_MODEL_HH
 
+#include <dumux/porousmediumflow/nonisothermal/mimetic/model.hh>
 #include "properties.hh"
 
 namespace Dumux
@@ -74,6 +75,8 @@ class OnePMimeticModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    using NonIsothermalModel = Dumux::MimeticNonIsothermalModel<TypeTag>;
+
 
 public:
 
@@ -85,7 +88,7 @@ public:
         auto& vtkOutputModule = problem.vtkOutputModule();
         vtkOutputModule.addPrimaryVariable("pressure", Indices::pressureIdx);
 
-//         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
+        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }
 };
 }
