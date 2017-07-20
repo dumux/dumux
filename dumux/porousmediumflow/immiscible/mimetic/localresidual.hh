@@ -69,7 +69,7 @@ class ImmiscibleMimeticLocalResidual : public Dumux::StaggeredLocalResidual<Type
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -105,7 +105,7 @@ public:
         FluxVariables fluxVars;
         fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
 
-        CellCenterPrimaryVariables flux;
+        PrimaryVariables flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // the physical quantities for which we perform upwinding
@@ -116,13 +116,13 @@ public:
             flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
             //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-            //EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
         }
 
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
-        //EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
-        return flux;
+        return flux[cellCenterIdx];
     }
 
     CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,
@@ -157,7 +157,7 @@ public:
                                     const VolumeVariables& volVars)
     {
         // partial time derivative of the phase mass
-        CellCenterPrimaryVariables storage;
+        PrimaryVariables storage;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             auto eqIdx = conti0EqIdx + phaseIdx;
@@ -166,13 +166,13 @@ public:
                              * volVars.saturation(phaseIdx);
 
             //! The energy storage in the fluid phase with index phaseIdx
-            //EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
+            EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
         }
 
         //! The energy storage in the solid matrix
-        //EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
+        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
-        return storage;
+        return storage[cellCenterIdx];
     }
 
      /*!
@@ -209,17 +209,10 @@ public:
                                             const GlobalFaceVars& globalFaceVars,
                                             const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-//        FacePrimaryVariables flux(0.0);
-////        FluxVariables fluxVars;
-//        flux += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
-////        flux += fluxVars.computeTangetialMomentumFlux(this->problem(), scvf, fvGeometry, elemVolVars, globalFaceVars);
-////        flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
-
-
         FluxVariables fluxVars;
         fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
 
-        FacePrimaryVariables flux;
+        PrimaryVariables flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // the physical quantities for which we perform upwinding
@@ -228,12 +221,11 @@ public:
 
             auto eqIdx = conti0EqIdx + phaseIdx;
             flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-
-            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-            //EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
         }
 
-        return flux;
+       EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+
+        return flux[cellCenterIdx];
     }
 
 protected:
@@ -269,8 +261,24 @@ protected:
         {
             if (scvf.boundary())
             {
-                // For the mass-balance residual, do the same as if the face was not on a boundary.This might need to be changed sometime...
-                this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+                // handle the actual boundary conditions:
+                const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+
+                // set a fixed value for the velocity
+                if(bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
+                {
+                    auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf)[cellCenterIdx];
+
+                    // multiply neumann fluxes with the area and the extrusion factor
+                    auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
+                    neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
+
+                    this->ccResidual_ += neumannFluxes;
+                }
+                else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
+                {
+                    this->ccResidual_ += computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
+                }
             }
         }
     }
@@ -299,46 +307,37 @@ protected:
 
                 auto neumannFlux = this->evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, bcTypes);
 
-                //this->faceResiduals_[scvf.localFaceIdx()] = computeFluxForCellCenter(element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
                 FluxVariables fluxVars;
                 fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache);
 
-                FacePrimaryVariables flux;
+//                Scalar pdiff = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[nPhaseIdx] - globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[wPhaseIdx];
+//                Scalar Sw = MaterialLaw::sw(this->problem().spatialParams().materialLawParamsAtPos(scvf.center()), pdiff);
+//                std::vector<Scalar> kr(numPhases);
+//                kr[wPhaseIdx] =  MaterialLaw::krw(this->problem().spatialParams().materialLawParamsAtPos(scvf.center()), Sw);
+//                kr[nPhaseIdx] =  MaterialLaw::krn(this->problem().spatialParams().materialLawParamsAtPos(scvf.center()), Sw);
+
+                PrimaryVariables flux;
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                 {
-                    // the physical quantities for which we perform upwinding
                     auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
                                       { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
 
                     auto eqIdx = conti0EqIdx + phaseIdx;
                     flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-
-//                    if(neumannFlux[phaseIdx] > 0.0)
-//                        this->faceResiduals_[scvf.localFaceIdx()][eqIdx] = flux[eqIdx] - neumannFlux[phaseIdx];
-//                    else
-//                        this->faceResiduals_[scvf.localFaceIdx()][eqIdx] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[0] - globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[1];
-
-
-                    //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
-                    //EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
                 }
 
-//                std::cout << "neumannFlux" << neumannFlux << std::endl;
-//
-//                for(int faceEqIdx = 0; faceEqIdx < neumannFlux.size(); ++faceEqIdx)
-//                {
-//                    this->faceResiduals_[scvf.localFaceIdx()] = flux[faceEqIdx];
-//                    this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux[faceEqIdx];
-//                }
+                EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
-                this->faceResiduals_[scvf.localFaceIdx()] = flux;
+                this->faceResiduals_[scvf.localFaceIdx()] = flux[cellCenterIdx];
                 this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux;
+
             }
             else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())
             {
                 const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
                 const auto& insideVolVars = elemVolVars[insideScv];
-                this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars() - this->problem().dirichlet(element, scvf)[faceIdx];
+                this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()
+                                                          - this->problem().dirichlet(element, scvf)[faceIdx];
             }
         }
     }
