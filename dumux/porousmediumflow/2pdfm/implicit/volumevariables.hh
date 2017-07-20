@@ -146,7 +146,7 @@ public:
             satNFracture_ = priVars[saturationIdx];
             satWFracture_ = 1.0 - satNFracture_;
         }
-
+        bool useInterfaceCondition_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, UseInterfaceCondition);
         //update fracture saturation using interface condition
         const VertexMapper &vertexMapper = problem.vertexMapper();
         int globalIdx = vertexMapper.subIndex(element, scvIdx, dim);
@@ -170,39 +170,40 @@ public:
             pe = MaterialLaw::pc(materialParamsMatrix, 1.0-materialParamsMatrix.snr());
         }
 
-        FVElementGeometry minPcElemFvGeometry;
-        Element minPcElem = vertIdxToMinPcMapper.vertexElement(globalIdx);
-        minPcElemFvGeometry.update(problem.gridView(), minPcElem);
-        //choose materialLawParamsFracture as fracture has lower pe
-        // we set an scvIdx of 0, because we don't know the actual scv idx and assume element wise parameters anyway
-        MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParamsFracture(minPcElem, minPcElemFvGeometry, /*dummy*/0);
-        //calculate capillary pressure based on the pc-sw relation of the minPc element
-        Scalar pcmin;
-        if (hasFractureFaces)
-            pcmin = MaterialLaw::pc(minPcElemMaterialParams, satWFracture_);
-        else
-            pcmin = MaterialLaw::pc(minPcElemMaterialParams, satWMatrix_);
-
-        // update fracture saturation for scvs containing fracture scvs, otherwise update matrix saturations
-        if (hasFractureFaces)
-        {
-            if (std::abs(pc-pcmin) < 1e-6) {}
-            else if (pcmin < pe)
-                satNFracture_ = std::min(materialParamsFracture.snr(), 0.0 /* SnInitial*/);
+        if (useInterfaceCondition_){
+            FVElementGeometry minPcElemFvGeometry;
+            Element minPcElem = vertIdxToMinPcMapper.vertexElement(globalIdx);
+            minPcElemFvGeometry.update(problem.gridView(), minPcElem);
+            //choose materialLawParamsFracture as fracture has lower pe
+            // we set an scvIdx of 0, because we don't know the actual scv idx and assume element wise parameters anyway
+            MaterialLawParams minPcElemMaterialParams = problem.spatialParams().materialLawParamsFracture(minPcElem, minPcElemFvGeometry, /*dummy*/0);
+            //calculate capillary pressure based on the pc-sw relation of the minPc element
+            Scalar pcmin;
+            if (hasFractureFaces)
+                pcmin = MaterialLaw::pc(minPcElemMaterialParams, satWFracture_);
             else
-               satNFracture_ = 1.0 - MaterialLaw::sw(materialParamsFracture, pcmin);
-            satWFracture_ = 1.0 - satNFracture_;
-        }
-        else
-        {
-            if (std::abs(pc-pcmin) < 1e-6) {}
-            else if (pcmin < pe)
-                satNMatrix_ = std::min(materialParamsMatrix.snr(), 0.0 /* SnInitial*/);
-            else
-               satNMatrix_ = 1.0 - MaterialLaw::sw(materialParamsMatrix, pcmin);
-            satWMatrix_ = 1.0 - satNMatrix_;
-        }
+                pcmin = MaterialLaw::pc(minPcElemMaterialParams, satWMatrix_);
 
+            // update fracture saturation for scvs containing fracture scvs, otherwise update matrix saturations
+            if (hasFractureFaces)
+            {
+                if (std::abs(pc-pcmin) < 1e-6) {}
+             else if (pcmin < pe)
+                    satNFracture_ = std::min(materialParamsFracture.snr(), 0.0 /* SnInitial*/);
+             else
+                    satNFracture_ = 1.0 - MaterialLaw::sw(materialParamsFracture, pcmin);
+                    satWFracture_ = 1.0 - satNFracture_;
+            }
+            else
+            {
+                if (std::abs(pc-pcmin) < 1e-6) {}
+                else if (pcmin < pe)
+                    satNMatrix_ = std::min(materialParamsMatrix.snr(), 0.0 /* SnInitial*/);
+                else
+                    satNMatrix_ = 1.0 - MaterialLaw::sw(materialParamsMatrix, pcmin);
+                    satWMatrix_ = 1.0 - satNMatrix_;
+            }
+        }
 
         // update fracture mobilities if we are on an scv containing fracture scvs
         if (hasFractureFaces)
@@ -226,8 +227,7 @@ public:
                     MaterialLaw::krn(materialParamsFracture, fluidStateFracture_.saturation(wPhaseIdx))
                         / fluidStateFracture_.viscosity(nPhaseIdx);
 
-            // use interface condition - extended capillary pressure inteface condition
-            if (problem.useInterfaceCondition())
+                // use interface condition - extended capillary pressure inteface condition
                 // updated solution in the fracture is used for the interface condition
                 interfaceCondition(priVarsFracture, materialParamsMatrix, materialParamsFracture);
         }

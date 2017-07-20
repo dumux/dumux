@@ -117,19 +117,21 @@ public:
         coarseFractureMaterialParams_.setSwr(0.08);
         coarseFractureMaterialParams_.setSnr(0.0);
 
-        rockMatrixMaterialParams_.setPe(2000);
+        rockMatrixMaterialParams_.setPe(2200);
         rockMatrixMaterialParams_.setLambda(2.49);
 
-        fineFractureMaterialParams_.setPe(1300);
+        fineFractureMaterialParams_.setPe(1400);
         fineFractureMaterialParams_.setLambda(2.0);
-        coarseFractureMaterialParams_.setPe(300);
+        coarseFractureMaterialParams_.setPe(800);
         coarseFractureMaterialParams_.setLambda(3.2);
 
-        KMatrix_   = 1 * mD; //m^2
-        KFracture_ = 1e5 * mD; //m^2
+        KMatrix_   = 1.1 * mD; //m^2
+        coarseKFracture_ = 1.1e5 * mD; //m^2
+        fineKFracture_ = 5.5e5 * mD; //m^2
 
-        porosityMatrix_   = 0.25;
-        porosityFracture_ = 0.10;
+
+        porosityMatrix_   = 0.20;
+        porosityFracture_ = 0.4;
         fractureWidth_    = 1e-2;
 
         // comment this out if you want to use the simple test case
@@ -172,7 +174,10 @@ public:
                                          const FVElementGeometry &fvGeometry,
                                          int scvIdx) const
     {
-        return KFracture_;
+        const GlobalPosition& globalPos = element.geometry().center();
+        if (isFine_(globalPos))
+            return fineKFracture_;
+        return coarseKFracture_;
     }
     /*!
      * \brief Porosity
@@ -346,6 +351,8 @@ private:
     Scalar KFracture_;
     Scalar porosityMatrix_;
     Scalar porosityFracture_;
+    Scalar coarseKFracture_;
+    Scalar fineKFracture_;
 
     Scalar fractureWidth_;
 

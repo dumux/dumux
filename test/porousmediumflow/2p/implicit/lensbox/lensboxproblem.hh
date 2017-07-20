@@ -35,7 +35,7 @@
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
 #include <dumux/implicit/box/vertidxtoscvneighbormapper.hh>
 #include <dumux/porousmediumflow/2p/implicit/vertextominpcelemmapper.hh>
-#include "satconditionspatialparams.hh"
+#include "lensboxspatialparams.hh"
 
 namespace Dumux
 {
@@ -287,7 +287,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values,
             const GlobalPosition &globalPos) const
     {
-        if ( onLowerBoundary_(globalPos)) {
+        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) {
             values.setAllDirichlet();
         }
         else {
@@ -306,7 +306,21 @@ public:
     void dirichletAtPos(PrimaryVariables &values,
                         const GlobalPosition &globalPos) const
     {
-        values[pwIdx] = 2e5;
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1.0e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1.0e5);
+
+        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+
+        Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
+        Scalar depth = this->bBoxMax()[1] - globalPos[1];
+        Scalar alpha = 1 + 1.5/height;
+        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
+
+        // hydrostatic pressure scaled by alpha
+        values[pwIdx] = 1.0e5 - factor*densityW*this->gravity()[1]*depth;
         values[snIdx] = 0.0;
     }
 
@@ -326,7 +340,7 @@ public:
     {
         values = 0.0;
         if (onInlet_(globalPos)) {
-            values[contiNEqIdx] = -0.05; // kg / (m * s)
+            values[contiNEqIdx] = -0.04; // kg / (m * s)
         }
     }
     // \}
@@ -347,7 +361,17 @@ public:
     void initialAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {
-        values[pwIdx] = 2.0e5;
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1.0e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1.0e5);
+
+        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+
+        Scalar depth = this->bBoxMax()[1] - globalPos[1];
+
+        // hydrostatic pressure
+        values[pwIdx] = 1.0e5 - densityW*this->gravity()[1]*depth;
         values[snIdx] = 0.0;
     }
     // \}
@@ -376,7 +400,9 @@ private:
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        return onUpperBoundary_(globalPos);
+        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
     Scalar temperature_;

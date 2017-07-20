@@ -1,11 +1,11 @@
 [TimeManager]
 DtInitial = 100 # [s]
-TEnd = 7000 # [s]
+TEnd = 6000 # [s]
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 6 4
-Cells = 72 48
+Cells = 30 20
 
 [SpatialParams]
 LensLowerLeftX = 1.0 # [m] x-coordinate of the lower left lens corner
@@ -14,7 +14,7 @@ LensUpperRightX = 4.0 # [m] x-coordinate of the upper right lens corner
 LensUpperRightY = 3.0 # [m] y-coordinate of the upper right lens corner
 
 [Problem]
-Name = lensbox # name passed to the output routines
+Name = lensbox_classicbox # name passed to the output routines
 SnInitial = 0
 
 [Implicit]

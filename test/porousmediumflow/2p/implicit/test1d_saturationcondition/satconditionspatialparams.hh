@@ -57,9 +57,9 @@ private:
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     //vangenuchten
-    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+    //typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
     // brookscorey
-    //typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;//RawMaterialLaw;
+    typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;//RawMaterialLaw;
 public:
     // define the material law parameterized by absolute saturations
     //vangenuchten
@@ -117,17 +117,17 @@ public:
         coarseMaterialParams_.setSnr(0.0);
 
         //// parameters of Brooks & Corey Law
-        //fineMaterialParams_.setPe(1324);
-        //fineMaterialParams_.setLambda(2.49);
-        //coarseMaterialParams_.setPe(370);
-        //coarseMaterialParams_.setLambda(3.86);
+        fineMaterialParams_.setPe(1324);
+        fineMaterialParams_.setLambda(2.49);
+        coarseMaterialParams_.setPe(370);
+        coarseMaterialParams_.setLambda(3.86);
 
         // parameters for the Van Genuchten law
         // alpha and n
-        fineMaterialParams_. setVgAlpha(0.000581);
-        fineMaterialParams_.setVgn(5.34);
-        coarseMaterialParams_.setVgAlpha(0.00225);
-        coarseMaterialParams_.setVgn(8.06);
+        //fineMaterialParams_. setVgAlpha(0.000581);
+        //fineMaterialParams_.setVgn(5.34);
+        //coarseMaterialParams_.setVgAlpha(0.00225);
+        //coarseMaterialParams_.setVgn(8.06);
 
         fineK_ = 5.26e-11;
         coarseK_ = 5.04e-10;

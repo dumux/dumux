@@ -126,11 +126,14 @@ class TwoPDFMTestProblem : public ImplicitPorousMediaProblem<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx,
 
         // world dimension
-        dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld,
+        // equation indices
+        contiNEqIdx = Indices::contiNEqIdx
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -149,7 +152,6 @@ public:
     TwoPDFMTestProblem(TimeManager &timeManager,
                        const GridView &gridView)
         : ParentType(timeManager, gridView),
-          useInterfaceCondition_(true),
           vertIdxToScvNeighborMapper_(gridView),
           vertIdxToMinPcFractureMapper_(gridView, this->spatialParams()),
           vertIdxToMinPcMapper_(gridView, this->spatialParams())
@@ -159,8 +161,34 @@ public:
         //vertIdxToScvNeighborMapper_.update();
         vertIdxToMinPcFractureMapper_.update();
         vertIdxToMinPcMapper_.update();
+
+        int outputInterval = 5;
+        if (ParameterTree::tree().hasKey("Problem.OutputInterval"))
+        {
+            outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
+        }
+        this->setOutputInterval(outputInterval);
+
     }
 
+    /*!
+     * \brief Sets the interval for Output
+     *
+     * The default is 1 -> Output every time step
+     */
+    void setOutputInterval(const int interval)
+    {
+        outputInterval_ = std::max(interval, 0);
+    }
+
+    bool shouldWriteOutput() const
+    {
+        return
+            this->timeManager().timeStepIndex() == 0 ||
+            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
+            this->timeManager().episodeWillBeOver() ||
+            this->timeManager().willBeFinished();
+    }
     /*!
      * \name Problem parameters
      */
@@ -242,7 +270,7 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values,
             const GlobalPosition &globalPos) const
     {
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+        if (onRightBoundary_(globalPos))
         {
             values.setAllDirichlet();
         }
@@ -271,22 +299,11 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
-        if (onLeftBoundary_(globalPos))
+        if (onRightBoundary_(globalPos))
         {
-            Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
-            Scalar depth = this->bBoxMax()[1] - globalPos[1];
-            Scalar alpha = (1 + 1.5/height);
 
-            // hydrostatic pressure scaled by alpha
-            values[pwIdx] = 2.0e5 - alpha*densityW*this->gravity()[1]*depth;
-            values[snIdx] = 1.0;
-        }
-        else if (onRightBoundary_(globalPos))
-        {
-            Scalar depth = this->bBoxMax()[1] - globalPos[1];
-
-            // hydrostatic pressure
-            values[pwIdx] = 1.0e5 - densityW*this->gravity()[1]*depth;
+            // fix pressure
+            values[pwIdx] = 1.0e5;
             values[snIdx] = 0.0;
         }
         else
@@ -308,7 +325,13 @@ public:
     void neumannAtPos(PrimaryVariables &values,
                       const GlobalPosition &globalPos) const
     {
+        if (onLeftBoundary_(globalPos))
+        {
+            values[contiNEqIdx] = -0.2;
+        }
+        else{
         values = 0.0;
+        }
     }
     // \}
 
@@ -339,7 +362,7 @@ public:
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
         // hydrostatic pressure
-        values[pwIdx] = 1.0e5 - densityW*this->gravity()[1]*depth;
+        values[pwIdx] = 1.0e5;
         values[snIdx] = 0.0;
     }
     // \}
@@ -379,6 +402,8 @@ private:
     VertIdxToScvNeighborMapper vertIdxToScvNeighborMapper_;
     VertIdxToMinPcFractureMapper vertIdxToMinPcFractureMapper_;
     VertIdxToMinPcMapper vertIdxToMinPcMapper_;
+    int outputInterval_;
+    int outputTimeInterval_;
 };
 } //end namespace
 

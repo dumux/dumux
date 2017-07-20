@@ -1,6 +1,7 @@
 [TimeManager]
 DtInitial = 1 # [s]
-TEnd = 250 # [s]
+TEnd = 50000 # [s]
+#MaxTimeStepSize = 2
 
 [Grid]
 File = ./grids/2pdfmartmesh.net
@@ -8,9 +9,10 @@ File = ./grids/2pdfmartmesh.net
 [Implicit]
 EnablePartialReassemble = 1 # enable partial reassembly of the jacobian matrix?
 EnableJacobianRecycling = 1 # enable reuse of jacobian matrices?
-UseInterfaceCondition = 1
+UseInterfaceCondition = 0
 
 [Problem]
 UseSimpleTest = false
 EnableGravity = 0 # enable gravity?
-Name = 2pdfm_satup # name passed to the output routines
+Name = 2pdfm_boxinterface # name passed to the output routines
+OutputInterval = 1

@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief The spatial parameters for the LensProblem which uses the
+ * \brief The spatial parameters for the SatConditionProblem which uses the
  *        two-phase fully implicit model
  */
 #ifndef DUMUX_LENS_SPATIAL_PARAMS_HH
@@ -39,39 +39,43 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class LensSpatialParams;
+class SatConditionSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(LensSpatialParams);
+NEW_TYPE_TAG(SatConditionSpatialParams);
 
 // Set the spatial parameters
-SET_TYPE_PROP(LensSpatialParams, SpatialParams, Dumux::LensSpatialParams<TypeTag>);
+SET_TYPE_PROP(SatConditionSpatialParams, SpatialParams, Dumux::SatConditionSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(LensSpatialParams, MaterialLaw)
+SET_PROP(SatConditionSpatialParams, MaterialLaw)
 {
 private:
     // define the material law which is parameterized by effective
     // saturations
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    //vangenuchten
     //typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
     // brookscorey
     typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;//RawMaterialLaw;
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    //vangenuchten
+    //typedef EffToAbsLaw<EffectiveLaw> type;
+    //brookscorey
+    typedef EffToAbsLaw<EffectiveLaw> type;//EffToAbsLaw<RawMaterialLaw> type;
 };
 }
 /*!
  * \ingroup TwoPModel
  * \ingroup ImplicitTestProblems
- * \brief The spatial parameters for the LensProblem which uses the
+ * \brief The spatial parameters for the SatConditionProblem which uses the
  *        two-phase fully implicit model
  */
 template<class TypeTag>
-class LensSpatialParams : public ImplicitSpatialParams<TypeTag>
+class SatConditionSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
@@ -100,7 +104,7 @@ public:
      *
      * \param gridView The grid view
      */
-    LensSpatialParams(const GridView& gridView)
+    SatConditionSpatialParams(const GridView& gridView)
     : ParentType(gridView)
     {
             lensLowerLeft_[0]   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensLowerLeftX);
@@ -109,26 +113,26 @@ public:
             lensUpperRight_[1]  = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.LensUpperRightY);
 
         // residual saturations
-        lensMaterialParams_.setSwr(0.09);
-        lensMaterialParams_.setSnr(0.0);
-        outerMaterialParams_.setSwr(0.09);
-        outerMaterialParams_.setSnr(0.0);
+        fineMaterialParams_.setSwr(0.098);
+        fineMaterialParams_.setSnr(0.0);
+        coarseMaterialParams_.setSwr(0.078);
+        coarseMaterialParams_.setSnr(0.0);
 
         //// parameters of Brooks & Corey Law
-        lensMaterialParams_.setPe(1324);
-        lensMaterialParams_.setLambda(2.49);
-        outerMaterialParams_.setPe(370);
-        outerMaterialParams_.setLambda(3.86);
+        fineMaterialParams_.setPe(1324);
+        fineMaterialParams_.setLambda(2.49);
+        coarseMaterialParams_.setPe(370);
+        coarseMaterialParams_.setLambda(3.86);
 
         // parameters for the Van Genuchten law
         // alpha and n
-        //lensMaterialParams_.setVgAlpha(0.00045);
-        //lensMaterialParams_.setVgn(7.3);
-        //outerMaterialParams_.setVgAlpha(0.0037);
-        //outerMaterialParams_.setVgn(4.7);
+        //fineMaterialParams_. setVgAlpha(0.000581);
+        //fineMaterialParams_.setVgn(5.34);
+        //coarseMaterialParams_.setVgAlpha(0.00225);
+        //coarseMaterialParams_.setVgn(8.06);
 
-        lensK_ = 5.26e-11;
-        outerK_ = 5.04e-10;
+        fineK_ = 5.26e-11;
+        coarseK_ = 5.04e-10;
     }
 
     /*!
@@ -142,11 +146,11 @@ public:
                                  const FVElementGeometry &fvGeometry,
                                  int scvIdx) const
     {
-        const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
+        const GlobalPosition& globalPos = element.geometry().center();
 
-        if (isInLens_(globalPos))
-            return lensK_;
-        return outerK_;
+        if (isFine_(globalPos))
+            return fineK_;
+        return coarseK_;
     }
 
     /*!
@@ -159,12 +163,11 @@ public:
     Scalar porosity(const Element &element,
                     const FVElementGeometry &fvGeometry,
                     int scvIdx) const
-    {
-        const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isInLens_(globalPos))
-            return 0.4;
-        return 0.39;
-}
+    { const GlobalPosition& globalPos = element.geometry().center();
+        if (isFine_(globalPos))
+            return 0.35;
+        return 0.4;
+        }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law
@@ -177,16 +180,14 @@ public:
                                                 const FVElementGeometry &fvGeometry,
                                                 int scvIdx) const
     {
-        const GlobalPosition& globalPos = fvGeometry.subContVol[scvIdx].global;
-
-        if (isInLens_(globalPos))
-            return lensMaterialParams_;
-        return outerMaterialParams_;
+        const GlobalPosition& globalPos = element.geometry().center();
+        if (isFine_(globalPos))
+            return fineMaterialParams_;
+        return coarseMaterialParams_;
     }
 
-
 private:
-    bool isInLens_(const GlobalPosition &globalPos) const
+    bool isFine_(const GlobalPosition &globalPos) const
     {
         for (int i = 0; i < dimWorld; ++i) {
             if (globalPos[i] < lensLowerLeft_[i] || globalPos[i] > lensUpperRight_[i])
@@ -195,15 +196,13 @@ private:
         return true;
     }
 
+    Scalar fineK_;
+    Scalar coarseK_;
+    MaterialLawParams fineMaterialParams_;
+    MaterialLawParams coarseMaterialParams_;
     GlobalPosition lensLowerLeft_;
     GlobalPosition lensUpperRight_;
-
-    Scalar lensK_;
-    Scalar outerK_;
-    MaterialLawParams lensMaterialParams_;
-    MaterialLawParams outerMaterialParams_;
 };
 
 } // end namespace
 #endif
-
