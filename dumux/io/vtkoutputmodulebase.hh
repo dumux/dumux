@@ -187,7 +187,12 @@ public:
         if (velocityOutput.enableOutput())
         {
             for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                velocity[phaseIdx].resize(numDofs);
+            {
+                if(isBox && dim == 1)
+                    velocity[phaseIdx].resize(numCells);
+                else
+                    velocity[phaseIdx].resize(numDofs);
+            }
         }
 
         // maybe allocate space for the process rank
@@ -282,7 +287,7 @@ public:
         // the velocity field
         if (velocityOutput.enableOutput())
         {
-            if (isBox)
+            if (isBox && dim > 1)
             {
                 using NestedFunction = VtkNestedFunction<GridView, VertexMapper, std::vector<GlobalPosition>>;
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
