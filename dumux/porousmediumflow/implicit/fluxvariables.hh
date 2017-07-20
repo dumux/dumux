@@ -112,7 +112,7 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, false> : public FluxVar
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-            numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+           numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
 public:
