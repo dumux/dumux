@@ -116,6 +116,9 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
         wPhaseIdx = Indices::wPhaseIdx
     };
 
+    static constexpr bool enableWaterDiffusionInAir
+        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
+
 public:
 
     /*!
@@ -141,6 +144,8 @@ public:
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
         if(GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
             vtkOutputModule.addSecondaryVariable("pressure head", [](const VolumeVariables& v){ return v.pressureHead(wPhaseIdx); });
+        if (enableWaterDiffusionInAir)
+            vtkOutputModule.addSecondaryVariable("x^w_air", [](const VolumeVariables& v){ return v.moleFraction(1, 0); });
         vtkOutputModule.addSecondaryVariable("water content", [](const VolumeVariables& v){ return v.waterContent(wPhaseIdx); });
 
         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
