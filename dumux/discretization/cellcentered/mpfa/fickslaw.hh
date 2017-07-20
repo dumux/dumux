@@ -26,7 +26,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
 
 #include <memory>
-//
+
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
