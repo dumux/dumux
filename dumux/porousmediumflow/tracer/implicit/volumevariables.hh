@@ -52,10 +52,10 @@ class TracerVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -82,16 +82,8 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
-            if (useMoles)
-            {
-                moleFraction_[compIdx] = this->priVars()[compIdx];
-                massFraction_[compIdx] = moleFraction_[compIdx]*FluidSystem::molarMass(compIdx)/fluidMolarMass_;
-            }
-            else
-            {
-                massFraction_[compIdx] = this->priVars()[compIdx];
-                moleFraction_[compIdx] = massFraction_[compIdx]/FluidSystem::molarMass(compIdx)*fluidMolarMass_;
-            }
+            moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
+
             diffCoeff_[compIdx] =
                 FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
         }
@@ -134,14 +126,14 @@ public:
      * \param compIdx The index of the component
      */
     Scalar moleFraction(int pIdx, int compIdx) const
-    { return moleFraction_[compIdx]; }
+    { return useMoles ? moleOrMassFraction_[compIdx] : moleOrMassFraction_[compIdx]/FluidSystem::molarMass(compIdx)*fluidMolarMass_; }
 
     /*!
      * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
      * \param compIdx The index of the component
      */
     Scalar massFraction(int pIdx, int compIdx) const
-    { return massFraction_[compIdx]; }
+    { return useMoles ? moleOrMassFraction_[compIdx]*FluidSystem::molarMass(compIdx)/fluidMolarMass_ : moleOrMassFraction_[compIdx]; }
 
     /*!
      * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
@@ -173,8 +165,7 @@ protected:
     Scalar fluidDensity_, fluidMolarMass_;
     GlobalPosition dispersivity_;
     std::array<Scalar, numComponents> diffCoeff_;
-    std::array<Scalar, numComponents> moleFraction_;
-    std::array<Scalar, numComponents> massFraction_;
+    std::array<Scalar, numComponents> moleOrMassFraction_;
 
 private:
     const Problem* problem_;
