@@ -54,6 +54,16 @@ public:
         return gridView_.size(1);
     }
 
+    /*!
+     * \brief The number of faces for a given element
+     *
+     * \param element The element
+     */
+    std::size_t numFaces(const Element& element) const
+    {
+        return element.subEntities(1);
+    }
+
     IndexType globalIntersectionIndex(const Element& element, const IndexType localFaceIdx) const
     {
         return gridView_.indexSet().subIndex(element, localFaceIdx, codimIntersection);
