@@ -84,9 +84,15 @@ class StaggeredGeometryHelper
     static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
 
 public:
-    StaggeredGeometryHelper(const Intersection& intersection, const GridView& gridView)
-    : intersection_(intersection), element_(intersection.inside()), elementGeometry_(element_.geometry()), gridView_(gridView)
+
+    StaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), elementGeometry_(element.geometry()), gridView_(gridView)
+    { }
+
+    template<class IntersectionMapper>
+    void updateLocalFace(const IntersectionMapper& intersectionMapper_, const int localFIdx, const Intersection& intersection)
     {
+        intersection_ = intersection;
+        innerNormalFacePos_.clear();
         fillPairData_();
     }
 
@@ -438,7 +444,7 @@ private:
     }
 
     // TODO: check whether to use references here or not
-    const Intersection intersection_; //! The intersection of interest
+    Intersection intersection_; //! The intersection of interest
     const Element element_; //! The respective element
     const typename Element::Geometry elementGeometry_; //! Reference to the element geometry
     const GridView gridView_;
