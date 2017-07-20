@@ -115,6 +115,8 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            if(compIdx == phaseIdx)
+                continue;
 
             // effective diffusion tensors
             auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
@@ -143,6 +145,7 @@ public:
             // apply the diffusion tensor and return the flux
             auto DGradX = applyDiffusionTensor_(D, gradX);
             componentFlux[compIdx] = -1.0*rho*(DGradX*scvf.unitOuterNormal())*scvf.area();
+            componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux;
     }

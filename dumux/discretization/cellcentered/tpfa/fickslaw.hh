@@ -94,6 +94,9 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
+            if(compIdx == phaseIdx)
+                continue;
+
             // diffusion tensors are always solution dependent
             Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
 
@@ -110,6 +113,7 @@ public:
                                   : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = tij*(rhoInside*xInside - rhoOutside*xOutside);
+            componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux ;
     }

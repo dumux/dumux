@@ -566,7 +566,12 @@ public:
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
-    { return diffCoeff_[phaseIdx]; }
+    {
+        if(phaseIdx == compIdx)
+            DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
+        else
+            return diffCoeff_[phaseIdx];
+    }
 
 
 protected:
