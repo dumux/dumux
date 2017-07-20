@@ -113,7 +113,8 @@ public:
                                   : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = tij*(rhoInside*xInside - rhoOutside*xOutside);
-            componentFlux[phaseIdx] -= componentFlux[compIdx];
+            if (phaseIdx < numComponents-1)
+                componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux ;
     }
