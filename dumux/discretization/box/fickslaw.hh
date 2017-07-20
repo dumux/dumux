@@ -88,11 +88,33 @@ public:
                                     const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         ComponentFluxVector componentFlux(0.0);
+
+        // get inside and outside diffusion tensors and calculate the harmonic mean
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        // evaluate gradX at integration point and interpolate density
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        const auto& jacInvT = fluxVarsCache.jacInvT();
+        const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
+        const auto& shapeValues = fluxVarsCache.shapeValues();
+
+        Scalar rho(0.0);
+        std::vector<GlobalPosition> gradN(fvGeometry.numScv());
+
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            const auto& volVars = elemVolVars[scv];
+
+            // density interpolation
+            rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
+
+            // the ansatz function gradient
+            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN[scv.indexInElement()]);
+        }
+
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            // get inside and outside diffusion tensors and calculate the harmonic mean
-            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
-            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
             // effective diffusion tensors
             auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
@@ -109,25 +131,13 @@ public:
             // the resulting averaged diffusion tensor
             const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
 
-            // evaluate gradX at integration point and interpolate density
-            const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-            const auto& jacInvT = fluxVarsCache.jacInvT();
-            const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
-            const auto& shapeValues = fluxVarsCache.shapeValues();
-
             GlobalPosition gradX(0.0);
-            Scalar rho(0.0);
             for (auto&& scv : scvs(fvGeometry))
             {
                 const auto& volVars = elemVolVars[scv];
 
-                // density interpolation
-                rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
-
                 // the mole/mass fraction gradient
-                GlobalPosition gradN;
-                jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN);
-                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN);
+                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN[scv.indexInElement()]);
             }
 
             // apply the diffusion tensor and return the flux
