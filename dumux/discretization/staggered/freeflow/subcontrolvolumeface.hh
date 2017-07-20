@@ -103,7 +103,7 @@ public:
           selfToOppositeDistance_ = geometryHelper.selfToOppositeDistance();
 
           pairData_ = geometryHelper.pairData();
-          localFaceIdx_ = is.indexInInside();
+          localFaceIdx_ = geometryHelper.localFaceIndex();
           dirIdx_ = geometryHelper.directionIndex();
           normalInPosCoordDir_ = unitOuterNormal()[directionIndex()] > 0.0;
           outerNormalScalar_ = unitOuterNormal()[directionIndex()];

@@ -153,11 +153,10 @@ public:
 
             GeometryHelper geometryHelper(element, gridView_);
 
-            int localFIdx = 0;
-
             for (const auto& intersection : intersections(gridView_, element))
             {
-                geometryHelper.updateLocalFace(intersectionMapper_, localFIdx, intersection);
+                geometryHelper.updateLocalFace(intersectionMapper_, intersection);
+                const int localFaceIndex = geometryHelper.localFaceIndex();
 
                 // inner sub control volume faces
                 if (intersection.neighbor())
@@ -169,8 +168,7 @@ public:
                                         std::vector<IndexType>({eIdx, nIdx}),
                                         geometryHelper
                                         );
-                    // localToGlobalScvfIndices_[eIdx][intersection.indexInInside()] = scvfIdx;
-                    localToGlobalScvfIndices_[eIdx][localFIdx] = scvfIdx;
+                    localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
                 // boundary sub control volume faces
@@ -182,10 +180,9 @@ public:
                                         std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
                                         geometryHelper
                                         );
-                    localToGlobalScvfIndices_[eIdx][localFIdx] = scvfIdx;
+                    localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
-                localFIdx++;
             }
 
             // Save the scvf indices belonging to this scv to build up fv element geometries fast

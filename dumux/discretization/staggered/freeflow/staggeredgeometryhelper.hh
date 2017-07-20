@@ -89,7 +89,7 @@ public:
     { }
 
     template<class IntersectionMapper>
-    void updateLocalFace(const IntersectionMapper& intersectionMapper_, const int localFIdx, const Intersection& intersection)
+    void updateLocalFace(const IntersectionMapper& intersectionMapper_, const Intersection& intersection)
     {
         intersection_ = intersection;
         innerNormalFacePos_.clear();
@@ -114,6 +114,14 @@ public:
         //TODO: use proper intersection mapper!
         const auto inIdx = intersection_.indexInInside();
         return gridView_.indexSet().subIndex(this->intersection_.inside(), localOppositeIdx_(inIdx), codimIntersection);
+    }
+
+    /*!
+    * \brief Returns the local index of the face (i.e. the intersection)
+    */
+    int localFaceIndex() const
+    {
+        return intersection_.indexInInside();
     }
 
      /*!
