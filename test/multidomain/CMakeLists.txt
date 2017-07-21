@@ -1,0 +1,1 @@
+add_executable(test_stokesdarcy1p test_stokesdarcy1p test_stokesdarcy1p.cc)

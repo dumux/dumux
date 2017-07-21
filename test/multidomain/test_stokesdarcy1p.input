@@ -1,0 +1,11 @@
+# Parameter file for test_stokesdarcy1p
+
+[StokesGrid]
+LowerLeft = 0 1
+UpperRight = 2 2
+Cells = 20 20
+
+[DarcyGrid]
+LowerLeft = 0 0
+UpperRight = 2 1
+Cells = 20 20
