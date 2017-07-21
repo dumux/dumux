@@ -46,7 +46,7 @@ public:
     MimeticGeometryHelper(const Element& element, const GridView& gridView)
     :gridView_(gridView),
      dofIndex_(0),
-     localIndex_(0),
+     localIndex_(-1),
      area_(0),
      unitOuterNormal_(0)
     {
@@ -63,7 +63,7 @@ public:
    /*!
    * \brief Returns the local index of the intersection itself
    */
-  int localIndex() const
+  int localFaceIndex() const
   {
       return localIndex_;
   }
@@ -79,10 +79,11 @@ public:
       return unitOuterNormal_;
   }
 
-  void updateLocalFace(const int dofIndex, const int localIndex, const Intersection& intersection)
+  template<class IntersectionMapper>
+  void updateLocalFace(const IntersectionMapper& intersectionMapper_, const Intersection& intersection)
   {
-      dofIndex_ = dofIndex;
-      localIndex_ = localIndex;
+      localIndex_++;
+      dofIndex_ = intersectionMapper_.globalIntersectionIndex(intersection.inside(), localIndex_);
       unitOuterNormal_ = intersection.centerUnitOuterNormal();
       area_ = intersection.geometry().volume();
   }

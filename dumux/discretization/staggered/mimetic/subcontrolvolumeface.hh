@@ -77,7 +77,7 @@ public:
       boundary_(is.boundary())
       {
           dofIdx_ = geometryHelper.dofIndex();
-          localFaceIdx_ = geometryHelper.localIndex();
+          localFaceIdx_ = geometryHelper.localFaceIndex();
       }
 
 
