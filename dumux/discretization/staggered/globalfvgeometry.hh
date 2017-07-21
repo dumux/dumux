@@ -116,6 +116,7 @@ public:
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
         elementMap_.clear();
+        intersectionMapper_.update();
 
         // determine size of containers
         IndexType numScvs = gridView_.size(0);
@@ -137,9 +138,8 @@ public:
         {
             auto eIdx = problem.elementMapper().index(element);
 
-
             // reserve memory for the localToGlobalScvfIdx map
-            auto numLocalFaces = element.subEntities(1);
+            auto numLocalFaces = intersectionMapper_.numFaces(element);
             localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
 
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
@@ -149,7 +149,7 @@ public:
 
             // the element-wise index sets for finite volume geometry
             std::vector<IndexType> scvfsIndexSet;
-            scvfsIndexSet.reserve(element.subEntities(1));
+            scvfsIndexSet.reserve(numLocalFaces);
 
             GeometryHelper geometryHelper(element, gridView_);
 
