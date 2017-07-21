@@ -68,13 +68,17 @@ public:
     {
             permOne_[0][0] = 3.0;
             permOne_[1][1] = 3.0;
-            permOne_[2][2] = 1.0;
             permOne_[0][1] = permOne_[1][0] = 1.0;
+
+            if(dimWorld == 3)
+                permOne_[2][2] = 1.0;
 
             permTwo_[0][0] = 10.0;
             permTwo_[1][1] = 10.0;
-            permTwo_[2][2] = 1.0;
             permTwo_[0][1] = permTwo_[1][0] = 3.0;
+
+            if(dimWorld == 3)
+                permTwo_[2][2] = 1.0;
 
             testCase_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, TestCase);
     }
@@ -105,7 +109,7 @@ public:
         else
         {
             perm[0][0] = perm[1][1] = 1.0;
-            perm[2][2] = 1.0e-3;
+            perm[dimWorld-1][dimWorld-1] = 1.0e-3;
         }
 
         return perm;

@@ -25,20 +25,24 @@
 #ifndef DUMUX_1PLINEAR_MIMETIC_PROBLEM_HH
 #define DUMUX_1PLINEAR_MIMETIC_PROBLEM_HH
 
-//#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-//#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-//#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#if PROBLEM==1
 #include <dumux/porousmediumflow/1p/mimetic/model.hh>
+#include "resultevaluationmimetic.hh"
+#include <dumux/discretization/staggered/mimetic/mimeticcpgeometryhelper.hh>
+#else
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include "resultevaluationcc.hh"
+#endif
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/unit.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include <dumux/discretization/staggered/mimetic/mimeticcpgeometryhelper.hh>
-
 #include <dumux/io/cpgridcreator.hh>
+#include <dumux/common/intersectionmapper.hh>
 
 #include "1plinearspatialparams.hh"
-#include "resultevaluationmimetic.hh"
 
 namespace Dumux
 {
@@ -55,7 +59,11 @@ namespace Capabilities
 namespace Properties
 {
 //NEW_TYPE_TAG(OnePLinearProblem, INHERITS_FROM(CCTpfaModel, OneP));
+#if PROBLEM==1
 NEW_TYPE_TAG(OnePLinearProblem, INHERITS_FROM(OnePMimetic));
+#else
+NEW_TYPE_TAG(OnePLinearProblem, INHERITS_FROM(CCMpfaModel, OneP));
+#endif
 
 SET_PROP(OnePLinearProblem, Fluid)
 {
@@ -90,6 +98,7 @@ SET_BOOL_PROP(OnePLinearProblem, ProblemEnableGravity, false);
 
 SET_TYPE_PROP(OnePLinearProblem, LinearSolver, UMFPackBackend<TypeTag> );
 
+#if PROBLEM==1
 SET_BOOL_PROP(OnePLinearProblem, VtkWriteFaceData, false);
 
 // The geometry helper required for the stencils, etc.
@@ -100,6 +109,9 @@ private:
 public:
     using type = MimeticCPGeometryHelper<GridView>;
 };
+
+SET_TYPE_PROP(OnePLinearProblem, IntersectionMapper, Dumux::NonConformingGridIntersectionMapper<TypeTag>);
+#endif
 
 }
 
@@ -162,7 +174,7 @@ class OnePLinearProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
 
-    typedef std::array<Scalar, dim+1> CoeffArray;
+    typedef std::array<Scalar, 4> CoeffArray;
 
 public:
     OnePLinearProblem(TimeManager &timeManager, const GridView &gridView)
@@ -340,7 +352,10 @@ public:
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
-        Scalar z = globalPos[2];
+        Scalar z = 0.0;
+
+        if(dimWorld == 3)
+            z = globalPos[2];
 
         Scalar p_ex = 0.0;
 
@@ -361,11 +376,26 @@ public:
             Scalar x_min = this->bBoxMin()[0];
             Scalar y_max = this->bBoxMax()[1];
             Scalar y_min = this->bBoxMin()[1];
-            Scalar z_max = this->bBoxMax()[2];
-            Scalar z_min = this->bBoxMin()[2];
 
-            p_ex = 1.0/3.0*((x - x_min)/(x_max - x_min) + (y - y_min)/(y_max - y_min) + (z - z_min)/(z_max - z_min))*pLow_
-                   - 1.0/3.0*((x - x_max)/(x_max - x_min) + (y - y_max)/(y_max - y_min) + (z - z_max)/(z_max - z_min))*pHigh_;
+            Scalar z_max = 0.0;
+            Scalar z_min = 0.0;
+
+            if(dimWorld == 3)
+            {
+                z_max = this->bBoxMax()[2];
+                z_min = this->bBoxMin()[2];
+            }
+
+            if(dimWorld == 3)
+            {
+            p_ex = 1.0/dimWorld*((x - x_min)/(x_max - x_min) + (y - y_min)/(y_max - y_min) + (z - z_min)/(z_max - z_min))*pLow_
+                   - 1.0/dimWorld*((x - x_max)/(x_max - x_min) + (y - y_max)/(y_max - y_min) + (z - z_max)/(z_max - z_min))*pHigh_;
+            }
+            else
+            {
+            p_ex = 1.0/dimWorld*((x - x_min)/(x_max - x_min) + (y - y_min)/(y_max - y_min))*pLow_
+                   - 1.0/dimWorld*((x - x_max)/(x_max - x_min) + (y - y_max)/(y_max - y_min))*pHigh_;
+            }
         }
 
         return p_ex;
@@ -398,12 +428,22 @@ public:
             Scalar x_min = this->bBoxMin()[0];
             Scalar y_max = this->bBoxMax()[1];
             Scalar y_min = this->bBoxMin()[1];
-            Scalar z_max = this->bBoxMax()[2];
-            Scalar z_min = this->bBoxMin()[2];
 
-            grad[0] = 1.0/3.0*(pLow_-pHigh_)/(x_max - x_min);
-            grad[1] = 1.0/3.0*(pLow_-pHigh_)/(y_max - y_min);
-            grad[2] = 1.0/3.0*(pLow_-pHigh_)/(z_max - z_min);
+            Scalar z_max = 0.0;
+            Scalar z_min = 0.0;
+
+            if(dimWorld == 3)
+            {
+                z_max = this->bBoxMax()[2];
+                z_min = this->bBoxMin()[2];
+            }
+
+            grad[0] = 1.0/dimWorld*(pLow_-pHigh_)/(x_max - x_min);
+            grad[1] = 1.0/dimWorld*(pLow_-pHigh_)/(y_max - y_min);
+            if(dimWorld == 3)
+            {
+                grad[2] = 1.0/dimWorld*(pLow_-pHigh_)/(z_max - z_min);
+            }
 
         }
 

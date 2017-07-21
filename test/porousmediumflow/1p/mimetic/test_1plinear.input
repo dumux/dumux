@@ -9,7 +9,7 @@ File = ../implicit/grids/flat_fault_refTwo.grdecl
 
 [Problem]
 Name = test_1PLinearityPreservation_mimetic
-TestCase = 2
+TestCase = 1
 a = 14 1 1 0
 b = 4 1 1 6
 Plow = 1.0e5
