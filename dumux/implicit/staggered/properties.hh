@@ -61,6 +61,8 @@ NEW_PROP_TAG(DofTypeIndices); //!< Indices to choose between cell center and fac
 NEW_PROP_TAG(FaceVariables); //!< Variables associated to facets (equivalent to volVars)
 NEW_PROP_TAG(GlobalFaceVars); //!< Global vector of facet variables
 
+NEW_PROP_TAG(IntersectionMapper); //!< The intersection mapper
+
 NEW_PROP_TAG(VtkWriteFaceData); //!< Decide whether to write separate vtp files for face variables
 
 }

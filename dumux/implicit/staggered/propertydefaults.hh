@@ -50,6 +50,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
+#include <dumux/common/intersectionmapper.hh>
 
 #include "assembler.hh"
 #include "localresidual.hh"
@@ -121,6 +122,9 @@ SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, Dumux::StaggeredElementVol
 
 //! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, Dumux::StaggeredLocalResidual<TypeTag>);
+
+//! Set the BaseLocalResidual to StaggeredLocalResidual
+SET_TYPE_PROP(StaggeredModel, IntersectionMapper, Dumux::ConformingGridIntersectionMapper<TypeTag>);
 
 //! indicate that this is no box discretization
 SET_BOOL_PROP(StaggeredModel, ImplicitIsBox, false);

@@ -516,7 +516,7 @@ public:
      */
     size_t numDofs() const
     {
-        return this->gridView_().size(0) + this->gridView_().size(1);
+        return numCellCenterDofs() + numFaceDofs();
     }
 
      /*!
@@ -528,11 +528,11 @@ public:
     }
 
      /*!
-     * \brief Returns the number of cell center degrees of freedoms (DOFs)
+     * \brief Returns the number of face degrees of freedoms (DOFs)
      */
     size_t numFaceDofs() const
     {
-        return this->gridView_().size(1);
+        return this->globalFvGeometryPtr_->numIntersections();
     }
 
     const GlobalFaceVariables& curGlobalFaceVars() const

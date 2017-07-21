@@ -52,6 +52,7 @@ class StaggeredGlobalFVGeometry<TypeTag, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Element = typename GridView::template Codim<0>::Entity;
+    using IntersectionMapper = typename GET_PROP_TYPE(TypeTag, IntersectionMapper);
     //! The local class needs access to the scv, scvfs and the fv element geometry
     //! as they are globally cached
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -67,7 +68,7 @@ class StaggeredGlobalFVGeometry<TypeTag, true>
 public:
     //! Constructor
     StaggeredGlobalFVGeometry(const GridView& gridView)
-    : gridView_(gridView), elementMap_(gridView) {}
+    : gridView_(gridView), elementMap_(gridView), intersectionMapper_(gridView) {}
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -85,6 +86,12 @@ public:
     std::size_t numBoundaryScvf() const
     {
         return numBoundaryScvf_;
+    }
+
+    //! The total number of intersections
+    std::size_t numIntersections() const
+    {
+        return intersectionMapper_.numIntersections();
     }
 
     // Get an element from a sub control volume contained in it
@@ -109,6 +116,7 @@ public:
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
         elementMap_.clear();
+        intersectionMapper_.update();
 
         // determine size of containers
         IndexType numScvs = gridView_.size(0);
@@ -130,9 +138,8 @@ public:
         {
             auto eIdx = problem.elementMapper().index(element);
 
-
             // reserve memory for the localToGlobalScvfIdx map
-            auto numLocalFaces = element.subEntities(1);
+            auto numLocalFaces = intersectionMapper_.numFaces(element);
             localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
 
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
@@ -142,10 +149,14 @@ public:
 
             // the element-wise index sets for finite volume geometry
             std::vector<IndexType> scvfsIndexSet;
-            scvfsIndexSet.reserve(element.subEntities(1));
+            scvfsIndexSet.reserve(numLocalFaces);
+
+            GeometryHelper geometryHelper(element, gridView_);
+
             for (const auto& intersection : intersections(gridView_, element))
             {
-                GeometryHelper geometryHelper(intersection, gridView_);
+                geometryHelper.updateLocalFace(intersectionMapper_, intersection);
+                const int localFaceIndex = geometryHelper.localFaceIndex();
 
                 // inner sub control volume faces
                 if (intersection.neighbor())
@@ -157,7 +168,7 @@ public:
                                         std::vector<IndexType>({eIdx, nIdx}),
                                         geometryHelper
                                         );
-                    localToGlobalScvfIndices_[eIdx][intersection.indexInInside()] = scvfIdx;
+                    localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
                 // boundary sub control volume faces
@@ -169,7 +180,7 @@ public:
                                         std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
                                         geometryHelper
                                         );
-                    localToGlobalScvfIndices_[eIdx][intersection.indexInInside()] = scvfIdx;
+                    localToGlobalScvfIndices_[eIdx][localFaceIndex] = scvfIdx;
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
             }
@@ -226,6 +237,7 @@ private:
 
     const GridView gridView_;
     Dumux::ElementMap<GridView> elementMap_;
+    IntersectionMapper intersectionMapper_;
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
