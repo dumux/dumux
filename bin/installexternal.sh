@@ -63,7 +63,7 @@ installErt()
     fi
 
     if [ ! -e ert ]; then
-        git clone -b release/2016.10 https://github.com/Ensembles/ert.git
+        git clone -b release/2017.04 https://github.com/Ensembles/ert.git
     fi
 
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -294,27 +294,27 @@ installOPM()
     fi
 
     if [ ! -e opm-common ]; then
-        git clone -b release/2016.10 https://github.com/OPM/opm-common
+        git clone -b release/2017.04 https://github.com/OPM/opm-common
     fi
 
     if [ ! -e opm-core ]; then
-        git clone -b release/2016.10 https://github.com/OPM/opm-core
+        git clone -b release/2017.04 https://github.com/OPM/opm-core
     fi
 
     if [ ! -e opm-material ]; then
-        git clone -b release/2016.10 https://github.com/OPM/opm-material
+        git clone -b release/2017.04 https://github.com/OPM/opm-material
     fi
 
     if [ ! -e opm-parser ]; then
-        git clone -b release/2016.10 https://github.com/OPM/opm-parser
+        git clone -b release/2017.04 https://github.com/OPM/opm-parser
     fi
 
     if [ ! -e opm-grid ]; then
-        git clone -b release/2016.10 https://github.com/OPM/opm-grid
+        git clone -b release/2017.04 https://github.com/OPM/opm-grid
     fi
 
     if [ ! -e opm-output ]; then
-        git clone -b release/2016.10 https://github.com/OPM/opm-output
+        git clone -b release/2017.04 https://github.com/OPM/opm-output
     fi
     
     if  test "$DOWNLOAD_ONLY" == "y"; then
@@ -332,13 +332,21 @@ installOPM()
     fi
 
     # apply patches
-    echo "Applying patch for opm-parser"
-    cd $TOPDIR/opm-parser
-    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2016.04.patch
-
     echo "Applying patch for opm-common"
     cd $TOPDIR/opm-common
-    patch -p1 < $TOPDIR/dumux/patches/opm-common-2016.04.patch
+    patch -p1 < $TOPDIR/dumux/patches/opm-common-2017.04.patch
+
+    echo "Applying patch for opm-core"
+    cd $TOPDIR/opm-core
+    patch -p1 < $TOPDIR/dumux/patches/opm-core-2017.04.patch
+
+    echo "Applying patch for opm-parser"
+    cd $TOPDIR/opm-parser
+    patch -p1 < $TOPDIR/dumux/patches/opm-parser-2017.04.patch
+
+    echo "Applying patch for opm-grid"
+    cd $TOPDIR/opm-grid
+    patch -p1 < $TOPDIR/dumux/patches/opm-grid-2017.04.patch
 
     # show additional information
     echo "In addition, it might be necessary to set manually some"
