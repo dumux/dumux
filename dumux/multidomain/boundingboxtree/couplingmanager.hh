@@ -457,6 +457,28 @@ public:
                                           prevGlobalFaceVars, curGlobalFaceVars,
                                           elemBcTypes, elemFluxVarsCache);
         return stokesLocalResidual_.ccResidual();
+
+        // assumption: method only called for elements which are at the interface
+        // determine coupling subcontrolvolumeface
+//         for (auto scvf : fvGeometry.scvfs(fvGeometry)) // TODO ??? -- rough draft
+//         {
+//             if (abs(scvf.center()[1] - problem.interfaceVerticalPos()) < eps_) // |y(scvf.center) - y(interface)| < eps ???
+//             {
+//                 auto couplingScfvIdx = scvf.index();
+//                 continue;
+//             }
+//         }
+//         auto outerUnitNormal = fvGeometry.scfv(couplingScfvIdx).unitOuterNormal();
+//         Scalar interfaceArea = fvGeometry.scfv(couplingScfvIdx).area();
+//
+//         Scalar densityStokes = prevElemVolVars.density();
+//         const Scalar velocity = prevGlobalFaceVars.faceVars(scvf.dofIndex()).velocity();
+//         auto normalVelocityAtInterface = velocity * outerUnitNormal;
+//
+//         // mass coupling condition
+//         auto stokesCCCouplingResidual = densityStokes * normalVelocityAtInterface * interfaceArea; // TODO nc --> rho_g^ff
+//
+//         return stokesCCCouplingResidual;
     }
 
     //! evaluate coupling residual for the derivative stokes DOF with respect to low dim DOF

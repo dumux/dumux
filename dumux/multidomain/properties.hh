@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup MultiDomain
- * \brief Base properties for problems of mixed dimension
+ * \brief Base properties for problems of equal dimension
  * two sub problems
  */
 
@@ -38,7 +38,7 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/timemanager.hh>
 
-#include <dumux/multidimension/subproblemlocaljacobian.hh>
+#include <dumux/multidomain/subproblemlocaljacobian.hh>
 
 namespace Dumux
 {

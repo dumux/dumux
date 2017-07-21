@@ -99,8 +99,8 @@ class CouplingMapperStokesDarcy
     using StokesCCToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
     using StokesFaceToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
 
-    static_assert((!stokesIsBox && darcyIsBox),
-         "Only the coupling between a lowdim box and a a stokes staggered model is implemented so far!");
+//     static_assert((!stokesIsBox && darcyIsBox), // TODO
+//          "Only the coupling between a lowdim box and a a stokes staggered model is implemented so far!");
 
 public:
     CouplingMapperStokesDarcy(StokesProblem &stokesProblem, DarcyProblem &darcyProblem, CouplingManager &couplingManager)
@@ -153,7 +153,7 @@ public:
 
                 // set the darcy eIdx
                 darcyToStokesMap_[darcyDofIdxGlobal].setDarcyElementIndex(darcyElementIdx);
-                darcyToStokesMap_[darcyDofIdxGlobal].setDarcyScvIdx(darcyScv.index());
+                darcyToStokesMap_[darcyDofIdxGlobal].setDarcyScvIdx(darcyScv.dofIndex());
 
                 // keep track of the total area in the
                 // stokes domain one darcy dof is associated to

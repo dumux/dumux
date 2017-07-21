@@ -135,27 +135,27 @@ public:
        // create a vector containing all darcy elements coupled to the stokes SCV face
        const auto darcyCouplingInfo = couplingManager().stokesFaceToDarcyMap().at(scvf.dofIndex());
 
-       DarcyPrimaryVariables velocity(0);
-       for(auto x:darcyCouplingInfo)
-       {
-           const auto& darcyElement = darcyTree.entity(x.darcyElementIdx);
-           const auto darcyDofIdx = x.darcyDofIdx;
-
-           const auto darcyScvIdx = darcyToStokesMap.at(darcyDofIdx).darcyScvIdx();
-
-           auto fvGeometry = localView(darcyProblem.model().globalFvGeometry());
-           fvGeometry.bind(darcyElement);
-
-           auto curElemVolVars = localView(darcyProblem.model().curGlobalVolVars());
-           curElemVolVars.bind(darcyElement, fvGeometry, darcyProblem.model().curSol());
-           const auto volVars = curElemVolVars[darcyScvIdx];
-           auto massflux = Functions<DarcyProblemTypeTag>::boundaryFlux(darcyProblem, darcyElement, restriction);
-           const auto couplingArea = darcyToStokesMap.at(darcyDofIdx).couplingArea() * volVars.extrusionFactor();
-
-//            std::cout << "at lowdim : " << darcyDofIdx << ", mass flux : " << flux << " , area: " << couplingArea << std::endl;
-           velocity += massflux / (volVars.density() * couplingArea);
-       }
-       return velocity;
+       DarcyPrimaryVariables velocity(0); // TODO
+//        for(auto x:darcyCouplingInfo)
+//        {
+//            const auto& darcyElement = darcyTree.entity(x.darcyElementIdx);
+//            const auto darcyDofIdx = x.darcyDofIdx;
+//
+//            const auto darcyScvIdx = darcyToStokesMap.at(darcyDofIdx).darcyScvIdx();
+//
+//            auto fvGeometry = localView(darcyProblem.model().globalFvGeometry());
+//            fvGeometry.bind(darcyElement);
+//
+//            auto curElemVolVars = localView(darcyProblem.model().curGlobalVolVars());
+//            curElemVolVars.bind(darcyElement, fvGeometry, darcyProblem.model().curSol());
+//            const auto volVars = curElemVolVars[darcyScvIdx];
+//            auto massflux = Functions<DarcyProblemTypeTag>::boundaryFlux(darcyProblem, darcyElement, restriction);
+//            const auto couplingArea = darcyToStokesMap.at(darcyDofIdx).couplingArea() * volVars.extrusionFactor();
+//
+// //            std::cout << "at lowdim : " << darcyDofIdx << ", mass flux : " << flux << " , area: " << couplingArea << std::endl;
+//            velocity += massflux / (volVars.density() * couplingArea);
+//        }
+       return velocity; // TODO
     }
 
     //! Get the coupling manager

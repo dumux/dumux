@@ -22,8 +22,8 @@
  * \brief An assembler for the global Jacobian matrix for coupled models.
  *        We assume a Stokes domain and a Darcy domain on separate grids.
  */
-#ifndef DUMUX_MIXEDDIMENSION_ASSEMBLER_HH
-#define DUMUX_MIXEDDIMENSION_ASSEMBLER_HH
+#ifndef DUMUX_MULTIDOMAIN_ASSEMBLER_HH
+#define DUMUX_MULTIDOMAIN_ASSEMBLER_HH
 
 #include <dune/istl/matrixindexset.hh>
 

@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup MultiDomain
- * \brief Base class for the coupled models
+ * \brief Base class for the coupled models of equal dimension
  */
-#ifndef DUMUX_MULTIDOMAIN_MODEL_HH
-#define DUMUX_MULTIDOMAIN_MODEL_HH
+#ifndef DUMUX_MULTIDOMAIN_MODEL_FOR_STAGGERED_HH
+#define DUMUX_MULTIDOMAIN_MODEL_FOR_STAGGERED_HH
 
 #include <dune/geometry/type.hh>
 #include <dune/istl/bvector.hh>
@@ -39,10 +39,10 @@ namespace Dumux
 
 /*!
  * \ingroup MultiDomain
- * \brief The base class for implicit coupled models.
+ * \brief The base class for implicit models of equal dimension.
  */
 template<class TypeTag>
-class MultiDomainModel
+class MultiDomainModelForStaggered
 {
     typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
@@ -73,17 +73,22 @@ class MultiDomainModel
 
     enum {
         stokesDim = StokesGridView::dimension,
-        darcyDim = DarcyGridView::dimension,
+        darcyDim = DarcyGridView::dimension, // TODO same dimension
         dimWorld = StokesGridView::dimensionworld
     };
 
     enum {
-        stokesDofCodim =  0,
+        darcyIsBox = GET_PROP_VALUE(DarcyProblemTypeTag, ImplicitIsBox),
+        stokesDofCodim = 0,
         darcyDofCodim = 0
     };
 
     typename SubProblemBlockIndices::StokesIdx stokesIdx;
     typename SubProblemBlockIndices::DarcyIdx darcyIdx;
+
+    using DofTypeIndices = typename GET_PROP(StokesProblemTypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
 
     typedef typename StokesGridView::template Codim<0>::Entity StokesElement;
     typedef typename DarcyGridView::template Codim<0>::Entity DarcyElement;
@@ -93,18 +98,19 @@ class MultiDomainModel
 
 public:
      // copying a model is not a good idea
-    MultiDomainModel(const MultiDomainModel&) = delete;
+    MultiDomainModelForStaggered(const MultiDomainModelForStaggered&) = delete;
 
     /*!
      * \brief The constructor.
      */
-    MultiDomainModel()
+    MultiDomainModelForStaggered()
     : problemPtr_(nullptr) {}
 
     /*!
      * \brief Apply the initial conditions to the model.
      *
-     * \param problem The object representing the problem which needs to be simulated.
+     * \param problem The object representing the problem which needs to
+     *             be simulated.
      * \note at this point the sub problems are already initialized
      */
     void init(Problem &problem)
@@ -112,16 +118,19 @@ public:
         problemPtr_ = &problem;
 
         // resize the current and previous solution
-        const unsigned int stokesNumDofs = asImp_().stokesNumDofs();
         const unsigned int darcyNumDofs = asImp_().darcyNumDofs();
-        uCur_[stokesIdx].resize(stokesNumDofs);
+        uCur_[stokesIdx][cellCenterIdx].resize(problem_().stokesProblem().model().numCellCenterDofs());
+        uCur_[stokesIdx][faceIdx].resize(problem_().stokesProblem().model().numFaceDofs());
         uCur_[darcyIdx].resize(darcyNumDofs);
-        uPrev_[stokesIdx].resize(stokesNumDofs);
+        uPrev_[stokesIdx][cellCenterIdx].resize(problem_().stokesProblem().model().numCellCenterDofs());
+        uPrev_[stokesIdx][faceIdx].resize(problem_().stokesProblem().model().numFaceDofs());
         uPrev_[darcyIdx].resize(darcyNumDofs);
 
         // initialize local jocabian and jacobian assembler
         // \note these local jacobians are not the localjacobian objects of the submodels
         // \todo generalize so that there is only one unique local jac object
+
+        std::cout << "in init(Problem& problem) of model " << std::endl;
         stokesLocalJacobian_.init(problem_());
         darcyLocalJacobian_.init(problem_());
         jacAsm_ = std::make_shared<JacobianAssembler>();
@@ -166,15 +175,39 @@ public:
         for (const auto& element : elements(stokesGridView_()))
         {
             stokesLocalResidual().eval(element);
-            const unsigned int dofIdxGlobal = problem_().stokesProblem().model().dofMapper().index(element);
-            residual[stokesIdx][dofIdxGlobal] = stokesLocalResidual().residual(0);
+
+//             if (stokesIsBox)
+//             {
+//                 for (int i = 0; i < element.subEntities(stokesDim); ++i)
+//                 {
+//                     const unsigned int dofIdxGlobal = problem_().stokesProblem().model().dofMapper().subIndex(element, i, stokesDim);
+//                     residual[stokesIdx][dofIdxGlobal] += stokesLocalResidual().residual(i);
+//                 }
+//             }
+//             else//TODO
+//             {
+//                 const unsigned int dofIdxGlobal = problem_().stokesProblem().model().dofMapper().index(element);
+//                 residual[stokesIdx][dofIdxGlobal] = stokesLocalResidual().residual(0);
+//             }
         }
 
         for (const auto& element : elements(darcyGridView_()))
         {
             darcyLocalResidual().eval(element);
-            const unsigned int dofIdxGlobal = problem_().darcyProblem().model().dofMapper().index(element);
-            residual[darcyIdx][dofIdxGlobal] = darcyLocalResidual().residual(0);
+
+            if (darcyIsBox)
+            {
+                for (int i = 0; i < element.subEntities(darcyDim); ++i)
+                {
+                    const unsigned int dofIdxGlobal = problem_().darcyProblem().model().dofMapper().subIndex(element, i, darcyDim);
+                    residual[darcyIdx][dofIdxGlobal] += darcyLocalResidual().residual(i);
+                }
+            }
+            else
+            {
+                const unsigned int dofIdxGlobal = problem_().darcyProblem().model().dofMapper().index(element);
+                residual[darcyIdx][dofIdxGlobal] = darcyLocalResidual().residual(0);
+            }
         }
 
         // calculate the square norm of the residual
