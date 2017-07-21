@@ -124,7 +124,7 @@ public:
      *
      * \param globalPos The global position
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         if (isFineMaterial_(globalPos))
             return fineK_;

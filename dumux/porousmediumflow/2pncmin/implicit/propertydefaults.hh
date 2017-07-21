@@ -35,6 +35,7 @@
 #include "properties.hh"
 #include "primaryvariableswitch.hh"
 
+#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/2pnc/implicit/newtoncontroller.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit.hh>
@@ -121,6 +122,9 @@ SET_TYPE_PROP(TwoPNCMin, VolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);
 
 //! the primary variable switch
 SET_TYPE_PROP(TwoPNCMin, PrimaryVariableSwitch, TwoPNCMinPrimaryVariableSwitch<TypeTag>);
+
+//! The primary variables vector for the 2pncmin model
+SET_TYPE_PROP(TwoPNCMin, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
 
 //! The indices required by the isothermal 2pNcMin model
 SET_TYPE_PROP(TwoPNCMin, Indices, TwoPNCMinIndices <TypeTag, /*PVOffset=*/0>);

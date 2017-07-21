@@ -37,7 +37,7 @@ namespace Properties
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(Indices);
 NEW_PROP_TAG(VolumeVariables);
-NEW_PROP_TAG(PrimaryVariables);
+NEW_PROP_TAG(NumEqVector);
 }
 
 /*!
@@ -55,7 +55,7 @@ class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryMode
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) SourceValues;
 
     typedef Constants<Scalar> Constant;
 
@@ -88,7 +88,7 @@ public:
     *
     * For this method, the \a values parameter stores source values
     */
-    static void reactionSource(PrimaryVariables &values,
+    static void reactionSource(SourceValues &values,
                                Scalar currentDensity)
     {
         //correction to account for actually relevant reaction area

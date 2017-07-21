@@ -167,11 +167,15 @@ class NewtonController
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
 
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+
     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
 
     typedef typename GET_PROP_TYPE(TypeTag, NewtonConvergenceWriter) ConvergenceWriter;
 
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
+
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
 public:
     /*!
@@ -412,7 +416,22 @@ public:
                 initialResidual_ = sqrt(norm2);
             }
 
-            int converged = linearSolver_.solve(A, x, b);
+            //! Copy into a standard block vector. This is necessary for all model _not_ using a FieldVector<Scalar, numEq> as
+            //! primary variables vector in combination with UMFPack or SuperLU as their interfaces are hard coded
+            //! to this field vector type in Dune ISTL
+            //! Could be avoided for vectors that already have the right type using SFINAE
+            //! but it shouldn't impact performance too much
+            Dune::BlockVector<NumEqVector> xTmp; xTmp.resize(b.size());
+            Dune::BlockVector<NumEqVector> bTmp(xTmp);
+            for (int i = 0; i < b.size(); ++i)
+                for (int j = 0; j < numEq; ++j)
+                    bTmp[i][j] = b[i][j];
+
+            int converged = linearSolver_.solve(A, xTmp, bTmp);
+
+            for (int i = 0; i < x.size(); ++i)
+                for (int j = 0; j < numEq; ++j)
+                    x[i][j] = xTmp[i][j];
 
             // make sure all processes converged
             int convergedRemote = converged;

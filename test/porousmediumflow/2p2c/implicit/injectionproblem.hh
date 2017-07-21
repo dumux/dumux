@@ -112,8 +112,9 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         contiN2EqIdx = Indices::contiNEqIdx
     };
 
-
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
@@ -218,15 +219,15 @@ public:
     { return temperature_; }
 
     /*!
-     * \brief Returns the source term
+     * \brief Returns the source terms for each equation
      *
      * \param values Stores the source values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return Sources(0.0);
     }
 
     // \}
@@ -284,12 +285,12 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    PrimaryVariables neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+    NeumannFluxes neumann(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
 
         const auto& globalPos = scvf.ipGlobal();
 
@@ -322,14 +323,6 @@ public:
         return initial_(globalPos);
     }
 
-    /*!
-     * \brief Evaluate the initial phase state at a given position
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
-    { return Indices::wPhaseOnly; }
-
     // \}
 
 private:
@@ -345,6 +338,8 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
+        priVars.setState(Indices::wPhaseOnly);
+
         Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 
         Scalar pl = 1e5 - densityW*this->gravity()[1]*(depthBOR_ - globalPos[1]);

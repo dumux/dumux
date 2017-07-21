@@ -40,7 +40,7 @@ namespace Properties
 NEW_PROP_TAG(FluidSystem);
 NEW_PROP_TAG(FVElementGeometry);
 NEW_PROP_TAG(Indices);
-NEW_PROP_TAG(PrimaryVariables);
+NEW_PROP_TAG(NumEqVector);
 NEW_PROP_TAG(VolumeVariables);
 }
 
@@ -61,7 +61,7 @@ class ElectroChemistry
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) SourceValues;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
@@ -112,7 +112,7 @@ public:
     *
     * For this method, the \a values parameter stores source values
     */
-    static void reactionSource(PrimaryVariables &values,
+    static void reactionSource(SourceValues &values,
                                Scalar currentDensity)
     {
         //correction to account for actually relevant reaction area

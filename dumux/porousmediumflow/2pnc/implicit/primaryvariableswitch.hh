@@ -82,7 +82,7 @@ protected:
     {
         // evaluate primary variable switch
         bool wouldSwitch = false;
-        int phasePresence = this->phasePresence_[dofIdxGlobal];
+        int phasePresence = priVars.state();
         int newPhasePresence = phasePresence;
 
         //check if a primary variable switch is necessary
@@ -187,7 +187,7 @@ protected:
         }
 
 
-        this->phasePresence_[dofIdxGlobal] = newPhasePresence;
+        priVars.setState(newPhasePresence);
         this->wasSwitched_[dofIdxGlobal] = wouldSwitch;
         return phasePresence != newPhasePresence;
     }

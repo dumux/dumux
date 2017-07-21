@@ -127,6 +127,7 @@ class InfiltrationProblem : public ImplicitPorousMediaProblem<TypeTag>
 
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) NeumannFluxes;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -188,17 +189,6 @@ public:
         return temperature_;
     }
 
-    /*!
-     * \brief Returns the source term at specific position in the domain.
-     *
-     * \param values The source values for the primary variables
-     * \param globalPos The position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
     // \}
 
     /*!
@@ -237,6 +227,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
+        values.setState(wgPhaseOnly);
 
         Scalar y = globalPos[1];
         Scalar x = globalPos[0];
@@ -277,9 +268,9 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    NeumannFluxes neumannAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
 
         // negative values for injection
         if ((globalPos[0] <= 75.0 + eps_) && (globalPos[0] >= 50.0 - eps_) && (globalPos[1] >= 10.0 - eps_))
@@ -311,25 +302,15 @@ public:
      * variables.
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables values;
-        initial_(values, globalPos);
-        return values;
-    }
-
-    /*!
-     * \brief Evaluate the initial phase state at a given position
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
-    { return wgPhaseOnly; }
+    { return initial_(globalPos); }
 
 private:
     // internal method for the initial condition
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0.0);
+        values.setState(wgPhaseOnly);
+
         Scalar y = globalPos[1];
         Scalar x = globalPos[0];
         Scalar sw, swr=0.12, sgr=0.03;
@@ -351,6 +332,7 @@ private:
             values[switch1Idx] = 1.-sgr;
             values[switch2Idx] = 1.e-6;
         }
+        return values;
     }
 
     static Scalar invertPcgw_(Scalar pcIn, const MaterialLawParams &pcParams)

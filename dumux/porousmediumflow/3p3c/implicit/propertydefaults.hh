@@ -37,6 +37,7 @@
 #include "localresidual.hh"
 #include "primaryvariableswitch.hh"
 
+#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -128,6 +129,9 @@ SET_TYPE_PROP(ThreePThreeC, Model, ThreePThreeCModel<TypeTag>);
 
 //! The primary variable switch for the 3p3c model
 SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch<TypeTag>);
+
+//! The primary variables vector for the 2p2c model
+SET_TYPE_PROP(ThreePThreeC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreePThreeC, VolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);

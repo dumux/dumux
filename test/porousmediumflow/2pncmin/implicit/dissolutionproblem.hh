@@ -130,6 +130,7 @@ class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
 
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -249,6 +250,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
+        priVars.setState(bothPhases);
 
         const Scalar rmax = this->bBoxMax()[0];
         const Scalar rmin = this->bBoxMin()[0];
@@ -274,19 +276,6 @@ public:
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
-    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param values The initial values for the primary variables
@@ -297,11 +286,12 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const SubControlVolume &scv) const
+    PrimaryVariables initial(const Element &element) const
     {
         PrimaryVariables priVars(0.0);
+        priVars.setState(bothPhases);
 
-        const auto& globalPos = scv.dofPosition();
+        const auto& globalPos = element.geometry().center();
 
         priVars[pressureIdx] = reservoirPressure_;
         priVars[switchIdx]   = initLiqSaturation_;                 // Sl primary variable
@@ -339,12 +329,12 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    PrimaryVariables source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
+    Sources source(const Element &element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume &scv) const
     {
-        PrimaryVariables source(0.0);
+        Sources source(0.0);
 
         const auto& volVars = elemVolVars[scv];
 
@@ -378,16 +368,6 @@ public:
         source[precipNaClEqIdx] += precipSalt;
 
         return source;
-    }
-
-    /*!
-     * \brief Return the initial phase state inside a control volume.
-     *
-     * \param scv The sub control volume
-     */
-    int initialPhasePresence(const SubControlVolume& scv) const
-    {
-        return bothPhases;
     }
 
 private:
