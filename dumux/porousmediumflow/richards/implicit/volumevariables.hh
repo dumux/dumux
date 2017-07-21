@@ -111,7 +111,7 @@ public:
         // use Raoult to compute the water mole fraction in air
         if (enableWaterDiffusionInAir)
         {
-            molarDensity_[wPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(wPhaseIdx));
+            molarDensity_[wPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(wPhaseIdx))/FluidSystem::H2O::molarMass();
             molarDensity_[nPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
             moleFraction_[wPhaseIdx] = 1.0;
 
