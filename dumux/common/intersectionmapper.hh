@@ -26,13 +26,16 @@
 
 /*!
  * \file
- * \brief defines an intersection mapper for mapping of global DOFs assigned
- *        to faces which also works for adaptive grids.
+ * \brief defines intersection mappers.
  */
 
 namespace Dumux
 {
 
+/*!
+ * \brief defines a standard intersection mapper for mapping of global DOFs assigned
+ *        to faces. It only works for conforming grids, without hanging nodes.
+ */
 template<class TypeTag>
 class ConformingGridIntersectionMapper
 {
@@ -71,6 +74,104 @@ public:
 
 private:
     const GridView gridView_;
+};
+
+/*!
+ * \brief defines an intersection mapper for mapping of global DOFs assigned
+ *        to faces which also works for non-conforming grids and corner-point grids.
+ */
+template<class TypeTag>
+class NonConformingGridIntersectionMapper
+{
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using IndexType = unsigned int;
+
+public:
+    NonConformingGridIntersectionMapper(const GridView& gridview)
+    : gridView_(gridview),
+      numIntersections_(gridView_.size(1)),
+      intersectionMapGlobal_(gridView_.size(0))
+    {
+
+    }
+
+    //! The total number of intersections
+    std::size_t numIntersections() const
+    {
+        return numIntersections_;
+    }
+
+    IndexType globalIntersectionIndex(const Element& element, const IndexType localFaceIdx) const
+    {
+        return (intersectionMapGlobal_[index(element)].find(localFaceIdx))->second; //use find() for const function!
+    }
+
+    std::size_t numFaces(const Element& element)
+    {
+        return intersectionMapGlobal_[index(element)].size();
+    }
+
+    void update()
+    {
+        intersectionMapGlobal_.clear();
+        intersectionMapGlobal_.resize(gridView_.size(0));
+
+        int globalIntersectionIdx = 0;
+        for (const auto& element : elements(gridView_))
+        {
+            int eIdx = index(element);
+            int fIdx = 0;
+
+            // run through all intersections with neighbors
+            for (const auto& intersection : intersections(gridView_, element))
+            {
+                if (intersection.neighbor())
+                {
+                    auto neighbor = intersection.outside();
+                    int eIdxN = index(neighbor);
+
+                    if (element.level() > neighbor.level() || (element.level() == neighbor.level() && eIdx < eIdxN))
+                    {
+                        int fIdxN = 0;
+                        for (const auto& intersectionNeighbor : intersections(gridView_, neighbor))
+                        {
+                            if (intersectionNeighbor.neighbor())
+                            {
+                                if (intersectionNeighbor.outside() == element)
+                                {
+                                    break;
+                                }
+                            }
+                            fIdxN++;
+                        }
+                        intersectionMapGlobal_[eIdx][fIdx] = globalIntersectionIdx;
+                        intersectionMapGlobal_[eIdxN][fIdxN] = globalIntersectionIdx;
+                        globalIntersectionIdx++;
+                    }
+                }
+                else
+                {
+                    intersectionMapGlobal_[eIdx][fIdx] = globalIntersectionIdx;
+                    globalIntersectionIdx++;
+                }
+
+                fIdx++;
+            }
+        }
+        numIntersections_ = globalIntersectionIdx;
+    }
+
+private:
+    IndexType index(const Element& element) const
+    {
+        return gridView_.indexSet().index(element);
+    }
+
+    const GridView gridView_;
+    unsigned int numIntersections_;
+    std::vector<std::unordered_map<int, int> > intersectionMapGlobal_;
 };
 
 /*!
