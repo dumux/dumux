@@ -56,10 +56,12 @@ public:
         return state_;
     }
 
-    //! Set the state of this primary variable object, e.g. the phase presence
-    void setState(const StateType& state)
+    //! Set the state of this primary variable object, e.g. the phase presence.
+    void setState(StateType state)
     {
-        state_ = state;
+        // NOTE: we use a copy instead of a reference in the signature to
+        // avoid linker errors related to passing a static variable to this function
+        state_ = std::move(state);
         stateIsSet_ = true;
     }
 
