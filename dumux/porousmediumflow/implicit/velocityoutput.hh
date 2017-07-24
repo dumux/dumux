@@ -161,9 +161,11 @@ public:
 
                 // get the volume flux divided by the area of the
                 // subcontrolvolume face in the reference element
-                // TODO: Divide by extrusion factor!!?
                 Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
+                flux /= problem_.extrusionFactor(element,
+                                                 fvGeometry.scv(scvf.insideScvIdx()),
+                                                 problem_.model().elementSolution(element, problem_.model().curSol()));
                 tmpVelocity *= flux;
 
                 const int eIdxGlobal = problem_.elementMapper().index(element);
