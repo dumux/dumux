@@ -102,7 +102,8 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using CoordScalar = typename Grid::ctype;
     using Miscible2pNCComposition = Dumux::Miscible2pNCComposition<Scalar, FluidSystem>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static_assert(useMoles, "use moles has to be set true in the 2pnc model");
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 

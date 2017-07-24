@@ -111,7 +111,9 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, false> : public FluxVar
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+           numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+    };
 
 public:
     //! The constructor
@@ -140,14 +142,14 @@ public:
         return this->applyUpwindScheme(upwindTerm, advPreFlux_[phaseIdx], phaseIdx);
     }
 
-    Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
+    Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx)
     {
         return MolecularDiffusionType::flux(this->problem(),
                                             this->element(),
                                             this->fvGeometry(),
                                             this->elemVolVars(),
                                             this->scvFace(),
-                                            phaseIdx, compIdx,
+                                            phaseIdx,
                                             this->elemFluxVarsCache());
     }
 
@@ -239,7 +241,9 @@ class PorousMediumFluxVariablesImpl<TypeTag, true, true, true> : public FluxVari
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
 
-    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+           numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
+    };
 
 public:
     //! The constructor
@@ -268,14 +272,14 @@ public:
         return this->applyUpwindScheme(upwindTerm, advPreFlux_[phaseIdx], phaseIdx);
     }
 
-    Scalar molecularDiffusionFlux(const int phaseIdx, const int compIdx)
+    Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx)
     {
         return MolecularDiffusionType::flux(this->problem(),
                                             this->element(),
                                             this->fvGeometry(),
                                             this->elemVolVars(),
                                             this->scvFace(),
-                                            phaseIdx, compIdx,
+                                            phaseIdx,
                                             this->elemFluxVarsCache());
     }
 

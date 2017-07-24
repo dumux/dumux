@@ -88,6 +88,9 @@ public:
                           const SubControlVolume& scv) const
     { return 18.0; }
 
+    Scalar fluidMolarMass(const GlobalPosition &globalPos) const
+    { return 18.0; }
+
     //! velocity field
     GlobalPosition velocity(const Element &element,
                             const SubControlVolumeFace& scvf) const

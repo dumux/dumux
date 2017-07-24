@@ -125,6 +125,7 @@ class OnePTwoCTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
+
     // copy some indices for convenience
     enum
     {
@@ -140,7 +141,10 @@ class OnePTwoCTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
         // indices of the equations
         conti0EqIdx = Indices::conti0EqIdx,
-        transportEqIdx = Indices::transportEqIdx
+        transportEqIdx = Indices::transportEqIdx,
+
+        phaseCompIdx = Indices::phaseCompIdx,
+        transportCompIdx = Indices::transportCompIdx
     };
 
     //! property that defines whether mole or mass fractions are used
@@ -226,10 +230,14 @@ public:
     {
         PrimaryVariables values = initial_(globalPos);
 
+
         // condition for the N2 molefraction at left boundary
         if (globalPos[0] < eps_)
         {
-            values[massOrMoleFracIdx] = 2.0e-5;
+            if (useMoles)
+                values[massOrMoleFracIdx] = 2.0e-5 ;
+            else
+                values[massOrMoleFracIdx] = 2.0e-5*FluidSystem::molarMass(transportCompIdx)/(2.0e-5*FluidSystem::molarMass(transportCompIdx)+ (1-2.0e-5)*FluidSystem::molarMass(phaseCompIdx));
 #if NONISOTHERMAL
             values[temperatureIdx] = 300.;
 #endif

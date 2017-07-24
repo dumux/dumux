@@ -53,8 +53,10 @@ class TracerLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
 
@@ -70,8 +72,7 @@ public:
      *  \param useMoles If mole or mass fractions are used
      */
     PrimaryVariables computeStorage(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars,
-                                    bool useMoles = true) const
+                                    const VolumeVariables& volVars) const
     {
         PrimaryVariables storage(0.0);
 
@@ -110,15 +111,14 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache,
-                                 bool useMoles = true)
+                                 const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         FluxVariables fluxVars;
         fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // get upwind weights into local scope
         PrimaryVariables flux(0.0);
-
+        const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(0);
         // formulation with mole balances
         if (useMoles)
         {
@@ -131,7 +131,7 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(0, upwindTerm);
                 // diffusive fluxes
-                flux[compIdx] += fluxVars.molecularDiffusionFlux(0, compIdx);
+                flux[compIdx] += diffusiveFluxes[compIdx];
             }
         }
         // formulation with mass balances
@@ -146,7 +146,7 @@ public:
                 // advective fluxes
                 flux[compIdx] += fluxVars.advectiveFlux(0, upwindTerm);
                 // diffusive fluxes
-                flux[compIdx] += fluxVars.molecularDiffusionFlux(0, compIdx);
+                flux[compIdx] += diffusiveFluxes[compIdx]*FluidSystem::molarMass(compIdx);
             }
         }
 

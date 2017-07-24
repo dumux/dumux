@@ -185,6 +185,9 @@ SET_TYPE_PROP(TwoPNC, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<type
 //! Enable gravity by default
 SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
 
+//! Use mole fractions in the balance equations by default
+SET_BOOL_PROP(TwoPNC, UseMoles, true);
+
 //! Disable velocity output by default
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity

@@ -66,6 +66,7 @@ class TracerFluidSystem
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+
 public:
     //! The number of components
     static constexpr int numComponents = 1;
@@ -120,6 +121,8 @@ class TracerTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -207,7 +210,12 @@ public:
     {
         PrimaryVariables initialValues(0.0);
         if (globalPos[1] > 0.4 - eps_ && globalPos[1] < 0.6 + eps_)
-            initialValues = 1e-9;
+        {
+            if (useMoles)
+                initialValues = 1e-9;
+            else
+                initialValues = 1e-9*FluidSystem::molarMass(0)/this->spatialParams().fluidMolarMass(globalPos);
+        }
         return initialValues; }
 
     // \}
