@@ -169,10 +169,12 @@ public:
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
         fluidState.setDensity(wPhaseIdx, FluidSystem::density(fluidState, paramCache, wPhaseIdx));
+        fluidState.setDensity(nPhaseIdx, FluidSystem::density(fluidState, paramCache, nPhaseIdx));
         fluidState.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState, paramCache, wPhaseIdx));
 
         // compute and set the enthalpy
         fluidState.setEnthalpy(wPhaseIdx, Implementation::enthalpy(fluidState, paramCache, wPhaseIdx));
+        fluidState.setEnthalpy(nPhaseIdx, Implementation::enthalpy(fluidState, paramCache, nPhaseIdx));
     }
 
     /*!
@@ -223,7 +225,7 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     Scalar density(const int phaseIdx = wPhaseIdx) const
-    { return phaseIdx == wPhaseIdx ? fluidState_.density(phaseIdx) : 0.0; }
+    { return fluidState_.density(phaseIdx); }
 
     /*!
      * \brief Returns the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
