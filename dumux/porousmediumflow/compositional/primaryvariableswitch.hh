@@ -131,6 +131,8 @@ public:
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
+            const auto eIdx = problem.elementMapper().index(element);
+
             auto curElemSol = problem.model().elementSolution(element, curSol);
 
             auto& curGlobalVolVars = problem.model().nonConstCurGlobalVolVars();
@@ -145,8 +147,7 @@ public:
                     visited_[dofIdxGlobal] = true;
                     // Compute temporary volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    //auto&& volVars = curGlobalVolVars.volVars(scv.index());
-                    auto&& volVars = curGlobalVolVars.volVars(scv);
+                    auto&& volVars = curGlobalVolVars.volVars(eIdx, scv.indexInElement());
                     volVars.update(curElemSol, problem, element, scv);
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
