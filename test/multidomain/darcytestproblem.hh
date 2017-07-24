@@ -24,7 +24,6 @@
 #define DUMUX_DARCY_SUBPROBLEM_HH
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
@@ -52,10 +51,13 @@ class DarcyTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyTestProblem, INHERITS_FROM(OneP, CCTpfaModel, OnePTestSpatialParams)); // TODO ??
+NEW_TYPE_TAG(DarcyTestProblem, INHERITS_FROM(CCTpfaModel, OneP, OnePTestSpatialParams)); // TODO ??
 
 // Set the problem property
 SET_TYPE_PROP(DarcyTestProblem, Problem, Dumux::DarcyTestProblem<TypeTag>);
+
+// Set the spatial parameters
+SET_TYPE_PROP(DarcyTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
 
 // SET_TYPE_PROP(DarcyTestProblem, GridCreator, Dumux::StructuredMicroModelGridCreator<TypeTag>);
 
@@ -108,6 +110,7 @@ class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -202,12 +205,12 @@ public:
     // \{
     //! Specifies which kind of boundary condition should be used for
     //! which equation for a finite volume on the boundary.
-    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolume &scv) const
+    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes bcTypes;
         bcTypes.setAllNeumann();
-        if(couplingManager().isDarcyCouplingEntity(scv)) // TODO
-            bcTypes.setAllDirichlet();
+        if(couplingManager().isDarcyCouplingEntity(scvf))
+            bcTypes.setAllCouplingNeumann();
 
         return bcTypes;
     }
@@ -223,17 +226,26 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichlet(const Element &element,
-                               const SubControlVolume &scv) const
+                               const SubControlVolumeFace &scvf) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 0.9e5; // TODO
-
-        if(couplingManager().isDarcyCouplingEntity(scv))
-        {
-            values[pressureIdx] = couplingManager().stokesData().valueFromSolVec(scv.dofIndex(), pressureIdx);
-//             std::cout << "coupled pressure is: " << couplingManager().stokesData().valueFromSolVec(scv.dofIndex(), pressureIdx) << std::endl;
-        }
+        values[pressureIdx] = 1.0e5;
         return values;
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a Neumann
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param vertex The vertex (pore body) for which the condition is evaluated
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    PrimaryVariables neumann(const Element &element,
+                               const SubControlVolumeFace &scvf) const
+    {
+        return PrimaryVariables(0.0);
     }
 
 
@@ -250,9 +262,9 @@ public:
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    PrimaryVariables source(const Vertex& vertex, const VolumeVariables& volVars)
+    PrimaryVariables source(const Element& element, const VolumeVariables& volVars)
     {
-        return PrimaryVariables(0);
+        return PrimaryVariables(0.0);
     }
     // \}
 
@@ -262,10 +274,10 @@ public:
      * For this method, the \a priVars parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const Vertex &vertex) const
+    PrimaryVariables initial(const Element &element) const
     {
         PrimaryVariables values(0.0);
-            values[pressureIdx] = 0;//1e5;
+            values[pressureIdx] = 1.0e5;
             return values;
     }
 

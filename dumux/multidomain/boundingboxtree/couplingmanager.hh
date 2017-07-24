@@ -79,6 +79,7 @@ class CouplingManagerStokesDarcy // TODO sg-ccfv?
     using DarcyProblem = typename GET_PROP_TYPE(DarcyProblemTypeTag, Problem);
 
     using DarcySubControlVolume = typename GET_PROP_TYPE(DarcyProblemTypeTag, SubControlVolume);
+    using DarcySubControlVolumeFace = typename GET_PROP_TYPE(DarcyProblemTypeTag, SubControlVolumeFace);
     using StokesSubControlVolume = typename GET_PROP_TYPE(StokesProblemTypeTag, SubControlVolume);
     using StokesSubControlVolumeFace = typename GET_PROP_TYPE(StokesProblemTypeTag, SubControlVolumeFace);
 
@@ -246,6 +247,18 @@ public:
     bool isDarcyCouplingEntity(const DarcySubControlVolume &scv) const
     {
         return couplingMapper_.darcyToStokesMap().count(scv.dofIndex());
+    }
+
+    /*!
+     * \brief Returns whether a low dim vertex is considered for coupling
+     *        with the stokes domain. This function is used for the boundaryType() method
+     *        of the low dim problem which handles vertices.
+     *
+     * \param element The element
+     */
+    bool isDarcyCouplingEntity(const DarcySubControlVolumeFace &scvf) const
+    {
+        return couplingMapper_.darcyToStokesMap().count(scvf.insideScvIdx()); //dofIndex()); TODO
     }
 
     /*!
