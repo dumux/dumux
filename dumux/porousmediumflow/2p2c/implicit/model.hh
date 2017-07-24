@@ -214,31 +214,35 @@ public:
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
+                        const auto eIdx = this->problem_().elementMapper().index(element);
                         const auto elemSol = this->elementSolution(element, this->curSol());
-                        this->nonConstCurGlobalVolVars().volVars(scv).update(elemSol,
-                                                                                     this->problem_(),
-                                                                                     element,
-                                                                                     scv);
+                        this->nonConstCurGlobalVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
+                                                                                                    this->problem_(),
+                                                                                                    element,
+                                                                                                    scv);
                     }
                 }
             }
 
-            // handle the boundary volume variables
-            for (auto&& scvf : scvfs(fvGeometry))
+            // handle the boundary volume variables for cell-centered models
+            if(!isBox)
             {
-                // if we are not on a boundary, skip the rest
-                if (!scvf.boundary())
-                    continue;
-
-                // check if boundary is a pure dirichlet boundary
-                const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
-                if (bcTypes.hasOnlyDirichlet())
+                for (auto&& scvf : scvfs(fvGeometry))
                 {
-                    const auto insideScvIdx = scvf.insideScvIdx();
-                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
+                    // if we are not on a boundary, skip the rest
+                    if (!scvf.boundary())
+                        continue;
 
-                    this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx()).update(elemSol, this->problem_(), element, insideScv);
+                    // check if boundary is a pure dirichlet boundary
+                    const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
+                    if (bcTypes.hasOnlyDirichlet())
+                    {
+                        const auto insideScvIdx = scvf.insideScvIdx();
+                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                        const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
+
+                        this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, this->problem_(), element, insideScv);
+                    }
                 }
             }
         }
