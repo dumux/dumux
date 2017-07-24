@@ -124,6 +124,15 @@ public:
 
     VolumeVariables& volVars(const SubControlVolume scv)
     { return volumeVariables_[scv.dofIndex()]; }
+
+    // required for compatibility with the box method
+    const VolumeVariables& volVars(const IndexType scvIdx, const IndexType localIdx) const
+    { return volumeVariables_[scvIdx]; }
+
+    // required for compatibility with the box method
+    VolumeVariables& volVars(const IndexType scvIdx, const IndexType localIdx)
+    { return volumeVariables_[scvIdx]; }
+
 private:
     const Problem& problem_() const
     { return *problemPtr_; }

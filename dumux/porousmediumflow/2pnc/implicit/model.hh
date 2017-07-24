@@ -111,6 +111,7 @@ class TwoPNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
@@ -229,26 +230,49 @@ public:
         // update the secondary variables if global caching is enabled
         // \note we only updated if phase presence changed as the volume variables
         //       are already updated once by the switch
-        if (switchFlag_)
+        for (const auto& element : elements(this->problem_().gridView()))
         {
-            for (const auto& element : elements(this->problem_().gridView()))
-            {
-                // make sure FVElementGeometry & vol vars are bound to the element
-                auto fvGeometry = localView(this->globalFvGeometry());
-                fvGeometry.bindElement(element);
+            // make sure FVElementGeometry & vol vars are bound to the element
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
 
+            if (switchFlag_)
+            {
                 for (auto&& scv : scvs(fvGeometry))
                 {
                     auto dofIdxGlobal = scv.dofIndex();
                     if (priVarSwitch_().wasSwitched(dofIdxGlobal))
                     {
-                       this->nonConstCurGlobalVolVars().volVars(scv).update(this->curSol()[dofIdxGlobal],
-                                                                                     this->problem_(),
-                                                                                     element,
-                                                                                     scv);
+                        const auto eIdx = this->problem_().elementMapper().index(element);
+                        const auto elemSol = this->elementSolution(element, this->curSol());
+                        this->nonConstCurGlobalVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
+                                                                                                    this->problem_(),
+                                                                                                    element,
+                                                                                                    scv);
                     }
                 }
+            }
 
+            // handle the boundary volume variables for cell-centered models
+            if(!isBox)
+            {
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    // if we are not on a boundary, skip the rest
+                    if (!scvf.boundary())
+                        continue;
+
+                    // check if boundary is a pure dirichlet boundary
+                    const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
+                    if (bcTypes.hasOnlyDirichlet())
+                    {
+                        const auto insideScvIdx = scvf.insideScvIdx();
+                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                        const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
+
+                        this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, this->problem_(), element, insideScv);
+                    }
+                }
             }
         }
     }

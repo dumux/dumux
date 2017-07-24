@@ -131,27 +131,29 @@ public:
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bindElement(element);
 
+            const auto eIdx = problem.elementMapper().index(element);
+
             auto curElemSol = problem.model().elementSolution(element, curSol);
 
             auto& curGlobalVolVars = problem.model().nonConstCurGlobalVolVars();
 
             for (auto&& scv : scvs(fvGeometry))
             {
+                // Update volVars on which grounds we decide
+                // if we need to switch the primary variables
+                auto&& volVars = curGlobalVolVars.volVars(eIdx, scv.indexInElement());
+                volVars.update(curElemSol, problem, element, scv);
+
                 auto dofIdxGlobal = scv.dofIndex();
+
                 if (!visited_[dofIdxGlobal])
                 {
                     // Note this implies that volume variables don't differ
                     // in any sub control volume associated with the dof!
                     visited_[dofIdxGlobal] = true;
-                    // Compute temporary volVars on which grounds we decide
-                    // if we need to switch the primary variables
-                    //auto&& volVars = curGlobalVolVars.volVars(scv.index());
-                    auto&& volVars = curGlobalVolVars.volVars(scv);
-                    volVars.update(curElemSol, problem, element, scv);
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
                         switched = true;
-
                 }
             }
         }
