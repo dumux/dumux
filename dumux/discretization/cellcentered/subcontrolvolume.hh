@@ -126,8 +126,8 @@ public:
     //! Return the corner for the given local index
     GlobalPosition corner(unsigned int localIdx) const
     {
-        assert(localIdx < geometry().corners().size() && "provided index exceeds the number of corners");
-        return geometry().corners(localIdx);
+        assert(localIdx < geometry().corners() && "provided index exceeds the number of corners");
+        return geometry().corner(localIdx);
     }
 
 private:
