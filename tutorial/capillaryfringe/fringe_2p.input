@@ -1,0 +1,14 @@
+[TimeManager]
+DtInitial = 3600 # [s]
+TEnd = 36000000 # [s]
+
+[Grid]
+UpperRight = 2 2
+Cells = 1 100
+
+[Problem]
+Name = 2p_fringe
+EnableGravity = true # enable gravity
+
+[Newton]
+EnableChop = true # chop for better convergence
