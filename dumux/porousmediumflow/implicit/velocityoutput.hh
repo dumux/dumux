@@ -83,7 +83,7 @@ public:
         if (velocityOutput_)
         {
             // set the number of scvs the vertices are connected to
-            if (isBox)
+            if (isBox && dim > 1)
             {
                 // resize to the number of vertices of the grid
                 cellNum_.assign(problem.gridView().size(dim), 0);
@@ -135,12 +135,7 @@ public:
         if (!velocityOutput_) return;
 
         const auto geometry = element.geometry();
-        Dune::GeometryType geomType = geometry.type();
-
-        // get the transposed Jacobian of the element mapping
-        const auto& referenceElement = ReferenceElements::general(geomType);
-        const auto& localPos = referenceElement.position(0, 0);
-        const auto jacobianT2 = geometry.jacobianTransposed(localPos);
+        const Dune::GeometryType geomType = geometry.type();
 
         // bind the element flux variables cache
         auto elemFluxVarsCache = localView(problem_.model().globalFluxVarsCache());
@@ -149,7 +144,42 @@ public:
         // the upwind term to be used for the volume flux evaluation
         auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
 
-        if (isBox)
+        if(isBox && dim == 1)
+        {
+            GlobalPosition tmpVelocity(0.0);
+            tmpVelocity = (geometry.corner(1) - geometry.corner(0));
+            tmpVelocity /= tmpVelocity.two_norm();
+
+            for (auto&& scvf : scvfs(fvGeometry))
+            {
+                if (scvf.boundary())
+                    continue;
+
+                // insantiate the flux variables
+                FluxVariables fluxVars;
+                fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+
+                // get the volume flux divided by the area of the
+                // subcontrolvolume face in the reference element
+                Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
+                Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
+                flux /= problem_.extrusionFactor(element,
+                                                 fvGeometry.scv(scvf.insideScvIdx()),
+                                                 problem_.model().elementSolution(element, problem_.model().curSol()));
+                tmpVelocity *= flux;
+
+                const int eIdxGlobal = problem_.elementMapper().index(element);
+                velocity[eIdxGlobal] = tmpVelocity;
+            }
+            return;
+        }
+
+        // get the transposed Jacobian of the element mapping
+        const auto& referenceElement = ReferenceElements::general(geomType);
+        const auto& localPos = referenceElement.position(0, 0);
+        const auto jacobianT2 = geometry.jacobianTransposed(localPos);
+
+        if(isBox)
         {
             using ScvVelocities = Dune::BlockVector<Dune::FieldVector<Scalar, dimWorld> >;
             ScvVelocities scvVelocities(fvGeometry.numScv());
