@@ -96,13 +96,13 @@ public:
     friend inline ElementVolumeVariables localView(const BoxGlobalVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
-private:
     const VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx) const
     { return volumeVariables_[eIdx][scvIdx]; }
 
     VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx)
     { return volumeVariables_[eIdx][scvIdx]; }
 
+private:
     const Problem& problem_() const
     { return *problemPtr_; }
 
