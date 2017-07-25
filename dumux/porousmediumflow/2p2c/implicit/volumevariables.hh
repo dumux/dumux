@@ -92,7 +92,6 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using PermeabilityType = typename SpatialParams::PermeabilityType;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -100,6 +99,8 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     static constexpr bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
     static_assert(useMoles || (!useMoles && useConstraintSolver),
                   "if UseMoles is set false, UseConstraintSolver has to be set to true");
+
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem, useKelvinEquation>;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
