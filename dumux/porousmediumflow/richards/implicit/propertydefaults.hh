@@ -107,6 +107,9 @@ SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, in
 //! The primary variable switch for the richards model
 SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
 
+//! The primary variable switch for the richards model
+SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
+
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);

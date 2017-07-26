@@ -73,6 +73,7 @@ NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coeffic
 //! Enabling the water diffusion in air leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
 NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into extended Richards
 NEW_PROP_TAG(UseKelvinEquation); //!< Property for turning Richards into extended Richards
+NEW_PROP_TAG(ProblemUsePrimaryVariableSwitch); //!< If we should use a primary variable switch
 
 // \}
 }
