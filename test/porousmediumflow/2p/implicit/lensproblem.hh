@@ -193,6 +193,8 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -275,7 +277,7 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
         return PrimaryVariables(0.0);
     }
@@ -348,9 +350,9 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    NeumannFluxes neumannAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
         if (onInlet_(globalPos)) {
             values[contiNEqIdx] = -0.04; // kg / (m * s)
         }
