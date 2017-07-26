@@ -28,6 +28,7 @@
 #include <dumux/implicit/model.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 #include "properties.hh"
+#include "primaryvariableswitch.hh"
 
 namespace Dumux
 {
@@ -104,10 +105,14 @@ namespace Dumux
 template<class TypeTag >
 class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
+    // the parent class needs to access the variable switch
+    friend typename GET_PROP_TYPE(TypeTag, BaseModel);
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
 
@@ -115,6 +120,10 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
         nPhaseIdx = Indices::nPhaseIdx,
         wPhaseIdx = Indices::wPhaseIdx
     };
+
+    static constexpr int dim = GridView::dimension;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    enum { dofCodim = isBox ? dim : 0 };
 
     static constexpr bool enableWaterDiffusionInAir
         = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
@@ -150,6 +159,197 @@ public:
 
         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {
+        auto& phasePresence = outputModule.createScalarField("phase presence", dofCodim);
+        for (std::size_t i = 0; i < phasePresence.size(); ++i)
+            phasePresence[i] = this->curSol()[i].state();
+    }
+
+    /*!
+     * \brief One Newton iteration was finished.
+     * \param uCurrent The solution after the current Newton iteration
+     */
+    template<typename T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), void>::type
+    newtonEndStep()
+    {
+        // \todo resize volvars vector if grid was adapted
+
+        // update the variable switch
+        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol());
+
+        // update the secondary variables if global caching is enabled
+        // \note we only updated if phase presence changed as the volume variables
+        //       are already updated once by the switch
+        for (const auto& element : elements(this->problem_().gridView()))
+        {
+            // make sure FVElementGeometry & vol vars are bound to the element
+            auto fvGeometry = localView(this->globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            if (switchFlag_)
+            {
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    auto dofIdxGlobal = scv.dofIndex();
+                    if (priVarSwitch_().wasSwitched(dofIdxGlobal))
+                    {
+                        const auto eIdx = this->problem_().elementMapper().index(element);
+                        const auto elemSol = this->elementSolution(element, this->curSol());
+                        this->nonConstCurGlobalVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
+                                                                                                    this->problem_(),
+                                                                                                    element,
+                                                                                                    scv);
+                    }
+                }
+            }
+
+            // handle the boundary volume variables for cell-centered models
+            if(!isBox)
+            {
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    // if we are not on a boundary, skip the rest
+                    if (!scvf.boundary())
+                        continue;
+
+                    // check if boundary is a pure dirichlet boundary
+                    const auto bcTypes = this->problem_().boundaryTypes(element, scvf);
+                    if (bcTypes.hasOnlyDirichlet())
+                    {
+                        const auto insideScvIdx = scvf.insideScvIdx();
+                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                        const auto elemSol = ElementSolutionVector{this->problem_().dirichlet(element, scvf)};
+
+                        this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, this->problem_(), element, insideScv);
+                    }
+                }
+            }
+        }
+    }
+
+    /*!
+     * \brief One Newton iteration was finished.
+     * \param uCurrent The solution after the current Newton iteration
+     */
+    template<typename T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), void>::type
+    newtonEndStep()
+    {
+        // update the variable switch
+        switchFlag_ = priVarSwitch_().update(this->problem_(), this->curSol());
+    }
+
+    /*!
+     * \brief Called by the update() method if applying the Newton
+     *        method was unsuccessful.
+     */
+    void updateFailed()
+    {
+        ParentType::updateFailed();
+        // reset privar switch flag
+        switchFlag_ = false;
+    }
+
+    /*!
+     * \brief Called by the problem if a time integration was
+     *        successful, post processing of the solution is done and the
+     *        result has been written to disk.
+     *
+     * This should prepare the model for the next time integration.
+     */
+    void advanceTimeLevel()
+    {
+        ParentType::advanceTimeLevel();
+        // reset privar switch flag
+        switchFlag_ = false;
+    }
+
+    /*!
+     * \brief Returns true if the primary variables were switched for
+     *        at least one dof after the last timestep.
+     */
+    bool switched() const
+    {
+        return switchFlag_;
+    }
+
+    /*!
+     * \brief Write the current solution to a restart file.
+     *
+     * \param outStream The output stream of one entity for the restart file
+     * \param entity The entity, either a vertex or an element
+     */
+    template<class Entity>
+    void serializeEntity(std::ostream &outStream, const Entity &entity)
+    {
+        // write primary variables
+        ParentType::serializeEntity(outStream, entity);
+
+        int dofIdxGlobal = this->dofMapper().index(entity);
+
+        if (!outStream.good())
+            DUNE_THROW(Dune::IOError, "Could not serialize entity " << dofIdxGlobal);
+
+        outStream << this->curSol()[dofIdxGlobal].state() << " ";
+    }
+
+    /*!
+     * \brief Reads the current solution from a restart file.
+     *
+     * \param inStream The input stream of one entity from the restart file
+     * \param entity The entity, either a vertex or an element
+     */
+    template<class Entity>
+    void deserializeEntity(std::istream &inStream, const Entity &entity)
+    {
+        // read primary variables
+        ParentType::deserializeEntity(inStream, entity);
+
+        // read phase presence
+        int dofIdxGlobal = this->dofMapper().index(entity);
+
+        if (!inStream.good())
+            DUNE_THROW(Dune::IOError, "Could not deserialize entity " << dofIdxGlobal);
+
+        int phasePresence;
+        inStream >> phasePresence;
+
+        this->curSol()[dofIdxGlobal].setState(phasePresence);
+        this->prevSol()[dofIdxGlobal].setState(phasePresence);
+    }
+
+    const Dumux::ExtendedRichardsPrimaryVariableSwitch<TypeTag>& priVarSwitch() const
+    { return switch_; }
+
+protected:
+
+    Dumux::ExtendedRichardsPrimaryVariableSwitch<TypeTag>& priVarSwitch_()
+    { return switch_; }
+
+    /*!
+     * \brief Applies the initial solution for all vertices of the grid.
+     *
+     * \todo the initial condition needs to be unique for
+     *       each vertex. we should think about the API...
+     */
+    void applyInitialSolution_()
+    {
+        ParentType::applyInitialSolution_();
+
+        // initialize the primary variable switch
+        priVarSwitch_().init(this->problem_());
+    }
+
+    //! the class handling the primary variable switch
+    ExtendedRichardsPrimaryVariableSwitch<TypeTag> switch_;
+    bool switchFlag_;
 };
 
 } // end namespace Dumux

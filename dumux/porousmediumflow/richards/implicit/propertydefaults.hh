@@ -34,8 +34,10 @@
 #include "properties.hh"
 #include "newtoncontroller.hh"
 #include "localresidual.hh"
+#include "primaryvariableswitch.hh"
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
@@ -98,6 +100,12 @@ SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
 
 //! The class with all index definitions for the model
 SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
+
+//! The class with all index definitions for the model
+SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+
+//! The primary variable switch for the richards model
+SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
 
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.

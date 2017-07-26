@@ -61,10 +61,19 @@ class RichardsVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     enum{
          pressureIdx = Indices::pressureIdx,
+         switchIdx = Indices::switchIdx,
          wPhaseIdx = Indices::wPhaseIdx,
          nPhaseIdx = Indices::nPhaseIdx,
          wCompIdx = FluidSystem::wCompIdx,
          nCompIdx = FluidSystem::nCompIdx
+    };
+
+    // present phases
+    enum
+    {
+        wPhaseOnly = Indices::wPhaseOnly,
+        nPhaseOnly = Indices::nPhaseOnly,
+        bothPhases = Indices::bothPhases
     };
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -93,47 +102,84 @@ public:
           "Kevin vapor presssure only makes sense if water in air is considered!");
 
         ParentType::update(elemSol, problem, element, scv);
-
-        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
-        //////////
-        // specify the other parameters
-        //////////
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
 
         // precompute the minimum capillary pressure (entry pressure)
         // needed to make sure we don't compute unphysical capillary pressures and thus saturations
         minPc_ = MaterialLaw::endPointPc(materialParams);
-        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
-        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        // if we want to account for diffusion in the air phase
-        // use Raoult to compute the water mole fraction in air
-        if (enableWaterDiffusionInAir)
+        if (phasePresence == nPhaseOnly)
         {
+            moleFraction_[wPhaseIdx] = 1.0;
+            moleFraction_[nPhaseIdx] = priVars[switchIdx];
+
+            fluidState_.setSaturation(wPhaseIdx, 0.0);
+            fluidState_.setSaturation(nPhaseIdx, 1.0);
+
+            Scalar t = ParentType::temperature(elemSol, problem, element, scv);
+            fluidState_.setTemperature(t);
+
+            // get pc for sw = 0.0
+            const Scalar pc = MaterialLaw::pc(materialParams, 0.0);
+
+            // set the wetting pressure
+            fluidState_.setPressure(wPhaseIdx, problem.nonWettingReferencePressure() - pc);
+            fluidState_.setPressure(nPhaseIdx, problem.nonWettingReferencePressure());
+
+            // set molar densities
             molarDensity_[wPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(wPhaseIdx))/FluidSystem::H2O::molarMass();
             molarDensity_[nPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
-            moleFraction_[wPhaseIdx] = 1.0;
 
-            if (useKelvinVaporPressure)
-            {
-                using std::exp;
-                using std::max;
-                const Scalar pc = max(MaterialLaw::endPointPc(materialParams), problem.nonWettingReferencePressure() - pressure(wPhaseIdx));
-                moleFraction_[nPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonWettingReferencePressure()
-                                           * exp(-pc * FluidSystem::H2O::molarMass()/density()
-                                                 / Constants<Scalar>::R / temperature());
-            }
-            else
-            {
-                moleFraction_[nPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonWettingReferencePressure();
-            }
-
-            // binary diffusion coefficients
+            // density and viscosity
             typename FluidSystem::ParameterCache paramCache;
             paramCache.updateAll(fluidState_);
-            diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, nPhaseIdx, wCompIdx, nCompIdx);
+            fluidState_.setDensity(wPhaseIdx, FluidSystem::density(fluidState_, paramCache, wPhaseIdx));
+            fluidState_.setDensity(nPhaseIdx, FluidSystem::density(fluidState_, paramCache, nPhaseIdx));
+            fluidState_.setViscosity(wPhaseIdx, FluidSystem::viscosity(fluidState_, paramCache, wPhaseIdx));
+
+            // compute and set the enthalpy
+            fluidState_.setEnthalpy(wPhaseIdx, Implementation::enthalpy(fluidState_, paramCache, wPhaseIdx));
+            fluidState_.setEnthalpy(nPhaseIdx, Implementation::enthalpy(fluidState_, paramCache, nPhaseIdx));
         }
+        else if (phasePresence == bothPhases)
+        {
+            Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
+
+            // if we want to account for diffusion in the air phase
+            // use Raoult to compute the water mole fraction in air
+            if (enableWaterDiffusionInAir)
+            {
+                molarDensity_[wPhaseIdx] = FluidSystem::H2O::liquidDensity(temperature(), pressure(wPhaseIdx))/FluidSystem::H2O::molarMass();
+                molarDensity_[nPhaseIdx] = IdealGas<Scalar>::molarDensity(temperature(), problem.nonWettingReferencePressure());
+                moleFraction_[wPhaseIdx] = 1.0;
+
+                moleFraction_[nPhaseIdx] = FluidSystem::H2O::vaporPressure(temperature()) / problem.nonWettingReferencePressure();
+                if (useKelvinVaporPressure)
+                {
+                    using std::exp;
+                    moleFraction_[nPhaseIdx] *= exp(-capillaryPressure() * FluidSystem::H2O::molarMass()/density(wPhaseIdx)
+                                                     / Constants<Scalar>::R / temperature());
+                }
+
+                // binary diffusion coefficients
+                typename FluidSystem::ParameterCache paramCache;
+                paramCache.updateAll(fluidState_);
+                diffCoeff_ = FluidSystem::binaryDiffusionCoefficient(fluidState_, paramCache, nPhaseIdx, wCompIdx, nCompIdx);
+            }
+        }
+        else if (phasePresence == wPhaseOnly)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Water phase only phase presence!");
+        }
+
+        //////////
+        // specify the other parameters
+        //////////
+        relativePermeabilityWetting_ = MaterialLaw::krw(materialParams, fluidState_.saturation(wPhaseIdx));
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
     /*!
