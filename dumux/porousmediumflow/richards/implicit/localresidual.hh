@@ -40,7 +40,7 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
@@ -77,11 +77,11 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    PrimaryVariables computeStorage(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars) const
+    ResidualVector computeStorage(const SubControlVolume& scv,
+                                  const VolumeVariables& volVars) const
     {
         // partial time derivative of the phase mass
-        PrimaryVariables storage;
+        ResidualVector storage(0.0);
         storage[conti0EqIdx] = volVars.porosity()
                                * volVars.density(wPhaseIdx)
                                * volVars.saturation(wPhaseIdx);
@@ -107,16 +107,16 @@ public:
      * \brief Evaluate the mass flux over a face of a sub control volume
      * \param scvf The sub control volume face to compute the flux on
      */
-    PrimaryVariables computeFlux(const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
+    ResidualVector computeFlux(const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVolumeVariables& elemVolVars,
+                               const SubControlVolumeFace& scvf,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        PrimaryVariables flux;
+        ResidualVector flux(0.0);
         // the physical quantities for which we perform upwinding
         auto upwindTerm = [](const auto& volVars)
                           { return volVars.density(wPhaseIdx)*volVars.mobility(wPhaseIdx); };
