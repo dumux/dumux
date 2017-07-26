@@ -34,6 +34,8 @@
 #include "el2pco2tables.hh"
 #include "el2pspatialparams.hh"
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 template<class TypeTag>
@@ -764,7 +766,11 @@ public:
      *
      * \param gridView The grid view
      */
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    InitialPressSat(const GridView & gridView) : BaseT(gridView) , gridView_(gridView), vertexMapper_(gridView, Dune::mcmgVertexLayout())
+#else
     InitialPressSat(const GridView & gridView) : BaseT(gridView) , gridView_(gridView), vertexMapper_(gridView)
+#endif
     {
         // resize the pressure field vector with the number of vertices
         pInit_.resize(gridView.size(GridView::dimension));

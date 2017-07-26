@@ -30,6 +30,8 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 
@@ -65,9 +67,15 @@ public:
      *
      * \param gridView the used gridView
      */
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    GstatRandomField(const GridView& gridView)
+    : gridView_(gridView), elementMapper_(gridView, Dune::mcmgElementLayout()),
+      data_(gridView.size(0)) {}
+#else
     GstatRandomField(const GridView& gridView)
     : gridView_(gridView), elementMapper_(gridView),
       data_(gridView.size(0)) {}
+#endif
 
       /*!
        * \brief Creates a new field with random variables, if desired.

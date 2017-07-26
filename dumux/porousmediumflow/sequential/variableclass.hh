@@ -21,6 +21,8 @@
 
 #include "properties.hh"
 
+#include <dune/common/version.hh>
+
 // for  parallelization
 //#include <dumux/parallel/elementhandles.hh>
 
@@ -76,9 +78,14 @@ public:
     /**
      *  @param gridView a DUNE gridview object corresponding to diffusion and transport equation
      */
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    VariableClass(const GridView& gridView) :
+        gridView_(gridView), elementMapper_(gridView, Dune::mcmgElementLayout()), vertexMapper_(gridView, Dune::mcmgVertexLayout())
+#else
     VariableClass(const GridView& gridView) :
         gridView_(gridView), elementMapper_(gridView), vertexMapper_(gridView)
     {}
+#endif
 
 
     //! Initializes the variable class

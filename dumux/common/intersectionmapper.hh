@@ -24,6 +24,8 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
+#include <dune/common/version.hh>
+
 /*!
  * \file
  * \brief defines intersection mappers.
@@ -185,7 +187,11 @@ class IntersectionMapper
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+#endif
 
 public:
     IntersectionMapper(const GridView& gridview)
