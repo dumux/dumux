@@ -29,9 +29,9 @@
 
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
-
+#include <dumux/material/components/n2.hh>
 // use the same spatial parameters as the injection problem of the
 // 2p2c test program
 #include "test/porousmediumflow/2p2c/implicit/injectionspatialparams.hh"
@@ -48,11 +48,11 @@ namespace Properties
 #if !ISOTHERMAL
 NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(TwoPNI, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionBoxProblem2PNI, INHERITS_FROM(BoxModel, InjectionProblem2PNI));
-NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCModel, InjectionProblem2PNI));
+NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCTpfaModel, InjectionProblem2PNI));
 #else
 NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(TwoP, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionBoxProblem2PNI, INHERITS_FROM(BoxModel, InjectionProblem2PNI));
-NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCModel, InjectionProblem2PNI));
+NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCTpfaModel, InjectionProblem2PNI));
 #endif
 
 // Set the grid type
@@ -118,11 +118,8 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
-#if ISOTHERMAL
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-#else
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-#endif
+
     enum {
         pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
@@ -139,7 +136,15 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+    using GasN2 = N2<Scalar>;
+
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -207,10 +212,11 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+    Sources sourceAtPos(const GlobalPosition &globalPos) const
     {
+        Sources values(0.0);
         values = 0;
+        return values;
     }
 
     // \}
@@ -227,19 +233,18 @@ public:
      * \param values Stores the value of the boundary type
      * \param globalPos The global position
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes values;
         if (globalPos[0] < eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
-
+        return values;
 #if !ISOTHERMAL
-        // set a dirichlet value for the temperature, use the energy
-        // equation to set the value
         values.setDirichlet(temperatureIdx);
 #endif
+
     }
 
     /*!
@@ -250,14 +255,16 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values;
         Scalar densityW = 1000.0;
         values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[saturationIdx] = 0.0;
 #if !ISOTHERMAL
         values[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
 #endif
+         return values;
     }
 
     /*!
@@ -275,25 +282,20 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+    NeumannFluxes neumann(const Element &element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
     {
-        values = 0;
-
-        GlobalPosition globalPos;
-        if (isBox)
-            globalPos = element.geometry().corner(scvIdx);
-        else
-            globalPos = intersection.geometry().center();
+        NeumannFluxes values(0.0);
+        const auto globalPos = scvf.ipGlobal();
 
         if (globalPos[1] < 15 + eps_ && globalPos[1] > 7 - eps_) {
             // inject air. negative values mean injection
             values[contiNEqIdx] = -1e-3; // kg/(s*m^2)
+
         }
+         return values;
     }
 
     // \}
@@ -311,8 +313,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values;
         Scalar densityW = 1000.0;
         values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[saturationIdx] = 0.0;
@@ -322,6 +325,7 @@ public:
         if (globalPos[0] > 20 - eps_ && globalPos[0] < 30 + eps_ && globalPos[1] > 5 - eps_ && globalPos[1] < 35 + eps_)
             values[temperatureIdx] = 380;
 #endif // !ISOTHERMAL
+         return values;
     }
     // \}
 

@@ -103,8 +103,6 @@ public:
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
-        // energy related quantities not belonging to the fluid state
-        asImp_().updateEnergy_(elemSol, problem, element, scv);
     }
 
     /*!
@@ -116,7 +114,7 @@ public:
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        Scalar t = Implementation::temperature_(elemSol, problem, element, scv);
+        Scalar t =  ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
@@ -156,7 +154,7 @@ public:
             fluidState.setDensity(phaseIdx, rho);
 
             // compute and set the enthalpy
-            Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+            Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
             fluidState.setEnthalpy(phaseIdx, h);
         }
     }
@@ -243,30 +241,6 @@ public:
     { return permeability_; }
 
 protected:
-    static Scalar temperature_(const ElementSolutionVector &elemSol,
-                               const Problem& problem,
-                               const Element &element,
-                               const SubControlVolume &scv)
-    {
-        return problem.temperatureAtPos(scv.dofPosition());
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return 0;
-    }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities.
-     */
-    void updateEnergy_(const ElementSolutionVector &elemSol,
-                       const Problem &problem,
-                       const Element &element,
-                       const SubControlVolume& scv)
-    {}
 
     FluidState fluidState_;
     Scalar porosity_;
