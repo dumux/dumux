@@ -49,8 +49,6 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -667,12 +665,6 @@ public:
      */
     Scalar bulkDensTimesAdsorpCoeff() const
     { return bulkDensTimesAdsorpCoeff_; }
-
-        /*!
-     * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
-     */
-    const PermeabilityType& permeability() const
-    { return permeability_; }
 
     /*!
      * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
