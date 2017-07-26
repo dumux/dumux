@@ -117,9 +117,9 @@ protected:
             {
                 // wetting phase appears
                 std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnwPredicted / xnw * 100: "
-                          << xnwPredicted / xnw * 100 << "%"
-                          << ", x_n^w: " << priVars[switchIdx] << std::endl;
+                          << ", coordinates: " << globalPos << ", xnw / xnwPredicted * 100: "
+                          << xnw / xnwPredicted * 100 << "%"
+                          << ", at x_n^w: " << priVars[switchIdx] << std::endl;
                 newPhasePresence = bothPhases;
                 priVars[switchIdx] = 0.0;
             }
