@@ -24,6 +24,8 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
+#include <dune/common/version.hh>
+
 /*!
  * \file
  * \brief defines an intersection mapper for mapping of global DOFs assigned
@@ -44,7 +46,11 @@ class IntersectionMapper
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename GridView::Intersection Intersection;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
+#endif
 
 public:
     IntersectionMapper(const GridView& gridview)

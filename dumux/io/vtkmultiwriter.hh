@@ -38,6 +38,8 @@
 
 #include <dumux/common/valgrind.hh>
 
+#include <dune/common/version.hh>
+
 #if HAVE_MPI
 #include <mpi.h>
 #endif
@@ -56,8 +58,13 @@ class VtkMultiWriter
 {
     enum { dim = GridView::dimension };
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView> ElementMapper;
+#else
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+#endif
 
 public:
     typedef Dune::VTKWriter<GridView> VtkWriter;
@@ -65,8 +72,13 @@ public:
                    const std::string &simName = "",
                    std::string multiFileName = "")
         : gridView_(gridView)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        , elementMapper_(gridView, Dune::mcmgElementLayout())
+        , vertexMapper_(gridView, Dune::mcmgVertexLayout())
+#else
         , elementMapper_(gridView)
         , vertexMapper_(gridView)
+#endif
     {
         simName_ = (simName.empty())?"sim":simName;
         multiFileName_ = multiFileName;
