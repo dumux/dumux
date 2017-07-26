@@ -34,7 +34,20 @@ namespace Dumux
  */
 template<class TypeTag>
 class NoPrimaryVariableSwitch
-{};
+{
+public:
+    template<typename... Args>
+    void init(Args&&... args) {};
+
+    template<typename... Args>
+    bool wasSwitched(Args&&... args) const { return false; };
+
+    template<typename... Args>
+    bool update(Args&&... args) { return false; };
+
+    template<typename... Args>
+    bool update_(Args&&... args) {return false; };
+};
 
 /*!
  * \ingroup ImplicitModel
