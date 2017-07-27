@@ -351,8 +351,6 @@ private:
                 auto foundCorrectIdx = [otherIsIdx](const auto& x) { return x.localNormalFaceIdx == otherIsIdx; };
                 const int index = std::find_if(this->pairData_.begin(), this->pairData_.end(), foundCorrectIdx) - this->pairData_.begin();
 
-                assert(this->pairData_[index].outerParallelFaceDofIdx == -1);
-
                 this->pairData_[index].virtualOuterParallelFaceDofPos = std::move(virtualOuterParallelFaceDofPos);
                 this->pairData_[index].parallelDistance = std::move(distance.two_norm());
             }

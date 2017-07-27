@@ -66,7 +66,7 @@ public:
     {
         const auto numDofsCC = problem.model().numCellCenterDofs();
         const auto numDofsFace = problem.model().numFaceDofs();
-        const auto numBoundaryFacets = problem.gridView().grid().numBoundarySegments();
+        const auto numBoundaryFacets = problem.model().globalFvGeometry().numBoundaryScvf();
         cellCenterToCellCenterMap_.resize(numDofsCC);
         cellCenterToFaceMap_.resize(numDofsCC);
         faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
