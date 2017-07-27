@@ -113,6 +113,7 @@ class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
 
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) NeumannFluxes;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -223,7 +224,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumann(const Element& element,
+    NeumannFluxes neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
@@ -244,18 +245,6 @@ public:
 
     // \}
 
-    /*!
-     * \name Volume terms
-     */
-    // \{
-
-    /*!
-     * \brief Evaluate the initial phase state at a given position
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
-    { return threePhases; }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -308,6 +297,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
+        values.setState(threePhases);
         Scalar y = globalPos[1];
 
         values[temperatureIdx] = 296.15;

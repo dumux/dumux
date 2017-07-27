@@ -127,6 +127,7 @@ class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>
 
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) NeumannFluxes;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 
@@ -240,7 +241,7 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumann(const Element& element,
+    NeumannFluxes neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
@@ -278,19 +279,6 @@ public:
     PrimaryVariables initialAtPos( const GlobalPosition &globalPos) const
     {
        return initial_(globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the initial phase state at a given position
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
-    {
-        if (isInContaminationZone(globalPos))
-            return threePhases;
-        else
-            return wgPhaseOnly;
     }
 
     /*!
@@ -355,6 +343,11 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
+        if (isInContaminationZone(globalPos))
+            values.setState(threePhases);
+        else
+         values.setState(wgPhaseOnly);
+
         values[pressureIdx] = 1e5 ;
         values[switch1Idx] = 0.12;
         values[switch2Idx] = 1.e-6;
