@@ -196,7 +196,7 @@ public:
             adaptionIndicator_.calculateIndicator();
 
         // prepare an indicator for refinement
-        indicatorVector_.resize(problem_.gridView().size(0), 0);
+        indicatorVector_.assign(problem_.gridView().size(0), 0);
 
         // 1) calculate Indicator -> min, maxvalues
         // loop over all leaf elements

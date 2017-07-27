@@ -413,6 +413,9 @@ public:
     {
         if(!isBox)
         {
+            if(adaptedValuesFather.u.size() == 0)
+                adaptedValuesFather.u.resize(1);
+
             adaptedValuesFather.u[0] += adaptedValues.u[0];
             adaptedValuesFather.u[0] /= adaptedValues.count;
             adaptedValuesFather.associatedMass += adaptedValues.associatedMass;

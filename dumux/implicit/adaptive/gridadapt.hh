@@ -117,7 +117,7 @@ public:
             int shouldInitialize = adaptionInitIndicator.initializeModel();
             if (problem_.grid().comm().max(shouldInitialize))
             {
-                problem_.model().init(problem_);
+                problem_.model().adaptVariableSize(true);
             }
 
             ++iter;
