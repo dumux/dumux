@@ -78,11 +78,11 @@ protected:
                  IndexType dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
-        static_assert(enableWaterDiffusionInAir, "The Richards primary variable switch only works with water diffusion in air enabled!");
-
         static const bool usePriVarSwitch = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, UsePrimaryVariableSwitch);
         if (!usePriVarSwitch)
             return false;
+
+        assert(enableWaterDiffusionInAir && "The Richards primary variable switch only works with water diffusion in air enabled!");
 
         // evaluate primary variable switch
         bool wouldSwitch = false;
