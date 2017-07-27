@@ -19,24 +19,46 @@
 /*!
  * \file
  *
- * \brief spatial parameters for the RichardsLensProblem
+ * \brief spatial parameters for the TwoPTwoCTestProblem
  */
 #ifndef DUMUX_FRINGE_SPATIAL_PARAMETERS_HH
 #define DUMUX_FRINGE_SPATIAL_PARAMETERS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/porousmediumflow/richards/implicit/model.hh>
 
 namespace Dumux
 {
+template<class TypeTag>
+class FringeSpatialParams;
+
+namespace Properties
+{
+// The spatial parameters TypeTag
+NEW_TYPE_TAG(FringeSpatialParams);
+
+// Set the spatial parameters
+SET_TYPE_PROP(FringeSpatialParams, SpatialParams, FringeSpatialParams<TypeTag>);
+
+// Set the material law
+SET_PROP(FringeSpatialParams, MaterialLaw)
+{
+private:
+    // define the material law which is parameterized by effective
+    // saturations
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    // define the material law parameterized by absolute saturations
+    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
+};
+} // end namespace Properties
 
 /*!
- * \ingroup RichardsModel
+ * \ingroup TwoPTwoCModel
  * \ingroup ImplicitTestProblems
- * \brief The spatial parameters for the RichardsLensProblem
+ * \brief The spatial parameters for the TwoPTwoCTestProblem
  */
 template<class TypeTag>
 class FringeSpatialParams : public ImplicitSpatialParams<TypeTag>
@@ -68,18 +90,29 @@ public:
     FringeSpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView)
     {
-        // residual saturations
-        outerMaterialParams_.setSwr(0.05);
-        outerMaterialParams_.setSnr(0.0);
 
-        // parameters for the Van Genuchten law
-        // alpha and n
-        outerMaterialParams_.setVgAlpha(0.0037);
-        outerMaterialParams_.setVgn(4.7);
+        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, LensSpatialParams.LowerLeft);
+        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, LensSpatialParams.UpperRight);
 
-        outerMaterialParams_.setPcLowSw(0.001);
+        // residual saturations and parameters for the Van Genuchten law
+        materialParams_.setSwr(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Swr));
+        materialParams_.setSnr(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Snr));
+        materialParams_.setVgAlpha(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.VanGenAlpha));
+        materialParams_.setVgn(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.VanGenN));
+        materialParams_.setPcLowSw(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.RegThresholdSw));
 
-        outerK_ = 5e-12;
+        // same for lens: residual saturations and parameters for the Van Genuchten law
+        materialParamsLens_.setSwr(GET_RUNTIME_PARAM(TypeTag, Scalar, LensSpatialParams.Swr));
+        materialParamsLens_.setSnr(GET_RUNTIME_PARAM(TypeTag, Scalar, LensSpatialParams.Snr));
+        materialParamsLens_.setVgAlpha(GET_RUNTIME_PARAM(TypeTag, Scalar, LensSpatialParams.VanGenAlpha));
+        materialParamsLens_.setVgn(GET_RUNTIME_PARAM(TypeTag, Scalar, LensSpatialParams.VanGenN));
+        materialParamsLens_.setPcLowSw(GET_RUNTIME_PARAM(TypeTag, Scalar, LensSpatialParams.RegThresholdSw));
+
+        permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
+        lensPermeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, LensSpatialParams.Permeability);
+        porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Porosity);
+        lensPorosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, LensSpatialParams.Porosity);
+        hasLens_ = GET_RUNTIME_PARAM(TypeTag, bool, LensSpatialParams.HasLens);
     }
 
     /*!
@@ -89,7 +122,11 @@ public:
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        return outerK_;
+        if (isInLens_(globalPos))
+            return lensPermeability_;
+        else
+            return permeability_;
+
     }
 
     /*!
@@ -98,27 +135,81 @@ public:
      * \param globalPos The global position where we evaluate
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    {
+        if (isInLens_(globalPos))
+            return lensPorosity_;
+        else
+            return porosity_;
+    }
 
     /*!
      * \brief Returns the parameters for the material law at a given location
      *
-     * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsLensProblem
+     * This method is not actually required by the TwoPTwoC model, but provided
+     * for the convenience of the TwoPTwoCLensProblem
      *
      * \param globalPos A global coordinate vector
      */
     const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
     {
-        return outerMaterialParams_;
+         if (isInLens_(globalPos))
+             return materialParamsLens_;
+         else
+            return materialParams_;
     }
 
+        /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
+    { return 1480; /*specific heat capacity of granite [J / (kg K)]*/ }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
+    { return 1600; /*density of granite [kg/m^3]*/ }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
+    { return 2; }
+
 private:
+    bool isInLens_(const GlobalPosition &globalPos) const
+    {
+        if(!hasLens_) return false;
 
-    static constexpr Scalar eps_ = 1.5e-7;
+        for (int i = 0; i < dimWorld; ++i)
+            if (globalPos[i] < lensLowerLeft_[i] - eps_ || globalPos[i] > lensUpperRight_[i] + eps_)
+                return false;
 
-    Scalar outerK_;
-    MaterialLawParams outerMaterialParams_;
+        return true;
+    }
+    static constexpr Scalar eps_ = 1e-7;
+
+    MaterialLawParams materialParams_;
+    MaterialLawParams materialParamsLens_;
+    Scalar permeability_, lensPermeability_;
+    Scalar porosity_, lensPorosity_;
+
+    GlobalPosition lensLowerLeft_;
+    GlobalPosition lensUpperRight_;
+
+    bool hasLens_;
 };
 
 } // end namespace Dumux

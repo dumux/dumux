@@ -130,7 +130,7 @@ public:
     RichardsFringeProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name) + "_richards";
     }
 
     /*!
@@ -183,6 +183,9 @@ public:
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
+        static const bool bottomDirichlet = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, BottomDirichlet);
+        if (bottomDirichlet && onLowerBoundary_(globalPos))
+            bcTypes.setAllDirichlet();
         return bcTypes;
     }
 
@@ -196,20 +199,22 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initialAtPos(globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
-     *
-     * \param globalPos The position for which the Dirichlet value is set
-     *
-     * For this method, the \a values parameter stores primary variables.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
+        PrimaryVariables values(0.0);
+        if (onUpperBoundary_(globalPos))
+        {
+            static const Scalar sw = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, TopSaturation);
+            const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
+            values[pressureIdx] = nonWettingReferencePressure() - pc;
+            values.setState(Indices::bothPhases);
+        }
+        else if(onLowerBoundary_(globalPos))
+        {
+            static const Scalar sw = 1.0;
+            const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
+            values[pressureIdx] = nonWettingReferencePressure() - pc;
+            values.setState(Indices::bothPhases);
+        }
+        return values;
     }
 
     /*!
@@ -227,21 +232,30 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
+        static const Scalar levelFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, WaterLevelFactor);
+        static const Scalar swBottom = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, SwBottomInitial);
+        static const Scalar swTop = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, SwTopInitial);
+
         PrimaryVariables values(0.0);
-        if (globalPos[1] > 0.5*(this->bBoxMax()[1] - this->bBoxMin()[1]))
+        if (globalPos[1] > levelFactor*(this->bBoxMax()[1] - this->bBoxMin()[1]))
         {
-            const Scalar sw = 0.05;
+            const Scalar sw = swTop;
             const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
             values[pressureIdx] = nonWettingReferencePressure() - pc;
+            values.setState(Indices::bothPhases);
         }
         else
         {
-            const Scalar sw = 1.0;
+            const Scalar sw = swBottom;
             const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
             values[pressureIdx] = nonWettingReferencePressure() - pc;
+            values.setState(Indices::bothPhases);
         }
         return values;
-    };
+    }
+
+    bool shouldWriteRestartFile() const
+    { return false; }
 
     // \}
 
@@ -250,6 +264,11 @@ private:
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
         return globalPos[1] > this->bBoxMax()[1] - eps_;
+    }
+
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] < this->bBoxMin()[1] + eps_;
     }
 
     static constexpr Scalar eps_ = 1.5e-7;
