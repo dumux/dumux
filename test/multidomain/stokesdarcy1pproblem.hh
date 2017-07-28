@@ -33,8 +33,6 @@
 #include <dumux/multidomain/boundingboxtree/map.hh>
 #include <dumux/multidomain/staggeredgrid/properties.hh>
 
-// #include<dumux/porenetworkflow/common/functions.hh>
-
 #include <dumux/multidomain/staggeredgrid/model.hh>
 #include <dumux/multidomain/staggeredgrid/assembler.hh>
 #include <dumux/multidomain/staggeredgrid/newtoncontroller.hh>
@@ -44,56 +42,56 @@
 namespace Dumux
 {
 template <class TypeTag>
-class TestCoupledStokesDarcyBBTProblem; // boundingboxtree
+class TestCoupledStokesDarcyProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestCoupledStokesDarcyBBTProblem, INHERITS_FROM(MultiDomain, CouplingStokesStaggeredModel));
+NEW_TYPE_TAG(TestCoupledStokesDarcyProblem, INHERITS_FROM(MultiDomain, CouplingStokesStaggeredModel));
 
 // Set the problem property
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, Problem, Dumux::TestCoupledStokesDarcyBBTProblem<TypeTag>);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, Problem, Dumux::TestCoupledStokesDarcyProblem<TypeTag>);
 
 // Set the coupling manager
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, CouplingManager, Dumux::CouplingManagerStokesDarcy<TypeTag>);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, CouplingManager, Dumux::CouplingManagerStokesDarcy<TypeTag>);
 
 //////////////////////////////////////////////////////////////////////////
 // Set the two sub-problems of the global problem
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, DarcyProblemTypeTag, TTAG(DarcyTestProblem));
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, StokesProblemTypeTag, TTAG(StokesTestProblem));
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyProblemTypeTag, TTAG(DarcyTestProblem));
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, StokesProblemTypeTag, TTAG(StokesTestProblem));
 ////////////////////////////////////////////////////////////////////////////
 
 // publish this problem in the sub problems
-SET_TYPE_PROP(DarcyTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDarcyBBTProblem));
-SET_TYPE_PROP(StokesTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDarcyBBTProblem));
+SET_TYPE_PROP(DarcyTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDarcyProblem));
+SET_TYPE_PROP(StokesTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDarcyProblem));
 
 // The subproblems inherit the parameter tree from this problem
-SET_PROP(DarcyTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyBBTProblem), ParameterTree) {};
-SET_PROP(StokesTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyBBTProblem), ParameterTree) {};
+SET_PROP(DarcyTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
+SET_PROP(StokesTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
 
-// SET_BOOL_PROP(TestCoupledStokesDarcyBBTProblem, MultiDimensionUseIterativeSolver, true);
+// SET_BOOL_PROP(TestCoupledStokesDarcyProblem, MultiDimensionUseIterativeSolver, true);
 
 NEW_PROP_TAG(DarcyToStokesMapValue); // TODO: make specialized map value class
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);
 
 NEW_PROP_TAG(StokesData);
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, StokesData, StokesData<TypeTag>);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, StokesData, StokesData<TypeTag>);
 
 NEW_PROP_TAG(DarcyData);
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, DarcyData, DarcyData<TypeTag>);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyData, DarcyData<TypeTag>);
 
 //! Set the BaseModel to MultiDomainModel
-// SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, Model, MultiDomainModelForStaggered<TypeTag>);
-// SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, JacobianAssembler,MultiDomainAssemblerForStaggered<TypeTag>);
-// SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, NewtonController, MultiDomainNewtonControllerForStaggered<TypeTag>);
+// SET_TYPE_PROP(TestCoupledStokesDarcyProblem, Model, MultiDomainModelForStaggered<TypeTag>);
+// SET_TYPE_PROP(TestCoupledStokesDarcyProblem, JacobianAssembler,MultiDomainAssemblerForStaggered<TypeTag>);
+// SET_TYPE_PROP(TestCoupledStokesDarcyProblem, NewtonController, MultiDomainNewtonControllerForStaggered<TypeTag>);
 
 #if HAVE_UMFPACK
-SET_TYPE_PROP(TestCoupledStokesDarcyBBTProblem, LinearSolver, UMFPackBackend<TypeTag>);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 
 }//end namespace properties
 
 template <class TypeTag>
-class TestCoupledStokesDarcyBBTProblem : public MultiDomainProblem<TypeTag>
+class TestCoupledStokesDarcyProblem : public MultiDomainProblem<TypeTag>
 {
     using ParentType = MultiDomainProblem<TypeTag>;
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
@@ -114,7 +112,7 @@ class TestCoupledStokesDarcyBBTProblem : public MultiDomainProblem<TypeTag>
     using DarcyPrimaryVariables = typename GET_PROP_TYPE(DarcyProblemTypeTag, PrimaryVariables);
 
 public:
-    TestCoupledStokesDarcyBBTProblem(TimeManager &timeManager, const StokesGridView &stokesGridView, const DarcyGridView &darcygridView)
+    TestCoupledStokesDarcyProblem(TimeManager &timeManager, const StokesGridView &stokesGridView, const DarcyGridView &darcygridView)
     : ParentType(timeManager, stokesGridView, darcygridView)
     {
         verbose_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, Verbose);

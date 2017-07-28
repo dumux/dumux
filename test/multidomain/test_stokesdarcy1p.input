@@ -1,5 +1,11 @@
 # Parameter file for test_stokesdarcy1p
 
+[Problem]
+Name = StokesDarcy1p
+Verbose = true
+Velocity = 0
+
+
 [StokesGrid]
 LowerLeft = 0 1
 UpperRight = 2 2

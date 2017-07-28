@@ -27,11 +27,7 @@
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-// base problem
-// 1p porous medium flow model
-
-// #include <dumux/porousmediumflow/1p/implicit/properties.hh> // TODO remove?
-#include <test/porousmediumflow/1p/implicit/1ptestspatialparams.hh> // TODO replace!!
+#include "1ptestspatialparams.hh"
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
@@ -40,8 +36,6 @@
 
 // coupling-specific includes
 #include <dumux/multidomain/subproblemproperties.hh>
-// #include <dumux/porenetworkflow/common/functions.hh>
-// #include <dumux/io/matchinggridcreator.hh> // TODO
 
 
 namespace Dumux
@@ -63,11 +57,9 @@ SET_TYPE_PROP(DarcyTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
 
 // Set the grid type
 #if ENABLE_3D
-SET_TYPE_PROP(DarcyTestProblem, Grid, Dune::YaspGrid<3>); //, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
-// SET_TYPE_PROP(DarcyTestProblem, GridCreator, MatchingGridCreator<TypeTag, 3>);
+SET_TYPE_PROP(DarcyTestProblem, Grid, Dune::YaspGrid<3>);
 #else
-SET_TYPE_PROP(DarcyTestProblem, Grid, Dune::YaspGrid<2>); //, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
-// SET_TYPE_PROP(DarcyTestProblem, GridCreator, MatchingGridCreator<TypeTag, 2>);
+SET_TYPE_PROP(DarcyTestProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 SET_PROP(DarcyTestProblem, Fluid)
@@ -80,8 +72,6 @@ public:
 
 // Enable gravity
 SET_BOOL_PROP(DarcyTestProblem, ProblemEnableGravity, false);
-
-// SET_BOOL_PROP(DarcyTestProblem, NeglectPoreFlowResistance, false); // TODO
 
 // Set the grid parameter group
 SET_STRING_PROP(DarcyTestProblem, GridParameterGroup, "DarcyGrid");
@@ -135,7 +125,6 @@ class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(StokesProblemTypeTag, Indices) StokesIndices;
 
     enum { dofCodim = 0 };
-//     typedef typename Dumux::Functions<TypeTag> Functions;
 
 public:
     DarcyTestProblem(TimeManager &timeManager, const GridView &gridView)
@@ -143,6 +132,11 @@ public:
     {
         // get some parameters from the input file
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, LowerLeft)[0];
+        bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, UperRight)[0];
+
+        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, LowerLeft)[1];
+        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, UpperRight)[1];
     }
 
     /*!
@@ -205,14 +199,32 @@ public:
     // \{
     //! Specifies which kind of boundary condition should be used for
     //! which equation for a finite volume on the boundary.
-    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
+//    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
+//    {
+//        BoundaryTypes bcTypes;
+//        bcTypes.setAllNeumann();
+//        if(couplingManager().isDarcyCouplingEntity(scvf))
+//            bcTypes.setAllCouplingNeumann();
+//
+//        return bcTypes;
+//    }
+    // Fetzer2017a
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryTypes bcTypes;
-        bcTypes.setAllNeumann();
-        if(couplingManager().isDarcyCouplingEntity(scvf))
-            bcTypes.setAllCouplingNeumann();
+    BoundaryTypes values;
 
-        return bcTypes;
+    // Scalar time = this->timeManager().time();
+
+    values.setAllNeumann();
+
+    if(onUpperBoundary_(globalPos))
+//    		&& (globalPos[0] > runUpDistanceX_ - eps_)
+//			&& (time > initializationTime_))
+    {
+    values.setAllCouplingNeumann();
+    }
+
+    return values;
     }
 
 
@@ -225,6 +237,7 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
+    // TODO NumEqVector
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
     {
@@ -242,8 +255,11 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables neumann(const Element &element,
-                               const SubControlVolumeFace &scvf) const
+    // TODO NumEqVector
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolvars,
+                             const SubControlVolumeFace& scvf) const
     {
         return PrimaryVariables(0.0);
     }
@@ -256,15 +272,29 @@ public:
      */
     // \{
 
-     /*!
-     * \brief Return the sources within the domain.
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
      *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
+     * For this method, the \a values parameter stores the rate mass
+     * of a component is generated or annihilate per volume
+     * unit. Positive values mean that mass is created, negative ones
+     * mean that it vanishes.
      */
-    PrimaryVariables source(const Element& element, const VolumeVariables& volVars)
+    // TODO NumEqVector
+    // TODO copied from daryproblem (pnmdarcy1p)
+     PrimaryVariables source(const Element &element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolume &scv) const
     {
-        return PrimaryVariables(0.0);
+        PrimaryVariables source(0.0); // TODO
+//        if(couplingManager().isStokesCouplingEntity(element, scv.dofIndex()))
+//        {
+//            couplingManager().DarcyData().boundarySource(source, element, fvGeometry,
+//                                         scv.dofIndex(), elemVolVars);
+//        }
+        return source;
     }
     // \}
 
@@ -294,8 +324,24 @@ public:
     { return *couplingManager_; }
 
 private:
+
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] < bBoxMin_[0] + eps_; }
+
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] > bBoxMax_[0] - eps_; }
+
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[1] < bBoxMin_[1] + eps_; }
+
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[1] > bBoxMax_[1] - eps_; }
+
     Scalar eps_;
     std::string name_;
+
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

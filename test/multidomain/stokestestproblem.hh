@@ -34,7 +34,6 @@
 #include <dumux/multidomain/subproblemproperties.hh>
 #include <typeinfo>
 
-// #include <dumux/io/matchinggridcreator.hh> // TODO
 namespace Dumux
 {
 
@@ -154,9 +153,14 @@ public:
         : ParentType(timeManager, gridView)
     {
         eps_ = 1e-6;
-//         throatDiamater_ = 2.0*GET_RUNTIME_PARAM(StokesProblemTypeTag, Scalar, PNMGrid.ThroatRadius);
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
         vIn_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Velocity);
+
+        bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, LowerLeft)[0];
+        bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, UperRight)[0];
+
+        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, LowerLeft)[1];
+        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, UpperRight)[1];
     }
 
     /*!
@@ -196,53 +200,131 @@ public:
     {
         BoundaryTypes values;
 
-        // set Dirichlet values for the velocity everywhere
-        values.setDirichlet(momentumBalanceIdx);
+//        const Scalar time = this->time.Manager().time();
 
-        // set a fixed pressure in one cell
-        if (isOutlet(globalPos))
+        // Fetzer2017a
+        values.setAllDirichlet();
+
+//        if(onUpperBoundary_(globalPos))
+//        	values.setNeumann(transportEqIdx);
+
+        // Left inflow boundaries should be Neumann, otherwise the
+        // evaporative fluxes are much more grid dependent
+        if(onLeftBoundary_(globalPos))
         {
-            values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
+//        	values.setNeumann(transportEqIdx);
+
+        if(onUpperBoundary_(globalPos)) // corner point
+        values.setAllDirichlet();
         }
-        else
-            values.setOutflow(massBalanceIdx);
+
+        if(onRightBoundary_(globalPos))
+        {
+        values.setAllOutflow();
+        if(onUpperBoundary_(globalPos)) // corner point
+        values.setAllDirichlet();
+        }
+
+        if(onLowerBoundary_(globalPos))
+        {
+//        	values.setAllDirichlet();
+//        	values.setNeumann(transportEqIdx);
+//
+//        	if(globalPos[0] > runUpDistanceX - eps_ && time > initializationTime_)
+//        	{
+        values.setAllCouplingDirichlet();
+        values.setCouplingNeumann(momentumXBalanceIdx);
+        values.setCouplingNeumann(momentumYBalanceIdx);
+//        	}
+        }
+
+        // the mass balance has to be of type outflow
+        // it does not get a coupling condition, since pn is a condition for Stokes
+        values.setOutflow(massBalanceIdx);
+
+        // set pressure at one point, do NOT specif this if the Darcy domain
+        // has a Dirichlet condition for pressure
+        if(onRightBoundary_(globalPos))
+        {
+//        	if(time > initializationTime_)
+//        		values.setDirichlet(pressureIdx);
+//        	else
+        if(!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
+        values.setDirichlet(pressureIdx);
+        }
+
+        // ??
+//        // set Dirichlet values for the velocity everywhere
+//        values.setDirichlet(momentumBalanceIdx);
+//
+//        // set a fixed pressure in one cell
+//        if (isOutlet(globalPos))
+//        {
+//            values.setDirichlet(massBalanceIdx);
+//            values.setOutflow(momentumBalanceIdx);
+//        }
+//        else
+//            values.setOutflow(massBalanceIdx);
 
         return values;
     }
 
 
-    /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
-     *
-     * \param element The element
-     * \param scvf The subcontrolvolume face
-     */
-    BoundaryValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+//    /*!
+//     * \brief Evaluate the boundary conditions for a dirichlet
+//     *        control volume.
+//     *
+//     * \param element The element
+//     * \param scvf The subcontrolvolume face
+//     */
+//    BoundaryValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+//    {
+//        const auto& globalPos = scvf.dofPosition();
+//        BoundaryValues values;
+//        values[pressureIdx] = 0.0;
+//        values[velocityXIdx] = 0.0;
+//        values[velocityYIdx] = 0.0;
+//
+//        if(isInlet(globalPos))
+//        {
+//            values[velocityXIdx] = vIn_;
+//            values[velocityYIdx] = 0.0;
+//        }
+//
+//        if(couplingManager().isStokesCouplingEntity(element, scvf))
+//        {
+//            values[velocityYIdx] = couplingManager().darcyData().boundaryVelocity(scvf); // TODO
+//        }
+//
+//        return values;
+//
+//    }
+    // Fetzer2017a
+    BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const auto& globalPos = scvf.dofPosition();
-        BoundaryValues values;
-        values[pressureIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+    BoundaryValues values;
 
-        if(isInlet(globalPos))
-        {
-            values[velocityXIdx] = vIn_;
-            values[velocityYIdx] = 0.0;
-        }
+    values[velocityXIdx] = vIn_;
+    values[velocityYIdx] = 0.0;
+    values[pressureIdx] = 1.0e5;
+//    	values[massOrMoleFracIdx] = refMassfrac();
 
-        if(couplingManager().isStokesCouplingEntity(element, scvf))
-        {
-//             std::cout << "found coupled scvf at " << globalPos << std::endl;
-//             std::cout << " velo would be " << couplingManager().darcyData().boundaryVelocity(scvf) << std::endl;
-//             std::cout << "area is: " << scvf.area() << std::endl;
-            values[velocityYIdx] = couplingManager().darcyData().boundaryVelocity(scvf);
-        }
+    return values;
+    }
 
-        return values;
+    // Fetzer2017a
+    BoundaryValues neumannAtPos(const GlobalPosition &globalPos) const
+    {
+    BoundaryValues values(0.0);
 
+//    	const Scalar xVelocity_(globalPos);
+//
+//    	if(onLeftBoundary_(globalPos) && gobalPos[1] > bBoxMin_[1] - eps_ && globalPos[1] < bBoxMax_[1] + eps_)
+//    	{
+//    		// rho*v*X at inflow
+//    		values[transportEqIdx] = -1.0 * xVelocity * density * massFracDirichlet_;
+//    	}
+    return values;
     }
 
     // \}
@@ -266,20 +348,8 @@ public:
 
         return values;
     }
+
     // \}
-
-    /*!
-     * \brief Return how much the domain is extruded at a given position.
-     *
-     * This means the factor by which a lower-dimensional (1D or 2D)
-     * entity needs to be expanded to get a full dimensional cell. The
-     * default is 1.0 which means that 1D problems are actually
-     * thought as pipes with a cross section of 1 m^2 and 2D problems
-     * are assumed to extend 1 m to the back.
-     */
-//     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-//     { return throatDiamater_; }
-
 
     /*!
      * \brief Set the coupling manager
@@ -300,25 +370,39 @@ public:
 
 private:
 
-    bool isInlet(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
-    }
+//    bool isInlet(const GlobalPosition& globalPos) const
+//    {
+//        return globalPos[0] < this->bBoxMin()[0] + eps_;
+//    }
+//
+//    bool isOutlet(const GlobalPosition& globalPos) const
+//    {
+//        return globalPos[0] > this->bBoxMax()[0] - eps_;
+//    }
+//
+//    bool isWall(const GlobalPosition& globalPos) const
+//    {
+//        return globalPos[0] > this->bBoxMin()[0] + eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
+//    }
 
-    bool isOutlet(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
-    }
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] < bBoxMin_[0] + eps_; }
 
-    bool isWall(const GlobalPosition& globalPos) const
-    {
-        return globalPos[0] > this->bBoxMin()[0] + eps_ || globalPos[0] < this->bBoxMax()[0] - eps_;
-    }
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[0] > bBoxMax_[0] - eps_; }
+
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[1] < bBoxMin_[1] + eps_; }
+
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    { return globalPos[1] > bBoxMax_[1] - eps_; }
 
     Scalar eps_;
-//     Scalar throatDiamater_;
     Scalar vIn_;
     std::string name_;
+
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 
     std::shared_ptr<CouplingManager> couplingManager_;
 };

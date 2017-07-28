@@ -41,6 +41,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(TestCoupledStokesDarcyBBTProblem) ProblemTypeTag;
+    typedef TTAG(TestCoupledStokesDarcyProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
