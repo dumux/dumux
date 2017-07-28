@@ -104,8 +104,7 @@ class CouplingManagerStokesDarcy // TODO sg-ccfv?
     using StokesGlobalFaceVars = typename GET_PROP_TYPE(StokesProblemTypeTag, GlobalFaceVars);
 
     enum {
-        stokesDim = StokesGridView::dimension,
-        darcyDim = DarcyGridView::dimension,
+        dim = StokesGridView::dimension,
         dimWorld = StokesGridView::dimensionworld
     };
 
@@ -115,8 +114,8 @@ class CouplingManagerStokesDarcy // TODO sg-ccfv?
     using CoordScalar = typename StokesGridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    using StokesVertex = typename StokesGridView::template Codim<stokesDim>::Entity;
-    using DarcyVertex = typename DarcyGrid::template Codim<darcyDim>::Entity;
+    using StokesVertex = typename StokesGridView::template Codim<dim>::Entity;
+    using DarcyVertex = typename DarcyGrid::template Codim<dim>::Entity;
 
     using CouplingMapper = Dumux::CouplingMapperStokesDarcy<TypeTag>;
     using StokesData = typename GET_PROP_TYPE(TypeTag, StokesData);
@@ -473,14 +472,7 @@ public:
 
         // assumption: method only called for elements which are at the interface
         // determine coupling subcontrolvolumeface
-//         for (auto scvf : fvGeometry.scvfs(fvGeometry)) // TODO ??? -- rough draft
-//         {
-//             if (abs(scvf.center()[1] - problem.interfaceVerticalPos()) < eps_) // |y(scvf.center) - y(interface)| < eps ???
-//             {
-//                 auto couplingScfvIdx = scvf.index();
-//                 continue;
-//             }
-//         }
+
 //         auto outerUnitNormal = fvGeometry.scfv(couplingScfvIdx).unitOuterNormal();
 //         Scalar interfaceArea = fvGeometry.scfv(couplingScfvIdx).area();
 //
@@ -515,8 +507,8 @@ public:
         return stokesLocalResidual_.faceResidual(scvf.localFaceIdx());
     }
 
-    //! evaluate coupling residual for the derivative low dim DOF with respect to stokes DOF
-    //! we only need to evaluate the part of the residual that will be influence by the stokes DOF
+    //! evaluate coupling residual for the derivative Darcy DOF with respect to Stokes DOF
+    //! we only need to evaluate the part of the residual that will be influence by the Stokes DOF
     auto evalCouplingResidual(const DarcyElement& element,
                               const DarcyFVElementGeometry& fvGeometry,
                               const DarcyElementVolumeVariables& curElemVolVars,

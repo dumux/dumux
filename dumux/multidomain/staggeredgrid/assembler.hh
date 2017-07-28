@@ -192,14 +192,14 @@ protected:
     {
         resetSystem_();
 
-        // assemble the elements of the stokes problem
+        // assemble the elements of the Stokes problem
         for (const auto& element : elements(problem_().stokesGridView()))
             problem_().model().stokesLocalJacobian().assemble(element,
                                                             (*matrix_)[stokesIdx][stokesIdx],
                                                             (*matrix_)[stokesIdx][darcyIdx],
                                                             residual_[stokesIdx]);
 
-        // assemble the elements of the lowdim problem
+        // assemble the elements of the Darcy problem
         for (const auto& element : elements(problem_().darcyGridView()))
             problem_().model().darcyLocalJacobian().assemble(element,
                                                               (*matrix_)[darcyIdx][darcyIdx][localDarcyIdx][localDarcyIdx],

@@ -179,9 +179,71 @@ public:
     }
 
     protected:
-
     // for cell-centered models
-    template<class JacobianMatrix, class JacobianMatrixCoupling, class T = SubProblemTypeTag>
+    template<class JacobianMatrix, class JacobianMatrixCoupling, class T = SubProblemTypeTag,
+    typename std::enable_if<((GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa)), bool>::type = 0>
+    void assemble_(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     ElementVolumeVariables& prevElemVolVars,
+                     ElementVolumeVariables& curElemVolVars,
+                     ElementFluxVariablesCache& elemFluxVarsCache,
+                     const ElementBoundaryTypes& elemBcTypes,
+                     JacobianMatrix& matrix,
+                     JacobianMatrixCoupling& couplingMatrix,
+                     SolutionVector& residual)
+    {
+        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
+
+        // set the actual dof index
+        this->globalI_ = this->problem_().elementMapper().index(element);
+
+        // Evaluate the undeflected element local residual
+        this->localResidual().eval(element,
+                                   fvGeometry,
+                                   prevElemVolVars,
+                                   curElemVolVars,
+                                   elemBcTypes,
+                                   elemFluxVarsCache);
+        this->residual_ = this->localResidual().residual();
+
+        // set the global residual
+        residual[this->globalI_] = this->localResidual().residual(0);
+
+        // calculate derivatives of all dofs in stencil with respect to the dofs in the element
+        this->evalPartialDerivatives_(element,
+                                      fvGeometry,
+                                      prevElemVolVars,
+                                      curElemVolVars,
+                                      elemFluxVarsCache,
+                                      elemBcTypes,
+                                      matrix,
+                                      residual,
+                                      isGhost);
+
+        // compute derivatives with respect to additional user defined DOF dependencies
+        const auto& additionalDofDepedencies = this->problem_().getAdditionalDofDependencies(this->globalI_);
+        if (!additionalDofDepedencies.empty() && !isGhost)
+        {
+            this->evalAdditionalDerivatives_(additionalDofDepedencies,
+                                             element,
+                                             fvGeometry,
+                                             curElemVolVars,
+                                             matrix,
+                                             residual);
+        }
+
+        evalCCFVPartialDerivativeCoupling_(element,
+                                       fvGeometry,
+                                       curElemVolVars,
+                                       elemFluxVarsCache,
+                                       elemBcTypes,
+                                       couplingMatrix,
+                                       residual);
+    }
+
+    // for staggered grid model
+    template<class JacobianMatrix, class JacobianMatrixCoupling, class T = SubProblemTypeTag,
+    typename std::enable_if<((GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Staggered)), bool>::type = 0>
     void assemble_(const Element& element,
                    const FVElementGeometry& fvGeometry,
                    ElementVolumeVariables& prevElemVolVars,
@@ -242,7 +304,7 @@ public:
                                       residual[cellCenterIdx][this->ccGlobalI_],
                                       faceResidualCache);
 
-        evalStokesPartialDerivativeCoupling_(element,
+        evalStaggeredPartialDerivativeCoupling_(element,
                                            fvGeometry,
                                            prevElemVolVars,
                                            curElemVolVars,
@@ -254,6 +316,7 @@ public:
                                            residual[cellCenterIdx][this->ccGlobalI_],
                                            faceResidualCache);
     }
+
 
     /*!
      * \brief Returns a reference to the problem.
@@ -285,7 +348,104 @@ public:
 
     // cell-centered
     template<class JacobianMatrixCoupling>
-    void evalStokesPartialDerivativeCoupling_(const Element& element,
+    void evalCCFVPartialDerivativeCoupling_(const Element& element,
+                                        const FVElementGeometry& fvGeometry,
+                                        ElementVolumeVariables& curElemVolVars,
+                                        ElementFluxVariablesCache& elemFluxVarsCache,
+                                        const ElementBoundaryTypes& elemBcTypes,
+                                        JacobianMatrixCoupling& couplingMatrix,
+                                        SolutionVector& residual)
+    {
+        const auto& couplingStencil = globalProblem_().couplingManager().couplingStencil(element, cellCenterIdx);
+
+        for (auto globalJ : couplingStencil)
+        {
+            const auto otherElement = otherProblem_().model().globalFvGeometry().element(globalJ);
+            const auto originalResidual = globalProblem_().couplingManager().evalCouplingResidual(element,
+                                                                                                  fvGeometry,
+                                                                                                  curElemVolVars,
+                                                                                                  elemBcTypes,
+                                                                                                  elemFluxVarsCache); //, otherElement); TODO
+
+            auto& otherPriVars = otherProblem_().model().curSol()[cellCenterIdx][globalJ];
+            auto originalOtherPriVars = otherPriVars;
+
+            // derivatives in the neighbors with repect to the current elements
+//            std::decay_t<decltype(originalResidual)> partialDeriv;
+            ElementSolutionVector partialDeriv(fvGeometry.numScv()); // TODO!!
+//            PrimaryVariables partialDeriv;
+            for (int pvIdx = 0; pvIdx < otherPriVars.size(); pvIdx++)
+            {
+                const Scalar eps = this->numericEpsilon(otherPriVars[pvIdx]);
+                Scalar delta = 0;
+
+                if (numericDifferenceMethod_ >= 0)
+                {
+                    // we are not using backward differences, i.e. we need to
+                    // calculate f(x + \epsilon)
+
+                    // deflect primary variables
+                    otherPriVars[pvIdx] += eps;
+                    delta += eps;
+
+                    // calculate the residual with the deflected primary variables
+                    partialDeriv = globalProblem_().couplingManager().evalCouplingResidual(element,
+                                                                                           fvGeometry,
+                                                                                           curElemVolVars,
+                                                                                           elemBcTypes,
+                                                                                           elemFluxVarsCache); //, otherElement); TODO
+                }
+                else
+                {
+                    // we are using backward differences, i.e. we don't need
+                    // to calculate f(x + \epsilon) and we can recycle the
+                    // (already calculated) residual f(x)
+                    partialDeriv = originalResidual;
+                }
+
+
+                if (numericDifferenceMethod_ <= 0)
+                {
+                    // we are not using forward differences, i.e. we
+                    // need to calculate f(x - \epsilon)
+
+                    // deflect the primary variables
+                    otherPriVars[pvIdx] -= 2*eps;
+                    delta += eps;
+
+                    // calculate the residual with the deflected primary variables
+                    partialDeriv -= globalProblem_().couplingManager().evalCouplingResidual(element,
+                                                                                            fvGeometry,
+                                                                                            curElemVolVars,
+                                                                                            elemBcTypes,
+                                                                                            elemFluxVarsCache);//, otherElement); // TODO
+                }
+                else
+                {
+                    // we are using forward differences, i.e. we don't need to
+                    // calculate f(x - \epsilon) and we can recycle the
+                    // (already calculated) residual f(x)
+                    partialDeriv -= originalResidual;
+                }
+
+                // divide difference in residuals by the magnitude of the
+                // deflections between the two function evaluation
+                partialDeriv /= delta;
+
+                // restore the original state of the element solution vector
+                otherPriVars = originalOtherPriVars;
+
+                // update the global jacobian matrix (coupling block)
+//                this->updateGlobalJacobian_(couplingMatrix, this->globalI_, globalJ, pvIdx, partialDeriv); // TODO ??
+                for (auto&& scv : scvs(fvGeometry))
+                this->updateGlobalJacobian_(couplingMatrix[localDarcyIdx][cellCenterIdx], scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.dofIndex()]); // TODO!!
+            }
+        }
+    }
+
+    // staggered grid
+    template<class JacobianMatrixCoupling>
+    void evalStaggeredPartialDerivativeCoupling_(const Element& element,
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& prevElemVolVars,
                                             ElementVolumeVariables& curElemVolVars,
@@ -299,7 +459,7 @@ public:
     {
 #if TREAT_STOKES_COUPLED_CC_DERIVATIVES
         const auto& couplingStencilCC = globalProblem_().couplingManager().couplingStencil(element);
-        const auto ccGlobalI = globalProblem_().couplingManager().stokesProblem().elementMapper().index(element);
+        const auto ccGlobalI = globalProblem_().couplingManager().StokesProblem().elementMapper().index(element);
 
         // treat cell-center derivatives
         for (auto globalJ : couplingStencilCC)
@@ -383,7 +543,7 @@ public:
                 otherPriVars = originalOtherPriVars;
 
                 // update the global jacobian matrix (coupling block)
-                this->updateGlobalJacobian_(couplingMatrix[cellCenterIdx][localDarcyIdx], ccGlobalI, globalJ, pvIdx, partialDeriv);
+                this->updateGlobalJacobian_(couplingMatrix[cellCenterIdx][localdarcyIdx], ccGlobalI, globalJ, pvIdx, partialDeriv);
             }
         }
 #endif
@@ -485,7 +645,6 @@ public:
 
 
     }
-
 
     // The problem we would like to solve
     GlobalProblem *globalProblemPtr_;
