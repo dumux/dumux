@@ -766,10 +766,13 @@ public:
      *
      * \param gridView The grid view
      */
+    InitialPressSat(const GridView & gridView)
+    : BaseT(gridView)
+    , gridView_(gridView)
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    InitialPressSat(const GridView & gridView) : BaseT(gridView) , gridView_(gridView), vertexMapper_(gridView, Dune::mcmgVertexLayout())
+    , vertexMapper_(gridView, Dune::mcmgVertexLayout())
 #else
-    InitialPressSat(const GridView & gridView) : BaseT(gridView) , gridView_(gridView), vertexMapper_(gridView)
+    , vertexMapper_(gridView)
 #endif
     {
         // resize the pressure field vector with the number of vertices

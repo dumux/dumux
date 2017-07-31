@@ -100,27 +100,21 @@ public:
      * \param timeManager The TimeManager which is used by the simulation
      * \param gridView The simulation's idea about physical space
      */
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     ImplicitProblem(TimeManager &timeManager, const GridView &gridView)
         : gridView_(gridView)
         , bBoxMin_(std::numeric_limits<double>::max())
         , bBoxMax_(-std::numeric_limits<double>::max())
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         , elementMapper_(gridView, Dune::mcmgElementLayout())
         , vertexMapper_(gridView, Dune::mcmgVertexLayout())
-        , timeManager_(&timeManager)
-        , newtonMethod_(asImp_())
-        , newtonCtl_(asImp_())
 #else
-    ImplicitProblem(TimeManager &timeManager, const GridView &gridView)
-        : gridView_(gridView)
-        , bBoxMin_(std::numeric_limits<double>::max())
-        , bBoxMax_(-std::numeric_limits<double>::max())
         , elementMapper_(gridView)
         , vertexMapper_(gridView)
+#endif
         , timeManager_(&timeManager)
         , newtonMethod_(asImp_())
         , newtonCtl_(asImp_())
-#endif
+
     {
         // calculate the bounding box of the local partition of the grid view
         for (const auto& vertex : vertices(gridView)) {

@@ -190,7 +190,7 @@ class IntersectionMapper
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 #else
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
 #endif
 
 public:

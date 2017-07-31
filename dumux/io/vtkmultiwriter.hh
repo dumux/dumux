@@ -63,18 +63,14 @@ class VtkMultiWriter
 
 public:
     typedef Dune::VTKWriter<GridView> VtkWriter;
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     VtkMultiWriter(const GridView &gridView,
                    const std::string &simName = "",
                    std::string multiFileName = "")
         : gridView_(gridView)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         , elementMapper_(gridView, Dune::mcmgElementLayout())
         , vertexMapper_(gridView, Dune::mcmgVertexLayout())
 #else
-    VtkMultiWriter(const GridView &gridView,
-                   const std::string &simName = "",
-                std::string multiFileName = "")
-        : gridView_(gridView)
         , elementMapper_(gridView)
         , vertexMapper_(gridView)
 #endif
