@@ -5,6 +5,7 @@ Applicable for all style formats like e.g. csv files.
 Fuzzy compares numbers by using absolute and/or relative difference comparison.
 
 """
+from __future__ import print_function
 import argparse
 import csv
 import json
@@ -45,7 +46,7 @@ def compare_data(dataFile1, dataFile2, delimiter, absolute=1.5e-7, relative=1e-2
     data2 = list(csv.reader(open(dataFile2, 'rb'), delimiter=delimiter))
 
     if (len(data1) != len(data2)):
-        print "Length of data1 and data2 not equal: ref=", len(data1), ",new=", len(data2), ". Aborting!"
+        print("Length of data1 and data2 not equal: ref=", len(data1), ",new=", len(data2), ". Aborting!")
         exit (3)
 
     is_equal = True
