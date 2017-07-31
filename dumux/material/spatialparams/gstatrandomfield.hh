@@ -30,6 +30,8 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk.hh>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 
@@ -54,7 +56,11 @@ class GstatRandomField
 
     using DataVector = std::vector<Scalar>;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
+#endif
 
 public:
     // Add field types if you want to implement e.g. tensor permeabilities.
@@ -66,7 +72,12 @@ public:
      * \param gridView the used gridView
      */
     GstatRandomField(const GridView& gridView)
-    : gridView_(gridView), elementMapper_(gridView),
+    : gridView_(gridView),
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+      elementMapper_(gridView, Dune::mcmgElementLayout()),
+#else
+      elementMapper_(gridView),
+#endif
       data_(gridView.size(0)) {}
 
       /*!

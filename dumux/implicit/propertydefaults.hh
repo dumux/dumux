@@ -55,6 +55,8 @@
 #include "assembler.hh"
 #include "localjacobian.hh"
 
+#include <dune/common/version.hh>
+
 namespace Dumux {
 
 // forward declarations
@@ -88,16 +90,29 @@ SET_TYPE_PROP(ImplicitBase, NewtonController, NewtonController<TypeTag>);
 SET_TYPE_PROP(ImplicitBase, NewtonConvergenceWriter, NewtonConvergenceWriter<TypeTag>);
 
 //! Mapper for the grid view's vertices.
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+SET_TYPE_PROP(ImplicitBase,
+              VertexMapper,
+              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView)>);
+#else
 SET_TYPE_PROP(ImplicitBase,
               VertexMapper,
               Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
                                                         Dune::MCMGVertexLayout>);
+#endif
+
 
 //! Mapper for the grid view's elements.
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+SET_TYPE_PROP(ImplicitBase,
+              ElementMapper,
+              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView)>);
+#else
 SET_TYPE_PROP(ImplicitBase,
               ElementMapper,
               Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
                                                         Dune::MCMGElementLayout>);
+#endif
 
 //! Set the BaseModel to ImplicitModel
 SET_TYPE_PROP(ImplicitBase, BaseModel, ImplicitModel<TypeTag>);
