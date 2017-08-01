@@ -393,6 +393,9 @@ public:
     {
         problem_().bulkProblem().model().newtonEndStep();
         problem_().lowDimProblem().model().newtonEndStep();
+
+        //this is needed in case one of the subproblems has a phaseswitch during a newton step
+        asImp_().copySubProblemSolutions_();
     }
 
     /*!
@@ -402,14 +405,14 @@ public:
      */
     void updateFailed()
     {
+       // call the respective methods in the sub problems
+        problem_().lowDimProblem().model().updateFailed();
+        problem_().bulkProblem().model().updateFailed();
+
         // Reset the current solution to the one of the
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
-
-        // call the respective methods in the sub problems
-        problem_().lowDimProblem().model().updateFailed();
-        problem_().bulkProblem().model().updateFailed();
     }
 
     /*!
@@ -421,12 +424,12 @@ public:
      */
     void advanceTimeLevel()
     {
-        // make the current solution the previous one.
-        uPrev_ = uCur_;
-
         // call the respective methods in the sub problems
         problem_().lowDimProblem().model().advanceTimeLevel();
         problem_().bulkProblem().model().advanceTimeLevel();
+
+        // make the current solution the previous one.
+        uPrev_ = uCur_;
     }
 
     /*!
