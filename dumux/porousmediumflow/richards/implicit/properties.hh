@@ -59,6 +59,7 @@ NEW_TYPE_TAG(CCRichardsNI, INHERITS_FROM(CCModel, RichardsNI));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
+NEW_PROP_TAG(NumComponents);   //!< Number of components in the system
 NEW_PROP_TAG(Indices); //!< Enumerations used by the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (by default extracted from the spatial parameters)

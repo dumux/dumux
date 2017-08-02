@@ -69,6 +69,17 @@ SET_PROP(ThreeP, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p model!");
 };
 
+SET_PROP(ThreeP, NumComponents)
+{
+ private:
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+
+ public:
+    static const int value = FluidSystem::numComponents;
+    static_assert(value == 3,
+                  "Only fluid systems with 3 components are supported by the 3p model!");
+};
+
 SET_INT_PROP(ThreeP, NumEq, 3); //!< set the number of equations to 2
 
 /*!

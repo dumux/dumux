@@ -59,6 +59,9 @@ SET_INT_PROP(Richards, NumEq, 1);
 //! phase with a balance equation
 SET_INT_PROP(Richards, NumPhases, 1);
 
+//! Only the water component is balanced for Richards
+SET_INT_PROP(Richards, NumComponents, 1);
+
 //! The local residual operator
 SET_TYPE_PROP(Richards, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
 

@@ -52,6 +52,7 @@ namespace Dumux
 namespace Properties {
 SET_INT_PROP(OneP, NumEq, 1); //!< set the number of equations to 1
 SET_INT_PROP(OneP, NumPhases, 1); //!< The number of phases in the 1p model is 1
+SET_INT_PROP(OneP, NumComponents, 1); //!< The number of components in the 1p model is 1
 
 //! The local residual function
 SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
