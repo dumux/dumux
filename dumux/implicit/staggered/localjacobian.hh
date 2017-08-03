@@ -168,8 +168,8 @@ public:
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(this->problem_(), element, fvGeometry);
 
-        auto& curGlobalFaceVars = this->model_().nonConstCurFaceVars();
-        auto& prevGlobalFaceVars = this->model_().prevGlobalFaceVars();
+        auto& curGlobalFaceVars = getCurrNonConstGlobalFaceVars_();
+        auto& prevGlobalFaceVars = getPrevGlobalFaceVars_();
 
         // calculate the local residual for all dofs of this element
         this->localResidual().eval(element, fvGeometry,
@@ -561,6 +561,19 @@ protected:
     typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables>::type&
     getCurVolVars(ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return elemVolVars[scv]; }
+
+
+    //! Convenience function to get the current non-const global face vars. This is necessary for classes that inherit from this class.
+    auto& getCurrNonConstGlobalFaceVars_()
+    {
+        return this->model_().nonConstCurFaceVars();
+    }
+
+    //! Convenience function to get the previous global face vars
+    auto& getPrevGlobalFaceVars_()
+    {
+        return this->model_().prevGlobalFaceVars();
+    }
 
     IndexType ccGlobalI_;
     int numericDifferenceMethod_;
