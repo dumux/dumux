@@ -56,6 +56,9 @@ SET_INT_PROP(TwoP, NumEq, 2);
 //! The number of phases in the 2p model is 2
 SET_INT_PROP(TwoP, NumPhases, 2);
 
+//! The number of components in the 2p model is 2
+SET_INT_PROP(TwoP, NumComponents, 2);
+
 //! Set the default formulation to pWsN
 SET_INT_PROP(TwoP,
              Formulation,

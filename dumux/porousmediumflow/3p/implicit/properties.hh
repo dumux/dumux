@@ -55,6 +55,7 @@ NEW_TYPE_TAG(CCThreePNI, INHERITS_FROM(CCTpfaModel, ThreePNI));
 //////////////////////////////////////////////////////////////////
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
+NEW_PROP_TAG(NumComponents);   //!< Number of components in the system
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations

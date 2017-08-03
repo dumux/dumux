@@ -101,7 +101,7 @@ public:
 
     //! Applies the upwind scheme to precalculated fluxes
     template<class UpwindTermFunction>
-    Scalar applyUpwindScheme(const UpwindTermFunction& upwindTerm, Scalar flux, int phaseIdx)
+    Scalar applyUpwindScheme(const UpwindTermFunction& upwindTerm, Scalar flux, int phaseIdx) const
     {
         //! Give the upwind scheme access to the cached variables
         return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);
