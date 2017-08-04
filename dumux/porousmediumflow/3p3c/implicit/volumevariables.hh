@@ -693,7 +693,7 @@ protected:
     Scalar massFrac_[numPhases][numComponents];
 
     Scalar porosity_;        //!< Effective porosity within the control volume
-    PermeabilityType permeability_; //!> Effective permeability within the control volume
+    PermeabilityType permeability_; //!< Effective permeability within the control volume
     Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
     Scalar bulkDensTimesAdsorpCoeff_; //!< the basis for calculating adsorbed NAPL
     FluidState fluidState_;

@@ -35,7 +35,6 @@
 #include "properties.hh"
 #include "newtoncontroller.hh"
 #include "primaryvariableswitch.hh"
-//#include "localresidual.hh"
 
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
