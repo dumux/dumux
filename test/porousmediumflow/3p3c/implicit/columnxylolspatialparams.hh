@@ -95,19 +95,22 @@ class ColumnSpatialParams : public ImplicitSpatialParams<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
-
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
 public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    ColumnSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    ColumnSpatialParams(const Problem& problem, const GridView &gridView)
+        : ParentType(problem, gridView)
     {
         // intrinsic permeabilities
         fineK_ = 1.4e-11;
@@ -166,15 +169,10 @@ public:
      * \brief Apply the intrinsic permeability tensor to a pressure
      *        potential gradient.
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeometry,
-                                       int scvIdx) const
+   Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
@@ -188,11 +186,9 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    double porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+
         if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
@@ -203,15 +199,11 @@ public:
     /*!
      * \brief return the parameter object for the Brooks-Corey material law which depends on the position
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvGeometry,
-                                               const int scvIdx) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
+
         if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
@@ -227,11 +219,8 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
         if (isFineMaterial_(globalPos))
             return fineHeatCap_;
         else
@@ -248,8 +237,8 @@ public:
      * \param scvIdx The local index of the sub-control volume
      */
     Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
     {
         return 2650; // density of sand [kg/m^3]
     }
@@ -263,8 +252,8 @@ public:
      *                    the heat capacity needs to be defined
      */
     Scalar solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const int scvIdx) const
+                                    const SubControlVolume& scv,
+                                    const ElementSolutionVector& elemSol) const
     {
         return lambdaSolid_;
     }

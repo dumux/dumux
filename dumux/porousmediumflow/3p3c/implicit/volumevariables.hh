@@ -56,6 +56,7 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // constraint solvers
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -121,6 +122,7 @@ public:
         // capillary pressure parameters
         const MaterialLawParams &materialParams =
             problem.spatialParams().materialLawParams(element, scv, elemSol);
+
 
         Scalar temp = ParentType::temperature(elemSol, problem, element, scv);
         fluidState_.setTemperature(temp);
@@ -703,6 +705,8 @@ private:
             diffCoefficient_[phaseIdx][compIdx] = std::move(d);
         else if (compIdx > phaseIdx)
             diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
+        else if (phaseIdx == nPhaseIdx)
+            diffCoefficient_[phaseIdx][compIdx-1] = 0;
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }

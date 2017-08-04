@@ -34,10 +34,10 @@
 #include "volumevariables.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
-#include "localresidual.hh"
 #include "primaryvariableswitch.hh"
 
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -87,6 +87,8 @@ SET_PROP(ThreePThreeC, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p3c model!");
 };
 
+//! Set as default that no component mass balance is replaced by the total mass balance
+SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, 100);
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen
@@ -110,7 +112,7 @@ SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 2
 SET_TYPE_PROP(ThreePThreeC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 //! The local residual function of the conservation equations
-SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
+SET_TYPE_PROP(ThreePThreeC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //! Enable advection
 SET_BOOL_PROP(ThreePThreeC, EnableAdvection, true);
@@ -174,6 +176,9 @@ SET_SCALAR_PROP(BoxModel, SpatialParamsForchCoeff, 0.55);
  */
 SET_SCALAR_PROP(ThreePThreeC, TauTortuosity, 0.5);
 
+//! Use mole fractions in the balance equations by default
+SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
+
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(ThreePThreeCNI, ThermalConductivityModel)
 {
@@ -198,7 +203,7 @@ SET_TYPE_PROP(ThreePThreeCNI, IsothermalModel, ThreePThreeCModel<TypeTag>);
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalVolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(ThreePThreeCNI, IsothermalLocalResidual, ThreePThreeCLocalResidual<TypeTag>);
+SET_TYPE_PROP(ThreePThreeCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_PROP(ThreePThreeCNI, IsothermalIndices)

@@ -164,11 +164,15 @@ public:
         vtkOutputModule.addSecondaryVariable("rhon", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
         vtkOutputModule.addSecondaryVariable("rhog", [](const VolumeVariables& v){ return v.density(gPhaseIdx); });
 
+
         for (int i = 0; i < numPhases; ++i)
             for (int j = 0; j < numComponents; ++j)
                 vtkOutputModule.addSecondaryVariable("x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(i),
                                                      [i,j](const VolumeVariables& v){ return v.moleFraction(i,j); });
 
+        vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
+        vtkOutputModule.addSecondaryVariable("permeability",
+                                             [](const VolumeVariables& v){ return v.permeability(); });
         vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
     }
 
