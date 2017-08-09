@@ -337,7 +337,7 @@ private:
                            const Tensor& T) const
     {
         // make sure we have positive definite diffsion tensors
-        assert(this->tensorIsPositiveDefinite(t) && "only positive definite tensors can be handled by mpfa methods");
+        assert(this->tensorIsPositiveDefinite(T) && "only positive definite tensors can be handled by mpfa methods");
 
         GlobalPosition tmp;
         T.mv(nu, tmp);

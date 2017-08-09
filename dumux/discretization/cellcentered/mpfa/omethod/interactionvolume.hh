@@ -224,7 +224,7 @@ public:
             return 0.0;
 
         // Do the scalar product CAinv_*neumannFluxes[eqIdx]
-        assert(dataHandle.C()[localFaceData.localScvfIndex].size() == neumannFluxes_.size() &&
+        assert(dataHandle.CA()[localFaceData.localScvfIndex].size() == neumannFluxes_.size() &&
                "Number of neumann flux entries does not match with size of coefficent vector!");
 
         Scalar flux(0.0);
@@ -800,7 +800,7 @@ private:
                                const Tensor& T) const
     {
         // make sure we have positive definite diffsion tensors
-        assert(this->tensorIsPositiveDefinite(t) && "only positive definite tensors can be handled by mpfa methods");
+        assert(this->tensorIsPositiveDefinite(T) && "only positive definite tensors can be handled by mpfa methods");
 
         DimVector wijk;
         GlobalPosition tmp;
