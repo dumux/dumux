@@ -138,7 +138,7 @@ public:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache)
+                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
