@@ -79,7 +79,7 @@ public:
     PorousMediumFluxVariables()
     {
         advFluxIsCached_.reset();
-        advFluxBeforeUpwinding_.fill(0.0);
+        // advFluxBeforeUpwinding_.fill(0.0);
     }
 
     template<typename FunctionType>
@@ -146,7 +146,7 @@ public:
 private:
     //! simple caching if advection flux is used twice with different upwind function
     mutable std::bitset<numPhases> advFluxIsCached_;
-    mutable std::array<Scalar, numPhases> advFluxBeforeUpwinding_;
+    mutable std::array<typename AdvectionType::ReturnType, numPhases> advFluxBeforeUpwinding_;
 };
 
 } // end namespace Dumux

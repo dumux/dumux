@@ -37,6 +37,7 @@ namespace Properties
 NEW_PROP_TAG(ProblemEnableGravity);
 NEW_PROP_TAG(MpfaHelper);
 NEW_PROP_TAG(BoundaryInteractionVolume);
+NEW_PROP_TAG(UseTpfaBoundary);
 }
 
 /*!

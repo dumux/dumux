@@ -99,6 +99,10 @@ NEW_PROP_TAG(EnableEnergyBalance); //! Specifies if the model solves an energy e
 NEW_PROP_TAG(HeatConductionType); //! The type for the calculation of the heat conduction fluxes
 NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters for the heat conduction fluxes depend on the solution
 
+// Some discretization properties
+NEW_PROP_TAG(FluxStencil); //!< The class that computes the flux stencil for the given discretization
+NEW_PROP_TAG(UpwindScheme); //!< The class that applies the upwind scheme
+
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);

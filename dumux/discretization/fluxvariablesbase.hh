@@ -26,8 +26,7 @@
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
-#include <dumux/discretization/fluxstencil.hh>
-#include <dumux/discretization/upwindscheme.hh>
+
 
 namespace Dumux
 {
@@ -41,7 +40,8 @@ class FluxVariablesBaseImplementation;
  *        The upwind scheme is chosen depending on the discretization method
  */
 template<class TypeTag>
-using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>, FluxStencil<TypeTag>>;
+using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, typename GET_PROP_TYPE(TypeTag, UpwindScheme),
+                                                                   typename GET_PROP_TYPE(TypeTag, FluxStencil)>;
 
 /*!
  * \ingroup Discretization
@@ -63,6 +63,7 @@ class FluxVariablesBaseImplementation
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
 public:
 
@@ -101,7 +102,9 @@ public:
 
     //! Applies the upwind scheme to precalculated fluxes
     template<class UpwindTermFunction>
-    Scalar applyUpwindScheme(const UpwindTermFunction& upwindTerm, Scalar flux, int phaseIdx) const
+    Scalar applyUpwindScheme(const UpwindTermFunction& upwindTerm,
+                             const typename AdvectionType::ReturnType& flux,
+                             int phaseIdx) const
     {
         //! Give the upwind scheme access to the cached variables
         return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);

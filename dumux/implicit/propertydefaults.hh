@@ -46,6 +46,8 @@
 #include <dumux/discretization/darcyslaw.hh>
 #include <dumux/discretization/fickslaw.hh>
 #include <dumux/discretization/fourierslaw.hh>
+#include <dumux/discretization/fluxstencil.hh>
+#include <dumux/discretization/upwindscheme.hh>
 
 #include <dumux/io/vtkoutputmodulebase.hh>
 #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
@@ -126,6 +128,12 @@ SET_TYPE_PROP(ImplicitBase, FluxVariables, PorousMediumFluxVariables<TypeTag>);
 
 //! The flux variables cache class, by default the one for porous media
 SET_TYPE_PROP(ImplicitBase, FluxVariablesCache, PorousMediumFluxVariablesCache<TypeTag>);
+
+//! The class computing the flux stencil
+SET_TYPE_PROP(ImplicitBase, FluxStencil, FluxStencil<TypeTag>);
+
+//! The class applying the upwind scheme
+SET_TYPE_PROP(ImplicitBase, UpwindScheme, UpwindScheme<TypeTag>);
 
 //! We use darcy's law as the default for the advective fluxes
 SET_TYPE_PROP(ImplicitBase, AdvectionType, DarcysLaw<TypeTag>);
