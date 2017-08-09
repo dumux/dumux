@@ -84,8 +84,7 @@ class MultiDomainAssemblerForStaggered
     using MatrixBlockDarcyToStokesFace = typename GET_PROP(TypeTag, JacobianMatrix)::MatrixBlockDarcyToStokesFace;
 
     enum {
-        stokesDim = StokesGridView::dimension,
-        darcyDim = DarcyGridView::dimension, // TODO same dimension
+        dim = StokesGridView::dimension,
         dimWorld = StokesGridView::dimensionworld
     };
 
@@ -109,7 +108,7 @@ public:
         // save problem pointer
         problemPtr_ = &problem;
 
-        std::cout << "in init(Problem& problem) " << std::endl;
+        std::cout << "in init(Problem& problem) of multidomain/staggeredgrid/assembler" << std::endl;
 
         // initialize the multitype matrix
         asImp_().createMatrix_();
@@ -121,6 +120,7 @@ public:
         residual_[stokesIdx][cellCenterIdx].resize(problem.stokesProblem().model().numCellCenterDofs());
         residual_[stokesIdx][faceIdx].resize(problem.stokesProblem().model().numFaceDofs());
         residual_[darcyIdx].resize(problem.model().darcyNumDofs());
+
 
 
 //         printmatrix(std::cout, (*matrix_)[stokesIdx][stokesIdx][cellCenterIdx][cellCenterIdx], "A11", "");
@@ -237,7 +237,7 @@ protected:
         (*matrix_)[stokesIdx][darcyIdx][cellCenterIdx][localDarcyIdx] = A13;
         (*matrix_)[stokesIdx][darcyIdx][faceIdx][localDarcyIdx] = A23;
 
-        // now treat the low dim problem
+        // now treat the Darcy problem
         auto A31 = MatrixBlockDarcyToStokesCC(darcySize, cellCenterSize, MatrixBlockDarcyToStokesCC::random);
         auto A32 = MatrixBlockDarcyToStokesFace(darcySize, faceSize, MatrixBlockDarcyToStokesFace::random);
         auto A33 = DarcyMatrixBlock(darcySize, darcySize, DarcyMatrixBlock::random);
@@ -246,7 +246,6 @@ protected:
         (*matrix_)[darcyIdx][darcyIdx][localDarcyIdx][localDarcyIdx] = A33;
         (*matrix_)[darcyIdx][stokesIdx][localDarcyIdx][cellCenterIdx] = A31;
         (*matrix_)[darcyIdx][stokesIdx][localDarcyIdx][faceIdx] = A32;
-
     }
 
     void setupStokesMatrices_(CCToCCMatrixBlock& A11,
@@ -333,22 +332,20 @@ protected:
             const auto& couplingCCStencil = problem_().couplingManager().couplingStencil(element, cellCenterIdx);
             const auto& couplingFaceStencil = problem_().couplingManager().couplingStencil(element, faceIdx);
 
-            for (unsigned int vIdx = 0; vIdx < element.subEntities(darcyDim); ++vIdx)
+            for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
             {
-                const auto globalI = problem_().model().darcyVertexMapper().subIndex(element, vIdx, darcyDim);
-                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(darcyDim); ++vIdx2)
+                const auto globalI = problem_().model().darcyVertexMapper().subIndex(element, vIdx, dim);
+                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(dim); ++vIdx2)
                 {
-                    const auto globalJ = problem_().model().darcyVertexMapper().subIndex(element, vIdx2, darcyDim);
+                    const auto globalJ = problem_().model().darcyVertexMapper().subIndex(element, vIdx2, dim);
                     darcyPattern.add(globalI, globalJ);
                     darcyPattern.add(globalJ, globalI);
                 }
 
                 for (auto&& globalJ : couplingCCStencil)
                     darcyToCCPattern.add(globalI, globalJ);
-
                 for (auto&& globalJ : couplingFaceStencil)
                     darcyToFacePattern.add(globalI, globalJ);
-
             }
         }
 

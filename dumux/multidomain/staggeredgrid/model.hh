@@ -130,7 +130,7 @@ public:
         // \note these local jacobians are not the localjacobian objects of the submodels
         // \todo generalize so that there is only one unique local jac object
 
-        std::cout << "in init(Problem& problem) of model " << std::endl;
+        std::cout << "in init(Problem& problem) of multidomain/staggeredgrid/model " << std::endl;
         stokesLocalJacobian_.init(problem_());
         darcyLocalJacobian_.init(problem_());
         jacAsm_ = std::make_shared<JacobianAssembler>();
