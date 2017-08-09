@@ -78,6 +78,8 @@ SET_STRING_PROP(DarcyTestProblem, GridParameterGroup, "DarcyGrid");
 
 // SET_TYPE_PROP(DarcyTestProblem, SinglePhaseTransmissibility, TransmissibilityBruus<TypeTag, false>); // TODO
 
+SET_BOOL_PROP(DarcyTestProblem, EnableGlobalFVGeometryCache, true); // TODO default = false, but true needed for couplingmanager (access Darcy element)
+
 NEW_PROP_TAG(GlobalProblemTypeTag);
 NEW_PROP_TAG(CouplingManager);
 NEW_PROP_TAG(StokesProblemTypeTag);
@@ -132,11 +134,8 @@ public:
     {
         // get some parameters from the input file
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-        bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, LowerLeft)[0];
-        bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, UperRight)[0];
-
-        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, LowerLeft)[1];
-        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, DarcyGrid, UpperRight)[1];
+        bBoxMin_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, LowerLeft);
+        bBoxMax_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, UpperRight);
     }
 
     /*!
@@ -282,7 +281,7 @@ public:
      * mean that it vanishes.
      */
     // TODO NumEqVector
-    // TODO copied from daryproblem (pnmdarcy1p)
+    // TODO copied from darcyproblem (pnmdarcy1p)
      PrimaryVariables source(const Element &element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
@@ -322,6 +321,9 @@ public:
     //! Get the coupling manager
     CouplingManager& couplingManager() const
     { return *couplingManager_; }
+
+    bool onCouplingInterface(const GlobalPosition &globalPos) const
+    {return onUpperBoundary_(globalPos); }
 
 private:
 

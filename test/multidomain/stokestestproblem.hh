@@ -41,7 +41,7 @@ template <class TypeTag>
 class StokesTestProblem;
 
 //////////
-// Specify the properties for the stokes problem
+// Specify the properties for the Stokes problem
 //////////
 namespace Properties
 {
@@ -117,15 +117,7 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
     };
 
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
-    };
+
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
@@ -149,6 +141,17 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
 public:
+    enum {
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
+        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
+        pressureIdx = Indices::pressureIdx,
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx
+    };
+
+public:
     StokesTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
@@ -156,11 +159,8 @@ public:
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
         vIn_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Velocity);
 
-        bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, LowerLeft)[0];
-        bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, UperRight)[0];
-
-        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, LowerLeft)[1];
-        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, StokesGrid, UpperRight)[1];
+        bBoxMin_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, StokesGrid, LowerLeft);
+        bBoxMax_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, StokesGrid, UpperRight);
     }
 
     /*!
@@ -367,6 +367,9 @@ public:
      */
     CouplingManager& couplingManager() const
     { return *couplingManager_; }
+
+    bool onCouplingInterface(const GlobalPosition &globalPos) const
+    {return onLowerBoundary_(globalPos); }
 
 private:
 
