@@ -320,7 +320,11 @@ public:
         lowDimGridPtr_() = std::shared_ptr<LowDimGrid>(lowDimFactory.createGrid());
 
         // set up the map from insertion to actual global indices for bulk elements
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        BulkElementMapper elementMapper(bulkGrid().leafGridView(), Dune::mcmgElementLayout());
+#else
         BulkElementMapper elementMapper(bulkGrid().leafGridView());
+#endif
         auto& map = bulkInsertionToGlobalIdxMap_();
         map.resize(bulkElementCounter);
         for (const auto& element : elements(bulkGrid().leafGridView()))
