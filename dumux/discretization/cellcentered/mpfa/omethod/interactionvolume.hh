@@ -651,7 +651,7 @@ private:
                         if (otherFaceType != MpfaFaceTypes::dirichlet && otherFaceType != MpfaFaceTypes::interiorDirichlet)
                         {
                             if (faceType == MpfaFaceTypes::interiorNeumann)
-                                A_[curIdxInFluxFaces][this->findIndexInVector(fluxScvfIndexSet(), otherLocalScvfIdx)] += (1-xi)*negWijk[localDir];
+                                A_[curIdxInFluxFaces][this->findIndexInVector(fluxScvfIndexSet(), otherLocalScvfIdx)] -= (1-xi)*negWijk[localDir];
                             else
                                 A_[curIdxInFluxFaces][this->findIndexInVector(fluxScvfIndexSet(), otherLocalScvfIdx)] += negWijk[localDir];
                         }
@@ -665,7 +665,7 @@ private:
 
                         // add entries to matrix B
                         if (faceType == MpfaFaceTypes::interiorNeumann)
-                            B_[curIdxInFluxFaces][negLocalScvIdx] += (1-xi)*negWijk[localDir];
+                            B_[curIdxInFluxFaces][negLocalScvIdx] -= (1-xi)*negWijk[localDir];
                         else
                             B_[curIdxInFluxFaces][negLocalScvIdx] += negWijk[localDir];
                     }
