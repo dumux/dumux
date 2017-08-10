@@ -134,228 +134,228 @@ public:
     {
         if (!velocityOutput_) return;
 
-        const auto geometry = element.geometry();
-        const Dune::GeometryType geomType = geometry.type();
+        // const auto geometry = element.geometry();
+        // const Dune::GeometryType geomType = geometry.type();
 
-        // bind the element flux variables cache
-        auto elemFluxVarsCache = localView(problem_.model().globalFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+        // // bind the element flux variables cache
+        // auto elemFluxVarsCache = localView(problem_.model().globalFluxVarsCache());
+        // elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
-        // the upwind term to be used for the volume flux evaluation
-        auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
+        // // the upwind term to be used for the volume flux evaluation
+        // auto upwindTerm = [phaseIdx](const auto& volVars) { return volVars.mobility(phaseIdx); };
 
-        if(isBox && dim == 1)
-        {
-            GlobalPosition tmpVelocity(0.0);
-            tmpVelocity = (geometry.corner(1) - geometry.corner(0));
-            tmpVelocity /= tmpVelocity.two_norm();
+        // if(isBox && dim == 1)
+        // {
+        //     GlobalPosition tmpVelocity(0.0);
+        //     tmpVelocity = (geometry.corner(1) - geometry.corner(0));
+        //     tmpVelocity /= tmpVelocity.two_norm();
 
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                if (scvf.boundary())
-                    continue;
+        //     for (auto&& scvf : scvfs(fvGeometry))
+        //     {
+        //         if (scvf.boundary())
+        //             continue;
 
-                // insantiate the flux variables
-                FluxVariables fluxVars;
-                fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        //         // insantiate the flux variables
+        //         FluxVariables fluxVars;
+        //         fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-                // get the volume flux divided by the area of the
-                // subcontrolvolume face in the reference element
-                Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
-                Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
-                flux /= problem_.extrusionFactor(element,
-                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                 problem_.model().elementSolution(element, problem_.model().curSol()));
-                tmpVelocity *= flux;
+        //         // get the volume flux divided by the area of the
+        //         // subcontrolvolume face in the reference element
+        //         Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
+        //         Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
+        //         flux /= problem_.extrusionFactor(element,
+        //                                          fvGeometry.scv(scvf.insideScvIdx()),
+        //                                          problem_.model().elementSolution(element, problem_.model().curSol()));
+        //         tmpVelocity *= flux;
 
-                const int eIdxGlobal = problem_.elementMapper().index(element);
-                velocity[eIdxGlobal] = tmpVelocity;
-            }
-            return;
-        }
+        //         const int eIdxGlobal = problem_.elementMapper().index(element);
+        //         velocity[eIdxGlobal] = tmpVelocity;
+        //     }
+        //     return;
+        // }
 
-        // get the transposed Jacobian of the element mapping
-        const auto& referenceElement = ReferenceElements::general(geomType);
-        const auto& localPos = referenceElement.position(0, 0);
-        const auto jacobianT2 = geometry.jacobianTransposed(localPos);
+        // // get the transposed Jacobian of the element mapping
+        // const auto& referenceElement = ReferenceElements::general(geomType);
+        // const auto& localPos = referenceElement.position(0, 0);
+        // const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 
-        if(isBox)
-        {
-            using ScvVelocities = Dune::BlockVector<Dune::FieldVector<Scalar, dimWorld> >;
-            ScvVelocities scvVelocities(fvGeometry.numScv());
-            scvVelocities = 0;
+        // if(isBox)
+        // {
+        //     using ScvVelocities = Dune::BlockVector<Dune::FieldVector<Scalar, dimWorld> >;
+        //     ScvVelocities scvVelocities(fvGeometry.numScv());
+        //     scvVelocities = 0;
 
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                if (scvf.boundary())
-                    continue;
+        //     for (auto&& scvf : scvfs(fvGeometry))
+        //     {
+        //         if (scvf.boundary())
+        //             continue;
 
-                // local position of integration point
-                const auto localPosIP = geometry.local(scvf.ipGlobal());
+        //         // local position of integration point
+        //         const auto localPosIP = geometry.local(scvf.ipGlobal());
 
-                // Transformation of the global normal vector to normal vector in the reference element
-                const auto jacobianT1 = geometry.jacobianTransposed(localPosIP);
-                const auto globalNormal = scvf.unitOuterNormal();
-                GlobalPosition localNormal(0);
-                jacobianT1.mv(globalNormal, localNormal);
-                localNormal /= localNormal.two_norm();
+        //         // Transformation of the global normal vector to normal vector in the reference element
+        //         const auto jacobianT1 = geometry.jacobianTransposed(localPosIP);
+        //         const auto globalNormal = scvf.unitOuterNormal();
+        //         GlobalPosition localNormal(0);
+        //         jacobianT1.mv(globalNormal, localNormal);
+        //         localNormal /= localNormal.two_norm();
 
-                // insantiate the flux variables
-                FluxVariables fluxVars;
-                fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        //         // insantiate the flux variables
+        //         FluxVariables fluxVars;
+        //         fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-                // get the volume flux divided by the area of the
-                // subcontrolvolume face in the reference element
-                // TODO: Divide by extrusion factor!!?
-                Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
-                Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
+        //         // get the volume flux divided by the area of the
+        //         // subcontrolvolume face in the reference element
+        //         // TODO: Divide by extrusion factor!!?
+        //         Scalar localArea = scvfReferenceArea_(geomType, scvf.index());
+        //         Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
 
-                // transform the volume flux into a velocity vector
-                GlobalPosition tmpVelocity = localNormal;
-                tmpVelocity *= flux;
+        //         // transform the volume flux into a velocity vector
+        //         GlobalPosition tmpVelocity = localNormal;
+        //         tmpVelocity *= flux;
 
-                scvVelocities[scvf.insideScvIdx()] += tmpVelocity;
-                scvVelocities[scvf.outsideScvIdx()] += tmpVelocity;
-            }
+        //         scvVelocities[scvf.insideScvIdx()] += tmpVelocity;
+        //         scvVelocities[scvf.outsideScvIdx()] += tmpVelocity;
+        //     }
 
-            // transform vertex velocities from local to global coordinates
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                int vIdxGlobal = scv.dofIndex();
+        //     // transform vertex velocities from local to global coordinates
+        //     for (auto&& scv : scvs(fvGeometry))
+        //     {
+        //         int vIdxGlobal = scv.dofIndex();
 
-                // calculate the subcontrolvolume velocity by the Piola transformation
-                Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
+        //         // calculate the subcontrolvolume velocity by the Piola transformation
+        //         Dune::FieldVector<CoordScalar, dimWorld> scvVelocity(0);
 
-                jacobianT2.mtv(scvVelocities[scv.indexInElement()], scvVelocity);
-                scvVelocity /= geometry.integrationElement(localPos)*cellNum_[vIdxGlobal];
-                // add up the wetting phase subcontrolvolume velocities for each vertex
-                velocity[vIdxGlobal] += scvVelocity;
-            }
-        }
-        else
-        {
-            if (fvGeometry.numScvf() > element.subEntities(1))
-                DUNE_THROW(Dune::NotImplemented, "Velocity output for non-conforming grids");
+        //         jacobianT2.mtv(scvVelocities[scv.indexInElement()], scvVelocity);
+        //         scvVelocity /= geometry.integrationElement(localPos)*cellNum_[vIdxGlobal];
+        //         // add up the wetting phase subcontrolvolume velocities for each vertex
+        //         velocity[vIdxGlobal] += scvVelocity;
+        //     }
+        // }
+        // else
+        // {
+        //     if (fvGeometry.numScvf() > element.subEntities(1))
+        //         DUNE_THROW(Dune::NotImplemented, "Velocity output for non-conforming grids");
 
-            if (!geomType.isCube() && !geomType.isSimplex())
-                DUNE_THROW(Dune::NotImplemented, "Velocity output for other geometry types than cube and simplex");
+        //     if (!geomType.isCube() && !geomType.isSimplex())
+        //         DUNE_THROW(Dune::NotImplemented, "Velocity output for other geometry types than cube and simplex");
 
-            // first we extract the corner indices for each scv for the CIV method
-            // for network grids there might be multiple intersection with the same geometryInInside
-            // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            // here we keep track of them
-            std::vector<bool> handledScvf;
-            if (dim < dimWorld) handledScvf.resize(element.subEntities(1), false);
+        //     // first we extract the corner indices for each scv for the CIV method
+        //     // for network grids there might be multiple intersection with the same geometryInInside
+        //     // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+        //     // here we keep track of them
+        //     std::vector<bool> handledScvf;
+        //     if (dim < dimWorld) handledScvf.resize(element.subEntities(1), false);
 
-            // find the local face indices of the scvfs (for conforming meshes)
-            std::vector<unsigned int> scvfIndexInInside(element.subEntities(1));
-            int localScvfIdx = 0;
-            for (const auto& intersection : intersections(problem_.gridView(), element))
-            {
-                if (dim < dimWorld) if (handledScvf[intersection.indexInInside()]) continue;
+        //     // find the local face indices of the scvfs (for conforming meshes)
+        //     std::vector<unsigned int> scvfIndexInInside(element.subEntities(1));
+        //     int localScvfIdx = 0;
+        //     for (const auto& intersection : intersections(problem_.gridView(), element))
+        //     {
+        //         if (dim < dimWorld) if (handledScvf[intersection.indexInInside()]) continue;
 
-                if (intersection.neighbor() || intersection.boundary())
-                {
-                    scvfIndexInInside[localScvfIdx++] = intersection.indexInInside();
-                    // for surface and network grids mark that we handled this face
-                    if (dim < dimWorld) handledScvf[intersection.indexInInside()] = true;
-                }
-            }
+        //         if (intersection.neighbor() || intersection.boundary())
+        //         {
+        //             scvfIndexInInside[localScvfIdx++] = intersection.indexInInside();
+        //             // for surface and network grids mark that we handled this face
+        //             if (dim < dimWorld) handledScvf[intersection.indexInInside()] = true;
+        //         }
+        //     }
 
-            std::vector<Scalar> scvfFluxes(element.subEntities(1), 0.0);
-            localScvfIdx = 0;
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                if (!scvf.boundary())
-                {
-                    FluxVariables fluxVars;
-                    fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-                    scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                    scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
-                                                                                            fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                            problem_.model().elementSolution(element, problem_.model().curSol()));
-                }
-                else
-                {
-                    auto bcTypes = problemBoundaryTypes(element, scvf);
-                    if (bcTypes.hasOnlyDirichlet())
-                    {
-                        FluxVariables fluxVars;
-                        fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-                        scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
-                        scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
-                                                                                                fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                                problem_.model().elementSolution(element, problem_.model().curSol()));
-                    }
-                }
+        //     std::vector<Scalar> scvfFluxes(element.subEntities(1), 0.0);
+        //     localScvfIdx = 0;
+        //     for (auto&& scvf : scvfs(fvGeometry))
+        //     {
+        //         if (!scvf.boundary())
+        //         {
+        //             FluxVariables fluxVars;
+        //             fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        //             scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+        //             scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
+        //                                                                                     fvGeometry.scv(scvf.insideScvIdx()),
+        //                                                                                     problem_.model().elementSolution(element, problem_.model().curSol()));
+        //         }
+        //         else
+        //         {
+        //             auto bcTypes = problemBoundaryTypes(element, scvf);
+        //             if (bcTypes.hasOnlyDirichlet())
+        //             {
+        //                 FluxVariables fluxVars;
+        //                 fluxVars.init(problem_, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        //                 scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+        //                 scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
+        //                                                                                         fvGeometry.scv(scvf.insideScvIdx()),
+        //                                                                                         problem_.model().elementSolution(element, problem_.model().curSol()));
+        //             }
+        //         }
 
-                // increment scvf counter
-                localScvfIdx++;
-            }
+        //         // increment scvf counter
+        //         localScvfIdx++;
+        //     }
 
-            // Correct boundary fluxes in case of Neumann conditions.
-            // In this general setting, it would be very difficult to
-            // calculate correct phase, i.e., volume, fluxes from arbitrary
-            // Neumann conditions. We approximate the Neumann flux by the
-            // flux on the opposite face. For extremely distorted grids this can
-            // lead to unexpected results (but then TPFA also leads to unexpected results).
-            localScvfIdx = 0;
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                if (scvf.boundary())
-                {
-                    auto bcTypes = problemBoundaryTypes(element, scvf);
-                    if (bcTypes.hasNeumann())
-                    {
-                        // cubes
-                        if (dim == 1 || geomType.isCube())
-                        {
-                            const auto fIdx = scvfIndexInInside[localScvfIdx];
-                            const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
-                            scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
-                        }
-                        // simplices
-                        else if (geomType.isSimplex())
-                            scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
-                    }
-                }
+        //     // Correct boundary fluxes in case of Neumann conditions.
+        //     // In this general setting, it would be very difficult to
+        //     // calculate correct phase, i.e., volume, fluxes from arbitrary
+        //     // Neumann conditions. We approximate the Neumann flux by the
+        //     // flux on the opposite face. For extremely distorted grids this can
+        //     // lead to unexpected results (but then TPFA also leads to unexpected results).
+        //     localScvfIdx = 0;
+        //     for (auto&& scvf : scvfs(fvGeometry))
+        //     {
+        //         if (scvf.boundary())
+        //         {
+        //             auto bcTypes = problemBoundaryTypes(element, scvf);
+        //             if (bcTypes.hasNeumann())
+        //             {
+        //                 // cubes
+        //                 if (dim == 1 || geomType.isCube())
+        //                 {
+        //                     const auto fIdx = scvfIndexInInside[localScvfIdx];
+        //                     const auto fIdxOpposite = fIdx%2 ? fIdx-1 : fIdx+1;
+        //                     scvfFluxes[fIdx] = -scvfFluxes[fIdxOpposite];
+        //                 }
+        //                 // simplices
+        //                 else if (geomType.isSimplex())
+        //                     scvfFluxes[scvfIndexInInside[localScvfIdx]] = 0;
+        //             }
+        //         }
 
-                // increment scvf counter
-                localScvfIdx++;
-            }
+        //         // increment scvf counter
+        //         localScvfIdx++;
+        //     }
 
-            Dune::FieldVector <Scalar, dim> refVelocity;
-            // cubes: On the reference element simply average over opposite fluxes
-            // note that this is equal to a corner velocity interpolation method
-            if (dim == 1 || geomType.isCube())
-            {
-                for (int i = 0; i < dim; i++)
-                    refVelocity[i] = 0.5 * (scvfFluxes[2*i + 1] - scvfFluxes[2*i]);
-            }
-            // simplices: Raviart-Thomas-0 interpolation evaluated at the cell center
-            else if (geomType.isSimplex())
-            {
-                for (int dimIdx = 0; dimIdx < dim; dimIdx++)
-                {
-                    refVelocity[dimIdx] = -scvfFluxes[dim - 1 - dimIdx];
-                    for (int fIdx = 0; fIdx < dim + 1; fIdx++)
-                        refVelocity[dimIdx] += scvfFluxes[fIdx]/(dim + 1);
-                }
-            }
-            // 3D prism and pyramids
-            else
-                DUNE_THROW(Dune::NotImplemented, "velocity output for cell-centered and prism/pyramid");
+        //     Dune::FieldVector <Scalar, dim> refVelocity;
+        //     // cubes: On the reference element simply average over opposite fluxes
+        //     // note that this is equal to a corner velocity interpolation method
+        //     if (dim == 1 || geomType.isCube())
+        //     {
+        //         for (int i = 0; i < dim; i++)
+        //             refVelocity[i] = 0.5 * (scvfFluxes[2*i + 1] - scvfFluxes[2*i]);
+        //     }
+        //     // simplices: Raviart-Thomas-0 interpolation evaluated at the cell center
+        //     else if (geomType.isSimplex())
+        //     {
+        //         for (int dimIdx = 0; dimIdx < dim; dimIdx++)
+        //         {
+        //             refVelocity[dimIdx] = -scvfFluxes[dim - 1 - dimIdx];
+        //             for (int fIdx = 0; fIdx < dim + 1; fIdx++)
+        //                 refVelocity[dimIdx] += scvfFluxes[fIdx]/(dim + 1);
+        //         }
+        //     }
+        //     // 3D prism and pyramids
+        //     else
+        //         DUNE_THROW(Dune::NotImplemented, "velocity output for cell-centered and prism/pyramid");
 
-            Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
-            jacobianT2.mtv(refVelocity, scvVelocity);
+        //     Dune::FieldVector<Scalar, dimWorld> scvVelocity(0);
+        //     jacobianT2.mtv(refVelocity, scvVelocity);
 
-            scvVelocity /= geometry.integrationElement(localPos);
+        //     scvVelocity /= geometry.integrationElement(localPos);
 
-            int eIdxGlobal = problem_.elementMapper().index(element);
+        //     int eIdxGlobal = problem_.elementMapper().index(element);
 
-            velocity[eIdxGlobal] = scvVelocity;
+        //     velocity[eIdxGlobal] = scvVelocity;
 
-        } // cell-centered
+        // } // cell-centered
     }
 
 private:

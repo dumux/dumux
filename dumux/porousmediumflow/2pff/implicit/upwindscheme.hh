@@ -30,21 +30,13 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(ImplicitUpwindWeight);
-NEW_PROP_TAG(EnableInteriorBoundaries);
-NEW_PROP_TAG(MpfaFacetCoupling);
-NEW_PROP_TAG(UseTpfaBoundary);
-}
-
 //! Upwind scheme for the fractional flow formulation
 template<class TypeTag>
 class TwoPFractionalFlowUpwindScheme
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
     enum
     {
@@ -59,12 +51,17 @@ class TwoPFractionalFlowUpwindScheme
         capillaryFluxIdx = 2
     };
 
+    enum {
+        conti0EqIdx = Indices::conti0EqIdx,
+        transportEqIdx = Indices::transportEqIdx
+    };
+
 public:
     // applies a simple upwind scheme to the precalculated advective flux
     template<class FluxVariables, class UpwindTermFunction, class Flux>
     static Scalar apply(const FluxVariables& fluxVars,
                         const UpwindTermFunction& upwindTerm,
-                        Flux flux, int phaseIdx)
+                        const Flux& flux, int eqIdx)
     {
         static const bool useHybridUpwinding = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseHybridUpwinding);
 
@@ -72,7 +69,7 @@ public:
         {
             // TODO: Implement hybrid upwinding here
             return 0.0;
-        }
+        } // end hybrid upwinding
 
         // we use phase potential upwinding as the default
         else
@@ -80,24 +77,64 @@ public:
             const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
             const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
 
-            // Compute phase potential gradients for both phases
-            std::array<Scalar, numPhases> potGradN;
+            if (eqIdx == transportEqIdx)
+            {
 
-            // TODO: How to compute potential gradients?
+                // get the potential fluxes
+                const auto potFluxes = AdvectionType::flux(fluxVars.problem(),
+                                                           fluxVars.element(),
+                                                           fluxVars.fvGeometry(),
+                                                           fluxVars.elemVolVars(),
+                                                           fluxVars.scvFace(),
+                                                           conti0EqIdx,
+                                                           fluxVars.elemFluxVarsCache());
 
-            // Decide which mobilities to use
-            const auto mobW = std::signbit(potGradN[wPhaseIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                : insideVolVars.mobility(wPhaseIdx);
-            const auto mobN = std::signbit(potGradN[nPhaseIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                : insideVolVars.mobility(nPhaseIdx);
-            const auto mobT = mobW + mobN;
+                // Decide which mobilities to use
+                const auto mobW = std::signbit(potFluxes[wPhaseIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+                                                                     : insideVolVars.mobility(wPhaseIdx);
+                const auto mobN = std::signbit(potFluxes[nPhaseIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+                                                                     : insideVolVars.mobility(nPhaseIdx);
+                const auto mobT = mobW + mobN;
 
-            // for PPU the flux[capillaryFluxIdx] should contain tij*(pc_i - pc_j)
-            // while for IHU it should contain tij*(s_i - s_j)
-            return mobW/mobT*flux[viscousFluxIdx]
-                   + mobW*mobN/mobT*flux[capillaryFluxIdx]
-                   + mobW*mobN/mobT*flux[gravityFluxIdx];
-        }
+
+
+
+                const Scalar upwindW = std::signbit(potFluxes[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
+
+                const Scalar upwindN = std::signbit(potFluxes[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
+
+
+                return mobW/mobT*(upwindW*flux[wPhaseIdx] + upwindN*flux[nPhaseIdx])
+                       + mobW*mobN/mobT*flux[capillaryFluxIdx]
+                       + mobW*mobN/mobT*flux[gravityFluxIdx];
+
+
+
+                // for PPU the flux[capillaryFluxIdx] should contain tij*(pc_i - pc_j)
+                // while for IHU it should contain tij*(s_i - s_j)
+                // return mobW/mobT*flux[viscousFluxIdx]
+                //        + mobW*mobN/mobT*flux[capillaryFluxIdx]
+                //        + mobW*mobN/mobT*flux[gravityFluxIdx];
+            }
+
+            else if (eqIdx == conti0EqIdx)
+            {
+                const Scalar upwindW = std::signbit(flux[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
+
+                const Scalar upwindN = std::signbit(flux[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
+
+                return upwindW*flux[wPhaseIdx] + upwindN*flux[nPhaseIdx];
+            }
+
+            else
+            {
+                DUNE_THROW(Dune::InvalidStateException, "Unknown equation index!");
+            }
+        } // end phase potential upwinding
     }
 };
 

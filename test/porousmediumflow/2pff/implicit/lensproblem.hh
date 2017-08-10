@@ -105,6 +105,8 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
 
+        pnIdx = Indices::pnIdx,
+        swIdx = Indices::swIdx,
 
         // world dimension
         dim = GridView::dimension,
@@ -199,8 +201,7 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
-        return values;
+        return initialAtPos(globalPos);
     }
 
     /*!
@@ -237,6 +238,18 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
+
+        values[pnIdx] = 1e5;
+        values[swIdx] = 0.2;
+
+        if (onLeftBoundary_(globalPos))
+        {
+            values[pnIdx] = 1.1e5;
+            values[swIdx] = 1.0;
+        }
+
+        if (globalPos[0] < 0.1*this->bBoxMax()[0] + eps_)
+            values[swIdx] = 1.0;
         return values;
     }
     // \}

@@ -66,6 +66,7 @@ struct TwoPCommonIndices
     static const int conti0EqIdx = PVOffset + 0; //!< Index of the first continuity equation
     static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
     static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
+    static const int transportEqIdx = PVOffset + 1; //!< Index of the saturation transport equation in case of fractional flow
 };
 
 

@@ -42,9 +42,6 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property defaults
 //////////////////////////////////////////////////////////////////
-//! Set the number of equations to 2
-SET_INT_PROP(TwoPFractionalFlow, NumEq, 1);
-
 //! Set the default formulation to pWsN
 SET_INT_PROP(TwoPFractionalFlow,
              Formulation,

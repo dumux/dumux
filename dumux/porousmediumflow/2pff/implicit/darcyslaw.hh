@@ -77,13 +77,20 @@ class FractionalFlowDarcysLaw
     enum {
         viscousFluxIdx = 0,
         gravityFluxIdx = 1,
-        capillaryFluxIdx = 2
+        capillaryFluxIdx = 2,
     };
 
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
+
+    enum {
+        conti0EqIdx = Indices::conti0EqIdx,
+        transportEqIdx = Indices::transportEqIdx
+    };
+
+    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
 public:
     // state the discretization method this implementation belongs to
@@ -94,7 +101,6 @@ public:
     using CacheFiller = typename Implementation::CacheFiller;
 
     // the return type of the flux method
-    // we return three separate fluxes: the viscous, gravity and capillary flux
     using ReturnType = std::array<Scalar, 3>;
 
     static ReturnType flux(const Problem& problem,
@@ -102,7 +108,7 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf,
-                           int phaseIdx,
+                           int eqIdx,
                            const ElementFluxVarsCache& elemFluxVarsCache)
     {
         ReturnType fluxes;
@@ -114,45 +120,137 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        // Get the total velocity from the input file
-        static const GlobalPosition v_t = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, TotalVelocity);
-
-        // The viscous flux before upwinding is the total velocity
-        fluxes[viscousFluxIdx] = (v_t*scvf.unitOuterNormal())*scvf.area(); // TODO extrusion factor
-
-        // Compute the capillary flux before upwinding
-        const auto sInside = insideVolVars.saturation(wPhaseIdx);
-        const auto sOutside = outsideVolVars.saturation(wPhaseIdx);
-        fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(sInside - sOutside);
-
-
-        // Compute the gravitational flux before upwinding
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (eqIdx == transportEqIdx)
         {
-            // do averaging for the density over all neighboring elements
-            const auto rho = [&](int phaseIdx)
+            //////////////////////////////////////////////////////////////
+            // we return three separate fluxes: the viscous, gravity and capillary flux
+            //////////////////////////////////////////////////////////////
+
+            // Get the total velocity from the input file
+            static const GlobalPosition v_t = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, TotalVelocity);
+
+            //////////////////////////////////////////////////////////////
+            // The viscous flux before upwinding is the total velocity
+            //////////////////////////////////////////////////////////////
+
+            fluxes[viscousFluxIdx] = (v_t*scvf.unitOuterNormal())*scvf.area(); // TODO extrusion factor
+
+
+            //////////////////////////////////////////////////////////////
+            // Compute the capillary flux before upwinding
+            //////////////////////////////////////////////////////////////
+
+            static const bool useHybridUpwinding = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseHybridUpwinding);
+            // for hybrid upwinding we want tij*delta_Sij
+            if (useHybridUpwinding)
             {
-                // boundaries
-                if (scvf.boundary())
-                    return insideVolVars.density(phaseIdx);
+                const auto sInside = insideVolVars.saturation(wPhaseIdx);
+                const auto sOutside = outsideVolVars.saturation(wPhaseIdx);
+                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(sInside - sOutside);
+            }
+            // for potetial phase upwinding we want tij*delta_Pcij
+            else
+            {
+                const auto pcInside = insideVolVars.capillaryPressure();
+                const auto pcOutside = outsideVolVars.capillaryPressure();
+                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(pcInside - pcOutside);
+            }
 
-                // inner faces with two neighboring elements
-                else
-                    return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
-            };
+            //////////////////////////////////////////////////////////////
+            // Compute the gravitational flux before upwinding
+            //////////////////////////////////////////////////////////////
 
-            // ask for the gravitational acceleration in the inside neighbor
-            const auto xInside = insideScv.center();
-            const auto gInside = problem.gravityAtPos(xInside);
-            const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
-                                                  : fvGeometry.scv(scvf.outsideScvIdx()).center();
-            const auto gOutside = problem.gravityAtPos(xOutside);
+            if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+            {
+                // do averaging for the density over all neighboring elements
+                const auto rho = [&](int phaseIdx)
+                {
+                    // boundaries
+                    if (scvf.boundary())
+                        return insideVolVars.density(phaseIdx);
 
-            fluxes[gravityFluxIdx] = fluxVarsCache.tij()*(xInside*gInside - xOutside*gOutside)*(rho(wPhaseIdx)- rho(nPhaseIdx));
+                    // inner faces with two neighboring elements
+                    else
+                        return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
+                };
+
+                // ask for the gravitational acceleration in the inside neighbor
+                const auto xInside = insideScv.center();
+                const auto gInside = problem.gravityAtPos(xInside);
+                const auto xOutside = scvf.boundary() ? scvf.ipGlobal()
+                                                      : fvGeometry.scv(scvf.outsideScvIdx()).center();
+                const auto gOutside = problem.gravityAtPos(xOutside);
+
+                fluxes[gravityFluxIdx] = fluxVarsCache.tij()*(xInside*gInside - xOutside*gOutside)*(rho(wPhaseIdx)- rho(nPhaseIdx));
+            }
+            else // no gravity
+            {
+                fluxes[gravityFluxIdx] = 0.0;
+            }
         }
-        else // no gravity
+
+        else if (eqIdx == conti0EqIdx)
         {
-            fluxes[gravityFluxIdx] = 0.0;
+            //////////////////////////////////////////////////////////////
+            // we return two separate fluxes: the wetting potential flux and the non-wetting potential flux
+            //////////////////////////////////////////////////////////////
+
+            if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+            {
+                // do averaging for the density over all neighboring elements
+                const auto rho = [&](int phaseIdx)
+                {
+                    // boundaries
+                    if (scvf.boundary())
+                        return insideVolVars.density(phaseIdx);
+
+                    // inner faces with two neighboring elements
+                    else
+                        return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
+                };
+
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    // ask for the gravitational acceleration in the inside neighbor
+                    const auto xInside = insideScv.center();
+                    const auto gInside = problem.gravityAtPos(xInside);
+                    const auto hInside = insideVolVars.pressure(phaseIdx) - rho(phaseIdx)*(gInside*xInside);
+                    const auto hOutside = [&]()
+                    {
+                        // boundaries
+                        if (scvf.boundary())
+                        {
+                            const auto xOutside = scvf.ipGlobal();
+                            const auto gOutside = problem.gravityAtPos(xOutside);
+                            return outsideVolVars.pressure(phaseIdx) - rho(phaseIdx)*(gOutside*xOutside);
+                        }
+
+                        // inner faces with two neighboring elements
+                        else
+                        {
+                            const auto xOutside = fvGeometry.scv(scvf.outsideScvIdx()).center();
+                            const auto gOutside = problem.gravityAtPos(xOutside);
+                            return outsideVolVars.pressure(phaseIdx) - rho(phaseIdx)*(gOutside*xOutside);
+                        }
+                    }();
+
+                    fluxes[phaseIdx] = fluxVarsCache.tij()*(hInside - hOutside);
+                }
+            }
+            else // no gravity
+            {
+                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                {
+                    const auto pInside = insideVolVars.pressure(phaseIdx);
+                    const auto pOutside = outsideVolVars.pressure(phaseIdx);
+                    fluxes[phaseIdx] = fluxVarsCache.tij()*(pInside - pOutside);
+                }
+            }
+        }
+
+        else
+        {
+            DUNE_THROW(Dune::InvalidStateException, "Unknown equation index!");
         }
 
         return fluxes;

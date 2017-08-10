@@ -53,8 +53,12 @@ class TwoPFractionalFlowLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalR
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // first index for the mass balance
-    enum { conti0EqIdx = Indices::conti0EqIdx,
-           wPhaseIdx = Indices::wPhaseIdx };
+    enum {
+           conti0EqIdx = Indices::conti0EqIdx,
+           transportEqIdx = Indices::transportEqIdx,
+           wPhaseIdx = Indices::wPhaseIdx,
+           nPhaseIdx = Indices::nPhaseIdx
+    };
 
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
@@ -76,12 +80,20 @@ public:
         // partial time derivative of the phase mass
         PrimaryVariables storage;
 
-        storage[conti0EqIdx] = volVars.porosity()
-                                * volVars.density(wPhaseIdx)
-                                * volVars.saturation(wPhaseIdx);
+        // the saturation transport equation storage term
+        storage[transportEqIdx] = volVars.porosity()
+                                  // * volVars.density(wPhaseIdx)
+                                  * volVars.saturation(wPhaseIdx);
+
+        // the total mass balance equation storage term
+        storage[conti0EqIdx] = storage[transportEqIdx]
+                                 + volVars.porosity()
+                                   // * volVars.density(nPhaseIdx)
+                                   * volVars.saturation(nPhaseIdx);
 
         //! The energy storage in the fluid phase with index phaseIdx
         EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, wPhaseIdx);
+        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, nPhaseIdx);
 
         //! The energy storage in the solid matrix
         EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
@@ -106,12 +118,16 @@ public:
         PrimaryVariables flux;
 
         // this is just a dummy we do upwinding internally in the upwind scheme class
-        auto upwindTerm = [](const auto& volVars){};
+        auto upwindTermTransport = [](const auto& volVars, const int phaseIdx = 0){ return 0.0; };
+        flux[transportEqIdx] = fluxVars.advectiveFlux(transportEqIdx, upwindTermTransport);
 
-        flux[conti0EqIdx] = fluxVars.advectiveFlux(wPhaseIdx, upwindTerm);
+        auto upwindTermTotalMassBalance = [](const auto& volVars, const int phaseIdx = 0)
+                                          { return volVars.mobility(phaseIdx)/**volVars.density(phaseIdx)*/; };
+        flux[conti0EqIdx] = fluxVars.advectiveFlux(conti0EqIdx, upwindTermTotalMassBalance);
 
         //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);
+        EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, nPhaseIdx);
 
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
