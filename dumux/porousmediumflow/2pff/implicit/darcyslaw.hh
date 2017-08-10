@@ -146,7 +146,7 @@ public:
             {
                 const auto sInside = insideVolVars.saturation(wPhaseIdx);
                 const auto sOutside = outsideVolVars.saturation(wPhaseIdx);
-                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(sOutside - sInside);
+                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(sInside-sOutside);
             }
             // for potetial phase upwinding we want tij*delta_Pcij
             else

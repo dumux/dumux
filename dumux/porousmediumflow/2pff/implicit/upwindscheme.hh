@@ -37,6 +37,7 @@ class TwoPFractionalFlowUpwindScheme
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
 
     enum
     {
@@ -67,8 +68,90 @@ public:
 
         if (useHybridUpwinding)
         {
-            // TODO: Implement hybrid upwinding here
-            return 0.0;
+            const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
+            const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
+
+            if (eqIdx == transportEqIdx)
+            {
+
+                // get the potential fluxes
+                const auto potFluxes = AdvectionType::flux(fluxVars.problem(),
+                                                           fluxVars.element(),
+                                                           fluxVars.fvGeometry(),
+                                                           fluxVars.elemVolVars(),
+                                                           fluxVars.scvFace(),
+                                                           conti0EqIdx,
+                                                           fluxVars.elemFluxVarsCache());
+
+                const Scalar upwindW = std::signbit(potFluxes[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
+
+                const Scalar upwindN = std::signbit(potFluxes[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
+
+                const Scalar flux_t = upwindW*potFluxes[wPhaseIdx] + upwindN*potFluxes[nPhaseIdx];
+
+                // Calculate viscous flux
+                const auto mobW_v = std::signbit(flux_t) ? outsideVolVars.mobility(wPhaseIdx)
+                                                                     : insideVolVars.mobility(wPhaseIdx);
+                const auto mobN_v = std::signbit(flux_t) ? outsideVolVars.mobility(nPhaseIdx)
+                                                                     : insideVolVars.mobility(nPhaseIdx);
+                const auto mobT_v = mobW_v + mobN_v;
+
+                const Scalar viscousFlux = mobW_v/mobT_v*flux_t;
+
+                // Calculate gravity flux
+                const auto mobW_mobN_G =
+                        std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx) * insideVolVars.mobility(nPhaseIdx)
+                                                           : outsideVolVars.mobility(nPhaseIdx) * insideVolVars.mobility(wPhaseIdx);
+                const auto mobT_G =
+                        std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx) + insideVolVars.mobility(nPhaseIdx)
+                                                           : outsideVolVars.mobility(nPhaseIdx) + insideVolVars.mobility(wPhaseIdx);
+
+                const Scalar gravFlux = mobW_mobN_G/mobT_G * flux[gravityFluxIdx];
+
+                // Calculate capillary flux
+                Scalar S_minus = std::min(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
+                Scalar S_max = std::max(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
+
+                Scalar D_max = 0.0;
+                //Here, we assume constant viscosity and constant material laws
+                //ToDo generalize for non-constant material laws, etc.
+                const auto& fvGeometry = fluxVars.fvGeometry();
+                const auto& scvf = fluxVars.scvFace();
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
+                auto materialLaws = fluxVars.problem().spatialParams().materialLawParamsAtPos(scv.center());
+                for(int k=0; k <= 10; k++)
+                {
+                    Scalar Sw = S_minus + k/10 * (S_max - S_minus);
+                    Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
+                    Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
+                    Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
+
+                    D_max = std::max(D_max,-(mobW*mobN)/(mobW + mobN)*dPc_dSw);
+                }
+
+                return viscousFlux
+                       + D_max*flux[capillaryFluxIdx]
+                       + gravFlux;
+            }
+
+            else if (eqIdx == conti0EqIdx)
+            {
+                const Scalar upwindW = std::signbit(flux[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
+
+                const Scalar upwindN = std::signbit(flux[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
+                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
+
+                return upwindW*flux[wPhaseIdx] + upwindN*flux[nPhaseIdx];
+            }
+
+            else
+            {
+                DUNE_THROW(Dune::InvalidStateException, "Unknown equation index!");
+            }
         } // end hybrid upwinding
 
         // we use phase potential upwinding as the default
