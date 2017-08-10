@@ -8,5 +8,5 @@ add_dumux_test(test_cc2pff test_cc2pff test_cc2pff.cc
 install(FILES
 lensproblem.hh
 lensspatialparams.hh
-test_cc2p.cc
+test_cc2pff.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2pff)

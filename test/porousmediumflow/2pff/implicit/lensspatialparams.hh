@@ -22,8 +22,8 @@
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
-#ifndef DUMUX_LENS_SPATIAL_PARAMS_HH
-#define DUMUX_LENS_SPATIAL_PARAMS_HH
+#ifndef DUMUX_FRACFLOW_LENS_SPATIAL_PARAMS_HH
+#define DUMUX_FRACFLOW_LENS_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>

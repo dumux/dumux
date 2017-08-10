@@ -27,7 +27,7 @@
 #define DUMUX_LENSPROBLEM_FRACTIONAL_FLOW_HH
 
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/air.hh>
+#include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2pff/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
@@ -48,7 +48,7 @@ namespace Properties
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(TwoPFractionalFlow, LensSpatialParams));
 NEW_TYPE_TAG(LensCCProblem, INHERITS_FROM(CCTpfaModel, LensProblem));
 
-SET_TYPE_PROP(LensCCProblem, Grid, Dune::FoamGrid<1, 3>);
+SET_TYPE_PROP(LensCCProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(LensProblem, Problem, LensProblem<TypeTag>);
@@ -68,11 +68,13 @@ SET_PROP(LensProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::GasPhase<Scalar, Air<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
 // Linear solver settings
 SET_TYPE_PROP(LensCCProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+
+SET_INT_PROP(LensCCProblem, Formulation, TwoPFormulation::pnsw);
 
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(LensCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
@@ -96,10 +98,12 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using WettingPhase = typename GET_PROP_TYPE(TypeTag, WettingPhase);
     using NonwettingPhase = typename GET_PROP_TYPE(TypeTag, NonwettingPhase);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
 
     enum {
         // equation indices
-        contiNEqIdx = Indices::contiNEqIdx,
+        conti0EqIdx = Indices::conti0EqIdx,
+        transportEqIdx = Indices::transportEqIdx,
 
         // phase indices
         wPhaseIdx = Indices::wPhaseIdx,
@@ -201,7 +205,28 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        return initialAtPos(globalPos);
+        PrimaryVariables values;
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+
+        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+
+        Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
+        Scalar depth = this->bBoxMax()[1] - globalPos[1];
+        Scalar alpha = 1 + 1.5/height;
+        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
+
+        values[swIdx] = 1.0;
+
+        // hydrostatic pressure scaled by alpha
+        Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), values[swIdx]);
+        Scalar pw = 1e5 - factor*densityW*this->gravity()[1]*depth;
+        values[pnIdx] = pc + pw;
+
+        return values;
     }
 
     /*!
@@ -217,7 +242,17 @@ public:
      */
     NeumannFluxes neumannAtPos(const GlobalPosition &globalPos) const
     {
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+
+        Scalar densityN = FluidSystem::density(fluidState, FluidSystem::nPhaseIdx);
+
         NeumannFluxes values(0.0);
+        if (onInlet_(globalPos)) {
+            values[conti0EqIdx] = -0.04/densityN; // kg / (m * s)
+        }
         return values;
     }
     // \}
@@ -237,19 +272,23 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        PrimaryVariables values;
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
 
-        values[pnIdx] = 1e5;
-        values[swIdx] = 0.2;
+        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
-        if (onLeftBoundary_(globalPos))
-        {
-            values[pnIdx] = 1.1e5;
-            values[swIdx] = 1.0;
-        }
+        Scalar depth = this->bBoxMax()[1] - globalPos[1];
 
-        if (globalPos[0] < 0.1*this->bBoxMax()[0] + eps_)
-            values[swIdx] = 1.0;
+        values[swIdx] = 1.0;
+
+        // hydrostatic pressure
+        Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), values[swIdx]);
+        Scalar pw = 1e5 - densityW*this->gravity()[1]*depth;
+        values[pnIdx] = pc + pw;
+
         return values;
     }
     // \}
@@ -265,6 +304,24 @@ private:
     {
         return globalPos[0] > this->bBoxMax()[0] - eps_;
     }
+
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] < this->bBoxMin()[1] + eps_;
+    }
+
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] > this->bBoxMax()[1] - eps_;
+    }
+
+    bool onInlet_(const GlobalPosition &globalPos) const
+    {
+        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
+    }
+
 
     Scalar temperature_;
     static constexpr Scalar eps_ = 1e-7;
