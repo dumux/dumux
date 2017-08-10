@@ -68,10 +68,13 @@ public:
             auto fvGeometry = localView(problem.model().globalFvGeometry());
             fvGeometry.bind(element);
 
+            auto elemVolVars = localView(problem.model().curGlobalVolVars());
+            elemVolVars.bind(element, fvGeometry, problem.model().curSol());
+
             fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                this->get(eIdx, scvf.index()).update(problem, element, fvGeometry, scvf);
+                this->get(eIdx, scvf.index()).update(problem, element, fvGeometry, elemVolVars, scvf);
             }
         }
     }
