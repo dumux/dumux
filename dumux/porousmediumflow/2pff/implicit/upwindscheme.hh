@@ -106,7 +106,7 @@ public:
                                                                      : upwindTerm(insideVolVars, nPhaseIdx);
 
 
-                return mobW/mobT*(upwindW*flux[wPhaseIdx] + upwindN*flux[nPhaseIdx])
+                return mobW/mobT*(upwindW*potFluxes[wPhaseIdx] + upwindN*potFluxes[nPhaseIdx])
                        + mobW*mobN/mobT*flux[capillaryFluxIdx]
                        + mobW*mobN/mobT*flux[gravityFluxIdx];
 

@@ -146,14 +146,14 @@ public:
             {
                 const auto sInside = insideVolVars.saturation(wPhaseIdx);
                 const auto sOutside = outsideVolVars.saturation(wPhaseIdx);
-                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(sInside - sOutside);
+                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(sOutside - sInside);
             }
             // for potetial phase upwinding we want tij*delta_Pcij
             else
             {
                 const auto pcInside = insideVolVars.capillaryPressure();
                 const auto pcOutside = outsideVolVars.capillaryPressure();
-                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(pcInside - pcOutside);
+                fluxes[capillaryFluxIdx] = fluxVarsCache.tij()*(pcOutside - pcInside);
             }
 
             //////////////////////////////////////////////////////////////
@@ -181,7 +181,7 @@ public:
                                                       : fvGeometry.scv(scvf.outsideScvIdx()).center();
                 const auto gOutside = problem.gravityAtPos(xOutside);
 
-                fluxes[gravityFluxIdx] = fluxVarsCache.tij()*(xInside*gInside - xOutside*gOutside)*(rho(wPhaseIdx)- rho(nPhaseIdx));
+                fluxes[gravityFluxIdx] = -fluxVarsCache.tij()*(xInside*gInside - xOutside*gOutside)*(rho(wPhaseIdx)- rho(nPhaseIdx));
             }
             else // no gravity
             {

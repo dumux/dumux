@@ -118,7 +118,8 @@ public:
         PrimaryVariables flux;
 
         // this is just a dummy we do upwinding internally in the upwind scheme class
-        auto upwindTermTransport = [](const auto& volVars, const int phaseIdx = 0){ return 0.0; };
+        auto upwindTermTransport =  [](const auto& volVars, const int phaseIdx = 0)
+                                                  { return volVars.mobility(phaseIdx)/**volVars.density(phaseIdx)*/; };
         flux[transportEqIdx] = fluxVars.advectiveFlux(transportEqIdx, upwindTermTransport);
 
         auto upwindTermTotalMassBalance = [](const auto& volVars, const int phaseIdx = 0)
