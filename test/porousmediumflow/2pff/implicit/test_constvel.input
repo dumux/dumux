@@ -1,0 +1,13 @@
+[TimeManager]
+DtInitial = 10 # [s]
+TEnd = 5.0e4 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 10
+Cells = 1 100
+
+[Problem]
+Name = constvelff_hybrid # name passed to the output routines
+UseHybridUpwinding = true
+TotalVelocity = 0 -1.0e-5

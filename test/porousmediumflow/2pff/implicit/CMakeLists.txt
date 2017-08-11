@@ -4,6 +4,9 @@ add_input_file_links()
 add_dumux_test(test_cc2pff test_cc2pff test_cc2pff.cc
                ${CMAKE_CURRENT_BINARY_DIR}/test_cc2pff)
 
+add_dumux_test(test_constvel test_constvel test_constvel.cc
+               ${CMAKE_CURRENT_BINARY_DIR}/test_constvel)
+
 #install sources
 install(FILES
 lensproblem.hh
