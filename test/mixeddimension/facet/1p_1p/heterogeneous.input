@@ -1,0 +1,36 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+MaxTimeStepSize = 1
+DtInitialBulkProblem = 1 # [s]
+DtInitialLowDimProblem = 1 # [s]
+EpisodeTime = 1 # [s]
+
+[Grid]
+File = ./grids/singlefracture_wide_quadrilateral.msh
+
+[Problem]
+Name = heterogeneous
+[MixedDimension]
+UseIterativeSolver = false
+
+[IterativeAlgorithm]
+MaxIterations = 100
+Tolerance = 1.0e-8
+Verbose = 1
+
+[SpatialParams]
+FractureAperture = 1e-2
+FracturePermeability = 200
+MatrixPermeability = 1
+
+[Vtk]
+AddVelocity = False
+
+[Mpfa]
+Q = 0.0
+Xi = 0.66
+
+[Newton]
+MaxRelativeShift = 1e-8
+MaxSteps = 20
