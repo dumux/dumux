@@ -11,7 +11,7 @@ File = ./grids/singlefracturequadrilateral.msh
 NumCells = 10
 
 [Problem]
-Name = test_1dfracture
+Name = analytical
 MovePoints = true
 IntegrateFracSol = true
 FracSolQuadOrder = 4
