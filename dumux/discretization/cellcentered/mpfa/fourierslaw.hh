@@ -183,7 +183,7 @@ public:
             scvfFlux += tij[localIdx++]*elemVolVars[volVarIdx].temperature();
 
         // if no interior boundaries are present, return heat conduction flux
-        if (!enableInteriorBoundaries)
+        if (!enableInteriorBoundaries || !problem.model().globalFvGeometry().touchesInteriorBoundary(scvf))
         {
             if (fluxVarsCache.heatConductionSwitchFluxSign())
                 return useTpfaBoundary ? -scvfFlux : -scvfFlux - fluxVarsCache.heatNeumannFlux();

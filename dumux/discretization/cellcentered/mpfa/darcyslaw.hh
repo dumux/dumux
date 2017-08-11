@@ -220,7 +220,7 @@ public:
         }
 
         // if no interior boundaries are present, return the flux
-        if (!enableInteriorBoundaries)
+        if (!enableInteriorBoundaries || !problem.model().globalFvGeometry().touchesInteriorBoundary(scvf))
         {
             if (fluxVarsCache.advectionSwitchFluxSign())
                 return useTpfaBoundary ? -scvfFlux : -scvfFlux - fluxVarsCache.advectionNeumannFlux(phaseIdx);

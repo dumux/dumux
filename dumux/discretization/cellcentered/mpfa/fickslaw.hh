@@ -247,7 +247,7 @@ public:
                 flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
 
             // if no interior boundaries are present, return effective mass flux
-            if (!enableInteriorBoundaries)
+            if (!enableInteriorBoundaries || !problem.model().globalFvGeometry().touchesInteriorBoundary(scvf))
             {
                 if (fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx))
                     componentFlux[compIdx] = useTpfaBoundary ? -flux*rho*effFactor : -flux*rho*effFactor - fluxVarsCache.componentNeumannFlux(compIdx);
