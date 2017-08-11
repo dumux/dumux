@@ -111,8 +111,7 @@ public:
         scvfSeeds.shrink_to_fit();
 
         // check if touches domain boundary (not only interior boundary)
-        const bool boundary = problem.model().globalFvGeometry().touchesDomainBoundary(scvf);
-        return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), boundary);
+        return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), true);
     }
 
 private:
