@@ -24,10 +24,13 @@
 #ifndef DUMUX_1D2D_FACET_ANALYTICAL_PROBLEM_HH
 #define DUMUX_1D2D_FACET_ANALYTICAL_PROBLEM_HH
 
+#include <dune/geometry/quadraturerules.hh>
+
 #include "analyticfractureproblem.hh"
 #include "analyticmatrixproblem.hh"
 
 #include <dumux/mixeddimension/problem.hh>
+#include <dumux/mixeddimension/facet/properties.hh>
 #include <dumux/mixeddimension/facet/gmshdualfacetgridcreator.hh>
 #include <dumux/mixeddimension/facet/mpfa/couplingmanager.hh>
 
@@ -39,7 +42,7 @@ class OnePFacetCouplingProblem;
 namespace Properties
 {
 // Type tag of the global Problem and the two sub problems
-NEW_TYPE_TAG(OnePFacetCoupling, INHERITS_FROM(MixedDimension));
+NEW_TYPE_TAG(OnePFacetCoupling, INHERITS_FROM(MixedDimensionFacetCoupling));
 
 // Set the problem property
 SET_TYPE_PROP(OnePFacetCoupling, Problem, Dumux::OnePFacetCouplingProblem<TypeTag>);
@@ -55,7 +58,7 @@ SET_TYPE_PROP(OnePFacetCoupling, LowDimProblemTypeTag, TTAG(OnePCCFractureProble
 SET_TYPE_PROP(OnePFacetCoupling, CouplingManager, CCMpfaFacetCouplingManager<TypeTag>);
 
 // The linear solver to be used
-SET_TYPE_PROP(OnePFacetCoupling, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(OnePFacetCoupling, LinearSolver, UMFPackBackend<TypeTag>);
 
 // The sub-problems need to know the global problem's type tag
 SET_TYPE_PROP(OnePCCMpfaMatrixProblem, GlobalProblemTypeTag, TTAG(OnePFacetCoupling));
@@ -93,7 +96,7 @@ public:
     {}
 
     //! use this method to calculate the L2-norms of the errors
-    void postTimeStep() const
+    void postTimeStep()
     {
         if (!this->timeManager().willBeFinished())
             return;
@@ -115,7 +118,7 @@ public:
 private:
 
     template<class T, class SP, class GV>
-    std::array<Scalar, 3> calculateNorm(const SP& subProblem, const GV& gridView) const
+    std::array<Scalar, 3> calculateNorm(SP& subProblem, const GV& gridView)
     {
         using std::min;
         using std::max;
@@ -139,11 +142,12 @@ private:
 
         for (const auto& element : elements(gridView))
         {
+            const auto c = element.geometry().center();
             const auto uh = subProblem.model().curSol()[subProblem.elementMapper().index(element)];
 
             // integrate the pressure error over the element
             const auto eg = element.geometry();
-            sumA += eg.volume()*subProblem.extrusionFactorAtPos(eg.center());
+            sumA += eg.volume()*subProblem.extrusionFactorAtPos(c);
 
             static const bool doIntegration = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, L2Error, IntegrateElements);
             if (doIntegration)
@@ -152,24 +156,27 @@ private:
                 const auto& rule = Dune::QuadratureRules<Scalar, GV::dimension>::rule(eg.type(), order);
                 for (auto&& qp : rule)
                 {
-                    const auto u = subProblem.exact(eg.global(qp.position()));
+                    auto globalPos = eg.global(qp.position());
+                    const auto u = subProblem.exact(element, globalPos);
 
                     uMin = min(u, uMin);
                     uMax = max(u, uMax);
 
-                    result[1] += (uh - u)*(uh - u)*qp.weight()*eg.integrationElement(qp.position());
+                    result[1] += (uh - u)*(uh - u)*qp.weight()*eg.integrationElement(qp.position())*subProblem.extrusionFactorAtPos(c);
                 }
             }
             else
             {
-                const auto u = subProblem.exact(eg.center());
-                result[1] += (uh - u)*(uh - u)*eg.volume();
+                auto globalPos = c;
+                const auto u = subProblem.exact(element, globalPos);
+                result[1] += (uh - u)*(uh - u)*eg.volume()*subProblem.extrusionFactorAtPos(c);
 
                 uMin = min(u, uMin);
                 uMax = max(u, uMax);
             }
 
             // evaluate the error in fluxes for this element
+            subProblem.couplingManager().setCouplingContext(element);
             auto fvGeometry = localView(subProblem.model().globalFvGeometry());
             auto elemVolVars = localView(subProblem.model().curGlobalVolVars());
             auto elemFluxVarCache = localView(subProblem.model().globalFluxVarsCache());
@@ -178,24 +185,25 @@ private:
             elemFluxVarCache.bind(element, fvGeometry, elemVolVars);
 
             // sum up the exact and discrete fluxes
-            Scalar q = 0.0;
-            Scalar qh = 0.0;
             for (const auto& scvf : scvfs(fvGeometry))
             {
                 FluxVariables fluxVars;
                 fluxVars.init(subProblem, element, fvGeometry, elemVolVars, scvf, elemFluxVarCache);
 
                 auto upwindRule = [] (const auto& volVars) { return 1.0; };
-                qh += fluxVars.advectiveFlux(/*phaseIdx*/0, upwindRule);
-                q += subProblem.exactFlux(scvf);
+                Scalar qh = fluxVars.advectiveFlux(/*phaseIdx*/0, upwindRule);
+                Scalar q = subProblem.exactFlux(element, scvf);
+
+                const Scalar scvfArea = scvf.area()*subProblem.extrusionFactorAtPos(scvf.ipGlobal());
+                qh /= scvfArea;
+                q /= scvfArea;
+
+                sumL += scvfArea;
+                result[2] += scvfArea*(q-qh)*(q-qh);
+
+                qMax = max(qMax, q);
+                qMin = min(qMin, q);
             }
-
-            qMax = max(qMax, q);
-            qMin = min(qMin, q);
-
-            // flux error contribution of this element
-            sumL += Li;
-            result[2] += Li*(q-qh)*(q-qh);
         }
 
         // final error calculation

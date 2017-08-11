@@ -21,8 +21,8 @@
  *
  * \brief The spatial parameters class for the fracture problem
  */
-#ifndef DUMUX_1P_FRACTURE_SPATIALPARAMS_HH
-#define DUMUX_1P_FRACTURE_SPATIALPARAMS_HH
+#ifndef DUMUX_1P_ANALYTICAL_FRACTURE_SPATIALPARAMS_HH
+#define DUMUX_1P_ANALYTICAL_FRACTURE_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/implicit1p.hh>
 
@@ -68,7 +68,7 @@ public:
      * \brief Define the porosity in [-].
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.8; }
+    { return 1.0; }
 
 private:
     Scalar permeability_;

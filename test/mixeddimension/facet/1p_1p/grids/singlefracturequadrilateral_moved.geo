@@ -1,14 +1,14 @@
-numElements = 10;
+numElements = 750;
 a = 0.01;
 domainLength = 1;
 lc = 1/numElements;
 
-Point(1) = {0.5, -0.5, 0, lc};
+Point(1) = {0.5, -0.5 + a/2.0, 0, lc};
 Point(2) = {0.5, 0, 0, lc};
-Point(3) = {0.5, 0.5, 0, lc};
-Point(4) = {-0.5, 0.5, 0, lc};
+Point(3) = {0.5, 0.5 - a/2.0, 0, lc};
+Point(4) = {-0.5, 0.5 - a/2.0, 0, lc};
 Point(5) = {-0.5, 0, 0, lc};
-Point(6) = {-0.5, -0.5, 0, lc};
+Point(6) = {-0.5, -0.5 + a/2.0, 0, lc};
 
 Line(1) = {4, 5};
 Transfinite Line{1} = numElements/2 + 1;

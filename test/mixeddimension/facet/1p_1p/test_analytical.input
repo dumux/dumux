@@ -12,6 +12,9 @@ NumCells = 10
 
 [Problem]
 Name = test_1dfracture
+MovePoints = true
+IntegrateFracSol = true
+FracSolQuadOrder = 4
 
 [MixedDimension]
 UseIterativeSolver = False
@@ -23,16 +26,19 @@ Verbose = 1
 
 [SpatialParams]
 FractureAperture = 1e-3 # [m]
-FracturePermeability = 1e4 # [m^2]
+FracturePermeability = 1e-4 # [m^2]
 MatrixPermeability = 1 # [m^2]
+
+[Mpfa]
+Xi = 0.66
 
 [Vtk]
 AddVelocity = False
 
 [Newton]
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-8
 MaxSteps = 20
 
 [L2Error]
 IntegrateElements = false
-QuadratureOrder = 2
+QuadratureOrder = 4

@@ -49,37 +49,30 @@ class OnePMatrixSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
 
-    using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-
 public:
-    using PermeabilityType = Tensor;
+    using PermeabilityType = Scalar;
 
     OnePMatrixSpatialParams(const Problem& problem, const GridView& gridView)
     : ParentType(problem, gridView)
     {
-        Scalar permeability = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MatrixPermeability);
-
-        K_[0][0] = permeability;
-        K_[1][1] = permeability;
-        K_[0][1] = 0.;
-        K_[1][0] = 0.;
+        permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, MatrixPermeability);
     }
 
     /*!
      * \brief Return the intrinsic permeability for the given position in [m^2].
      */
-    Tensor permeabilityAtPos(const GlobalPosition& globalPos) const
-    { return K_; }
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    { return permeability_; }
 
     /*!
      * \brief Define the porosity in [-].
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.25; }
+    { return 1.0; }
 
 
 private:
-    Tensor K_;
+    Scalar permeability_;
 };
 } //end namespace
 

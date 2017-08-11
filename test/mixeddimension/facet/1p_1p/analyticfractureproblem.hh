@@ -21,8 +21,10 @@
  *
  * \brief A test problem for the one-dimensional single-phase fracture model
  */
-#ifndef DUMUX_1P_FRACTURE_PROBLEM_HH
-#define DUMUX_1P_FRACTURE_PROBLEM_HH
+#ifndef DUMUX_1P_ANALYTICAL_FRACTURE_PROBLEM_HH
+#define DUMUX_1P_ANALYTICAL_FRACTURE_PROBLEM_HH
+
+#include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/mixeddimension/subproblemproperties.hh>
@@ -66,6 +68,8 @@ SET_TYPE_PROP(OnePFractureProblem, LinearSolver, SuperLUBackend<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(OnePFractureProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePCCFractureProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(OnePCCFractureProblem, EnableGlobalFluxVariablesCache, true);
 }
 
 /*!
@@ -111,6 +115,8 @@ public:
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name) + "_fracture";
         eps_ = 1e-6;
+        aperture_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, FractureAperture);
+        integrateAnalyticalSolution_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IntegrateFracSol);
     }
 
     /*!
@@ -132,11 +138,7 @@ public:
      * \brief Return how much the domain is extruded at a given sub-control volume.
      */
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
-    {
-        //! return the user-specified fracture aperture
-        static const Scalar a = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, FractureAperture);
-        return a;
-    }
+    { return aperture_; }
 
 
     /*!
@@ -148,7 +150,9 @@ public:
                             const SubControlVolume& scv) const
     {
         // we have only sources coming from the bulk domain
-        return couplingManager().evalSourcesFromBulk(element, fvGeometry, elemVolVars, scv);
+        auto sources = couplingManager().evalSourcesFromBulk(element, fvGeometry, elemVolVars, scv);
+        sources /= scv.volume()*elemVolVars[scv].extrusionFactor();
+        return sources;
     }
 
     /*!
@@ -165,8 +169,8 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      */
-    PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(exact(globalPos)); }
+    PrimaryVariables dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
+    { return PrimaryVariables(exact(element, scvf.ipGlobal())); }
 
     Scalar exact(const GlobalPosition& globalPos) const
     {
@@ -177,6 +181,39 @@ public:
         const auto y = globalPos[1];
 
         return cos(x)*cosh(y);
+    }
+
+    Scalar exact(const Element& element, const GlobalPosition& globalPos) const
+    {
+        if (integrateAnalyticalSolution_)
+        {
+            // integrate and average the exact pressure
+            auto upperEdge = globalPos;
+            upperEdge[1] += aperture_/2.0;
+
+            auto lowerEdge = globalPos;
+            lowerEdge[1] -= aperture_/2.0;
+
+            static const int order = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, FracSolQuadOrder);
+            const auto& rule = Dune::QuadratureRules<Scalar, 1>::rule(Dune::GeometryType(1), order);
+
+            std::vector<GlobalPosition> corners(2);
+            corners[0] = lowerEdge;
+            corners[1] = upperEdge;
+            auto g = Dune::AffineGeometry<Scalar, 1, 2>(Dune::GeometryType(1), corners);
+
+            Scalar result = 0.0;
+            for (auto&& qp : rule)
+            {
+                const auto u = exact(g.global(qp.position()));
+                result += u*qp.weight()*g.integrationElement(qp.position());
+            }
+            result /= aperture_;
+
+            return result;
+        }
+        else
+            return PrimaryVariables(exact(globalPos));
     }
 
     GlobalPosition exactGradient(const GlobalPosition& globalPos) const
@@ -196,17 +233,52 @@ public:
         return gradU;
     }
 
-    Scalar exactFlux(const SubControlVolumeFace& scvf) const
+    Scalar exactFlux(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        const auto pos = scvf.ipGlobal();
-        const auto gradU = exactGradient(pos);
-
         static const Scalar kf = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, FracturePermeability);
-        return -1.0*kf*extrusionFactorAtPos(pos)*(gradU*scvf.unitOuterNormal())*scvf.area();
+
+        if (integrateAnalyticalSolution_)
+        {
+            // integrate the exact flux over the aperture
+            auto upperEdge = scvf.ipGlobal();
+            upperEdge[1] += aperture_/2.0;
+
+            auto lowerEdge = scvf.ipGlobal();
+            lowerEdge[1] -= aperture_/2.0;
+
+            static const int order = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, FracSolQuadOrder);
+            const auto& rule = Dune::QuadratureRules<Scalar, 1>::rule(Dune::GeometryType(1), order);
+
+            std::vector<GlobalPosition> corners(2);
+            corners[0] = lowerEdge;
+            corners[1] = upperEdge;
+            auto g = Dune::AffineGeometry<Scalar, 1, 2>(Dune::GeometryType(1), corners);
+
+            Scalar result = 0.0;
+            for (auto&& qp : rule)
+            {
+                const auto gradU = exactGradient(g.global(qp.position()));
+                const auto flux = -1.0*kf*(gradU*scvf.unitOuterNormal());
+                result += flux*qp.weight()*g.integrationElement(qp.position());
+            }
+            return result;
+        }
+        else
+        {
+            const auto gradU = exactGradient(scvf.ipGlobal());
+            return -1.0*kf*(gradU*scvf.unitOuterNormal());
+        }
     }
 
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(0.0); }
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     */
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolvars,
+                             const SubControlVolumeFace& scvf) const
+    { return exactFlux(element, scvf); }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -238,9 +310,14 @@ public:
     const CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    CouplingManager& couplingManager()
+    { return *couplingManager_; }
+
 private:
     std::string name_;
     Scalar eps_;
+    Scalar aperture_;
+    bool integrateAnalyticalSolution_;
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 } //end namespace
