@@ -53,7 +53,6 @@ class TwoPFractionalFlowUpwindScheme
     };
 
     enum {
-        conti0EqIdx = Indices::conti0EqIdx,
         transportEqIdx = Indices::transportEqIdx
     };
 
@@ -73,32 +72,14 @@ public:
 
             if (eqIdx == transportEqIdx)
             {
-
-                // get the potential fluxes
-                const auto potFluxes = AdvectionType::flux(fluxVars.problem(),
-                                                           fluxVars.element(),
-                                                           fluxVars.fvGeometry(),
-                                                           fluxVars.elemVolVars(),
-                                                           fluxVars.scvFace(),
-                                                           conti0EqIdx,
-                                                           fluxVars.elemFluxVarsCache());
-
-                const Scalar upwindW = std::signbit(potFluxes[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
-
-                const Scalar upwindN = std::signbit(potFluxes[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
-
-                const Scalar flux_t = upwindW*potFluxes[wPhaseIdx] + upwindN*potFluxes[nPhaseIdx];
-
                 // Calculate viscous flux
-                const auto mobW_v = std::signbit(flux_t) ? outsideVolVars.mobility(wPhaseIdx)
+                const auto mobW_v = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
                                                                      : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN_v = std::signbit(flux_t) ? outsideVolVars.mobility(nPhaseIdx)
+                const auto mobN_v = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
                                                                      : insideVolVars.mobility(nPhaseIdx);
                 const auto mobT_v = mobW_v + mobN_v;
 
-                const Scalar viscousFlux = mobW_v/mobT_v*flux_t;
+                const Scalar viscousFlux = mobW_v/mobT_v*flux[viscousFluxIdx];
 
                 // Calculate gravity flux
                 const auto mobW_mobN_G =
@@ -124,30 +105,18 @@ public:
                 auto materialLaws = fluxVars.problem().spatialParams().materialLawParamsAtPos(scv.center());
                 for(int k=0; k <= 10; k++)
                 {
-                    Scalar Sw = S_minus + k/10 * (S_max - S_minus);
+                    Scalar Sw = (S_minus + S_max)/2.0;
                     Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
                     Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
                     Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
 
-                    D_max = std::max(D_max,-(mobW*mobN)/(mobW + mobN)*dPc_dSw);
+                    D_max = -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
                 }
 
                 return viscousFlux
                        + D_max*flux[capillaryFluxIdx]
                        + gravFlux;
             }
-
-            else if (eqIdx == conti0EqIdx)
-            {
-                const Scalar upwindW = std::signbit(flux[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
-
-                const Scalar upwindN = std::signbit(flux[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
-
-                return upwindW*flux[wPhaseIdx] + upwindN*flux[nPhaseIdx];
-            }
-
             else
             {
                 DUNE_THROW(Dune::InvalidStateException, "Unknown equation index!");
@@ -162,36 +131,37 @@ public:
 
             if (eqIdx == transportEqIdx)
             {
-
-                // get the potential fluxes
-                const auto potFluxes = AdvectionType::flux(fluxVars.problem(),
-                                                           fluxVars.element(),
-                                                           fluxVars.fvGeometry(),
-                                                           fluxVars.elemVolVars(),
-                                                           fluxVars.scvFace(),
-                                                           conti0EqIdx,
-                                                           fluxVars.elemFluxVarsCache());
-
-                // Decide which mobilities to use
-                const auto mobW = std::signbit(potFluxes[wPhaseIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+                // viscous Flux
+                const auto mobW_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
                                                                      : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN = std::signbit(potFluxes[nPhaseIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+                const auto mobN_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
                                                                      : insideVolVars.mobility(nPhaseIdx);
-                const auto mobT = mobW + mobN;
+                const auto mobT_V = mobW_V + mobN_V;
 
+                Scalar viscousFlux = mobW_V/mobT_V*flux[viscousFluxIdx];
 
+                // Calculate gravity flux
+                const auto mobW_mobN_G =
+                        std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx) * insideVolVars.mobility(nPhaseIdx)
+                                                           : outsideVolVars.mobility(nPhaseIdx) * insideVolVars.mobility(wPhaseIdx);
+                const auto mobT_G =
+                        std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx) + insideVolVars.mobility(nPhaseIdx)
+                                                           : outsideVolVars.mobility(nPhaseIdx) + insideVolVars.mobility(wPhaseIdx);
 
+                const Scalar gravFlux = mobW_mobN_G/mobT_G * flux[gravityFluxIdx];
 
-                const Scalar upwindW = std::signbit(potFluxes[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
+                // capillary Flux
+                const auto mobW_C = std::signbit(flux[capillaryFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+                                                                     : insideVolVars.mobility(wPhaseIdx);
+                const auto mobN_C = std::signbit(flux[capillaryFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+                                                                     : insideVolVars.mobility(nPhaseIdx);
+                const auto mobT_C = mobW_C + mobN_C;
 
-                const Scalar upwindN = std::signbit(potFluxes[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
+                Scalar capillaryFlux = mobW_C*mobN_C/mobT_C*flux[capillaryFluxIdx];
 
-
-                return mobW/mobT*(upwindW*potFluxes[wPhaseIdx] + upwindN*potFluxes[nPhaseIdx])
-                       + mobW*mobN/mobT*flux[capillaryFluxIdx]
-                       + mobW*mobN/mobT*flux[gravityFluxIdx];
+                return   viscousFlux
+                       + capillaryFlux
+                       + gravFlux;
 
 
 
@@ -201,18 +171,6 @@ public:
                 //        + mobW*mobN/mobT*flux[capillaryFluxIdx]
                 //        + mobW*mobN/mobT*flux[gravityFluxIdx];
             }
-
-            else if (eqIdx == conti0EqIdx)
-            {
-                const Scalar upwindW = std::signbit(flux[wPhaseIdx]) ? upwindTerm(outsideVolVars, wPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, wPhaseIdx);
-
-                const Scalar upwindN = std::signbit(flux[nPhaseIdx]) ? upwindTerm(outsideVolVars, nPhaseIdx)
-                                                                     : upwindTerm(insideVolVars, nPhaseIdx);
-
-                return upwindW*flux[wPhaseIdx] + upwindN*flux[nPhaseIdx];
-            }
-
             else
             {
                 DUNE_THROW(Dune::InvalidStateException, "Unknown equation index!");

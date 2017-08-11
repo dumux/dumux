@@ -33,7 +33,7 @@
 #include "volumevariables.hh"
 #include "darcyslaw.hh"
 #include "upwindscheme.hh"
-#include <dumux/porousmediumflow/2p/implicit/indices.hh>
+#include "indices.hh"
 
 namespace Dumux
 {
@@ -42,11 +42,6 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Property defaults
 //////////////////////////////////////////////////////////////////
-//! Set the default formulation to pWsN
-SET_INT_PROP(TwoPFractionalFlow,
-             Formulation,
-             TwoPFormulation::pnsw);
-
 //! We have a special local resdiual
 SET_TYPE_PROP(TwoPFractionalFlow,
               LocalResidual,
@@ -66,6 +61,15 @@ SET_TYPE_PROP(TwoPFractionalFlow,
 SET_TYPE_PROP(TwoPFractionalFlow,
               UpwindScheme,
               TwoPFractionalFlowUpwindScheme<TypeTag>);
+
+//! The class with all index definitions for the model
+SET_TYPE_PROP(TwoPFractionalFlow,
+              Indices,
+              TwoPFractionalFlowIndices<TypeTag>);
+
+//! Number of equations required by the model
+SET_INT_PROP(TwoPFractionalFlow, NumEq, 1);
+
 
 } // end namespace Properties
 

@@ -54,7 +54,6 @@ class TwoPFractionalFlowLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalR
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // first index for the mass balance
     enum {
-           conti0EqIdx = Indices::conti0EqIdx,
            transportEqIdx = Indices::transportEqIdx,
            wPhaseIdx = Indices::wPhaseIdx,
            nPhaseIdx = Indices::nPhaseIdx
@@ -85,12 +84,6 @@ public:
                                   // * volVars.density(wPhaseIdx)
                                   * volVars.saturation(wPhaseIdx);
 
-        // the total mass balance equation storage term
-        storage[conti0EqIdx] = storage[transportEqIdx]
-                                 + volVars.porosity()
-                                   // * volVars.density(nPhaseIdx)
-                                   * volVars.saturation(nPhaseIdx);
-
         //! The energy storage in the fluid phase with index phaseIdx
         EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, wPhaseIdx);
         EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, nPhaseIdx);
@@ -119,12 +112,8 @@ public:
 
         // this is just a dummy we do upwinding internally in the upwind scheme class
         auto upwindTermTransport =  [](const auto& volVars, const int phaseIdx = 0)
-                                                  { return volVars.mobility(phaseIdx)/**volVars.density(phaseIdx)*/; };
+                                                  { return 0.0; };
         flux[transportEqIdx] = fluxVars.advectiveFlux(transportEqIdx, upwindTermTransport);
-
-        auto upwindTermTotalMassBalance = [](const auto& volVars, const int phaseIdx = 0)
-                                          { return volVars.mobility(phaseIdx)/**volVars.density(phaseIdx)*/; };
-        flux[conti0EqIdx] = fluxVars.advectiveFlux(conti0EqIdx, upwindTermTotalMassBalance);
 
         //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);

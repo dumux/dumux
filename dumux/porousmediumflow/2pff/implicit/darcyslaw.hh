@@ -86,7 +86,6 @@ class FractionalFlowDarcysLaw
     };
 
     enum {
-        conti0EqIdx = Indices::conti0EqIdx,
         transportEqIdx = Indices::transportEqIdx
     };
 
@@ -188,66 +187,6 @@ public:
                 fluxes[gravityFluxIdx] = 0.0;
             }
         }
-
-        else if (eqIdx == conti0EqIdx)
-        {
-            //////////////////////////////////////////////////////////////
-            // we return two separate fluxes: the wetting potential flux and the non-wetting potential flux
-            //////////////////////////////////////////////////////////////
-
-            if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
-            {
-                // do averaging for the density over all neighboring elements
-                const auto rho = [&](int phaseIdx)
-                {
-                    // boundaries
-                    if (scvf.boundary())
-                        return insideVolVars.density(phaseIdx);
-
-                    // inner faces with two neighboring elements
-                    else
-                        return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
-                };
-
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                {
-                    // ask for the gravitational acceleration in the inside neighbor
-                    const auto xInside = insideScv.center();
-                    const auto gInside = problem.gravityAtPos(xInside);
-                    const auto hInside = insideVolVars.pressure(phaseIdx) - rho(phaseIdx)*(gInside*xInside);
-                    const auto hOutside = [&]()
-                    {
-                        // boundaries
-                        if (scvf.boundary())
-                        {
-                            const auto xOutside = scvf.ipGlobal();
-                            const auto gOutside = problem.gravityAtPos(xOutside);
-                            return outsideVolVars.pressure(phaseIdx) - rho(phaseIdx)*(gOutside*xOutside);
-                        }
-
-                        // inner faces with two neighboring elements
-                        else
-                        {
-                            const auto xOutside = fvGeometry.scv(scvf.outsideScvIdx()).center();
-                            const auto gOutside = problem.gravityAtPos(xOutside);
-                            return outsideVolVars.pressure(phaseIdx) - rho(phaseIdx)*(gOutside*xOutside);
-                        }
-                    }();
-
-                    fluxes[phaseIdx] = fluxVarsCache.tij()*(hInside - hOutside);
-                }
-            }
-            else // no gravity
-            {
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                {
-                    const auto pInside = insideVolVars.pressure(phaseIdx);
-                    const auto pOutside = outsideVolVars.pressure(phaseIdx);
-                    fluxes[phaseIdx] = fluxVarsCache.tij()*(pInside - pOutside);
-                }
-            }
-        }
-
         else
         {
             DUNE_THROW(Dune::InvalidStateException, "Unknown equation index!");

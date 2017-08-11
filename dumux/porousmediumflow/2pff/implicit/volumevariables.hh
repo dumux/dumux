@@ -58,14 +58,10 @@ class TwoPFractionalFlowVolumeVariables : public ImplicitVolumeVariables<TypeTag
 
     enum
     {
-        pwsn = Indices::pwsn,
-        pnsw = Indices::pnsw,
-        pressureIdx = Indices::pressureIdx,
         saturationIdx = Indices::saturationIdx,
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        formulation = GET_PROP_VALUE(TypeTag, Formulation)
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -120,26 +116,14 @@ public:
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
-        if (int(formulation) == pwsn) {
-            Scalar sn = priVars[saturationIdx];
-            fluidState.setSaturation(nPhaseIdx, sn);
-            fluidState.setSaturation(wPhaseIdx, 1 - sn);
+        Scalar sw = priVars[saturationIdx];
+        fluidState.setSaturation(wPhaseIdx, sw);
+        fluidState.setSaturation(nPhaseIdx, 1 - sw);
 
-            Scalar pw = priVars[pressureIdx];
-            fluidState.setPressure(wPhaseIdx, pw);
-            fluidState.setPressure(nPhaseIdx,
-                                   pw + MaterialLaw::pc(materialParams, 1 - sn));
-        }
-        else if (int(formulation) == pnsw) {
-            Scalar sw = priVars[saturationIdx];
-            fluidState.setSaturation(wPhaseIdx, sw);
-            fluidState.setSaturation(nPhaseIdx, 1 - sw);
-
-            Scalar pn = priVars[pressureIdx];
-            fluidState.setPressure(nPhaseIdx, pn);
-            fluidState.setPressure(wPhaseIdx,
-                                   pn - MaterialLaw::pc(materialParams, sw));
-        }
+        Scalar pn = 1.0e5;
+        fluidState.setPressure(nPhaseIdx, pn);
+        fluidState.setPressure(wPhaseIdx,
+                               pn - MaterialLaw::pc(materialParams, sw));
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(fluidState);
