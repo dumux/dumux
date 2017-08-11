@@ -583,7 +583,12 @@ private:
 
                     D_[rowIdx][numLocalScvs + otherIdxInDiriFaces] -= posWijk[localDir];
                     if (hasUnknown)
-                        B_[curIdxInFluxFaces][numLocalScvs + otherIdxInDiriFaces] += posWijk[localDir];
+                    {
+                        if (faceType == MpfaFaceTypes::interiorNeumann && !curIsOnBoundary)
+                            B_[curIdxInFluxFaces][numLocalScvs + otherIdxInDiriFaces] += xi*posWijk[localDir];
+                        else
+                            B_[curIdxInFluxFaces][numLocalScvs + otherIdxInDiriFaces] += posWijk[localDir];
+                    }
                 }
                 else if (otherFaceType == MpfaFaceTypes::interiorDirichlet)
                 {
@@ -592,7 +597,12 @@ private:
 
                     D_[rowIdx][numLocalScvs + numDirichletScvfs + otherIdxInInteriorDiriFaces] -= posWijk[localDir];
                     if (hasUnknown)
-                        B_[curIdxInFluxFaces][numLocalScvs + numDirichletScvfs + otherIdxInInteriorDiriFaces] += posWijk[localDir];
+                    {
+                        if (faceType == MpfaFaceTypes::interiorNeumann && !curIsOnBoundary)
+                            B_[curIdxInFluxFaces][numLocalScvs + numDirichletScvfs + otherIdxInInteriorDiriFaces] += xi*posWijk[localDir];
+                        else
+                            B_[curIdxInFluxFaces][numLocalScvs + numDirichletScvfs + otherIdxInInteriorDiriFaces] += posWijk[localDir];
+                    }
                 }
 
                 // add entries related to pressures at the scv centers (dofs)
@@ -658,10 +668,18 @@ private:
                         else if (otherFaceType == MpfaFaceTypes::interiorDirichlet)
                         {
                             const auto otherIdxInInteriorDiriFaces = this->findIndexInVector(interiorDirichletScvfIndexSet(), otherLocalScvfIdx);
-                            B_[curIdxInFluxFaces][numLocalScvs + numDirichletScvfs + otherIdxInInteriorDiriFaces] -= negWijk[localDir];
+                            if (faceType == MpfaFaceTypes::interiorNeumann)
+                                B_[curIdxInFluxFaces][numLocalScvs + numDirichletScvfs + otherIdxInInteriorDiriFaces] += (1-xi)*negWijk[localDir];
+                            else
+                                B_[curIdxInFluxFaces][numLocalScvs + numDirichletScvfs + otherIdxInInteriorDiriFaces] -= negWijk[localDir];
                         }
                         else // Dirichlet face
-                            B_[curIdxInFluxFaces][numLocalScvs + this->findIndexInVector(dirichletScvfIndexSet(), otherLocalScvfIdx)] -= negWijk[localDir];
+                        {
+                            if (faceType == MpfaFaceTypes::interiorNeumann)
+                                B_[curIdxInFluxFaces][numLocalScvs + this->findIndexInVector(dirichletScvfIndexSet(), otherLocalScvfIdx)] += (1-xi)*negWijk[localDir];
+                            else
+                                B_[curIdxInFluxFaces][numLocalScvs + this->findIndexInVector(dirichletScvfIndexSet(), otherLocalScvfIdx)] -= negWijk[localDir];
+                        }
 
                         // add entries to matrix B
                         if (faceType == MpfaFaceTypes::interiorNeumann)
@@ -732,7 +750,6 @@ private:
                     T[rowIdx][posLocalScvIdx] += posWijk[localDir];
                 }
             }
-
         }
     }
 
