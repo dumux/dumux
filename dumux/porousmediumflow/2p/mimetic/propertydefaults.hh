@@ -41,6 +41,7 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
 
 namespace Dumux
@@ -142,24 +143,42 @@ public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
 };
 
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(TwoPNIMimetic, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(TwoPNIMimetic, NiOutputLevel, 0);
+
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
 // set isothermal Model
-// SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
+SET_TYPE_PROP(TwoPNIMimetic, IsothermalModel, TwoPMimeticModel<TypeTag>);
 
 //set isothermal VolumeVariables
-// SET_TYPE_PROP(NavierStokesNI, IsothermalVolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+SET_TYPE_PROP(TwoPNIMimetic, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-// SET_TYPE_PROP(NavierStokesNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(TwoPNIMimetic, IsothermalLocalResidual, ImmiscibleMimeticLocalResidual<TypeTag>);
 
 //set isothermal Indices
-// SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+//! The indices required by the isothermal 2p model
+SET_TYPE_PROP(TwoPNIMimetic,
+              IsothermalIndices,
+              TwoPMimeticIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>);
 
 //set isothermal NumEq
-// SET_INT_PROP(NavierStokesNI, IsothermalNumEq, 1);
+SET_INT_PROP(TwoPNIMimetic, IsothermalNumEqCellCenter, 2);
+
+SET_INT_PROP(TwoPNIMimetic, IsothermalNumEqFace, 2);
 
 // \}
 } // end namespace Properties

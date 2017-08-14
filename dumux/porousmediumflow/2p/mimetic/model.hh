@@ -28,6 +28,7 @@
 #define DUMUX_2P_MIMETIC_MODEL_HH
 
 // #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
+#include <dumux/porousmediumflow/nonisothermal/mimetic/model.hh>
 #include "properties.hh"
 
 namespace Dumux
@@ -65,6 +66,8 @@ class TwoPMimeticModel : public GET_PROP_TYPE(TypeTag, BaseModel)
         wPhaseIdx = Indices::wPhaseIdx
     };
 
+    using NonIsothermalModel = Dumux::MimeticNonIsothermalModel<TypeTag>;
+
 
 public:
 
@@ -86,7 +89,7 @@ public:
         vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
 
-//         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
+        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }
 };
 }

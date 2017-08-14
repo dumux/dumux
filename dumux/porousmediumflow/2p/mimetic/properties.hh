@@ -27,6 +27,7 @@
 #ifndef DUMUX_2P_MIMETIC_PROPERTIES_HH
 #define DUMUX_2P_MIMETIC_PROPERTIES_HH
 
+#include <dumux/porousmediumflow/nonisothermal/mimetic/properties.hh>
 #include <dumux/implicit/staggered/mimetic/properties.hh>
 
 namespace Dumux
@@ -43,6 +44,10 @@ namespace Properties {
 
 //! The type tags for the implicit single-phase problems
 NEW_TYPE_TAG(TwoPMimetic, INHERITS_FROM(MimeticModel));
+
+//! The type tags for the corresponding non-isothermal problems
+NEW_TYPE_TAG(TwoPNIMimetic, INHERITS_FROM(MimeticModel, MimeticNonIsothermal));
+
 
 //////////////////////////////////////////////////////////////////
 // Property tags
@@ -62,6 +67,8 @@ NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extra
 NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatial parameters)
 NEW_PROP_TAG(WettingPhase); //!< The wetting phase for two-phase models
 NEW_PROP_TAG(NonwettingPhase); //!< The non-wetting phase for two-phase models
+NEW_PROP_TAG(IsothermalNumEqCellCenter);
+NEW_PROP_TAG(IsothermalNumEqFace);
 // \}
 }
 
