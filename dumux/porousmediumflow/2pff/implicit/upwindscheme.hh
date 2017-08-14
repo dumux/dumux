@@ -92,7 +92,7 @@ public:
                 const Scalar gravFlux = mobW_mobN_G/mobT_G * flux[gravityFluxIdx];
 
                 // Calculate capillary flux
-                Scalar S_minus = std::min(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
+                Scalar S_min = std::min(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
                 Scalar S_max = std::max(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
 
                 Scalar D_max = 0.0;
@@ -103,14 +103,15 @@ public:
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
                 auto materialLaws = fluxVars.problem().spatialParams().materialLawParamsAtPos(scv.center());
-                for(int k=0; k <= 10; k++)
+                unsigned int numIntervals = 10;
+                for(int k=0; k <= numIntervals; k++)
                 {
-                    Scalar Sw = (S_minus + S_max)/2.0;
+                    Scalar Sw = S_min + (S_max-S_min)*k/numIntervals;
                     Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
                     Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
                     Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
 
-                    D_max = -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
+                    D_max = std::max(D_max,-(mobW*mobN)/(mobW + mobN)*dPc_dSw);
                 }
 
                 return viscousFlux

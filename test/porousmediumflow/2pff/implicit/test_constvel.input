@@ -11,3 +11,4 @@ Cells = 1 100
 Name = constvelff_hybrid # name passed to the output routines
 UseHybridUpwinding = true
 TotalVelocity = 0 -1.0e-5
+EnableGravity = true
