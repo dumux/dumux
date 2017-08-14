@@ -180,7 +180,7 @@ public:
                                                       : fvGeometry.scv(scvf.outsideScvIdx()).center();
                 const auto gOutside = problem.gravityAtPos(xOutside);
 
-                fluxes[gravityFluxIdx] = -fluxVarsCache.tij()*(xInside*gInside - xOutside*gOutside)*(rho(wPhaseIdx)- rho(nPhaseIdx));
+                fluxes[gravityFluxIdx] = fluxVarsCache.tij()*(xInside*gInside - xOutside*gOutside)*(rho(nPhaseIdx) - rho(wPhaseIdx));
             }
             else // no gravity
             {

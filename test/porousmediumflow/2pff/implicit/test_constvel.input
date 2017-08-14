@@ -1,11 +1,11 @@
 [TimeManager]
 DtInitial = 10 # [s]
-TEnd = 5.0e4 # [s]
+TEnd = 1.0368e+9 # [s]
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 100
-Cells = 1 100
+Cells = 1 1000
 
 [Problem]
 Name = constvelff_hybrid # name passed to the output routines
