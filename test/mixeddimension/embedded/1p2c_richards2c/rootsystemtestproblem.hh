@@ -26,6 +26,8 @@
 
 #include <cmath>
 
+#include <dune/grid/common/scsgmapper.hh>
+
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/porousmediumflow/1p2c/implicit/model.hh>

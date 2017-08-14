@@ -150,8 +150,8 @@ int start_(int argc,
     TimeManager timeManager;
     Problem problem(timeManager, bulkGridView, lowDimGridView);
 
-    // locally refine levels deep around the embedded grid
-    int levels = 2;
+    //locally refine levels deep around the embedded grid
+    int levels = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, SoilGrid, LocalRefinement);
     for (int i = 0; i < levels; ++i)
     {
         CCMultiDimensionGlue<TypeTag> glue(problem.bulkProblem(), problem.lowDimProblem());
@@ -159,8 +159,49 @@ int start_(int argc,
 
         // refine all 3D cells intersected
         for (const auto& is : intersections(glue))
+        {
             for (unsigned int outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
-                BulkGridCreator::grid().mark(1, is.outside(outsideIdx));
+            {
+                const auto cutElement = is.outside(outsideIdx);
+
+                // mark the cut element and all it's neighbors
+                BulkGridCreator::grid().mark(1, cutElement);
+                for (const auto& intersection : intersections(bulkGridView, cutElement))
+                    if (intersection.neighbor())
+                        BulkGridCreator::grid().mark(1, intersection.outside());
+            }
+
+        }
+
+        // refine all 3D cells that are where the contamination is
+        for (const auto& element : elements(bulkGridView))
+        {
+            const auto globalPos = element.geometry().center();
+            auto contaminationPos = problem.bulkProblem().bBoxMax()-problem.bulkProblem().bBoxMin();
+            contaminationPos[0] *= 0.25;
+            contaminationPos[1] *= 0.55;
+            contaminationPos[2] *= 0.25;
+            contaminationPos += problem.bulkProblem().bBoxMin();
+
+            static const Scalar extend = 0.15*(problem.bulkProblem().bBoxMax()[0]-problem.bulkProblem().bBoxMin()[0]);
+            if ((globalPos - contaminationPos).infinity_norm() <  extend + 1e-7)
+                BulkGridCreator::grid().mark(1, element);
+        }
+
+        BulkGridCreator::grid().preAdapt();
+        BulkGridCreator::grid().adapt();
+        BulkGridCreator::grid().postAdapt();
+
+        // make sure there is only one level difference
+        for (const auto& element : elements(bulkGridView))
+        {
+            for (const auto& intersection : intersections(bulkGridView, element))
+            {
+                if (intersection.neighbor())
+                    if (intersection.outside().level()-1 > element.level())
+                        BulkGridCreator::grid().mark(1, element);
+            }
+        }
 
         BulkGridCreator::grid().preAdapt();
         BulkGridCreator::grid().adapt();

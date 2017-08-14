@@ -8,21 +8,23 @@ EpisodeTime = 8640 # [s]
 
 [Grid]
 File = ./grids/lupine.dgf
-Refinement = 0
+Refinement = 1
 
 [SoilGrid]
 LowerLeft = -0.05 -0.05 -0.1
 UpperRight = 0.05 0.05 0
-Cells = 15 15 15
+Cells = 10 10 10
 ClosureType = None
+Refinement = 0
+LocalRefinement = 0
 
 [Problem]
 Name = rosi2c
-ContaminantMoleFraction = 1e-6
+ContaminantMoleFraction = 3e-7
 MolarMass = 20e-3 # in kg/mol, molar mass heavy water D2O
 
 [Component]
-LiquidDiffusionCoefficient = 1e-9
+LiquidDiffusionCoefficient = 2.3e-9
 Name = D2O
 
 [SpatialParams]

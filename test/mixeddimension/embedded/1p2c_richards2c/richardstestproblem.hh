@@ -149,7 +149,7 @@ public:
         contaminantMoleFraction_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ContaminantMoleFraction);
 
         // for initial conditions
-        const Scalar sw = 0.2; // start with 20% saturation on top
+        const Scalar sw = 0.3; // start with 30% saturation on top
         pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->bBoxMax()), sw);
     }
 
@@ -338,12 +338,13 @@ public:
         const auto xTracer = [&,this]()
         {
             auto contaminationPos = this->bBoxMax()-this->bBoxMin();
-            contaminationPos[0] *= 0.2;
-            contaminationPos[1] *= 0.5;
-            contaminationPos[2] *= 0.2;
+            contaminationPos[0] *= 0.25;
+            contaminationPos[1] *= 0.55;
+            contaminationPos[2] *= 0.25;
             contaminationPos += this->bBoxMin();
 
-            if ((globalPos - contaminationPos).two_norm() < 0.1*(this->bBoxMax()-this->bBoxMin()).two_norm() + eps_)
+            static const Scalar extend = 0.15*(this->bBoxMax()[0]-this->bBoxMin()[0]);
+            if ((globalPos - contaminationPos).infinity_norm() <  extend + eps_)
                 return contaminantMoleFraction_;
             else
                 return 0.0;

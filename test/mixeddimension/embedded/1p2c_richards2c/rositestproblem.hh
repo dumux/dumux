@@ -32,6 +32,8 @@
 #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanagersimple.hh>
 #include <dumux/mixeddimension/integrationpointsource.hh>
 
+#include "schursolver.hh"
+
 namespace Dumux
 {
 template <class TypeTag>
@@ -66,7 +68,7 @@ SET_TYPE_PROP(RootsystemTestCCProblem, PointSourceHelper, Dumux::IntegrationPoin
 SET_TYPE_PROP(RichardsTestCCProblem, PointSource, Dumux::IntegrationPointSource<TTAG(RichardsTestCCProblem), unsigned int>);
 SET_TYPE_PROP(RichardsTestCCProblem, PointSourceHelper, Dumux::IntegrationPointSourceHelper<TTAG(RichardsTestCCProblem)>);
 
-SET_TYPE_PROP(RosiTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(RosiTestProblem, LinearSolver, BlockILU0BiCGSTABSolver<TypeTag>);
 
 }//end namespace properties
 
