@@ -386,9 +386,6 @@ public:
             }
         }
 
-        // make sure we found as many scvfs as previously estimated
-        assert(scvfIdx == numScvfs);
-
         // Initialize the interaction volume seeds
         globalInteractionVolumeSeeds_.update(problem, interiorOrDomainBoundaryVertices);
     }
@@ -738,9 +735,6 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
-
-        // make sure we found as many scvfs as previously estimated
-        assert(numScvf_ == numScvfs);
 
         // Initialize the interaction volume seeds
         globalInteractionVolumeSeeds_.update(problem, interiorOrDomainBoundaryVertices);
