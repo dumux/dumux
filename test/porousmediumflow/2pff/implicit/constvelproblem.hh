@@ -28,6 +28,7 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/lnapl.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/porousmediumflow/2pff/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
@@ -68,7 +69,7 @@ SET_PROP(ConstVelProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, LNAPL<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Constant<TypeTag, Scalar> > type;
 };
 
 // Linear solver settings
@@ -187,12 +188,13 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos) || onLowerBoundary_(globalPos)) {
-            values.setAllNeumann();
-        }
-        else {
-            values.setAllDirichlet();
-        }
+//        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos) || onLowerBoundary_(globalPos)) {
+//            values.setAllNeumann();
+//        }
+//        else {
+//            values.setAllDirichlet();
+//        }
+        values.setAllNeumann();
         return values;
     }
 
@@ -259,8 +261,9 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
-        values[saturationIdx] = 0.1;
+        PrimaryVariables values(0);
+        if(globalPos[1] > 65.0)
+            values[saturationIdx] = 0.9;
 
         return values;
     }
