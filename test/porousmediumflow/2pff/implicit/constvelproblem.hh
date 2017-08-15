@@ -261,7 +261,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(1.0e-8);
+        PrimaryVariables values(0.0);
         if(globalPos[1] > 65.0)
             values[saturationIdx] = 1.0;
 

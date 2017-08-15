@@ -72,14 +72,14 @@ public:
 
             if (eqIdx == transportEqIdx)
             {
-                // Calculate viscous flux
-                const auto mobW_v = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                     : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN_v = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                     : insideVolVars.mobility(nPhaseIdx);
-                const auto mobT_v = mobW_v + mobN_v;
+                // viscous Flux
+                const auto mobW_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+                                                                       : insideVolVars.mobility(wPhaseIdx);
+                const auto mobN_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+                                                                       : insideVolVars.mobility(nPhaseIdx);
+                const auto mobT_V = std::max(mobW_V + mobN_V, 1.0e-30);
 
-                const Scalar viscousFlux = mobW_v/mobT_v*flux[viscousFluxIdx];
+                const Scalar viscousFlux = mobW_V/mobT_V*flux[viscousFluxIdx];
 
                 // Calculate gravity flux
                 Scalar gravFlux = 0.0;
@@ -98,23 +98,23 @@ public:
                             return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
                     };
 
-                    if(rho(nPhaseIdx) - rho(wPhaseIdx) > 0)
+                    if(rho(nPhaseIdx) - rho(wPhaseIdx) < 0)
                     {
                         const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                             : insideVolVars.mobility(wPhaseIdx);
-                        const auto mobN_G = std::signbit(-flux[gravityFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                             : insideVolVars.mobility(nPhaseIdx);
-                        const auto mobT_G = mobW_G + mobN_G;
+                                                                               : insideVolVars.mobility(wPhaseIdx);
+                        const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(nPhaseIdx)
+                                                                               : outsideVolVars.mobility(nPhaseIdx);
+                        const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
 
                         gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
                     }
                     else
                     {
-                        const auto mobW_G = std::signbit(-flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                             : insideVolVars.mobility(wPhaseIdx);
+                        const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(wPhaseIdx)
+                                                                               : outsideVolVars.mobility(wPhaseIdx);
                         const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                             : insideVolVars.mobility(nPhaseIdx);
-                        const auto mobT_G = mobW_G + mobN_G;
+                                                                               : insideVolVars.mobility(nPhaseIdx);
+                        const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
 
                         gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
                     }
@@ -142,7 +142,6 @@ public:
                     Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
 
                     D_max = std::max(D_max, -(mobW*mobN)/(mobW + mobN)*dPc_dSw);
-
                 }
 
                 return viscousFlux
@@ -165,35 +164,65 @@ public:
             {
                 // viscous Flux
                 const auto mobW_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                     : insideVolVars.mobility(wPhaseIdx);
+                                                                       : insideVolVars.mobility(wPhaseIdx);
                 const auto mobN_V = std::signbit(flux[viscousFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                     : insideVolVars.mobility(nPhaseIdx);
-                const auto mobT_V = mobW_V + mobN_V;
+                                                                       : insideVolVars.mobility(nPhaseIdx);
+                const auto mobT_V = std::max(mobW_V + mobN_V, 1.0e-30);
 
-                Scalar viscousFlux = mobW_V/mobT_V*flux[viscousFluxIdx];
+                const Scalar viscousFlux = mobW_V/mobT_V*flux[viscousFluxIdx];
 
                 // Calculate gravity flux
-                const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                     : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN_G = std::signbit(-flux[gravityFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                     : insideVolVars.mobility(nPhaseIdx);
-                const auto mobT_G = mobW_G + mobN_G;
+                Scalar gravFlux = 0.0;
+                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+                {
+                    const auto& scvf = fluxVars.scvFace();
+                    // do averaging for the density over all neighboring elements
+                    const auto rho = [&](int phaseIdx)
+                    {
+                        // boundaries
+                        if (scvf.boundary())
+                            return insideVolVars.density(phaseIdx);
 
-                const Scalar gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
+                        // inner faces with two neighboring elements
+                        else
+                            return (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
+                    };
 
-                // capillary Flux
+                    if(rho(nPhaseIdx) - rho(wPhaseIdx) < 0)
+                    {
+                        const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
+                                                                               : insideVolVars.mobility(wPhaseIdx);
+                        const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(nPhaseIdx)
+                                                                               : outsideVolVars.mobility(nPhaseIdx);
+                        const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
+
+                        gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
+                    }
+                    else
+                    {
+                        const auto mobW_G = std::signbit(flux[gravityFluxIdx]) ? insideVolVars.mobility(wPhaseIdx)
+                                                                               : outsideVolVars.mobility(wPhaseIdx);
+                        const auto mobN_G = std::signbit(flux[gravityFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
+                                                                               : insideVolVars.mobility(nPhaseIdx);
+                        const auto mobT_G = std::max(mobW_G + mobN_G, 1.0e-30);
+
+                        gravFlux = mobW_G*mobN_G/mobT_G * flux[gravityFluxIdx];
+                    }
+
+                }
+
+                // capillary flux
                 const auto mobW_C = std::signbit(flux[capillaryFluxIdx]) ? outsideVolVars.mobility(wPhaseIdx)
-                                                                     : insideVolVars.mobility(wPhaseIdx);
-                const auto mobN_C = std::signbit(-flux[capillaryFluxIdx]) ? outsideVolVars.mobility(nPhaseIdx)
-                                                                     : insideVolVars.mobility(nPhaseIdx);
-                const auto mobT_C = mobW_C + mobN_C;
+                                                                         : insideVolVars.mobility(wPhaseIdx);
+                const auto mobN_C = std::signbit(flux[capillaryFluxIdx]) ? insideVolVars.mobility(nPhaseIdx)
+                                                                         : outsideVolVars.mobility(nPhaseIdx);
+                const auto mobT_C = std::max(mobW_C + mobN_C, 1.0e-30);
 
-                Scalar capillaryFlux = mobW_C*mobN_C/mobT_C*flux[capillaryFluxIdx];
+                const Scalar capillaryFlux = mobW_C*mobN_C/mobT_C*flux[capillaryFluxIdx];
 
-                return   viscousFlux
-                       + capillaryFlux
-                       + gravFlux;
-
+                return    viscousFlux
+                        + capillaryFlux
+                        + gravFlux;
 
 
                 // for PPU the flux[capillaryFluxIdx] should contain tij*(pc_i - pc_j)
