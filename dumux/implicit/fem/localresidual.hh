@@ -331,7 +331,7 @@ protected:
                 for (unsigned int i = 0; i < numLocalDofs; ++i)
                 {
                     residual_[i][eqIdx] += (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight;
-                    residual_[i][eqIdx] += (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
+                    residual_[i][eqIdx] -= (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
                 }
             }
         }
@@ -366,7 +366,7 @@ protected:
 
             // only treat faces with neumann boundary conditions
             auto bcTypes = problem().boundaryTypes(element, is);
-            assert(!bcTypes.hasOutflow() && "Outflow BCs cannot be set for FEM models");
+            assert(!bcTypes.hasOutflow() && "Outflow BCs are not implemented yet for FEM models");
             if (!bcTypes.hasNeumann())
                 continue;
 
@@ -399,7 +399,7 @@ protected:
                 for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                     for (unsigned int i = 0; i < numLocalDofs; ++i)
                         if (bcTypes.isNeumann(eqIdx))
-                            residual_[i][eqIdx] -= ipData.shapeValues(i)*qWeight*neumannFlux[eqIdx];
+                            residual_[i][eqIdx] += ipData.shapeValues(i)*qWeight*neumannFlux[eqIdx];
             }
         }
     }
