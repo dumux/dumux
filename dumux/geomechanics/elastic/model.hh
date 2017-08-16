@@ -88,6 +88,9 @@ public:
         auto& ux = *writer.allocateManagedBuffer(numVert);
         auto& uy = *writer.allocateManagedBuffer(numVert);
         auto& uz = *writer.allocateManagedBuffer(numVert);
+        auto& uxExact = *writer.allocateManagedBuffer(numVert);
+        auto& uyExact = *writer.allocateManagedBuffer(numVert);
+        auto& uzExact = *writer.allocateManagedBuffer(numVert);
         auto& sigmax = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
         auto& sigmay = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
         auto& sigmaz = *writer.template allocateManagedBuffer<Scalar, dim>(numElements);
@@ -130,14 +133,22 @@ public:
                 if (fe.localCoefficients().localKey(i).codim() != dim)
                     continue;
 
-                auto dofIdxGlobal = localIndexSet.index(i);
+                const auto dofIdxGlobal = localIndexSet.index(i);
 
-                auto dofSol = sol[dofIdxGlobal];
+                const auto dofSol = sol[dofIdxGlobal];
                 ux[dofIdxGlobal] = dofSol[Indices::u(0)];
                 if (dim >= 2)
                     uy[dofIdxGlobal] = dofSol[Indices::u(1)];
                 if (dim >= 3)
                     uz[dofIdxGlobal] = dofSol[Indices::u(2)];
+
+                const auto vertexPos = element.template subEntity</*codim=*/dim>(fe.localCoefficients().localKey(i).subEntity()).geometry().center();
+                const auto exactSolAtPos = this->problem_().exactSolution(vertexPos);
+                uxExact[dofIdxGlobal] = exactSolAtPos[Indices::u(0)];
+                if (dim >= 2)
+                    uyExact[dofIdxGlobal] = exactSolAtPos[Indices::u(1)];
+                if (dim >= 3)
+                    uzExact[dofIdxGlobal] = exactSolAtPos[Indices::u(2)];
 
                 elemSol[i] = std::move(dofSol);
             }
@@ -167,6 +178,11 @@ public:
             writer.attachDofData(uy, "uy", true);
         if (dim == 3)
             writer.attachDofData(uz, "uz", true);
+        writer.attachDofData(uxExact, "ux_exact", true);
+        if (dim >= 2)
+            writer.attachDofData(uyExact, "uy_exact", true);
+        if (dim == 3)
+            writer.attachDofData(uzExact, "uz_exact", true);
         writer.attachCellData(sigmax, "stress X", dim);
         if (dim >= 2)
         writer.attachCellData(sigmay, "stress Y", dim);
