@@ -208,6 +208,20 @@ public:
     }
 
     /*!
+     * \brief Calculate stabilization terms
+     *
+     * \param element The finite element
+     * \param ipData Data on shape values and gradients at the integration point
+     * \param secVars Secondary variables and parameters of the problem
+     *
+     */
+    PrimaryVariables computeStabilizationTerms(const Element& element,
+                                               const IpData& ipData,
+                                               const SecondaryVariables& secVars,
+                                               const ElementSolutionVector& elemSol) const
+    { return PrimaryVariables(0.0); }
+
+    /*!
      * \brief Return the problem we are solving. Only call this after init()!
      */
     const Problem& problem() const
@@ -315,6 +329,9 @@ protected:
             // evaluate flux term contribution
             FluxTermType flux = asImp_().computeFlux(element, ipData, curSecVars, curElemSol);
 
+            // evaluate stabilization term contributions
+            PrimaryVariables stabTerms = asImp_().computeStabilizationTerms(element, ipData, curSecVars, curElemSol);
+
             // scale terms by extrusion factors
             storage *= curSecVars.extrusionFactor();
             prevStorage *= prevSecVars.extrusionFactor();
@@ -333,6 +350,7 @@ protected:
                 {
                     residual_[i][eqIdx] += (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight;
                     residual_[i][eqIdx] -= (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
+                    residual_[i][eqIdx] += stabTerms[eqIdx];
                 }
             }
         }
