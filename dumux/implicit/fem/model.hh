@@ -569,6 +569,19 @@ public:
     {}
 
     /*!
+     * \brief Mapper for the entities where degrees of freedoms are
+     *        defined to indices.
+     *
+     * For the finite element method of order one, this is the vertex mapper
+     * TODO AMG needs this method to be present, what do we do if order is > 1
+     */
+    template <class T = TypeTag>
+    const typename std::enable_if<GET_PROP_VALUE(T, FemBasisOrder) == 1, VertexMapper>::type &dofMapper() const
+    {
+        return problem_().vertexMapper();
+    }
+
+    /*!
      * \brief Reference to the grid view of the spatial domain.
      */
     const GridView &gridView() const
