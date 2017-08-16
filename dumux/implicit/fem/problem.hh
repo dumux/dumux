@@ -142,6 +142,8 @@ public:
      *
      * \param element The finite element
      * \param intersection The intersection which is to be checked
+     *
+     * TODO shouldn't we go over all the dofs on the intersection and check the types?
      */
     BoundaryTypes boundaryTypes(const Element& element,
                                 const Intersection& intersection) const
