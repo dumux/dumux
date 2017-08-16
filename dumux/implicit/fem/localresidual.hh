@@ -193,7 +193,8 @@ public:
      */
     PrimaryVariables computeSource(const Element& element,
                                    const IpData& ipData,
-                                   const SecondaryVariables& secVars) const
+                                   const SecondaryVariables& secVars,
+                                   const ElementSolutionVector& elemSol) const
     {
         PrimaryVariables source(0);
 
@@ -241,9 +242,9 @@ public:
 protected:
 
     PrimaryVariables evalStorage_(const Element& element,
-                                 const LocalView& localView,
-                                 const LocalIndexSet& localIndexSet,
-                                 const ElementSolutionVector& curElemSol)
+                                  const LocalView& localView,
+                                  const LocalIndexSet& localIndexSet,
+                                  const ElementSolutionVector& curElemSol)
     {
         const auto& localBasis = localView().tree().finiteElement().localBasis();
         auto geometry = element.geometry();

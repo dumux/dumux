@@ -112,7 +112,7 @@ public:
     {
         PrimaryVariables source(0.0);
 
-        source += ParentType::computeSource(element, ipData, secVars);
+        source += ParentType::computeSource(element, ipData, secVars, elemSol);
 
         // gravity term of the solid matrix in the momentum balance
         GlobalPosition gravityTerm(0.0);
