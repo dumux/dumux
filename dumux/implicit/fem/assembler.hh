@@ -83,8 +83,6 @@ private:
         auto localView = feBasis().localView();
         auto localIndexSet = feBasis().localIndexSet();
 
-        // keep track of dofs that have been handled alread
-        std::vector<bool> dofTracker(feBasis().size(), false);
         for (const auto& element : elements(this->gridView_()))
         {
             auto eg = element.geometry();
@@ -117,11 +115,7 @@ private:
                 // handle Dirichlet boundaries
                 for (unsigned int i = 0; i < numLocalDofs; i++)
                 {
-                    auto dofIdxGlobal = localIndexSet.index(i);
-
-                    // skip the rest if we handled the dof already
-                    if (dofTracker[dofIdxGlobal])
-                        continue;
+                    const auto dofIdxGlobal = localIndexSet.index(i);
 
                     const auto& localKey = fe.localCoefficients().localKey(i);
                     auto subEntity = localKey.subEntity();
@@ -141,7 +135,7 @@ private:
                             auto globalPos = eg.global(refElement.position(subEntity, codim));
 
                             // value of dirichlet BC
-                            auto diriValues = this->problem_().dirichlet(element, is, globalPos);
+                            const auto diriValues = this->problem_().dirichlet(element, is, globalPos);
 
                             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                             {
@@ -168,9 +162,6 @@ private:
                             break;
                         }
                     }
-
-                    // keep track of finished dofs
-                    dofTracker[dofIdxGlobal] = true;
                 }
             }
         }
