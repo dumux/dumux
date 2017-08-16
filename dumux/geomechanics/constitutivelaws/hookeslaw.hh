@@ -69,7 +69,7 @@ public:
         // evaluate displacement gradient
         StressTensor gradU(0.0);
         for (int dir = 0; dir < dim; ++dir)
-            for (int i = 0; i < elemSol.size(); ++i)
+            for (unsigned int i = 0; i < elemSol.size(); ++i)
                 gradU[dir].axpy(elemSol[i][Indices::u(dir)], ipData.shapeGradients(i));
 
         // evaluate strain tensor

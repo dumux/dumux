@@ -148,7 +148,7 @@ public:
             auto numLocalDofs = localView.tree().finiteElement().localBasis().size();
             ElementSolution curElemSol(numLocalDofs);
             ElementSolution prevElemSol(numLocalDofs);
-            for (int i = 0; i < numLocalDofs; i++)
+            for (unsigned int i = 0; i < numLocalDofs; i++)
             {
                 auto dofIdxGlobal = localIndexSet.index(i);
                 curElemSol[i] = curSol[dofIdxGlobal];

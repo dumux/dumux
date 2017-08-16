@@ -326,9 +326,9 @@ protected:
 
             // add entries to residual vector
             Scalar qWeight = it->weight() * geometry.integrationElement(it->position());
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
-                for (int i = 0; i < numLocalDofs; ++i)
+                for (unsigned int i = 0; i < numLocalDofs; ++i)
                 {
                     residual_[i][eqIdx] += (storage[eqIdx] - source[eqIdx])*ipData.shapeValues(i)*qWeight;
                     residual_[i][eqIdx] += (flux[eqIdx]*ipData.shapeGradients(i))*qWeight;
@@ -396,8 +396,8 @@ protected:
                 qWeight *= secVars.extrusionFactor();
 
                 // add entries to residual vector
-                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    for (int i = 0; i < numLocalDofs; ++i)
+                for (unsigned int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    for (unsigned int i = 0; i < numLocalDofs; ++i)
                         if (bcTypes.isNeumann(eqIdx))
                             residual_[i][eqIdx] -= ipData.shapeValues(i)*qWeight*neumannFlux[eqIdx];
             }

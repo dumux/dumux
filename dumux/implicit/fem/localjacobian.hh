@@ -114,7 +114,7 @@ public:
         auto numLocalDofs = localView.tree().finiteElement().localBasis().size();
         ElementSolutionVector curElemSol(numLocalDofs);
         ElementSolutionVector prevElemSol(numLocalDofs);
-        for (int i = 0; i < numLocalDofs; i++)
+        for (unsigned int i = 0; i < numLocalDofs; i++)
         {
             auto dofIdxGlobal = localIndexSet.index(i);
             curElemSol[i] = curSol[dofIdxGlobal];
@@ -129,7 +129,7 @@ public:
         // this->model_().updatePVWeights(fvGeometry);
 
         // calculation of the derivatives
-        for (int i = 0; i < numLocalDofs; ++i)
+        for (unsigned int i = 0; i < numLocalDofs; ++i)
         {
             // store actual pri vars
             auto dofIdxGlobal = localIndexSet.index(i);
@@ -269,7 +269,7 @@ protected:
         partialDeriv /= delta;
 
         // update the global stiffness matrix with the current partial derivatives
-        for (int i = 0; i < numLocalDofs; ++i)
+        for (unsigned int i = 0; i < numLocalDofs; ++i)
             this->updateGlobalJacobian_(matrix, localIndexSet.index(i), dofIdxGlobal, pvIdx, partialDeriv[i]);
     }
 

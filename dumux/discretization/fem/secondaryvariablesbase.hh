@@ -63,7 +63,7 @@ public:
     {
         // interpolate primary variables
         priVars_ = 0.0;
-        for (int i = 0; i < elemSol.size(); ++i)
+        for (unsigned int i = 0; i < elemSol.size(); ++i)
         {
             PrimaryVariables tmp(elemSol[i]);
             tmp *= ipData.shapeValues()[i];

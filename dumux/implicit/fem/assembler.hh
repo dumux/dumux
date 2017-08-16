@@ -115,7 +115,7 @@ private:
                 const auto& refElement = ReferenceElements::general(eg.type());
 
                 // handle Dirichlet boundaries
-                for (int i = 0; i < numLocalDofs; i++)
+                for (unsigned int i = 0; i < numLocalDofs; i++)
                 {
                     auto dofIdxGlobal = localIndexSet.index(i);
 

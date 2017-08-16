@@ -124,7 +124,7 @@ public:
             // TODO HOW TO INCLUDE SUBSAMPLING
             const auto numLocalDofs = fe.localBasis().size();
             ElementSolution elemSol(numLocalDofs);
-            for (int i = 0; i < numLocalDofs; ++i)
+            for (unsigned int i = 0; i < numLocalDofs; ++i)
             {
                 // only proceed for vertex dofs
                 if (fe.localCoefficients().localKey(i).codim() != dim)
