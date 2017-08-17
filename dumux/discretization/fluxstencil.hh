@@ -59,8 +59,7 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::Box>
 
 public:
     // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
+    static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {
@@ -81,8 +80,7 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using Stencil = std::vector<IndexType>;
 
 public:
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
+    static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {
@@ -113,8 +111,7 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Stencil = std::vector<IndexType>;
 
 public:
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
+    static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {

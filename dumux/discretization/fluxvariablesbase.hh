@@ -107,14 +107,13 @@ public:
         return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);
     }
 
-    static Stencil computeStencil(const Problem& problem,
-                                  const Element& element,
+    static Stencil computeStencil(const Element& element,
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
     {
         //! Give the upwind scheme access to the cached variables
         //! Forward to the discretization specific implementation
-        return FluxStencil::stencil(problem, element, fvGeometry, scvf);
+        return FluxStencil::stencil(element, fvGeometry, scvf);
     }
 
 private:
