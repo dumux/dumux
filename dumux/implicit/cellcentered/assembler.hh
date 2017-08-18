@@ -28,6 +28,8 @@
 
 #include <dumux/implicit/properties.hh>
 
+#include "localassembler.hh"
+
 namespace Dumux {
 
 //! TPFA and MPFA use the same assembler class
@@ -49,7 +51,7 @@ class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCMpfa> : 
  *        for fully implicit models and cell-centered discretization schemes.
  */
 template<class TypeTag>
-class CCImplicitAssembler<TypeTag, DiscretizationMethods::CCTpfa>
+class CCImplicitAssembler
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -59,59 +61,42 @@ class CCImplicitAssembler<TypeTag, DiscretizationMethods::CCTpfa>
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-
-    //! the classes containing the actual assemble routines
-    //! they need to be friend as well
-    using NewtonAssembler = CCImplicitNewtonAssembler<TypeTag>;
-    friend NewtonAssembler;
+    using LocalAssembler = typename GET_PROP_TYPE(TypeTag, LocalAssembler);
 
 public:
+    using ResidualType = SolutionVector;
+
     //! The constructor
     CCImplicitAssembler(std::shared_ptr<const Problem> problem,
                         std::shared_ptr<const GridFvGeometry> gridFvGeometry,
-                        std::shared_ptr<GridVariables> gridVariables,
-                        std::shared_ptr<JacobianMatrix> matrix,
-                        std::shared_ptr<SolutionVector> rhs,
-                        const bool useAssemblyMap = true)
+                        std::shared_ptr<const SolutionVector> prevSol,
+                        std::shared_ptr<const SolutionVector> curSol,
+                        std::shared_ptr<GridVariables> gridVariables)
     : problem_(problem)
     , gridFvGeometry_(gridFvGeometry)
+    , prevSol_(prevSol)
+    , curSol_(curSol)
     , gridVariables_(gridVariables)
-    , matrix_(matrix)
-    , rhs_(rhs)
     {
-        // set the BCRS matrix's build mode
-        A.setBuildMode(JacobianMatrix::random);
-
-        // export sparsity pattern to matrix
-        createMatrix();
-
-        // maybe build assembly map
-        if (useAssemblyMap)
-            assemblyMap_.init(globalFvGeometry);
+        // build assembly map
+        assemblyMap_.init(globalFvGeometry);
     }
 
     /*!
-     * \brief Assemble the global Jacobian of the residual
+     * \brief Assembles the global Jacobian of the residual
      *        and the residual for the current solution.
-     *
-     * This method called by Newton's method. In the Newton's method,
-     * the right hand side is the residual at the last time step. Also,
-     * the incorporation of the BCs is different than for linear problems.
      */
-    void assembleNewton()
+    void assembleJacobianAndResidual()
     {
-        // instantiate the class containing the assembly algorithm
-        NewtonAssembler newtonAssembler;
+        resetSystem_();
 
         bool succeeded;
         // try assembling the global linear system
         try
         {
-            // reset all entries to zero
-            resetSystem_();
-
-            // let the actual assembler set up the global linear system
-            newtonAssembler.assemble(*this);
+            // let the local assembler add the element contributions
+            for (const auto element : elements(gridView()))
+                LocalAssembler::assemble(*this, residual(), element);
 
             // if we get here, everything worked well
             succeeded = true;
@@ -133,18 +118,68 @@ public:
     }
 
     /*!
-     * \brief Set sizes and sparsity pattern of the matrix.
-     *
-     * This method has to be called during initialization and
-     * whenever the grid has been changed.
+     * \brief Assembles only the global Jacobian of the residual.
      */
-    void createMatrix()
+    void assembleJacobian()
     {
-        const auto numDofs = numDofs();
+        resetMatrix_();
 
-        // resize the matrix and the rhs
-        matrix_().setSize(numDofs, numDofs);
-        rhs_().resize(numDofs);
+        bool succeeded;
+        // try assembling the global linear system
+        try
+        {
+            // let the local assembler add the element contributions
+            for (const auto element : elements(gridView()))
+                LocalAssembler::assemble(*this, element);
+
+            // if we get here, everything worked well
+            succeeded = true;
+            if (gridView_().comm().size() > 1)
+                succeeded = gridView_().comm().min(succeeded);
+        }
+        // throw exception if a problem ocurred
+        catch (NumericalProblem &e)
+        {
+            std::cout << "rank " << problem_().gridView().comm().rank()
+                      << " caught an exception while assembling:" << e.what()
+                      << "\n";
+            succeeded = false;
+            if (gridView_().comm().size() > 1)
+                succeeded = gridView_().comm().min(succeeded);
+        }
+        if (!succeeded)
+            DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
+    }
+
+    /*!
+     * \brief Tells the assembler which matrix and right hand side vector to use.
+     *        This also resizes the containers to the required sizes and sets the
+     *        sparsity pattern of the matrix.
+     */
+    void setLinearSystem(std::shared_ptr<JacobianMatrix> matrix,
+                         std::shared_ptr<SolutionVector> residual)
+    {
+        matrix_ = matrix;
+        residual_ = residual;
+
+        // check and/or set the BCRS matrix's build mode
+        if (matrix().buildMode() == JacobianMatrix::BuildMode::unknown)
+            matrix().setBuildMode(JacobianMatrix::random);
+        else if (matrix().buildMode() != JacobianMatrix::BuildMode::random)
+            DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
+
+        updateLinearSystem();
+    }
+
+    /*!
+     * \brief Resizes the matrix and right hand side and sets the matrix' sparsity pattern.
+     */
+    void updateLinearSystem()
+    {
+        // resize the matrix and the residual
+        const auto numDofs = numDofs();
+        matrix().setSize(numDofs, numDofs);
+        residual().resize(numDofs);
 
         // get occupation pattern of the matrix
         Dune::MatrixIndexSet occupationPattern;
@@ -153,27 +188,92 @@ public:
         for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
         {
             occupationPattern.add(globalI, globalI);
-            for (const auto& dataJ : assemblyMap_()[globalI])
+            for (const auto& dataJ : assemblyMap()[globalI])
                 occupationPattern.add(dataJ.globalJ, globalI);
 
             // reserve index for additional user defined DOF dependencies
-            const auto& additionalDofDependencies = problem_().getAdditionalDofDependencies(globalI);
+            const auto& additionalDofDependencies = problem().getAdditionalDofDependencies(globalI);
             for (auto globalJ : additionalDofDependencies)
                 occupationPattern.add(globalI, globalJ);
         }
 
         // export pattern to matrix
-        occupationPattern.exportIdx(matrix_());
-
-        // initialize the global system with zeros
-        // TODO: Do we need to do this here?
-        //       At the beginning of the assembly it is done anyway!
-        resetSystem_();
+        occupationPattern.exportIdx(matrix());
     }
+
+    //! compute the residuals
+    void assembleResidual(ResidualType& r)
+    {
+        r = 0.0;
+        for (const auto& element : elements(gridView()))
+        {
+            if (element.partitionType != Dune::GhostEntity)
+            {
+                const auto eIdx = gridFvGeometry().elementMapper().index(element);
+                r[eIdx] += localResidual().eval(element,
+                                                problem(),
+                                                gridFvGeometry(),
+                                                gridVariables(),
+                                                curSol(),
+                                                prevSol());
+            }
+        }
+    }
+
+    //! computes the global residual
+    Scalar globalResidual()
+    {
+        ResidualType residual;
+        assembleResidual(residual);
+
+        // calculate the square norm of the residual
+        Scalar result2 = residual.two_norm2();
+        if (gridView().comm().size() > 1)
+            result2 = gridView_().comm().sum(result2);
+
+        using std::sqrt;
+        return sqrt(result2);
+    }
+
+    const Problem& problem() const
+    { return *problem; }
+
+    const GridFvGeometry& gridFvGeometry() const
+    { return *gridFvGeometry_; }
+
+    const GridView& gridView() const
+    { return gridFvGeometry_().gridView(); }
+
+    const SolutionVector& prevSol() const
+    { return *prevSol_; }
+
+    const SolutionVector& curSol() const
+    { return *curSol_; }
+
+    GridVariables& gridVariables()
+    { return *gridVariables_; }
+
+    JacobianMatrix& matrix()
+    {
+        assert(matrix_ && "The matrix has not been set yet!");
+        return *matrix_;
+    }
+
+    SolutionVector& residual()
+    {
+        assert(residual_ && "The right hand side has been set yet!");
+        return residual_;
+    }
+
+    const AssemblyMap& assemblyMap() const
+    { return assemblyMap_; }
+
+    LocalResidual& localResidual()
+    { return localResidual_; }
 
     //! cell-centered schemes have one dof per cell
     std::size_t numDofs() const
-    { return gridView_().size(0); }
+    { return gridView().size(0); }
 
 private:
     // reset the global linear system of equations.
@@ -181,56 +281,22 @@ private:
     // that the jacobian matrix must only be erased partially!
     void resetSystem_()
     {
-        rhs_() = 0.0;
-        matrix_() = 0;
+        residual_() = 0.0;
+        resetMatrix_();
     }
-
-    /*!
-     * \brief Computes the epsilon used for numeric differentiation
-     *        for a given value of a primary variable.
-     *
-     * \param priVar The value of the primary variable
-     */
-    Scalar numericEpsilon(const Scalar priVar) const
+    void resetMatrix_()
     {
-        // define the base epsilon as the geometric mean of 1 and the
-        // resolution of the scalar type. E.g. for standard 64 bit
-        // floating point values, the resolution is about 10^-16 and
-        // the base epsilon is thus approximately 10^-8.
-        /*
-        static const Scalar baseEps
-            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
-        */
-        static const Scalar baseEps = 1e-10;
-        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
-        // the epsilon value used for the numeric differentiation is
-        // now scaled by the absolute value of the primary variable...
-        return baseEps*(std::abs(priVar) + 1.0);
+        matrix_() = 0.0;
     }
 
-    const Problem& problem_() const
-    { return *problem; }
+     /*!
+     * \brief Assemble the global Jacobian of the residual
+     *        and the residual for the current solution.
+     */
+    void assemble_()
+    {
 
-    const GridFvGeometry& gridFvGeometry_() const
-    { return *gridFvGeometry_; }
-
-    const GridView& gridView_() const
-    { return gridFvGeometry_().gridView(); }
-
-    GridVariables& gridVariables_()
-    { return *gridVariables_; }
-
-    JacobianMatrix& matrix_()
-    { return *matrix_; }
-
-    SolutionVector& rhs_()
-    { return rhs_; }
-
-    AssemblyMap& assemblyMap_()
-    { return assemblyMap_; }
-
-    LocalResidual& localResidual_()
-    { return localResidual_; }
+    }
 
     // pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
@@ -238,12 +304,16 @@ private:
     // the finite volume geometry of the grid
     std::shared_ptr<const GridFvGeometry> gridFvGeometry_;
 
+    // previous and current solution to the problem
+    std::shared_ptr<const SolutionVector> prevSol_;
+    std::shared_ptr<const SolutionVector> curSol_;
+
     // the variables container for the grid
     std::shared_ptr<GridVariables> gridVariables_;
 
-    // shared pointers to the jacobian matrix and right hand side
+    // shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> matrix_;
-    std::shared_ptr<SolutionVector> rhs_;
+    std::shared_ptr<SolutionVector> residual_;
 
     // assembly map needed for derivative calculations
     AssemblyMap assemblyMap_;
