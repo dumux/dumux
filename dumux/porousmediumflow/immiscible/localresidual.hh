@@ -36,10 +36,9 @@ namespace Dumux
 template<class TypeTag>
 class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -69,7 +68,8 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    PrimaryVariables computeStorage(const SubControlVolume& scv,
+    PrimaryVariables computeStorage(const Problem& problem,
+                                    const SubControlVolume& scv,
                                     const VolumeVariables& volVars) const
     {
         // partial time derivative of the phase mass
@@ -96,14 +96,15 @@ public:
      * \brief Evaluate the mass flux over a face of a sub control volume
      * \param scvf The sub control volume face to compute the flux on
      */
-    PrimaryVariables computeFlux(const Element& element,
+    PrimaryVariables computeFlux(const Problem& problem,
+                                 const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
                                  const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         PrimaryVariables flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -124,15 +125,8 @@ public:
 
         return flux;
     }
-
-private:
-    Implementation *asImp_()
-    { return static_cast<Implementation *> (this); }
-
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *> (this); }
 };
 
-}
+} // end namespace Dumux
 
 #endif

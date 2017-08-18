@@ -57,7 +57,7 @@ SET_TYPE_PROP(CCModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper)
 SET_TYPE_PROP(CCModel, LocalJacobian, CCLocalJacobian<TypeTag>);
 
 //! Assembler for the global jacobian matrix
-SET_TYPE_PROP(CCModel, JacobianAssembler, CCAssembler<TypeTag>);
+// SET_TYPE_PROP(CCModel, JacobianAssembler, CCAssembler<TypeTag>);
 
 //! The sub control volume
 SET_PROP(CCModel, SubControlVolume)

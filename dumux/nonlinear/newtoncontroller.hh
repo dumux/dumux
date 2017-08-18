@@ -167,7 +167,9 @@ public:
     /*!
      * \brief Constructor without convergence writer
      */
-    NewtonController(const Communicator& comm) : comm_(comm), endIterMsgStream_(std::ostringstream::out)
+    NewtonController(const Communicator& comm)
+    : comm_(comm)
+    , endIterMsgStream_(std::ostringstream::out)
     {
         enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
@@ -196,12 +198,8 @@ public:
         numSteps_ = 0;
     }
 
-    /*!
-     * \brief Constructor with a given convergence writer
-     */
-    NewtonController(const Communicator& comm, ConvergenceWriter&& writer)
-    : NewtonController(comm), convergenceWriter_(std::move(writer))
-    {}
+    Communicator& communicator() const
+    { return comm_; }
 
     /*!
      * \brief Set the maximum acceptable difference of any primary variable
@@ -372,8 +370,8 @@ public:
             shift_ = max(shift_, shiftAtDof);
         }
 
-        if (comm().size() > 1)
-            shift_ = comm().max(shift_);
+        if (communicator().size() > 1)
+            shift_ = communicator().max(shift_);
     }
 
     /*!
@@ -406,8 +404,8 @@ public:
             if (numSteps_ == 0)
             {
                 Scalar norm2 = b.two_norm2();
-                if (comm().size() > 1)
-                    norm2 = comm().sum(norm2);
+                if (communicator().size() > 1)
+                    norm2 = communicator().sum(norm2);
 
                 using std::sqrt;
                 initialResidual_ = sqrt(norm2);
@@ -432,8 +430,8 @@ public:
 
             // make sure all processes converged
             int convergedRemote = converged;
-            if (comm().size() > 1)
-                convergedRemote = comm().min(converged);
+            if (communicator().size() > 1)
+                convergedRemote = communicator().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
@@ -447,8 +445,8 @@ public:
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
             int converged = 0;
-            if (comm().size() > 1)
-                converged = comm().min(converged);
+            if (communicator().size() > 1)
+                converged = communicator().min(converged);
 
             NumericalProblem p;
             std::string msg;
@@ -460,8 +458,8 @@ public:
         catch (const Dune::Exception &e) {
             // make sure all processes converged
             int converged = 0;
-            if (comm().size() > 1)
-                converged = comm().min(converged);
+            if (communicator().size() > 1)
+                converged = communicator().min(converged);
 
             NumericalProblem p;
             p.message(e.what());
@@ -495,7 +493,11 @@ public:
         if (enableShiftCriterion_)
             newtonUpdateShift(uLastIter, deltaU);
 
-        writeConvergence_(uLastIter, deltaU);
+        if (writeConvergence_)
+        {
+            convergenceWriter_->advanceIteration();
+            convergenceWriter_->write(uLastIter, deltaU);
+        }
 
         if (useLineSearch_)
         {
@@ -544,7 +546,7 @@ public:
         // classes directly as well?
         // -> The assembler has all the data w.r.t. the problem etc...
         // -> also, how do we call this?
-        assembler.updateVariables()
+        assembler.updateVariables();
 
         ++numSteps_;
 
@@ -628,7 +630,7 @@ public:
      * \brief Returns true if the Newton method ought to be chatty.
      */
     bool verbose() const
-    { return verbose_ && comm().rank() == 0; }
+    { return verbose_ && communicator().rank() == 0; }
 
 protected:
 
@@ -640,16 +642,6 @@ protected:
     { return *static_cast<Implementation*>(this); }
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
-
-    void writeConvergence_(const SolutionVector &uLastIter,
-                           const SolutionVector &deltaU)
-    {
-        if (writeConvergence_)
-        {
-            convergenceWriter_->advanceIteration();
-            convergenceWriter_->write(uLastIter, deltaU);
-        }
-    }
 
     void lineSearchUpdate_(const JacobianAssembler& assembler,
                            SolutionVector &uCurrentIter,
@@ -694,6 +686,7 @@ protected:
      * \param priVars1 The first vector of primary variables
      * \param priVars2 The second vector of primary variables
      */
+    template<class PrimaryVariables>
     Scalar relativeShiftAtDof_(const PrimaryVariables &priVars1,
                                const PrimaryVariables &priVars2)
     {

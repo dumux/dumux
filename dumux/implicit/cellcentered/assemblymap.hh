@@ -47,7 +47,7 @@ class CCSimpleAssemblyMap
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
 
     struct DataJ

@@ -65,6 +65,7 @@ NEW_PROP_TAG(FVGridGeometry); //!< The type of the global finite volume geometry
 NEW_PROP_TAG(EnableFVGridGeometryCache); //! specifies if geometric data is be saved (faster, but more memory consuming)
 
 NEW_PROP_TAG(JacobianAssembler); //!< Assembles the global jacobian matrix
+NEW_PROP_TAG(LocalAssembler); //!< Assembles the global jacobian matrix
 NEW_PROP_TAG(JacobianMatrix); //!< Type of the global jacobian matrix
 NEW_PROP_TAG(BoundaryTypes); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG(ElementBoundaryTypes); //!< Stores the boundary types on an element
@@ -72,6 +73,9 @@ NEW_PROP_TAG(ElementBoundaryTypes); //!< Stores the boundary types on an element
 NEW_PROP_TAG(PrimaryVariables); //!< A vector of primary variables within a sub-control volume
 NEW_PROP_TAG(SolutionVector); //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a sub-control volume
+
+// TODO GridVariables
+NEW_PROP_TAG(GridVariables); //!< Doc me
 
 NEW_PROP_TAG(EnableGlobalVolumeVariablesCache); //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume

@@ -36,27 +36,6 @@
 namespace Dumux
 {
 
-template<class TypeTag>
-class MockProblem
-{
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-public:
-    MockProblem(const GridView& gridView) : mapper_(gridView) {}
-
-    const ElementMapper& elementMapper() const
-    { return mapper_; }
-
-    template<class Element, class Intersection>
-    bool isInteriorBoundary(const Element& e, const Intersection& i) const
-    { return false; }
-
-    std::vector<unsigned int> getAdditionalDofDependencies(unsigned int index) const
-    { return std::vector<unsigned int>(); }
-private:
-    ElementMapper mapper_;
-};
-
 namespace Properties
 {
 NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel));

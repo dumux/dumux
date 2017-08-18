@@ -30,6 +30,11 @@
 
 namespace Dumux {
 
+enum DifferentiationMethods
+{
+    numeric
+};
+
 /*!
  * \ingroup ImplicitModel
  * \brief An assembler for the local contributions (per element) to the global
@@ -47,6 +52,10 @@ class CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalAssembler);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+
+    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
 public:
 
@@ -57,6 +66,7 @@ public:
     template<class Assembler>
     static void assemble(Assembler& assembler, SolutionVector& res, const Element& element)
     {
+        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
         res[globalI] = Implementation::assemble_(assembler, element);
     }
 
@@ -76,7 +86,7 @@ public:
      *
      * \param priVar The value of the primary variable
      */
-    static Scalar numericEpsilon(const Scalar priVar) const
+    static Scalar numericEpsilon(const Scalar priVar)
     {
         // define the base epsilon as the geometric mean of 1 and the
         // resolution of the scalar type. E.g. for standard 64 bit
@@ -115,7 +125,7 @@ private:
         auto& A = assembler.matrix();
 
         // prepare the local views
-        auto fvGeometry = localView(globalFvGeometry());
+        auto fvGeometry = localView(assembler.fvGridGeometry());
         fvGeometry.bind(element);
 
         auto curElemVolVars = localView(gridVariables.curGlobalVolVars());
@@ -251,7 +261,7 @@ private:
                 neighborDeriv = origFlux;
             }
 
-            if (numericDifferenceMethod_ <= 0)
+            if (numericDifferenceMethod <= 0)
             {
                 // we are not using forward differences, i.e. we
                 // need to calculate f(x - \epsilon)
@@ -266,7 +276,8 @@ private:
 
                 // calculate the residual with the deflected primary variables and subtract it
                 if (!isGhost)
-                    partialDeriv -= localResidual.eval(element,
+                    partialDeriv -= localResidual.eval(problem,
+                                                       element,
                                                        fvGeometry,
                                                        prevElemVolVars,
                                                        curElemVolVars,
@@ -275,12 +286,13 @@ private:
 
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
-                    for (auto scvfIdx : assemblyMap_[globalI][k].scvfsJ)
-                        neighborDeriv[k] -= this->localResidual().evalFlux_(neighborElements[k],
-                                                                            fvGeometry,
-                                                                            curElemVolVars,
-                                                                            fvGeometry.scvf(scvfIdx),
-                                                                            elemFluxVarsCache);
+                    for (auto scvfIdx : assemblyMap[globalI][k].scvfsJ)
+                        neighborDeriv[k] -= localResidual.evalFlux(problem,
+                                                                   neighborElements[k],
+                                                                   fvGeometry,
+                                                                   curElemVolVars,
+                                                                   fvGeometry.scvf(scvfIdx),
+                                                                   elemFluxVarsCache);
             }
             else
             {
@@ -312,7 +324,7 @@ private:
 
                 // off-diagonal entries
                 j = 0;
-                for (const auto& dataJ : assemblyMap_[globalI])
+                for (const auto& dataJ : assemblyMap[globalI])
                     A[dataJ.globalJ][globalI][eqIdx][pvIdx] += neighborDeriv[j++][pvIdx];
             }
         }
@@ -325,101 +337,103 @@ private:
         //                                                                                          //
         //////////////////////////////////////////////////////////////////////////////////////////////
 
-        const auto& additionalDofDepedencies = problem.getAdditionalDofDependencies(globalI);
-        if (!additionalDofDepedencies.empty() && !isGhost)
-        {
-            // compute the source in the undeflected state
-            auto source = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
-            source *= -scv.volume()*curVolVarsI.extrusionFactor();
+        // const auto& additionalDofDepedencies = problem.getAdditionalDofDependencies(globalI);
+        // if (!additionalDofDepedencies.empty() && !isGhost)
+        // {
+        //     // compute the source in the undeflected state
+        //     auto source = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
+        //     source *= -scv.volume()*curVolVarsI.extrusionFactor();
 
-            // deflect solution at given dofs and recalculate the source
-            for (auto globalJ : additionalDofDependencies)
-            {
-                const auto& scvJ = fvGeometry.scv(globalJ);
-                auto& curVolVarsJ = curElemVolVars[scv];
-                const auto& elementJ = gridFvGeometry.element(globalJ);
+        //     // deflect solution at given dofs and recalculate the source
+        //     for (auto globalJ : additionalDofDependencies)
+        //     {
+        //         const auto& scvJ = fvGeometry.scv(globalJ);
+        //         auto& curVolVarsJ = curElemVolVars[scv];
+        //         const auto& elementJ = gridFvGeometry.element(globalJ);
 
-                // save a copy of the original privars and volvars
-                // to restore original solution after deflection
-                const auto origPriVars = curSol[globalJ];
-                const auto origVolVarsJ = curVolVarsJ;
+        //         // save a copy of the original privars and volvars
+        //         // to restore original solution after deflection
+        //         const auto origPriVars = curSol[globalJ];
+        //         const auto origVolVarsJ = curVolVarsJ;
 
-                // derivatives with repect to the additional DOF we depend on
-                for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-                {
-                    // derivatives of element dof with respect to itself
-                    NumEqVector partialDeriv(0.0);
-                    const auto eps = Implementation::numericEpsilon(curVolVarsJ.priVar(pvIdx));
-                    Scalar delta = 0;
+        //         // derivatives with repect to the additional DOF we depend on
+        //         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+        //         {
+        //             // derivatives of element dof with respect to itself
+        //             NumEqVector partialDeriv(0.0);
+        //             const auto eps = Implementation::numericEpsilon(curVolVarsJ.priVar(pvIdx));
+        //             Scalar delta = 0;
 
-                    if (numericDifferenceMethod_ >= 0)
-                    {
-                        // we are not using backward differences, i.e. we need to
-                        // calculate f(x + \epsilon)
+        //             if (numericDifferenceMethod >= 0)
+        //             {
+        //                 // we are not using backward differences, i.e. we need to
+        //                 // calculate f(x + \epsilon)
 
-                        // deflect primary variables
-                        curSol[globalJ][pvIdx] += eps;
-                        delta += eps;
+        //                 // deflect primary variables
+        //                 curSol[globalJ][pvIdx] += eps;
+        //                 delta += eps;
 
-                        // update the volume variables and the flux var cache
-                        curVolVarsJ.update(gridVariables.elementSolution(elementJ, curSol), problem, elementJ, scvJ);
+        //                 // update the volume variables and the flux var cache
+        //                 curVolVarsJ.update(gridVariables.elementSolution(elementJ, curSol), problem, elementJ, scvJ);
 
-                        // calculate the source with the deflected primary variables
-                        auto deflSource = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
-                        deflSource *= -scv.volume()*curVolVarsI.extrusionFactor();
-                        partialDeriv = std::move(deflSource);
-                    }
-                    else
-                    {
-                        // we are using backward differences, i.e. we don't need
-                        // to calculate f(x + \epsilon) and we can recycle the
-                        // (already calculated) source f(x)
-                        partialDeriv = source;
-                    }
+        //                 // calculate the source with the deflected primary variables
+        //                 auto deflSource = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
+        //                 deflSource *= -scv.volume()*curVolVarsI.extrusionFactor();
+        //                 partialDeriv = std::move(deflSource);
+        //             }
+        //             else
+        //             {
+        //                 // we are using backward differences, i.e. we don't need
+        //                 // to calculate f(x + \epsilon) and we can recycle the
+        //                 // (already calculated) source f(x)
+        //                 partialDeriv = source;
+        //             }
 
-                    if (numericDifferenceMethod_ <= 0)
-                    {
-                        // we are not using forward differences, i.e. we
-                        // need to calculate f(x - \epsilon)
+        //             if (numericDifferenceMethod <= 0)
+        //             {
+        //                 // we are not using forward differences, i.e. we
+        //                 // need to calculate f(x - \epsilon)
 
-                        // deflect the primary variables
-                        curSol[globalJ][pvIdx] -= delta + eps;
-                        delta += eps;
+        //                 // deflect the primary variables
+        //                 curSol[globalJ][pvIdx] -= delta + eps;
+        //                 delta += eps;
 
-                        // update the volume variables and the flux var cache
-                        curVolVarsJ.update(gridVariables.elementSolution(elementJ, curSol), problem, elementJ, scvJ);
+        //                 // update the volume variables and the flux var cache
+        //                 curVolVarsJ.update(gridVariables.elementSolution(elementJ, curSol), problem, elementJ, scvJ);
 
-                        // calculate the source with the deflected primary variables and subtract
-                        auto deflSource = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
-                        deflSource *= -scv.volume()*curVolVarsI.extrusionFactor();
-                        partialDeriv -= std::move(deflSource);
-                    }
-                    else
-                    {
-                        // we are using forward differences, i.e. we don't need to
-                        // calculate f(x - \epsilon) and we can recycle the
-                        // (already calculated) source f(x)
-                        partialDeriv -= source;
-                    }
+        //                 // calculate the source with the deflected primary variables and subtract
+        //                 auto deflSource = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
+        //                 deflSource *= -scv.volume()*curVolVarsI.extrusionFactor();
+        //                 partialDeriv -= std::move(deflSource);
+        //             }
+        //             else
+        //             {
+        //                 // we are using forward differences, i.e. we don't need to
+        //                 // calculate f(x - \epsilon) and we can recycle the
+        //                 // (already calculated) source f(x)
+        //                 partialDeriv -= source;
+        //             }
 
-                    // divide difference in residuals by the magnitude of the
-                    // deflections between the two function evaluation
-                    partialDeriv /= delta;
+        //             // divide difference in residuals by the magnitude of the
+        //             // deflections between the two function evaluation
+        //             partialDeriv /= delta;
 
-                    // restore the original state of the dofs privars and the volume variables
-                    curSol[globalJ] = origPriVars;
-                    curVolVarsJ = origVolVarsJ;
+        //             // restore the original state of the dofs privars and the volume variables
+        //             curSol[globalJ] = origPriVars;
+        //             curVolVarsJ = origVolVarsJ;
 
-                    // add the current partial derivatives to the global jacobian matrix
-                    for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                        A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
-                }
-            }
-        }
+        //             // add the current partial derivatives to the global jacobian matrix
+        //             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+        //                 A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+        //         }
+        //     }
+        // }
 
         // return the original residual
         return residual;
     }
 };
 
-}
+} // end namespace Dumux
+
+#endif

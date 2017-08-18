@@ -46,6 +46,9 @@ NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(NewtonController);
 NEW_PROP_TAG(SolutionVector);
 NEW_PROP_TAG(JacobianAssembler);
+NEW_PROP_TAG(JacobianMatrix);
+NEW_PROP_TAG(NewtonConvergenceWriter);
+NEW_PROP_TAG(WriteConvergence);
 }
 
 /*!
@@ -62,6 +65,7 @@ class NewtonMethod
     using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
     using ConvergenceWriter =  typename GET_PROP_TYPE(TypeTag, NewtonConvergenceWriter);
     using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using LinearSolver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
 
 public:
@@ -69,18 +73,8 @@ public:
                  std::shared_ptr<LinearSolver> linearSolver)
     : jacobianAssembler_(jacobianAssembler)
     , linearSolver_(linearSolver)
-    , matrix_ = std::make_shared<JacobianMatrix>()
-    , residual_ = std::make_shared<SolutionVector>()
     {
-        // construct the newton controller with or without convergence writer
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
-        {
-            newtonController_ = std::make_unique<NewtonController>(assembler().gridView().comm(),
-                                                                   NewtonConvergenceWriter(gridView, assembler().numDofs()));
-        }
-        else
-            newtonController_ = std::make_unique<NewtonController>(assembler().gridView().comm());
-
+        newtonController_ = std::make_unique<NewtonController>(assembler().gridView().comm());
         // set the linear system (matrix & residual) in the assembler
         assembler().setLinearSystem(matrix(), residual());
     }
@@ -95,9 +89,9 @@ public:
             return execute_();
         }
         catch (const NumericalProblem &e) {
-            if (ctl.verbose())
+            if (controller().verbose())
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
-            ctl.newtonFail();
+            controller().newtonFail();
             return false;
         }
     }
@@ -144,7 +138,7 @@ private:
             if (controller().newtonNumSteps() > 0)
                 uLastIter = uCurrentIter;
 
-            if (ctl.verbose()) {
+            if (controller().verbose()) {
                 std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
                 std::cout.flush();
             }
@@ -167,7 +161,7 @@ private:
             // http://en.wikipedia.org/wiki/ANSI_escape_code
             const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
 
-            if (ctl.verbose()) {
+            if (controller().verbose()) {
                 std::cout << "\rSolve: M deltax^k = r";
                 std::cout << clearRemainingLine;
                 std::cout.flush();
@@ -180,15 +174,15 @@ private:
             deltaU = 0;
             // ask the controller to solve the linearized system
             controller().solveLinearSystem(linearSolver(),
-                                           jacobianAsm.matrix(),
+                                           matrix(),
                                            deltaU,
-                                           jacobianAsm.residual());
+                                           residual());
             solveTimer.stop();
 
             ///////////////
             // update
             ///////////////
-            if (ctl.verbose()) {
+            if (controller().verbose()) {
                 std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
                 std::cout << clearRemainingLine;
                 std::cout.flush();
@@ -197,17 +191,17 @@ private:
             updateTimer.start();
             // update the current solution (i.e. uOld) with the delta
             // (i.e. u). The result is stored in u
-            ctl.newtonUpdate(assembler(), uCurrentIter, uLastIter, deltaU);
+            controller().newtonUpdate(assembler(), uCurrentIter, uLastIter, deltaU);
             updateTimer.stop();
 
             // tell the controller that we're done with this iteration
-            ctl.newtonEndStep(assembler(), uCurrentIter, uLastIter);
+            controller().newtonEndStep(assembler(), uCurrentIter, uLastIter);
         }
 
         // tell the controller that we're done
-        ctl.newtonEnd();
+        controller().newtonEnd();
 
-        if (ctl.verbose()) {
+        if (controller().verbose()) {
             Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
             std::cout << "Assemble/solve/update time: "
                       <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
@@ -216,12 +210,12 @@ private:
                       << "\n";
         }
 
-        if (!ctl.newtonConverged()) {
-            ctl.newtonFail();
+        if (!controller().newtonConverged()) {
+            controller().newtonFail();
             return false;
         }
 
-        ctl.newtonSucceed();
+        controller().newtonSucceed();
         return true;
     }
 

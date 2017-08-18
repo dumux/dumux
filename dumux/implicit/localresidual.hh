@@ -42,18 +42,15 @@ namespace Dumux
 template<class TypeTag>
 class ImplicitLocalResidual
 {
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
@@ -62,29 +59,11 @@ class ImplicitLocalResidual
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
-    // copying the local residual class is not a good idea
-    ImplicitLocalResidual(const ImplicitLocalResidual &) = delete;
-
-    // the default constructor
-    ImplicitLocalResidual() = default;
-
-    /*!
-     * \brief Initialize the local residual.
-     *
-     * This assumes that all objects of the simulation have been fully
-     * allocated but not necessarily initialized completely.
-     *
-     * \param problem The representation of the physical problem to be
-     *             solved.
-     */
-    void init(Problem &problem)
-    { problemPtr_ = &problem; }
-
 
     /*!
      * \name User interface
      * \note The following methods are usually expensive to evaluate
-     *       They are useful for outputting residual information.
+     *       They are useful for outputting / postprocessing residual information.
      */
     // \{
 
@@ -95,26 +74,26 @@ public:
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      */
-    void eval(const Element &element)
-    {
-        // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(problem().model().fvGridGeometry());
-        fvGeometry.bind(element);
+    // ElementResidualVector eval(const Problem& problem, const Element &element)
+    // {
+    //     // make sure FVElementGeometry and volume variables are bound to the element
+    //     auto fvGeometry = localView(problem.model().globalFvGeometry());
+    //     fvGeometry.bind(element);
 
-        auto curElemVolVars = localView(problem().model().curGlobalVolVars());
-        curElemVolVars.bind(element, fvGeometry, problem().model().curSol());
+    //     auto curElemVolVars = localView(problem.model().curGlobalVolVars());
+    //     curElemVolVars.bind(element, fvGeometry, problem.model().curSol());
 
-        auto prevElemVolVars = localView(problem().model().prevGlobalVolVars());
-        prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
+    //     auto prevElemVolVars = localView(problem.model().prevGlobalVolVars());
+    //     prevElemVolVars.bindElement(element, fvGeometry, problem.model().prevSol());
 
-        auto elemFluxVarsCache = localView(problem().model().globalFluxVarsCache());
-        elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
+    //     auto elemFluxVarsCache = localView(problem.model().globalFluxVarsCache());
+    //     elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
 
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem(), element, fvGeometry);
+    //     ElementBoundaryTypes bcTypes;
+    //     bcTypes.update(problem, element, fvGeometry);
 
-        asImp_().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes, elemFluxVarsCache);
-    }
+    //     return asImp_().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes, elemFluxVarsCache);
+    // }
 
     /*!
      * \brief Compute the storage term for the current solution.
@@ -125,51 +104,32 @@ public:
      * \param element The DUNE Codim<0> entity for which the storage
      *                term ought to be calculated
      */
-    void evalStorage(const Element &element)
-    {
-        // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(problem().model().fvGridGeometry());
-        fvGeometry.bindElement(element);
-
-        auto curElemVolVars = localView(problem().model().curGlobalVolVars());
-        curElemVolVars.bindElement(element, fvGeometry, problem().model().curSol());
-
-        auto prevElemVolVars = localView(problem().model().prevGlobalVolVars());
-        prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
-
-        asImp_().evalStorage_(fvGeometry, prevElemVolVars, curElemVolVars);
-    }
-
-    // !
-    //  * \brief Compute the flux term for the current solution.
-    //  *
-    //  * \param element The DUNE Codim<0> entity for which the residual
-    //  *                ought to be calculated
-    //  * \param curVolVars The volume averaged variables for all
-    //  *                   sub-contol volumes of the element
-
-    // void evalFluxes(const Element &element)
+    // ElementResidualVector evalStorage(const Problem& problem, const Element &element)
     // {
-    //     elemPtr_ = &element;
-
     //     // make sure FVElementGeometry and volume variables are bound to the element
-    //     problem().model().fvGeometries_().bind(element);
-    //     problem().model().curVolVars_().bind(element);
-    //     problem().model().prevVolVars_().bindElement(element);
-    //     problem().model().fluxVariablesCache_().bindElement(element);
+    //     auto fvGeometry = localView(problem.model().globalFvGeometry());
+    //     fvGeometry.bindElement(element);
 
-    //     ElementBoundaryTypes bcTypes;
-    //     bcTypes.update(problem(), element, fvGeometry_());
+    //     auto curElemVolVars = localView(problem.model().curGlobalVolVars());
+    //     curElemVolVars.bindElement(element, fvGeometry, problem.model().curSol());
 
-    //     residual_.resize(fvGeometry_().numScv);
-    //     residual_ = 0;
+    //     ElementResidualVector storage(fvGeometry.numScv());
+    //     storage.resize(fvGeometry.numScv(), 0.0);
 
-    //     bcTypesPtr_ = &bcTypes;
-    //     asImp_().evalFluxes_();
+    //     // calculate the amount of conservation each quantity inside
+    //     // all sub control volumes
+    //     for (auto&& scv : scvs(fvGeometry))
+    //     {
+    //         auto localScvIdx = scv.indexInElement();
+    //         const auto& volVars = elemVolVars[scv];
+    //         storage[localScvIdx] = asImp_().computeStorage(scv, volVars);
+    //         storage[localScvIdx] *= scv.volume() * volVars.extrusionFactor();
+    //     }
+
+    //     return storage;
     // }
 
     // \}
-
 
     /*!
      * \name Main interface
@@ -180,7 +140,8 @@ public:
     /*!
      * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero.
-     *
+     * \param problem The problem to solve
+
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
@@ -193,230 +154,183 @@ public:
      * \param bcTypes The types of the boundary conditions for all
      *                vertices of the element
      */
-    void eval(const Element &element,
-              const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& prevElemVolVars,
-              const ElementVolumeVariables& curElemVolVars,
-              const ElementBoundaryTypes &bcTypes,
-              const ElementFluxVariablesCache& elemFluxVarsCache)
+    ElementResidualVector eval(const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVolumeVariables& prevElemVolVars,
+                               const ElementVolumeVariables& curElemVolVars,
+                               const ElementBoundaryTypes &bcTypes,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        // resize the vectors for all terms
-        auto numScv = fvGeometry.numScv();
-        residual_.resize(numScv);
-        storageTerm_.resize(numScv);
+        // initialize the residual vector for all scvs in this element
+        ElementResidualVector residual(fvGeometry.numScv(), 0.0);
 
-        residual_ = 0.0;
-        storageTerm_ = 0.0;
+        // evaluate the volume terms (storage + source terms)
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            //! foward to the local residual specialized for the discretization methods
+            asImp_().evalStorage(residual, problem, element, fvGeometry, curElemVolVars, prevElemVolVars, scv);
+            asImp_().evalSource(residual, problem, element, fvGeometry, curElemVolVars, scv);
+        }
 
-        asImp_().evalVolumeTerms_(element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes);
-        asImp_().evalFluxes_(element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache);
-        asImp_().evalBoundary_(element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache);
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            //! foward to the local residual specialized for the discretization methods
+            asImp_().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
+            asImp_().evalBoundary(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
+        }
+
+        return residual;
+    }
+
+    // \}
+
+
+    /*!
+     * \name Model specific interface
+     * \note The following method are the model specific implementations of the actual residual
+     */
+    // \{
+
+    /*!
+     * \brief Calculate the source term of the equation
+     *
+     * \param scv The sub-control volume over which we integrate the source term
+     * \note has to be implemented by the model specific residual class
+     *
+     */
+    ResidualVector computeStorage(const Problem& problem,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "This model does not implement a storage method!");
     }
 
     /*!
      * \brief Calculate the source term of the equation
      *
      * \param scv The sub-control volume over which we integrate the source term
+     * \note This is the default implementation for all models as sources are computed
+     *       in the user interface of the problem
      *
      */
-    PrimaryVariables computeSource(const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const SubControlVolume &scv)
+    ResidualVector computeSource(const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 const SubControlVolume &scv) const
     {
-        PrimaryVariables source(0);
+        ResidualVector source(0.0);
 
         // add contributions from volume flux sources
-        source += this->problem().source(element, fvGeometry, elemVolVars, scv);
+        source += problem.source(element, fvGeometry, elemVolVars, scv);
 
         // add contribution from possible point sources
-        source += this->problem().scvPointSources(element, fvGeometry, elemVolVars, scv);
+        source += problem.scvPointSources(element, fvGeometry, elemVolVars, scv);
 
         return source;
     }
 
     /*!
-     * \brief Returns the local residual for all sub-control
-     *        volumes of the element.
-     */
-    const ElementSolutionVector &residual() const
-    { return residual_; }
-
-    /*!
-     * \brief Returns the local residual for a given sub-control
-     *        volume of the element.
+     * \brief Calculate the source term of the equation
      *
-     * \param localScvIdx The local index of the sub-control volume
+     * \param scv The sub-control volume over which we integrate the source term
+     * \note has to be implemented by the model specific residual class
+     *
      */
-    const PrimaryVariables &residual(const int localScvIdx) const
-    { return residual_[localScvIdx]; }
-
-    /*!
-     * \brief Returns the storage term for all sub-control volumes of the
-     *        element.
-     */
-    const ElementSolutionVector &storageTerm() const
-    { return storageTerm_; }
-
-    /*!
-     * \brief Returns the storage term for a given sub-control volumes
-     *        of the element.
-     */
-    const PrimaryVariables &storageTerm(const int localScvIdx) const
-    { return storageTerm_[localScvIdx]; }
-
-    /*!
-     * \brief Return the problem we are solving. Only call this after init()!
-     */
-    const Problem& problem() const
-    { return *problemPtr_; }
-
-    /*!
-     * \brief Return the problem we are solving. Only call this after init()!
-     */
-    Problem& problem()
-    { return *problemPtr_; }
+    ResidualVector computeFlux(const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVolumeVariables& elemVolVars,
+                               const SubControlVolumeFace& scvf,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "This model does not implement a flux method!");
+    }
 
     // \}
 
-protected:
+    /*!
+     * \name Discretization specific interface
+     * \note The following method are the discretization specific wrapper methods
+     */
+    // \{
+
+    void evalStorage(ElementResidualVector& residual,
+                     const Problem& problem,
+                     const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& curElemVolVars,
+                     const ElementVolumeVariables& prevElemVolVars,
+                     const SubControlVolume& scv) const
+    {
+        const auto& curVolVars = curElemVolVars[scv];
+        const auto& prevVolVars = prevElemVolVars[scv];
+
+        // mass balance within the element. this is the
+        // \f$\frac{m}{\partial t}\f$ term if using implicit
+        // euler as time discretization.
+        //
+        // We might need a more explicit way for
+        // doing the time discretization...
+
+        //! Compute storage with the model specific storage residual
+        ResidualVector prevStorage = asImp_().computeStorage(problem, scv, prevVolVars);
+        ResidualVector storage = asImp_().computeStorage(problem, scv, curVolVars);
+
+        prevStorage *= prevVolVars.extrusionFactor();
+        storage *= curVolVars.extrusionFactor();
+
+        storage -= prevStorage;
+        storage *= scv.volume();
+        storage /= problem.timeManager().timeStepSize();
+
+        residual[scv.indexInElement()] += storage;
+    }
+
+    void evalSource(ElementResidualVector& residual,
+                    const Problem& problem,
+                    const Element& element,
+                    const FVElementGeometry& fvGeometry,
+                    const ElementVolumeVariables& curElemVolVars,
+                    const SubControlVolume& scv) const
+    {
+        //! Compute source with the model specific storage residual
+        const auto& curVolVars = curElemVolVars[scv];
+        ResidualVector source = asImp_().computeSource(problem, element, fvGeometry, curElemVolVars, scv);
+        source *= scv.volume()*curVolVars.extrusionFactor();
+
+        //! subtract source from local rate (sign convention in user interface)
+        residual[scv.indexInElement()] -= source;
+    }
+
+    void evalFlux(ElementResidualVector& residual,
+                  const Problem& problem,
+                  const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const ElementBoundaryTypes& elemBcTypes,
+                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                  const SubControlVolumeFace& scvf) const {}
+
+    void evalBoundary(ElementResidualVector& residual,
+                      const Problem& problem,
+                      const Element& element,
+                      const FVElementGeometry& fvGeometry,
+                      const ElementVolumeVariables& elemVolVars,
+                      const ElementBoundaryTypes& elemBcTypes,
+                      const ElementFluxVariablesCache& elemFluxVarsCache,
+                      const SubControlVolumeFace& scvf) const {}
+
+    // \}
+
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
-
-    PrimaryVariables evalFlux_(const Element &element,
-                               const FVElementGeometry& fvGeometry,
-                               const ElementVolumeVariables& elemVolVars,
-                               const SubControlVolumeFace& scvf,
-                               const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        return asImp_().computeFlux_(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-    }
-
-    /*!
-     * \brief Set the local residual to the storage terms of all
-     *        sub-control volumes of the current element.
-     */
-    void evalStorage_(const FVElementGeometry& fvGeometry,
-                      const ElementVolumeVariables& prevElemVolVars,
-                      const ElementVolumeVariables& curElemVolVars)
-    {
-        storageTerm_.resize(fvGeometry.numScv());
-        storageTerm_ = 0;
-
-        // calculate the amount of conservation each quantity inside
-        // all sub control volumes
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            auto localScvIdx = scv.indexInElement();
-            const auto& volVars = curElemVolVars[scv];
-            storageTerm_[localScvIdx] = asImp_().computeStorage(scv, volVars);
-            storageTerm_[localScvIdx] *= scv.volume() * volVars.extrusionFactor();
-        }
-    }
-
-    // PrimaryVariables evalSource_(const Element& element,
-    //                              const FVElementGeometry& fvGeometry)
-    // {
-    //     PrimaryVariables source(0);
-    //     const auto& fvGeometry = fvGeometry.fvElementGeometry();
-    //     for (auto&& scv : scvs(fvGeometry))
-    //     {
-    //         source += this->problem().source(element, scv);
-
-    //         // add contribution from possible point sources
-    //         source += this->problem().scvPointSources(element, scv);
-    //     }
-
-    //     return source;
-    // }
-
-    /*!
-     * \brief Add the change the source term for stationary problems
-     *        to the local residual of all sub-control volumes of the
-     *        current element.
-     */
-    template<class P = Problem>
-    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTerms_(const Element &element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& prevElemVolVars,
-                     const ElementVolumeVariables& curElemVolVars,
-                     const ElementBoundaryTypes &bcTypes)
-    {
-        // evaluate the volume terms (storage + source terms)
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            auto localScvIdx = scv.indexInElement();
-            auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
-
-            // subtract the source term from the local rate
-            PrimaryVariables source = asImp_().computeSource(element, fvGeometry, curElemVolVars, scv);
-            source *= scv.volume()*curExtrusionFactor;
-
-            residual_[localScvIdx] -= source;
-        }
-    }
-
-    /*!
-     * \brief Add the change in the storage terms and the source term
-     *        to the local residual of all sub-control volumes of the
-     *        current element.
-     */
-    template<class P = Problem>
-    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTerms_(const Element &element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& prevElemVolVars,
-                     const ElementVolumeVariables& curElemVolVars,
-                     const ElementBoundaryTypes &bcTypes)
-    {
-        // evaluate the volume terms (storage + source terms)
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            auto localScvIdx = scv.indexInElement();
-
-            const auto& curVolVars = curElemVolVars[scv];
-            const auto& prevVolVars = prevElemVolVars[scv];
-
-            // mass balance within the element. this is the
-            // \f$\frac{m}{\partial t}\f$ term if using implicit
-            // euler as time discretization.
-            //
-            // We might need a more explicit way for
-            // doing the time discretization...
-            PrimaryVariables prevStorage = asImp_().computeStorage(scv, prevVolVars);
-            PrimaryVariables curStorage = asImp_().computeStorage(scv, curVolVars);
-
-            prevStorage *= prevVolVars.extrusionFactor();
-            curStorage *= curVolVars.extrusionFactor();
-
-            storageTerm_[localScvIdx] = std::move(curStorage);
-            storageTerm_[localScvIdx] -= std::move(prevStorage);
-            storageTerm_[localScvIdx] *= scv.volume();
-            storageTerm_[localScvIdx] /= problem().timeManager().timeStepSize();
-
-            // add the storage term to the residual
-            residual_[localScvIdx] += storageTerm_[localScvIdx];
-
-            // subtract the source term from the local rate
-            PrimaryVariables source = asImp_().computeSource(element, fvGeometry, curElemVolVars, scv);
-            source *= scv.volume()*curVolVars.extrusionFactor();
-
-            residual_[localScvIdx] -= source;
-        }
-    }
-
-protected:
-    ElementSolutionVector storageTerm_;
-    ElementSolutionVector residual_;
-
-private:
-    Problem* problemPtr_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

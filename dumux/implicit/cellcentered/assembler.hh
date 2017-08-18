@@ -32,15 +32,21 @@
 
 namespace Dumux {
 
+template<class TypeTag, DiscretizationMethods DM>
+class ImplicitAssemblerImplementation;
+
+template<class TypeTag>
+class CCImplicitAssembler;
+
 //! TPFA and MPFA use the same assembler class
 template<class TypeTag>
-class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCTpfa> : CCImplicitAssembler<TypeTag>
+class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCTpfa> : public CCImplicitAssembler<TypeTag>
 {
     using CCImplicitAssembler<TypeTag>::CCImplicitAssembler;
 };
 
 template<class TypeTag>
-class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCMpfa> : CCImplicitAssembler<TypeTag>
+class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCMpfa> : public CCImplicitAssembler<TypeTag>
 {
     using CCImplicitAssembler<TypeTag>::CCImplicitAssembler;
 };
@@ -54,21 +60,23 @@ template<class TypeTag>
 class CCImplicitAssembler
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using AssemblyMap = typename GET_PROP_TYPE(TypeTag, AssemblyMap);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using GridFvGeometry = typename GET_PROP_TYPE(TypeTag, GridFvGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using LocalAssembler = typename GET_PROP_TYPE(TypeTag, LocalAssembler);
+    // using LocalAssembler = typename GET_PROP_TYPE(TypeTag, LocalAssembler);
+     using LocalAssembler = CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>;
 
 public:
     using ResidualType = SolutionVector;
 
     //! The constructor
     CCImplicitAssembler(std::shared_ptr<const Problem> problem,
-                        std::shared_ptr<const GridFvGeometry> gridFvGeometry,
+                        std::shared_ptr<const FVGridGeometry> gridFvGeometry,
                         std::shared_ptr<const SolutionVector> prevSol,
                         std::shared_ptr<const SolutionVector> curSol,
                         std::shared_ptr<GridVariables> gridVariables)
@@ -79,7 +87,7 @@ public:
     , gridVariables_(gridVariables)
     {
         // build assembly map
-        assemblyMap_.init(globalFvGeometry);
+        assemblyMap_.init(gridFvGeometry);
     }
 
     /*!
@@ -100,18 +108,18 @@ public:
 
             // if we get here, everything worked well
             succeeded = true;
-            if (gridView_().comm().size() > 1)
-                succeeded = gridView_().comm().min(succeeded);
+            if (gridView().comm().size() > 1)
+                succeeded = gridView().comm().min(succeeded);
         }
         // throw exception if a problem ocurred
         catch (NumericalProblem &e)
         {
-            std::cout << "rank " << problem_().gridView().comm().rank()
+            std::cout << "rank " << gridView().comm().rank()
                       << " caught an exception while assembling:" << e.what()
                       << "\n";
             succeeded = false;
-            if (gridView_().comm().size() > 1)
-                succeeded = gridView_().comm().min(succeeded);
+            if (gridView().comm().size() > 1)
+                succeeded = gridView().comm().min(succeeded);
         }
         if (!succeeded)
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
@@ -134,8 +142,8 @@ public:
 
             // if we get here, everything worked well
             succeeded = true;
-            if (gridView_().comm().size() > 1)
-                succeeded = gridView_().comm().min(succeeded);
+            if (gridView().comm().size() > 1)
+                succeeded = gridView().comm().min(succeeded);
         }
         // throw exception if a problem ocurred
         catch (NumericalProblem &e)
@@ -144,8 +152,8 @@ public:
                       << " caught an exception while assembling:" << e.what()
                       << "\n";
             succeeded = false;
-            if (gridView_().comm().size() > 1)
-                succeeded = gridView_().comm().min(succeeded);
+            if (gridView().comm().size() > 1)
+                succeeded = gridView().comm().min(succeeded);
         }
         if (!succeeded)
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
@@ -229,7 +237,7 @@ public:
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
         if (gridView().comm().size() > 1)
-            result2 = gridView_().comm().sum(result2);
+            result2 = gridView().comm().sum(result2);
 
         using std::sqrt;
         return sqrt(result2);
@@ -238,7 +246,7 @@ public:
     const Problem& problem() const
     { return *problem; }
 
-    const GridFvGeometry& gridFvGeometry() const
+    const FVGridGeometry& gridFvGeometry() const
     { return *gridFvGeometry_; }
 
     const GridView& gridView() const
@@ -302,7 +310,7 @@ private:
     std::shared_ptr<const Problem> problem_;
 
     // the finite volume geometry of the grid
-    std::shared_ptr<const GridFvGeometry> gridFvGeometry_;
+    std::shared_ptr<const FVGridGeometry> gridFvGeometry_;
 
     // previous and current solution to the problem
     std::shared_ptr<const SolutionVector> prevSol_;
