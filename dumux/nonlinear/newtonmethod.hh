@@ -43,8 +43,6 @@ namespace Properties
 NEW_TYPE_TAG(NewtonMethod);
 
 NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(Model);
 NEW_PROP_TAG(NewtonController);
 NEW_PROP_TAG(SolutionVector);
 NEW_PROP_TAG(JacobianAssembler);
@@ -59,51 +57,42 @@ NEW_PROP_TAG(JacobianAssembler);
 template <class TypeTag>
 class NewtonMethod
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using ConvergenceWriter =  typename GET_PROP_TYPE(TypeTag, NewtonConvergenceWriter);
+    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
+    using LinearSolver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 public:
-    NewtonMethod(Problem &problem)
-        : problem_(problem)
-    { }
+    NewtonMethod(std::shared_ptr<JacobianAssembler> jacobianAssembler,
+                 std::shared_ptr<LinearSolver> linearSolver)
+    : jacobianAssembler_(jacobianAssembler)
+    , linearSolver_(linearSolver)
+    , matrix_ = std::make_shared<JacobianMatrix>()
+    , residual_ = std::make_shared<SolutionVector>()
+    {
+        // construct the newton controller with or without convergence writer
+        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
+        {
+            newtonController_ = std::make_unique<NewtonController>(assembler().gridView().comm(),
+                                                                   NewtonConvergenceWriter(gridView, assembler().numDofs()));
+        }
+        else
+            newtonController_ = std::make_unique<NewtonController>(assembler().gridView().comm());
 
-    /*!
-     * \brief Returns a reference to the current numeric problem.
-     */
-    Problem &problem()
-    { return problem_; }
-
-    /*!
-     * \brief Returns a reference to the current numeric problem.
-     */
-    const Problem &problem() const
-    { return problem_; }
-
-    /*!
-     * \brief Returns a reference to the numeric model.
-     */
-    Model &model()
-    { return problem().model(); }
-
-    /*!
-     * \brief Returns a reference to the numeric model.
-     */
-    const Model &model() const
-    { return problem().model(); }
-
+        // set the linear system (matrix & residual) in the assembler
+        assembler().setLinearSystem(matrix(), residual());
+    }
 
     /*!
      * \brief Run the newton method. The controller is responsible
      *        for all the strategic decisions.
      */
-    bool execute(NewtonController &ctl)
+    bool execute()
     {
         try {
-            return execute_(ctl);
+            return execute_();
         }
         catch (const NumericalProblem &e) {
             if (ctl.verbose())
@@ -113,32 +102,47 @@ public:
         }
     }
 
-protected:
-    bool execute_(NewtonController &ctl)
+    NewtonController& controller()
+    { return *newtonController_; }
+
+    JacobianAssembler& assembler()
+    { return *jacobianAssembler_; }
+
+    LinearSolver& linearSolver()
+    { return *linearSolver_; }
+
+    JacobianMatrix& matrix()
+    { return *matrix_; }
+
+    SolutionVector& residual()
+    { return residual_; }
+
+private:
+    bool execute_()
     {
-        SolutionVector &uCurrentIter = model().curSol();
+        // the current solution is the initial guess
+        SolutionVector& uCurrentIter = assembler.curSol();
         SolutionVector uLastIter(uCurrentIter);
         SolutionVector deltaU(uCurrentIter);
-
-        JacobianAssembler &jacobianAsm = model().jacobianAssembler();
 
         Dune::Timer assembleTimer(false);
         Dune::Timer solveTimer(false);
         Dune::Timer updateTimer(false);
 
         // tell the controller that we begin solving
-        ctl.newtonBegin(*this, uCurrentIter);
+        controller().newtonBegin(uCurrentIter);
 
         // execute the method as long as the controller thinks
         // that we should do another iteration
-        while (ctl.newtonProceed(uCurrentIter))
+        while (controller().newtonProceed(uCurrentIter))
         {
             // notify the controller that we're about to start
             // a new timestep
-            ctl.newtonBeginStep();
+            controller().newtonBeginStep();
 
             // make the current solution to the old one
-            uLastIter = uCurrentIter;
+            if (controller().newtonNumSteps() > 0)
+                uLastIter = uCurrentIter;
 
             if (ctl.verbose()) {
                 std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
@@ -151,7 +155,7 @@ protected:
 
             // linearize the problem at the current solution
             assembleTimer.start();
-            jacobianAsm.assemble();
+            controller().assembleLinearSystem(assembler());
             assembleTimer.stop();
 
             ///////////////
@@ -175,9 +179,10 @@ protected:
             // set the delta vector to zero before solving the linear system!
             deltaU = 0;
             // ask the controller to solve the linearized system
-            ctl.newtonSolveLinear(jacobianAsm.matrix(),
-                                  deltaU,
-                                  jacobianAsm.residual());
+            controller().solveLinearSystem(linearSolver(),
+                                           jacobianAsm.matrix(),
+                                           deltaU,
+                                           jacobianAsm.residual());
             solveTimer.stop();
 
             ///////////////
@@ -192,11 +197,11 @@ protected:
             updateTimer.start();
             // update the current solution (i.e. uOld) with the delta
             // (i.e. u). The result is stored in u
-            ctl.newtonUpdate(uCurrentIter, uLastIter, deltaU);
+            ctl.newtonUpdate(assembler(), uCurrentIter, uLastIter, deltaU);
             updateTimer.stop();
 
             // tell the controller that we're done with this iteration
-            ctl.newtonEndStep(uCurrentIter, uLastIter);
+            ctl.newtonEndStep(assembler(), uCurrentIter, uLastIter);
         }
 
         // tell the controller that we're done
@@ -220,8 +225,13 @@ protected:
         return true;
     }
 
-private:
-    Problem &problem_;
+    std::shared_ptr<JacobianAssembler> jacobianAssembler_;
+    std::shared_ptr<LinearSolver> linearSolver_;
+
+    std::unique_ptr<NewtonController> newtonController_;
+
+    std::shared_ptr<JacobianMatrix> matrix_;
+    std::shared_ptr<SolutionVector> residual_;
 };
 
 }

@@ -29,16 +29,8 @@
 
 #include <dumux/common/basicproperties.hh>
 
-#include "newtoncontroller.hh"
-
 namespace Dumux
 {
-
-namespace Properties
-{
-NEW_PROP_TAG(NewtonController);
-NEW_PROP_TAG(SolutionVector);
-}
 
 /*!
  * \ingroup Newton
@@ -50,21 +42,19 @@ class NewtonConvergenceWriter
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
 
 public:
-    NewtonConvergenceWriter(NewtonController &ctl, const GridView& gridView)
-    : ctl_(ctl),
-      writer_(gridView, "convergence", "", "")
+    NewtonConvergenceWriter(const GridView& gridView, const std::size_t numDofs)
+    : writer_(gridView, "convergence", "", "")
     {
         timeStepIndex_ = 0;
         iteration_ = 0;
 
-        const auto numDofs = ctl_.method().model().numDofs();
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
         {
             def_[eqIdx].resize(numDofs);
@@ -106,9 +96,7 @@ public:
     void write(const SolutionVector &uLastIter,
                const SolutionVector &deltaU)
     {
-        SolutionVector residual(uLastIter);
-        ctl_.method().model().globalResidual(residual, uLastIter);
-
+        const auto residual = LocalResidual::globalResidual();
         for (unsigned int dofIdxGlobal = 0; dofIdxGlobal < deltaU.size(); dofIdxGlobal++)
         {
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
@@ -130,7 +118,6 @@ private:
     std::array<std::vector<Scalar>, numEq> delta_;
     std::array<std::vector<Scalar>, numEq> x_;
 
-    NewtonController &ctl_;
     Dune::VTKSequenceWriter<GridView> writer_;
 };
 
