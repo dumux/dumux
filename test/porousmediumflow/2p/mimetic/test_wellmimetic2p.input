@@ -1,0 +1,9 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1.8e5 # [s]
+
+[Grid]
+File = ../../1p/implicit/grids/WellMesh_4.msh.dgf
+
+[Problem]
+Name = wellinjection_tpfa # name passed to the output routines

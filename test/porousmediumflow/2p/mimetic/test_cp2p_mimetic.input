@@ -1,0 +1,41 @@
+[TimeManager]
+DtInitial = 1.0 # [s]
+TEnd = 6e8 # [s]
+EpisodeLength = 5e7
+
+[Grid]
+File = ../implicit/grids/Hummocky.grdecl
+
+[Problem]
+Name = cc2pcornerpoint_mimetic_lineSearch_writeEpisodes_withDirichlet_shorter # name passed to the output routines
+Homogeneous = 0 # use a homogeneous permeablity/porosity distribution
+InjectionElement = 0 # index of the element where injection should take place
+InjectionRate = 100 # injection rate in kg/s
+BoreHolePressureI = 5e6
+BoreHolePressureP = -2e7
+DeviationX = 20
+DeviationY = 40
+P1WellXCoord = 456387
+P1WellYCoord = 7320567
+P1DeviationX = 20
+P1DeviationY = 40
+P2WellXCoord = 459315
+P2WellYCoord = 7325935
+P2DeviationX = 20
+P2DeviationY = 40
+I1WellXCoord = 458891
+I1WellYCoord = 7322595
+I1DeviationX = 10
+I1DeviationY = 40
+I2WellXCoord = 457452
+I2WellYCoord = 7322575
+I2DeviationX = 10
+I2DeviationY = 40
+
+EnableGravity = false
+
+[LinearSolver]
+Verbosity = 0
+
+[Newton]
+UseLineSearch = 1
