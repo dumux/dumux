@@ -120,7 +120,7 @@ public:
         clear();
 
         const auto& problem = globalVolVars().problem_();
-        const auto globalI = problem.elementMapper().index(element);
+        const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
         const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
         const auto numDofs = assemblyMapI.size() + 1;
 
@@ -205,7 +205,7 @@ public:
     {
         clear();
 
-        auto eIdx = globalVolVars().problem_().elementMapper().index(element);
+        const auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 

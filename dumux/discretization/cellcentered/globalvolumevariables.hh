@@ -52,6 +52,7 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -62,24 +63,24 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    void update(Problem& problem, const SolutionVector& sol)
+    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         problemPtr_ = &problem;
 
-        auto numScv = problem.model().fvGridGeometry().numScv();
-        auto numBoundaryScvf = problem.model().fvGridGeometry().numBoundaryScvf();
+        const auto numScv = fvGridGeometry.numScv();
+        const auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
 
         volumeVariables_.resize(numScv + numBoundaryScvf);
-        for (const auto& element : elements(problem.gridView()))
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[scv.dofIndex()].update(problem.model().elementSolution(element, sol),
-                                                     problem,
-                                                     element,
-                                                     scv);
+            {
+                const ElementSolution elemSol({sol[scv.dofIndex()]});
+                volumeVariables_[scv.dofIndex()].update(elemSol, problem, element, scv);
+            }
 
             // handle the boundary volume variables
             for (auto&& scvf : scvfs(fvGeometry))
@@ -152,9 +153,10 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    void update(Problem& problem, const SolutionVector& sol)
+    void update(Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     { problemPtr_ = &problem; }
 
     /*!

@@ -39,27 +39,6 @@
 #include "properties.hh"
 //#include "problem.hh"
 
-template<class TypeTag>
-class MockProblem
-{
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-public:
-    MockProblem(const GridView& gridView) : mapper_(gridView) {}
-
-    const ElementMapper& elementMapper() const
-    { return mapper_; }
-
-    template<class Element, class Intersection>
-    bool isInteriorBoundary(const Element& e, const Intersection& i) const
-    { return false; }
-
-    std::vector<unsigned int> getAdditionalDofDependencies(unsigned int index) const
-    { return std::vector<unsigned int>(); }
-private:
-    ElementMapper mapper_;
-};
-
 int main(int argc, char** argv)
 {
     using namespace Dumux;
@@ -69,9 +48,11 @@ int main(int argc, char** argv)
     // some aliases for better readability
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    // using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -107,19 +88,35 @@ int main(int argc, char** argv)
     const auto& leafGridView = GridCreator::grid().leafGridView();
 
     // create the finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // do some testing
+    // the solution vector
+    SolutionVector x;
+    x.resize(leafGridView.size(0), 0.0);
+
+    // the problem (boundary conditions)
+    Problem problem(leafGridView);
+
+    // the grid variables
+    auto gridVariables = std::make_shared<GridVariables>();
+    gridVariables->update(problem, *fvGridGeometry, x);
+
     for (const auto& element : elements(leafGridView))
     {
         auto fvGeometry = localView(*fvGridGeometry);
-        fvGeometry.bind(element);
+        fvGeometry.bindElement(element);
+
+        auto elemVolVars = localView(gridVariables->curGridVolVars());
+        elemVolVars.bindElement(element, fvGeometry, x);
+
         for (const auto& scv : scvs(fvGeometry))
-            std::cout << scv.dofPosition() << " ";
-        std::cout << std::endl;
+        {
+            const auto volVars = elemVolVars[scv];
+            std::cout << volVars.pressure(0) << " ";
+        }
     }
+    std::cout << std::endl;
 
     return 0;
 

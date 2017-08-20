@@ -50,6 +50,9 @@ class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -58,23 +61,26 @@ class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
 
 public:
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    void update(Problem& problem)
+    void update(const Problem& problem,
+                const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol)
     {
+        // TODO do we need the problem?
         problemPtr_ = &problem;
 
         // instantiate helper class to fill the caches
         FluxVariablesCacheFiller filler(problem);
 
-        const auto& fvGridGeometry = problem.model().fvGridGeometry();
         fluxVarsCache_.resize(fvGridGeometry.numScvf());
-        for (const auto& element : elements(problem.gridView()))
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // Prepare the geometries within the elements of the stencil
             auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bind(element);
 
-            auto elemVolVars = localView(problem.model().curGlobalVolVars());
-            elemVolVars.bind(element, fvGeometry, problem.model().curSol());
+            auto elemVolVars = localView(gridVolVars);
+            elemVolVars.bind(element, fvGeometry, sol);
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
