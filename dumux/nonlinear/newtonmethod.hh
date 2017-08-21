@@ -62,172 +62,155 @@ class NewtonMethod
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
-    using ConvergenceWriter =  typename GET_PROP_TYPE(TypeTag, NewtonConvergenceWriter);
-    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using LinearSolver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
 
 public:
-    NewtonMethod(std::shared_ptr<JacobianAssembler> jacobianAssembler,
-                 std::shared_ptr<LinearSolver> linearSolver)
-    : jacobianAssembler_(jacobianAssembler)
-    , linearSolver_(linearSolver)
-    {
-        newtonController_ = std::make_unique<NewtonController>(assembler().gridView().comm());
-        // set the linear system (matrix & residual) in the assembler
-        assembler().setLinearSystem(matrix(), residual());
-    }
+    NewtonMethod()
+    : matrix_(std::make_shared<JacobianMatrix>())
+    , residual_(std::make_shared<SolutionVector>())
+    {}
 
     /*!
-     * \brief Run the newton method. The controller is responsible
-     *        for all the strategic decisions.
+     * \brief Run the newton method to solve a non-linear system.
+     *        The controller is responsible for all the strategic decisions.
      */
-    bool execute()
+    template<class NewtonController, class JacobianAssembler, class LinearSolver>
+    bool solve(NewtonController& controller, JacobianAssembler& assembler, LinearSolver& linearSolver)
     {
-        try {
-            return execute_();
+        try
+        {
+            // set the linear system (matrix & residual) in the assembler
+            assembler.setLinearSystem(matrix_, residual_);
+
+            // the current solution is the initial guess
+            SolutionVector& uCurrentIter = assembler.curSol();
+            SolutionVector uLastIter(uCurrentIter);
+            SolutionVector deltaU(uCurrentIter);
+
+            Dune::Timer assembleTimer(false);
+            Dune::Timer solveTimer(false);
+            Dune::Timer updateTimer(false);
+
+            // tell the controller that we begin solving
+            controller.newtonBegin(uCurrentIter);
+
+            // execute the method as long as the controller thinks
+            // that we should do another iteration
+            while (controller.newtonProceed(uCurrentIter))
+            {
+                // notify the controller that we're about to start
+                // a new timestep
+                controller.newtonBeginStep();
+
+                // make the current solution to the old one
+                if (controller.newtonNumSteps() > 0)
+                    uLastIter = uCurrentIter;
+
+                if (controller.verbose()) {
+                    std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
+                    std::cout.flush();
+                }
+
+                ///////////////
+                // assemble
+                ///////////////
+
+                // linearize the problem at the current solution
+                assembleTimer.start();
+                controller.assembleLinearSystem(assembler);
+                assembleTimer.stop();
+
+                ///////////////
+                // linear solve
+                ///////////////
+
+                // Clear the current line using an ansi escape
+                // sequence.  for an explanation see
+                // http://en.wikipedia.org/wiki/ANSI_escape_code
+                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
+
+                if (controller.verbose()) {
+                    std::cout << "\rSolve: M deltax^k = r";
+                    std::cout << clearRemainingLine;
+                    std::cout.flush();
+                }
+
+                // solve the resulting linear equation system
+                solveTimer.start();
+
+                // set the delta vector to zero before solving the linear system!
+                deltaU = 0;
+                // ask the controller to solve the linearized system
+                controller.solveLinearSystem(linearSolver,
+                                             matrix(),
+                                             deltaU,
+                                             residual());
+                solveTimer.stop();
+
+                ///////////////
+                // update
+                ///////////////
+                if (controller.verbose()) {
+                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
+                    std::cout << clearRemainingLine;
+                    std::cout.flush();
+                }
+
+                updateTimer.start();
+                // update the current solution (i.e. uOld) with the delta
+                // (i.e. u). The result is stored in u
+                controller.newtonUpdate(assembler, uCurrentIter, uLastIter, deltaU);
+                updateTimer.stop();
+
+                // tell the controller that we're done with this iteration
+                controller.newtonEndStep(assembler, uCurrentIter, uLastIter);
+            }
+
+            // tell the controller that we're done
+            controller.newtonEnd();
+
+            if (controller.verbose()) {
+                Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+                std::cout << "Assemble/solve/update time: "
+                          <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+                          <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+                          <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+                          << "\n";
+            }
+
+            if (!controller.newtonConverged())
+            {
+                controller.newtonFail();
+                return false;
+            }
+
+            controller.newtonSucceed();
+            return true;
+
         }
-        catch (const NumericalProblem &e) {
-            if (controller().verbose())
+        catch (const NumericalProblem &e)
+        {
+            if (controller.verbose())
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
-            controller().newtonFail();
+            controller.newtonFail();
             return false;
         }
     }
 
-    NewtonController& controller()
-    { return *newtonController_; }
-
-    JacobianAssembler& assembler()
-    { return *jacobianAssembler_; }
-
-    LinearSolver& linearSolver()
-    { return *linearSolver_; }
-
+    //! The jacobian for the Newton method
     JacobianMatrix& matrix()
     { return *matrix_; }
 
+    //! The residual for the Newton method
     SolutionVector& residual()
-    { return residual_; }
+    { return *residual_; }
 
 private:
-    bool execute_()
-    {
-        // the current solution is the initial guess
-        SolutionVector& uCurrentIter = assembler.curSol();
-        SolutionVector uLastIter(uCurrentIter);
-        SolutionVector deltaU(uCurrentIter);
 
-        Dune::Timer assembleTimer(false);
-        Dune::Timer solveTimer(false);
-        Dune::Timer updateTimer(false);
-
-        // tell the controller that we begin solving
-        controller().newtonBegin(uCurrentIter);
-
-        // execute the method as long as the controller thinks
-        // that we should do another iteration
-        while (controller().newtonProceed(uCurrentIter))
-        {
-            // notify the controller that we're about to start
-            // a new timestep
-            controller().newtonBeginStep();
-
-            // make the current solution to the old one
-            if (controller().newtonNumSteps() > 0)
-                uLastIter = uCurrentIter;
-
-            if (controller().verbose()) {
-                std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
-                std::cout.flush();
-            }
-
-            ///////////////
-            // assemble
-            ///////////////
-
-            // linearize the problem at the current solution
-            assembleTimer.start();
-            controller().assembleLinearSystem(assembler());
-            assembleTimer.stop();
-
-            ///////////////
-            // linear solve
-            ///////////////
-
-            // Clear the current line using an ansi escape
-            // sequence.  for an explanation see
-            // http://en.wikipedia.org/wiki/ANSI_escape_code
-            const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
-
-            if (controller().verbose()) {
-                std::cout << "\rSolve: M deltax^k = r";
-                std::cout << clearRemainingLine;
-                std::cout.flush();
-            }
-
-            // solve the resulting linear equation system
-            solveTimer.start();
-
-            // set the delta vector to zero before solving the linear system!
-            deltaU = 0;
-            // ask the controller to solve the linearized system
-            controller().solveLinearSystem(linearSolver(),
-                                           matrix(),
-                                           deltaU,
-                                           residual());
-            solveTimer.stop();
-
-            ///////////////
-            // update
-            ///////////////
-            if (controller().verbose()) {
-                std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
-                std::cout << clearRemainingLine;
-                std::cout.flush();
-            }
-
-            updateTimer.start();
-            // update the current solution (i.e. uOld) with the delta
-            // (i.e. u). The result is stored in u
-            controller().newtonUpdate(assembler(), uCurrentIter, uLastIter, deltaU);
-            updateTimer.stop();
-
-            // tell the controller that we're done with this iteration
-            controller().newtonEndStep(assembler(), uCurrentIter, uLastIter);
-        }
-
-        // tell the controller that we're done
-        controller().newtonEnd();
-
-        if (controller().verbose()) {
-            Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-            std::cout << "Assemble/solve/update time: "
-                      <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                      <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                      <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                      << "\n";
-        }
-
-        if (!controller().newtonConverged()) {
-            controller().newtonFail();
-            return false;
-        }
-
-        controller().newtonSucceed();
-        return true;
-    }
-
-    std::shared_ptr<JacobianAssembler> jacobianAssembler_;
-    std::shared_ptr<LinearSolver> linearSolver_;
-
-    std::unique_ptr<NewtonController> newtonController_;
-
-    std::shared_ptr<JacobianMatrix> matrix_;
-    std::shared_ptr<SolutionVector> residual_;
+    std::shared_ptr<JacobianMatrix> matrix_; //! The jacobian for the Newton method
+    std::shared_ptr<SolutionVector> residual_; //! The residual for the Newton method
 };
 
-}
+} // end namespace Dumux
 
 #endif
