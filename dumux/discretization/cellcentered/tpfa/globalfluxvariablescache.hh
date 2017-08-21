@@ -131,10 +131,16 @@ class CCTpfaGlobalFluxVariablesCache<TypeTag, false>
     friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
 
 public:
     // When global flux variables caching is disabled, we don't need to update the cache
-    void update(Problem& problem)
+    void update(const Problem& problem,
+                const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol)
     { problemPtr_ = &problem; }
 
     /*!

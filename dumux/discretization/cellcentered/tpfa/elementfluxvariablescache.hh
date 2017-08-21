@@ -143,9 +143,10 @@ public:
               const ElementVolumeVariables& elemVolVars)
     {
         const auto& problem = globalFluxVarsCache().problem_();
-        const auto globalI = problem.elementMapper().index(element);
-        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
-        const auto numNeighbors = assemblyMapI.size();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
+        const auto numNeighbors = connectivityMapI.size();
 
         // instantiate helper class to fill the caches
         FluxVariablesCacheFiller filler(problem);
@@ -153,7 +154,7 @@ public:
         // find the number of scv faces that need to be prepared
         auto numScvf = fvGeometry.numScvf();
         for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
-            numScvf += assemblyMapI[localIdxJ].scvfsJ.size();
+            numScvf += connectivityMapI[localIdxJ].scvfsJ.size();
 
         // fill the containers with the data on the scv faces inside the actual element
         fluxVarsCache_.resize(numScvf);
@@ -169,8 +170,8 @@ public:
         // add required data on the scv faces in the neighboring elements
         for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto elementJ = fvGeometry.fvGridGeometry().element(assemblyMapI[localIdxJ].globalJ);
-            for (auto scvfIdx : assemblyMapI[localIdxJ].scvfsJ)
+            const auto elementJ = fvGridGeometry.element(connectivityMapI[localIdxJ].globalJ);
+            for (auto scvfIdx : connectivityMapI[localIdxJ].scvfsJ)
             {
                 auto&& scvfJ = fvGeometry.scvf(scvfIdx);
                 filler.fill(*this, fluxVarsCache_[localScvfIdx], elementJ, fvGeometry, elemVolVars, scvfJ);
@@ -205,7 +206,7 @@ public:
         if (!isSolIndependent)
         {
             const auto& problem = globalFluxVarsCache().problem_();
-            const auto globalI = problem.elementMapper().index(element);
+            const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
 
             // instantiate filler class
             FluxVariablesCacheFiller filler(problem);
@@ -218,7 +219,7 @@ public:
                 const auto scvfInsideScvIdx = scvf.insideScvIdx();
                 const auto& insideElement = scvfInsideScvIdx == globalI ?
                                             element :
-                                            problem.model().fvGridGeometry().element(scvfInsideScvIdx);
+                                            fvGeometry.fvGridGeometry().element(scvfInsideScvIdx);
 
                 filler.fill(*this, fluxVarsCache_[localScvfIdx], insideElement, fvGeometry, elemVolVars, scvf);
             }
