@@ -31,7 +31,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include "newtonconvergencewriter.hh"
 #include "newtonmethod.hh"
 
 namespace Dumux
@@ -39,26 +38,10 @@ namespace Dumux
 template <class TypeTag>
 class NewtonController;
 
-template <class TypeTag>
-class NewtonConvergenceWriter;
-
 namespace Properties
 {
 //! Specifies the implementation of the Newton controller
 NEW_PROP_TAG(NewtonController);
-
-//! Specifies the type of the actual Newton method
-NEW_PROP_TAG(NewtonMethod);
-
-//! Specifies the type of a solution
-NEW_PROP_TAG(SolutionVector);
-
-//! Specifies the type of a global Jacobian matrix
-NEW_PROP_TAG(JacobianMatrix);
-
-//! specifies whether the convergence rate and the global residual
-//! gets written out to disk for every Newton iteration (default is false)
-NEW_PROP_TAG(NewtonWriteConvergence);
 
 //! Specifies whether the Jacobian matrix should only be reassembled
 //! if the current solution deviates too much from the evaluation point
@@ -117,12 +100,8 @@ NEW_PROP_TAG(NewtonTargetSteps);
 //! Number of maximum iterations for the Newton method.
 NEW_PROP_TAG(NewtonMaxSteps);
 
-//! The assembler for the Jacobian matrix
-NEW_PROP_TAG(JacobianAssembler);
-
-// set default values
+//! set default values
 SET_TYPE_PROP(NewtonMethod, NewtonController, NewtonController<TypeTag>);
-SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
 SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteResidualCriterion, false);
 SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
@@ -151,21 +130,15 @@ class NewtonController
 {
     using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
     using Implementation =  typename GET_PROP_TYPE(TypeTag, NewtonController);
-    using ConvergenceWriter =  typename GET_PROP_TYPE(TypeTag, NewtonConvergenceWriter);
     using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
     using Communicator = typename GridView::CollectiveCommunication;
-
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SolutionVector =  typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using JacobianMatrix =  typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using JacobianAssembler =  typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
-    using LinearSolver =  typename GET_PROP_TYPE(TypeTag, LinearSolver);
 
     static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
 public:
     /*!
-     * \brief Constructor without convergence writer
+     * \brief Constructor
      */
     NewtonController(const Communicator& comm)
     : comm_(comm)
@@ -174,7 +147,6 @@ public:
         enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
         enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
 
-        writeConvergence_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence);
         useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
         enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
         enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
@@ -256,6 +228,7 @@ public:
      *
      * \param uCurrentIter The solution of the current Newton iteration
      */
+    template<class SolutionVector>
     bool newtonProceed(const SolutionVector &uCurrentIter)
     {
         if (numSteps_ < 2)
@@ -318,12 +291,10 @@ public:
      *
      * \param u The initial solution
      */
+    template<class SolutionVector>
     void newtonBegin(const SolutionVector &u)
     {
         numSteps_ = 0;
-
-        // if (writeConvergence_)
-        //     convergenceWriter_->advanceTimeStep();
     }
 
     /*!
@@ -356,6 +327,7 @@ public:
      * \param uLastIter The current iterative solution
      * \param deltaU The difference between the current and the next solution
      */
+    template<class SolutionVector>
     void newtonUpdateShift(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
@@ -379,6 +351,7 @@ public:
      *
      * \param assembler The jacobian assembler
      */
+    template<class JacobianAssembler>
     void assembleLinearSystem(JacobianAssembler& assembler)
     {
         assembler.assembleJacobianAndResidual();
@@ -395,6 +368,7 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
+    template<class LinearSolver, class JacobianMatrix, class SolutionVector>
     void solveLinearSystem(LinearSolver& ls,
                            JacobianMatrix& A,
                            SolutionVector& x,
@@ -485,6 +459,7 @@ public:
      *               system of equations. This parameter also stores
      *               the updated solution.
      */
+    template<class JacobianAssembler, class SolutionVector>
     void newtonUpdate(const JacobianAssembler& assembler,
                       SolutionVector &uCurrentIter,
                       const SolutionVector &uLastIter,
@@ -492,12 +467,6 @@ public:
     {
         if (enableShiftCriterion_)
             newtonUpdateShift(uLastIter, deltaU);
-
-        // if (writeConvergence_)
-        // {
-        //     convergenceWriter_->advanceIteration();
-        //     convergenceWriter_->write(uLastIter, deltaU);
-        // }
 
         if (useLineSearch_)
         {
@@ -533,6 +502,7 @@ public:
      * \param uCurrentIter The solution after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */
+    template<class JacobianAssembler, class SolutionVector>
     void newtonEndStep(JacobianAssembler& assembler,
                        SolutionVector &uCurrentIter,
                        const SolutionVector &uLastIter)
@@ -546,7 +516,7 @@ public:
         // classes directly as well?
         // -> The assembler has all the data w.r.t. the problem etc...
         // -> also, how do we call this?
-        assembler.updateVariables();
+        assembler.gridVariables().update(assembler.problem(), assembler.fvGridGeometry(), uCurrentIter);
 
         ++numSteps_;
 
@@ -643,6 +613,7 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+    template<class JacobianAssembler, class SolutionVector>
     void lineSearchUpdate_(const JacobianAssembler& assembler,
                            SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
@@ -708,9 +679,6 @@ protected:
     // message stream to be displayed at the end of iterations
     std::ostringstream endIterMsgStream_;
 
-    // writes an output file for each iteration
-    // ConvergenceWriter convergenceWriter_;
-
     // switches on/off verbosity
     bool verbose_;
 
@@ -742,10 +710,8 @@ protected:
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
-
-    // specifies if we want to write down the intermediate solutions
-    bool writeConvergence_;
 };
+
 } // namespace Dumux
 
 #endif

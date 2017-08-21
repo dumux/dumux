@@ -92,13 +92,6 @@ public:
     , gridVariables_(gridVariables)
     {}
 
-    //! Update the variables
-    // TODO Is this right here? Needs to be called after every Newton step
-    void updateVariables()
-    {
-        gridVariables().update(problem(), fvGridGeometry(), curSol());
-    }
-
     /*!
      * \brief Assembles the global Jacobian of the residual
      *        and the residual for the current solution.
