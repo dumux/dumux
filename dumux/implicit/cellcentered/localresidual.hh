@@ -76,7 +76,7 @@ public:
         // boundary faces
         else
         {
-            const auto& bcTypes = elemBcTypes[localScvIdx];
+            const auto& bcTypes = problem.boundaryTypes(element, scvf);
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
