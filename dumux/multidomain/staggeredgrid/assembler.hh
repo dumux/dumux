@@ -227,6 +227,7 @@ protected:
 
         auto A13 = MatrixBlockStokesCCToDarcy(cellCenterSize, darcySize, MatrixBlockStokesCCToDarcy::random);
         auto A23 = MatrixBlockStokesFaceToDarcy(faceSize, darcySize, MatrixBlockStokesFaceToDarcy::random);
+
         setupStokesMatrices_(A11, A12, A21, A22, A13, A23);
 
         (*matrix_)[stokesIdx][stokesIdx][cellCenterIdx][cellCenterIdx] = A11;
@@ -275,7 +276,7 @@ protected:
 
         const auto& assemblyMap = problem_().stokesProblem().model().localJacobian().assemblyMap();
 
-        for (const auto& element : elements(problem_().stokesProblem().gridView()))
+        for (const auto& element : elements(problem_().stokesGridView()))
         {
             // the global index of the element at hand
             const auto ccGlobalI = problem_().stokesProblem().elementMapper().index(element);
@@ -315,6 +316,8 @@ protected:
 
         occupationPatternA13.exportIdx(A13);
         occupationPatternA23.exportIdx(A23);
+
+        Dune::dverb << "Stokes matrices set up." << std::endl;
     }
 
     void setupDarcyMatrices_(DarcyMatrixBlock& m,
@@ -327,32 +330,35 @@ protected:
         darcyToCCPattern.resize(darcyToCC.N(), darcyToCC.M());
         darcyToFacePattern.resize(darcyToFace.N(), darcyToFace.M());
 
+        const auto& assemblyMap = this->problem_().darcyProblem().model().localJacobian().assemblyMap();
         for (const auto& element : elements(problem_().darcyGridView()))
         {
+            const auto globalI = problem_().model().darcyElementMapper().index(element);
+
+            darcyPattern.add(globalI, globalI);
+            for (const auto& dataJ : assemblyMap[globalI])
+                darcyPattern.add(dataJ.globalJ, globalI);
+
+            // reserve index for additional user defined DOF dependencies
+            const auto& additionalDofDependencies = problem_().darcyProblem().getAdditionalDofDependencies(globalI);
+            for (auto globalJ : additionalDofDependencies)
+                darcyPattern.add(globalI, globalJ);
+
             const auto& couplingCCStencil = problem_().couplingManager().couplingStencil(element, cellCenterIdx);
             const auto& couplingFaceStencil = problem_().couplingManager().couplingStencil(element, faceIdx);
 
-            for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-            {
-                const auto globalI = problem_().model().darcyVertexMapper().subIndex(element, vIdx, dim);
-                for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(dim); ++vIdx2)
-                {
-                    const auto globalJ = problem_().model().darcyVertexMapper().subIndex(element, vIdx2, dim);
-                    darcyPattern.add(globalI, globalJ);
-                    darcyPattern.add(globalJ, globalI);
-                }
-
-                for (auto&& globalJ : couplingCCStencil)
-                    darcyToCCPattern.add(globalI, globalJ);
-                for (auto&& globalJ : couplingFaceStencil)
-                    darcyToFacePattern.add(globalI, globalJ);
-            }
+            for (auto globalJ : couplingCCStencil)
+                darcyToCCPattern.add(globalI, globalJ);
+            for (auto globalJ : couplingFaceStencil)
+                darcyToFacePattern.add(globalI, globalJ);
         }
 
         // export occupation patterns to matrices
         darcyPattern.exportIdx(m);
         darcyToCCPattern.exportIdx(darcyToCC);
         darcyToFacePattern.exportIdx(darcyToFace);
+
+        Dune::dverb << "Darcy matrices set up." << std::endl;
     }
 
 

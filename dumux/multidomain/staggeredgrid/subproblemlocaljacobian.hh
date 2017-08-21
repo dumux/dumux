@@ -32,7 +32,7 @@
 
 #include <dumux/multidomain/properties.hh>
 
-#define TREAT_STOKES_COUPLED_CC_DERIVATIVES 0
+//#define TREAT_STOKES_COUPLED_CC_DERIVATIVES 0 // TODO ?
 
 namespace Dumux
 {
@@ -123,6 +123,8 @@ class SubProblemLocalJacobianForStaggered : public GET_PROP_TYPE(SubProblemTypeT
     using FacePrimaryVariables = typename GET_PROP_TYPE(StokesProblemTypeTag, FacePrimaryVariables);
     using GlobalFaceVars = typename GET_PROP_TYPE(StokesProblemTypeTag, GlobalFaceVars);
     using FaceSolutionVector = typename GET_PROP_TYPE(StokesProblemTypeTag, FaceSolutionVector);
+
+    using DarcyPrimaryVariables = typename GET_PROP_TYPE(DarcyProblemTypeTag, PrimaryVariables);
 
 public:
 
@@ -360,19 +362,13 @@ public:
 
         for (auto globalJ : couplingStencil)
         {
-            const auto originalResidual = globalProblem_().couplingManager().evalDarcyCouplingResidual(element,
-                                                                                                  fvGeometry,
-                                                                                                  curElemVolVars,
-                                                                                                  elemBcTypes,
-                                                                                                  elemFluxVarsCache); //, otherElement); TODO
+            const auto originalResidual = globalProblem_().couplingManager().evalDarcyCouplingResidual(element);
 
             auto& otherPriVars = otherProblem_().model().curSol()[cellCenterIdx][globalJ];
             auto originalOtherPriVars = otherPriVars;
 
             // derivatives in the neighbors with repect to the current elements
-//            std::decay_t<decltype(originalResidual)> partialDeriv;
-            ElementSolutionVector partialDeriv(fvGeometry.numScv()); // TODO!!
-//            PrimaryVariables partialDeriv;
+            DarcyPrimaryVariables partialDeriv(0.0);
             for (int pvIdx = 0; pvIdx < otherPriVars.size(); pvIdx++)
             {
                 const Scalar eps = this->numericEpsilon(otherPriVars[pvIdx]);
@@ -388,11 +384,7 @@ public:
                     delta += eps;
 
                     // calculate the residual with the deflected primary variables
-                    partialDeriv = globalProblem_().couplingManager().evalDarcyCouplingResidual(element,
-                                                                                           fvGeometry,
-                                                                                           curElemVolVars,
-                                                                                           elemBcTypes,
-                                                                                           elemFluxVarsCache);
+                    partialDeriv = globalProblem_().couplingManager().evalDarcyCouplingResidual(element);
                 }
                 else
                 {
@@ -413,11 +405,7 @@ public:
                     delta += eps;
 
                     // calculate the residual with the deflected primary variables
-                    partialDeriv -= globalProblem_().couplingManager().evalDarcyCouplingResidual(element,
-                                                                                            fvGeometry,
-                                                                                            curElemVolVars,
-                                                                                            elemBcTypes,
-                                                                                            elemFluxVarsCache);
+                    partialDeriv -= globalProblem_().couplingManager().evalDarcyCouplingResidual(element);
                 }
                 else
                 {
@@ -437,7 +425,9 @@ public:
                 // update the global jacobian matrix (coupling block)
 //                this->updateGlobalJacobian_(couplingMatrix, this->globalI_, globalJ, pvIdx, partialDeriv); // TODO ??
                 for (auto&& scv : scvs(fvGeometry))
-                this->updateGlobalJacobian_(couplingMatrix[localDarcyIdx][cellCenterIdx], scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.dofIndex()]); // TODO!!
+                this->updateGlobalJacobian_(couplingMatrix[localDarcyIdx][cellCenterIdx], scv.dofIndex(), globalJ, pvIdx, partialDeriv); // TODO!!
+//                  this->updateGlobalJacobian_(couplingMatrix[cellCenterIdx][localDarcyIdx], scv.dofIndex(), globalJ, pvIdx, partialDeriv); // TODO!!
+
             }
         }
     }
@@ -456,9 +446,9 @@ public:
                                             const CellCenterPrimaryVariables& ccResidual,
                                             const FaceSolutionVector& faceResidualCache)
     {
-#if TREAT_STOKES_COUPLED_CC_DERIVATIVES
+//#if TREAT_STOKES_COUPLED_CC_DERIVATIVES
         const auto& couplingStencilCC = globalProblem_().couplingManager().couplingStencil(element);
-        const auto ccGlobalI = globalProblem_().couplingManager().StokesProblem().elementMapper().index(element);
+        const auto ccGlobalI = globalProblem_().couplingManager().stokesProblem().elementMapper().index(element);
 
         // treat cell-center derivatives
         for (auto globalJ : couplingStencilCC)
@@ -536,13 +526,14 @@ public:
                 this->updateGlobalJacobian_(couplingMatrix[cellCenterIdx][localDarcyIdx], ccGlobalI, globalJ, pvIdx, partialDeriv);
             }
         }
-#endif
+//#endif
 
         // treat face derivatives
         for(auto&& scvf : scvfs(fvGeometry))
         {
             const auto originalResidual = globalProblem_().couplingManager().evalStokesFaceCouplingResidual(element,
                                                                                                           fvGeometry,
+                                                                                                          curGlobalFaceVars,
                                                                                                           scvf);
 
             const auto& couplingStencilFace = globalProblem_().couplingManager().couplingStencil(scvf);
@@ -572,6 +563,7 @@ public:
                         // calculate the residual with the deflected primary variables
                         partialDeriv = globalProblem_().couplingManager().evalStokesFaceCouplingResidual(element,
                                                                                                     fvGeometry,
+                                                                                                    curGlobalFaceVars,
                                                                                                     scvf);
                     }
                     else
@@ -595,6 +587,7 @@ public:
                         // calculate the residual with the deflected primary variables
                         partialDeriv -= globalProblem_().couplingManager().evalStokesFaceCouplingResidual(element,
                                                                                                     fvGeometry,
+                                                                                                    curGlobalFaceVars,
                                                                                                     scvf);
                     }
                     else
