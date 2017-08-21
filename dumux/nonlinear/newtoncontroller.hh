@@ -534,7 +534,7 @@ public:
         endIterMsgStream_.str("");
 
         // When the Newton iterations are done: ask the model to check whether it makes sense
-        // TODO: how do we realize this?
+        // TODO: how do we realize this? -> do this here in the newton controller
         // model_().checkPlausibility();
     }
 
@@ -619,35 +619,36 @@ protected:
                            const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
-       Scalar lambda = 1.0;
-       SolutionVector tmp(uLastIter);
+        Scalar lambda = 1.0;
+        SolutionVector tmp(uLastIter);
 
-       while (true) {
-           uCurrentIter = deltaU;
-           uCurrentIter *= -lambda;
-           uCurrentIter += uLastIter;
+        while (true)
+        {
+            uCurrentIter = deltaU;
+            uCurrentIter *= -lambda;
+            uCurrentIter += uLastIter;
 
-           // calculate the residual of the current solution
-           // Originally here we handed in uCurrentIter into
-           // the global residual function to evaluate the
-           // residual for the given solution. Currently, the
-           // assembler evaluates the residual for the curSol
-           // container only. However, uCurrentIter is a ref
-           // to this container, so we don't need to do the copying
-           // etc.
-           // TODO: Should we re-include this??????
-           residual_ = assembler.globalResidual();
-           reduction_ = residual_;
-           reduction_ /= initialResidual_;
+            // calculate the residual of the current solution
+            // Originally here we handed in uCurrentIter into
+            // the global residual function to evaluate the
+            // residual for the given solution. Currently, the
+            // assembler evaluates the residual for the curSol
+            // container only. However, uCurrentIter is a ref
+            // to this container, so we don't need to do the copying
+            // etc.
+            // TODO: Should we re-include this??????
+            residual_ = assembler.globalResidual();
+            reduction_ = residual_;
+            reduction_ /= initialResidual_;
 
-           if (reduction_ < lastReduction_ || lambda <= 0.125) {
-               endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
-               return;
-           }
+            if (reduction_ < lastReduction_ || lambda <= 0.125) {
+                endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
+                return;
+            }
 
-           // try with a smaller update
-           lambda /= 2.0;
-       }
+            // try with a smaller update
+            lambda /= 2.0;
+        }
     }
 
     /*!
