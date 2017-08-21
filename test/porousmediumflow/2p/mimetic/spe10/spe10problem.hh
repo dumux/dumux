@@ -152,6 +152,9 @@ class TwoPSpe10Problem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     enum {
 
@@ -277,17 +280,10 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluates the boundary conditions for a Dirichlet
-     *        boundary segment
-     *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
-     * \param globalPos The global position
-     */
-    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         PrimaryVariables values(0);
+        const auto globalPos = scvf.ipGlobal();
 
         if (onUpperBoundary_(globalPos))
         {
@@ -300,7 +296,13 @@ public:
             values[snIdx] = 0.0;
         }
 #if PROBLEM==1
-        Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), 1.0-values[snIdx]);
+        auto fvGeometry = localView(this->model().globalFvGeometry());
+        fvGeometry.bindElement(element);
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+
+        Scalar pc = MaterialLaw::pc(
+                this->spatialParams().materialLawParams(element,scv,
+                        this->model().elementSolution(element, this->model().curSol())), 1.0-values[snIdx]);
         values[facePressureWIdx] = values[pwIdx];
         //values[facePressureNIdx] = pc + values[facePressureWIdx];
 #endif
@@ -333,13 +335,6 @@ public:
     // \{
 
 
-    /*!
-     * \brief Evaluates the initial values for a control volume
-     *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
-     * \param globalPos The global position
-     */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
@@ -350,12 +345,18 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
+//        auto fvGeometry = localView(this->model().globalFvGeometry());
+//        fvGeometry.bindElement(element);
+//        const auto& scv = fvGeometry.scv(this->elementMapper(element));
+//        const auto globalPos = scv.center();
+
         Scalar depth = this->bBoxMax()[dim-1] - globalPos[dim-1];
 
         values[pwIdx] = pOut_ + (pIn_-pOut_)/this->bBoxMax()[dim-1] * depth - densityW*this->gravity()[dim-1]*depth;
         values[snIdx] = 1.0;
 #if PROBLEM==1
-        Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), 1.0-values[snIdx]);
+        Scalar pc = 0.0;
+
         values[facePressureWIdx] = values[pwIdx];
         //values[facePressureNIdx] = pc + values[facePressureWIdx];
 #endif
@@ -392,6 +393,7 @@ public:
         auto& potN = outputModule.createScalarField("potN", 0);
         auto& Kxx = outputModule.createScalarField("Kxx", 0);
         auto& Kyy = outputModule.createScalarField("Kyy", 0);
+        auto& pd = outputModule.createScalarField("pd", 0);
 
         typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
         fluidState.setTemperature(temperature_);
@@ -417,10 +419,14 @@ public:
                 auto K = this->spatialParams().permeability(element, scv,
                         this->model().elementSolution(element, this->model().curSol()));
 
+                auto materialParams = this->spatialParams().materialLawParams(element,scv,
+                        this->model().elementSolution(element, this->model().curSol()));
+
                 auto center = scv.center();
                 Scalar depth = this->bBoxMax()[1] - center[1];
                 potW[ccDofIdx] = elemVolVars[scv].pressure(wPhaseIdx) + densityW*this->gravity()[1]*depth;
                 potN[ccDofIdx] = elemVolVars[scv].pressure(nPhaseIdx) + densityN*this->gravity()[1]*depth;
+                pd[ccDofIdx] = materialParams.pe();
                 Kxx[ccDofIdx] = K[0][0];
                 Kyy[ccDofIdx] = K[1][1];
             }

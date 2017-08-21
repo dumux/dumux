@@ -200,14 +200,13 @@ public:
         return porosity_[eIdx];
     }
 
-    /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
-     *
-     * \param globalPos The global position
-     */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
+
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolutionVector& elemSol) const
     {
-        return materialLawParams_[0];
+        int eIdx = GridCreator::grid().leafGridView().indexSet().index(element);
+        return materialLawParams_[eIdx];
     }
 
 
