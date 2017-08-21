@@ -47,7 +47,6 @@ NEW_PROP_TAG(NewtonController);
 NEW_PROP_TAG(SolutionVector);
 NEW_PROP_TAG(JacobianAssembler);
 NEW_PROP_TAG(JacobianMatrix);
-NEW_PROP_TAG(NewtonConvergenceWriter);
 NEW_PROP_TAG(WriteConvergence);
 }
 

@@ -117,7 +117,6 @@ NEW_PROP_TAG(VelocityOutput); //!< specifies the velocity calculation module to 
 NEW_PROP_TAG(TimeManager);  //!< Manages the simulation time
 NEW_PROP_TAG(NewtonMethod);     //!< The type of the newton method
 NEW_PROP_TAG(NewtonController); //!< The type of the newton controller
-NEW_PROP_TAG(NewtonConvergenceWriter); //!< The type of the newton convergence writer
 
 //! Specify whether the jacobian matrix of the last iteration of a
 //! time step should be re-used as the jacobian of the first iteration
