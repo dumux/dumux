@@ -163,7 +163,7 @@ public:
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         // initialize the residual vector for all scvs in this element
-        ElementResidualVector residual(fvGeometry.numScv(), 0.0);
+        ElementResidualVector residual(fvGeometry.numScv());
 
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : scvs(fvGeometry))
@@ -264,28 +264,28 @@ public:
                      const ElementVolumeVariables& prevElemVolVars,
                      const SubControlVolume& scv) const
     {
-        const auto& curVolVars = curElemVolVars[scv];
-        const auto& prevVolVars = prevElemVolVars[scv];
+        // const auto& curVolVars = curElemVolVars[scv];
+        // const auto& prevVolVars = prevElemVolVars[scv];
 
-        // mass balance within the element. this is the
-        // \f$\frac{m}{\partial t}\f$ term if using implicit
-        // euler as time discretization.
-        //
-        // We might need a more explicit way for
-        // doing the time discretization...
+        // // mass balance within the element. this is the
+        // // \f$\frac{m}{\partial t}\f$ term if using implicit
+        // // euler as time discretization.
+        // //
+        // // We might need a more explicit way for
+        // // doing the time discretization...
 
-        //! Compute storage with the model specific storage residual
-        ResidualVector prevStorage = asImp_().computeStorage(problem, scv, prevVolVars);
-        ResidualVector storage = asImp_().computeStorage(problem, scv, curVolVars);
+        // //! Compute storage with the model specific storage residual
+        // ResidualVector prevStorage = asImp_().computeStorage(problem, scv, prevVolVars);
+        // ResidualVector storage = asImp_().computeStorage(problem, scv, curVolVars);
 
-        prevStorage *= prevVolVars.extrusionFactor();
-        storage *= curVolVars.extrusionFactor();
+        // prevStorage *= prevVolVars.extrusionFactor();
+        // storage *= curVolVars.extrusionFactor();
 
-        storage -= prevStorage;
-        storage *= scv.volume();
-        storage /= problem.timeManager().timeStepSize();
+        // storage -= prevStorage;
+        // storage *= scv.volume();
+        // storage /= problem.timeManager().timeStepSize();
 
-        residual[scv.indexInElement()] += storage;
+        // residual[scv.indexInElement()] += storage;
     }
 
     void evalSource(ElementResidualVector& residual,

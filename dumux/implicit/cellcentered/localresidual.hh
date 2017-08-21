@@ -70,7 +70,7 @@ public:
         // inner faces
         if (!scvf.boundary())
         {
-            residual[localScvIdx] += this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            residual[localScvIdx] += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         }
 
         // boundary faces
@@ -80,12 +80,12 @@ public:
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                residual[localScvIdx] += this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+                residual[localScvIdx] += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf);
+                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
                 neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();

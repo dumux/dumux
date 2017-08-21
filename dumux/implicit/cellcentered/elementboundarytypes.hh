@@ -89,8 +89,8 @@ public:
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            if (!problem.model().onBoundary(scv))
-                return;
+            // if (!problem.model().onBoundary(scv))
+            //     return;
 
             for (auto&& scvFace : scvfs(fvGeometry))
             {

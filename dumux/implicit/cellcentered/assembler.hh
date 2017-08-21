@@ -27,10 +27,17 @@
 #include <dune/istl/matrixindexset.hh>
 
 #include <dumux/implicit/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 #include "localassembler.hh"
 
 namespace Dumux {
+
+namespace Properties
+{
+NEW_PROP_TAG(AssemblyMap);
+NEW_PROP_TAG(LocalAssembler);
+}
 
 template<class TypeTag, DiscretizationMethods DM>
 class ImplicitAssemblerImplementation;
@@ -76,18 +83,18 @@ public:
 
     //! The constructor
     CCImplicitAssembler(std::shared_ptr<const Problem> problem,
-                        std::shared_ptr<const FVGridGeometry> gridFvGeometry,
+                        std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                         std::shared_ptr<const SolutionVector> prevSol,
                         std::shared_ptr<const SolutionVector> curSol,
                         std::shared_ptr<GridVariables> gridVariables)
     : problem_(problem)
-    , gridFvGeometry_(gridFvGeometry)
+    , fvGridGeometry_(fvGridGeometry)
     , prevSol_(prevSol)
     , curSol_(curSol)
     , gridVariables_(gridVariables)
     {
         // build assembly map
-        assemblyMap_.init(gridFvGeometry);
+        assemblyMap_.init(*fvGridGeometry);
     }
 
     /*!
@@ -137,7 +144,7 @@ public:
         try
         {
             // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
+            for (const auto& element : elements(gridView()))
                 LocalAssembler::assemble(*this, element);
 
             // if we get here, everything worked well
@@ -148,7 +155,7 @@ public:
         // throw exception if a problem ocurred
         catch (NumericalProblem &e)
         {
-            std::cout << "rank " << problem_().gridView().comm().rank()
+            std::cout << "rank " << gridView().comm().rank()
                       << " caught an exception while assembling:" << e.what()
                       << "\n";
             succeeded = false;
@@ -164,11 +171,11 @@ public:
      *        This also resizes the containers to the required sizes and sets the
      *        sparsity pattern of the matrix.
      */
-    void setLinearSystem(std::shared_ptr<JacobianMatrix> matrix,
-                         std::shared_ptr<SolutionVector> residual)
+    void setLinearSystem(std::shared_ptr<JacobianMatrix>& A,
+                         std::shared_ptr<SolutionVector>& r)
     {
-        matrix_ = matrix;
-        residual_ = residual;
+        matrix_ = A;
+        residual_ = r;
 
         // check and/or set the BCRS matrix's build mode
         if (matrix().buildMode() == JacobianMatrix::BuildMode::unknown)
@@ -185,7 +192,7 @@ public:
     void updateLinearSystem()
     {
         // resize the matrix and the residual
-        const auto numDofs = numDofs();
+        const auto numDofs = this->numDofs();
         matrix().setSize(numDofs, numDofs);
         residual().resize(numDofs);
 
@@ -200,9 +207,9 @@ public:
                 occupationPattern.add(dataJ.globalJ, globalI);
 
             // reserve index for additional user defined DOF dependencies
-            const auto& additionalDofDependencies = problem().getAdditionalDofDependencies(globalI);
-            for (auto globalJ : additionalDofDependencies)
-                occupationPattern.add(globalI, globalJ);
+            // const auto& additionalDofDependencies = problem().getAdditionalDofDependencies(globalI);
+            // for (auto globalJ : additionalDofDependencies)
+            //     occupationPattern.add(globalI, globalJ);
         }
 
         // export pattern to matrix
@@ -217,10 +224,10 @@ public:
         {
             if (element.partitionType != Dune::GhostEntity)
             {
-                const auto eIdx = gridFvGeometry().elementMapper().index(element);
+                const auto eIdx = fvGridGeometry().elementMapper().index(element);
                 r[eIdx] += localResidual().eval(element,
                                                 problem(),
-                                                gridFvGeometry(),
+                                                fvGridGeometry(),
                                                 gridVariables(),
                                                 curSol(),
                                                 prevSol());
@@ -244,13 +251,13 @@ public:
     }
 
     const Problem& problem() const
-    { return *problem; }
+    { return *problem_; }
 
-    const FVGridGeometry& gridFvGeometry() const
-    { return *gridFvGeometry_; }
+    const FVGridGeometry& fvGridGeometry() const
+    { return *fvGridGeometry_; }
 
     const GridView& gridView() const
-    { return gridFvGeometry_().gridView(); }
+    { return fvGridGeometry().gridView(); }
 
     const SolutionVector& prevSol() const
     { return *prevSol_; }
@@ -269,8 +276,8 @@ public:
 
     SolutionVector& residual()
     {
-        assert(residual_ && "The right hand side has been set yet!");
-        return residual_;
+        assert(residual_ && "The residual has not been set yet!");
+        return *residual_;
     }
 
     const AssemblyMap& assemblyMap() const
@@ -289,28 +296,19 @@ private:
     // that the jacobian matrix must only be erased partially!
     void resetSystem_()
     {
-        residual_() = 0.0;
+        residual() = 0.0;
         resetMatrix_();
     }
     void resetMatrix_()
     {
-        matrix_() = 0.0;
-    }
-
-     /*!
-     * \brief Assemble the global Jacobian of the residual
-     *        and the residual for the current solution.
-     */
-    void assemble_()
-    {
-
+        matrix() = 0.0;
     }
 
     // pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
 
     // the finite volume geometry of the grid
-    std::shared_ptr<const FVGridGeometry> gridFvGeometry_;
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
 
     // previous and current solution to the problem
     std::shared_ptr<const SolutionVector> prevSol_;

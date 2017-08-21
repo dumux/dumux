@@ -20,21 +20,66 @@
  * \file
  * \brief The properties for the incompressible test
  */
-#ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROPERTIES_HH
-#define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROPERTIES_HH
+#ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
+#define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/localassembler.hh>
 #include <dumux/implicit/gridvariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/porousmediumflow/1p/implicit/propertydefaults.hh>
 
 namespace Dumux
 {
+// forward declarations
+template<class TypeTag> class OnePTestProblem;
+template<class TypeTag> class OnePTestSpatialParams;
+
+namespace Properties
+{
+
+NEW_PROP_TAG(EnableFVGridGeometryCache);
+NEW_PROP_TAG(FVGridGeometry);
+
+NEW_TYPE_TAG(IncompressibleTestProblem, INHERITS_FROM(CCTpfaModel, OneP));
+
+// Set the grid type
+SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
+
+// Set the finite volume grid geometry
+SET_TYPE_PROP(IncompressibleTestProblem, FVGridGeometry, CCTpfaFVGridGeometry<TypeTag, true>);
+
+// Set the problem type
+SET_TYPE_PROP(IncompressibleTestProblem, Problem, OnePTestProblem<TypeTag>);
+SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
+
+// the grid variables
+SET_TYPE_PROP(IncompressibleTestProblem, GridVariables, GridVariables<TypeTag>);
+
+// the local assembler
+SET_TYPE_PROP(IncompressibleTestProblem, LocalAssembler, CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>);
+
+// the fluid system
+SET_PROP(IncompressibleTestProblem, Fluid)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+};
+
+// Enable caching
+SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, true);
+
+} // end namespace Properties
 
 template<class TypeTag>
-class MockSpatialParams
+class OnePTestSpatialParams
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -61,20 +106,23 @@ public:
 
 
 template<class TypeTag>
-class MockProblem
+class OnePTestProblem
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
 public:
-    MockProblem(const GridView& gridView) {}
+    OnePTestProblem(const GridView& gridView) {}
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -87,7 +135,10 @@ public:
                                 const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes values;
+        // const auto& pos = scvf.ipGlobal();
         values.setAllDirichlet();
+        // if (pos[0] > 1.0 - 1e-8 || pos[0] < 1e-8)
+        //     values.setAllNeumann();
         return values;
     }
 
@@ -103,7 +154,68 @@ public:
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
     {
+        // const auto& pos = scvf.ipGlobal();
+        // return PrimaryVariables(pos[1]*1e5 + 1e5);
         return PrimaryVariables(0.0);
+    }
+
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The center of the finite volume which ought to be set.
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    ResidualVector neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolvars,
+                           const SubControlVolumeFace& scvf) const
+    {
+        return ResidualVector(0.0);
+    }
+
+    /*!
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param values The source and sink values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The subcontrolvolume
+     *
+     * For this method, the \a values parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
+     */
+    ResidualVector source(const Element &element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolume &scv) const
+    {
+        return ResidualVector(0.0);
+    }
+
+    /*!
+     * \brief Adds contribution of point sources for a specific sub control volume
+     *        to the values.
+     *        Caution: Only overload this method in the implementation if you know
+     *                 what you are doing.
+     */
+    ResidualVector scvPointSources(const Element &element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& elemVolVars,
+                                     const SubControlVolume &scv) const
+    {
+        return ResidualVector(0.0);
     }
 
     /*!
@@ -142,52 +254,14 @@ public:
         return 1.0;
     }
 
-    const MockSpatialParams<TypeTag>& spatialParams() const
+    const OnePTestSpatialParams<TypeTag>& spatialParams() const
     { return spatialParams_; }
 
 private:
-    MockSpatialParams<TypeTag> spatialParams_;
+    OnePTestSpatialParams<TypeTag> spatialParams_;
 
 
 };
-
-namespace Properties
-{
-
-NEW_PROP_TAG(EnableFVGridGeometryCache);
-NEW_PROP_TAG(FVGridGeometry);
-
-NEW_TYPE_TAG(IncompressibleTestProblem, INHERITS_FROM(CCTpfaModel, OneP));
-
-// Set the grid type
-SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
-
-// Set the finite volume grid geometry
-SET_TYPE_PROP(IncompressibleTestProblem, FVGridGeometry, CCTpfaFVGridGeometry<TypeTag, true>);
-
-// Set the problem type
-SET_TYPE_PROP(IncompressibleTestProblem, Problem, MockProblem<TypeTag>);
-SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, MockSpatialParams<TypeTag>);
-
-// the grid variables
-SET_TYPE_PROP(IncompressibleTestProblem, GridVariables, GridVariables<TypeTag>);
-
-// the fluid system
-SET_PROP(IncompressibleTestProblem, Fluid)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
-};
-
-// Enable caching
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFVGeometryCache, true);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, true);
-
-} // end namespace Properties
 
 } // end namespace Dumux
 

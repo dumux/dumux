@@ -25,6 +25,7 @@
 #define DUMUX_CC_IMPLICIT_LOCAL_ASSEMBLER_HH
 
 #include <dune/istl/matrixindexset.hh>
+#include <dune/istl/bvector.hh>
 
 #include <dumux/implicit/properties.hh>
 
@@ -54,6 +55,10 @@ class CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
@@ -116,7 +121,7 @@ private:
     {
         // get some references for convenience
         const auto& problem = assembler.problem();
-        const auto& gridFvGeometry = assembler.gridFvGeometry();
+        const auto& fvGridGeometry = assembler.fvGridGeometry();
         const auto& assemblyMap = assembler.assemblyMap();
         const auto& prevSol = assembler.prevSol();
         auto& curSol = assembler.curSol();
@@ -128,17 +133,17 @@ private:
         auto fvGeometry = localView(assembler.fvGridGeometry());
         fvGeometry.bind(element);
 
-        auto curElemVolVars = localView(gridVariables.curGlobalVolVars());
+        auto curElemVolVars = localView(gridVariables.curGridVolVars());
         curElemVolVars.bind(element, fvGeometry, curSol);
 
-        auto prevElemVolVars = localView(gridVariables.prevGlobalVolVars());
+        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
         prevElemVolVars.bindElement(element, fvGeometry, prevSol);
 
-        auto elemFluxVarsCache = localView(gridVariables.globalFluxVarsCache());
+        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
         // the global dof of the actual element
-        const auto globalI = gridFvGeometry.elementMapper().index(element);
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
 
         // check for boundaries on the element
         ElementBoundaryTypes elemBcTypes;
@@ -148,12 +153,15 @@ private:
         const bool isGhost = (element.partitionType() == Dune::GhostEntity);
 
         // the actual element's current residual
-        const NumEqVector residual = isGhost ? 0.0 : localResidual.eval(element,
-                                                                        fvGeometry,
-                                                                        prevElemVolVars,
-                                                                        curElemVolVars,
-                                                                        elemBcTypes,
-                                                                        elemFluxVarsCache);
+        NumEqVector residual(0.0);
+        if (!isGhost)
+            residual = localResidual.eval(problem,
+                                          element,
+                                          fvGeometry,
+                                          prevElemVolVars,
+                                          curElemVolVars,
+                                          elemBcTypes,
+                                          elemFluxVarsCache)[0];
 
         // TODO Do we really need this??????????
         // this->model_().updatePVWeights(fvGeometry);
@@ -182,20 +190,26 @@ private:
         unsigned int j = 0;
         for (const auto& dataJ : assemblyMap[globalI])
         {
-            neighborElements.emplace_back(gridFvGeometry().element(dataJ.globalJ));
+            neighborElements.emplace_back(fvGridGeometry.element(dataJ.globalJ));
             for (const auto scvfIdx : dataJ.scvfsJ)
-                origFlux[j] += localResidual.evalFlux_(neighborElements.back(),
-                                                       fvGeometry,
-                                                       curElemVolVars,
-                                                       fvGeometry.scvf(scvfIdx),
-                                                       elemFluxVarsCache);
+            {
+                ElementSolutionVector flux(1);
+                localResidual.evalFlux(flux, problem,
+                                       neighborElements.back(),
+                                       fvGeometry,
+                                       curElemVolVars,
+                                       elemBcTypes,
+                                       elemFluxVarsCache,
+                                       fvGeometry.scvf(scvfIdx));
+                origFlux[j] += flux[0];
+            }
             // increment neighbor counter
             ++j;
         }
 
         // reference to the element's scv (needed later) and corresponding vol vars
         const auto& scv = fvGeometry.scv(globalI);
-        auto& curVolVars = curElemVolVars[scv];
+        auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
 
         // save a copy of the original privars and vol vars in order
         // to restore the original solution after deflection
@@ -235,21 +249,28 @@ private:
 
                 // calculate the residual with the deflected primary variables
                 if (!isGhost)
-                    partialDeriv = localResidual.eval(element,
+                    partialDeriv = localResidual.eval(problem,
+                                                      element,
                                                       fvGeometry,
                                                       prevElemVolVars,
                                                       curElemVolVars,
                                                       elemBcTypes,
-                                                      elemFluxVarsCache);
+                                                      elemFluxVarsCache)[0];
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                     for (auto scvfIdx : assemblyMap[globalI][k].scvfsJ)
-                        neighborDeriv[k] += localResidual.evalFlux_(neighborElements[k],
-                                                                    fvGeometry,
-                                                                    curElemVolVars,
-                                                                    fvGeometry.scvf(scvfIdx),
-                                                                    elemFluxVarsCache);
+                    {
+                        ElementSolutionVector flux(1);
+                        localResidual.evalFlux(flux, problem,
+                                               neighborElements[k],
+                                               fvGeometry,
+                                               curElemVolVars,
+                                               elemBcTypes,
+                                               elemFluxVarsCache,
+                                               fvGeometry.scvf(scvfIdx));
+                        neighborDeriv[k] += flux[0];
+                    }
             }
             else
             {
@@ -282,17 +303,22 @@ private:
                                                        prevElemVolVars,
                                                        curElemVolVars,
                                                        elemBcTypes,
-                                                       elemFluxVarsCache);
+                                                       elemFluxVarsCache)[0];
 
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                     for (auto scvfIdx : assemblyMap[globalI][k].scvfsJ)
-                        neighborDeriv[k] -= localResidual.evalFlux(problem,
-                                                                   neighborElements[k],
-                                                                   fvGeometry,
-                                                                   curElemVolVars,
-                                                                   fvGeometry.scvf(scvfIdx),
-                                                                   elemFluxVarsCache);
+                    {
+                        ElementSolutionVector flux(1);
+                        localResidual.evalFlux(flux, problem,
+                                               neighborElements[k],
+                                               fvGeometry,
+                                               curElemVolVars,
+                                               elemBcTypes,
+                                               elemFluxVarsCache,
+                                               fvGeometry.scvf(scvfIdx));
+                        neighborDeriv[k] += flux[0];
+                    }
             }
             else
             {
@@ -349,7 +375,7 @@ private:
         //     {
         //         const auto& scvJ = fvGeometry.scv(globalJ);
         //         auto& curVolVarsJ = curElemVolVars[scv];
-        //         const auto& elementJ = gridFvGeometry.element(globalJ);
+        //         const auto& elementJ = fvGridGeometry.element(globalJ);
 
         //         // save a copy of the original privars and volvars
         //         // to restore original solution after deflection
@@ -432,6 +458,16 @@ private:
         // return the original residual
         return residual;
     }
+private:
+    template<class T = TypeTag>
+    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables&>::type
+    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return elemVolVars[scv]; }
+
+    template<class T = TypeTag>
+    static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables&>::type
+    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return gridVolVars.volVars(scv); }
 };
 
 } // end namespace Dumux

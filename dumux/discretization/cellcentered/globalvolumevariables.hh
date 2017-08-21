@@ -156,7 +156,7 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    void update(Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     { problemPtr_ = &problem; }
 
     /*!
@@ -168,10 +168,10 @@ public:
     { return ElementVolumeVariables(global); }
 
 private:
-    Problem& problem_() const
+    const Problem& problem_() const
     { return *problemPtr_;}
 
-    Problem* problemPtr_;
+    const Problem* problemPtr_;
 };
 
 } // end namespace

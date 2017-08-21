@@ -27,7 +27,11 @@
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -36,8 +40,9 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
-#include "properties.hh"
-//#include "problem.hh"
+#include <dumux/implicit/cellcentered/assembler.hh>
+
+#include "problem.hh"
 
 int main(int argc, char** argv)
 {
@@ -48,11 +53,13 @@ int main(int argc, char** argv)
     // some aliases for better readability
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -91,32 +98,61 @@ int main(int argc, char** argv)
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // the solution vector
-    SolutionVector x;
-    x.resize(leafGridView.size(0), 0.0);
-
     // the problem (boundary conditions)
-    Problem problem(leafGridView);
+    auto problem = std::make_shared<Problem>(leafGridView);
+
+    // the solution vector
+    auto x = std::make_shared<SolutionVector>(leafGridView.size(0));
+    auto xold = x;
 
     // the grid variables
     auto gridVariables = std::make_shared<GridVariables>();
-    gridVariables->update(problem, *fvGridGeometry, x);
+    gridVariables->update(*problem, *fvGridGeometry, *x);
 
-    for (const auto& element : elements(leafGridView))
-    {
-        auto fvGeometry = localView(*fvGridGeometry);
-        fvGeometry.bindElement(element);
+    // // TEST
+    // for (const auto& element : elements(leafGridView))
+    // {
+    //     auto fvGeometry = localView(*fvGridGeometry);
+    //     fvGeometry.bindElement(element);
 
-        auto elemVolVars = localView(gridVariables->curGridVolVars());
-        elemVolVars.bindElement(element, fvGeometry, x);
+    //     auto elemVolVars = localView(gridVariables->curGridVolVars());
+    //     elemVolVars.bindElement(element, fvGeometry, x);
 
-        for (const auto& scv : scvs(fvGeometry))
-        {
-            const auto volVars = elemVolVars[scv];
-            std::cout << volVars.pressure(0) << " ";
-        }
-    }
-    std::cout << std::endl;
+    //     for (const auto& scv : scvs(fvGeometry))
+    //     {
+    //         const auto volVars = elemVolVars[scv];
+    //         std::cout << volVars.pressure(0) << " ";
+    //     }
+    // }
+    // std::cout << std::endl;
+
+    // make assemble and attach linear system
+    CCImplicitAssembler<TypeTag> assembler(problem, fvGridGeometry, x, xold, gridVariables);
+    auto A = std::make_shared<JacobianMatrix>();
+    auto r = std::make_shared<SolutionVector>();
+    assembler.setLinearSystem(A, r);
+
+    // assemble the local jacobian and the residual
+    Dune::Timer timer; std::cout << "Assembling linear system ..." << std::flush;
+    assembler.assembleJacobianAndResidual();
+    std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
+
+    // set a source term in the middle of the domain
+    (*r)[r->size()/2] += -0.01;
+
+    // we solve Ax = -r
+    (*r) *= -1.0;
+
+    // solve the linear system
+    timer.reset(); std::cout << "Solving linear system ..." << std::flush;
+    ILU0BiCGSTABBackend<TypeTag> linearSolver(*problem);
+    linearSolver.solve(*A, *x, *r);
+    std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
+
+    // output result to vtk
+    Dune::VTKWriter<GridView> vtkwriter(leafGridView);
+    vtkwriter.addCellData(*x, "p");
+    vtkwriter.write("test_1pincompressible");
 
     return 0;
 
