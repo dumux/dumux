@@ -198,7 +198,7 @@ public:
         numSteps_ = 0;
     }
 
-    Communicator& communicator() const
+    const Communicator& communicator() const
     { return comm_; }
 
     /*!
@@ -322,8 +322,8 @@ public:
     {
         numSteps_ = 0;
 
-        if (writeConvergence_)
-            convergenceWriter_->advanceTimeStep();
+        // if (writeConvergence_)
+        //     convergenceWriter_->advanceTimeStep();
     }
 
     /*!
@@ -493,11 +493,11 @@ public:
         if (enableShiftCriterion_)
             newtonUpdateShift(uLastIter, deltaU);
 
-        if (writeConvergence_)
-        {
-            convergenceWriter_->advanceIteration();
-            convergenceWriter_->write(uLastIter, deltaU);
-        }
+        // if (writeConvergence_)
+        // {
+        //     convergenceWriter_->advanceIteration();
+        //     convergenceWriter_->write(uLastIter, deltaU);
+        // }
 
         if (useLineSearch_)
         {
@@ -709,7 +709,7 @@ protected:
     std::ostringstream endIterMsgStream_;
 
     // writes an output file for each iteration
-    ConvergenceWriter convergenceWriter_;
+    // ConvergenceWriter convergenceWriter_;
 
     // switches on/off verbosity
     bool verbose_;

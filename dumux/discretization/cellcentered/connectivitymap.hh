@@ -22,11 +22,10 @@
  *        that contribute to the derivative calculation. This is used for
  *        finite-volume schemes with symmetric sparsity pattern in the global matrix.
  */
-#ifndef DUMUX_CC_ASSEMBLY_MAP_HH
-#define DUMUX_CC_ASSEMBLY_MAP_HH
+#ifndef DUMUX_CC_CONNECTIVITY_MAP_HH
+#define DUMUX_CC_CONNECTIVITY_MAP_HH
 
-#include <dune/istl/bcrsmatrix.hh>
-
+#include <vector>
 #include <dumux/implicit/properties.hh>
 
 namespace Dumux
@@ -34,7 +33,7 @@ namespace Dumux
 
 /*!
  * \ingroup CellCentered
- * \brief A simple version of the assembly map for cellcentered schemes.
+ * \brief A simple version of the connectivity map for cellcentered schemes.
  *        This implementation works for schemes in which for a given cell I only
  *        those cells J have to be prepared in whose stencil the cell I appears.
  *        This means that for the flux calculations in the cells J (in order to compute
@@ -43,7 +42,7 @@ namespace Dumux
  *        scvfs in the cells J in which the cell I is in the stencil.
  */
 template<class TypeTag>
-class CCSimpleAssemblyMap
+class CCSimpleConnectivityMap
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
@@ -55,7 +54,7 @@ class CCSimpleAssemblyMap
         IndexType globalJ;
         std::vector<IndexType> scvfsJ;
         // A list of additional scvfs is needed for compatibility
-        // reasons with more complex assembly maps (see mpfa)
+        // reasons with more complex connectivity maps (see mpfa)
         std::vector<IndexType> additionalScvfs;
     };
 
@@ -64,11 +63,11 @@ class CCSimpleAssemblyMap
 public:
 
     /*!
-     * \brief Initialize the AssemblyMap object.
+     * \brief Initialize the ConnectivityMap object.
      *
      * \param fvGridGeometry The grid's finite volume geometry.
      */
-    void init(const FVGridGeometry& fvGridGeometry)
+    void update(const FVGridGeometry& fvGridGeometry)
     {
         map_.clear();
         map_.resize(fvGridGeometry.gridView().size(0));

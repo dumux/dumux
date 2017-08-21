@@ -53,6 +53,18 @@ public:
 
         // update the flux variables caches
         globalfluxVarsCache_.update(problem, fvGridGeometry, curGlobalVolVars_, solution);
+    }
+
+    //! update all fvElementGeometries (do this again after grid adaption)
+    void init(const Problem& problem,
+              const FVGridGeometry& fvGridGeometry,
+              const SolutionVector& solution)
+    {
+        // resize and update the volVars with the initial solution
+        curGlobalVolVars_.update(problem, fvGridGeometry, solution);
+
+        // update the flux variables caches
+        globalfluxVarsCache_.update(problem, fvGridGeometry, curGlobalVolVars_, solution);
 
         // set the old time step vol vars to new current vol vars
         prevGlobalVolVars_ = curGlobalVolVars_;

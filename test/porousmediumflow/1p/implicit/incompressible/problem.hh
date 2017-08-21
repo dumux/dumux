@@ -26,6 +26,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/assembler.hh>
 #include <dumux/implicit/cellcentered/localassembler.hh>
 #include <dumux/implicit/gridvariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
@@ -57,6 +58,12 @@ SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<Ty
 
 // the grid variables
 SET_TYPE_PROP(IncompressibleTestProblem, GridVariables, GridVariables<TypeTag>);
+
+// the grid variables
+SET_TYPE_PROP(IncompressibleTestProblem, JacobianAssembler, CCImplicitAssembler<TypeTag>);
+
+// linear solver
+SET_TYPE_PROP(IncompressibleTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 
 // the local assembler
 SET_TYPE_PROP(IncompressibleTestProblem, LocalAssembler, CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>);
@@ -122,7 +129,8 @@ class OnePTestProblem
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
 public:
-    OnePTestProblem(const GridView& gridView) {}
+    OnePTestProblem(const GridView& gridView)
+    : gridView_(gridView) {}
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -135,10 +143,10 @@ public:
                                 const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes values;
-        // const auto& pos = scvf.ipGlobal();
+        const auto& pos = scvf.ipGlobal();
         values.setAllDirichlet();
-        // if (pos[0] > 1.0 - 1e-8 || pos[0] < 1e-8)
-        //     values.setAllNeumann();
+        if (pos[0] > 1.0 - 1e-8 || pos[0] < 1e-8)
+            values.setAllNeumann();
         return values;
     }
 
@@ -154,9 +162,8 @@ public:
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
     {
-        // const auto& pos = scvf.ipGlobal();
-        // return PrimaryVariables(pos[1]*1e5 + 1e5);
-        return PrimaryVariables(0.0);
+        const auto& pos = scvf.ipGlobal();
+        return PrimaryVariables(pos[1]*1e5 + 1e5);
     }
 
     /*!
@@ -201,7 +208,10 @@ public:
                           const ElementVolumeVariables& elemVolVars,
                           const SubControlVolume &scv) const
     {
-        return ResidualVector(0.0);
+        if (scv.dofIndex() == gridView_.size(0)/2)
+            return ResidualVector(0.1/scv.volume());
+        else
+            return ResidualVector(0.0);
     }
 
     /*!
@@ -211,9 +221,9 @@ public:
      *                 what you are doing.
      */
     ResidualVector scvPointSources(const Element &element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& elemVolVars,
-                                     const SubControlVolume &scv) const
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolume &scv) const
     {
         return ResidualVector(0.0);
     }
@@ -258,6 +268,7 @@ public:
     { return spatialParams_; }
 
 private:
+    GridView gridView_;
     OnePTestSpatialParams<TypeTag> spatialParams_;
 
 

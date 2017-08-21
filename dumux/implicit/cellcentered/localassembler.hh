@@ -122,7 +122,7 @@ private:
         // get some references for convenience
         const auto& problem = assembler.problem();
         const auto& fvGridGeometry = assembler.fvGridGeometry();
-        const auto& assemblyMap = assembler.assemblyMap();
+        const auto& connectivityMap = fvGridGeometry.connectivityMap();
         const auto& prevSol = assembler.prevSol();
         auto& curSol = assembler.curSol();
         auto& localResidual = assembler.localResidual();
@@ -177,7 +177,7 @@ private:
         static const int numericDifferenceMethod = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
 
         // get stencil informations
-        const auto numNeighbors = assemblyMap[globalI].size();
+        const auto numNeighbors = connectivityMap[globalI].size();
 
         // container to store the neighboring elements
         std::vector<Element> neighborElements;
@@ -188,7 +188,7 @@ private:
         Dune::BlockVector<NumEqVector> origFlux(numNeighbors);
         origFlux = 0.0;
         unsigned int j = 0;
-        for (const auto& dataJ : assemblyMap[globalI])
+        for (const auto& dataJ : connectivityMap[globalI])
         {
             neighborElements.emplace_back(fvGridGeometry.element(dataJ.globalJ));
             for (const auto scvfIdx : dataJ.scvfsJ)
@@ -259,7 +259,7 @@ private:
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
-                    for (auto scvfIdx : assemblyMap[globalI][k].scvfsJ)
+                    for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
                     {
                         ElementSolutionVector flux(1);
                         localResidual.evalFlux(flux, problem,
@@ -307,7 +307,7 @@ private:
 
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
-                    for (auto scvfIdx : assemblyMap[globalI][k].scvfsJ)
+                    for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
                     {
                         ElementSolutionVector flux(1);
                         localResidual.evalFlux(flux, problem,
@@ -350,7 +350,7 @@ private:
 
                 // off-diagonal entries
                 j = 0;
-                for (const auto& dataJ : assemblyMap[globalI])
+                for (const auto& dataJ : connectivityMap[globalI])
                     A[dataJ.globalJ][globalI][eqIdx][pvIdx] += neighborDeriv[j++][pvIdx];
             }
         }

@@ -47,6 +47,8 @@ class ImplicitLocalResidual
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -57,6 +59,7 @@ class ImplicitLocalResidual
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
 public:
 
@@ -74,26 +77,31 @@ public:
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      */
-    // ElementResidualVector eval(const Problem& problem, const Element &element)
-    // {
-    //     // make sure FVElementGeometry and volume variables are bound to the element
-    //     auto fvGeometry = localView(problem.model().globalFvGeometry());
-    //     fvGeometry.bind(element);
+    ElementResidualVector eval(const Problem& problem,
+                               const Element &element,
+                               const FVGridGeometry& fvGridGeometry,
+                               const GridVariables& gridVariables,
+                               const SolutionVector& curSol,
+                               const SolutionVector& prevSol) const
+    {
+        // make sure FVElementGeometry and volume variables are bound to the element
+        auto fvGeometry = localView(fvGridGeometry);
+        fvGeometry.bind(element);
 
-    //     auto curElemVolVars = localView(problem.model().curGlobalVolVars());
-    //     curElemVolVars.bind(element, fvGeometry, problem.model().curSol());
+        auto curElemVolVars = localView(gridVariables.curGridVolVars());
+        curElemVolVars.bind(element, fvGeometry, curSol);
 
-    //     auto prevElemVolVars = localView(problem.model().prevGlobalVolVars());
-    //     prevElemVolVars.bindElement(element, fvGeometry, problem.model().prevSol());
+        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
+        prevElemVolVars.bindElement(element, fvGeometry, prevSol);
 
-    //     auto elemFluxVarsCache = localView(problem.model().globalFluxVarsCache());
-    //     elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
+        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
+        elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
 
-    //     ElementBoundaryTypes bcTypes;
-    //     bcTypes.update(problem, element, fvGeometry);
+        ElementBoundaryTypes bcTypes;
+        bcTypes.update(problem, element, fvGeometry);
 
-    //     return asImp_().eval(element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes, elemFluxVarsCache);
-    // }
+        return asImp_().eval(problem, element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes, elemFluxVarsCache);
+    }
 
     /*!
      * \brief Compute the storage term for the current solution.

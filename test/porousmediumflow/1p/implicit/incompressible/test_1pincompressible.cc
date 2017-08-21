@@ -30,10 +30,12 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
+#include <dune/istl/io.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/common/propertysystem.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -60,6 +62,8 @@ int main(int argc, char** argv)
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    // for non-linear problems
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -107,7 +111,7 @@ int main(int argc, char** argv)
 
     // the grid variables
     auto gridVariables = std::make_shared<GridVariables>();
-    gridVariables->update(*problem, *fvGridGeometry, *x);
+    gridVariables->init(*problem, *fvGridGeometry, *x);
 
     // // TEST
     // for (const auto& element : elements(leafGridView))
@@ -127,27 +131,32 @@ int main(int argc, char** argv)
     // std::cout << std::endl;
 
     // make assemble and attach linear system
-    CCImplicitAssembler<TypeTag> assembler(problem, fvGridGeometry, x, xold, gridVariables);
+    auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, x, xold, gridVariables);
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
-    assembler.setLinearSystem(A, r);
+    assembler->setLinearSystem(A, r);
 
     // assemble the local jacobian and the residual
     Dune::Timer timer; std::cout << "Assembling linear system ..." << std::flush;
-    assembler.assembleJacobianAndResidual();
+    assembler->assembleJacobianAndResidual();
     std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
 
-    // set a source term in the middle of the domain
-    (*r)[r->size()/2] += -0.01;
+    // // print matrioc
+    // // Dune::printmatrix(std::cout, *A, "", "");
+    // // Dune::printvector(std::cout, *r, "", "");
 
     // we solve Ax = -r
     (*r) *= -1.0;
 
-    // solve the linear system
+    // // solve the linear system
     timer.reset(); std::cout << "Solving linear system ..." << std::flush;
-    ILU0BiCGSTABBackend<TypeTag> linearSolver(*problem);
-    linearSolver.solve(*A, *x, *r);
+    auto linearSolver = std::make_shared<ILU0BiCGSTABBackend<TypeTag>>(*problem);
+    linearSolver->solve(*A, *x, *r);
     std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
+
+    // NewtonMethod<TypeTag> nonLinearSolver;
+    // NewtonController newtonController(leafGridView.comm());
+    // nonLinearSolver.solve(newtonController, *assembler, *linearSolver);
 
     // output result to vtk
     Dune::VTKWriter<GridView> vtkwriter(leafGridView);
