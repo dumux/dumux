@@ -3,11 +3,11 @@
 [Problem]
 Name = StokesDarcy1p
 Verbose = true
-Velocity = 5
+Velocity = 1
 
 [TimeManager]
-DtInitial = 120 # s
-# MaxTimeStepSize = 5 # s
+DtInitial = 2 # s
+# MaxTimeStepSize = 1 # s
 EpisodeTime = 300 # s
 TEnd = 10 # s
 
