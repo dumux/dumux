@@ -27,7 +27,7 @@
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
-#include "1ptestspatialparams.hh"
+#include "1pspatialparams.hh"
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include <dumux/material/components/simpleh2o.hh>
@@ -37,7 +37,6 @@
 // coupling-specific includes
 #include <dumux/multidomain/subproblemproperties.hh>
 
-
 namespace Dumux
 {
 template <class TypeTag>
@@ -45,15 +44,13 @@ class DarcyTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DarcyTestProblem, INHERITS_FROM(CCTpfaModel, OneP, OnePTestSpatialParams)); // TODO ??
+NEW_TYPE_TAG(DarcyTestProblem, INHERITS_FROM(CCTpfaModel, OneP, OnePSpatialParams));
 
 // Set the problem property
 SET_TYPE_PROP(DarcyTestProblem, Problem, Dumux::DarcyTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(DarcyTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
-
-// SET_TYPE_PROP(DarcyTestProblem, GridCreator, Dumux::StructuredMicroModelGridCreator<TypeTag>);
+SET_TYPE_PROP(DarcyTestProblem, SpatialParams, OnePSpatialParams<TypeTag>);
 
 // Set the grid type
 #if ENABLE_3D
@@ -75,8 +72,6 @@ SET_BOOL_PROP(DarcyTestProblem, ProblemEnableGravity, false);
 
 // Set the grid parameter group
 SET_STRING_PROP(DarcyTestProblem, GridParameterGroup, "DarcyGrid");
-
-// SET_TYPE_PROP(DarcyTestProblem, SinglePhaseTransmissibility, TransmissibilityBruus<TypeTag, false>); // TODO
 
 SET_BOOL_PROP(DarcyTestProblem, EnableGlobalFVGeometryCache, true); // TODO default = false, but true needed for couplingmanager (access Darcy element)
 
@@ -131,12 +126,12 @@ class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 public:
     DarcyTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView), eps_(1e-7)
-    {
+{
         // get some parameters from the input file
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
         bBoxMin_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, LowerLeft);
         bBoxMax_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, UpperRight);
-    }
+}
 
     /*!
      * \name Simulation steering
@@ -180,7 +175,6 @@ public:
      */
     void postTimeStep()
     {
-//         std::cout << "Darcy outflux: " << Functions::boundaryFlux(*this,"max", 0) << std::endl;
     }
 
 
@@ -192,38 +186,28 @@ public:
     { return 273.15 + 10; } // 10°C
     // \}
 
-     /*!
+    /*!
      * \name Boundary conditions
      */
     // \{
     //! Specifies which kind of boundary condition should be used for
     //! which equation for a finite volume on the boundary.
-//    BoundaryTypes boundaryTypes(const Element &element, const SubControlVolumeFace &scvf) const
-//    {
-//        BoundaryTypes bcTypes;
-//        bcTypes.setAllNeumann();
-//        if(couplingManager().isDarcyCouplingEntity(scvf))
-//            bcTypes.setAllCouplingNeumann();
-//
-//        return bcTypes;
-//    }
-    // Fetzer2017a
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-    BoundaryTypes values;
+        BoundaryTypes values;
 
-    // Scalar time = this->timeManager().time();
+        // Scalar time = this->timeManager().time();
 
-    values.setAllNeumann();
+        values.setAllNeumann();
 
-    if(onUpperBoundary_(globalPos))
-//    		&& (globalPos[0] > runUpDistanceX_ - eps_)
-//			&& (time > initializationTime_))
-    {
-    values.setAllCouplingNeumann();
-    }
+        if(onCouplingInterface(globalPos))
+            //            && (globalPos[0] > runUpDistanceX_ - eps_)
+            //            && (time > initializationTime_))
+        {
+            values.setAllCouplingNeumann();
+        }
 
-    return values;
+        return values;
     }
 
 
@@ -236,7 +220,6 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    // TODO NumEqVector
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
     {
@@ -254,7 +237,6 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    // TODO NumEqVector
     PrimaryVariables neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolvars,
@@ -280,19 +262,13 @@ public:
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
      */
-    // TODO NumEqVector
-    // TODO copied from darcyproblem (pnmdarcy1p)
-     PrimaryVariables source(const Element &element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolume &scv) const
+    PrimaryVariables source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume &scv) const
     {
-        PrimaryVariables source(0.0); // TODO
-//        if(couplingManager().isStokesCouplingEntity(element, scv.dofIndex()))
-//        {
-//            couplingManager().DarcyData().boundarySource(source, element, fvGeometry,
-//                                         scv.dofIndex(), elemVolVars);
-//        }
+        PrimaryVariables source(0.0);
+
         return source;
     }
     // \}
@@ -306,14 +282,14 @@ public:
     PrimaryVariables initial(const Element &element) const
     {
         PrimaryVariables values(0.0);
-            values[pressureIdx] = 1.0e5;
-            return values;
+        values[pressureIdx] = 1.0e5;
+        return values;
     }
 
 
     // \}
 
-   void setCouplingManager(std::shared_ptr<CouplingManager> couplingManager)
+    void setCouplingManager(std::shared_ptr<CouplingManager> couplingManager)
     {
         couplingManager_ = couplingManager;
     }
@@ -322,6 +298,11 @@ public:
     CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
+    /*!
+     * \brief Return the coupling boundary
+     *
+     * \param globalPos The global position
+     */
     bool onCouplingInterface(const GlobalPosition &globalPos) const
     {return onUpperBoundary_(globalPos); }
 

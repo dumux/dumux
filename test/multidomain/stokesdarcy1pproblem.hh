@@ -29,10 +29,9 @@
 
 #include <dumux/multidomain/boundingboxtree/problem.hh>
 #include <dumux/multidomain/boundingboxtree/couplingmanager.hh>
-#include <dumux/multidomain/boundingboxtree/couplingdata.hh>
 #include <dumux/multidomain/boundingboxtree/map.hh>
-#include <dumux/multidomain/staggeredgrid/properties.hh>
 
+#include <dumux/multidomain/staggeredgrid/properties.hh>
 #include <dumux/multidomain/staggeredgrid/model.hh>
 #include <dumux/multidomain/staggeredgrid/assembler.hh>
 #include <dumux/multidomain/staggeredgrid/newtoncontroller.hh>
@@ -73,17 +72,6 @@ SET_PROP(StokesTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarc
 NEW_PROP_TAG(DarcyToStokesMapValue); // TODO: make specialized map value class
 SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);
 
-NEW_PROP_TAG(StokesData);
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, StokesData, StokesData<TypeTag>);
-
-NEW_PROP_TAG(DarcyData);
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyData, DarcyData<TypeTag>);
-
-//! Set the BaseModel to MultiDomainModel
-// SET_TYPE_PROP(TestCoupledStokesDarcyProblem, Model, MultiDomainModelForStaggered<TypeTag>);
-// SET_TYPE_PROP(TestCoupledStokesDarcyProblem, JacobianAssembler,MultiDomainAssemblerForStaggered<TypeTag>);
-// SET_TYPE_PROP(TestCoupledStokesDarcyProblem, NewtonController, MultiDomainNewtonControllerForStaggered<TypeTag>);
-
 #if HAVE_UMFPACK
 SET_TYPE_PROP(TestCoupledStokesDarcyProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
@@ -122,33 +110,11 @@ public:
     bool shouldWriteOutput() const //define output
     {
         return true;
-//         return (this->timeManager().willBeFinished());
     }
 
     void postTimeStep()
     {
-        // calculate the mass flux entering the stokes domain
-//         StokesPrimaryVariables inflow;
-//         const auto left = this->couplingManager().stokesProblem().bBoxMin()[0] + 1e-3;
-//         this->couplingManager().stokesProblem().calculateFluxAcrossLayer(inflow, 0, left);
-//
-        //calculate the mass flux leaving  the darcy domain
-//         const DarcyPrimaryVariables outflow = Functions<DarcyProblemTypeTag>::boundaryFlux(this->couplingManager().darcyProblem(), "max", 1);
-//
-//         if(verbose_)
-//         {
-//             std::cout << "IN Darcy: " << inflow << " kg/s" << std::endl;
-//             std::cout << "OUT PNM : " << outflow <<  " kg/s"<<  std::endl;
-//         }
-//         // at the end of the simulation, check if everything is mass conservative
-//         if(this->timeManager().willBeFinished())
-//         {
-//             if(Dune::FloatCmp::ne<Scalar>(inflow, outflow, 1e-6))
-//             {
-//                 std::cout << "Test failed: Inflow differs from outflow: " << inflow - outflow << std::endl;
-//                 std::exit(EXIT_FAILURE);
-//             }
-//         }
+
     }
 private:
     bool verbose_;

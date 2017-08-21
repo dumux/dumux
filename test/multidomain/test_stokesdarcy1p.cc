@@ -24,7 +24,7 @@
 // #include "config.h"
 #include <config.h>
 #include "stokesdarcy1pproblem.hh"
-#include <dumux/multidomain/boundingboxtree/start.hh> // TODO
+#include <dumux/multidomain/boundingboxtree/start.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -36,7 +36,6 @@
  */
 void usage(const char *progName, const std::string &errorMsg)
 {
-//     TODO
 }
 
 int main(int argc, char** argv)

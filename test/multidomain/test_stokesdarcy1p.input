@@ -1,23 +1,26 @@
 # Parameter file for test_stokesdarcy1p
+
 [Problem]
 Name = StokesDarcy1p
 Verbose = true
-Velocity = 0
+Velocity = 5
+
 [TimeManager]
-DtInitial = 1e-1 # s
-MaxTimeStepSize = 50 # s
+DtInitial = 120 # s
+# MaxTimeStepSize = 5 # s
 EpisodeTime = 300 # s
-TEnd = 300 # s
+TEnd = 10 # s
+
 [StokesGrid]
 Positions0 = 0.0 2.0 # m
 Positions1 = 1.0 2.0 # m
-Cells0 = 2
-Cells1 = 2
-LowerLeft = 0 1 # remove, adapt stokestestproblem
-UpperRight = 2 2 # remove, adapt stokestestproblem
+Cells0 = 40
+Cells1 = 20
+
 [DarcyGrid]
 LowerLeft = 0 0
 UpperRight = 2 1
-Cells = 2 2
+Cells = 40 20
+
 [SpatialParams]
 Permeability = 1.0e-10 # m^2

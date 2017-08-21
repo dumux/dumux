@@ -31,12 +31,12 @@ namespace Dumux
 
 //forward declaration
 template<class TypeTag>
-class OnePTestSpatialParams; // TODO rename
+class OnePSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(OnePTestSpatialParams);
+NEW_TYPE_TAG(OnePSpatialParams);
 
 }
 
@@ -48,7 +48,7 @@ NEW_TYPE_TAG(OnePTestSpatialParams);
  *        1p cc model
  */
 template<class TypeTag>
-class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
     using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -71,7 +71,7 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePTestSpatialParams(const Problem& problem, const GridView& gridView)
+    OnePSpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView)
     {
         permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
@@ -88,9 +88,7 @@ public:
      * \param elemSol The element solution vector
      * \return the intrinsic permeability
      */
-    PermeabilityType permeability(const Element& element,
-                                  const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
 //        if (isInLens_(scv.dofPosition()))
 //        {
@@ -106,6 +104,9 @@ public:
    */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
+
+    Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
+    {return 1.0; }
 
 
 private:
