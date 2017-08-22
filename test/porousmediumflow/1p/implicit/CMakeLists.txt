@@ -1,5 +1,6 @@
 add_subdirectory(pointsources)
 add_subdirectory(incompressible)
+add_subdirectory(compressible)
 
 add_input_file_links()
 add_gstat_file_links()
