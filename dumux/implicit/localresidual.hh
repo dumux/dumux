@@ -321,6 +321,13 @@ public:
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const {}
 
+    ResidualVector evalFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const {}
+
     void evalBoundary(ElementResidualVector& residual,
                       const Problem& problem,
                       const Element& element,

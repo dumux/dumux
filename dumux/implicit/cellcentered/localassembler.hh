@@ -147,6 +147,7 @@ private:
         const auto globalI = fvGridGeometry.elementMapper().index(element);
 
         // check for boundaries on the element
+        // TODO Do we need them for cell-centered models?
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(problem, element, fvGeometry);
 
@@ -194,15 +195,12 @@ private:
             neighborElements.emplace_back(fvGridGeometry.element(dataJ.globalJ));
             for (const auto scvfIdx : dataJ.scvfsJ)
             {
-                ElementSolutionVector flux(1);
-                localResidual.evalFlux(flux, problem,
-                                       neighborElements.back(),
-                                       fvGeometry,
-                                       curElemVolVars,
-                                       elemBcTypes,
-                                       elemFluxVarsCache,
-                                       fvGeometry.scvf(scvfIdx));
-                origFlux[j] += flux[0];
+                origFlux[j] += localResidual.evalFlux(problem,
+                                                      neighborElements.back(),
+                                                      fvGeometry,
+                                                      curElemVolVars,
+                                                      elemFluxVarsCache,
+                                                      fvGeometry.scvf(scvfIdx));
             }
             // increment neighbor counter
             ++j;
@@ -262,15 +260,12 @@ private:
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                     for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
                     {
-                        ElementSolutionVector flux(1);
-                        localResidual.evalFlux(flux, problem,
-                                               neighborElements[k],
-                                               fvGeometry,
-                                               curElemVolVars,
-                                               elemBcTypes,
-                                               elemFluxVarsCache,
-                                               fvGeometry.scvf(scvfIdx));
-                        neighborDeriv[k] += flux[0];
+                        neighborDeriv[k] += localResidual.evalFlux(problem,
+                                                                   neighborElements[k],
+                                                                   fvGeometry,
+                                                                   curElemVolVars,
+                                                                   elemFluxVarsCache,
+                                                                   fvGeometry.scvf(scvfIdx));
                     }
             }
             else
@@ -310,15 +305,12 @@ private:
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                     for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
                     {
-                        ElementSolutionVector flux(1);
-                        localResidual.evalFlux(flux, problem,
-                                               neighborElements[k],
-                                               fvGeometry,
-                                               curElemVolVars,
-                                               elemBcTypes,
-                                               elemFluxVarsCache,
-                                               fvGeometry.scvf(scvfIdx));
-                        neighborDeriv[k] += flux[0];
+                        neighborDeriv[k] += localResidual.evalFlux(problem,
+                                                                   neighborElements[k],
+                                                                   fvGeometry,
+                                                                   curElemVolVars,
+                                                                   elemFluxVarsCache,
+                                                                   fvGeometry.scvf(scvfIdx));
                     }
             }
             else

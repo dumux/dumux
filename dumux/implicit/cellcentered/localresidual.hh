@@ -47,6 +47,7 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -66,11 +67,22 @@ public:
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto localScvIdx = scv.indexInElement();
+        residual[localScvIdx] += evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+    }
+
+    ResidualVector evalFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const
+    {
+        ResidualVector flux(0.0);
 
         // inner faces
         if (!scvf.boundary())
         {
-            residual[localScvIdx] += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            flux += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         }
 
         // boundary faces
@@ -80,7 +92,7 @@ public:
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                residual[localScvIdx] += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+                flux += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
@@ -88,15 +100,17 @@ public:
                 auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
+                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
                 neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
 
-                residual[localScvIdx] += neumannFluxes;
+                flux += neumannFluxes;
             }
 
             else
                 DUNE_THROW(Dune::NotImplemented, "Mixed boundary conditions. Use pure boundary conditions by converting Dirichlet BCs to Robin BCs");
         }
 
+        return flux;
     }
 };
 
