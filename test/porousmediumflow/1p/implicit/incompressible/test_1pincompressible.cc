@@ -131,32 +131,33 @@ int main(int argc, char** argv)
     // std::cout << std::endl;
 
     // make assemble and attach linear system
-    auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, x, xold, gridVariables);
-    auto A = std::make_shared<JacobianMatrix>();
-    auto r = std::make_shared<SolutionVector>();
-    assembler->setLinearSystem(A, r);
+    auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables);
+    // auto A = std::make_shared<JacobianMatrix>();
+    // auto r = std::make_shared<SolutionVector>();
+    // assembler->setLinearSystem(A, r);
 
     // assemble the local jacobian and the residual
-    Dune::Timer timer; std::cout << "Assembling linear system ..." << std::flush;
-    assembler->assembleJacobianAndResidual();
-    std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
+    // Dune::Timer timer; std::cout << "Assembling linear system ..." << std::flush;
+    // assembler->assembleJacobianAndResidual(*x, *xold);
+    // std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
 
     // // print matrioc
     // // Dune::printmatrix(std::cout, *A, "", "");
     // // Dune::printvector(std::cout, *r, "", "");
 
     // we solve Ax = -r
-    (*r) *= -1.0;
+    // (*r) *= -1.0;
 
     // // solve the linear system
-    timer.reset(); std::cout << "Solving linear system ..." << std::flush;
+    // timer.reset(); std::cout << "Solving linear system ..." << std::flush;
     auto linearSolver = std::make_shared<ILU0BiCGSTABBackend<TypeTag>>(*problem);
-    linearSolver->solve(*A, *x, *r);
-    std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
+    // auto linearSolver = std::make_shared<UMFPackBackend<TypeTag>>(*problem);
+    // linearSolver->solve(*A, *x, *r);
+    // std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
 
-    // NewtonMethod<TypeTag> nonLinearSolver;
-    // NewtonController newtonController(leafGridView.comm());
-    // nonLinearSolver.solve(newtonController, *assembler, *linearSolver);
+    NewtonMethod<TypeTag> nonLinearSolver;
+    NewtonController newtonController(leafGridView.comm());
+    nonLinearSolver.solve(newtonController, *assembler, *linearSolver, *x, *xold);
 
     // output result to vtk
     Dune::VTKWriter<GridView> vtkwriter(leafGridView);

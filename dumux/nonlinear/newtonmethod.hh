@@ -73,8 +73,9 @@ public:
      * \brief Run the newton method to solve a non-linear system.
      *        The controller is responsible for all the strategic decisions.
      */
-    template<class NewtonController, class JacobianAssembler, class LinearSolver>
-    bool solve(NewtonController& controller, JacobianAssembler& assembler, LinearSolver& linearSolver)
+    template<class NewtonController, class JacobianAssembler, class LinearSolver, class SolutionVector>
+    bool solve(NewtonController& controller, JacobianAssembler& assembler, LinearSolver& linearSolver,
+               SolutionVector& u, const SolutionVector& uPrev)
     {
         try
         {
@@ -82,7 +83,7 @@ public:
             assembler.setLinearSystem(matrix_, residual_);
 
             // the current solution is the initial guess
-            SolutionVector& uCurrentIter = assembler.curSol();
+            SolutionVector& uCurrentIter = u;
             SolutionVector uLastIter(uCurrentIter);
             SolutionVector deltaU(uCurrentIter);
 
@@ -116,7 +117,7 @@ public:
 
                 // linearize the problem at the current solution
                 assembleTimer.start();
-                controller.assembleLinearSystem(assembler);
+                controller.assembleLinearSystem(assembler, u, uPrev);
                 assembleTimer.stop();
 
                 ///////////////
@@ -158,7 +159,7 @@ public:
                 updateTimer.start();
                 // update the current solution (i.e. uOld) with the delta
                 // (i.e. u). The result is stored in u
-                controller.newtonUpdate(assembler, uCurrentIter, uLastIter, deltaU);
+                controller.newtonUpdate(assembler, uCurrentIter, uLastIter, deltaU, uPrev);
                 updateTimer.stop();
 
                 // tell the controller that we're done with this iteration

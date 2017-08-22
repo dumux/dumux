@@ -69,10 +69,11 @@ public:
      *        to the global matrix. The element residual is written into the right hand side.
      */
     template<class Assembler>
-    static void assemble(Assembler& assembler, SolutionVector& res, const Element& element)
+    static void assemble(Assembler& assembler, typename Assembler::ResidualType& res, const Element& element,
+                         const SolutionVector& curSol, const SolutionVector& prevSol)
     {
         const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = Implementation::assemble_(assembler, element);
+        res[globalI] = Implementation::assemble_(assembler, element, curSol, prevSol);
     }
 
     /*!
@@ -80,9 +81,10 @@ public:
      *        to the global matrix.
      */
     template<class Assembler>
-    static void assemble(Assembler& assembler, const Element& element)
+    static void assemble(Assembler& assembler, const Element& element,
+                         const SolutionVector& curSol, const SolutionVector& prevSol)
     {
-        Implementation::assemble_(assembler, element);
+        Implementation::assemble_(assembler, element, curSol, prevSol);
     }
 
     /*!
@@ -117,14 +119,13 @@ private:
      * \return The element residual at the current solution.
      */
     template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler, const Element& element)
+    static NumEqVector assemble_(Assembler& assembler, const Element& element,
+                                 const SolutionVector& curSol, const SolutionVector& prevSol)
     {
         // get some references for convenience
         const auto& problem = assembler.problem();
         const auto& fvGridGeometry = assembler.fvGridGeometry();
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
-        const auto& prevSol = assembler.prevSol();
-        auto& curSol = assembler.curSol();
         auto& localResidual = assembler.localResidual();
         auto& gridVariables = assembler.gridVariables();
         auto& A = assembler.matrix();

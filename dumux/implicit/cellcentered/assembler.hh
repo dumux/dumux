@@ -82,13 +82,9 @@ public:
     //! The constructor
     CCImplicitAssembler(std::shared_ptr<const Problem> problem,
                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                        std::shared_ptr<const SolutionVector> prevSol,
-                        std::shared_ptr<SolutionVector> curSol,
                         std::shared_ptr<GridVariables> gridVariables)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
-    , prevSol_(prevSol)
-    , curSol_(curSol)
     , gridVariables_(gridVariables)
     {}
 
@@ -96,7 +92,8 @@ public:
      * \brief Assembles the global Jacobian of the residual
      *        and the residual for the current solution.
      */
-    void assembleJacobianAndResidual()
+    void assembleJacobianAndResidual(const SolutionVector& curSol,
+                                     const SolutionVector& prevSol)
     {
         if(!matrix_)
             DUNE_THROW(Dune::InvalidStateException,
@@ -116,7 +113,7 @@ public:
         {
             // let the local assembler add the element contributions
             for (const auto element : elements(gridView()))
-                LocalAssembler::assemble(*this, residual(), element);
+                LocalAssembler::assemble(*this, residual(), element, curSol, prevSol);
 
             // if we get here, everything worked well
             succeeded = true;
@@ -140,7 +137,8 @@ public:
     /*!
      * \brief Assembles only the global Jacobian of the residual.
      */
-    void assembleJacobian()
+    void assembleJacobian(const SolutionVector& curSol,
+                          const SolutionVector& prevSol)
     {
         resetMatrix_();
 
@@ -150,7 +148,7 @@ public:
         {
             // let the local assembler add the element contributions
             for (const auto& element : elements(gridView()))
-                LocalAssembler::assemble(*this, element);
+                LocalAssembler::assemble(*this, element, curSol, prevSol);
 
             // if we get here, everything worked well
             succeeded = true;
@@ -172,7 +170,11 @@ public:
     }
 
     //! compute the residuals
-    void assembleResidual(ResidualType& r) const
+    void assembleResidual(const SolutionVector& curSol, const SolutionVector& prevSol) const
+    { assembleResidual(residual(), curSol, prevSol); }
+
+    //! compute the residuals
+    void assembleResidual(ResidualType& r, const SolutionVector& curSol, const SolutionVector& prevSol) const
     {
         r = 0.0;
         for (const auto& element : elements(gridView()))
@@ -184,17 +186,17 @@ public:
                                                 element,
                                                 fvGridGeometry(),
                                                 gridVariables(),
-                                                curSol(),
-                                                prevSol())[0];
+                                                curSol,
+                                                prevSol)[0];
             }
         }
     }
 
     //! computes the global residual
-    Scalar globalResidual() const
+    Scalar globalResidual(const SolutionVector& curSol, const SolutionVector& prevSol) const
     {
         ResidualType residual(numDofs());
-        assembleResidual(residual);
+        assembleResidual(residual, curSol, prevSol);
 
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
@@ -282,15 +284,6 @@ public:
     const GridView& gridView() const
     { return fvGridGeometry().gridView(); }
 
-    const SolutionVector& prevSol() const
-    { return *prevSol_; }
-
-    SolutionVector& curSol()
-    { return *curSol_; }
-
-    const SolutionVector& curSol() const
-    { return *curSol_; }
-
     GridVariables& gridVariables()
     { return *gridVariables_; }
 
@@ -331,10 +324,6 @@ private:
 
     // the finite volume geometry of the grid
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
-
-    // previous and current solution to the problem
-    std::shared_ptr<const SolutionVector> prevSol_;
-    std::shared_ptr<SolutionVector> curSol_;
 
     // the variables container for the grid
     std::shared_ptr<GridVariables> gridVariables_;

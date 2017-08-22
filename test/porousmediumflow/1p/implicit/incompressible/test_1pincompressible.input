@@ -1,5 +1,12 @@
-eps = 1e5
+eps = 1e10
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
 Cells = 101 101
+
+[LinearSolver]
+ResidualReduction = 1e-20
+
+[Newton]
+EnableShiftCriterion = false
+EnableResidualCriterion = true

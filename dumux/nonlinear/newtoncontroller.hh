@@ -262,7 +262,7 @@ public:
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
             if(enableAbsoluteResidualCriterion_)
-                return residual_ <= residualTolerance_;
+                return residualNorm_ <= residualTolerance_;
             else
                 return reduction_ <= reductionTolerance_;
         }
@@ -270,7 +270,7 @@ public:
         {
             if(enableAbsoluteResidualCriterion_)
                 return shift_ <= shiftTolerance_
-                        && residual_ <= residualTolerance_;
+                        && residualNorm_ <= residualTolerance_;
             else
                 return shift_ <= shiftTolerance_
                         && reduction_ <= reductionTolerance_;
@@ -279,7 +279,7 @@ public:
         {
             return shift_ <= shiftTolerance_
                     || reduction_ <= reductionTolerance_
-                    || residual_ <= residualTolerance_;
+                    || residualNorm_ <= residualTolerance_;
         }
 
         return false;
@@ -351,10 +351,12 @@ public:
      *
      * \param assembler The jacobian assembler
      */
-    template<class JacobianAssembler>
-    void assembleLinearSystem(JacobianAssembler& assembler)
+    template<class JacobianAssembler, class SolutionVector>
+    void assembleLinearSystem(JacobianAssembler& assembler,
+                              const SolutionVector& uCurrentIter,
+                              const SolutionVector& prevSol)
     {
-        assembler.assembleJacobianAndResidual();
+        assembler.assembleJacobianAndResidual(uCurrentIter, prevSol);
     }
 
     /*!
@@ -463,14 +465,15 @@ public:
     void newtonUpdate(const JacobianAssembler& assembler,
                       SolutionVector &uCurrentIter,
                       const SolutionVector &uLastIter,
-                      const SolutionVector &deltaU)
+                      const SolutionVector &deltaU,
+                      const SolutionVector &uPrev)
     {
         if (enableShiftCriterion_)
             newtonUpdateShift(uLastIter, deltaU);
 
         if (useLineSearch_)
         {
-            lineSearchUpdate_(assembler, uCurrentIter, uLastIter, deltaU);
+            lineSearchUpdate_(assembler, uCurrentIter, uLastIter, deltaU, uPrev);
         }
         else {
             for (unsigned int i = 0; i < uLastIter.size(); ++i) {
@@ -480,16 +483,8 @@ public:
 
             if (enableResidualCriterion_)
             {
-                // Originally here we handed in uCurrentIter into
-                // the global residual function to evaluate the
-                // residual for the given solution. Currently, the
-                // assembler evaluates the residual for the curSol
-                // container only. However, uCurrentIter is a ref
-                // to this container, so we don't need to do the copying
-                // etc.
-                // TODO: Should we re-include this??????
-                residual_ = assembler.globalResidual();
-                reduction_ = residual_;
+                residualNorm_ = assembler.globalResidual(uCurrentIter, uPrev);
+                reduction_ = residualNorm_;
                 reduction_ /= initialResidual_;
             }
         }
@@ -526,7 +521,7 @@ public:
             if (enableShiftCriterion_)
                 std::cout << ", maximum relative shift = " << shift_;
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
-                std::cout << ", residual = " << residual_;
+                std::cout << ", residual = " << residualNorm_;
             else if (enableResidualCriterion_)
                 std::cout << ", residual reduction = " << reduction_;
             std::cout << endIterMsg().str() << "\n";
@@ -617,7 +612,8 @@ protected:
     void lineSearchUpdate_(const JacobianAssembler& assembler,
                            SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
-                           const SolutionVector &deltaU)
+                           const SolutionVector &deltaU,
+                           const SolutionVector &uPrev)
     {
         Scalar lambda = 1.0;
         SolutionVector tmp(uLastIter);
@@ -628,17 +624,8 @@ protected:
             uCurrentIter *= -lambda;
             uCurrentIter += uLastIter;
 
-            // calculate the residual of the current solution
-            // Originally here we handed in uCurrentIter into
-            // the global residual function to evaluate the
-            // residual for the given solution. Currently, the
-            // assembler evaluates the residual for the curSol
-            // container only. However, uCurrentIter is a ref
-            // to this container, so we don't need to do the copying
-            // etc.
-            // TODO: Should we re-include this??????
-            residual_ = assembler.globalResidual();
-            reduction_ = residual_;
+            residualNorm_ = assembler.globalResidual(uCurrentIter, uPrev);
+            reduction_ = residualNorm_;
             reduction_ /= initialResidual_;
 
             if (reduction_ < lastReduction_ || lambda <= 0.125) {
@@ -690,7 +677,7 @@ protected:
 
     // residual criterion variables
     Scalar reduction_;
-    Scalar residual_;
+    Scalar residualNorm_;
     Scalar lastReduction_;
     Scalar initialResidual_;
     Scalar reductionTolerance_;
