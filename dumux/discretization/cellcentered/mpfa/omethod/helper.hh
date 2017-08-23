@@ -111,7 +111,7 @@ public:
         scvfSeeds.shrink_to_fit();
 
         // check if touches domain boundary (not only interior boundary)
-        const bool boundary = problem.model().globalFvGeometry().touchesDomainBoundary(scvf);
+        const bool boundary = problem.model().fvGridGeometry().touchesDomainBoundary(scvf);
         return InteractionVolumeSeed(std::move(scvSeeds), std::move(scvfSeeds), boundary);
     }
 
@@ -125,7 +125,7 @@ private:
                                  const SubControlVolumeFace& scvf)
     {
         // Check whether or not we are touching the boundary here
-        const bool onBoundary = problem.model().globalFvGeometry().touchesDomainBoundary(scvf);
+        const bool onBoundary = problem.model().fvGridGeometry().touchesDomainBoundary(scvf);
 
         // Get the two scv faces in the first scv
         const auto scvfVector = Implementation::getScvFacesAtVertex(scvf.vertexIndex(), element, fvGeometry);
@@ -172,7 +172,7 @@ private:
         LocalIndexType localScvfIdx = scvfSeeds.size();
 
         // fvGeometry object to bind the neighbouring element during rotation
-        auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
+        auto outsideFvGeometry = localView(problem.model().fvGridGeometry());
 
         // Start/continue interaction region construction from the given scv face
         const LocalIndexType startScvfIdx = clockWise ? 1 : 0;
@@ -187,7 +187,7 @@ private:
             const LocalIndexType insideLocalScvIdx = firstIteration ? 0 : localScvIdx;
 
             // the current element inside of the scv face
-            const auto insideElement = problem.model().globalFvGeometry().element(curScvf.insideScvIdx());
+            const auto insideElement = problem.model().fvGridGeometry().element(curScvf.insideScvIdx());
             const auto faceType = Implementation::getMpfaFaceType(problem, insideElement, curScvf);
 
             // if the face touches the boundary, create a boundary scvf entity
@@ -225,7 +225,7 @@ private:
             }
 
             // If we get here, there are outside entities
-            const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
+            const auto outsideElement = problem.model().fvGridGeometry().element(outsideGlobalScvIdx);
             outsideFvGeometry.bindElement(outsideElement);
 
             // get the two scv faces in the outside element that share the vertex
@@ -317,7 +317,7 @@ public:
                                                                 const SubControlVolumeFace& scvf)
     {
         // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
-        if (!problem.model().globalFvGeometry().touchesBranchingPoint(scvf))
+        if (!problem.model().fvGridGeometry().touchesBranchingPoint(scvf))
             return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeInnerInteractionVolumeSeed(problem,
                                                                                                          element,
                                                                                                          fvGeometry,
@@ -355,7 +355,7 @@ public:
                                                                    const SubControlVolumeFace& scvf)
     {
         // if the scvf does not touch a branching point, use simplified algorithm to create interaction volume seed
-        if (!problem.model().globalFvGeometry().touchesBranchingPoint(scvf))
+        if (!problem.model().fvGridGeometry().touchesBranchingPoint(scvf))
             return MpfaMethodHelper<TypeTag, MpfaMethods::oMethod, 2, 2>::makeBoundaryInteractionVolumeSeed(problem,
                                                                                                             element,
                                                                                                             fvGeometry,
@@ -430,8 +430,8 @@ private:
                 for (auto outsideGlobalScvIdx : actualScvf.outsideScvIndices())
                 {
                     // get outside element, fvgeometry etc.
-                    const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
-                    auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
+                    const auto outsideElement = problem.model().fvGridGeometry().element(outsideGlobalScvIdx);
+                    auto outsideFvGeometry = localView(problem.model().fvGridGeometry());
                     outsideFvGeometry.bindElement(outsideElement);
 
                     // find scvf in outside corresponding to the actual scvf
@@ -739,8 +739,8 @@ private:
                     actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
 
                     // get outside element, fvgeometry etc.
-                    const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
-                    auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
+                    const auto outsideElement = problem.model().fvGridGeometry().element(outsideGlobalScvIdx);
+                    auto outsideFvGeometry = localView(problem.model().fvGridGeometry());
                     outsideFvGeometry.bindElement(outsideElement);
 
                     // find scvf in outside corresponding to the actual scvf
@@ -801,8 +801,8 @@ private:
                         actualScvSeed.setLocalScvfIndex(coordDir, scvfSeeds.size());
 
                         // get outside element, fvgeometry etc.
-                        const auto outsideElement = problem.model().globalFvGeometry().element(outsideGlobalScvIdx);
-                        auto outsideFvGeometry = localView(problem.model().globalFvGeometry());
+                        const auto outsideElement = problem.model().fvGridGeometry().element(outsideGlobalScvIdx);
+                        auto outsideFvGeometry = localView(problem.model().fvGridGeometry());
                         outsideFvGeometry.bindElement(outsideElement);
 
                         // find scvf in outside corresponding to the actual scvf

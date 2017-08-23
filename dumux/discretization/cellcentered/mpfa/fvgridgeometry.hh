@@ -22,8 +22,8 @@
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_GLOBALFVGEOMETRY_BASE_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_GLOBALFVGEOMETRY_BASE_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_BASE_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_BASE_HH
 
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -40,14 +40,14 @@ namespace Dumux
  *        for each element.
  */
 template<class TypeTag, bool EnableFVElementGeometryCache>
-class CCMpfaGlobalFVGeometry
+class CCMpfaFVGridGeometry
 {};
 
 // specialization in case the FVElementGeometries are stored
 template<class TypeTag>
-class CCMpfaGlobalFVGeometry<TypeTag, true>
+class CCMpfaFVGridGeometry<TypeTag, true>
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     //! The actual implementation might overwrite the update() routine
     friend Implementation;
@@ -81,7 +81,7 @@ class CCMpfaGlobalFVGeometry<TypeTag, true>
 
 public:
     //! Constructor
-    CCMpfaGlobalFVGeometry(const GridView gridView)
+    CCMpfaFVGridGeometry(const GridView gridView)
     : gridView_(gridView), elementMap_(gridView), globalInteractionVolumeSeeds_(gridView) {}
 
     //! The total number of sub control volumes
@@ -442,12 +442,12 @@ private:
 
 // specialization in case the FVElementGeometries are not stored
 template<class TypeTag>
-class CCMpfaGlobalFVGeometry<TypeTag, false>
+class CCMpfaFVGridGeometry<TypeTag, false>
 {
     //! The local fvGeometry needs access to the problem
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
-    using Implementation = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -476,7 +476,7 @@ class CCMpfaGlobalFVGeometry<TypeTag, false>
 
 public:
     //! Constructor
-    CCMpfaGlobalFVGeometry(const GridView gridView)
+    CCMpfaFVGridGeometry(const GridView gridView)
     : gridView_(gridView), elementMap_(gridView), globalInteractionVolumeSeeds_(gridView_) {}
 
     //! The total number of sub control volumes

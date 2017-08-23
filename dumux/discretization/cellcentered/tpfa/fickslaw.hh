@@ -136,7 +136,7 @@ private:
         {
             const auto outsideScvIdx = scvf.outsideScvIdx(i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
+            const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
             const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
 
             auto outsideTi = calculateTransmissibility_(problem, outsideElement, fvGeometry, elemVolVars, flippedScvf, phaseIdx, compIdx);

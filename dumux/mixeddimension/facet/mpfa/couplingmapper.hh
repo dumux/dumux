@@ -153,8 +153,8 @@ public:
                 {
                     bulkCouplingData_[bulkElementIdx].isCoupled = true;
 
-                    const auto bulkElement = bulkProblem_().model().globalFvGeometry().element(bulkElementIdx);
-                    auto bulkFvGeometry = localView(bulkProblem_().model().globalFvGeometry());
+                    const auto bulkElement = bulkProblem_().model().fvGridGeometry().element(bulkElementIdx);
+                    auto bulkFvGeometry = localView(bulkProblem_().model().fvGridGeometry());
                     bulkFvGeometry.bindElement(bulkElement);
 
                     // find the scvfs in the bulk element that "touch" the facet element
@@ -179,10 +179,10 @@ public:
                             // also, insert scvf stencil to the coupling stencil of the low dim element
                             const auto scvfStencil = [&] ()
                             {
-                                if (bulkProblem_().model().globalFvGeometry().isInBoundaryInteractionVolume(scvf))
-                                    return bulkProblem_().model().globalFvGeometry().boundaryInteractionVolumeSeed(scvf).globalScvIndices();
+                                if (bulkProblem_().model().fvGridGeometry().isInBoundaryInteractionVolume(scvf))
+                                    return bulkProblem_().model().fvGridGeometry().boundaryInteractionVolumeSeed(scvf).globalScvIndices();
                                 else
-                                    return bulkProblem_().model().globalFvGeometry().interactionVolumeSeed(scvf).globalScvIndices();
+                                    return bulkProblem_().model().fvGridGeometry().interactionVolumeSeed(scvf).globalScvIndices();
                             } ();
 
                             auto& lowDimCouplingStencil = lowDimCouplingData_[lowDimElementGlobalIdx].couplingStencil;

@@ -114,7 +114,7 @@ public:
     void eval(const Element &element)
     {
         // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(this->problem().model().globalFvGeometry());
+        auto fvGeometry = localView(this->problem().model().fvGridGeometry());
         fvGeometry.bind(element);
 
         auto curElemVolVars = localView(problem().model().curGlobalVolVars());

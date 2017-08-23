@@ -159,7 +159,7 @@ public:
         for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
             const auto& fluxVarIndicesJ = globalFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
-            const auto elementJ = fvGeometry.globalFvGeometry().element(neighborStencil[localIdxJ]);
+            const auto elementJ = fvGeometry.fvGridGeometry().element(neighborStencil[localIdxJ]);
 
             for (auto fluxVarIdx : fluxVarIndicesJ)
             {

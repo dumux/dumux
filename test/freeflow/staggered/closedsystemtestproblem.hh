@@ -61,7 +61,7 @@ SET_TYPE_PROP(ClosedSystemTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ClosedSystemTestProblem, Problem, Dumux::ClosedSystemTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(ClosedSystemTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalVolumeVariablesCache, true);

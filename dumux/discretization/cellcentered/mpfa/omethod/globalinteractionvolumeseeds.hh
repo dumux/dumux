@@ -65,8 +65,8 @@ public:
         scvfIndexMap.clear();
 
         // reserve memory
-        const auto numScvf = this->problem().model().globalFvGeometry().numScvf();
-        const auto numInteriorOrDomainBoundaryVertices = this->problem().model().globalFvGeometry().numInteriorOrDomainBoundaryVertices();
+        const auto numScvf = this->problem().model().fvGridGeometry().numScvf();
+        const auto numInteriorOrDomainBoundaryVertices = this->problem().model().fvGridGeometry().numInteriorOrDomainBoundaryVertices();
         const int numInteriorVertices = this->gridView().size(dim) - numInteriorOrDomainBoundaryVertices;
 
         if (numInteriorVertices > 0)
@@ -81,7 +81,7 @@ public:
         IndexType seedIndex = 0;
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->problem().model().globalFvGeometry());
+            auto fvGeometry = localView(this->problem().model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scvf : scvfs(fvGeometry))
@@ -93,7 +93,7 @@ public:
                 // on interior or domain boundaries and on branching points we have to set
                 // a boundary interaction volume (for compatibility with other mpfa methods)
                 if (interiorOrDomainBoundaryVertices[scvf.vertexIndex()]
-                    || this->problem().model().globalFvGeometry().touchesBranchingPoint(scvf))
+                    || this->problem().model().fvGridGeometry().touchesBranchingPoint(scvf))
                 {
                     // make the boundary interaction volume seed
                     boundarySeeds.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(this->problem(),

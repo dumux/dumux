@@ -7,6 +7,6 @@ fluxvariablescachefiller.hh
 fourieslaw.hh
 fvelementgeometry.hh
 globalfluxvariablescache.hh
-globalfvgeometry.hh
+fvgridgeometry.hh
 subcontrolvolumeface.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/tpfa)

@@ -118,13 +118,13 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
+        const auto& fvGridGeometry = problem.model().fvGridGeometry();
 
         // return the scv (element) indices in the interaction region
-        if (globalFvGeometry.isInBoundaryInteractionVolume(scvf))
-            return globalFvGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
+        if (fvGridGeometry.isInBoundaryInteractionVolume(scvf))
+            return fvGridGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
         else
-            return globalFvGeometry.interactionVolumeSeed(scvf).globalScvIndices();
+            return fvGridGeometry.interactionVolumeSeed(scvf).globalScvIndices();
     }
 };
 

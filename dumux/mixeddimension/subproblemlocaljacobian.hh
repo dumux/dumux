@@ -141,7 +141,7 @@ public:
                   SolutionVector& residual)
     {
         // prepare the volvars/fvGeometries in case caching is disabled
-        auto fvGeometry = localView(this->model_().globalFvGeometry());
+        auto fvGeometry = localView(this->model_().fvGridGeometry());
         fvGeometry.bind(element);
 
         auto curElemVolVars = localView(this->model_().curGlobalVolVars());
@@ -333,7 +333,7 @@ protected:
 
         for (auto globalJ : couplingStencil)
         {
-            const auto otherElement = otherProblem_().model().globalFvGeometry().element(globalJ);
+            const auto otherElement = otherProblem_().model().fvGridGeometry().element(globalJ);
             const auto originalResidual = globalProblem_().couplingManager().evalCouplingResidual(element,
                                                                                                   fvGeometry,
                                                                                                   curElemVolVars,

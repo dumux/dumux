@@ -62,7 +62,7 @@ SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffs
 //SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::UGGrid<3>);
 //SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::conforming>);
 
-SET_BOOL_PROP(RichardsTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(RichardsTestProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(RichardsTestProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(RichardsTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(RichardsTestProblem, SolutionDependentAdvection, false);
@@ -244,7 +244,7 @@ public:
         {
             for (const auto& element : elements(this->gridView()))
             {
-                auto fvGeometry = localView(this->model().globalFvGeometry());
+                auto fvGeometry = localView(this->model().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
                 auto elemVolVars = localView(this->model().curGlobalVolVars());

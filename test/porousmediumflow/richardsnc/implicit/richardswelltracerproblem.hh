@@ -147,7 +147,7 @@ public:
         // bulk elements
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(this->model().curGlobalVolVars());

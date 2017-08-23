@@ -167,7 +167,7 @@ SET_BOOL_PROP(ImplicitBase, ImplicitEnableJacobianRecycling, false);
 SET_BOOL_PROP(ImplicitBase, ImplicitEnablePartialReassemble, false);
 
 //! We do not store the FVGeometry by default
-SET_BOOL_PROP(ImplicitBase, EnableGlobalFVGeometryCache, false);
+SET_BOOL_PROP(ImplicitBase, EnableFVGridGeometryCache, false);
 
 //! We do not store the volume variables by default
 SET_BOOL_PROP(ImplicitBase, EnableGlobalVolumeVariablesCache, false);

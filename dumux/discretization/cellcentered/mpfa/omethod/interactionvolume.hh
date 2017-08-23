@@ -392,7 +392,7 @@ private:
         // set up quantities related to sub-control volumes
         for (auto&& scvSeed : seed.scvSeeds())
         {
-            const auto element = problem_().model().globalFvGeometry().element(scvSeed.globalIndex());
+            const auto element = problem_().model().fvGridGeometry().element(scvSeed.globalIndex());
             localScvs_.emplace_back(problem_(), element, fvGeometry_(), scvSeed);
             localElements_.emplace_back(std::move(element));
             volVarsPositions_.push_back(localScvs_.back().center());

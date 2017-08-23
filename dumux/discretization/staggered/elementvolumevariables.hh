@@ -135,7 +135,7 @@ public:
         // Update the volume variables of the neighboring elements
         for (auto globalJ : neighborStencil)
         {
-            const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            const auto& elementJ = fvGeometry.fvGridGeometry().element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
             volumeVariables_[localIdx].update(sol[globalJ], globalVolVars().problem_(), elementJ, scvJ);
             volVarIndices_[localIdx] = scvJ.index();

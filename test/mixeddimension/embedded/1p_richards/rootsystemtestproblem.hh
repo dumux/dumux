@@ -59,7 +59,7 @@ public:
 // Set the grid type
 SET_TYPE_PROP(RootsystemTestProblem, Grid, Dune::FoamGrid<1, 3>);
 
-SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(RootsystemTestProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentAdvection, false);
@@ -317,7 +317,7 @@ public:
         {
             for (const auto& element : elements(this->gridView()))
             {
-                auto fvGeometry = localView(this->model().globalFvGeometry());
+                auto fvGeometry = localView(this->model().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
                 auto elemVolVars = localView(this->model().curGlobalVolVars());

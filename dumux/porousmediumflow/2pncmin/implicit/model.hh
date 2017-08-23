@@ -224,7 +224,7 @@ public:
         for (const auto& element : elements(this->problem_().gridView()))
         {
             // make sure FVElementGeometry & vol vars are bound to the element
-            auto fvGeometry = localView(this->globalFvGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
             if (switchFlag_)

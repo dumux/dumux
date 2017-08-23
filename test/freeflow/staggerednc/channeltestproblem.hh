@@ -74,7 +74,7 @@ SET_TYPE_PROP(ChannelNCTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ChannelNCTestProblem, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(ChannelNCTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalVolumeVariablesCache, true);
@@ -311,7 +311,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

@@ -64,7 +64,7 @@ SET_TYPE_PROP(DoneaTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(DoneaTestProblem, Problem, Dumux::DoneaTestProblem<TypeTag> );
 
-SET_BOOL_PROP(DoneaTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(DoneaTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(DoneaTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(DoneaTestProblem, EnableGlobalVolumeVariablesCache, true);
@@ -299,7 +299,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -345,7 +345,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

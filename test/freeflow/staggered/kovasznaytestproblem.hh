@@ -65,7 +65,7 @@ SET_TYPE_PROP(KovasznayTestProblem, Grid, Dune::YaspGrid<2, Dune::EquidistantOff
 // Set the problem property
 SET_TYPE_PROP(KovasznayTestProblem, Problem, Dumux::KovasznayTestProblem<TypeTag> );
 
-SET_BOOL_PROP(KovasznayTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(KovasznayTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(KovasznayTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(KovasznayTestProblem, EnableGlobalVolumeVariablesCache, true);
@@ -308,7 +308,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -354,7 +354,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

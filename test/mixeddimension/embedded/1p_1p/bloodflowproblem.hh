@@ -133,7 +133,7 @@ public:
         exactPressure_.resize(this->model().numDofs());
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -304,7 +304,7 @@ public:
         {
             for (const auto& element : elements(this->gridView()))
             {
-                auto fvGeometry = localView(this->model().globalFvGeometry());
+                auto fvGeometry = localView(this->model().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
                 auto elemVolVars = localView(this->model().curGlobalVolVars());

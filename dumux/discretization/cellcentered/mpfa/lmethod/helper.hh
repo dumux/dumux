@@ -139,11 +139,11 @@ private:
 
         // get the surrounding elements and "outside" data
         LocalIndexType otherScvfIdx = 1-localScvfIdx;
-        const auto e2 = problem.model().globalFvGeometry().element(scvf.outsideScvIdx());
-        const auto e3 = problem.model().globalFvGeometry().element(scvfVector[otherScvfIdx]->outsideScvIdx());
+        const auto e2 = problem.model().fvGridGeometry().element(scvf.outsideScvIdx());
+        const auto e3 = problem.model().fvGridGeometry().element(scvfVector[otherScvfIdx]->outsideScvIdx());
 
-        auto e2Geometry = localView(problem.model().globalFvGeometry());
-        auto e3Geometry = localView(problem.model().globalFvGeometry());
+        auto e2Geometry = localView(problem.model().fvGridGeometry());
+        auto e3Geometry = localView(problem.model().fvGridGeometry());
 
         e2Geometry.bindElement(e2);
         e3Geometry.bindElement(e3);
@@ -165,8 +165,8 @@ private:
                                    e3Scvfs[localScvfIdx]->index());
 
         // Outer seed for outside of e2, we know the local scvf index here will be localScvfIdx in 2d
-        const auto e4 = problem.model().globalFvGeometry().element(e2Scvfs[localScvfIdx]->outsideScvIdx());
-        auto e4Geometry = localView(problem.model().globalFvGeometry());
+        const auto e4 = problem.model().fvGridGeometry().element(e2Scvfs[localScvfIdx]->outsideScvIdx());
+        auto e4Geometry = localView(problem.model().fvGridGeometry());
         e4Geometry.bindElement(e4);
         const auto e4Scvfs = Implementation::getCommonAndNextScvFace(*e2Scvfs[localScvfIdx], e4Geometry, /*clockwise?*/localScvfIdx == 1);
 

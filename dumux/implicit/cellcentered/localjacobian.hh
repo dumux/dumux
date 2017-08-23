@@ -125,7 +125,7 @@ public:
         const bool isGhost = (element.partitionType() == Dune::GhostEntity);
 
         // prepare the volvars/fvGeometries in case caching is disabled
-        auto fvGeometry = localView(this->model_().globalFvGeometry());
+        auto fvGeometry = localView(this->model_().fvGridGeometry());
         fvGeometry.bind(element);
 
         auto curElemVolVars = localView(this->model_().curGlobalVolVars());
@@ -217,7 +217,7 @@ protected:
         unsigned int j = 0;
         for (const auto& dataJ : assemblyMap_[globalI_])
         {
-            auto elementJ = fvGeometry.globalFvGeometry().element(dataJ.globalJ);
+            auto elementJ = fvGeometry.fvGridGeometry().element(dataJ.globalJ);
             neighborElements.push_back(elementJ);
 
             for (auto scvfIdx : dataJ.scvfsJ)
@@ -397,7 +397,7 @@ protected:
         {
             auto&& scvJ = fvGeometry.scv(globalJ);
             auto& curVolVarsJ = getCurVolVars(curElemVolVars, scvJ);
-            const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            const auto& elementJ = fvGeometry.fvGridGeometry().element(globalJ);
             auto& curSol = this->model_().curSol();
 
             // save a copy of the original privars and volvars

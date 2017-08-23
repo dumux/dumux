@@ -99,7 +99,7 @@ int main (int argc, char *argv[]) try
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     // make a grid
@@ -111,7 +111,7 @@ int main (int argc, char *argv[]) try
 
     Problem problem(leafGridView);
 
-    GlobalFVGeometry global(leafGridView);
+    FVGridGeometry global(leafGridView);
     global.update(problem);
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces

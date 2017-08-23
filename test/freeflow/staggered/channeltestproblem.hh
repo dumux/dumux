@@ -69,7 +69,7 @@ SET_TYPE_PROP(ChannelTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(ChannelTestProblem, Problem, Dumux::ChannelTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelTestProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(ChannelTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(ChannelTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(ChannelTestProblem, EnableGlobalVolumeVariablesCache, true);

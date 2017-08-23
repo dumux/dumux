@@ -49,7 +49,7 @@ NEW_TYPE_TAG(FractureBoxProblem, INHERITS_FROM(BoxModel, FractureProblem));
 NEW_TYPE_TAG(FractureCCProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
 NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem));
 
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(FractureCCProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(FractureCCProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(FractureCCProblem, EnableGlobalFluxVariablesCache, true);
 

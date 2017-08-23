@@ -76,7 +76,7 @@ public:
             // We are looking for the elements I, for which this element J is in the flux stencil
             auto globalJ = problem.elementMapper().index(element);
 
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            auto fvGeometry = localView(problem.model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             // obtain the data of J in elements I

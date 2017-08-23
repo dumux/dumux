@@ -36,8 +36,8 @@ namespace Dumux
 {
 
 //! forward declaration of the global finite volume geometry
-template<class TypeTag, bool EnableGlobalFVGeometryCache>
-class BoxGlobalFVGeometry;
+template<class TypeTag, bool EnableFVGridGeometryCache>
+class BoxFVGridGeometry;
 
 /*!
  * \ingroup ImplicitModel
@@ -45,7 +45,7 @@ class BoxGlobalFVGeometry;
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-template<class TypeTag, bool EnableGlobalFVGeometryCache>
+template<class TypeTag, bool EnableFVGridGeometryCache>
 class BoxFVElementGeometry
 {};
 
@@ -60,7 +60,7 @@ class BoxFVElementGeometry<TypeTag, true>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
@@ -77,19 +77,19 @@ class BoxFVElementGeometry<TypeTag, true>
 
 public:
     //! Constructor
-    BoxFVElementGeometry(const GlobalFVGeometry& globalFvGeometry)
-    : globalFvGeometryPtr_(&globalFvGeometry) {}
+    BoxFVElementGeometry(const FVGridGeometry& fvGridGeometry)
+    : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(IndexType scvIdx) const
     {
-        return globalFvGeometry().scvs(eIdx_)[scvIdx];
+        return fvGridGeometry().scvs(eIdx_)[scvIdx];
     }
 
     //! Get a sub control volume face with a local scvf index
     const SubControlVolumeFace& scvf(IndexType scvfIdx) const
     {
-        return globalFvGeometry().scvfs(eIdx_)[scvfIdx];
+        return fvGridGeometry().scvfs(eIdx_)[scvfIdx];
     }
 
     //! iterator range for sub control volumes. Iterates over
@@ -100,7 +100,7 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
     scvs(const BoxFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.globalFvGeometry();
+        const auto& g = fvGeometry.fvGridGeometry();
         using Iter = typename std::vector<SubControlVolume>::const_iterator;
         return Dune::IteratorRange<Iter>(g.scvs(fvGeometry.eIdx_).begin(), g.scvs(fvGeometry.eIdx_).end());
     }
@@ -113,7 +113,7 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const BoxFVElementGeometry& fvGeometry)
     {
-        const auto& g = fvGeometry.globalFvGeometry();
+        const auto& g = fvGeometry.fvGridGeometry();
         using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
         return Dune::IteratorRange<Iter>(g.scvfs(fvGeometry.eIdx_).begin(), g.scvfs(fvGeometry.eIdx_).end());
     }
@@ -121,19 +121,19 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return globalFvGeometry().feCache().get(elementPtr_->geometry().type()).localBasis();
+        return fvGridGeometry().feCache().get(elementPtr_->geometry().type()).localBasis();
     }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
     {
-        return globalFvGeometry().scvs(eIdx_).size();
+        return fvGridGeometry().scvs(eIdx_).size();
     }
 
     //! The total number of sub control volume faces
     std::size_t numScvf() const
     {
-        return globalFvGeometry().scvfs(eIdx_).size();
+        return fvGridGeometry().scvfs(eIdx_).size();
     }
 
     //! this function is for compatibility reasons with cc methods
@@ -150,16 +150,16 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        eIdx_ = globalFvGeometry().problem_().elementMapper().index(element);
+        eIdx_ = fvGridGeometry().problem_().elementMapper().index(element);
     }
 
     //! The global finite volume geometry we are a restriction of
-    const GlobalFVGeometry& globalFvGeometry() const
-    { return *globalFvGeometryPtr_; }
+    const FVGridGeometry& fvGridGeometry() const
+    { return *fvGridGeometryPtr_; }
 
 private:
     const Element* elementPtr_;
-    const GlobalFVGeometry* globalFvGeometryPtr_;
+    const FVGridGeometry* fvGridGeometryPtr_;
 
     IndexType eIdx_;
 };
@@ -174,7 +174,7 @@ class BoxFVElementGeometry<TypeTag, false>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -192,8 +192,8 @@ class BoxFVElementGeometry<TypeTag, false>
 
 public:
     //! Constructor
-    BoxFVElementGeometry(const GlobalFVGeometry& globalFvGeometry)
-    : globalFvGeometryPtr_(&globalFvGeometry) {}
+    BoxFVElementGeometry(const FVGridGeometry& fvGridGeometry)
+    : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get a sub control volume with a local scv index
     const SubControlVolume& scv(IndexType scvIdx) const
@@ -234,7 +234,7 @@ public:
     //! Get a local finite element basis
     const FeLocalBasis& feLocalBasis() const
     {
-        return globalFvGeometry().feCache().get(elementPtr_->geometry().type()).localBasis();
+        return fvGridGeometry().feCache().get(elementPtr_->geometry().type()).localBasis();
     }
 
     //! The total number of sub control volumes
@@ -263,19 +263,19 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        eIdx_ = globalFvGeometry().problem_().elementMapper().index(element);
+        eIdx_ = fvGridGeometry().problem_().elementMapper().index(element);
         makeElementGeometries(element);
     }
 
     //! The global finite volume geometry we are a restriction of
-    const GlobalFVGeometry& globalFvGeometry() const
-    { return *globalFvGeometryPtr_; }
+    const FVGridGeometry& fvGridGeometry() const
+    { return *fvGridGeometryPtr_; }
 
 private:
 
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = globalFvGeometry().problem_().elementMapper().index(element);
+        auto eIdx = fvGridGeometry().problem_().elementMapper().index(element);
 
         // get the element geometry
         auto elementGeometry = element.geometry();
@@ -289,7 +289,7 @@ private:
         for (unsigned int scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
-            auto dofIdxGlobal = globalFvGeometry().problem_().vertexMapper().subIndex(element, scvLocalIdx, dim);
+            auto dofIdxGlobal = fvGridGeometry().problem_().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
@@ -318,7 +318,7 @@ private:
         }
 
         // construct the sub control volume faces on the domain boundary
-        for (const auto& intersection : intersections(globalFvGeometry().gridView(), element))
+        for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
         {
             if (intersection.boundary())
             {
@@ -350,7 +350,7 @@ private:
     IndexType eIdx_;
 
     //! The global geometry this is a restriction of
-    const GlobalFVGeometry* globalFvGeometryPtr_;
+    const FVGridGeometry* fvGridGeometryPtr_;
 
     //! vectors to store the geometries locally after binding an element
     std::vector<SubControlVolume> scvs_;

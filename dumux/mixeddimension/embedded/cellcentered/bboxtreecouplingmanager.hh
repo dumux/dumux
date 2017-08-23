@@ -487,8 +487,8 @@ public:
         auto& data = pointSourceData_[id];
         auto bulkPriVars = data.interpolateBulk(bulkProblem().model().curSol());
 
-        const auto element = bulkProblem().model().globalFvGeometry().element(data.bulkElementIdx());
-        auto fvGeometry = localView(bulkProblem().model().globalFvGeometry());
+        const auto element = bulkProblem().model().fvGridGeometry().element(data.bulkElementIdx());
+        auto fvGeometry = localView(bulkProblem().model().fvGridGeometry());
         fvGeometry.bindElement(element);
 
         BulkVolumeVariables volVars;
@@ -504,8 +504,8 @@ public:
     LowDimVolumeVariables lowDimVolVars(unsigned int id) const
     {
         const auto& data = pointSourceData_[id];
-        const auto element = lowDimProblem().model().globalFvGeometry().element(data.lowDimElementIdx());
-        auto fvGeometry = localView(lowDimProblem().model().globalFvGeometry());
+        const auto element = lowDimProblem().model().fvGridGeometry().element(data.lowDimElementIdx());
+        auto fvGeometry = localView(lowDimProblem().model().fvGridGeometry());
         fvGeometry.bindElement(element);
 
         const auto& curSol = lowDimProblem().model().curSol();

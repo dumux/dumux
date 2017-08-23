@@ -61,8 +61,8 @@ NEW_PROP_TAG(LocalJacobian); //!< The type of the local jacobian operator
 NEW_PROP_TAG(SubControlVolume);//!< The type of the sub control volume
 NEW_PROP_TAG(SubControlVolumeFace); //!< The type of the sub control volume face
 NEW_PROP_TAG(FVElementGeometry); //!< The type of the local finite volume geometry (iterators over scvs, scvfs)
-NEW_PROP_TAG(GlobalFVGeometry); //!< The type of the global finite volume geometry
-NEW_PROP_TAG(EnableGlobalFVGeometryCache); //! specifies if geometric data is be saved (faster, but more memory consuming)
+NEW_PROP_TAG(FVGridGeometry); //!< The type of the global finite volume geometry
+NEW_PROP_TAG(EnableFVGridGeometryCache); //! specifies if geometric data is be saved (faster, but more memory consuming)
 
 NEW_PROP_TAG(JacobianAssembler); //!< Assembles the global jacobian matrix
 NEW_PROP_TAG(JacobianMatrix); //!< Type of the global jacobian matrix

@@ -61,7 +61,7 @@ class StaggeredBaseModel : public ImplicitModel<TypeTag>
     friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
 
@@ -106,8 +106,8 @@ public:
 
         this->updateBoundaryIndices_();
 
-        this->globalFvGeometryPtr_ = std::make_shared<GlobalFVGeometry>(problem.gridView());
-        this->globalFvGeometryPtr_->update(problem);
+        this->fvGridGeometryPtr_ = std::make_shared<FVGridGeometry>(problem.gridView());
+        this->fvGridGeometryPtr_->update(problem);
 
         this->uCur_[cellCenterIdx].resize(asImp_().numCellCenterDofs());
         this->uCur_[faceIdx].resize(asImp_().numFaceDofs());
@@ -247,7 +247,7 @@ public:
         for (const auto& element : elements(this->gridView_()))
         {
             // deal with the current element, bind FVGeometry to it
-            auto fvGeometry = localView(this->globalFvGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
             // loop over sub control volumes
@@ -377,7 +377,7 @@ public:
 //             (*rank)[eIdx] = this->gridView_().comm().rank();
 //
 //             // get the local fv geometry
-//             auto fvGeometry = localView(this->globalFvGeometry());
+//             auto fvGeometry = localView(this->fvGridGeometry());
 //             fvGeometry.bindElement(element);
 //
 //             auto elemVolVars = localView(this->curGlobalVolVars());
@@ -532,7 +532,7 @@ public:
      */
     size_t numFaceDofs() const
     {
-        return this->globalFvGeometryPtr_->numIntersections();
+        return this->fvGridGeometryPtr_->numIntersections();
     }
 
     const GlobalFaceVariables& curGlobalFaceVars() const

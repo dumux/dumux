@@ -77,7 +77,7 @@ class ImplicitModel
         dim = GridView::dimension
     };
 
-    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using LocalJacobian = typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
@@ -113,8 +113,8 @@ public:
 
         updateBoundaryIndices_();
 
-        globalFvGeometryPtr_ = std::make_shared<GlobalFVGeometry>(problem.gridView());
-        globalFvGeometryPtr_->update(problem);
+        fvGridGeometryPtr_ = std::make_shared<FVGridGeometry>(problem.gridView());
+        fvGridGeometryPtr_->update(problem);
 
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
@@ -410,7 +410,7 @@ public:
             updateBoundaryIndices_();
 
             // update the fv geometry
-            globalFvGeometryPtr_->update(problem_());
+            fvGridGeometryPtr_->update(problem_());
 
             // resize and update the volVars with the initial solution
             curGlobalVolVars_.update(problem_(), curSol());
@@ -654,8 +654,8 @@ public:
     const GlobalVolumeVariables& prevGlobalVolVars() const
     { return prevGlobalVolVars_; }
 
-    const GlobalFVGeometry& globalFvGeometry() const
-    { return *globalFvGeometryPtr_; }
+    const FVGridGeometry& fvGridGeometry() const
+    { return *fvGridGeometryPtr_; }
 
 protected:
 
@@ -813,7 +813,7 @@ protected:
     GlobalFluxVariablesCache globalfluxVarsCache_;
 
     // the finite volume element geometries
-    std::shared_ptr<GlobalFVGeometry> globalFvGeometryPtr_;
+    std::shared_ptr<FVGridGeometry> fvGridGeometryPtr_;
 
 private:
     /*!

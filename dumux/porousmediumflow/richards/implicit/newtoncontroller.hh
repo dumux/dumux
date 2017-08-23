@@ -91,7 +91,7 @@ public:
             const auto gridView = this->problem_().gridView();
             for (const auto& element : elements(gridView))
             {
-                auto fvGeometry = localView(this->model_().globalFvGeometry());
+                auto fvGeometry = localView(this->model_().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
                 for (auto&& scv : scvs(fvGeometry))

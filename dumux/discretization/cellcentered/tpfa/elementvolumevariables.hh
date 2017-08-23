@@ -141,7 +141,7 @@ public:
         // Update the volume variables of the neighboring elements
         for (const auto& dataJ : assemblyMapI)
         {
-            const auto& elementJ = fvGeometry.globalFvGeometry().element(dataJ.globalJ);
+            const auto& elementJ = fvGeometry.fvGridGeometry().element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
             volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
                                               problem,
@@ -184,7 +184,7 @@ public:
             volVarIndices_.resize(volVarIndices_.size() + additionalDofDependencies.size());
             for (auto globalJ : additionalDofDependencies)
             {
-                const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+                const auto& elementJ = fvGeometry.fvGridGeometry().element(globalJ);
                 auto&& scvJ = fvGeometry.scv(globalJ);
 
                 volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),

@@ -42,13 +42,13 @@ namespace Dumux
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-template<class TypeTag, bool EnableGlobalFVGeometryCache>
-class BoxGlobalFVGeometry
+template<class TypeTag, bool EnableFVGridGeometryCache>
+class BoxFVGridGeometry
 {};
 
 // specialization in case the FVElementGeometries are stored
 template<class TypeTag>
-class BoxGlobalFVGeometry<TypeTag, true>
+class BoxFVGridGeometry<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -75,7 +75,7 @@ class BoxGlobalFVGeometry<TypeTag, true>
 
 public:
     //! Constructor
-    BoxGlobalFVGeometry(const GridView gridView)
+    BoxFVGridGeometry(const GridView gridView)
     : gridView_(gridView) {}
 
     //! The total number of sub control volumes
@@ -193,7 +193,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend FVElementGeometry localView(const BoxGlobalFVGeometry& global)
+    friend FVElementGeometry localView(const BoxFVGridGeometry& global)
     {
         return FVElementGeometry(global);
     }
@@ -228,7 +228,7 @@ private:
 
 // specialization in case the FVElementGeometries are not stored
 template<class TypeTag>
-class BoxGlobalFVGeometry<TypeTag, false>
+class BoxFVGridGeometry<TypeTag, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -255,7 +255,7 @@ class BoxGlobalFVGeometry<TypeTag, false>
 
 public:
     //! Constructor
-    BoxGlobalFVGeometry(const GridView gridView)
+    BoxFVGridGeometry(const GridView gridView)
     : gridView_(gridView)
     {}
 
@@ -309,7 +309,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend FVElementGeometry localView(const BoxGlobalFVGeometry& global)
+    friend FVElementGeometry localView(const BoxFVGridGeometry& global)
     {
         return FVElementGeometry(global);
     }

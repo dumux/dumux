@@ -169,7 +169,7 @@ public:
         // add required data on the scv faces in the neighboring elements
         for (unsigned int localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto elementJ = fvGeometry.globalFvGeometry().element(assemblyMapI[localIdxJ].globalJ);
+            const auto elementJ = fvGeometry.fvGridGeometry().element(assemblyMapI[localIdxJ].globalJ);
             for (auto scvfIdx : assemblyMapI[localIdxJ].scvfsJ)
             {
                 auto&& scvfJ = fvGeometry.scvf(scvfIdx);
@@ -218,7 +218,7 @@ public:
                 const auto scvfInsideScvIdx = scvf.insideScvIdx();
                 const auto& insideElement = scvfInsideScvIdx == globalI ?
                                             element :
-                                            problem.model().globalFvGeometry().element(scvfInsideScvIdx);
+                                            problem.model().fvGridGeometry().element(scvfInsideScvIdx);
 
                 filler.fill(*this, fluxVarsCache_[localScvfIdx], insideElement, fvGeometry, elemVolVars, scvf);
             }

@@ -65,12 +65,12 @@ public:
         // instantiate helper class to fill the caches
         FluxVariablesCacheFiller filler(problem);
 
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
-        fluxVarsCache_.resize(globalFvGeometry.numScvf());
+        const auto& fvGridGeometry = problem.model().fvGridGeometry();
+        fluxVarsCache_.resize(fvGridGeometry.numScvf());
         for (const auto& element : elements(problem.gridView()))
         {
             // Prepare the geometries within the elements of the stencil
-            auto fvGeometry = localView(globalFvGeometry);
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bind(element);
 
             auto elemVolVars = localView(problem.model().curGlobalVolVars());

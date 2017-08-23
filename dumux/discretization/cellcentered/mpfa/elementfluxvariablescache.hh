@@ -180,7 +180,7 @@ public:
                 auto& scvfCache = (*this)[scvf];
                 if (!scvfCache.isUpdated())
                 {
-                    auto elementJ = problem.model().globalFvGeometry().element(dataJ.globalJ);
+                    auto elementJ = problem.model().fvGridGeometry().element(dataJ.globalJ);
                     filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, scvf);
                 }
             }
@@ -249,7 +249,7 @@ private:
                     const auto scvfInsideScvIdx = scvf.insideScvIdx();
                     const auto insideElement = scvfInsideScvIdx == globalI ?
                                                element :
-                                               problem.model().globalFvGeometry().element(scvfInsideScvIdx);
+                                               problem.model().fvGridGeometry().element(scvfInsideScvIdx);
 
                     filler.update(*this, scvfCache, insideElement, fvGeometry, elemVolVars, scvf);
                 }

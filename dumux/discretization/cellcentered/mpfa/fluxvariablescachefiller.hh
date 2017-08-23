@@ -102,10 +102,10 @@ public:
         scvfPtr_ = &scvf;
 
         // prepare interaction volume and fill caches of all the scvfs connected to it
-        const auto& globalFvGeometry = problem().model().globalFvGeometry();
-        if (globalFvGeometry.isInBoundaryInteractionVolume(scvf))
+        const auto& fvGridGeometry = problem().model().fvGridGeometry();
+        if (fvGridGeometry.isInBoundaryInteractionVolume(scvf))
         {
-            bIv_ = std::make_unique<BoundaryInteractionVolume>(globalFvGeometry.boundaryInteractionVolumeSeed(scvf),
+            bIv_ = std::make_unique<BoundaryInteractionVolume>(fvGridGeometry.boundaryInteractionVolumeSeed(scvf),
                                                                problem(),
                                                                fvGeometry,
                                                                elemVolVars);
@@ -115,7 +115,7 @@ public:
         }
         else
         {
-            iv_ = std::make_unique<InteractionVolume>(globalFvGeometry.interactionVolumeSeed(scvf),
+            iv_ = std::make_unique<InteractionVolume>(fvGridGeometry.interactionVolumeSeed(scvf),
                                                       problem(),
                                                       fvGeometry,
                                                       elemVolVars);
@@ -219,7 +219,7 @@ private:
             const auto scvfJInsideScvIndex = scvfJ.insideScvIdx();
             otherElements[otherScvfIdx] =  scvfJInsideScvIndex == scvFace().insideScvIdx() ?
                                            element() :
-                                           problem().model().globalFvGeometry().element(scvfJInsideScvIndex);
+                                           problem().model().fvGridGeometry().element(scvfJInsideScvIndex);
 
             // get the corresponding flux var cache
             otherFluxVarCaches[otherScvfIdx] = &fluxVarsCacheContainer[scvfJ];

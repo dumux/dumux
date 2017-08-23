@@ -217,7 +217,7 @@ public:
                             = asImp_().getPriVarData_(eIdxGlobal, priVarVectorDataInfo_[i].pvIdx[j]);
             }
 
-            auto fvGeometry = localView(problem_.model().globalFvGeometry());
+            auto fvGeometry = localView(problem_.model().fvGridGeometry());
             auto elemVolVars = localView(problem_.model().curGlobalVolVars());
 
             // If velocity output is enabled we need to bind to the whole stencil

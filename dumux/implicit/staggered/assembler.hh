@@ -146,7 +146,7 @@ private:
             for (auto&& faceGlobalJ : assemblyMap(cellCenterIdx, faceIdx, ccGlobalI))
                 occupationPatternA12.add(ccGlobalI, faceGlobalJ);
 
-            auto fvGeometry = localView(this->problem_().model().globalFvGeometry());
+            auto fvGeometry = localView(this->problem_().model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             // loop over sub control faces

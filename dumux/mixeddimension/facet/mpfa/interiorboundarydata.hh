@@ -139,7 +139,7 @@ public:
     //! returns the volume variables for interior dirichlet boundaries
     LowDimVolumeVariables facetVolVars(const FVElementGeometry& fvGeometry) const
     {
-        return problem_().couplingManager().lowDimVolVars(problem_().model().globalFvGeometry().element(elementIndex()),
+        return problem_().couplingManager().lowDimVolVars(problem_().model().fvGridGeometry().element(elementIndex()),
                                                           fvGeometry,
                                                           fvGeometry.scvf(scvfIndex()));
     }
@@ -148,7 +148,7 @@ public:
     LowDimVolumeVariables facetVolVars(const FVElementGeometry& fvGeometry, const SubControlVolumeFace& scvf) const
     {
         assert(scvf.index() == scvfIndex() && "calling facet volume variables for an scvf other than the bound one");
-        return problem_().couplingManager().lowDimVolVars(problem_().model().globalFvGeometry().element(elementIndex()),
+        return problem_().couplingManager().lowDimVolVars(problem_().model().fvGridGeometry().element(elementIndex()),
                                                           fvGeometry,
                                                           scvf);
     }
@@ -161,15 +161,15 @@ public:
         const auto& couplingMapper = problem_().couplingManager().couplingMapper();
 
         // get coupling data for this scvf
-        const auto element = problem_().model().globalFvGeometry().element(elementIndex());
+        const auto element = problem_().model().fvGridGeometry().element(elementIndex());
         const auto& scvfCouplingData = couplingMapper.getBulkCouplingData(element).getScvfCouplingData(fvGeometry.scvf(scvfIndex()));
 
         // obtain data necessary to fully instantiate the complete coupled facet data
         assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
         const auto& lowDimProblem = problem_().couplingManager().lowDimProblem();
 
-        auto lowDimElement = lowDimProblem.model().globalFvGeometry().element(scvfCouplingData.second);
-        auto lowDimFvGeometry = localView(lowDimProblem.model().globalFvGeometry());
+        auto lowDimElement = lowDimProblem.model().fvGridGeometry().element(scvfCouplingData.second);
+        auto lowDimFvGeometry = localView(lowDimProblem.model().fvGridGeometry());
         lowDimFvGeometry.bindElement(lowDimElement);
 
         LowDimVolumeVariables lowDimVolVars;

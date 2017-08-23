@@ -150,7 +150,7 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Support for ghost cells not implemented");
 
         // prepare the volvars/fvGeometries in case caching is disabled
-        auto fvGeometry = localView(this->model_().globalFvGeometry());
+        auto fvGeometry = localView(this->model_().fvGridGeometry());
         fvGeometry.bind(element);
 
         auto curElemVolVars = localView(this->model_().curGlobalVolVars());
@@ -270,7 +270,7 @@ protected:
         {
             // get the volVars of the element with respect to which we are going to build the derivative
             auto&& scvJ = fvGeometry.scv(globalJ);
-            const auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+            const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
             auto& curVolVars = getCurVolVars(curElemVolVars, scvJ);
             VolumeVariables origVolVars(curVolVars);
 
@@ -373,7 +373,7 @@ protected:
             {
                 // get the volVars of the element with respect to which we are going to build the derivative
                 auto&& scvJ = fvGeometry.scv(globalJ);
-                const auto elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+                const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
                 auto& curVolVars = getCurVolVars(curElemVolVars, scvJ);
                 VolumeVariables origVolVars(curVolVars);
 

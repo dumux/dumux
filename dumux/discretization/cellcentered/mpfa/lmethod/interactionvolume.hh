@@ -276,17 +276,17 @@ private:
     typename std::enable_if<d == 2>::type
     setupInteractionRegions_(const Seed& seed, const FVElementGeometry& fvGeometry)
     {
-        const auto& globalFvGeometry = problem_().model().globalFvGeometry();
+        const auto& fvGridGeometry = problem_().model().fvGridGeometry();
 
         interactionRegions_.reserve(2);
         auto&& scvSeed1 = seed.scvSeed(0);
         auto&& scvSeed2 = seed.scvSeed(1);
         auto&& outerScvSeed1 = seed.outerScvSeed(0);
         auto&& outerScvSeed2 = seed.outerScvSeed(1);
-        auto e1 = globalFvGeometry.element(scvSeed1.globalIndex());
-        auto e2 = globalFvGeometry.element(scvSeed2.globalIndex());
-        auto e3 = globalFvGeometry.element(outerScvSeed1.globalIndex());
-        auto e4 = globalFvGeometry.element(outerScvSeed2.globalIndex());
+        auto e1 = fvGridGeometry.element(scvSeed1.globalIndex());
+        auto e2 = fvGridGeometry.element(scvSeed2.globalIndex());
+        auto e3 = fvGridGeometry.element(outerScvSeed1.globalIndex());
+        auto e4 = fvGridGeometry.element(outerScvSeed2.globalIndex());
 
         // scvSeed1 is the one the seed construction began at
         if (scvSeed1.contiFaceLocalIdx() == 0)

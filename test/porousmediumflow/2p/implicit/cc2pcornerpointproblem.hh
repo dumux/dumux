@@ -305,7 +305,7 @@ public:
         for (const auto& element : elements(this->gridView()))
         {
             int eIdx = this->elementMapper().index(element);
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

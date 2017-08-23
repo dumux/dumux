@@ -63,7 +63,7 @@ public:
         oSeeds_.clear();
 
         // -1 indicates that the scvf has not been handled yet
-        auto numScvf = problem_().model().globalFvGeometry().numScvf();
+        auto numScvf = problem_().model().fvGridGeometry().numScvf();
         scvfIndexMap_.resize(numScvf, -1);
 
         // detect and handle the boundary first
@@ -85,7 +85,7 @@ private:
         IndexType fpsSeedIndex = 0;
         for (const auto& element : elements(gridView_))
         {
-            auto fvGeometry = localView(problem_().model().globalFvGeometry());
+            auto fvGeometry = localView(problem_().model().fvGridGeometry());
             fvGeometry.bind(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {
@@ -118,7 +118,7 @@ private:
         IndexType oSeedIndex = 0;
         for (const auto& element : elements(gridView_))
         {
-            auto fvGeometry = localView(problem_().model().globalFvGeometry());
+            auto fvGeometry = localView(problem_().model().fvGridGeometry());
             fvGeometry.bind(element);
             for (const auto& scvf : scvfs(fvGeometry))
             {

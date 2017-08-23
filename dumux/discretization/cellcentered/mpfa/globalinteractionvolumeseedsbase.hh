@@ -24,7 +24,7 @@
 #define DUMUX_DISCRETIZATION_MPFA_GLOBALINTERACTIONVOLUMESEEDS_BASE_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include "globalfvgeometry.hh"
+#include "fvgridgeometry.hh"
 
 namespace Dumux
 {

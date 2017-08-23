@@ -66,7 +66,7 @@ public:
     {
         const auto numDofsCC = problem.model().numCellCenterDofs();
         const auto numDofsFace = problem.model().numFaceDofs();
-        const auto numBoundaryFacets = problem.model().globalFvGeometry().numBoundaryScvf();
+        const auto numBoundaryFacets = problem.model().fvGridGeometry().numBoundaryScvf();
         cellCenterToCellCenterMap_.resize(numDofsCC);
         cellCenterToFaceMap_.resize(numDofsCC);
         faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
@@ -81,7 +81,7 @@ public:
         for(auto&& element: elements(problem.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            auto fvGeometry = localView(problem.model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             // loop over sub control faces

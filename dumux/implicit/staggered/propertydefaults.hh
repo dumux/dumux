@@ -28,7 +28,7 @@
 #define DUMUX_STAGGERED_PROPERTY_DEFAULTS_HH
 
 #include <dumux/implicit/propertydefaults.hh>
-#include <dumux/discretization/staggered/globalfvgeometry.hh>
+#include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/methods.hh>
@@ -78,10 +78,10 @@ SET_TYPE_PROP(StaggeredModel, BaseModel, StaggeredBaseModel<TypeTag>);
 
 
 //! Set the default for the global finite volume geometry
-SET_TYPE_PROP(StaggeredModel, GlobalFVGeometry, StaggeredGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+SET_TYPE_PROP(StaggeredModel, FVGridGeometry, StaggeredFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! Set the default for the local finite volume geometry
-SET_TYPE_PROP(StaggeredModel, FVElementGeometry, StaggeredFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+SET_TYPE_PROP(StaggeredModel, FVElementGeometry, StaggeredFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The sub control volume
 SET_PROP(StaggeredModel, SubControlVolume)

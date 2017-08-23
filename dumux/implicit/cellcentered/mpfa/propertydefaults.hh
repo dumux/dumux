@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
-#include <dumux/discretization/cellcentered/mpfa/globalfvgeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
@@ -80,7 +80,7 @@ SET_TYPE_PROP(CCMpfaModel, BoundaryInteractionVolume, typename GET_PROP_TYPE(Typ
 SET_TYPE_PROP(CCMpfaModel, GlobalInteractionVolumeSeeds, CCMpfaGlobalInteractionVolumeSeeds<TypeTag>);
 
 //! Set the default for the global finite volume geometry
-SET_TYPE_PROP(CCMpfaModel, GlobalFVGeometry, CCMpfaGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+SET_TYPE_PROP(CCMpfaModel, FVGridGeometry, CCMpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The global current volume variables vector class
 SET_TYPE_PROP(CCMpfaModel, GlobalVolumeVariables, Dumux::CCMpfaGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
@@ -89,7 +89,7 @@ SET_TYPE_PROP(CCMpfaModel, GlobalVolumeVariables, Dumux::CCMpfaGlobalVolumeVaria
 SET_TYPE_PROP(CCMpfaModel, GlobalFluxVariablesCache, CCMpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! Set the default for the local finite volume geometry
-SET_TYPE_PROP(CCMpfaModel, FVElementGeometry, CCMpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+SET_TYPE_PROP(CCMpfaModel, FVElementGeometry, CCMpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The global previous volume variables vector class
 SET_TYPE_PROP(CCMpfaModel, ElementVolumeVariables, Dumux::CCMpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);

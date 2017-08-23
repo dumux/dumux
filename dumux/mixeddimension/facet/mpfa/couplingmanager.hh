@@ -200,9 +200,9 @@ public:
         // of the first element, the necessary quantities for all the scvfs will be in there,
         // as the scvfs in the other elements are the "flipped" scvfs of the ones in the first element
         const auto& firstPair = couplingData.elementScvfList[0];
-        const auto firstBulkElement = bulkProblem().model().globalFvGeometry().element(firstPair.first);
+        const auto firstBulkElement = bulkProblem().model().fvGridGeometry().element(firstPair.first);
 
-        auto bulkFvGeometry = localView(bulkProblem().model().globalFvGeometry());
+        auto bulkFvGeometry = localView(bulkProblem().model().fvGridGeometry());
         bulkFvGeometry.bind(firstBulkElement);
 
         auto bulkElemVolVars = localView(bulkProblem().model().curGlobalVolVars());
@@ -214,7 +214,7 @@ public:
         BulkPrimaryVariables flux(0.0);
         for (const auto& pair : couplingData.elementScvfList)
         {
-            const auto bulkElement = bulkProblem().model().globalFvGeometry().element(pair.first);
+            const auto bulkElement = bulkProblem().model().fvGridGeometry().element(pair.first);
             for (auto scvfIdx : pair.second)
                 flux += bulkLocalResidual_.computeFlux(bulkElement,
                                                        bulkFvGeometry,
@@ -236,8 +236,8 @@ public:
         const auto& scvfCouplingData = couplingMapper_.getBulkCouplingData(element).getScvfCouplingData(scvf);
 
         assert(scvfCouplingData.first && "no coupled facet element found for given scvf!");
-        const auto lowDimElement = lowDimProblem().model().globalFvGeometry().element(scvfCouplingData.second);
-        auto lowDimFvGeometry = localView(lowDimProblem().model().globalFvGeometry());
+        const auto lowDimElement = lowDimProblem().model().fvGridGeometry().element(scvfCouplingData.second);
+        auto lowDimFvGeometry = localView(lowDimProblem().model().fvGridGeometry());
         lowDimFvGeometry.bindElement(lowDimElement);
 
         const auto& lowDimCurSol = lowDimProblem().model().curSol();

@@ -118,7 +118,7 @@ public:
               const SolutionVector& sol)
     {
         const auto& problem = globalVolVars().problem_();
-        const auto& globalFvGeometry = problem.model().globalFvGeometry();
+        const auto& fvGridGeometry = problem.model().fvGridGeometry();
 
         // stencil information
         const auto globalI = problem.elementMapper().index(element);
@@ -143,7 +143,7 @@ public:
         // Update the volume variables of the neighboring elements
         for (auto&& dataJ : assemblyMapI)
         {
-            const auto& elementJ = globalFvGeometry.element(dataJ.globalJ);
+            const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
             volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
                                               problem,
@@ -195,11 +195,11 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 // skip the rest if the scvf does not touch a domain boundary
-                if (!globalFvGeometry.touchesDomainBoundary(scvf))
+                if (!fvGridGeometry.touchesDomainBoundary(scvf))
                     continue;
 
                 // loop over all the scvfs in the interaction region
-                const auto& ivSeed = globalFvGeometry.boundaryInteractionVolumeSeed(scvf);
+                const auto& ivSeed = fvGridGeometry.boundaryInteractionVolumeSeed(scvf);
                 for (auto scvfIdx : ivSeed.globalScvfIndices())
                 {
                     auto&& ivScvf = fvGeometry.scvf(scvfIdx);
@@ -208,7 +208,7 @@ public:
                         continue;
 
                     auto insideScvIdx = ivScvf.insideScvIdx();
-                    auto insideElement = globalFvGeometry.element(insideScvIdx);
+                    auto insideElement = fvGridGeometry.element(insideScvIdx);
 
                     // on dirichlet boundaries use dirichlet values
                     if (MpfaHelper::getMpfaFaceType(problem, insideElement, ivScvf) == MpfaFaceTypes::dirichlet)
@@ -243,7 +243,7 @@ public:
             volVarIndices_.resize(volVarIndices_.size() + additionalDofDependencies.size());
             for (auto globalJ : additionalDofDependencies)
             {
-                const auto& elementJ = fvGeometry.globalFvGeometry().element(globalJ);
+                const auto& elementJ = fvGeometry.fvGridGeometry().element(globalJ);
                 auto&& scvJ = fvGeometry.scv(globalJ);
 
                 volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
@@ -304,7 +304,7 @@ private:
         for (auto&& scvf : scvfs(fvGeometry))
         {
             bool boundary = scvf.boundary();
-            if (boundary || (!boundary && fvGeometry.globalFvGeometry().touchesDomainBoundary(scvf)))
+            if (boundary || (!boundary && fvGeometry.fvGridGeometry().touchesDomainBoundary(scvf)))
                 bVolVarEstimate += dim-1;
         }
 

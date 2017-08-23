@@ -65,7 +65,7 @@ public:
         {
             auto eIdx = problem.elementMapper().index(element);
             // bind the geometries and volume variables to the element (all the elements in stencil)
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            auto fvGeometry = localView(problem.model().fvGridGeometry());
             fvGeometry.bind(element);
 
             auto elemVolVars = localView(problem.model().curGlobalVolVars());

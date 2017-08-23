@@ -70,7 +70,7 @@ public:
         {
             auto eIdx = problem_().elementMapper().index(element);
 
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            auto fvGeometry = localView(problem.model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             // get the element solution

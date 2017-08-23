@@ -175,7 +175,7 @@ public:
         const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->model().globalFvGeometry());
+        auto someFvGeometry = localView(this->model().fvGridGeometry());
         someFvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(someFvGeometry).begin());
 
@@ -195,7 +195,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

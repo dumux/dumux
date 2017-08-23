@@ -67,13 +67,13 @@ public:
     {
         problemPtr_ = &problem;
 
-        auto numScv = problem.model().globalFvGeometry().numScv();
-        auto numDomainBoundaryScvf = problem.model().globalFvGeometry().numDomainBoundaryScvf();
+        auto numScv = problem.model().fvGridGeometry().numScv();
+        auto numDomainBoundaryScvf = problem.model().fvGridGeometry().numDomainBoundaryScvf();
 
         volumeVariables_.resize(numScv + numDomainBoundaryScvf);
         for (const auto& element : elements(problem.gridView()))
         {
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            auto fvGeometry = localView(problem.model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))

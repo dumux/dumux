@@ -380,7 +380,7 @@ public:
                     // check in which subcontrolvolume(s) we are
                     // TODO mapper/problem in bboxtree would allow to make this much better
                     const auto element = boundingBoxTree.entity(eIdx);
-                    auto fvGeometry = localView(problem.model().globalFvGeometry());
+                    auto fvGeometry = localView(problem.model().fvGridGeometry());
                     fvGeometry.bindElement(element);
 
                     const auto globalPos = source.position();

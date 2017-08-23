@@ -22,8 +22,8 @@
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_HYBRIDFPS_GLOBALFVGEOMETRY_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_O_HYBRIDFPS_GLOBALFVGEOMETRY_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_HYBRIDFPS_FV_GRID_GEOMETRY_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_O_HYBRIDFPS_FV_GRID_GEOMETRY_HH
 
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -42,12 +42,12 @@ namespace Dumux
  *        for each element.
  */
 template<class TypeTag, bool EnableFVElementGeometryCache>
-class CCMpfaOHybridFpsGlobalFVGeometry
+class CCMpfaOHybridFpsFVGridGeometry
 {};
 
 // specialization in case the FVElementGeometries are stored
 template<class TypeTag>
-class CCMpfaOHybridFpsGlobalFVGeometry<TypeTag, true>
+class CCMpfaOHybridFpsFVGridGeometry<TypeTag, true>
 {
     //! The local class needs access to the scv, scvfs and the fv element geometry
     //! as they are globally cached
@@ -79,7 +79,7 @@ class CCMpfaOHybridFpsGlobalFVGeometry<TypeTag, true>
 
 public:
     //! Constructor
-    CCMpfaOHybridFpsGlobalFVGeometry(const GridView gridView)
+    CCMpfaOHybridFpsFVGridGeometry(const GridView gridView)
     : gridView_(gridView), elementMap_(gridView), globalInteractionVolumeSeeds_(gridView) {}
 
     //! The total number of sub control volumes
@@ -223,7 +223,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline FVElementGeometry localView(const CCMpfaOHybridFpsGlobalFVGeometry& global)
+    friend inline FVElementGeometry localView(const CCMpfaOHybridFpsFVGridGeometry& global)
     { return FVElementGeometry(global); }
 
     //! Get a sub control volume with a global scv index

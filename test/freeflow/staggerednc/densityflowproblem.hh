@@ -69,7 +69,7 @@ SET_TYPE_PROP(DensityDrivenFlowProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(DensityDrivenFlowProblem, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
 
-SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalVolumeVariablesCache, true);
@@ -277,7 +277,7 @@ public:
 
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {

@@ -545,7 +545,7 @@ public:
             const auto bcTypes = problem.boundaryTypes(element, scvf);
 
             // if we are on an interior boundary return interior types
-            if (problem.model().globalFvGeometry().isOnInteriorBoundary(scvf))
+            if (problem.model().fvGridGeometry().isOnInteriorBoundary(scvf))
             {
                 if (bcTypes.hasOnlyNeumann())
                     return MpfaFaceTypes::interiorNeumann;

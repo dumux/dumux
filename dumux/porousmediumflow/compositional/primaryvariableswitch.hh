@@ -83,7 +83,7 @@ public:
         for (const auto& element : elements(problem.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            auto fvGeometry = localView(problem.model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(problem.model().curGlobalVolVars());
@@ -128,7 +128,7 @@ public:
         for (const auto& element : elements(problem.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(problem.model().globalFvGeometry());
+            auto fvGeometry = localView(problem.model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             const auto eIdx = problem.elementMapper().index(element);

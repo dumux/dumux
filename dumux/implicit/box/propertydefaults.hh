@@ -33,7 +33,7 @@
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
 #include <dumux/discretization/box/globalvolumevariables.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
-#include <dumux/discretization/box/globalfvgeometry.hh>
+#include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/methods.hh>
@@ -61,10 +61,10 @@ SET_PROP(BoxModel, DiscretizationMethod)
 };
 
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(BoxModel, GlobalFVGeometry, BoxGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+SET_TYPE_PROP(BoxModel, FVGridGeometry, BoxFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(BoxModel, FVElementGeometry, BoxFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
+SET_TYPE_PROP(BoxModel, FVElementGeometry, BoxFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The sub control volume
 SET_PROP(BoxModel, SubControlVolume)

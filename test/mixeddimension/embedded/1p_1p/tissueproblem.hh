@@ -53,7 +53,7 @@ NEW_TYPE_TAG(TissueCCProblem, INHERITS_FROM(CCTpfaModel, TissueProblem));
 // Set the grid type
 SET_TYPE_PROP(TissueProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
 
-SET_BOOL_PROP(TissueProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(TissueProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(TissueProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(TissueProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(TissueProblem, SolutionDependentAdvection, false);
@@ -142,7 +142,7 @@ public:
         exactPressure_.resize(this->model().numDofs());
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
+            auto fvGeometry = localView(this->model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -308,7 +308,7 @@ public:
         {
             for (const auto& element : elements(this->gridView()))
             {
-                auto fvGeometry = localView(this->model().globalFvGeometry());
+                auto fvGeometry = localView(this->model().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
                 auto elemVolVars = localView(this->model().curGlobalVolVars());

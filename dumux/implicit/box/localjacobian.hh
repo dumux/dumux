@@ -112,7 +112,7 @@ public:
                   SolutionVector& residual)
     {
         // prepare the volvars/fvGeometries for the case when caching is disabled
-        auto fvGeometry = localView(this->problem_().model().globalFvGeometry());
+        auto fvGeometry = localView(this->problem_().model().fvGridGeometry());
         fvGeometry.bind(element);
 
         auto curElemVolVars = localView(this->model_().curGlobalVolVars());

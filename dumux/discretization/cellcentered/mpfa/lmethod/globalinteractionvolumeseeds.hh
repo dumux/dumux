@@ -62,14 +62,14 @@ public:
         scvfIndexMap.clear();
 
         // reserve memory
-        const auto numScvf = this->problem().model().globalFvGeometry().numScvf();
-        const auto numIBScvf = this->problem().model().globalFvGeometry().numInteriorBoundaryScvf();
-        const auto numDBScvf = this->problem().model().globalFvGeometry().numDomainBoundaryScvf();
-        const auto numBPScvf = this->problem().model().globalFvGeometry().numBranchingPointScvf();
+        const auto numScvf = this->problem().model().fvGridGeometry().numScvf();
+        const auto numIBScvf = this->problem().model().fvGridGeometry().numInteriorBoundaryScvf();
+        const auto numDBScvf = this->problem().model().fvGridGeometry().numDomainBoundaryScvf();
+        const auto numBPScvf = this->problem().model().fvGridGeometry().numBranchingPointScvf();
 
         const int numLMethodIVs = (numScvf-numIBScvf-numDBScvf-numBPScvf)/2;
-        const auto numOMethodIVs = this->problem().model().globalFvGeometry().numInteriorOrDomainBoundaryVertices()
-                                   + this->problem().model().globalFvGeometry().numBranchingPointVertices();
+        const auto numOMethodIVs = this->problem().model().fvGridGeometry().numInteriorOrDomainBoundaryVertices()
+                                   + this->problem().model().fvGridGeometry().numBranchingPointVertices();
 
         if (numLMethodIVs > 0)
             seeds.reserve( numLMethodIVs );
@@ -83,7 +83,7 @@ public:
         IndexType seedIndex = 0;
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->problem().model().globalFvGeometry());
+            auto fvGeometry = localView(this->problem().model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scvf : scvfs(fvGeometry))
@@ -97,7 +97,7 @@ public:
                 //      - domain boundaries
                 //      - branching points (l-method can not handle this)
                 if (interiorOrDomainBoundaryVertices[scvf.vertexIndex()]
-                    || this->problem().model().globalFvGeometry().touchesBranchingPoint(scvf))
+                    || this->problem().model().fvGridGeometry().touchesBranchingPoint(scvf))
                 {
                     // make the boundary interaction volume seed
                     boundarySeeds.emplace_back(Helper::makeBoundaryInteractionVolumeSeed(this->problem(),
@@ -141,7 +141,7 @@ public:
     }
 
     bool isLocalMaxLevel_(const Element& element, const SubControlVolumeFace& scvf) const
-    { return this->problem().model().globalFvGeometry().element(scvf.outsideScvIdx()).level() <= element.level(); }
+    { return this->problem().model().fvGridGeometry().element(scvf.outsideScvIdx()).level() <= element.level(); }
 };
 
 } // end namespace

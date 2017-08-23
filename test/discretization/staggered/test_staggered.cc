@@ -33,7 +33,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/implicit/staggered/properties.hh>
-#include <dumux/discretization/staggered/globalfvgeometry.hh>
+#include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 // #include <dumux/discretization/staggered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
@@ -65,7 +65,7 @@ SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
 
 SET_TYPE_PROP(TestFVGeometry, Problem, Dumux::MockProblem<TypeTag>);
 
-SET_BOOL_PROP(TestFVGeometry, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(TestFVGeometry, EnableFVGridGeometryCache, true);
 }
 
 }
@@ -96,7 +96,7 @@ int main (int argc, char *argv[]) try
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using GlobalFVGeometry = typename GET_PROP_TYPE(TypeTag, GlobalFVGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     // make a grid
@@ -108,7 +108,7 @@ int main (int argc, char *argv[]) try
 
     Problem problem(leafGridView);
 
-    GlobalFVGeometry global(leafGridView);
+    FVGridGeometry global(leafGridView);
     global.update(problem);
 
     std::cout << "Abbreviatons:\n"

@@ -192,7 +192,7 @@ private:
 
         for(auto&& element : elements(this->problem().gridView()))
         {
-            auto fvGeometry = localView(this->problem().model().globalFvGeometry());
+            auto fvGeometry = localView(this->problem().model().fvGridGeometry());
             fvGeometry.bindElement(element);
             for(auto && scvf : scvfs(fvGeometry))
             {

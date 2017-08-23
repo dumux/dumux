@@ -86,7 +86,7 @@ public:
                                                                 "not marked as interior Dirichlet face.");
 
         const auto& scvf = fvGeometry.scvf(scvfIndex());
-        const auto element = problem_().model().globalFvGeometry().element(scvf.insideScvIdx());
+        const auto element = problem_().model().fvGridGeometry().element(scvf.insideScvIdx());
         const auto priVars = problem_().dirichlet(element, scvf);
 
         VolumeVariables volVars;

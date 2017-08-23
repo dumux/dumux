@@ -126,7 +126,7 @@ public:
         // low dim elements
         for (const auto& element : elements(this->lowDimProblem().gridView()))
         {
-            auto fvGeometry = localView(this->lowDimProblem().model().globalFvGeometry());
+            auto fvGeometry = localView(this->lowDimProblem().model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(this->lowDimProblem().model().curGlobalVolVars());
@@ -143,7 +143,7 @@ public:
         // bulk elements
         for (const auto& element : elements(this->bulkProblem().gridView()))
         {
-            auto fvGeometry = localView(this->bulkProblem().model().globalFvGeometry());
+            auto fvGeometry = localView(this->bulkProblem().model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(this->bulkProblem().model().curGlobalVolVars());
@@ -172,7 +172,7 @@ public:
         // low dim elements
         for (const auto& element : elements(this->lowDimProblem().gridView()))
         {
-            auto fvGeometry = localView(this->lowDimProblem().model().globalFvGeometry());
+            auto fvGeometry = localView(this->lowDimProblem().model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(this->lowDimProblem().model().curGlobalVolVars());
@@ -197,7 +197,7 @@ public:
         // bulk elements
         for (const auto& element : elements(this->bulkProblem().gridView()))
         {
-            auto fvGeometry = localView(this->bulkProblem().model().globalFvGeometry());
+            auto fvGeometry = localView(this->bulkProblem().model().fvGridGeometry());
             fvGeometry.bindElement(element);
 
             auto elemVolVars = localView(this->bulkProblem().model().curGlobalVolVars());
