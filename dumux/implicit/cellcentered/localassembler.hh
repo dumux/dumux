@@ -70,10 +70,10 @@ public:
      */
     template<class Assembler>
     static void assemble(Assembler& assembler, typename Assembler::ResidualType& res, const Element& element,
-                         const SolutionVector& curSol, const SolutionVector& prevSol)
+                         const SolutionVector& curSol)
     {
         const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = Implementation::assemble_(assembler, element, curSol, prevSol);
+        res[globalI] = Implementation::assemble_(assembler, element, curSol);
     }
 
     /*!
@@ -82,9 +82,9 @@ public:
      */
     template<class Assembler>
     static void assemble(Assembler& assembler, const Element& element,
-                         const SolutionVector& curSol, const SolutionVector& prevSol)
+                         const SolutionVector& curSol)
     {
-        Implementation::assemble_(assembler, element, curSol, prevSol);
+        Implementation::assemble_(assembler, element, curSol);
     }
 
     /*!
@@ -119,8 +119,7 @@ private:
      * \return The element residual at the current solution.
      */
     template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler, const Element& element,
-                                 const SolutionVector& curSol, const SolutionVector& prevSol)
+    static NumEqVector assemble_(Assembler& assembler, const Element& element, const SolutionVector& curSol)
     {
         // get some references for convenience
         const auto& problem = assembler.problem();
@@ -137,11 +136,13 @@ private:
         auto curElemVolVars = localView(gridVariables.curGridVolVars());
         curElemVolVars.bind(element, fvGeometry, curSol);
 
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        prevElemVolVars.bindElement(element, fvGeometry, prevSol);
-
         auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+
+        const bool isStationary = localResidual.isStationary();
+        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
+        if (!isStationary)
+            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
 
         // the global dof of the actual element
         const auto globalI = fvGridGeometry.elementMapper().index(element);
@@ -157,13 +158,28 @@ private:
         // the actual element's current residual
         NumEqVector residual(0.0);
         if (!isGhost)
-            residual = localResidual.eval(problem,
-                                          element,
-                                          fvGeometry,
-                                          prevElemVolVars,
-                                          curElemVolVars,
-                                          elemBcTypes,
-                                          elemFluxVarsCache)[0];
+        {
+            if (isStationary)
+            {
+                residual = localResidual.eval(problem,
+                                              element,
+                                              fvGeometry,
+                                              curElemVolVars,
+                                              elemBcTypes,
+                                              elemFluxVarsCache)[0];
+            }
+            else
+            {
+                residual = localResidual.eval(problem,
+                                              element,
+                                              fvGeometry,
+                                              prevElemVolVars,
+                                              curElemVolVars,
+                                              elemBcTypes,
+                                              elemFluxVarsCache)[0];
+            }
+        }
+
 
         // TODO Do we really need this??????????
         // this->model_().updatePVWeights(fvGeometry);
@@ -248,13 +264,27 @@ private:
 
                 // calculate the residual with the deflected primary variables
                 if (!isGhost)
-                    partialDeriv = localResidual.eval(problem,
+                {
+                    if (isStationary)
+                    {
+                        partialDeriv = localResidual.eval(problem,
                                                       element,
                                                       fvGeometry,
-                                                      prevElemVolVars,
                                                       curElemVolVars,
                                                       elemBcTypes,
                                                       elemFluxVarsCache)[0];
+                    }
+                    else
+                    {
+                        partialDeriv = localResidual.eval(problem,
+                                                          element,
+                                                          fvGeometry,
+                                                          prevElemVolVars,
+                                                          curElemVolVars,
+                                                          elemBcTypes,
+                                                          elemFluxVarsCache)[0];
+                    }
+                }
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
@@ -293,13 +323,27 @@ private:
 
                 // calculate the residual with the deflected primary variables and subtract it
                 if (!isGhost)
-                    partialDeriv -= localResidual.eval(problem,
-                                                       element,
-                                                       fvGeometry,
-                                                       prevElemVolVars,
-                                                       curElemVolVars,
-                                                       elemBcTypes,
-                                                       elemFluxVarsCache)[0];
+                {
+                    if (isStationary)
+                    {
+                        partialDeriv -= localResidual.eval(problem,
+                                                           element,
+                                                           fvGeometry,
+                                                           curElemVolVars,
+                                                           elemBcTypes,
+                                                           elemFluxVarsCache)[0];
+                    }
+                    else
+                    {
+                        partialDeriv -= localResidual.eval(problem,
+                                                           element,
+                                                           fvGeometry,
+                                                           prevElemVolVars,
+                                                           curElemVolVars,
+                                                           elemBcTypes,
+                                                           elemFluxVarsCache)[0];
+                    }
+                }
 
                 // calculate the fluxes into element with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)

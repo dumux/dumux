@@ -95,12 +95,36 @@ class OnePTestSpatialParams
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
+    static constexpr int dimWorld = GridView::dimensionworld;
+
 public:
     using PermeabilityType = Scalar;
-    PermeabilityType permeability(const Element &element,
-                        const SubControlVolume &scv,
-                        const ElementSolutionVector &elemSol) const
-    { return 1e-12; }
+    OnePTestSpatialParams()
+    {
+        permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
+        permeabilityLens_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
+
+        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
+        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
+    }
+
+    /*!
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+     *
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
+     * \return the intrinsic permeability
+     */
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
+    {
+        if (isInLens_(scv.dofPosition()))
+            return permeabilityLens_;
+        else
+            return permeability_;
+    }
 
     PermeabilityType permeabilityAtPos(const GlobalPosition &globalPos) const
     { return 1e-12; }
@@ -108,7 +132,24 @@ public:
     Scalar porosity(const Element &element,
                         const SubControlVolume &scv,
                         const ElementSolutionVector &elemSol) const
-    { return 0.2; }
+    { return 0.4; }
+
+private:
+    bool isInLens_(const GlobalPosition &globalPos) const
+    {
+        for (int i = 0; i < dimWorld; ++i) {
+            if (globalPos[i] < lensLowerLeft_[i] + eps_ || globalPos[i] > lensUpperRight_[i] - eps_)
+                return false;
+        }
+        return true;
+    }
+
+    GlobalPosition lensLowerLeft_;
+    GlobalPosition lensUpperRight_;
+
+    Scalar permeability_, permeabilityLens_;
+
+    static constexpr Scalar eps_ = 1.5e-7;
 };
 
 
@@ -128,6 +169,8 @@ class OnePTestProblem
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
+    static constexpr int dimWorld = GridView::dimensionworld;
+
 public:
     OnePTestProblem(const GridView& gridView)
     : gridView_(gridView) {}
@@ -143,10 +186,14 @@ public:
                                 const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes values;
-        const auto& pos = scvf.ipGlobal();
-        values.setAllDirichlet();
-        if (pos[0] > 1.0 - 1e-8 || pos[0] < 1e-8)
+        const auto globalPos = scvf.ipGlobal();
+
+        Scalar eps = 1.0e-6;
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > 1.0 - eps)
+            values.setAllDirichlet();
+        else
             values.setAllNeumann();
+
         return values;
     }
 
@@ -163,7 +210,9 @@ public:
                                const SubControlVolumeFace &scvf) const
     {
         const auto& pos = scvf.ipGlobal();
-        return PrimaryVariables(pos[1]*1e5 + 1e5);
+        PrimaryVariables values(0);
+        values[0] = 1.0e+5*(2.0 - pos[dimWorld-1]);
+        return values;
     }
 
     /*!
@@ -208,10 +257,7 @@ public:
                           const ElementVolumeVariables& elemVolVars,
                           const SubControlVolume &scv) const
     {
-        if (scv.dofIndex() == gridView_.size(0)/2)
-            return ResidualVector(0.1/scv.volume());
-        else
-            return ResidualVector(0.0);
+        return ResidualVector(0.0);
     }
 
     /*!
@@ -245,8 +291,11 @@ public:
      * This is discretization independent interface. By default it
      * just calls gravity().
      */
-    GlobalPosition gravityAtPos(const GlobalPosition &pos) const
-    { return GlobalPosition({0.0, 0.0, -9.81}); }
+    const GlobalPosition& gravityAtPos(const GlobalPosition &pos) const
+    {
+        static const GlobalPosition g({0.0, -9.81});
+        return g;
+    }
 
     /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.

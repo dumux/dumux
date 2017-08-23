@@ -23,7 +23,9 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
+#include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/assembler.hh>
@@ -125,12 +127,21 @@ class OnePTestProblem
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
 public:
     OnePTestProblem(const GridView& gridView)
-    : gridView_(gridView) {}
+    : gridView_(gridView)
+    {
+        // TabulatedComponent<Scalar, H2O<Scalar>>::init(273.15 - 10,
+        //                                               273.15 + 10,
+        //                                               3,
+        //                                               1e4,
+        //                                               1e6,
+        //                                               100);
+    }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
@@ -181,6 +192,15 @@ public:
                            const SubControlVolumeFace& scvf) const
     {
         return ResidualVector(0.0);
+    }
+
+    /*!
+     * \brief Applies the initial solution for all degrees of freedom of the grid.
+     *
+    */
+    void applyInitialSolution(SolutionVector& sol) const
+    {
+        sol = 1e5;
     }
 
     /*!
@@ -246,7 +266,7 @@ public:
      * just calls gravity().
      */
     GlobalPosition gravityAtPos(const GlobalPosition &pos) const
-    { return GlobalPosition({0.0, 0.0, -9.81}); }
+    { return GlobalPosition({0.0, -9.81}); }
 
     /*!
      * \brief Return how much the domain is extruded at a given sub-control volume.

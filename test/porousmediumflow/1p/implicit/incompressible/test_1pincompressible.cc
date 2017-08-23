@@ -107,62 +107,43 @@ int main(int argc, char** argv)
 
     // the solution vector
     auto x = std::make_shared<SolutionVector>(leafGridView.size(0));
-    auto xold = x;
 
     // the grid variables
-    auto gridVariables = std::make_shared<GridVariables>();
-    gridVariables->init(*problem, *fvGridGeometry, *x);
-
-    // // TEST
-    // for (const auto& element : elements(leafGridView))
-    // {
-    //     auto fvGeometry = localView(*fvGridGeometry);
-    //     fvGeometry.bindElement(element);
-
-    //     auto elemVolVars = localView(gridVariables->curGridVolVars());
-    //     elemVolVars.bindElement(element, fvGeometry, x);
-
-    //     for (const auto& scv : scvs(fvGeometry))
-    //     {
-    //         const auto volVars = elemVolVars[scv];
-    //         std::cout << volVars.pressure(0) << " ";
-    //     }
-    // }
-    // std::cout << std::endl;
+    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    gridVariables->init(*x);
 
     // make assemble and attach linear system
     auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables);
-    // auto A = std::make_shared<JacobianMatrix>();
-    // auto r = std::make_shared<SolutionVector>();
-    // assembler->setLinearSystem(A, r);
+    auto A = std::make_shared<JacobianMatrix>();
+    auto r = std::make_shared<SolutionVector>();
+    assembler->setLinearSystem(A, r);
 
+    Dune::Timer timer;
     // assemble the local jacobian and the residual
-    // Dune::Timer timer; std::cout << "Assembling linear system ..." << std::flush;
-    // assembler->assembleJacobianAndResidual(*x, *xold);
-    // std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
-
-    // // print matrioc
-    // // Dune::printmatrix(std::cout, *A, "", "");
-    // // Dune::printvector(std::cout, *r, "", "");
+    Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
+    assembler->assembleJacobianAndResidual(*x);
+    assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
     // we solve Ax = -r
-    // (*r) *= -1.0;
+    (*r) *= -1.0;
 
     // // solve the linear system
-    // timer.reset(); std::cout << "Solving linear system ..." << std::flush;
+    Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
     auto linearSolver = std::make_shared<ILU0BiCGSTABBackend<TypeTag>>(*problem);
-    // auto linearSolver = std::make_shared<UMFPackBackend<TypeTag>>(*problem);
-    // linearSolver->solve(*A, *x, *r);
-    // std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
-
-    NewtonMethod<TypeTag> nonLinearSolver;
-    NewtonController newtonController(leafGridView.comm());
-    nonLinearSolver.solve(newtonController, *assembler, *linearSolver, *x, *xold);
+    linearSolver->solve(*A, *x, *r);
+    solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
 
     // output result to vtk
     Dune::VTKWriter<GridView> vtkwriter(leafGridView);
     vtkwriter.addCellData(*x, "p");
     vtkwriter.write("test_1pincompressible");
+
+    timer.stop();
+
+    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+              << comm.size() << " processes.\n"
+              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
     return 0;
 

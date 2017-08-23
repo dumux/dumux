@@ -1,12 +1,11 @@
-eps = 1e10
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
 Cells = 101 101
 
-[LinearSolver]
-ResidualReduction = 1e-20
+[SpatialParams]
+LensLowerLeft = 0.2 0.2
+LensUpperRight = 0.8 0.8
 
-[Newton]
-EnableShiftCriterion = false
-EnableResidualCriterion = true
+Permeability = 1e-10 # [m^2]
+PermeabilityLens = 1e-12 # [m^2]

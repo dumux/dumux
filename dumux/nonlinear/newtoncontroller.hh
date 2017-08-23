@@ -29,6 +29,7 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 #include "newtonmethod.hh"
@@ -138,36 +139,24 @@ class NewtonController
 
 public:
     /*!
-     * \brief Constructor
+     * \brief Constructor for stationary problems
      */
     NewtonController(const Communicator& comm)
     : comm_(comm)
     , endIterMsgStream_(std::ostringstream::out)
     {
-        enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
-        enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
+        initParams_();
+    }
 
-        useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
-        enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
-        enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
-        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion)
-                                   || enableAbsoluteResidualCriterion_;
-        satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
-        if (!enableShiftCriterion_ && !enableResidualCriterion_)
-        {
-            DUNE_THROW(Dune::NotImplemented,
-                       "at least one of NewtonEnableShiftCriterion or "
-                       << "NewtonEnableResidualCriterion has to be set to true");
-        }
-
-        setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxRelativeShift));
-        setMaxAbsoluteResidual(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxAbsoluteResidual));
-        setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, ResidualReduction));
-        setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
-        setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
-
-        verbose_ = true;
-        numSteps_ = 0;
+    /*!
+     * \brief Constructor for stationary problems
+     */
+    NewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+    : comm_(comm)
+    , timeLoop_(timeLoop)
+    , endIterMsgStream_(std::ostringstream::out)
+    {
+        initParams_();
     }
 
     const Communicator& communicator() const
@@ -353,10 +342,9 @@ public:
      */
     template<class JacobianAssembler, class SolutionVector>
     void assembleLinearSystem(JacobianAssembler& assembler,
-                              const SolutionVector& uCurrentIter,
-                              const SolutionVector& prevSol)
+                              const SolutionVector& uCurrentIter)
     {
-        assembler.assembleJacobianAndResidual(uCurrentIter, prevSol);
+        assembler.assembleJacobianAndResidual(uCurrentIter);
     }
 
     /*!
@@ -465,15 +453,14 @@ public:
     void newtonUpdate(const JacobianAssembler& assembler,
                       SolutionVector &uCurrentIter,
                       const SolutionVector &uLastIter,
-                      const SolutionVector &deltaU,
-                      const SolutionVector &uPrev)
+                      const SolutionVector &deltaU)
     {
         if (enableShiftCriterion_)
             newtonUpdateShift(uLastIter, deltaU);
 
         if (useLineSearch_)
         {
-            lineSearchUpdate_(assembler, uCurrentIter, uLastIter, deltaU, uPrev);
+            lineSearchUpdate_(assembler, uCurrentIter, uLastIter, deltaU);
         }
         else {
             for (unsigned int i = 0; i < uLastIter.size(); ++i) {
@@ -483,7 +470,7 @@ public:
 
             if (enableResidualCriterion_)
             {
-                residualNorm_ = assembler.globalResidual(uCurrentIter, uPrev);
+                residualNorm_ = assembler.globalResidual(uCurrentIter);
                 reduction_ = residualNorm_;
                 reduction_ /= initialResidual_;
             }
@@ -502,16 +489,8 @@ public:
                        SolutionVector &uCurrentIter,
                        const SolutionVector &uLastIter)
     {
-        // TODO
-        // This is a hack in order to be able to realize an update
-        // of the gridVolumeVariables etc... How could we achieve
-        // this differently??
-        // Originally here we had model.newtonEndStep() which updated
-        // the variables... Should the NewtonMethod get access to these
-        // classes directly as well?
-        // -> The assembler has all the data w.r.t. the problem etc...
-        // -> also, how do we call this?
-        assembler.gridVariables().update(assembler.problem(), assembler.fvGridGeometry(), uCurrentIter);
+        // update the variables class to the new solution
+        assembler.gridVariables().update(uCurrentIter);
 
         ++numSteps_;
 
@@ -534,29 +513,31 @@ public:
     }
 
     /*!
-     * \brief Indicates that we're done solving the non-linear system
-     *        of equations.
-     */
-    void newtonEnd()
-    {}
-
-    /*!
      * \brief Called if the Newton method broke down.
      *
      * This method is called _after_ newtonEnd()
      */
-    void newtonFail()
+    template<class Assembler, class SolutionVector>
+    void newtonFail(Assembler& assembler, SolutionVector& u)
     {
-        numSteps_ = targetSteps_*2;
-    }
+        if (!assembler.localResidual().isStationary())
+        {
+            // set solution to previous solution
+            u = assembler.prevSol();
 
-    /*!
-     * \brief Called when the Newton method was successful.
-     *
-     * This method is called _after_ newtonEnd()
-     */
-    void newtonSucceed()
-    {}
+            // reset the grid variables to the previous solution
+            assembler.gridVariables().resetTimeStep(u);
+
+            std::cout << "Newton solver did not converge with dt = "
+                      << timeLoop_->timeStepSize() << " seconds. Retrying with time step of "
+                      << timeLoop_->timeStepSize()/2 << " seconds\n";
+
+            // try again with dt = dt/2
+            timeLoop_->setTimeStepSize(timeLoop_->timeStepSize()/2);
+        }
+        else
+            DUNE_THROW(Dune::MathError, "Newton solver did not converge");
+    }
 
     /*!
      * \brief Suggest a new time-step size based on the old time-step
@@ -608,12 +589,39 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+    void initParams_()
+    {
+        enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
+        enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
+
+        useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
+        enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
+        enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
+        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion)
+                                   || enableAbsoluteResidualCriterion_;
+        satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
+        if (!enableShiftCriterion_ && !enableResidualCriterion_)
+        {
+            DUNE_THROW(Dune::NotImplemented,
+                       "at least one of NewtonEnableShiftCriterion or "
+                       << "NewtonEnableResidualCriterion has to be set to true");
+        }
+
+        setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxRelativeShift));
+        setMaxAbsoluteResidual(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxAbsoluteResidual));
+        setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, ResidualReduction));
+        setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
+        setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
+
+        verbose_ = true;
+        numSteps_ = 0;
+    }
+
     template<class JacobianAssembler, class SolutionVector>
     void lineSearchUpdate_(const JacobianAssembler& assembler,
                            SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
-                           const SolutionVector &deltaU,
-                           const SolutionVector &uPrev)
+                           const SolutionVector &deltaU)
     {
         Scalar lambda = 1.0;
         SolutionVector tmp(uLastIter);
@@ -624,7 +632,7 @@ protected:
             uCurrentIter *= -lambda;
             uCurrentIter += uLastIter;
 
-            residualNorm_ = assembler.globalResidual(uCurrentIter, uPrev);
+            residualNorm_ = assembler.globalResidual(uCurrentIter);
             reduction_ = residualNorm_;
             reduction_ /= initialResidual_;
 
@@ -663,6 +671,8 @@ protected:
 
     // The grid view's communicator
     const Communicator& comm_;
+
+    std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
 
     // message stream to be displayed at the end of iterations
     std::ostringstream endIterMsgStream_;

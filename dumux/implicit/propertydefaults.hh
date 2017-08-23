@@ -79,9 +79,6 @@ SET_TYPE_PROP(ImplicitBase,
               GridView,
               typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
 
-//! use the plain newton method by default
-SET_TYPE_PROP(ImplicitBase, NewtonMethod, NewtonMethod<TypeTag>);
-
 //! use the plain newton controller by default
 SET_TYPE_PROP(ImplicitBase, NewtonController, NewtonController<TypeTag>);
 
@@ -211,9 +208,6 @@ SET_INT_PROP(ImplicitBase, LinearSolverMaxIterations, 250);
 
 //! set number of equations of the mathematical model as default
 SET_INT_PROP(ImplicitBase, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
-
-//! set number of maximum timestep divisions to 10
-SET_INT_PROP(ImplicitBase, ImplicitMaxTimeStepDivisions, 10);
 
 //! Per default we have assume isothermal problems. Set this to true to solve an energy equation
 SET_BOOL_PROP(ImplicitBase, EnableEnergyBalance, false);

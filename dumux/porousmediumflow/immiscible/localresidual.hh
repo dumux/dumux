@@ -57,6 +57,7 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
 public:
+    using ParentType::ParentType;
 
     /*!
      * \brief Evaluate the rate of change of all conservation

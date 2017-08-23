@@ -8,5 +8,10 @@ Cells = 101 101
 ResidualReduction = 1e-20
 
 [Newton]
-EnableShiftCriterion = false
-EnableResidualCriterion = true
+EnableShiftCriterion = true
+EnableResidualCriterion = false
+EnableAbsoluteResidualCriterion = false
+
+[TimeLoop]
+TEnd = 100
+DtInitial = 1

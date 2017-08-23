@@ -41,33 +41,60 @@ class GridVariables
 
 public:
     //! Constructor
-    GridVariables() {}
+    GridVariables(std::shared_ptr<Problem> problem, std::shared_ptr<FVGridGeometry> fvGridGeometry)
+    : problem_(problem)
+    , fvGridGeometry_(fvGridGeometry)
+    {}
 
-    //! update all fvElementGeometries (do this again after grid adaption)
-    void update(const Problem& problem,
-                const FVGridGeometry& fvGridGeometry,
-                const SolutionVector& solution)
+    //! update all variables
+    void update(const SolutionVector& curSol)
     {
         // resize and update the volVars with the initial solution
-        curGlobalVolVars_.update(problem, fvGridGeometry, solution);
+        curGlobalVolVars_.update(*problem_, *fvGridGeometry_, curSol);
 
         // update the flux variables caches
-        globalfluxVarsCache_.update(problem, fvGridGeometry, curGlobalVolVars_, solution);
+        globalfluxVarsCache_.update(*problem_, *fvGridGeometry_, curGlobalVolVars_, curSol);
     }
 
-    //! update all fvElementGeometries (do this again after grid adaption)
-    void init(const Problem& problem,
-              const FVGridGeometry& fvGridGeometry,
-              const SolutionVector& solution)
+    //! initialize all variables (stationary case)
+    void init(const SolutionVector& curSol)
     {
         // resize and update the volVars with the initial solution
-        curGlobalVolVars_.update(problem, fvGridGeometry, solution);
+        curGlobalVolVars_.update(*problem_, *fvGridGeometry_, curSol);
 
         // update the flux variables caches
-        globalfluxVarsCache_.update(problem, fvGridGeometry, curGlobalVolVars_, solution);
+        globalfluxVarsCache_.update(*problem_, *fvGridGeometry_, curGlobalVolVars_, curSol);
+    }
 
-        // set the old time step vol vars to new current vol vars
+    //! initialize all variables (stationary case)
+    void init(const SolutionVector& curSol, const SolutionVector& initSol)
+    {
+        // resize and update the volVars with the initial solution
+        curGlobalVolVars_.update(*problem_, *fvGridGeometry_, curSol);
+
+        // update the flux variables caches
+        globalfluxVarsCache_.update(*problem_, *fvGridGeometry_, curGlobalVolVars_, curSol);
+
+        // update the old time step vol vars with the initial solution
+        // prevGlobalVolVars_ = curGlobalVolVars_;
+        prevGlobalVolVars_.update(*problem_, *fvGridGeometry_, initSol);
+    }
+
+    //! Sets the current state as the previous for next time step
+    //! this has to be called at the end of each time step
+    void advanceTimeStep()
+    {
         prevGlobalVolVars_ = curGlobalVolVars_;
+    }
+
+    //! resets state to the one before time integration
+    void resetTimeStep(const SolutionVector& solution)
+    {
+        // set the new time step vol vars to old vol vars
+        curGlobalVolVars_ = prevGlobalVolVars_;
+
+        // update the flux variables caches
+        globalfluxVarsCache_.update(*problem_, *fvGridGeometry_, curGlobalVolVars_, solution);
     }
 
     const GridFluxVariablesCache& gridFluxVarsCache() const
@@ -89,6 +116,8 @@ public:
     { return prevGlobalVolVars_; }
 
 private:
+    std::shared_ptr<Problem> problem_;
+    std::shared_ptr<FVGridGeometry> fvGridGeometry_;
 
     // the current and previous variables (primary and secondary variables)
     GridVolumeVariables curGlobalVolVars_;

@@ -97,7 +97,11 @@ NEW_PROP_TAG(PointSourceHelper);
  *
  * The default is to not limit the step size.
  */
-NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
+NEW_PROP_TAG(TimeLoopMaxTimeStepSize);
+
+//! the maximum allowed number of timestep divisions for the
+//! Newton solver
+NEW_PROP_TAG(TimeLoopMaxTimeStepDivisions);
 
 //! Property to define the output level
 NEW_PROP_TAG(VtkOutputLevel);
@@ -117,7 +121,10 @@ SET_TYPE_PROP(NumericModel, NumEqVector, Dune::FieldVector<typename GET_PROP_TYP
 SET_TYPE_PROP(NumericModel, PrimaryVariables, typename GET_PROP_TYPE(TypeTag, NumEqVector));
 
 //! use an unlimited time step size by default
-SET_SCALAR_PROP(NumericModel, TimeManagerMaxTimeStepSize, std::numeric_limits<typename GET_PROP_TYPE(TypeTag,Scalar)>::max());
+SET_SCALAR_PROP(NumericModel, TimeLoopMaxTimeStepSize, std::numeric_limits<typename GET_PROP_TYPE(TypeTag,Scalar)>::max());
+
+//! set number of maximum timestep divisions to 10
+SET_INT_PROP(NumericModel, TimeLoopMaxTimeStepDivisions, 10);
 
 //! Set the ParameterTree property
 SET_PROP(NumericModel, ParameterTree)

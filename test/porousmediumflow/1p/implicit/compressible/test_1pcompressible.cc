@@ -106,63 +106,83 @@ int main(int argc, char** argv)
     auto problem = std::make_shared<Problem>(leafGridView);
 
     // the solution vector
-    auto x = std::make_shared<SolutionVector>(leafGridView.size(0));
-    auto xold = x;
+    SolutionVector x(leafGridView.size(0));
+    problem->applyInitialSolution(x);
+    auto xOld = x;
 
     // the grid variables
-    auto gridVariables = std::make_shared<GridVariables>();
-    gridVariables->init(*problem, *fvGridGeometry, *x);
+    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    gridVariables->init(x, xOld);
 
-    // // TEST
-    // for (const auto& element : elements(leafGridView))
-    // {
-    //     auto fvGeometry = localView(*fvGridGeometry);
-    //     fvGeometry.bindElement(element);
+    // read the time loop parameters
+    auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, TEnd);
+    auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, DtInitial);
+    auto maxDivisions = GET_PARAM_FROM_GROUP(TypeTag, int, TimeLoop, MaxTimeStepDivisions);
 
-    //     auto elemVolVars = localView(gridVariables->curGridVolVars());
-    //     elemVolVars.bindElement(element, fvGeometry, x);
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = 0;
+    if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeManager.Restart"))
+        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
 
-    //     for (const auto& scv : scvs(fvGeometry))
-    //     {
-    //         const auto volVars = elemVolVars[scv];
-    //         std::cout << volVars.pressure(0) << " ";
-    //     }
-    // }
-    // std::cout << std::endl;
+    // write initial solution to disk
+    Dune::VTKSequenceWriter<GridView> vtkwriter(leafGridView, "test_1pcompressible", "", "");
+    vtkwriter.addCellData(x, "p");
+    vtkwriter.write(restartTime);
 
-    // make assemble and attach linear system
-    auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables);
-    // auto A = std::make_shared<JacobianMatrix>();
-    // auto r = std::make_shared<SolutionVector>();
-    // assembler->setLinearSystem(A, r);
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
 
-    // assemble the local jacobian and the residual
-    // Dune::Timer timer; std::cout << "Assembling linear system ..." << std::flush;
-    // assembler->assembleJacobianAndResidual(*x, *xold);
-    // std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
+    // make assembler
+    auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables, timeLoop);
 
-    // // print matrioc
-    // // Dune::printmatrix(std::cout, *A, "", "");
-    // // Dune::printvector(std::cout, *r, "", "");
-
-    // we solve Ax = -r
-    // (*r) *= -1.0;
-
-    // // solve the linear system
-    // timer.reset(); std::cout << "Solving linear system ..." << std::flush;
+    // make linear solver
     auto linearSolver = std::make_shared<ILU0BiCGSTABBackend<TypeTag>>(*problem);
-    // auto linearSolver = std::make_shared<UMFPackBackend<TypeTag>>(*problem);
-    // linearSolver->solve(*A, *x, *r);
-    // std::cout << " took " << timer.elapsed() << " seconds." << std::endl;
 
-    NewtonMethod<TypeTag> nonLinearSolver;
-    NewtonController newtonController(leafGridView.comm());
-    nonLinearSolver.solve(newtonController, *assembler, *linearSolver, *x, *xold);
+    // instantiate non-linear solver
+    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+    NewtonMethod<TypeTag, NewtonController> nonLinearSolver(newtonController, assembler, linearSolver);
 
-    // output result to vtk
-    Dune::VTKWriter<GridView> vtkwriter(leafGridView);
-    vtkwriter.addCellData(*x, "p");
-    vtkwriter.write("test_1pincompressible");
+    // time loop
+    timeLoop->start(); do
+    {
+        // set solution
+        assembler->setPreviousSolution(xOld);
+
+        // try solving the non-linear system
+        for (int i = 0; i < maxDivisions; ++i)
+        {
+            // linearize & solve
+            auto converged = nonLinearSolver.solve(x);
+
+            if (converged)
+                break;
+
+            if (!converged && i == maxDivisions-1)
+                DUNE_THROW(Dune::MathError,
+                           "Newton solver didn't converge after "
+                           << maxDivisions
+                           << " time-step divisions. dt="
+                           << timeLoop->timeStepSize()
+                           << ".\nThe solutions of the current and the previous time steps "
+                           << "have been saved to restart files.");
+        }
+
+        // make the new solution the old solution
+        xOld = x;
+        gridVariables->advanceTimeStep();
+        timeLoop->advanceTimeStep();
+
+        // write output
+        vtkwriter.write(timeLoop->time());
+
+        timeLoop->reportTimeStep();
+
+        // set new dt
+        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+
+    } while (!timeLoop->finished());
+
+    timeLoop->finalize();
 
     return 0;
 

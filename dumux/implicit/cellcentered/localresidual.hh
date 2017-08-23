@@ -55,6 +55,7 @@ class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
+    using ParentType::ParentType;
 
     void evalFlux(ElementResidualVector& residual,
                   const Problem& problem,
@@ -82,7 +83,7 @@ public:
         // inner faces
         if (!scvf.boundary())
         {
-            flux += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         }
 
         // boundary faces
@@ -92,7 +93,7 @@ public:
 
             // Dirichlet boundaries
             if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                flux += this->asImp_().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
             else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())

@@ -26,6 +26,7 @@
 
 #include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/timeloop.hh>
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -79,7 +80,7 @@ class CCImplicitAssembler
 public:
     using ResidualType = SolutionVector;
 
-    //! The constructor
+    //! The constructor for stationary problems
     CCImplicitAssembler(std::shared_ptr<const Problem> problem,
                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                         std::shared_ptr<GridVariables> gridVariables)
@@ -88,12 +89,22 @@ public:
     , gridVariables_(gridVariables)
     {}
 
+    //! The constructor for instationary problems
+    CCImplicitAssembler(std::shared_ptr<const Problem> problem,
+                        std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                        std::shared_ptr<GridVariables> gridVariables,
+                        std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+    : problem_(problem)
+    , fvGridGeometry_(fvGridGeometry)
+    , gridVariables_(gridVariables)
+    , localResidual_(timeLoop)
+    {}
+
     /*!
      * \brief Assembles the global Jacobian of the residual
      *        and the residual for the current solution.
      */
-    void assembleJacobianAndResidual(const SolutionVector& curSol,
-                                     const SolutionVector& prevSol)
+    void assembleJacobianAndResidual(const SolutionVector& curSol)
     {
         if(!matrix_)
             DUNE_THROW(Dune::InvalidStateException,
@@ -113,7 +124,7 @@ public:
         {
             // let the local assembler add the element contributions
             for (const auto element : elements(gridView()))
-                LocalAssembler::assemble(*this, residual(), element, curSol, prevSol);
+                LocalAssembler::assemble(*this, residual(), element, curSol);
 
             // if we get here, everything worked well
             succeeded = true;
@@ -137,8 +148,7 @@ public:
     /*!
      * \brief Assembles only the global Jacobian of the residual.
      */
-    void assembleJacobian(const SolutionVector& curSol,
-                          const SolutionVector& prevSol)
+    void assembleJacobian(const SolutionVector& curSol)
     {
         resetMatrix_();
 
@@ -148,7 +158,7 @@ public:
         {
             // let the local assembler add the element contributions
             for (const auto& element : elements(gridView()))
-                LocalAssembler::assemble(*this, element, curSol, prevSol);
+                LocalAssembler::assemble(*this, element, curSol);
 
             // if we get here, everything worked well
             succeeded = true;
@@ -170,11 +180,11 @@ public:
     }
 
     //! compute the residuals
-    void assembleResidual(const SolutionVector& curSol, const SolutionVector& prevSol) const
-    { assembleResidual(residual(), curSol, prevSol); }
+    void assembleResidual(const SolutionVector& curSol) const
+    { assembleResidual(residual(), curSol); }
 
     //! compute the residuals
-    void assembleResidual(ResidualType& r, const SolutionVector& curSol, const SolutionVector& prevSol) const
+    void assembleResidual(ResidualType& r, const SolutionVector& curSol) const
     {
         r = 0.0;
         for (const auto& element : elements(gridView()))
@@ -186,17 +196,16 @@ public:
                                                 element,
                                                 fvGridGeometry(),
                                                 gridVariables(),
-                                                curSol,
-                                                prevSol)[0];
+                                                curSol)[0];
             }
         }
     }
 
     //! computes the global residual
-    Scalar globalResidual(const SolutionVector& curSol, const SolutionVector& prevSol) const
+    Scalar globalResidual(const SolutionVector& curSol) const
     {
         ResidualType residual(numDofs());
-        assembleResidual(residual, curSol, prevSol);
+        assembleResidual(residual, curSol);
 
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
@@ -212,8 +221,8 @@ public:
      *        This also resizes the containers to the required sizes and sets the
      *        sparsity pattern of the matrix.
      */
-    void setLinearSystem(std::shared_ptr<JacobianMatrix>& A,
-                         std::shared_ptr<SolutionVector>& r)
+    void setLinearSystem(std::shared_ptr<JacobianMatrix> A,
+                         std::shared_ptr<SolutionVector> r)
     {
         matrix_ = A;
         residual_ = r;
@@ -240,6 +249,19 @@ public:
 
         allocateLinearSystem();
     }
+
+    /*!
+     * \brief Sets the solution from which to start the time integration. Has to be
+     *        called prior to assembly for time-dependent problems.
+     */
+    void setPreviousSolution(const SolutionVector& u)
+    { localResidual_.setPreviousSolution(u); }
+
+    /*!
+     * \brief Return the solution that has been set as the previous one.
+     */
+    const SolutionVector& prevSol() const
+    { return localResidual_.prevSol(); }
 
     /*!
      * \brief Resizes the matrix and right hand side and sets the matrix' sparsity pattern.
