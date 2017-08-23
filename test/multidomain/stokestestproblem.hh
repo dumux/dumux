@@ -191,71 +191,17 @@ public:
     {
         BoundaryTypes values;
 
-        //        const Scalar time = this->time.Manager().time();
+        // set Dirichlet values for the velocity everywhere
+        values.setDirichlet(momentumBalanceIdx);
 
-//        // Fetzer2017a
-//        values.setAllDirichlet();
-//
-//        //        if(onUpperBoundary_(globalPos))
-//        //            values.setNeumann(transportEqIdx);
-//
-//        // Left inflow boundaries should be Neumann, otherwise the
-//        // evaporative fluxes are much more grid dependent
-//        if(onLeftBoundary_(globalPos))
-//        {
-//            //            values.setNeumann(transportEqIdx);
-//
-//            if(onUpperBoundary_(globalPos)) // corner point
-//                values.setAllDirichlet();
-//        }
-//
-//        if(onRightBoundary_(globalPos))
-//        {
-//            values.setAllOutflow();
-//            if(onUpperBoundary_(globalPos)) // corner point
-//                values.setAllDirichlet();
-//        }
-//
-//        if(onLowerBoundary_(globalPos))
-//        {
-//            //            values.setAllDirichlet();
-//            //            values.setNeumann(transportEqIdx);
-//            //
-//            //            if(globalPos[0] > runUpDistanceX - eps_ && time > initializationTime_)
-//            //            {
-//            values.setAllCouplingDirichlet();
-//            values.setCouplingNeumann(momentumXBalanceIdx);
-//            values.setCouplingNeumann(momentumYBalanceIdx);
-//            //            }
-//        }
-//
-//        // the mass balance has to be of type outflow
-//        // it does not get a coupling condition, since pn is a condition for Stokes
-//        values.setOutflow(massBalanceIdx);
-//
-//        // set pressure at one point, do NOT specify this if the Darcy domain
-//        // has a Dirichlet condition for pressure
-//        if(onRightBoundary_(globalPos))
-//        {
-//            //            if(time > initializationTime_)
-//            //                values.setDirichlet(pressureIdx);
-//            //            else
-//            if(!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
-//                values.setDirichlet(pressureIdx);
-//        }
-
-//         alternative:
-                // set Dirichlet values for the velocity everywhere
-                values.setDirichlet(momentumBalanceIdx);
-
-                // set a fixed pressure in one cell
-                if (onRightBoundary_(globalPos))
-                {
-                    values.setDirichlet(massBalanceIdx);
-                    values.setOutflow(momentumBalanceIdx);
-                }
-                else
-                    values.setOutflow(massBalanceIdx);
+        // set a fixed pressure in one cell
+        if (onRightBoundary_(globalPos))
+        {
+            values.setDirichlet(massBalanceIdx);
+            values.setOutflow(momentumBalanceIdx);
+        }
+        else
+            values.setOutflow(massBalanceIdx);
 
         return values;
     }
@@ -272,7 +218,6 @@ public:
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
         values[pressureIdx] = 0.0;
-//        values[massOrMoleFracIdx] = refMassfrac();
 
         if (onLeftBoundary_(globalPos))
         {
@@ -288,16 +233,7 @@ public:
      */
     BoundaryValues neumannAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryValues values(0.0);
-
-//        const Scalar xVelocity_(globalPos);
-//
-//        if(onLeftBoundary_(globalPos) && gobalPos[1] > bBoxMin_[1] - eps_ && globalPos[1] < bBoxMax_[1] + eps_)
-//        {
-//            // rho*v*X at inflow
-//            values[transportEqIdx] = -1.0 * xVelocity * density * massFracDirichlet_;
-//        }
-        return values;
+        return BoundaryValues(0.0);
     }
 
     // \}

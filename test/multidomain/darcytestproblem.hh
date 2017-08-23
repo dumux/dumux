@@ -77,7 +77,6 @@ SET_BOOL_PROP(DarcyTestProblem, EnableGlobalFVGeometryCache, true); // TODO defa
 
 NEW_PROP_TAG(GlobalProblemTypeTag);
 NEW_PROP_TAG(CouplingManager);
-NEW_PROP_TAG(StokesProblemTypeTag);
 }
 
 template <class TypeTag>
@@ -118,8 +117,6 @@ class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, GlobalProblemTypeTag) GlobalTypeTag;
     typedef typename GET_PROP_TYPE(GlobalTypeTag, CouplingManager) CouplingManager;
-    typedef typename GET_PROP_TYPE(GlobalTypeTag, StokesProblemTypeTag) StokesProblemTypeTag;
-    typedef typename GET_PROP_TYPE(StokesProblemTypeTag, Indices) StokesIndices;
 
     enum { dofCodim = 0 };
 
@@ -195,17 +192,10 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-
-        // Scalar time = this->timeManager().time();
-
         values.setAllNeumann();
 
         if(onCouplingInterface(globalPos))
-            //            && (globalPos[0] > runUpDistanceX_ - eps_)
-            //            && (time > initializationTime_))
-        {
             values.setAllCouplingNeumann();
-        }
 
         return values;
     }
@@ -267,9 +257,7 @@ public:
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
-        PrimaryVariables source(0.0);
-
-        return source;
+        return PrimaryVariables(0.0);
     }
     // \}
 

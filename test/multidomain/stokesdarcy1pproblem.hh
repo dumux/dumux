@@ -96,9 +96,6 @@ class TestCoupledStokesDarcyProblem : public MultiDomainProblem<TypeTag>
     using StokesGridView = typename GET_PROP_TYPE(StokesProblemTypeTag, GridView);
     using DarcyGridView = typename GET_PROP_TYPE(DarcyProblemTypeTag, GridView);
 
-    using StokesPrimaryVariables = typename GET_PROP_TYPE(StokesProblemTypeTag, PrimaryVariables);
-    using DarcyPrimaryVariables = typename GET_PROP_TYPE(DarcyProblemTypeTag, PrimaryVariables);
-
 public:
     TestCoupledStokesDarcyProblem(TimeManager &timeManager, const StokesGridView &stokesGridView, const DarcyGridView &darcygridView)
     : ParentType(timeManager, stokesGridView, darcygridView)
