@@ -115,7 +115,7 @@ public:
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {
-        const auto& fvGridGeometry = problem.model().fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
 
         // return the scv (element) indices in the interaction region
         if (fvGridGeometry.isInBoundaryInteractionVolume(scvf))

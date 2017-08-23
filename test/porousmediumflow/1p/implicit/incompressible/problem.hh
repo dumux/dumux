@@ -49,9 +49,6 @@ NEW_TYPE_TAG(IncompressibleTestProblem, INHERITS_FROM(CCTpfaModel, OneP));
 // Set the grid type
 SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
 
-// Set the finite volume grid geometry
-SET_TYPE_PROP(IncompressibleTestProblem, FVGridGeometry, CCTpfaFVGridGeometry<TypeTag, false>);
-
 // Set the problem type
 SET_TYPE_PROP(IncompressibleTestProblem, Problem, OnePTestProblem<TypeTag>);
 SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
@@ -78,10 +75,9 @@ public:
 };
 
 // Enable caching
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalVolumeVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFluxVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFVGeometryCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, true);
 
 } // end namespace Properties
 
