@@ -396,7 +396,7 @@ public:
     }
 
     //! evaluate coupling residual for the derivative Stokes DOF with respect to Darcy DOF
-    auto evalStokesCCCouplingResidual(const StokesElement& element,
+    auto evalStokesCCCouplingResidual(const StokesElement& element, // TODO not needed
                               const StokesFVElementGeometry& fvGeometry,
                               const StokesElementVolumeVariables& elemVolVars,
                               const StokesGlobalFaceVars& globalFaceVars)
@@ -408,13 +408,17 @@ public:
         Scalar densityStokes = elemVolVars[0].density(); // TODO upwind?
         const Scalar velocity = globalFaceVars.faceVars(couplingScvfIdx).velocity();
 
+        // TODO stokesProblem_.massBalanceIdx, temperature, components
         // mass coupling condition
         CellCenterPrimaryVariables stokesCCCouplingResidual(0.0);
-        stokesCCCouplingResidual = densityStokes * velocity * outerNormalScalar * interfaceArea; // TODO nc --> rho_g^ff
+        stokesCCCouplingResidual[0] = densityStokes * velocity * outerNormalScalar * interfaceArea; // TODO nc --> rho_g^ff
 
         // TODO temperature
 
         // TODO transport
+
+//        Scalar elemIdx = fvGeometry.scv(fvGeometry.scvf(couplingScvfIdx).insideScvIdx()).elementIndex();
+//        std::cout << "** couplingmanager: StokesCCCouplingResidual = " << stokesCCCouplingResidual[0] << " at cc in element " << elemIdx<< std::endl;
 
         fluxStokesToDarcy_ = stokesCCCouplingResidual;
         return stokesCCCouplingResidual; // fluxStokesCCToDarcy
@@ -427,43 +431,56 @@ public:
                               const StokesSubControlVolumeFace& scvf)
     {
         FacePrimaryVariables stokesFaceCouplingResidual(0.0);
-        if(stokesProblem_.onCouplingInterface(scvf.center()))
+
+        Scalar couplingScvfIdx = scvf.index();
+        Scalar outerNormalScalar = fvGeometry.scvf(couplingScvfIdx).outerNormalScalar();
+        Scalar interfaceArea = fvGeometry.scvf(couplingScvfIdx).area();
+
+        if (scvf.directionIndex() == 1 && stokesProblem_.onCouplingInterface(scvf.center())) // horizontal face on coupling interface
         {
-            Scalar couplingScvfIdx = scvf.index();
-            Scalar outerNormalScalar = fvGeometry.scvf(couplingScvfIdx).outerNormalScalar();
-            Scalar interfaceArea = fvGeometry.scvf(couplingScvfIdx).area();
             Scalar pressureDarcy = pressureInDarcyElement(scvf);
 
-            Scalar distanceCenters = (fvGeometry.scv(scvf.insideScvIdx()).center() - scvf.center())[1]; // TODO direction? 0,1,2?
-            Scalar permeability = darcyProblem_.spatialParams().permeabilityAtPos(scvf.center());
-            Scalar alphaBeaversJoseph = darcyProblem_.spatialParams().beaversJosephCoeffAtPos(scvf.center());
-            Scalar beta = -1.0 * std::sqrt(permeability) / alphaBeaversJoseph / distanceCenters * outerNormalScalar;
-
-            auto stokesElemVolVars = localView(stokesProblem_.model().curGlobalVolVars());
-            stokesElemVolVars.bind(element, fvGeometry, stokesProblem_.model().curSol());
-            const auto stokesVolVars = stokesElemVolVars[scvf.insideScvIdx()];
-
-            Scalar effDynViscosity = stokesVolVars.viscosity();
-//            Scalar effDynViscosity = BaseFluid::dynamicViscosity(stokesVolVars.pressure(), stokesVolVars.temperature(), stokesVolVars.massFrac());
-//                                                                + (eddyKinematicViscosity_(elementInsideIdx) * stokesVolVars.density()); TODO
-            const Scalar tangXVelocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
-            Scalar beaversJosephXVelocity = beta * tangXVelocity / (1.0 + beta);
-//            Scalar tangZVelocity = faceSolutionVector[velocityZIdx];
-//            Scalar beaversJosephZVelocity = beta * tangZVelocity / (1.0 + beta);
-
             // normal momentum coupling condition
-            stokesFaceCouplingResidual[stokesProblem_.velocityYIdx] = pressureDarcy * outerNormalScalar * interfaceArea;
-
-            // TODO only for 2D, add loop over tangDims
-            // Fetzer2017 "classical BJ condition"
-            // tangential momentum coupling condition --> b.c. for stokesProblem?
-//            stokesFaceCouplingResidual[stokesProblem_.velocityXIdx] = 0.0; // TODO
-            stokesFaceCouplingResidual[stokesProblem_.velocityXIdx] = -0.5 * effDynViscosity * (tangXVelocity - beaversJosephXVelocity)
-                                                                           / distanceCenters * outerNormalScalar * interfaceArea;
-            // TODO
-//            stokesFaceCouplingResidual[stokesProblem_.velocityZIdx] = -0.5 * effDynViscosity * (tangZVelocity - beaversJosephZVelocity)
-//                                                                           / distanceCenters * outerNormalScalar * interfaceArea;
+            stokesFaceCouplingResidual = pressureDarcy * outerNormalScalar * interfaceArea;
         }
+
+        // TODO only for 2D, add loop over tangDims
+        // Fetzer2017 "classical BJ condition"
+        // tangential momentum coupling condition --> b.c. for stokesProblem?
+
+        else if (scvf.directionIndex() == 0 && !scvf.boundary()) // vertical face, not on boundary
+        { // TODO works only for horizontal coupling interface on lower boundary of Stokes domain
+            if( (scvf.index() % 4 == 0 && stokesProblem_.onCouplingInterface(fvGeometry.scvf(scvf.index()+2).center())) // if left scvf --> right neighbor scvf on interface
+             || (scvf.index() % 4 == 1 && stokesProblem_.onCouplingInterface(fvGeometry.scvf(scvf.index()+1).center())) ) // if right scvf --> left neighbor scvf on interface
+            {
+
+                Scalar distanceCenters = (fvGeometry.scv(scvf.insideScvIdx()).center() - scvf.center())[0]; // 0.25 TODO direction? 0,1,2?
+                Scalar permeability = darcyProblem_.spatialParams().permeabilityAtPos(scvf.center()); // 1e-10
+                Scalar alphaBeaversJoseph = darcyProblem_.spatialParams().beaversJosephCoeffAtPos(scvf.center()); // 1
+                Scalar beta = -1.0 * std::sqrt(permeability) / alphaBeaversJoseph / distanceCenters * outerNormalScalar; // 4e-5
+
+                auto stokesElemVolVars = localView(stokesProblem_.model().curGlobalVolVars());
+                stokesElemVolVars.bind(element, fvGeometry, stokesProblem_.model().curSol());
+                const auto stokesVolVars = stokesElemVolVars[scvf.insideScvIdx()];
+
+                Scalar effDynViscosity = stokesVolVars.viscosity();
+//                Scalar effDynViscosity = BaseFluid::dynamicViscosity(stokesVolVars.pressure(), stokesVolVars.temperature(), stokesVolVars.massFrac());
+//                                                                + (eddyKinematicViscosity_(elementInsideIdx) * stokesVolVars.density()); TODO
+                const Scalar tangXVelocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
+                Scalar beaversJosephXVelocity = beta * tangXVelocity / (1.0 + beta);
+//                Scalar tangZVelocity = faceSolutionVector[velocityZIdx];
+//                Scalar beaversJosephZVelocity = beta * tangZVelocity / (1.0 + beta);
+
+                stokesFaceCouplingResidual = -0.5 * effDynViscosity * (tangXVelocity - beaversJosephXVelocity)
+                    / distanceCenters * outerNormalScalar * interfaceArea;
+        // TODO
+//                stokesFaceCouplingResidual = -0.5 * effDynViscosity * (tangZVelocity - beaversJosephZVelocity)
+//                                                                          / distanceCenters * outerNormalScalar * interfaceArea;
+            }
+        }
+//        if (stokesFaceCouplingResidual != 0.0)
+//            std::cout << "** couplingmanager: StokesFaceCouplingResidual = " << stokesFaceCouplingResidual<< " at scvf " <<  scvf.index() << std::endl;
+
         return stokesFaceCouplingResidual;
     }
 
@@ -477,7 +494,7 @@ protected:
     // ! Returns the global index of the subcontrolvolumeface at the coupling interface
     const Scalar couplingSubControlVolumeFace(const StokesFVElementGeometry& fvGeometry)
     {
-        Scalar couplingScvfIdx;
+        Scalar couplingScvfIdx(-1);
         // assumption: only one interface scvf (no corners in coupling interface)
         for(const auto &scvf : scvfs(fvGeometry))
         {

@@ -110,6 +110,16 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
     };
 
+    enum {
+        massBalanceIdx = Indices::massBalanceIdx,
+        momentumBalanceIdx = Indices::momentumBalanceIdx,
+        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
+        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
+        pressureIdx = Indices::pressureIdx,
+        velocityXIdx = Indices::velocityXIdx,
+        velocityYIdx = Indices::velocityYIdx
+    };
+
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 
@@ -128,17 +138,6 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
-
-public:
-    enum {
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
-        pressureIdx = Indices::pressureIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
-    };
 
 public:
     StokesTestProblem(TimeManager &timeManager, const GridView &gridView)
