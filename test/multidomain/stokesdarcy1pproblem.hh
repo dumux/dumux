@@ -27,15 +27,15 @@
 #include "darcytestproblem.hh"
 #include "stokestestproblem.hh"
 
-#include <dumux/multidomain/boundingboxtree/problem.hh>
-#include <dumux/multidomain/boundingboxtree/couplingmanager.hh>
-#include <dumux/multidomain/boundingboxtree/map.hh>
+#include <dumux/multidomain/problem.hh>
+#include <dumux/multidomain/couplingmanager.hh>
+#include <dumux/multidomain/map.hh>
 
-#include <dumux/multidomain/staggeredgrid/properties.hh>
-#include <dumux/multidomain/staggeredgrid/model.hh>
-#include <dumux/multidomain/staggeredgrid/assembler.hh>
-#include <dumux/multidomain/staggeredgrid/newtoncontroller.hh>
-#include <dumux/multidomain/staggeredgrid/subproblemlocaljacobian.hh>
+#include <dumux/multidomain/staggered-ccfv/properties.hh>
+#include <dumux/multidomain/staggered-ccfv/model.hh>
+#include <dumux/multidomain/staggered-ccfv/assembler.hh>
+#include <dumux/multidomain/staggered-ccfv/newtoncontroller.hh>
+#include <dumux/multidomain/staggered-ccfv/subproblemlocaljacobian.hh>
 
 
 namespace Dumux

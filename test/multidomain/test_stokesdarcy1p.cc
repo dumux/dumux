@@ -24,7 +24,7 @@
 // #include "config.h"
 #include <config.h>
 #include "stokesdarcy1pproblem.hh"
-#include <dumux/multidomain/boundingboxtree/start.hh>
+#include <dumux/multidomain/start.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with

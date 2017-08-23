@@ -29,10 +29,10 @@
 #include <dumux/implicit/staggered/properties.hh>
 
 #include <dumux/multidomain/subproblemproperties.hh>
-#include <dumux/multidomain/staggeredgrid/model.hh>
-#include <dumux/multidomain/staggeredgrid/assembler.hh>
-#include <dumux/multidomain/staggeredgrid/newtoncontroller.hh>
-#include <dumux/multidomain/staggeredgrid/subproblemlocaljacobian.hh>
+#include <dumux/multidomain/staggered-ccfv/model.hh>
+#include <dumux/multidomain/staggered-ccfv/assembler.hh>
+#include <dumux/multidomain/staggered-ccfv/newtoncontroller.hh>
+#include <dumux/multidomain/staggered-ccfv/subproblemlocaljacobian.hh>
 
 
 namespace Dumux
