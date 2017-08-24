@@ -23,6 +23,8 @@
  */
 #include <config.h>
 
+#include "problem.hh"
+
 #include <ctime>
 #include <iostream>
 
@@ -32,19 +34,19 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
-
 #include <dumux/common/propertysystem.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
+#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
+
 #include <dumux/implicit/cellcentered/assembler.hh>
 
-#include "problem.hh"
+#include <dumux/io/vtkoutputmodule.hh>
 
 int main(int argc, char** argv)
 {
@@ -55,13 +57,15 @@ int main(int argc, char** argv)
     // some aliases for better readability
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+
+    // TODO is needed for output. Should be in extra module
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
     // for non-linear problems
     using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
 
@@ -126,9 +130,14 @@ int main(int argc, char** argv)
         restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, Restart);
 
     // write initial solution to disk
-    Dune::VTKSequenceWriter<GridView> vtkwriter(leafGridView, "test_1pcompressible", "", "");
-    vtkwriter.addCellData(x, "p");
-    vtkwriter.write(restartTime);
+    // Dune::VTKSequenceWriter<GridView> vtkWriter(leafGridView, "test_1pcompressible", "", "");
+    // vtkWriter.addCellData(x, "p");
+    // vtkWriter.write(restartTime);
+
+    // intialize the output module
+    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    vtkWriter.addPrimaryVariable("pressure", Indices::pressureIdx);
+    vtkWriter.write(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -175,7 +184,7 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write output
-        vtkwriter.write(timeLoop->time());
+        vtkWriter.write(timeLoop->time());
 
         timeLoop->reportTimeStep();
 

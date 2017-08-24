@@ -23,32 +23,40 @@
 #ifndef VTK_OUTPUT_MODULE_HH
 #define VTK_OUTPUT_MODULE_HH
 
+#include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
-
+#include <dumux/implicit/properties.hh>
 #include <dumux/io/vtknestedfunction.hh>
 
 namespace Properties
 {
 NEW_PROP_TAG(VtkAddVelocity);
 NEW_PROP_TAG(VtkAddProcessRank);
+NEW_PROP_TAG(FluidSystem);
+NEW_PROP_TAG(NumPhases);
 }
 
 namespace Dumux
 {
+
+namespace VtkImplDetail
+{
+    auto defaultAdderFunction = [](auto& m){};
+}
 
 /*!
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  *
  * Handles the output of scalar and vector fields to VTK formatted file for multiple
- * variables and timesteps. Certain predefined fields can be registered on problem / model
+ * variables and timesteps. Certain predefined fields can be registered on
  * initialization and/or be turned on/off using the designated properties. Additionally
  * non-standardized scalar and vector fields can be added to the writer manually.
  */
 template<typename TypeTag>
-class VtkOutputModuleBase
+class VtkOutputModule
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -59,6 +67,9 @@ class VtkOutputModuleBase
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using Implementation = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     enum {
         dim = GridView::dimension,
@@ -69,6 +80,7 @@ class VtkOutputModuleBase
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr int dofCodim = isBox ? dim : 0;
 
     struct PriVarScalarDataInfo { unsigned int pvIdx; std::string name; };
     struct PriVarVectorDataInfo { std::vector<unsigned int> pvIdx; std::string name; };
@@ -76,16 +88,26 @@ class VtkOutputModuleBase
 
 public:
 
-    VtkOutputModuleBase(const Problem& problem,
+    VtkOutputModule(const Problem& problem,
+                    const FVGridGeometry& fvGridGeometry,
+                    const GridVariables& gridVariables,
+                    const SolutionVector& sol,
+                    const std::string& name,
+                    bool verbose = true,
                     Dune::VTK::DataMode dm = Dune::VTK::conforming)
-    : problem_(problem),
-      writer_(std::make_shared<Dune::VTKWriter<GridView>>(problem.gridView(), dm)),
-      sequenceWriter_(writer_, problem.name())
+    : problem_(problem)
+    , gridGeom_(fvGridGeometry)
+    , gridVariables_(gridVariables)
+    , sol_(sol)
+    , name_(name)
+    , verbose_(fvGridGeometry.gridView().comm().rank() == 0 && verbose)
+    , writer_(std::make_shared<Dune::VTKWriter<GridView>>(fvGridGeometry.gridView(), dm))
+    , sequenceWriter_(writer_, name)
     {}
 
     //////////////////////////////////////////////////////////////////////////////////////////////
-    //! Methods to conveniently add primary and secondary variables upon problem initialization
-    //! Do not call these methods after initialization
+    //! Methods to conveniently add primary and secondary variables upon initialization
+    //! Do not call these methods after initialization i.e. not within the time loop
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     //! Output a scalar primary variable
@@ -115,8 +137,7 @@ public:
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     //! Methods to add addtional (non-standardized) scalar or vector fields to the output queue
-    //! Call these methods on the output module obtained as argument of the addVtkOutputFields
-    //! method that can be overloaded in the problem implementation
+    //! Call these methods on the output module obtained as argument of the addVtkOutputFields function
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     //! Output a scalar field
@@ -125,7 +146,7 @@ public:
     //! \returns A reference to the resized scalar field to be filled with the actual data
     std::vector<Scalar>& createScalarField(const std::string& name, int codim)
     {
-        scalarFields_.emplace_back(std::make_pair(std::vector<Scalar>(problem_.gridView().size(codim)), name));
+        scalarFields_.emplace_back(std::make_pair(std::vector<Scalar>(gridGeom_.gridView().size(codim)), name));
         return scalarFields_.back().first;
     }
 
@@ -135,7 +156,7 @@ public:
     //! \returns A reference to the resized vector field to be filled with the actual data
     std::vector<GlobalPosition>& createVectorField(const std::string& name, int codim)
     {
-        vectorFields_.emplace_back(std::make_pair(std::vector<GlobalPosition>(problem_.gridView().size(codim)), name));
+        vectorFields_.emplace_back(std::make_pair(std::vector<GlobalPosition>(gridGeom_.gridView().size(codim)), name));
         return vectorFields_.back().first;
     }
 
@@ -145,15 +166,17 @@ public:
     //! (3) We register them with the vtk writer
     //! (4) The writer writes the output for us
     //! (5) Clear the writer for the next time step
-    void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
+    template<typename AdderFunction = decltype(VtkImplDetail::defaultAdderFunction)>
+    void write(double time,
+               const AdderFunction& addVtkOutputFields = VtkImplDetail::defaultAdderFunction,
+               Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
-
+        Dune::Timer timer;
         //////////////////////////////////////////////////////////////
         //! (1) Register addtional (non-standardized) data fields with the vtk writer
         //!     Using the add scalar field or vector field methods
         //////////////////////////////////////////////////////////////
-        problem_.model().addVtkOutputFields(asImp_());
-        problem_.addVtkOutputFields(asImp_());
+        addVtkOutputFields(asImp_());
 
         //! Abort if no data was registered
         //! \todo This is not necessary anymore once the old style multiwriter is removed
@@ -167,7 +190,7 @@ public:
         //////////////////////////////////////////////////////////////
         //! (2) Assemble all variable fields with registered info
         //////////////////////////////////////////////////////////////
-        auto numCells = problem_.gridView().size(0);
+        auto numCells = gridGeom_.gridView().size(0);
         auto numDofs = asImp_().numDofs_();
 
         // get fields for all primary variables
@@ -181,7 +204,7 @@ public:
         std::vector<std::vector<Scalar>> secondVarScalarData(secondVarScalarDataInfo_.size(), std::vector<Scalar>(numDofs));
 
         // instatiate the velocity output
-       VelocityOutput velocityOutput(problem_);
+        VelocityOutput velocityOutput(problem_, gridGeom_, gridVariables_, sol_);
         std::array<std::vector<GlobalPosition>, numPhases> velocity;
 
         if (velocityOutput.enableOutput())
@@ -200,9 +223,9 @@ public:
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
             rank.resize(numCells);
 
-        for (const auto& element : elements(problem_.gridView(), Dune::Partitions::interior))
+        for (const auto& element : elements(gridGeom_.gridView(), Dune::Partitions::interior))
         {
-            const auto eIdxGlobal = problem_.elementMapper().index(element);
+            const auto eIdxGlobal = gridGeom_.elementMapper().index(element);
 
             // cell-centered models
             if(!isBox)
@@ -217,8 +240,8 @@ public:
                             = asImp_().getPriVarData_(eIdxGlobal, priVarVectorDataInfo_[i].pvIdx[j]);
             }
 
-            auto fvGeometry = localView(problem_.model().fvGridGeometry());
-            auto elemVolVars = localView(problem_.model().curGlobalVolVars());
+            auto fvGeometry = localView(gridGeom_);
+            auto elemVolVars = localView(gridVariables_.curGridVolVars());
 
             // If velocity output is enabled we need to bind to the whole stencil
             // otherwise element-local data is sufficient
@@ -230,9 +253,9 @@ public:
             // If velocity output is enabled we need to bind to the whole stencil
             // otherwise element-local data is sufficient
             if (velocityOutput.enableOutput())
-                elemVolVars.bind(element, fvGeometry, problem_.model().curSol());
+                elemVolVars.bind(element, fvGeometry, sol_);
             else
-                elemVolVars.bindElement(element, fvGeometry, problem_.model().curSol());
+                elemVolVars.bindElement(element, fvGeometry, sol_);
 
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -266,7 +289,7 @@ public:
 
             //! the rank
             if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
-                rank[eIdxGlobal] = problem_.gridView().comm().rank();
+                rank[eIdxGlobal] = gridGeom_.gridView().comm().rank();
         }
 
         //////////////////////////////////////////////////////////////
@@ -292,7 +315,7 @@ public:
                 using NestedFunction = VtkNestedFunction<GridView, VertexMapper, std::vector<GlobalPosition>>;
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     sequenceWriter_.addVertexData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
-                                                                                   problem_.gridView(), problem_.vertexMapper(),
+                                                                                   gridGeom_.gridView(), gridGeom_.elementMapper(),
                                                                                    velocity[phaseIdx], dim, dimWorld));
             }
             // cell-centered models
@@ -301,7 +324,7 @@ public:
                 using NestedFunction = VtkNestedFunction<GridView, ElementMapper, std::vector<GlobalPosition>>;
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                     sequenceWriter_.addCellData(std::make_shared<NestedFunction>("velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
-                                                                                 problem_.gridView(), problem_.elementMapper(),
+                                                                                 gridGeom_.gridView(), gridGeom_.elementMapper(),
                                                                                  velocity[phaseIdx], 0, dimWorld));
             }
         }
@@ -313,9 +336,9 @@ public:
         // also register additional (non-standardized) user fields
         for (auto&& field : scalarFields_)
         {
-            if (field.first.size() == std::size_t(problem_.gridView().size(0)))
+            if (field.first.size() == std::size_t(gridGeom_.gridView().size(0)))
                 sequenceWriter_.addCellData(field.first, field.second);
-            else if (field.first.size() == std::size_t(problem_.gridView().size(dim)))
+            else if (field.first.size() == std::size_t(gridGeom_.gridView().size(dim)))
                 sequenceWriter_.addVertexData(field.first, field.second);
             else
                 DUNE_THROW(Dune::RangeError, "Cannot add wrongly sized vtk scalar field!");
@@ -323,18 +346,18 @@ public:
 
         for (auto&& field : vectorFields_)
         {
-            if (field.first.size() == std::size_t(problem_.gridView().size(0)))
+            if (field.first.size() == std::size_t(gridGeom_.gridView().size(0)))
             {
                 using NestedFunction = VtkNestedFunction<GridView, ElementMapper, std::vector<GlobalPosition>>;
                 sequenceWriter_.addCellData(std::make_shared<NestedFunction>(field.second,
-                                                                             problem_.gridView(), problem_.elementMapper(),
+                                                                             gridGeom_.gridView(), gridGeom_.elementMapper(),
                                                                              field.first, 0, dimWorld));
             }
-            else if (field.first.size() == std::size_t(problem_.gridView().size(dim)))
+            else if (field.first.size() == std::size_t(gridGeom_.gridView().size(dim)))
             {
                 using NestedFunction = VtkNestedFunction<GridView, VertexMapper, std::vector<GlobalPosition>>;
                 sequenceWriter_.addVertexData(std::make_shared<NestedFunction>(field.second,
-                                                                               problem_.gridView(), problem_.vertexMapper(),
+                                                                               gridGeom_.gridView(), gridGeom_.elementMapper(),
                                                                                field.first, dim, dimWorld));
             }
             else
@@ -350,6 +373,13 @@ public:
         //! (5) Clear all fields and writer for the next time step
         //////////////////////////////////////////////////////////////
         clear();
+
+        //! output
+        timer.stop();
+        if (verbose_)
+        {
+            std::cout << "Writing output for problem \"" << name_ << "\". Took " << timer.elapsed() << " seconds." << std::endl;
+        }
     }
 
     //! clear all data in the writer
@@ -361,7 +391,7 @@ public:
     }
 
     /*!
-     * \brief This method writes the complete state of the problem
+     * \brief This method writes the complete state of the vtk writer
      *        to the harddisk.
      *
      * The file will start with the prefix returned by the name()
@@ -380,7 +410,7 @@ public:
     }
 
     /*!
-     * \brief This method restores the complete state of the problem
+     * \brief This method restores the complete state of the vtk writer
      *        from disk.
      *
      * It is the inverse of the serialize() method.
@@ -395,9 +425,6 @@ public:
         // TODO implement
     }
 
-    const Problem &problem() const
-    { return problem_; }
-
 private:
 
     template<typename Writer, typename... Args>
@@ -410,21 +437,10 @@ private:
             writer.addCellData(std::forward<Args>(args)...);
     }
 
-    const Problem& problem_;
-    std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
-    Dune::VTKSequenceWriter<GridView> sequenceWriter_;
-
-    std::vector<PriVarScalarDataInfo> priVarScalarDataInfo_;
-    std::vector<PriVarVectorDataInfo> priVarVectorDataInfo_;
-    std::vector<SecondVarScalarDataInfo> secondVarScalarDataInfo_;
-
-    std::list<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
-    std::list<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
-
     //! return the number of dofs
-    unsigned int numDofs_() const
+    std::size_t numDofs_() const
     {
-        return problem_.model().numDofs();
+        return gridGeom_.gridView().size(dofCodim);
     }
 
      /*!
@@ -436,16 +452,34 @@ private:
      */
     auto getPriVarData_(const std::size_t dofIdxGlobal, const std::size_t pvIdx)
     {
-        return problem_.model().curSol()[dofIdxGlobal][pvIdx];
+        return sol_[dofIdxGlobal][pvIdx];
     }
 
-    //! Returns the implementation of the problem (i.e. static polymorphism)
+    //! Returns the implementation of the output module (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
+
+    const Problem& problem_;
+    const FVGridGeometry& gridGeom_;
+    const GridVariables& gridVariables_;
+    const SolutionVector& sol_;
+
+    std::string name_;
+    bool verbose_;
+
+    std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
+    Dune::VTKSequenceWriter<GridView> sequenceWriter_;
+
+    std::vector<PriVarScalarDataInfo> priVarScalarDataInfo_;
+    std::vector<PriVarVectorDataInfo> priVarVectorDataInfo_;
+    std::vector<SecondVarScalarDataInfo> secondVarScalarDataInfo_;
+
+    std::list<std::pair<std::vector<Scalar>, std::string>> scalarFields_;
+    std::list<std::pair<std::vector<GlobalPosition>, std::string>> vectorFields_;
 };
 
 } // end namespace Dumux

@@ -7,6 +7,9 @@ LowerLeft = 0 0
 UpperRight = 1 1
 Cells = 101 101
 
+[Problem]
+Name = 1pcc
+
 [SpatialParams]
 LensLowerLeft = 0.2 0.2
 LensUpperRight = 0.8 0.8

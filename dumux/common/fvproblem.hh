@@ -75,7 +75,6 @@ class FVProblem
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     // using GridAdaptModel = ImplicitGridAdapt<TypeTag, adaptiveGrid>;
-    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
 public:
     /*!
@@ -87,7 +86,7 @@ public:
     : fvGridGeometry_(fvGridGeometry)
     {
         // set a default name for the problem
-        problemName_ = "dumuxsimulation";
+        problemName_ = GET_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
 
         // TODO this has to be moved to the main file most probably
         // // if we are calculating on an adaptive grid get the grid adapt model
@@ -587,11 +586,6 @@ public:
     //     model_.curSol() = curSol;
     //     timeManager().setTime(time);
     // }
-
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void addVtkOutputFields(VtkOutputModule& outputModule) const {}
 
     // TODO could be move to the episode manager that is user implemented?
     // /*!

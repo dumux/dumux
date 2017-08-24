@@ -70,7 +70,7 @@ SET_TYPE_PROP(IncompressibleTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeT
 SET_TYPE_PROP(IncompressibleTestProblem, LocalAssembler, CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>);
 
 // the fluid system
-SET_PROP(IncompressibleTestProblem, Fluid)
+SET_PROP(IncompressibleTestProblem, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

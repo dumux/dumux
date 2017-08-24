@@ -57,9 +57,15 @@ class ImplicitVelocityOutput
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
+
+    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static const int dofCodim = isBox ? dim : 0;
 
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -75,8 +81,14 @@ public:
      *
      * \param problem The problem to be solved
      */
-    ImplicitVelocityOutput(const Problem& problem)
+    ImplicitVelocityOutput(const Problem& problem,
+                           const FVGridGeometry& fvGridGeometry,
+                           const GridVariables& gridVariables,
+                           const SolutionVector& sol)
     : problem_(problem)
+    , fvGridGeometry_(fvGridGeometry)
+    , gridVariables_(gridVariables)
+    , sol_(sol)
     {
         // check, if velocity output can be used (works only for cubes so far)
         velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
@@ -86,17 +98,42 @@ public:
             if (isBox && dim > 1)
             {
                 // resize to the number of vertices of the grid
-                cellNum_.assign(problem.gridView().size(dim), 0);
+                cellNum_.assign(fvGridGeometry.gridView().size(dim), 0);
 
-                for (const auto& element : elements(problem.gridView()))
+                for (const auto& element : elements(fvGridGeometry.gridView()))
                     for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-                        ++cellNum_[problem.vertexMapper().subIndex(element, vIdx, dim)];
+                        ++cellNum_[fvGridGeometry.vertexMapper().subIndex(element, vIdx, dim)];
             }
         }
     }
 
     bool enableOutput()
     { return velocityOutput_; }
+
+    //TODO: where to put this? Maybe in the solution vector itself?
+    /*!
+     * \brief Obtains the current solution inside a given element.
+     *        Specialization for the box method.
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), ElementSolutionVector>::type
+    elementSolution(const Element& element, const SolutionVector& sol) const
+    {
+        auto numVert = element.subEntities(dofCodim);
+        ElementSolutionVector elemSol(numVert);
+        for (int v = 0; v < numVert; ++v)
+            elemSol[v] = sol[fvGridGeometry_.vertexMapper().subIndex(element, v, dofCodim)];
+        return elemSol;
+    }
+
+    /*!
+     * \brief Obtains the current solution inside a given element.
+     *        Specialization for cell-centered methods.
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), ElementSolutionVector>::type
+    elementSolution(const Element& element, const SolutionVector& sol) const
+    { return ElementSolutionVector({ sol[fvGridGeometry_.elementMapper().index(element)] }); }
 
     // The following SFINAE enable_if usage allows compilation, even if only a
     //
@@ -138,7 +175,7 @@ public:
         const Dune::GeometryType geomType = geometry.type();
 
         // bind the element flux variables cache
-        auto elemFluxVarsCache = localView(problem_.model().globalFluxVarsCache());
+        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
         // the upwind term to be used for the volume flux evaluation
@@ -165,10 +202,10 @@ public:
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 flux /= problem_.extrusionFactor(element,
                                                  fvGeometry.scv(scvf.insideScvIdx()),
-                                                 problem_.model().elementSolution(element, problem_.model().curSol()));
+                                                 elementSolution(element, sol_));
                 tmpVelocity *= flux;
 
-                const int eIdxGlobal = problem_.elementMapper().index(element);
+                const int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
                 velocity[eIdxGlobal] = tmpVelocity;
             }
             return;
@@ -250,7 +287,7 @@ public:
             // find the local face indices of the scvfs (for conforming meshes)
             std::vector<unsigned int> scvfIndexInInside(element.subEntities(1));
             int localScvfIdx = 0;
-            for (const auto& intersection : intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(fvGridGeometry_.gridView(), element))
             {
                 if (dim < dimWorld) if (handledScvf[intersection.indexInInside()]) continue;
 
@@ -273,7 +310,7 @@ public:
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                             fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                            problem_.model().elementSolution(element, problem_.model().curSol()));
+                                                                                            elementSolution(element, sol_));
                 }
                 else
                 {
@@ -285,7 +322,7 @@ public:
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                                problem_.model().elementSolution(element, problem_.model().curSol()));
+                                                                                                elementSolution(element, sol_));
                     }
                 }
 
@@ -351,7 +388,7 @@ public:
 
             scvVelocity /= geometry.integrationElement(localPos);
 
-            int eIdxGlobal = problem_.elementMapper().index(element);
+            int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
 
             velocity[eIdxGlobal] = scvVelocity;
 
@@ -417,6 +454,10 @@ private:
 
 private:
     const Problem& problem_;
+    const FVGridGeometry& fvGridGeometry_;
+    const GridVariables& gridVariables_;
+    const SolutionVector& sol_;
+
     bool velocityOutput_;
     std::vector<int> cellNum_;
 };

@@ -83,6 +83,9 @@ NEW_PROP_TAG(GridView);
 //! Property to specify the type of a problem which has to be solved
 NEW_PROP_TAG(Problem);
 
+//! Property to specify the name of the problem
+NEW_PROP_TAG(ProblemName);
+
 //! Property defining the type of the model which is used to solve the problem
 NEW_PROP_TAG(Model);
 
@@ -109,6 +112,9 @@ NEW_PROP_TAG(VtkOutputLevel);
 ///////////////////////////////////
 // Default values for properties:
 ///////////////////////////////////
+
+//! Set the default problem name to dumuxsim
+SET_STRING_PROP(NumericModel, ProblemName, "dumuxsim");
 
 //! Set the default type of scalar values to double
 SET_TYPE_PROP(NumericModel, Scalar, double);
