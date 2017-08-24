@@ -184,7 +184,11 @@ int main(int argc, char** argv)
 
     } while (!timeLoop->finished());
 
-    timeLoop->finalize();
+    timeLoop->finalize(leafGridView.comm());
+
+    // print dumux end message
+    if (mpiHelper.rank() == 0)
+        DumuxMessage::print(/*firstCall=*/false);
 
     return 0;
 

@@ -58,7 +58,8 @@ template <class Scalar>
 class TimeLoop
 {
 public:
-    TimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true) : timer_(false)
+    TimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
+    : timer_(false)
     {
         verbose_ =
             verbose &&
@@ -89,50 +90,12 @@ public:
     }
 
     /*!
-     * \brief State info on cpu time.
-     */
-    void reportTimeStep()
-    {
-        auto timeStepCpuTime = timer_.elapsed();
-        cpuTime_ += timeStepCpuTime;
-
-        if (verbose_)
-        {
-                std::cout << "Time step " << timeStepIndex() << " done in "
-                          << timeStepCpuTime << " seconds. "
-                          << "Wall time: " << cpuTime_
-                          << ", time: " << time()
-                          << ", time step size: " << timeStepSize()
-                          << std::endl;
-        }
-
-        timer_.reset();
-    }
-
-    /*!
      * \brief Advance time step.
      */
     void advanceTimeStep()
     {
         timeStepIdx_++;
         time_ += timeStepSize_;
-    }
-
-    /*!
-     * \brief Print final status and stops tracking the time.
-     */
-    void finalize()
-    {
-        timer_.stop();
-        cpuTime_ += timer_.elapsed();
-
-        if (verbose_)
-        {
-            const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-            std::cout << "Simulation took " << timer_.elapsed() << " seconds on "
-                      << comm.size() << " processes.\n"
-                      << "The cumulative CPU time was " << comm.sum(cpuTime_) << " seconds.\n";
-        }
     }
 
     /*!
@@ -268,6 +231,51 @@ public:
         //            max<Scalar>(0.0, endTime() - time()));
         return min(maxTimeStepSize_,
                    max<Scalar>(0.0, endTime() - time()));
+    }
+
+    /*!
+     * \brief State info on cpu time.
+     */
+    void reportTimeStep()
+    {
+        auto timeStepCpuTime = timer_.elapsed();
+        cpuTime_ += timeStepCpuTime;
+
+        if (verbose_)
+        {
+            std::cout << "Time step " << timeStepIndex() << " done in "
+                      << timeStepCpuTime << " seconds. "
+                      << "Wall time: " << cpuTime_
+                      << ", time: " << time()
+                      << ", time step size: " << timeStepSize()
+                      << std::endl;
+        }
+
+        timer_.reset();
+    }
+
+    /*!
+     * \brief Print final status and stops tracking the time.
+     */
+    template <class Communicator>
+    void finalize(const Communicator& comm = Dune::MPIHelper::getCollectiveCommunication())
+    {
+        timer_.stop();
+        cpuTime_ += timer_.elapsed();
+
+        if (verbose_)
+        {
+            std::cout << "Simulation took " << cpuTime_ << " seconds on "
+                      << comm.size() << " processes.\n";
+        }
+
+        if (comm.size() > 1)
+            cpuTime_ = comm.sum(cpuTime_);
+
+        if (verbose_)
+        {
+            std::cout << "The cumulative CPU time was " << cpuTime_ << " seconds.\n";
+        }
     }
 
     /*
