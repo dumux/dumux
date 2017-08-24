@@ -62,8 +62,8 @@ class ImplicitSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
-    ImplicitSpatialParams(const Problem &problem, const GridView &gridView)
-    : ImplicitSpatialParamsOneP<TypeTag>(problem, gridView)
+    ImplicitSpatialParams(const Problem& problem)
+    : ImplicitSpatialParamsOneP<TypeTag>(problem)
     {}
 
     /*!
@@ -78,7 +78,7 @@ public:
                                                const SubControlVolume& scv,
                                                const ElementSolutionVector& elemSol) const
     {
-        return asImp_().materialLawParamsAtPos(scv.center());
+        return this->asImp_().materialLawParamsAtPos(scv.center());
     }
 
     /*!
@@ -93,13 +93,6 @@ public:
                    "The spatial parameters do not provide "
                    "a materialLawParamsAtPos() method.");
     }
-
-private:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
 
 } // namespace Dumux

@@ -103,7 +103,7 @@ int main(int argc, char** argv)
     fvGridGeometry->update();
 
     // the problem (boundary conditions)
-    auto problem = std::make_shared<Problem>(leafGridView);
+    auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
     auto x = std::make_shared<SolutionVector>(leafGridView.size(0));

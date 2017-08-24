@@ -23,6 +23,7 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
@@ -34,11 +35,12 @@
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/porousmediumflow/1p/implicit/propertydefaults.hh>
 
+#include "spatialparams.hh"
+
 namespace Dumux
 {
 // forward declarations
 template<class TypeTag> class OnePTestProblem;
-template<class TypeTag> class OnePTestSpatialParams;
 
 namespace Properties
 {
@@ -73,7 +75,7 @@ SET_PROP(IncompressibleTestProblem, Fluid)
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::LiquidPhase<Scalar, TabulatedComponent<Scalar, H2O<Scalar>>>;
 };
 
 // Enable caching
@@ -84,76 +86,48 @@ SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, false);
 } // end namespace Properties
 
 template<class TypeTag>
-class OnePTestSpatialParams
+class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
-
-public:
-    using PermeabilityType = Scalar;
-    PermeabilityType permeability(const Element &element,
-                        const SubControlVolume &scv,
-                        const ElementSolutionVector &elemSol) const
-    { return 1e-12; }
-
-    PermeabilityType permeabilityAtPos(const GlobalPosition &globalPos) const
-    { return 1e-12; }
-
-    Scalar porosity(const Element &element,
-                        const SubControlVolume &scv,
-                        const ElementSolutionVector &elemSol) const
-    { return 0.2; }
-};
-
-
-template<class TypeTag>
-class OnePTestProblem
-{
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
+    static constexpr int dimWorld = GridView::dimensionworld;
+
 public:
-    OnePTestProblem(const GridView& gridView)
-    : gridView_(gridView)
+    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        // TabulatedComponent<Scalar, H2O<Scalar>>::init(273.15 - 10,
-        //                                               273.15 + 10,
-        //                                               3,
-        //                                               1e4,
-        //                                               1e6,
-        //                                               100);
+        TabulatedComponent<Scalar, H2O<Scalar>>::init(272.15, 294.15, 10,
+                                                      1.0e4, 1.0e6, 200);
     }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
-     * \param values The boundary types for the conservation equations
      * \param globalPos The position of the center of the finite volume
      */
     BoundaryTypes boundaryTypes(const Element &element,
                                 const SubControlVolumeFace &scvf) const
     {
         BoundaryTypes values;
-        const auto& pos = scvf.ipGlobal();
-        values.setAllDirichlet();
-        if (pos[0] > 1.0 - 1e-8 || pos[0] < 1e-8)
+        const auto globalPos = scvf.ipGlobal();
+
+        Scalar eps = 1.0e-6;
+        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
+            values.setAllDirichlet();
+        else
             values.setAllNeumann();
+
         return values;
     }
 
@@ -161,133 +135,38 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
     {
         const auto& pos = scvf.ipGlobal();
-        return PrimaryVariables(pos[1]*1e5 + 1e5);
+        PrimaryVariables values(0);
+        values[0] = 1.0e+5*(2.0 - pos[dimWorld-1]);
+        return values;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluate the initial conditions
      *
-     * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
-    ResidualVector neumann(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolvars,
-                           const SubControlVolumeFace& scvf) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        return ResidualVector(0.0);
+        return PrimaryVariables(1.0e5);
     }
 
     /*!
-     * \brief Applies the initial solution for all degrees of freedom of the grid.
-     *
-    */
-    void applyInitialSolution(SolutionVector& sol) const
-    {
-        sol = 1e5;
-    }
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * This is the method for the case where the source term is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
-     *
-     * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param scv The subcontrolvolume
-     *
-     * For this method, the \a values parameter stores the conserved quantity rate
-     * generated or annihilate per volume unit. Positive values mean
-     * that the conserved quantity is created, negative ones mean that it vanishes.
-     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
-     */
-    ResidualVector source(const Element &element,
-                          const FVElementGeometry& fvGeometry,
-                          const ElementVolumeVariables& elemVolVars,
-                          const SubControlVolume &scv) const
-    {
-        if (scv.dofIndex() == gridView_.size(0)/2)
-            return ResidualVector(0.1/scv.volume());
-        else
-            return ResidualVector(0.0);
-    }
-
-    /*!
-     * \brief Adds contribution of point sources for a specific sub control volume
-     *        to the values.
-     *        Caution: Only overload this method in the implementation if you know
-     *                 what you are doing.
-     */
-    ResidualVector scvPointSources(const Element &element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const SubControlVolume &scv) const
-    {
-        return ResidualVector(0.0);
-    }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
+     * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
      *
      * This is not specific to the discretization. By default it just
-     * calls temperature().
-     *
-     * \param globalPos The position in global coordinates where the temperature should be specified.
+     * throws an exception so it must be overloaded by the problem if
+     * no energy equation is used.
      */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    { return 273.15 + 10; }
-
-    /*!
-     * \brief Returns the acceleration due to gravity \f$\mathrm{[m/s^2]}\f$.
-     *
-     * This is discretization independent interface. By default it
-     * just calls gravity().
-     */
-    GlobalPosition gravityAtPos(const GlobalPosition &pos) const
-    { return GlobalPosition({0.0, -9.81}); }
-
-    /*!
-     * \brief Return how much the domain is extruded at a given sub-control volume.
-     *
-     * This means the factor by which a lower-dimensional (1D or 2D)
-     * entity needs to be expanded to get a full dimensional cell. The
-     * default is 1.0 which means that 1D problems are actually
-     * thought as pipes with a cross section of 1 m^2 and 2D problems
-     * are assumed to extend 1 m to the back.
-     */
-    Scalar extrusionFactor(const Element &element,
-                           const SubControlVolume &scv,
-                           const ElementSolutionVector &elemSol) const
+    Scalar temperature() const
     {
-        return 1.0;
+        return 283.15; // 10°C
     }
-
-    const OnePTestSpatialParams<TypeTag>& spatialParams() const
-    { return spatialParams_; }
-
-private:
-    GridView gridView_;
-    OnePTestSpatialParams<TypeTag> spatialParams_;
-
-
 };
 
 } // end namespace Dumux

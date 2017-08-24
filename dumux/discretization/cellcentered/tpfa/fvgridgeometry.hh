@@ -25,7 +25,10 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/common/elementmap.hh>
+#include <dumux/common/boundingboxtree.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
@@ -58,10 +61,12 @@ class CCTpfaFVGridGeometry<TypeTag, true>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Element = typename GridView::template Codim<0>::Entity;
     using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using BoundingBoxTree = Dumux::BoundingBoxTree<GridView>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     //! The local class needs access to the scv, scvfs and the fv element geometry
     //! as they are globally cached
@@ -72,9 +77,38 @@ public:
     CCTpfaFVGridGeometry(const GridView& gridView)
     : gridView_(gridView)
     , elementMap_(gridView)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , elementMapper_(gridView, Dune::mcmgElementLayout())
     , vertexMapper_(gridView, Dune::mcmgVertexLayout())
-    {}
+#else
+    , elementMapper_(gridView)
+    , vertexMapper_(gridView)
+#endif
+    , bBoxMin_(std::numeric_limits<double>::max())
+    , bBoxMax_(-std::numeric_limits<double>::max())
+    {
+        // calculate the bounding box of the local partition of the grid view
+        for (const auto& vertex : vertices(gridView))
+        {
+            for (int i=0; i<dimWorld; i++)
+            {
+                using std::min;
+                using std::max;
+                bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().corner(0)[i]);
+                bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().corner(0)[i]);
+            }
+        }
+
+        // communicate to get the bounding box of the whole domain
+        if (gridView.comm().size() > 1)
+        {
+            for (int i = 0; i < dimWorld; ++i)
+            {
+                bBoxMin_[i] = gridView.comm().min(bBoxMin_[i]);
+                bBoxMax_[i] = gridView.comm().max(bBoxMax_[i]);
+            }
+        }
+    }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -303,6 +337,42 @@ public:
     const ConnectivityMap &connectivityMap() const
     { return connectivityMap_; }
 
+    /*!
+     * \brief Returns the bounding box tree of the grid
+     */
+    BoundingBoxTree& boundingBoxTree()
+    {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_unique<BoundingBoxTree>(gridView_);
+
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief Returns the bounding box tree of the grid
+     */
+    const BoundingBoxTree& boundingBoxTree() const
+    {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_unique<BoundingBoxTree>(gridView_);
+
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief The coordinate of the corner of the GridView's bounding
+     *        box with the smallest values.
+     */
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    /*!
+     * \brief The coordinate of the corner of the GridView's bounding
+     *        box with the largest values.
+     */
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
+
 private:
     // find the scvf that has insideScvIdx in its outsideScvIdx list and outsideScvIdx as its insideScvIdx
     IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType outsideScvIdx)
@@ -332,8 +402,16 @@ private:
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     IndexType numBoundaryScvf_;
+
     // needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<IndexType>> flipScvfIndices_;
+
+    // The bounding box tree of the grid for effecient element intersections
+    mutable std::unique_ptr<BoundingBoxTree> boundingBoxTree_;
+
+    // The bounding box of the global grid
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 };
 
 // specialization in case the FVElementGeometries are not stored
@@ -350,9 +428,13 @@ class CCTpfaFVGridGeometry<TypeTag, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Element = typename GridView::template Codim<0>::Entity;
     using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using BoundingBoxTree = Dumux::BoundingBoxTree<GridView>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
+
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     // TODO is this necessary?
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -362,9 +444,38 @@ public:
     CCTpfaFVGridGeometry(const GridView& gridView)
     : gridView_(gridView)
     , elementMap_(gridView)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     , elementMapper_(gridView, Dune::mcmgElementLayout())
     , vertexMapper_(gridView, Dune::mcmgVertexLayout())
-    {}
+#else
+    , elementMapper_(gridView)
+    , vertexMapper_(gridView)
+#endif
+    , bBoxMin_(std::numeric_limits<double>::max())
+    , bBoxMax_(-std::numeric_limits<double>::max())
+    {
+        // calculate the bounding box of the local partition of the grid view
+        for (const auto& vertex : vertices(gridView))
+        {
+            for (int i=0; i<dimWorld; i++)
+            {
+                using std::min;
+                using std::max;
+                bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().corner(0)[i]);
+                bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().corner(0)[i]);
+            }
+        }
+
+        // communicate to get the bounding box of the whole domain
+        if (gridView.comm().size() > 1)
+        {
+            for (int i = 0; i < dimWorld; ++i)
+            {
+                bBoxMin_[i] = gridView.comm().min(bBoxMin_[i]);
+                bBoxMax_[i] = gridView.comm().max(bBoxMax_[i]);
+            }
+        }
+    }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -538,6 +649,42 @@ public:
     const ConnectivityMap &connectivityMap() const
     { return connectivityMap_; }
 
+    /*!
+     * \brief Returns the bounding box tree of the grid
+     */
+    BoundingBoxTree& boundingBoxTree()
+    {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_unique<BoundingBoxTree>(gridView_);
+
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief Returns the bounding box tree of the grid
+     */
+    const BoundingBoxTree& boundingBoxTree() const
+    {
+        if(!boundingBoxTree_)
+            boundingBoxTree_ = std::make_unique<BoundingBoxTree>(gridView_);
+
+        return *boundingBoxTree_;
+    }
+
+    /*!
+     * \brief The coordinate of the corner of the GridView's bounding
+     *        box with the smallest values.
+     */
+    const GlobalPosition &bBoxMin() const
+    { return bBoxMin_; }
+
+    /*!
+     * \brief The coordinate of the corner of the GridView's bounding
+     *        box with the largest values.
+     */
+    const GlobalPosition &bBoxMax() const
+    { return bBoxMax_; }
+
 private:
 
     const GridView gridView_;
@@ -556,6 +703,13 @@ private:
     // vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<std::vector<IndexType>>> neighborVolVarIndices_;
+
+    // The bounding box tree of the grid for effecient element intersections
+    mutable std::unique_ptr<BoundingBoxTree> boundingBoxTree_;
+
+    // The bounding box of the global grid
+    GlobalPosition bBoxMin_;
+    GlobalPosition bBoxMax_;
 };
 
 } // end namespace

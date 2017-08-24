@@ -68,7 +68,7 @@ class ImplicitSpatialParamsOneP
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
-    ImplicitSpatialParamsOneP(const Problem& problem, const GridView &gridView)
+    ImplicitSpatialParamsOneP(const Problem& problem)
     : problemPtr_(&problem)
     {}
 
@@ -306,7 +306,8 @@ public:
         return forchCoeff;
     }
 
-    const Problem& problem()
+    //! The problem we are associated with
+    const Problem& problem() const
     {
         return *problemPtr_;
     }

@@ -38,6 +38,7 @@ namespace Properties
 {
 // Property forward declarations
 NEW_PROP_TAG(ElementVolumeVariables);
+NEW_PROP_TAG(FVGridGeometry);
 NEW_PROP_TAG(FVElementGeometry);
 NEW_PROP_TAG(GridView);
 NEW_PROP_TAG(ImplicitIsBox);
@@ -346,26 +347,25 @@ private:
 template<class TypeTag>
 class BoundingBoxTreePointSourceHelper
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
 
     static const int dim = GridView::dimension;
     static const int dimworld = GridView::dimensionworld;
-
-    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
     //! calculate a DOF index to point source map from given vector of point sources
-    static void computePointSourceMap(const Problem& problem,
-                                      const BoundingBoxTree& boundingBoxTree,
+    static void computePointSourceMap(const FVGridGeometry& fvGridGeometry,
                                       std::vector<PointSource>& sources,
                                       std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> >& pointSourceMap)
     {
+        const auto& boundingBoxTree = fvGridGeometry.boundingBoxTree();
+
         for (auto&& source : sources)
         {
             // compute in which elements the point source falls
@@ -378,9 +378,8 @@ public:
                 if(isBox)
                 {
                     // check in which subcontrolvolume(s) we are
-                    // TODO mapper/problem in bboxtree would allow to make this much better
                     const auto element = boundingBoxTree.entity(eIdx);
-                    auto fvGeometry = localView(problem.model().fvGridGeometry());
+                    auto fvGeometry = localView(fvGridGeometry);
                     fvGeometry.bindElement(element);
 
                     const auto globalPos = source.position();

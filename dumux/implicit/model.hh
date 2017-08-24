@@ -702,53 +702,6 @@ protected:
     { return localJacobian_.localResidual(); }
 
     /*!
-     * \brief Applies the initial solution for all degrees of freedom of the grid.
-     *
-    */
-    void applyInitialSolution_()
-    {
-        // first set the whole domain to zero
-        uCur_ = Scalar(0.0);
-
-        // set the initial values by forwarding to a specialized method
-        applyInitialSolutionImpl_(std::integral_constant<bool, isBox>());
-
-        // add up the primary variables which cross process borders
-        if (isBox && gridView_().comm().size() > 1)
-        {
-            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
-                sumPVHandle(uCur_, vertexMapper());
-            gridView_().communicate(sumPVHandle,
-                                    Dune::InteriorBorder_InteriorBorder_Interface,
-                                    Dune::ForwardCommunication);
-        }
-    }
-
-    /*!
-     * \brief Applies the initial solution for the box method
-    */
-    void applyInitialSolutionImpl_(std::true_type)
-    {
-        for (const auto& vertex : vertices(problem_().gridView()))
-        {
-            const auto dofIdxGlobal = dofMapper().index(vertex);
-            uCur_[dofIdxGlobal] = problem_().initial(vertex);
-        }
-    }
-
-    /*!
-     * \brief Applies the initial solution for cell-centered methods
-    */
-    void applyInitialSolutionImpl_(std::false_type)
-    {
-        for (const auto& element : elements(problem_().gridView()))
-        {
-            const auto dofIdxGlobal = dofMapper().index(element);
-            uCur_[dofIdxGlobal] = problem_().initial(element);
-        }
-    }
-
-    /*!
      * \brief Find all indices of boundary vertices (box) / elements (cell centered).
      */
     void updateBoundaryIndices_()

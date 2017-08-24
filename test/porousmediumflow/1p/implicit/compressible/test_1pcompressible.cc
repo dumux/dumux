@@ -102,8 +102,8 @@ int main(int argc, char** argv)
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // the problem (boundary conditions)
-    auto problem = std::make_shared<Problem>(leafGridView);
+    // the problem (initial and boundary conditions)
+    auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
     SolutionVector x(leafGridView.size(0));
@@ -118,11 +118,12 @@ int main(int argc, char** argv)
     auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, TEnd);
     auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, DtInitial);
     auto maxDivisions = GET_PARAM_FROM_GROUP(TypeTag, int, TimeLoop, MaxTimeStepDivisions);
+    auto maxDt = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, MaxTimeStepSize);
 
     // check if we are about to restart a previously interrupted simulation
     Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeManager.Restart"))
-        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
+    if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeLoop.Restart"))
+        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, Restart);
 
     // write initial solution to disk
     Dune::VTKSequenceWriter<GridView> vtkwriter(leafGridView, "test_1pcompressible", "", "");
@@ -131,6 +132,7 @@ int main(int argc, char** argv)
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
 
     // make assembler
     auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables, timeLoop);
