@@ -388,7 +388,7 @@ private:
                 // off-diagonal entries
                 j = 0;
                 for (const auto& dataJ : connectivityMap[globalI])
-                    A[dataJ.globalJ][globalI][eqIdx][pvIdx] += neighborDeriv[j++][pvIdx];
+                    A[dataJ.globalJ][globalI][eqIdx][pvIdx] += neighborDeriv[j++][eqIdx];
             }
         }
 
