@@ -54,3 +54,12 @@ dune_add_test(NAME test_stokes2cni_diffusion
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2cni-diffusion.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_stokes2cni_diffusion-00014.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}//test_stokes2cni test_stokes2cni_diffusion.input")
+
+dune_add_test(NAME test_msfreeflow
+              SOURCES test_msfreeflow.cc
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/maxwellstefanfreeflow-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_msfreeflow-00022.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_msfreeflow test_msfreeflow.input")
