@@ -14,7 +14,7 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *****************************************************************************/
- /*!
+/*!
  * \file
  * \ingroup BoundaryCoupling
  * \brief @copybrief Dumux::CouplingMapper
@@ -96,21 +96,21 @@ class CouplingMapperStokesDarcy
         unsigned int darcyDofIdx;
         unsigned int darcyElementIdx;
     };
-    using StokesCCToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
-    using StokesFaceToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
+    //    using StokesCCToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
+    //    using StokesFaceToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
 
     // TODO only one Darcy element mapped to each Stokes element --> no vector needed?! (changes in couplingmanager necessary!)
-//    using StokesCCToDarcyMap = std::map<unsigned int, StokesToDarcyMapValue>; // key: global scv index (eIdx, scvIdx)
-//    using StokesFaceToDarcyMap = std::map<unsigned int, StokesToDarcyMapValue>; // key: global scv index (eIdx, scvIdx)
+    using StokesCCToDarcyMap = std::map<unsigned int, StokesToDarcyMapValue>; // key: global scv index (eIdx, scvIdx)
+    using StokesFaceToDarcyMap = std::map<unsigned int, StokesToDarcyMapValue>; // key: global scv index (eIdx, scvIdx)
 
 public:
     CouplingMapperStokesDarcy(StokesProblem &stokesProblem, DarcyProblem &darcyProblem, CouplingManager &couplingManager)
-    : stokesGridView_(stokesProblem.gridView()),
-      darcyGridView_(darcyProblem.gridView()),
-      stokesProblem_(stokesProblem),
-      darcyProblem_(darcyProblem),
-      couplingManager_(couplingManager)
-    {}
+: stokesGridView_(stokesProblem.gridView()),
+  darcyGridView_(darcyProblem.gridView()),
+  stokesProblem_(stokesProblem),
+  darcyProblem_(darcyProblem),
+  couplingManager_(couplingManager)
+{}
 
     /*!
      * \brief Computes the coupling maps
@@ -138,77 +138,65 @@ public:
                 if(!darcyProblem_.model().onBoundary(darcyDofIdxGlobal))
                     continue;
 
-                // determine the Stokes elements that are coupled to the Darcy DOFs
-                auto darcyPos = darcyScv.center(); // TODO ?! collision with darcyTree?
+                // check if the Darcy scv is at the coupling interface and determine the respective scvf
+                auto darcyPos = darcyScv.center();
                 for(auto& darcyScvf : scvfs(darcyFVElementGeometry))
                 {
                     if(darcyProblem_.onCouplingInterface(darcyScvf.center()))
-                        {
-                            darcyPos = darcyScvf.center();
-                            continue;
-                        }
+                    {
+                        darcyPos = darcyScvf.center();
+                        continue; // assumption: coupling interface is a straight line, no corners
+                    }
                 }
 
-                const auto stokesElementIndices = [&]()
-                {
-                    auto tmp = stokesTree.computeEntityCollisions(darcyPos);
-                    return tmp;
-                }();
+                // determine the Stokes element that is coupled to the Darcy DOFs
+                std::vector<unsigned int> stokesElementIndices = stokesTree.computeEntityCollisions(darcyPos);
 
                 // do nothing if there are no coupled elements
                 if(stokesElementIndices.empty())
-                continue;
+                    continue;
 
+                const int stokesElementIndex = stokesElementIndices[0];
 
                 // set the Darcy eIdx
                 darcyToStokesMap_[darcyDofIdxGlobal].setDarcyElementIndex(darcyElementIdx);
                 darcyToStokesMap_[darcyDofIdxGlobal].setDarcyScvIdx(darcyScv.dofIndex());
 
-                // keep track of the total area in the
-                // Stokes domain one Darcy dof is associated to
-                Scalar couplingArea = 0.0;
+                const auto& stokesElement = stokesTree.entity(stokesElementIndex);
+                StokesFVElementGeometry stokesFvGeometry = localView(stokesProblem_.model().globalFvGeometry());
+                stokesFvGeometry.bind(stokesElement);
 
-                // loop over all elements associated to the darcyDof // TODO here: no loop necessary, only one element
-                for (const auto stokesElementIdx : stokesElementIndices)
+                // loop over all Stokes sub control volumes and check if the Darcy vertex is inside
+                for(auto&& stokesScv : scvs(stokesFvGeometry))
                 {
-                    const auto& stokesElement = stokesTree.entity(stokesElementIdx);
-                    StokesFVElementGeometry stokesFvGeometry = localView(stokesProblem_.model().globalFvGeometry());
-                    stokesFvGeometry.bind(stokesElement);
+                    // Darcy vertex is inside Stokes scv
+                    // create a unique index for the Stokes scv
+                    const unsigned int stokesCCDofIdxGlobal = stokesScv.dofIndex();
 
-                    // loop over all Stokes sub control volumes and check if the Darcy vertex is inside
-                    for(auto&& stokesScv : scvs(stokesFvGeometry))
+                    StokesToDarcyMapValue value;
+                    value.darcyDofIdx = darcyDofIdxGlobal;
+                    value.darcyElementIdx = darcyElementIdx;
+                    stokesCCToDarcyMap_[stokesCCDofIdxGlobal] = value;
+
+                    darcyToStokesMap_[darcyDofIdxGlobal].addStokesElementIndex(stokesElementIndex);
+                    darcyToStokesMap_[darcyDofIdxGlobal].addStokesCCDofIndex(stokesCCDofIdxGlobal);
+
+                    for(auto&& stokesScvf : scvfs(stokesFvGeometry))
                     {
-                        // Darcy vertex is inside Stokes scv
-                        // create a unique index for the Stokes scv
-                        const unsigned int stokesCCDofIdxGlobal = stokesScv.dofIndex();
-
-                        StokesToDarcyMapValue value;
-                        value.darcyDofIdx = darcyDofIdxGlobal;
-                        value.darcyElementIdx = darcyElementIdx;
-                        stokesCCToDarcyMap_[stokesCCDofIdxGlobal].push_back(value);
-
-                        darcyToStokesMap_[darcyDofIdxGlobal].addStokesElementIndex(stokesElementIdx);
-                        darcyToStokesMap_[darcyDofIdxGlobal].addStokesCCDofIndex(stokesCCDofIdxGlobal);
-
-                        for(auto&& stokesScvf : scvfs(stokesFvGeometry))
+                        // make sure that the faces and the the Darcy vertices lie within the same
+                        if(stokesScvf.boundary())
                         {
-                            // make sure that the faces and the the Darcy vertices lie within the same
-                            if(stokesScvf.boundary())
+                            const auto delta = stokesScvf.center() - darcyPos;
+                            if(delta[1] < 1e-8)
                             {
-                                const auto delta = stokesScvf.center() - darcyPos;
-                                if(delta[1] < 1e-8)
-                                {
-                                    stokesFaceToDarcyMap_[stokesScvf.dofIndex()].push_back(value);
+                                stokesFaceToDarcyMap_[stokesScvf.dofIndex()] = value;
 
-                                    // keep track of the total volume in the stokes area, one Darcy dof is associated to
-                                    couplingArea += stokesScvf.area();
-                                    darcyToStokesMap_[darcyDofIdxGlobal].addstokesFaceDofIndex(stokesScvf.dofIndex());
-                                }
+
+                                darcyToStokesMap_[darcyDofIdxGlobal].addstokesFaceDofIndex(stokesScvf.dofIndex());
                             }
                         }
                     }
                 }
-                darcyToStokesMap_[darcyDofIdxGlobal].setCouplingArea(couplingArea);
             }
         }
     }

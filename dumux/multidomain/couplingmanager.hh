@@ -119,8 +119,6 @@ public:
       couplingMapper_(stokesProblem, darcyProblem, asImp_())
     {
         fluxStokesToDarcy_ = 0.0;
-
-        // TODO find opposite Darcy elements for pressureInDarcyElement (all elements at once?)
     }
 
 
@@ -270,33 +268,26 @@ public:
     void computeStencils()
     {
         const auto &stokesTree = stokesProblem_.boundingBoxTree();
-        const auto &darcyTree = darcyProblem_.boundingBoxTree();
 
         // compute Stokes cell-center coupling stencil using the coupling map
         for (const auto &entry : couplingMapper_.stokesCCToDarcyMap())
         {
             const auto stokesElementIdx = entry.first;
-
-            // get the darcy DOFs associated with the Stokes element
-            auto &darcyInfo = couplingMapper_.stokesCCToDarcyMap().at(stokesElementIdx);
-
             Dune::dverb << "Stokes element " << stokesElementIdx <<  " is coupled to Darcy element:";
-            std::vector<unsigned int> darcyDofs;
+
+            // get the Darcy DOFs associated with the Stokes element
+            auto &darcyInfo = couplingMapper_.stokesCCToDarcyMap().at(stokesElementIdx);
+            auto darcyElementIndex = darcyInfo.darcyElementIdx;
+            Dune::dverb << " " << darcyElementIndex ;
+            stokesCCCouplingStencils_[stokesElementIdx].push_back(darcyElementIndex);
 
             const auto& stokesElement = stokesTree.entity(stokesElementIdx);
-            auto stokesFvGeometry = localView(stokesProblem_.model().globalFvGeometry());
+            StokesFVElementGeometry stokesFvGeometry = localView(stokesProblem_.model().globalFvGeometry());
             stokesFvGeometry.bind(stokesElement);
 
-            for (const auto &i :darcyInfo) // TODO here only one element
-            {
-                auto darcyElemIdx = i.darcyElementIdx;
-                Dune::dverb << " " << darcyElemIdx ;
-                stokesCCCouplingStencils_[stokesElementIdx].push_back(darcyElemIdx);
+            for(auto&& stokesScvf : scvfs(stokesFvGeometry))
+                stokesFaceCouplingStencils_[stokesScvf.dofIndex()].push_back(darcyElementIndex);
 
-
-                for(auto&& stokesScvf : scvfs(stokesFvGeometry))
-                    stokesFaceCouplingStencils_[stokesScvf.dofIndex()].push_back(darcyElemIdx);
-            }
             Dune::dverb << std::endl;
         }
 
@@ -306,28 +297,21 @@ public:
         for (const auto &entry : couplingMapper_.darcyToStokesMap())
         {
             const auto darcyElementIdx = entry.first;
-
             Dune::dverb << "Darcy element " << darcyElementIdx <<  " is coupled to Stokes element:";
 
-            const auto& darcyElement = darcyTree.entity(darcyElementIdx);
-            auto darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
-            darcyFvGeometry.bind(darcyElement);
-
+            // get the Stokes DOFs associated with the Darcy element
             const auto &stokesElements = couplingMapper_.darcyToStokesMap().at(darcyElementIdx).stokesElementIndices();
+            auto stokesElementIndex = stokesElements[0];
+            Dune::dverb << " Stokes element " << stokesElementIndex;
+            darcyToCCCouplingStencils_[darcyElementIdx].push_back(stokesElementIndex);
 
-            for(const auto stokesElemIdx: stokesElements) // TODO here: only one element
-            {
-                const auto stokesElement = stokesTree.entity(stokesElemIdx);
-                StokesFVElementGeometry fvGeometry = localView(stokesProblem_.model().globalFvGeometry());
-                fvGeometry.bind(stokesElement);
+            const auto& stokesElement = stokesTree.entity(stokesElementIndex);
+            StokesFVElementGeometry stokesFvGeometry = localView(stokesProblem_.model().globalFvGeometry());
+            stokesFvGeometry.bind(stokesElement);
 
-                Dune::dverb << " Stokes element " << stokesElemIdx ;
+            for(auto&& stokesScvf : scvfs(stokesFvGeometry))
+                darcyToFaceCouplingStencils_[darcyElementIdx].push_back(stokesScvf.dofIndex());
 
-                darcyToCCCouplingStencils_[darcyElementIdx].push_back(stokesElemIdx);
-
-                for(auto&& stokesScvf : scvfs(fvGeometry))
-                    darcyToFaceCouplingStencils_[darcyElementIdx].push_back(stokesScvf.dofIndex());
-            }
             Dune::dverb << std::endl;
         }
 
@@ -436,7 +420,7 @@ public:
         Scalar outerNormalScalar = fvGeometry.scvf(couplingScvfIdx).outerNormalScalar();
         Scalar interfaceArea = fvGeometry.scvf(couplingScvfIdx).area();
 
-        if (scvf.directionIndex() == 1 && stokesProblem_.onCouplingInterface(scvf.center())) // horizontal face on coupling interface
+        if (scvf.directionIndex() == 1 && stokesProblem_.onCouplingInterface(scvf.center())) // horizontal scvf on coupling interface
         {
             Scalar pressureDarcy = pressureInDarcyElement(scvf);
 
@@ -448,7 +432,7 @@ public:
         // Fetzer2017 "classical BJ condition"
         // tangential momentum coupling condition --> b.c. for stokesProblem?
 
-        else if (scvf.directionIndex() == 0 && !scvf.boundary()) // vertical face, not on boundary
+        else if (scvf.directionIndex() == 0 && !scvf.boundary()) // vertical scvf, not on boundary
         { // TODO works only for horizontal coupling interface on lower boundary of Stokes domain
             if( (scvf.index() % 4 == 0 && stokesProblem_.onCouplingInterface(fvGeometry.scvf(scvf.index()+2).center())) // if left scvf --> right neighbor scvf on interface
              || (scvf.index() % 4 == 1 && stokesProblem_.onCouplingInterface(fvGeometry.scvf(scvf.index()+1).center())) ) // if right scvf --> left neighbor scvf on interface
@@ -473,7 +457,7 @@ public:
 
                 stokesFaceCouplingResidual = -0.5 * effDynViscosity * (tangXVelocity - beaversJosephXVelocity)
                     / distanceCenters * outerNormalScalar * interfaceArea;
-        // TODO
+
 //                stokesFaceCouplingResidual = -0.5 * effDynViscosity * (tangZVelocity - beaversJosephZVelocity)
 //                                                                          / distanceCenters * outerNormalScalar * interfaceArea;
             }
@@ -512,12 +496,11 @@ protected:
         // create a vector containing all Darcy elements coupled to the Stokes scvf
         const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
 
-        // TODO assumption: same number of elements in each subdomain, only one coupling element on opposite side of interface
-        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo[0].darcyElementIdx);
+        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
         DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
         darcyFvGeometry.bind(darcyCouplingElement);
 
-        const auto darcyDofIdx = darcyCouplingInfo[0].darcyDofIdx;
+        const auto darcyDofIdx = darcyCouplingInfo.darcyDofIdx;
 
         auto darcyElemVolVars = localView(darcyProblem_.model().curGlobalVolVars());
         darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, darcyProblem_.model().curSol());
