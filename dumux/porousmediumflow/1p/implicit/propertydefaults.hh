@@ -32,6 +32,7 @@
 #include "model.hh"
 #include "volumevariables.hh"
 #include "indices.hh"
+#include "vtkoutputfields.hh"
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
@@ -122,6 +123,9 @@ SET_PROP(OnePNI, ThermalConductivityModel)
   public:
     typedef ThermalConductivityAverage<Scalar> type;
 };
+
+//! Set the vtk output fields specific to this model
+SET_TYPE_PROP(OneP, VtkOutputFields, OnePVtkOutputFields<TypeTag>);
 
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model

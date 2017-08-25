@@ -32,6 +32,7 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/pointsource.hh>
+#include <dumux/io/defaultvtkoutputfields.hh>
 #include <dumux/io/gridcreator.hh>
 
 namespace Dumux
@@ -109,6 +110,9 @@ NEW_PROP_TAG(TimeLoopMaxTimeStepDivisions);
 //! Property to define the output level
 NEW_PROP_TAG(VtkOutputLevel);
 
+//! A class helping models to define default vtk output parameters
+NEW_PROP_TAG(VtkOutputFields);
+
 ///////////////////////////////////
 // Default values for properties:
 ///////////////////////////////////
@@ -185,6 +189,9 @@ SET_TYPE_PROP(NumericModel, PointSourceHelper, BoundingBoxTreePointSourceHelper<
 
 //! Set default output level to 0 -> only primary variables are added to output
 SET_INT_PROP(NumericModel, VtkOutputLevel, 0);
+
+//! Set the default to a function throwing a NotImplemented error
+SET_TYPE_PROP(NumericModel, VtkOutputFields, DefaultVtkOutputFields);
 
 } // namespace Properties
 } // namespace Dumux

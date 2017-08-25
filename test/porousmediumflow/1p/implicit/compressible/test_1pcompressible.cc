@@ -52,6 +52,7 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
+    // define the type tag for this problem
     using TypeTag = TTAG(IncompressibleTestProblem);
 
     // some aliases for better readability
@@ -62,12 +63,11 @@ int main(int argc, char** argv)
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-
-    // TODO is needed for output. Should be in extra module
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    // for non-linear problems
     using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+
+    ////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -99,6 +99,10 @@ int main(int argc, char** argv)
     }
     GridCreator::loadBalance();
 
+    ////////////////////////////////////////////////////////////
+    // run instationary non-linear problem on this grid
+    ////////////////////////////////////////////////////////////
+
     // we compute on the leaf grid view
     const auto& leafGridView = GridCreator::grid().leafGridView();
 
@@ -118,7 +122,7 @@ int main(int argc, char** argv)
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // read the time loop parameters
+    // get some time loop parameters
     auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, TEnd);
     auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, DtInitial);
     auto maxDivisions = GET_PARAM_FROM_GROUP(TypeTag, int, TimeLoop, MaxTimeStepDivisions);
@@ -129,34 +133,29 @@ int main(int argc, char** argv)
     if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeLoop.Restart"))
         restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, Restart);
 
-    // write initial solution to disk
-    // Dune::VTKSequenceWriter<GridView> vtkWriter(leafGridView, "test_1pcompressible", "", "");
-    // vtkWriter.addCellData(x, "p");
-    // vtkWriter.write(restartTime);
-
-    // intialize the output module
+    // intialize the vtk output module
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
-    vtkWriter.addPrimaryVariable("pressure", Indices::pressureIdx);
+    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
-    // make assembler
+    // the assembler with time loop for instationary problem
     auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables, timeLoop);
 
-    // make linear solver
+    // the linear solver
     auto linearSolver = std::make_shared<ILU0BiCGSTABBackend<TypeTag>>(*problem);
 
-    // instantiate non-linear solver
+    // the non-linear solver
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod<TypeTag, NewtonController> nonLinearSolver(newtonController, assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
     {
-        // set solution
+        // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
         // try solving the non-linear system
@@ -181,19 +180,26 @@ int main(int argc, char** argv)
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
+
+        // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write output
+        // write vtk output
         vtkWriter.write(timeLoop->time());
 
+        // report statistics of this time step
         timeLoop->reportTimeStep();
 
-        // set new dt
+        // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
 
     } while (!timeLoop->finished());
 
     timeLoop->finalize(leafGridView.comm());
+
+    ////////////////////////////////////////////////////////////
+    // finalize, print dumux message to say goodbye
+    ////////////////////////////////////////////////////////////
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
