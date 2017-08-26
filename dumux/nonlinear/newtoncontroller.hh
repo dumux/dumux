@@ -450,7 +450,7 @@ public:
      *               the updated solution.
      */
     template<class JacobianAssembler, class SolutionVector>
-    void newtonUpdate(const JacobianAssembler& assembler,
+    void newtonUpdate(JacobianAssembler& assembler,
                       SolutionVector &uCurrentIter,
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
@@ -475,6 +475,9 @@ public:
                 reduction_ /= initialResidual_;
             }
         }
+
+        // update the variables class to the new solution
+        assembler.gridVariables().update(uCurrentIter);
     }
 
     /*!
@@ -489,9 +492,6 @@ public:
                        SolutionVector &uCurrentIter,
                        const SolutionVector &uLastIter)
     {
-        // update the variables class to the new solution
-        assembler.gridVariables().update(uCurrentIter);
-
         ++numSteps_;
 
         if (verbose())
