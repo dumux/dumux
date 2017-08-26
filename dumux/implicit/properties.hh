@@ -74,9 +74,6 @@ NEW_PROP_TAG(PrimaryVariables); //!< A vector of primary variables within a sub-
 NEW_PROP_TAG(SolutionVector); //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(ElementSolutionVector); //!< A vector of primary variables within a sub-control volume
 
-// TODO GridVariables
-NEW_PROP_TAG(GridVariables); //!< Doc me
-
 NEW_PROP_TAG(EnableGlobalVolumeVariablesCache); //!< If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(VolumeVariables);  //!< The secondary variables within a sub-control volume
 NEW_PROP_TAG(ElementVolumeVariables);  //!< The type for a local (element/stencil) container for the volume variables

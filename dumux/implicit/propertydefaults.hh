@@ -53,6 +53,7 @@
 #include "model.hh"
 #include "assembler.hh"
 #include "localjacobian.hh"
+#include "gridvariables.hh"
 
 #include <dune/common/version.hh>
 
@@ -109,6 +110,9 @@ SET_TYPE_PROP(ImplicitBase,
 
 //! Set the BaseModel to ImplicitModel
 SET_TYPE_PROP(ImplicitBase, BaseModel, ImplicitModel<TypeTag>);
+
+//! The grid variables
+SET_TYPE_PROP(ImplicitBase, GridVariables, GridVariables<TypeTag>);
 
 //! The volume variable class, to be overloaded by the model
 SET_TYPE_PROP(ImplicitBase, VolumeVariables, ImplicitVolumeVariables<TypeTag>);

@@ -96,6 +96,9 @@ NEW_PROP_TAG(PointSource);
 //! Property defining the class that computes which sub control volume point sources belong to
 NEW_PROP_TAG(PointSourceHelper);
 
+//! The grid variables object managing variable data on the grid
+NEW_PROP_TAG(GridVariables);
+
 /*!
  * \brief Specify the maximum size of a time integration [s].
  *
