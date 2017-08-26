@@ -39,6 +39,7 @@ template<class TypeTag>
 class TracerLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -71,7 +72,8 @@ public:
      *  \param volVars The primary and secondary varaibles on the scv
      *  \param useMoles If mole or mass fractions are used
      */
-    PrimaryVariables computeStorage(const SubControlVolume& scv,
+    PrimaryVariables computeStorage(const Problem& problem,
+                                    const SubControlVolume& scv,
                                     const VolumeVariables& volVars) const
     {
         PrimaryVariables storage(0.0);
@@ -107,14 +109,15 @@ public:
      * \param elemFluxVarsCache The cache related to flux compuation
      * \param useMoles If mole or mass fractions are used
      */
-    PrimaryVariables computeFlux(const Element& element,
+    PrimaryVariables computeFlux(const Problem& problem,
+                                 const Element& element,
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& elemVolVars,
                                  const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache)
+                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // get upwind weights into local scope
         PrimaryVariables flux(0.0);

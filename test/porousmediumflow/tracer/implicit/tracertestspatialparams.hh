@@ -52,8 +52,8 @@ class TracerTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 
 public:
 
-    TracerTestSpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView) {}
+    TracerTestSpatialParams(const Problem& problem)
+    : ParentType(problem) {}
 
     /*!
      * \brief Define the porosity \f$\mathrm{[-]}\f$.

@@ -1,5 +1,6 @@
-[TimeManager]
-DtInitial = 1 # [s]
+[TimeLoop]
+DtInitial = 1e4 # [s]
+MaxTimeStepSize = 1e4
 TEnd = 1e6 # [s]
 
 [Grid]
