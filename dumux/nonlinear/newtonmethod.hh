@@ -44,8 +44,6 @@ NEW_TYPE_TAG(NewtonMethod);
 
 NEW_PROP_TAG(SolutionVector);
 NEW_PROP_TAG(JacobianMatrix);
-NEW_PROP_TAG(JacobianAssembler);
-NEW_PROP_TAG(LinearSolver);
 }
 
 /*!
@@ -54,13 +52,11 @@ NEW_PROP_TAG(LinearSolver);
  *
  * In order to use the method you need a Newtoncontroller_->
  */
-template <class TypeTag, class NewtonController>
+template <class TypeTag, class NewtonController, class JacobianAssembler, class LinearSolver>
 class NewtonMethod
 {
-    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using LinearSolver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
 
 public:
     NewtonMethod(std::shared_ptr<NewtonController> controller,
