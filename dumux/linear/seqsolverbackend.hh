@@ -146,6 +146,9 @@ public:
   ILUnBiCGSTABBackend(const Problem& problem)
   {}
 
+  ILUnBiCGSTABBackend()
+  {}
+
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
@@ -182,6 +185,9 @@ class SORBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 public:
 
   SORBiCGSTABBackend(const Problem& problem)
+  {}
+
+  SORBiCGSTABBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -222,6 +228,9 @@ public:
   SSORBiCGSTABBackend(const Problem& problem)
   {}
 
+  SSORBiCGSTABBackend()
+  {}
+
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
@@ -258,6 +267,9 @@ class GSBiCGSTABBackend: public IterativePrecondSolverBackend<TypeTag>
 public:
 
   GSBiCGSTABBackend(const Problem& problem)
+  {}
+
+  GSBiCGSTABBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -297,6 +309,9 @@ public:
   JacBiCGSTABBackend(const Problem& problem)
   {}
 
+  JacBiCGSTABBackend()
+  {}
+
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
@@ -332,6 +347,9 @@ class ILUnCGBackend: public IterativePrecondSolverBackend<TypeTag>
 public:
 
   ILUnCGBackend(const Problem& problem)
+  {}
+
+  ILUnCGBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -371,6 +389,9 @@ public:
   SORCGBackend(const Problem& problem)
   {}
 
+  SORCGBackend()
+  {}
+
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
@@ -406,6 +427,9 @@ class SSORCGBackend: public IterativePrecondSolverBackend<TypeTag>
 public:
 
   SSORCGBackend(const Problem& problem)
+  {}
+
+  SSORCGBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -445,6 +469,9 @@ public:
   GSCGBackend(const Problem& problem)
   {}
 
+  GSCGBackend()
+  {}
+
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
@@ -479,6 +506,9 @@ class JacCGBackend: public IterativePrecondSolverBackend<TypeTag>
 public:
 
   JacCGBackend(const Problem& problem)
+  {}
+
+  JacCGBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -517,6 +547,9 @@ class SSORRestartedGMResBackend: public IterativePrecondSolverBackend<TypeTag>
 public:
 
   SSORRestartedGMResBackend(const Problem& problem)
+  {}
+
+  SSORRestartedGMResBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -634,6 +667,9 @@ class ILU0BiCGSTABBackend : public ILU0SolverBackend<TypeTag>
   ILU0BiCGSTABBackend(const Problem& problem)
   {}
 
+  ILU0BiCGSTABBackend()
+  {}
+
   template<class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
@@ -668,6 +704,9 @@ class ILU0CGBackend : public ILU0SolverBackend<TypeTag>
 public:
 
   ILU0CGBackend(const Problem& problem)
+  {}
+
+  ILU0CGBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -705,6 +744,9 @@ class ILU0RestartedGMResBackend : public ILU0SolverBackend<TypeTag>
 public:
 
   ILU0RestartedGMResBackend(const Problem& problem)
+  {}
+
+  ILU0RestartedGMResBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -774,7 +816,9 @@ class SuperLUBackend
 public:
 
   SuperLUBackend(const Problem& problem)
-  : problem_(problem)
+  {}
+
+  SuperLUBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -817,7 +861,6 @@ public:
 
 private:
   Dune::InverseOperatorResult result_;
-  const Problem& problem_;
 };
 #endif // HAVE_SUPERLU
 
@@ -840,7 +883,9 @@ class UMFPackBackend
 public:
 
   UMFPackBackend(const Problem& problem)
-  : problem_(problem)
+  {}
+
+  UMFPackBackend()
   {}
 
   template<class Matrix, class Vector>
@@ -883,7 +928,6 @@ public:
 
 private:
   Dune::InverseOperatorResult result_;
-  const Problem& problem_;
 };
 #endif // HAVE_UMFPACK
 
