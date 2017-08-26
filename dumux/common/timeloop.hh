@@ -24,6 +24,7 @@
 #define DUMUX_TIME_LOOP_HH
 
 #include <algorithm>
+#include <queue>
 
 #include <dune/common/float_cmp.hh>
 #include <dune/common/timer.hh>
@@ -54,8 +55,39 @@ namespace Dumux
  * the (simulation) time it starts, its length and a consecutive
  * index starting at 0.
  */
+
+//! The abstract base class
+//! only contains the methods needed during the assembly
+////////////////////////////////////////////////////////////////////
+//! TODO this might not be necessary if t and dt are actually passed into
+//! a time stepping method that forwards it everywhere nedded
+//! Then the time loop always stays contained in the main file
+////////////////////////////////////////////////////////////////////
+template<class Scalar>
+class TimeLoopBase
+{
+public:
+    //! Abstract base class needs virtual constructor
+    virtual ~TimeLoopBase() {};
+
+    /*!
+     * \brief Return the time \f$\mathrm{[s]}\f$ before the time integration.
+     * To get the time after the time integration you have to add timeStepSize() to
+     * time().
+     */
+    virtual Scalar time() const = 0;
+
+    /*!
+     * \brief Returns the suggested time step length \f$\mathrm{[s]}\f$ so that we
+     *        don't miss the beginning of the next episode or cross
+     *        the end of the simulation.
+     */
+    virtual Scalar timeStepSize() const = 0;
+};
+
+//! The default time loop for instationary simulations
 template <class Scalar>
-class TimeLoop
+class TimeLoop : public TimeLoopBase<Scalar>
 {
 public:
     TimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
@@ -121,7 +153,7 @@ public:
      * To get the time after the time integration you have to add timeStepSize() to
      * time().
      */
-    Scalar time() const
+    virtual Scalar time() const
     { return time_; }
 
     /*!
@@ -151,13 +183,15 @@ public:
      * episode, the timeStep() method will take care that the step
      * size won't exceed the episode or the end of the simulation,
      * though.
+     * \note Always call this after TimeLoop::advanceTimeStep()
      *
      * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
      */
     void setTimeStepSize(Scalar dt)
     {
         using std::min;
-        timeStepSize_ = min(dt, maxTimeStepSize());
+        computeMaxTimeStepSize_();
+        timeStepSize_ = min(dt, maxTimeStepSize_);
     }
 
     /*!
@@ -173,7 +207,7 @@ public:
      *        don't miss the beginning of the next episode or cross
      *        the end of the simulation.
      */
-    Scalar timeStepSize() const
+    virtual Scalar timeStepSize() const
     { return timeStepSize_; }
 
     /*!
@@ -206,32 +240,22 @@ public:
      * if the end time is reached.
      */
     bool finished() const
-    { return finished_ || time() >= endTime(); }
+    { return finished_ || time_ >= endTime_; }
 
     /*!
      * \brief Returns true if the simulation is finished after the
      *        time level is incremented by the current time step size.
      */
     bool willBeFinished() const
-    { return finished_ || time() + timeStepSize() >= endTime(); }
+    { return finished_ || time_ + timeStepSize_ >= endTime_; }
 
     /*!
-     * \brief Aligns dt to the episode boundary or the end time of the
-     *        simulation.
+     * \brief The current maximum time step size
+     * \note This gets aligned on every setTimeStepSize call to end time
+     *       and other possible check points
      */
     Scalar maxTimeStepSize() const
-    {
-        if (finished())
-            return 0.0;
-
-        using std::max;
-        using std::min;
-        // return min(min(episodeMaxTimeStepSize(),
-        //                problem_->maxTimeStepSize()),
-        //            max<Scalar>(0.0, endTime() - time()));
-        return min(maxTimeStepSize_,
-                   max<Scalar>(0.0, endTime() - time()));
-    }
+    { return maxTimeStepSize_; }
 
     /*!
      * \brief State info on cpu time.
@@ -243,11 +267,11 @@ public:
 
         if (verbose_)
         {
-            std::cout << "Time step " << timeStepIndex() << " done in "
+            std::cout << "Time step " << timeStepIdx_ << " done in "
                       << timeStepCpuTime << " seconds. "
                       << "Wall time: " << cpuTime_
-                      << ", time: " << time()
-                      << ", time step size: " << timeStepSize()
+                      << ", time: " << time_
+                      << ", time step size: " << timeStepSize_
                       << std::endl;
         }
 
@@ -278,11 +302,32 @@ public:
         }
     }
 
+    //! If the time loop has verbose output
+    bool verbose() const
+    { return verbose_; }
+
     /*
      * @}
      */
 
 private:
+    //! Computes the maximum timestep size respecting end time
+    //! and possibly episodes (TODO)
+    void computeMaxTimeStepSize_()
+    {
+        if (finished())
+        {
+            maxTimeStepSize_ = 0.0;
+            return;
+        }
+
+        using std::max;
+        using std::min;
+
+        // TODO check for episodes if there is an episode manager
+        maxTimeStepSize_ = min(maxTimeStepSize_, max<Scalar>(0.0, endTime_ - time_));
+    }
+
     Dune::Timer timer_;
     Scalar time_;
     Scalar endTime_;
@@ -295,6 +340,154 @@ private:
     bool finished_;
     bool verbose_;
 };
-}
+
+//! A time loop with a check point mechanism
+template <class Scalar>
+class CheckPointTimeLoop : public TimeLoop<Scalar>
+{
+public:
+    CheckPointTimeLoop(Scalar startTime, Scalar dt, Scalar tEnd, bool verbose = true)
+    : TimeLoop<Scalar>(startTime, dt, tEnd, verbose)
+    {
+        periodicCheckPoints_ = false;
+        deltaPeriodicCheckPoint_ = 0.0;
+        lastPeriodicCheckPoint_ = startTime;
+        isCheckPoint_ = false;
+    }
+
+    /*!
+     * \brief Advance time step.
+     */
+    void advanceTimeStep()
+    {
+        // advance time index and time
+        TimeLoop<Scalar>::advanceTimeStep();
+
+        //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
+        // if we reached a periodic check point
+        if (periodicCheckPoints_ && Dune::FloatCmp::eq(this->time(), lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_, 1e-3*this->timeStepSize()))
+        {
+            lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
+            isCheckPoint_ = true;
+        }
+
+        // or a manually set check point
+        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(this->time(), checkPoints_.front(), 1e-3*this->timeStepSize()))
+        {
+            checkPoints_.pop();
+            isCheckPoint_ = true;
+        }
+
+        // if not reset the check point flag
+        else
+        {
+            isCheckPoint_ = false;
+        }
+    }
+
+    /*!
+     * \brief Set the current time step size to a given value.
+     *
+     * If the step size would exceed the length of the current
+     * episode, the timeStep() method will take care that the step
+     * size won't exceed the episode or the end of the simulation,
+     * though.
+     * \note Always call this after TimeLoop::advanceTimeStep()
+     *
+     * \param dt The new value for the time step size \f$\mathrm{[s]}\f$
+     */
+    void setTimeStepSize(Scalar dt)
+    {
+        using std::min;
+        TimeLoop<Scalar>::setTimeStepSize(min(dt, computeStepSizeRespectingCheckPoints_()));
+    }
+
+    /*!
+     * \brief Set the maximum time step size to a given value.
+     *
+     * \param dt The new value for the maximum time step size \f$\mathrm{[s]}\f$
+     */
+    void setPeriodicCheckPoint(Scalar interval)
+    {
+        periodicCheckPoints_ = true;
+        deltaPeriodicCheckPoint_ = interval;
+        if (this->verbose())
+            std::cout << "Enabled periodic check points every " << interval << " seconds." << std::endl;
+    }
+
+    //! Whether now is a time checkpoint
+    //! has to be called after TimeLoop::advanceTimeStep()
+    bool isCheckPoint() const
+    { return isCheckPoint_; }
+
+    //! Adds a checkPoint to the queue
+    void setCheckPoint(Scalar t)
+    {
+        if (!checkPoints_.empty())
+        {
+            if (t < checkPoints_.back())
+            {
+                if (this->verbose())
+                    std::cerr << "--- Couldn't insert checkpoint as it is earlier than the last check point in the queue.\n"
+                              << "--- Checkpoints can only be inserted in ascending order." << std::endl;
+            }
+            else
+                checkPoints_.push(t);
+        }
+        else
+            checkPoints_.push(t);
+    }
+
+    //! Adds check points to the queue
+    //! \param tList list of check points ascending in time
+    void setCheckPoint(std::initializer_list<Scalar>&& tList)
+    {
+        if (!checkPoints_.empty())
+        {
+            for (auto&& t : tList)
+            {
+                if (t < checkPoints_.back())
+                {
+                    if (this->verbose())
+                        std::cerr << "--- Couldn't insert checkpoint as it is earlier than the last check point in the queue.\n"
+                                  << "--- Checkpoints can only be inserted in ascending order." << std::endl;
+                }
+                else
+                    checkPoints_.emplace(t);
+            }
+        }
+        else
+        {
+            for (auto&& t : tList)
+                checkPoints_.emplace(t);
+        }
+    }
+
+private:
+     /*!
+     * \brief Aligns dt to the next check point
+     */
+    Scalar computeStepSizeRespectingCheckPoints_() const
+    {
+        using std::min;
+        auto maxDt = std::numeric_limits<Scalar>::max();
+
+        if (periodicCheckPoints_)
+            maxDt = min(maxDt, lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_ - this->time());
+
+        if (!checkPoints_.empty())
+            maxDt = min(maxDt, checkPoints_.front() - this->time());
+
+        return maxDt;
+    }
+
+    bool periodicCheckPoints_;
+    Scalar deltaPeriodicCheckPoint_;
+    Scalar lastPeriodicCheckPoint_;
+    std::queue<Scalar> checkPoints_;
+    bool isCheckPoint_;
+};
+
+} // end namespace Dumux
 
 #endif
