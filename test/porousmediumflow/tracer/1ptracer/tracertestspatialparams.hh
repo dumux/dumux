@@ -43,6 +43,8 @@ class TracerTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -92,19 +94,19 @@ public:
     { return 18.0; }
 
     //! velocity field
-    GlobalPosition velocity(const Element &element,
-                            const SubControlVolumeFace& scvf) const
+    Scalar volumeFlux(const Element &element,
+                      const FVElementGeometry& fvGeometry,
+                      const ElementVolumeVariables& elemVolVars,
+                      const SubControlVolumeFace& scvf) const
     {
-        GlobalPosition vel(1e-5);
-        const auto globalPos = scvf.center();
-        const auto& x = globalPos[0];
-        const auto& y = globalPos[1];
-
-        vel[0] *= x*x * (1.0 - x)*(1.0 - x) * (2.0*y - 6.0*y*y + 4.0*y*y*y);
-        vel[1] *= -1.0*y*y * (1.0 - y)*(1.0 - y) * (2.0*x - 6.0*x*x + 4.0*x*x*x);
-
-        return vel;
+        return volumeFlux_[scvf.index()];
     }
+
+    void setVolumeFlux(const std::vector<Scalar>& f)
+    { volumeFlux_ = f; }
+
+private:
+    std::vector<Scalar> volumeFlux_;
 };
 
 } // end namespace Dumux

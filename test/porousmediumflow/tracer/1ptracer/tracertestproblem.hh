@@ -94,7 +94,7 @@ public:
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)
-    { return 1.0e-9; }
+    { return 0.0;}//1.0e-9; }
 };
 
 SET_TYPE_PROP(TracerTestProblem, FluidSystem, TracerFluidSystem<TypeTag>);
@@ -196,7 +196,7 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables initialValues(0.0);
-        if (globalPos[1] > 0.4 - eps_ && globalPos[1] < 0.6 + eps_)
+        if (globalPos[1] < 0.1 + eps_)
         {
             if (useMoles)
                 initialValues = 1e-9;

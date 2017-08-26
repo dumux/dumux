@@ -62,11 +62,8 @@ public:
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        //! Obtain the velocity field from the user, specified in the spatial params
-        return problem.spatialParams().velocity(element, scvf)
-                  * scvf.unitOuterNormal()
-                  * scvf.area()
-                  * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+        //! Obtain the volume flux from the user, specified in the spatial params in m^3/s
+        return problem.spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf);
     }
 };
 
