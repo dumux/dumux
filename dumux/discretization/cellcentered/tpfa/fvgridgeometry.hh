@@ -50,7 +50,6 @@ class CCTpfaFVGridGeometry
 template<class TypeTag>
 class CCTpfaFVGridGeometry<TypeTag, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
@@ -418,7 +417,6 @@ private:
 template<class TypeTag>
 class CCTpfaFVGridGeometry<TypeTag, false>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);

@@ -156,7 +156,6 @@ template<class TypeTag>
 class CCTpfaFVElementGeometry<TypeTag, false>
 {
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
