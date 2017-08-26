@@ -38,7 +38,8 @@ namespace Dumux
  * \brief Element-wise calculation of the residual matrix for models
  *        using a fully implicit discretization.
  *
- * \todo Please doc me more!
+ * \note This class defines the interface used by the assembler using
+ *       static polymorphism.
  */
 template<class TypeTag>
 class ImplicitLocalResidual
@@ -61,7 +62,7 @@ class ImplicitLocalResidual
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using TimeLoop = Dumux::TimeLoop<Scalar>;
+    using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
     //! the constructor for stationary problems
@@ -205,7 +206,48 @@ public:
         {
             //! foward to the local residual specialized for the discretization methods
             asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-            asImp().evalBoundary(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
+            // asImp().evalBoundary(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
+        }
+
+        return residual;
+    }
+
+    /*!
+     * \brief Compute the storage local residual, i.e. the deviation of the
+     *        storage term from zero for instationary problems.
+     * \param problem The problem to solve
+
+     * \param element The DUNE Codim<0> entity for which the residual
+     *                ought to be calculated
+     * \param fvGeometry The finite-volume geometry of the element
+     * \param prevVolVars The volume averaged variables for all
+     *                    sub-control volumes of the element at the previous
+     *                    time level
+     * \param curVolVars The volume averaged variables for all
+     *                   sub-control volumes of the element at the current
+     *                   time level
+     * \param bcTypes The types of the boundary conditions for all
+     *                vertices of the element
+     */
+    ElementResidualVector evalStorage(const Problem& problem,
+                                      const Element& element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& prevElemVolVars,
+                                      const ElementVolumeVariables& curElemVolVars,
+                                      const ElementBoundaryTypes &bcTypes,
+                                      const ElementFluxVariablesCache& elemFluxVarsCache) const
+    {
+        assert(timeLoop_ && "no time loop set for storage term evaluation");
+        assert(prevSol_ && "no solution set for storage term evaluation");
+
+        // initialize the residual vector for all scvs in this element
+        ElementResidualVector residual(fvGeometry.numScv());
+
+        // evaluate the volume terms (storage + source terms)
+        for (auto&& scv : scvs(fvGeometry))
+        {
+            //! foward to the local residual specialized for the discretization methods
+            asImp().evalStorage(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
         }
 
         return residual;
@@ -246,7 +288,7 @@ public:
         {
             //! foward to the local residual specialized for the discretization methods
             asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-            asImp().evalBoundary(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
+            // asImp().evalBoundary(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
         }
 
         return residual;
@@ -337,7 +379,7 @@ public:
         const auto& prevVolVars = prevElemVolVars[scv];
 
         // mass balance within the element. this is the
-        // \f$\frac{m}{\partial t}\f$ term if using implicit
+        // \f$\frac{m}{\partial t}\f$ term if using implicit or explicit
         // euler as time discretization.
         //
         // We might need a more explicit way for
@@ -387,16 +429,10 @@ public:
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const ElementFluxVariablesCache& elemFluxVarsCache,
-                            const SubControlVolumeFace& scvf) const {}
-
-    void evalBoundary(ElementResidualVector& residual,
-                      const Problem& problem,
-                      const Element& element,
-                      const FVElementGeometry& fvGeometry,
-                      const ElementVolumeVariables& elemVolVars,
-                      const ElementBoundaryTypes& elemBcTypes,
-                      const ElementFluxVariablesCache& elemFluxVarsCache,
-                      const SubControlVolumeFace& scvf) const {}
+                            const SubControlVolumeFace& scvf) const
+    {
+        return asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+    }
 
     /*!
      * \brief Sets the solution from which to start the time integration. Has to be

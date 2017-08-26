@@ -28,9 +28,11 @@
 
 #include <dumux/common/timeloop.hh>
 #include <dumux/implicit/properties.hh>
+#include <dumux/implicit/localresidual.hh>
 #include <dumux/discretization/methods.hh>
 
 #include "localassembler.hh"
+#include "explicitlocalassembler.hh"
 
 namespace Dumux {
 
@@ -42,7 +44,7 @@ NEW_PROP_TAG(LocalAssembler);
 template<class TypeTag, DiscretizationMethods DM>
 class ImplicitAssemblerImplementation;
 
-template<class TypeTag>
+template<class TypeTag, bool implicit = true>
 class CCImplicitAssembler;
 
 //! TPFA and MPFA use the same assembler class
@@ -63,19 +65,22 @@ class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCMpfa> : 
  * \brief An assembler for the global linear system
  *        for fully implicit models and cell-centered discretization schemes.
  */
-template<class TypeTag>
+template<class TypeTag, bool implicit>
 class CCImplicitAssembler
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using LocalResidual = ImplicitLocalResidual<TypeTag>;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using TimeLoop = TimeLoopBase<Scalar>;
+
     // using LocalAssembler = typename GET_PROP_TYPE(TypeTag, LocalAssembler);
-    using LocalAssembler = CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>;
+    using ImplicitLocalAssembler = CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>;
+    using ExplicitLocalAssembler = CCExplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>;
 
 public:
     using ResidualType = SolutionVector;
@@ -87,17 +92,21 @@ public:
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
-    {}
+    , stationary_(true)
+    {
+        static_assert(implicit, "Explicit assembler for stationary problem doesn't make sense!");
+    }
 
     //! The constructor for instationary problems
     CCImplicitAssembler(std::shared_ptr<const Problem> problem,
                         std::shared_ptr<const FVGridGeometry> fvGridGeometry,
                         std::shared_ptr<GridVariables> gridVariables,
-                        std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+                        std::shared_ptr<TimeLoop> timeLoop)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
     , localResidual_(timeLoop)
+    , stationary_(false)
     {}
 
     /*!
@@ -106,25 +115,41 @@ public:
      */
     void assembleJacobianAndResidual(const SolutionVector& curSol)
     {
-        if(!matrix_)
-            DUNE_THROW(Dune::InvalidStateException,
-                "Can't assemble jacobian because no jacobian matrix was set. "
-                << "Use setLinearSystem() to do so!");
+        if (!stationary_ && localResidual_.isStationary())
+            DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
+
+        if(!jacobian_)
+        {
+            jacobian_ = std::make_shared<JacobianMatrix>();
+            jacobian_->setBuildMode(JacobianMatrix::random);
+            setJacobianPattern();
+        }
 
         if(!residual_)
-            DUNE_THROW(Dune::InvalidStateException,
-                "Can't assemble residual because no residual vector was set. "
-                << "Use setLinearSystem() to do so!");
+        {
+            residual_ = std::make_shared<SolutionVector>();
+            setResidualSize();
+        }
 
-        resetSystem_();
+        resetJacobian_();
+        resetResidual_();
 
         bool succeeded;
         // try assembling the global linear system
         try
         {
-            // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
-                LocalAssembler::assemble(*this, residual(), element, curSol);
+            if (implicit)
+            {
+                // let the local assembler add the element contributions
+                for (const auto element : elements(gridView()))
+                    ImplicitLocalAssembler::assemble(*this, *jacobian_, *residual_, element, curSol);
+            }
+            else
+            {
+                // let the local assembler add the element contributions
+                for (const auto element : elements(gridView()))
+                    ExplicitLocalAssembler::assemble(*this, *jacobian_, *residual_, element, curSol);
+            }
 
             // if we get here, everything worked well
             succeeded = true;
@@ -150,15 +175,34 @@ public:
      */
     void assembleJacobian(const SolutionVector& curSol)
     {
-        resetMatrix_();
+        if (!stationary_ && localResidual_.isStationary())
+            DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
+
+        if(!jacobian_)
+        {
+            jacobian_ = std::make_shared<JacobianMatrix>();
+            jacobian_->setBuildMode(JacobianMatrix::random);
+            setJacobianPattern();
+        }
+
+        resetJacobian_();
 
         bool succeeded;
         // try assembling the global linear system
         try
         {
-            // let the local assembler add the element contributions
-            for (const auto& element : elements(gridView()))
-                LocalAssembler::assemble(*this, element, curSol);
+            if (implicit)
+            {
+                // let the local assembler add the element contributions
+                for (const auto element : elements(gridView()))
+                    ImplicitLocalAssembler::assemble(*this, *jacobian_, element, curSol);
+            }
+            else
+            {
+                // let the local assembler add the element contributions
+                for (const auto element : elements(gridView()))
+                    ExplicitLocalAssembler::assemble(*this, *jacobian_, element, curSol);
+            }
 
             // if we get here, everything worked well
             succeeded = true;
@@ -180,24 +224,34 @@ public:
     }
 
     //! compute the residuals
-    void assembleResidual(const SolutionVector& curSol) const
-    { assembleResidual(residual(), curSol); }
+    void assembleResidual(const SolutionVector& curSol)
+    {
+        if(!residual_)
+        {
+            residual_ = std::make_shared<SolutionVector>();
+            setResidualSize();
+        }
+
+        assembleResidual(*residual_, curSol);
+    }
 
     //! compute the residuals
     void assembleResidual(ResidualType& r, const SolutionVector& curSol) const
     {
-        r = 0.0;
-        for (const auto& element : elements(gridView()))
+        if (!stationary_ && localResidual_.isStationary())
+            DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
+
+        if (implicit)
         {
-            if (element.partitionType() != Dune::GhostEntity)
-            {
-                const auto eIdx = fvGridGeometry().elementMapper().index(element);
-                r[eIdx] += localResidual().eval(problem(),
-                                                element,
-                                                fvGridGeometry(),
-                                                gridVariables(),
-                                                curSol)[0];
-            }
+            // let the local assembler add the element contributions
+            for (const auto element : elements(gridView()))
+                ImplicitLocalAssembler::assemble(*this, r, element, curSol);
+        }
+        else
+        {
+            // let the local assembler add the element contributions
+            for (const auto element : elements(gridView()))
+                ExplicitLocalAssembler::assemble(*this, r, element, curSol);
         }
     }
 
@@ -217,23 +271,24 @@ public:
     }
 
     /*!
-     * \brief Tells the assembler which matrix and right hand side vector to use.
+     * \brief Tells the assembler which jacobian and residual to use.
      *        This also resizes the containers to the required sizes and sets the
-     *        sparsity pattern of the matrix.
+     *        sparsity pattern of the jacobian matrix.
      */
     void setLinearSystem(std::shared_ptr<JacobianMatrix> A,
                          std::shared_ptr<SolutionVector> r)
     {
-        matrix_ = A;
+        jacobian_ = A;
         residual_ = r;
 
         // check and/or set the BCRS matrix's build mode
-        if (matrix().buildMode() == JacobianMatrix::BuildMode::unknown)
-            matrix().setBuildMode(JacobianMatrix::random);
-        else if (matrix().buildMode() != JacobianMatrix::BuildMode::random)
+        if (jacobian_->buildMode() == JacobianMatrix::BuildMode::unknown)
+            jacobian_->setBuildMode(JacobianMatrix::random);
+        else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)
             DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
 
-        allocateLinearSystem();
+        setJacobianPattern();
+        setResidualSize();
     }
 
     /*!
@@ -242,12 +297,13 @@ public:
      */
     void setLinearSystem()
     {
-        matrix_ = std::make_shared<JacobianMatrix>();
-        matrix_->setBuildMode(JacobianMatrix::random);
+        jacobian_ = std::make_shared<JacobianMatrix>();
+        jacobian_->setBuildMode(JacobianMatrix::random);
 
         residual_ = std::make_shared<SolutionVector>();
 
-        allocateLinearSystem();
+        setJacobianPattern();
+        setResidualSize();
     }
 
     /*!
@@ -264,34 +320,51 @@ public:
     { return localResidual_.prevSol(); }
 
     /*!
-     * \brief Resizes the matrix and right hand side and sets the matrix' sparsity pattern.
+     * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
      */
-    void allocateLinearSystem()
+    void setJacobianPattern()
     {
-        // resize the matrix and the residual
+        // resize the jacobian and the residual
         const auto numDofs = this->numDofs();
-        matrix().setSize(numDofs, numDofs);
-        residual().resize(numDofs);
+        jacobian_->setSize(numDofs, numDofs);
+        residual_->resize(numDofs);
 
-        // get occupation pattern of the matrix
+        // get occupation pattern of the jacobian
         Dune::MatrixIndexSet occupationPattern;
         occupationPattern.resize(numDofs, numDofs);
 
-        for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
+        // matrix pattern for implicit jacobians
+        if (implicit)
         {
-            occupationPattern.add(globalI, globalI);
-            for (const auto& dataJ : fvGridGeometry().connectivityMap()[globalI])
-                occupationPattern.add(dataJ.globalJ, globalI);
+            for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
+            {
+                occupationPattern.add(globalI, globalI);
+                for (const auto& dataJ : fvGridGeometry().connectivityMap()[globalI])
+                    occupationPattern.add(dataJ.globalJ, globalI);
 
-            // reserve index for additional user defined DOF dependencies
-            // const auto& additionalDofDependencies = problem().getAdditionalDofDependencies(globalI);
-            // for (auto globalJ : additionalDofDependencies)
-            //     occupationPattern.add(globalI, globalJ);
+                // reserve index for additional user defined DOF dependencies
+                // const auto& additionalDofDependencies = problem().getAdditionalDofDependencies(globalI);
+                // for (auto globalJ : additionalDofDependencies)
+                //     occupationPattern.add(globalI, globalJ);
+            }
         }
 
-        // export pattern to matrix
-        occupationPattern.exportIdx(matrix());
+        // matrix pattern for explicit jacobians -> diagonal matrix
+        else
+        {
+            for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
+                occupationPattern.add(globalI, globalI);
+        }
+
+        // export pattern to jacobian
+        occupationPattern.exportIdx(*jacobian_);
     }
+
+    /*!
+     * \brief Resizes the residual
+     */
+    void setResidualSize()
+    { residual_->resize(this->numDofs()); }
 
     //! cell-centered schemes have one dof per cell
     std::size_t numDofs() const
@@ -312,15 +385,17 @@ public:
     const GridVariables& gridVariables() const
     { return *gridVariables_; }
 
-    JacobianMatrix& matrix()
+    JacobianMatrix& jacobian()
     {
-        assert(matrix_ && "The matrix has not been set yet!");
-        return *matrix_;
+       if (!residual_)
+            DUNE_THROW(Dune::InvalidStateException, "No jacobian was set.");
+        return *jacobian_;
     }
 
     SolutionVector& residual()
     {
-        assert(residual_ && "The residual has not been set yet!");
+        if (!residual_)
+            DUNE_THROW(Dune::InvalidStateException, "No residual was set.");
         return *residual_;
     }
 
@@ -331,14 +406,13 @@ private:
     // reset the global linear system of equations.
     // TODO: if partial reassemble is enabled, this means
     // that the jacobian matrix must only be erased partially!
-    void resetSystem_()
+    void resetResidual_()
     {
-        residual() = 0.0;
-        resetMatrix_();
+        (*residual_) = 0.0;
     }
-    void resetMatrix_()
+    void resetJacobian_()
     {
-        matrix() = 0.0;
+       (*jacobian_)  = 0.0;
     }
 
     // pointer to the problem to be solved
@@ -351,11 +425,14 @@ private:
     std::shared_ptr<GridVariables> gridVariables_;
 
     // shared pointers to the jacobian matrix and residual
-    std::shared_ptr<JacobianMatrix> matrix_;
+    std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
 
     // class computing the residual of an element
     LocalResidual localResidual_;
+
+    // if this assembler is assembling a time dependent problem
+    bool stationary_;
 };
 
 } // namespace Dumux
