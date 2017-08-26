@@ -139,18 +139,23 @@ int main(int argc, char** argv)
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables, timeLoop);
+    using Assembler = CCImplicitAssembler<TypeTag>;
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    auto linearSolver = std::make_shared<ILU0BiCGSTABBackend<TypeTag>>(*problem);
+    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(*problem);
 
     // the non-linear solver
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
-    NewtonMethod<TypeTag, NewtonController> nonLinearSolver(newtonController, assembler, linearSolver);
+    NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+
+    // set some check points for the time loop
+    timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
     // time loop
     timeLoop->start(); do
@@ -185,7 +190,8 @@ int main(int argc, char** argv)
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        if (timeLoop->isCheckPoint())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

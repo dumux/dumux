@@ -1,6 +1,7 @@
 [TimeLoop]
-TEnd = 1
-DtInitial = 0.1
+TEnd = 0.02
+DtInitial = 1e-8
+#MaxTimeStepSize = 1.1e-6 #for explicit scheme
 
 [Grid]
 LowerLeft = 0 0
