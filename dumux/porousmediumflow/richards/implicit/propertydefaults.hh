@@ -63,9 +63,6 @@ SET_INT_PROP(Richards, NumPhases, 2);
 //! Number of components considered (only water)
 SET_INT_PROP(Richards, NumComponents, 1);
 
-//! Only the water component is balanced for Richards
-SET_INT_PROP(Richards, NumComponents, 1);
-
 //! The local residual operator
 SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
 
