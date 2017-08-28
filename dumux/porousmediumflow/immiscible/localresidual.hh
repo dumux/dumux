@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the Jacobian matrix for problems
+ * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
 #ifndef DUMUX_IMMISCIBLE_LOCAL_RESIDUAL_HH
@@ -30,7 +30,7 @@ namespace Dumux
 /*!
  * \ingroup OnePModel
  * \ingroup ImplicitLocalResidual
- * \brief Element-wise calculation of the Jacobian matrix for problems
+ * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
 template<class TypeTag>
