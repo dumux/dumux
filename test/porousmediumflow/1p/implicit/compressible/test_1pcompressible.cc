@@ -44,7 +44,8 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 
-#include <dumux/implicit/cellcentered/assembler.hh>
+#include <dumux/assembly/ccassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = CCImplicitAssembler<TypeTag>;
+    using Assembler = CCAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver

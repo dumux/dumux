@@ -42,7 +42,8 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
-#include <dumux/implicit/cellcentered/assembler.hh>
+#include <dumux/assembly/ccassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
 
 #include "problem.hh"
 
@@ -53,7 +54,6 @@ int main(int argc, char** argv)
     using TypeTag = TTAG(IncompressibleTestProblem);
 
     // some aliases for better readability
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
@@ -62,8 +62,6 @@ int main(int argc, char** argv)
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    // for non-linear problems
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -113,7 +111,7 @@ int main(int argc, char** argv)
     gridVariables->init(*x);
 
     // make assemble and attach linear system
-    auto assembler = std::make_shared<CCImplicitAssembler<TypeTag>>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<CCAssembler<TypeTag, DiffMethod::numeric>>(problem, fvGridGeometry, gridVariables);
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
     assembler->setLinearSystem(A, r);

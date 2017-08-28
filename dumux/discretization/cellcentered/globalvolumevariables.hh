@@ -41,14 +41,6 @@ class CCGlobalVolumeVariables
 template<class TypeTag>
 class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
-    // The local class needs to access and change volVars
-    friend typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    // The local jacobian needs to access and change volVars for derivative calculation
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
-    // as does the primary variable switch
-    friend class PrimaryVariableSwitch<TypeTag>;
-    friend typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -134,10 +126,11 @@ public:
     VolumeVariables& volVars(const IndexType scvIdx, const IndexType localIdx)
     { return volumeVariables_[scvIdx]; }
 
-private:
-    const Problem& problem_() const
+    //! The problem we are solving
+    const Problem& problem() const
     { return *problemPtr_; }
 
+private:
     const Problem* problemPtr_;
 
     std::vector<VolumeVariables> volumeVariables_;
@@ -148,8 +141,6 @@ private:
 template<class TypeTag>
 class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
 {
-    // local class needs access to the problem
-    friend typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -167,9 +158,11 @@ public:
     friend inline ElementVolumeVariables localView(const CCGlobalVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
-private:
-    const Problem& problem_() const
+    //! The problem we are solving
+    const Problem& problem() const
     { return *problemPtr_;}
+
+private:
 
     const Problem* problemPtr_;
 };

@@ -27,10 +27,6 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/assembler.hh>
-#include <dumux/implicit/cellcentered/localassembler.hh>
-#include <dumux/implicit/gridvariables.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/porousmediumflow/1p/implicit/propertydefaults.hh>
 
 #include "1ptestspatialparams.hh"

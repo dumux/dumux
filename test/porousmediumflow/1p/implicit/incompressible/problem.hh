@@ -27,10 +27,6 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/assembler.hh>
-#include <dumux/implicit/cellcentered/localassembler.hh>
-#include <dumux/implicit/gridvariables.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/porousmediumflow/1p/implicit/propertydefaults.hh>
 
 #include "spatialparams.hh"
@@ -54,18 +50,6 @@ SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem type
 SET_TYPE_PROP(IncompressibleTestProblem, Problem, OnePTestProblem<TypeTag>);
 SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
-
-// the grid variables
-SET_TYPE_PROP(IncompressibleTestProblem, GridVariables, GridVariables<TypeTag>);
-
-// the grid variables
-SET_TYPE_PROP(IncompressibleTestProblem, JacobianAssembler, CCImplicitAssembler<TypeTag>);
-
-// linear solver
-SET_TYPE_PROP(IncompressibleTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
-
-// the local assembler
-SET_TYPE_PROP(IncompressibleTestProblem, LocalAssembler, CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>);
 
 // the fluid system
 SET_PROP(IncompressibleTestProblem, Fluid)

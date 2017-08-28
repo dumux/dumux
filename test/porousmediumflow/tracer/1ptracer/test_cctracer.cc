@@ -45,7 +45,8 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 
-#include <dumux/implicit/cellcentered/assembler.hh>
+#include <dumux/assembly/ccassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
@@ -118,7 +119,7 @@ int main(int argc, char** argv)
     onePGridVariables->init(p);
 
     //! the assembler
-    using OnePAssembler = CCImplicitAssembler<OnePTypeTag>;
+    using OnePAssembler = CCAssembler<OnePTypeTag, DiffMethod::numeric>;
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, onePFvGridGeometry, onePGridVariables);
 
     //! the linear solver
@@ -220,7 +221,7 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
-    using TracerAssembler = CCImplicitAssembler<TracerTypeTag, /*implicit=*/false>;
+    using TracerAssembler = CCAssembler<TracerTypeTag, DiffMethod::numeric, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
     using JacobianMatrix = typename GET_PROP_TYPE(TracerTypeTag, JacobianMatrix);
     auto A = std::make_shared<JacobianMatrix>();

@@ -119,7 +119,7 @@ public:
     {
         clear();
 
-        const auto& problem = globalVolVars().problem_();
+        const auto& problem = globalVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
         const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
@@ -213,7 +213,7 @@ public:
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
         volumeVariables_[0].update(ElementSolution({sol[eIdx]}),
-                                   globalVolVars().problem_(),
+                                   globalVolVars().problem(),
                                    element,
                                    scv);
         volVarIndices_[0] = scv.dofIndex();

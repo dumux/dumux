@@ -21,8 +21,8 @@
  * \brief An assembler for the global linear system
  *        for fully implicit models and cell-centered discretization schemes.
  */
-#ifndef DUMUX_IMPLICIT_CC_ASSEMBLER_HH
-#define DUMUX_IMPLICIT_CC_ASSEMBLER_HH
+#ifndef DUMUX_CC_ASSEMBLER_HH
+#define DUMUX_CC_ASSEMBLER_HH
 
 #include <dune/istl/matrixindexset.hh>
 
@@ -31,42 +31,18 @@
 #include <dumux/implicit/localresidual.hh>
 #include <dumux/discretization/methods.hh>
 
-#include "localassembler.hh"
-#include "explicitlocalassembler.hh"
+#include "diffmethod.hh"
+#include "cclocalassembler.hh"
 
 namespace Dumux {
-
-namespace Properties
-{
-NEW_PROP_TAG(LocalAssembler);
-}
-
-template<class TypeTag, DiscretizationMethods DM>
-class ImplicitAssemblerImplementation;
-
-template<class TypeTag, bool implicit = true>
-class CCImplicitAssembler;
-
-//! TPFA and MPFA use the same assembler class
-template<class TypeTag>
-class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCTpfa> : public CCImplicitAssembler<TypeTag>
-{
-    using CCImplicitAssembler<TypeTag>::CCImplicitAssembler;
-};
-
-template<class TypeTag>
-class ImplicitAssemblerImplementation<TypeTag, DiscretizationMethods::CCMpfa> : public CCImplicitAssembler<TypeTag>
-{
-    using CCImplicitAssembler<TypeTag>::CCImplicitAssembler;
-};
 
 /*!
  * \ingroup ImplicitModel
  * \brief An assembler for the global linear system
  *        for fully implicit models and cell-centered discretization schemes.
  */
-template<class TypeTag, bool implicit>
-class CCImplicitAssembler
+template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
+class CCAssembler
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -77,31 +53,28 @@ class CCImplicitAssembler
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using TimeLoop = TimeLoopBase<Scalar>;
-
-    // using LocalAssembler = typename GET_PROP_TYPE(TypeTag, LocalAssembler);
-    using ImplicitLocalAssembler = CCImplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>;
-    using ExplicitLocalAssembler = CCExplicitLocalAssembler<TypeTag, DifferentiationMethods::numeric>;
+    using LocalAssembler = CCLocalAssembler<TypeTag, diffMethod, isImplicit>;
 
 public:
     using ResidualType = SolutionVector;
 
     //! The constructor for stationary problems
-    CCImplicitAssembler(std::shared_ptr<const Problem> problem,
-                        std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                        std::shared_ptr<GridVariables> gridVariables)
+    CCAssembler(std::shared_ptr<const Problem> problem,
+                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                std::shared_ptr<GridVariables> gridVariables)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
     , stationary_(true)
     {
-        static_assert(implicit, "Explicit assembler for stationary problem doesn't make sense!");
+        static_assert(isImplicit, "Explicit assembler for stationary problem doesn't make sense!");
     }
 
     //! The constructor for instationary problems
-    CCImplicitAssembler(std::shared_ptr<const Problem> problem,
-                        std::shared_ptr<const FVGridGeometry> fvGridGeometry,
-                        std::shared_ptr<GridVariables> gridVariables,
-                        std::shared_ptr<TimeLoop> timeLoop)
+    CCAssembler(std::shared_ptr<const Problem> problem,
+                std::shared_ptr<const FVGridGeometry> fvGridGeometry,
+                std::shared_ptr<GridVariables> gridVariables,
+                std::shared_ptr<TimeLoop> timeLoop)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)
@@ -138,18 +111,9 @@ public:
         // try assembling the global linear system
         try
         {
-            if (implicit)
-            {
-                // let the local assembler add the element contributions
-                for (const auto element : elements(gridView()))
-                    ImplicitLocalAssembler::assemble(*this, *jacobian_, *residual_, element, curSol);
-            }
-            else
-            {
-                // let the local assembler add the element contributions
-                for (const auto element : elements(gridView()))
-                    ExplicitLocalAssembler::assemble(*this, *jacobian_, *residual_, element, curSol);
-            }
+            // let the local assembler add the element contributions
+            for (const auto element : elements(gridView()))
+                LocalAssembler::assemble(*this, *jacobian_, *residual_, element, curSol);
 
             // if we get here, everything worked well
             succeeded = true;
@@ -191,18 +155,9 @@ public:
         // try assembling the global linear system
         try
         {
-            if (implicit)
-            {
-                // let the local assembler add the element contributions
-                for (const auto element : elements(gridView()))
-                    ImplicitLocalAssembler::assemble(*this, *jacobian_, element, curSol);
-            }
-            else
-            {
-                // let the local assembler add the element contributions
-                for (const auto element : elements(gridView()))
-                    ExplicitLocalAssembler::assemble(*this, *jacobian_, element, curSol);
-            }
+            // let the local assembler add the element contributions
+            for (const auto element : elements(gridView()))
+                LocalAssembler::assemble(*this, *jacobian_, element, curSol);
 
             // if we get here, everything worked well
             succeeded = true;
@@ -241,18 +196,9 @@ public:
         if (!stationary_ && localResidual_.isStationary())
             DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
 
-        if (implicit)
-        {
-            // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
-                ImplicitLocalAssembler::assemble(*this, r, element, curSol);
-        }
-        else
-        {
-            // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
-                ExplicitLocalAssembler::assemble(*this, r, element, curSol);
-        }
+        // let the local assembler add the element contributions
+        for (const auto element : elements(gridView()))
+            LocalAssembler::assemble(*this, r, element, curSol);
     }
 
     //! computes the global residual
@@ -334,7 +280,7 @@ public:
         occupationPattern.resize(numDofs, numDofs);
 
         // matrix pattern for implicit jacobians
-        if (implicit)
+        if (isImplicit)
         {
             for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
             {
