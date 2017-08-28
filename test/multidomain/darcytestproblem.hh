@@ -62,9 +62,9 @@ SET_TYPE_PROP(DarcyTestProblem, Grid, Dune::YaspGrid<2>);
 SET_PROP(DarcyTestProblem, Fluid)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    using type = Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> >;
 };
 
 // Enable gravity
@@ -82,24 +82,24 @@ NEW_PROP_TAG(CouplingManager);
 template <class TypeTag>
 class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables) ;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry) ;
+    using ElementIterator = typename GridView::template Codim<0>::Iterator;
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // grid and world dimension
         dim = GridView::dimension,
@@ -110,13 +110,13 @@ class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dimworld> GlobalPosition;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GlobalProblemTypeTag) GlobalTypeTag;
-    typedef typename GET_PROP_TYPE(GlobalTypeTag, CouplingManager) CouplingManager;
+    using GlobalTypeTag = typename GET_PROP_TYPE(TypeTag, GlobalProblemTypeTag);
+    using CouplingManager = typename GET_PROP_TYPE(GlobalTypeTag, CouplingManager);
 
     enum { dofCodim = 0 };
 

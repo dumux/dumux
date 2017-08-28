@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief A test problem for the coupled problem
+ * \brief A test problem for the coupled problem (1p)
  */
 #ifndef DUMUX_STOKES_DARCY_1P_TEST_PROBLEM_HH
 #define DUMUX_STOKES_DARCY_1P_TEST_PROBLEM_HH
@@ -66,8 +66,6 @@ SET_TYPE_PROP(StokesTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDar
 // The subproblems inherit the parameter tree from this problem
 SET_PROP(DarcyTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
 SET_PROP(StokesTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
-
-// SET_BOOL_PROP(TestCoupledStokesDarcyProblem, MultiDimensionUseIterativeSolver, true);
 
 NEW_PROP_TAG(DarcyToStokesMapValue); // TODO: make specialized map value class
 SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);

@@ -32,7 +32,6 @@
 
 // coupling-specific includes
 #include <dumux/multidomain/subproblemproperties.hh>
-#include <typeinfo>
 
 namespace Dumux
 {
@@ -60,14 +59,12 @@ SET_TYPE_PROP(StokesTestProblem, Problem, StokesTestProblem<TypeTag>);
 SET_PROP(StokesTestProblem, Fluid)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    using type = Dumux::FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> >;
 };
 
-
 SET_BOOL_PROP(StokesTestProblem, EnableGlobalFVGeometryCache, true);
-
 SET_BOOL_PROP(StokesTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(StokesTestProblem, EnableGlobalVolumeVariablesCache, true);
 
@@ -100,11 +97,11 @@ NEW_PROP_TAG(CouplingManager);
 template <class TypeTag>
 class StokesTestProblem : public NavierStokesProblem<TypeTag>
 {
-    typedef NavierStokesProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using ParentType = NavierStokesProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
@@ -120,21 +117,21 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
         velocityYIdx = Indices::velocityYIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::ctype CoordScalar;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using CoordScalar = typename GridView::ctype;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace) SubControlVolumeFace;
-    typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    using SubControlVolumeFace =  typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using Fluid = typename GET_PROP_TYPE(TypeTag, Fluid);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GlobalProblemTypeTag) GlobalTypeTag;
-    typedef typename GET_PROP_TYPE(GlobalTypeTag, CouplingManager) CouplingManager;
+    using GlobalTypeTag = typename GET_PROP_TYPE(TypeTag, GlobalProblemTypeTag);
+    using CouplingManager = typename GET_PROP_TYPE(GlobalTypeTag, CouplingManager);
 
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);

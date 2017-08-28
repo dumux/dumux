@@ -138,7 +138,7 @@ public:
                 if(!darcyProblem_.model().onBoundary(darcyDofIdxGlobal))
                     continue;
 
-                // check if the Darcy scv is at the coupling interface and determine the respective scvf
+                // if the Darcy scv is at the coupling interface determine the respective scvf
                 auto darcyPos = darcyScv.center();
                 for(auto& darcyScvf : scvfs(darcyFVElementGeometry))
                 {
@@ -156,7 +156,7 @@ public:
                 if(stokesElementIndices.empty())
                     continue;
 
-                const int stokesElementIndex = stokesElementIndices[0];
+                const int stokesElementIndex = stokesElementIndices[0]; // only one Stokes element coupled to one Darcy element
 
                 // set the Darcy eIdx
                 darcyToStokesMap_[darcyDofIdxGlobal].setDarcyElementIndex(darcyElementIdx);
@@ -190,8 +190,6 @@ public:
                             if(delta[1] < 1e-8)
                             {
                                 stokesFaceToDarcyMap_[stokesScvf.dofIndex()] = value;
-
-
                                 darcyToStokesMap_[darcyDofIdxGlobal].addstokesFaceDofIndex(stokesScvf.dofIndex());
                             }
                         }
