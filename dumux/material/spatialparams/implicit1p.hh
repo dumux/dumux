@@ -312,13 +312,14 @@ public:
         return *problemPtr_;
     }
 
-private:
+protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+private:
     const Problem *problemPtr_;
 };
 
