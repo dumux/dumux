@@ -82,43 +82,6 @@ public:
     // \{
 
     /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero.
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     */
-    ElementResidualVector eval(const Problem& problem,
-                               const Element &element,
-                               const FVGridGeometry& fvGridGeometry,
-                               const GridVariables& gridVariables,
-                               const SolutionVector& curSol) const
-    {
-        // make sure FVElementGeometry and volume variables are bound to the element
-        auto fvGeometry = localView(fvGridGeometry);
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bind(element, fvGeometry, curSol);
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
-
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(problem, element, fvGeometry);
-
-        if (!isStationary())
-        {
-            auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-            prevElemVolVars.bindElement(element, fvGeometry, *prevSol_);
-
-            return asImp().eval(problem, element, fvGeometry, prevElemVolVars, curElemVolVars, bcTypes, elemFluxVarsCache);
-        }
-        else
-            return asImp().eval(problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache);
-    }
-
-    /*!
      * \brief Compute the storage term for the current solution.
      *
      * This can be used to figure out how much of each conservation
