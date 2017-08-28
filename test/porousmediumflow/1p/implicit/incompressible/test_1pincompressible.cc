@@ -111,7 +111,7 @@ int main(int argc, char** argv)
     gridVariables->init(*x);
 
     // make assemble and attach linear system
-    auto assembler = std::make_shared<CCAssembler<TypeTag, DiffMethod::numeric>>(problem, fvGridGeometry, gridVariables);
+    auto assembler = std::make_shared<CCAssembler<TypeTag, DiffMethod::analytic>>(problem, fvGridGeometry, gridVariables);
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
     assembler->setLinearSystem(A, r);

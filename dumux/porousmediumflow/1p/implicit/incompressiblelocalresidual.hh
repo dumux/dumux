@@ -1,0 +1,128 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/*****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise calculation of the residual and its derivatives
+ *        for a single-phase, incompressible, test problem.
+ */
+#ifndef DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
+#define DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
+
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
+
+namespace Dumux
+{
+
+template<class TypeTag>
+class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
+{
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    // first index for the mass balance
+    enum { conti0EqIdx = Indices::conti0EqIdx };
+
+    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+
+public:
+    using ParentType::ParentType;
+
+    template<class PartialDerivativeMatrix>
+    void addStorageDerivatives(PartialDerivativeMatrix& partialDerivatives,
+                               const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const VolumeVariables& curVolVars) const {}
+
+    template<class PartialDerivativeMatrix>
+    void addSourceDerivatives(PartialDerivativeMatrix& partialDerivatives,
+                              const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const VolumeVariables& curVolVars) const {}
+
+    template<class PartialDerivativeMatrices>
+    void addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                            const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& curElemVolVars,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const
+    {
+        const auto tij = elemFluxVarsCache[scvf].advectionTij();
+
+        // we know the "upwind factor" is constant, get inner one here and compute derivatives
+        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()/curElemVolVars[scvf.insideScvIdx()].viscosity();
+        const Scalar deriv = tij*up;
+
+        // add partial derivatives to the respective given matrices
+        derivativeMatrices[scvf.insideScvIdx()] += deriv;
+        derivativeMatrices[scvf.outsideScvIdx()] -= deriv;
+    }
+
+    template<class PartialDerivativeMatrices>
+    void addDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& curElemVolVars,
+                                     const ElementFluxVariablesCache& elemFluxVarsCache,
+                                     const SubControlVolumeFace& scvf) const
+    {
+        const auto tij = elemFluxVarsCache[scvf].advectionTij();
+
+        // we know the "upwind factor" is constant, get inner one here and compute derivatives
+        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()/curElemVolVars[scvf.insideScvIdx()].viscosity();
+        const Scalar deriv = tij*up;
+
+        // add partial derivatives to the respective given matrices
+        derivativeMatrices[scvf.insideScvIdx()] += deriv;
+    }
+
+    template<class PartialDerivativeMatrices>
+    void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                 const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& curElemVolVars,
+                                 const ElementFluxVariablesCache& elemFluxVarsCache,
+                                 const SubControlVolumeFace& scvf) const
+    {
+        // we have no Robin-type boundary conditions here. Do nothing.
+    }
+};
+
+} // end namespace Dumux
+
+#endif

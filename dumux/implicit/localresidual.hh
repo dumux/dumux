@@ -397,6 +397,62 @@ public:
         return asImp().evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
     }
 
+    template<class PartialDerivativeMatrix>
+    void addStorageDerivatives(PartialDerivativeMatrix& partialDerivatives,
+                               const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const VolumeVariables& curVolVars) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "analytic storage derivative");
+    }
+
+    template<class PartialDerivativeMatrix>
+    void addSourceDerivatives(PartialDerivativeMatrix& partialDerivatives,
+                              const Problem& problem,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const VolumeVariables& curVolVars) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "analytic source derivative");
+    }
+
+    template<class PartialDerivativeMatrices>
+    void addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                            const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& curElemVolVars,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "analytic flux derivative");
+    }
+
+    template<class PartialDerivativeMatrices>
+    void addDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                     const Problem& problem,
+                                     const Element& element,
+                                     const FVElementGeometry& fvGeometry,
+                                     const ElementVolumeVariables& curElemVolVars,
+                                     const ElementFluxVariablesCache& elemFluxVarsCache,
+                                     const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "analytic Dirichlet flux derivative");
+    }
+
+    template<class PartialDerivativeMatrices>
+    void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                 const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& curElemVolVars,
+                                 const ElementFluxVariablesCache& elemFluxVarsCache,
+                                 const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "analytic Robin flux derivative");
+    }
+
     /*!
      * \brief Sets the solution from which to start the time integration. Has to be
      *        called prior to assembly for time-dependent problems.

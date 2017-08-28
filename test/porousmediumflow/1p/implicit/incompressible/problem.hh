@@ -28,6 +28,7 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/propertydefaults.hh>
+#include <dumux/porousmediumflow/1p/implicit/incompressiblelocalresidual.hh>
 
 #include "spatialparams.hh"
 
@@ -50,6 +51,7 @@ SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem type
 SET_TYPE_PROP(IncompressibleTestProblem, Problem, OnePTestProblem<TypeTag>);
 SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(IncompressibleTestProblem, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // the fluid system
 SET_PROP(IncompressibleTestProblem, Fluid)
