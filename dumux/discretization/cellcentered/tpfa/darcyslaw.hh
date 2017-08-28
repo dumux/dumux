@@ -84,7 +84,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
             tij_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
         }
 
-        const Scalar& tij() const
+        const Scalar& advectionTij() const
         { return tij_; }
 
     private:
@@ -187,8 +187,8 @@ public:
                 {
                     const auto& insideFluxVarsCache = elemFluxVarsCache[scvf];
 
-                    Scalar sumTi(insideFluxVarsCache.tij());
-                    Scalar sumPTi(insideFluxVarsCache.tij()*hInside);
+                    Scalar sumTi(insideFluxVarsCache.advectionTij());
+                    Scalar sumPTi(insideFluxVarsCache.advectionTij()*hInside);
                     for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
                     {
                         const auto outsideScvIdx = scvf.outsideScvIdx(i);
@@ -198,14 +198,14 @@ public:
                         const auto xOutside = scvf.boundary() ? scvf.ipGlobal() : fvGeometry.scv(outsideScvIdx).center();
                         const auto gOutside = problem.gravityAtPos(xOutside);
 
-                        sumTi += outsideFluxVarsCache.tij();
-                        sumPTi += outsideFluxVarsCache.tij()*(outsideVolVars.pressure(phaseIdx) - rho*(gOutside*xOutside));
+                        sumTi += outsideFluxVarsCache.advectionTij();
+                        sumPTi += outsideFluxVarsCache.advectionTij()*(outsideVolVars.pressure(phaseIdx) - rho*(gOutside*xOutside));
                     }
                     return sumPTi/sumTi;
                 }
             }();
 
-            return fluxVarsCache.tij()*(hInside - hOutside);
+            return fluxVarsCache.advectionTij()*(hInside - hOutside);
         }
         else // no gravity
         {
@@ -221,8 +221,8 @@ public:
                 {
 
                     const auto& insideFluxVarsCache = elemFluxVarsCache[scvf];
-                    Scalar sumTi(insideFluxVarsCache.tij());
-                    Scalar sumPTi(insideFluxVarsCache.tij()*pInside);
+                    Scalar sumTi(insideFluxVarsCache.advectionTij());
+                    Scalar sumPTi(insideFluxVarsCache.advectionTij()*pInside);
 
                     for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
                     {
@@ -230,14 +230,14 @@ public:
                         const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
                         const auto& outsideVolVars = elemVolVars[outsideScvIdx];
                         const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
-                        sumTi += outsideFluxVarsCache.tij();
-                        sumPTi += outsideFluxVarsCache.tij()*outsideVolVars.pressure(phaseIdx);
+                        sumTi += outsideFluxVarsCache.advectionTij();
+                        sumPTi += outsideFluxVarsCache.advectionTij()*outsideVolVars.pressure(phaseIdx);
                     }
                     return sumPTi/sumTi;
                 }
             }();
 
-            return fluxVarsCache.tij()*(pInside - pOutside);
+            return fluxVarsCache.advectionTij()*(pInside - pOutside);
         }
     }
 

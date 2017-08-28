@@ -110,8 +110,13 @@ int main(int argc, char** argv)
     auto problemOneP = std::make_shared<OnePProblem>(onePFvGridGeometry);
 
     //! the solution vector
+    using JacobianMatrix = typename GET_PROP_TYPE(OnePTypeTag, JacobianMatrix);
     using SolutionVector = typename GET_PROP_TYPE(OnePTypeTag, SolutionVector);
     SolutionVector p(leafGridView.size(0));
+
+    //! the linear system
+    auto A = std::make_shared<JacobianMatrix>();
+    auto r = std::make_shared<SolutionVector>();
 
     //! the grid variables
     using OnePGridVariables = typename GET_PROP_TYPE(OnePTypeTag, GridVariables);
@@ -119,21 +124,30 @@ int main(int argc, char** argv)
     onePGridVariables->init(p);
 
     //! the assembler
-    using OnePAssembler = CCAssembler<OnePTypeTag, DiffMethod::numeric>;
+    using OnePAssembler = CCAssembler<OnePTypeTag, DiffMethod::analytic>;
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, onePFvGridGeometry, onePGridVariables);
+    assemblerOneP->setLinearSystem(A, r);
 
-    //! the linear solver
-    using LinearSolver = UMFPackBackend<OnePTypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    Dune::Timer timer;
+    // assemble the local jacobian and the residual
+    Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
+    assemblerOneP->assembleJacobianAndResidual(p);
+    assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
-    //! the non-linear solver
-    using NewtonController = typename GET_PROP_TYPE(OnePTypeTag, NewtonController);
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
-    using Newton = NewtonMethod<OnePTypeTag, NewtonController, OnePAssembler, LinearSolver>;
-    Newton nonLinearSolver(newtonController, assemblerOneP, linearSolver);
+    // we solve Ax = -r
+    (*r) *= -1.0;
 
     //! solve the 1p problem
-    nonLinearSolver.solve(p);
+    using LinearSolver = UMFPackBackend<OnePTypeTag>;
+    Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
+    auto linearSolver = std::make_shared<LinearSolver>();
+    linearSolver->solve(*A, p, *r);
+    solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
+
+    //! update the grid variables
+    Dune::Timer updateTimer; std::cout << "Updating variables ..." << std::flush;
+    onePGridVariables->update(p);
+    updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
 
     //! write output to vtk
     using GridView = typename GET_PROP_TYPE(OnePTypeTag, GridView);
@@ -142,6 +156,13 @@ int main(int argc, char** argv)
     const auto& k = problemOneP->spatialParams().getKField();
     onepWriter.addCellData(k, "permeability");
     onepWriter.write("1p");
+
+    timer.stop();
+
+    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+              << comm.size() << " processes.\n"
+              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
     ////////////////////////////////////////////////////////////
     // compute volume fluxes for the tracer model
@@ -221,11 +242,8 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
-    using TracerAssembler = CCAssembler<TracerTypeTag, DiffMethod::numeric, /*implicit=*/false>;
+    using TracerAssembler = CCAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
-    using JacobianMatrix = typename GET_PROP_TYPE(TracerTypeTag, JacobianMatrix);
-    auto A = std::make_shared<JacobianMatrix>();
-    auto r = std::make_shared<SolutionVector>();
     assembler->setLinearSystem(A, r);
 
     //! intialize the vtk output module
@@ -258,7 +276,7 @@ int main(int argc, char** argv)
         solveTimer.stop();
 
         // update solution and grid variables
-        Dune::Timer updateTimer;
+        updateTimer.reset();
         x -= xDelta;
         gridVariables->update(x);
         updateTimer.stop();

@@ -61,6 +61,7 @@ SET_TYPE_PROP(TracerTestProblem, SpatialParams, TracerTestSpatialParams<TypeTag>
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(TracerTestProblem, UseMoles, false);
+SET_BOOL_PROP(TracerTestCCProblem, SolutionDependentMolecularDiffusion, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>

@@ -7,7 +7,7 @@ add_dumux_test(test_1ptracer test_1ptracer test_cctracer.cc
                  --files ${CMAKE_SOURCE_DIR}/test/references/cctracer-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/cctracer-00027.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cctracer")
-
+set(CMAKE_BUILD_TYPE Release)
 #install sources
 install(FILES
 1ptracertestproblem.hh
