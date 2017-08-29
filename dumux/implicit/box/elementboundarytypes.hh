@@ -94,7 +94,7 @@ public:
             int scvIdxLocal = scv.indexInElement();
             (*this)[scvIdxLocal].reset();
 
-            if (problem.model().onBoundary(scv))
+            if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
             {
                 (*this)[scvIdxLocal] = problem.boundaryTypes(element, scv);
 

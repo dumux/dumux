@@ -70,7 +70,7 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
-        eIdx_ = globalFluxVarsCache().problem_().elementMapper().index(element);
+        eIdx_ = fvGeometry.fvGridGeometry().elementMapper().index(element);
     }
 
     void bindScvf(const Element& element,
@@ -83,7 +83,7 @@ public:
 
     // access operator
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return globalFluxVarsCache().get(eIdx_, scvf.index()); }
+    { return globalFluxVarsCache().cache(eIdx_, scvf.index()); }
 
     //! The global object we are a restriction of
     const GlobalFluxVariablesCache& globalFluxVarsCache() const
@@ -132,7 +132,7 @@ public:
         // temporary resizing of the cache
         fluxVarsCache_.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
-            (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+            (*this)[scvf].update(globalFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
     }
 
     void bindScvf(const Element& element,
@@ -141,7 +141,7 @@ public:
                   const SubControlVolumeFace& scvf)
     {
         fluxVarsCache_.resize(fvGeometry.numScvf());
-        (*this)[scvf].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+        (*this)[scvf].update(globalFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
     }
 
     // access operator
@@ -161,6 +161,6 @@ private:
     std::vector<FluxVariablesCache> fluxVarsCache_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

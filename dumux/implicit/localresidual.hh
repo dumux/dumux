@@ -156,6 +156,7 @@ public:
 
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(fvGeometry.numScv());
+        residual = 0.0;
 
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : scvs(fvGeometry))
@@ -169,7 +170,8 @@ public:
         {
             //! foward to the local residual specialized for the discretization methods
             asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-            // asImp().evalBoundary(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
+            if (scvf.boundary())
+                asImp().enforceBoundaryConditions(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
         }
 
         return residual;
@@ -205,6 +207,7 @@ public:
 
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(fvGeometry.numScv());
+        residual = 0.0;
 
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : scvs(fvGeometry))
@@ -239,6 +242,7 @@ public:
     {
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(fvGeometry.numScv());
+        residual = 0.0;
 
         // evaluate the volume terms (storage + source terms)
         for (auto&& scv : scvs(fvGeometry))
@@ -251,7 +255,8 @@ public:
         {
             //! foward to the local residual specialized for the discretization methods
             asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-            // asImp().evalBoundary(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
+            if (scvf.boundary())
+                asImp().enforceBoundaryConditions(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
         }
 
         return residual;
@@ -386,6 +391,16 @@ public:
                   const ElementBoundaryTypes& elemBcTypes,
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const {}
+
+    //! e.g. incorporating Dirichlet boundary conditions for box method
+    void enforceBoundaryConditions(ElementResidualVector& residual,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const ElementBoundaryTypes& elemBcTypes,
+                                   const ElementFluxVariablesCache& elemFluxVarsCache,
+                                   const SubControlVolumeFace& scvf) const {}
 
     ResidualVector evalFlux(const Problem& problem,
                             const Element& element,

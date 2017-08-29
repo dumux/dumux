@@ -20,8 +20,8 @@
  * \file
  * \brief Global flux variable cache
  */
-#ifndef DUMUX_DISCRETIZATION_BOX_GLOBAL_FLUXVARSCACHE_HH
-#define DUMUX_DISCRETIZATION_BOX_GLOBAL_FLUXVARSCACHE_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
+#define DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
@@ -33,7 +33,7 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
-template<class TypeTag, bool EnableGlobalFluxVariablesCache>
+template<class TypeTag, bool EnableGridFluxVariablesCache>
 class BoxGlobalFluxVariablesCache
 {};
 
@@ -44,10 +44,11 @@ class BoxGlobalFluxVariablesCache
 template<class TypeTag>
 class BoxGlobalFluxVariablesCache<TypeTag, true>
 {
-    // the local class needs access to the problem
-    friend BoxElementFluxVariablesCache<TypeTag, true>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
@@ -57,25 +58,27 @@ class BoxGlobalFluxVariablesCache<TypeTag, true>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
-    void update(Problem& problem)
+    void update(const Problem& problem,
+                const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol)
     {
         problemPtr_ = &problem;
-        fluxVarsCache_.resize(problem.gridView().size(0));
-        for (const auto& element : elements(problem.gridView()))
+
+        fluxVarsCache_.resize(fvGridGeometry.gridView().size(0));
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
-            auto eIdx = problem.elementMapper().index(element);
+            auto eIdx = fvGridGeometry.elementMapper().index(element);
             // bind the geometries and volume variables to the element (all the elements in stencil)
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bind(element);
 
-            auto elemVolVars = localView(problem.model().curGlobalVolVars());
-            elemVolVars.bind(element, fvGeometry, problem.model().curSol());
+            auto elemVolVars = localView(gridVolVars);
+            elemVolVars.bind(element, fvGeometry, sol);
 
             fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
             for (auto&& scvf : scvfs(fvGeometry))
-            {
-                this->get(eIdx, scvf.index()).update(problem, element, fvGeometry, elemVolVars, scvf);
-            }
+                cache(eIdx, scvf.index()).update(problem, element, fvGeometry, elemVolVars, scvf);
         }
     }
 
@@ -87,18 +90,18 @@ public:
     friend inline ElementFluxVariablesCache localView(const BoxGlobalFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
-private:
-    const Problem& problem_() const
+    const Problem& problem() const
     { return *problemPtr_; }
 
     // access operator
-    const FluxVariablesCache& get(IndexType eIdx, IndexType scvfIdx) const
+    const FluxVariablesCache& cache(IndexType eIdx, IndexType scvfIdx) const
     { return fluxVarsCache_[eIdx][scvfIdx]; }
 
     // access operator
-    FluxVariablesCache& get(IndexType eIdx, IndexType scvfIdx)
+    FluxVariablesCache& cache(IndexType eIdx, IndexType scvfIdx)
     { return fluxVarsCache_[eIdx][scvfIdx]; }
 
+private:
     // currently bound element
     const Problem* problemPtr_;
     std::vector<std::vector<FluxVariablesCache>> fluxVarsCache_;
@@ -111,10 +114,11 @@ private:
 template<class TypeTag>
 class BoxGlobalFluxVariablesCache<TypeTag, false>
 {
-    // the local class needs access to the problem
-    friend BoxElementFluxVariablesCache<TypeTag, false>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
@@ -125,7 +129,10 @@ class BoxGlobalFluxVariablesCache<TypeTag, false>
 
 public:
 
-    void update(Problem& problem)
+    void update(const Problem& problem,
+                const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol)
     { problemPtr_ = &problem; }
 
     /*!
@@ -136,11 +143,10 @@ public:
     friend inline ElementFluxVariablesCache localView(const BoxGlobalFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
-private:
-    const Problem& problem_() const
+    const Problem& problem() const
     { return *problemPtr_; }
 
-    // currently bound element
+private:
     const Problem* problemPtr_;
 };
 

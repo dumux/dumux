@@ -1,7 +1,15 @@
-dune_symlink_to_source_files(FILES "test_1pincompressible.input")
+dune_symlink_to_source_files(FILES "test_1p.input")
 
-# incompressible
-add_dumux_test(test_1pincompressible test_1pincompressible test_1pincompressible.cc
-               ${CMAKE_CURRENT_BINARY_DIR}/test_1pincompressible)
+# using tpfa
+dune_add_test(NAME test_1p_incompressible_tpfa
+              SOURCES test_1p.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleTpfa
+              CMD_ARGS test_1p.input)
+
+# using box
+dune_add_test(NAME test_1p_incompressible_box
+              SOURCES test_1p.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePIncompressibleBox
+              CMD_ARGS test_1p.input)
 
 set(CMAKE_BUILD_TYPE Release)

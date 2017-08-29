@@ -54,7 +54,6 @@ template<class TypeTag>
 class BoxFVElementGeometry<TypeTag, true>
 {
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -150,7 +149,7 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        eIdx_ = fvGridGeometry().problem_().elementMapper().index(element);
+        eIdx_ = fvGridGeometry().elementMapper().index(element);
     }
 
     //! The global finite volume geometry we are a restriction of
@@ -263,7 +262,7 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        eIdx_ = fvGridGeometry().problem_().elementMapper().index(element);
+        eIdx_ = fvGridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
 
@@ -275,7 +274,7 @@ private:
 
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = fvGridGeometry().problem_().elementMapper().index(element);
+        auto eIdx = fvGridGeometry().elementMapper().index(element);
 
         // get the element geometry
         auto elementGeometry = element.geometry();
@@ -289,7 +288,7 @@ private:
         for (unsigned int scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
-            auto dofIdxGlobal = fvGridGeometry().problem_().vertexMapper().subIndex(element, scvLocalIdx, dim);
+            auto dofIdxGlobal = fvGridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,

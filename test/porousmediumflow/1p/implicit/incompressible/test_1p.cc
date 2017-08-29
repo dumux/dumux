@@ -42,7 +42,7 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
-#include <dumux/assembly/ccassembler.hh>
+#include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
 #include "problem.hh"
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 {
     using namespace Dumux;
 
-    using TypeTag = TTAG(IncompressibleTestProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // some aliases for better readability
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
@@ -104,14 +104,18 @@ int main(int argc, char** argv)
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    auto x = std::make_shared<SolutionVector>(leafGridView.size(0));
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
+    SolutionVector x(leafGridView.size(dofCodim));
+    // x = 1e5;
 
     // the grid variables
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(*x);
+    gridVariables->init(x);
 
     // make assemble and attach linear system
-    auto assembler = std::make_shared<CCAssembler<TypeTag, DiffMethod::analytic>>(problem, fvGridGeometry, gridVariables);
+    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
     assembler->setLinearSystem(A, r);
@@ -119,21 +123,29 @@ int main(int argc, char** argv)
     Dune::Timer timer;
     // assemble the local jacobian and the residual
     Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
-    assembler->assembleJacobianAndResidual(*x);
+    assembler->assembleJacobianAndResidual(x);
     assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
-    // we solve Ax = -r
+    // we solve Ax = -r to save update and copy
     (*r) *= -1.0;
 
     // // solve the linear system
     Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
-    auto linearSolver = std::make_shared<ILU0BiCGSTABBackend<TypeTag>>(*problem);
-    linearSolver->solve(*A, *x, *r);
+    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(*problem);
+    linearSolver->solve(*A, x, *r);
     solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
+
+    // the non-linear solver
+    // using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    // auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
+    // NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+    // nonLinearSolver.solve(x);
 
     // output result to vtk
     Dune::VTKWriter<GridView> vtkwriter(leafGridView);
-    vtkwriter.addCellData(*x, "p");
+    if (isBox) vtkwriter.addVertexData(x, "p");
+    else vtkwriter.addCellData(x, "p");
     vtkwriter.write("test_1pincompressible");
 
     timer.stop();

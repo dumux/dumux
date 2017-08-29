@@ -81,7 +81,7 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        eIdx_ = globalVolVars().problem_().elementMapper().index(element);
+        eIdx_ = fvGeometry.fvGridGeometry().elementMapper().index(element);
     }
 
     //! The global volume variables object we are a restriction of
@@ -106,6 +106,7 @@ class BoxElementVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -129,15 +130,18 @@ public:
                      const SolutionVector& sol)
     {
         // get the solution at the dofs of the element
-        auto elemSol = globalVolVars().problem_().model().elementSolution(element, sol);
+        const auto numVert = element.subEntities(dim);
+        ElementSolutionVector elemSol(numVert);
+        for (const auto& scv : scvs(fvGeometry))
+            elemSol[scv.indexInElement()] = sol[scv.dofIndex()];
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
         {
             // TODO: INTERFACE SOLVER
-            // globalVolVars().problem_().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
-            volumeVariables_[scv.indexInElement()].update(elemSol, globalVolVars().problem_(), element, scv);
+            // globalVolVars().problem().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
+            volumeVariables_[scv.indexInElement()].update(elemSol, globalVolVars().problem(), element, scv);
         }
     }
 

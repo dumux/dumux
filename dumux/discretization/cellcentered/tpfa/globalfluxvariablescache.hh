@@ -66,7 +66,6 @@ public:
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol)
     {
-        // TODO do we need the problem?
         problemPtr_ = &problem;
 
         // instantiate helper class to fill the caches

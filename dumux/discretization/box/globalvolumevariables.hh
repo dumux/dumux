@@ -41,11 +41,6 @@ class BoxGlobalVolumeVariables
 template<class TypeTag>
 class BoxGlobalVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 {
-    // The local class needs to access and change volVars
-    friend BoxElementVolumeVariables<TypeTag, true>;
-    // The local jacobian needs to access and change volVars for derivative calculation
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -54,37 +49,35 @@ class BoxGlobalVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-
 public:
-    void update(Problem& problem, const SolutionVector& sol)
+    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         problemPtr_ = &problem;
 
-        volumeVariables_.resize(problem.gridView().size(0));
-        for (const auto& element : elements(problem.gridView()))
+        volumeVariables_.resize(fvGridGeometry.gridView().size(0));
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
-            auto eIdx = problem_().elementMapper().index(element);
+            auto eIdx = fvGridGeometry.elementMapper().index(element);
 
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
             // get the element solution
-            auto elemSol = problem.model().elementSolution(element, sol);
+            const auto numVert = element.subEntities(dim);
+            ElementSolutionVector elemSol(numVert);
+            for (const auto& scv : scvs(fvGeometry))
+                elemSol[scv.indexInElement()] = sol[scv.dofIndex()];
 
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-            {
-                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol,
-                                                           problem,
-                                                           element,
-                                                           scv);
-            }
+                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem, element, scv);
         }
     }
 
@@ -102,13 +95,11 @@ public:
     VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx)
     { return volumeVariables_[eIdx][scvIdx]; }
 
-private:
-    const Problem& problem_() const
+    const Problem& problem() const
     { return *problemPtr_; }
 
+private:
     const Problem* problemPtr_;
-
-    IndexType eIdx_;
     std::vector<std::vector<VolumeVariables>> volumeVariables_;
 };
 
@@ -117,16 +108,15 @@ private:
 template<class TypeTag>
 class BoxGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
 {
-    // prev vol vars have to be a friend class in order for the assignment operator to work
-    friend BoxElementVolumeVariables<TypeTag, false>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
 
-    void update(Problem& problem, const SolutionVector& sol)
+    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     { problemPtr_ = &problem; }
 
     /*!
@@ -137,14 +127,13 @@ public:
     friend inline ElementVolumeVariables localView(const BoxGlobalVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
-private:
-
-    Problem& problem_() const
+    const Problem& problem() const
     { return *problemPtr_;}
 
-    Problem* problemPtr_;
+private:
+    const Problem* problemPtr_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
