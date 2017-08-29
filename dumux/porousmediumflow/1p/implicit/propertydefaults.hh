@@ -28,7 +28,6 @@
 #define DUMUX_1P_PROPERTY_DEFAULTS_HH
 
 #include "properties.hh"
-
 #include "model.hh"
 #include "volumevariables.hh"
 #include "indices.hh"
@@ -57,9 +56,6 @@ SET_INT_PROP(OneP, NumComponents, 1); //!< The number of components in the 1p mo
 
 //! The local residual function
 SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
-
-//! the Model property
-SET_TYPE_PROP(OneP, Model, OnePModel<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);
@@ -130,9 +126,6 @@ SET_TYPE_PROP(OneP, VtkOutputFields, OnePVtkOutputFields<TypeTag>);
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
-
-// set isothermal Model
-SET_TYPE_PROP(OnePNI, IsothermalModel, OnePModel<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);
