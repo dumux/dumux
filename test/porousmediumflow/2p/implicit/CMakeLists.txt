@@ -1,4 +1,5 @@
 add_subdirectory(pointsources)
+add_subdirectory(incompressible)
 add_input_file_links()
 
 # isothermal tests

@@ -32,6 +32,7 @@
 #include "model.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
+#include "vtkoutputfields.hh"
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
@@ -92,6 +93,9 @@ SET_TYPE_PROP(TwoP,
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
 SET_TYPE_PROP(TwoP, SpatialParams, ImplicitSpatialParams<TypeTag>);
+
+//! Set the vtk output fields specific to the twop model
+SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<TypeTag>);
 
 /*!
  * \brief Set the property for the material parameters by extracting
