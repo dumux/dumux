@@ -155,10 +155,8 @@ private:
         if (!isStationary)
             prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
 
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
+        // for compatibility with box models
         ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
 
         // the actual element's current residual
         NumEqVector residual(0.0);
