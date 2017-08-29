@@ -220,14 +220,33 @@ public:
     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
-        // derivative of the regualarization
-        if (swe < params.pcLowSw()) {
+        // retrieve the low and the high threshold saturations for the
+        // unregularized capillary pressure curve from the parameters
+        const Scalar swThLow = params.pcLowSw();
+        const Scalar swThHigh = params.pcHighSw();
+
+        // derivative of the regularization
+        if (swe < swThLow) {
             // the slope of the straight line used in pc()
             return mLow_(params);
         }
-        else if (swe > params.pcHighSw()) {
-            // the slope of the straight line used in pc()
-            return mHigh_(params);
+        else if (swe > swThHigh)
+        {
+            Scalar yTh = VanGenuchten::pc(params, swThHigh);
+            Scalar m1 = (0.0 - yTh)/(1.0 - swThHigh)*2;
+
+            if (swe < 1.0) {
+                // use spline between threshold swe and 1.0
+                Scalar mTh = VanGenuchten::dpc_dswe(params, swThHigh);
+                Spline<Scalar> sp(swThHigh, 1.0, // x0, x1
+                                  yTh, 0, // y0, y1
+                                  mTh, m1); // m0, m1
+                return sp.evalDerivative(swe);
+            }
+            else {
+                // straight line for swe > 1.0
+                return m1;
+            }
         }
 
         return VanGenuchten::dpc_dswe(params, swe);
