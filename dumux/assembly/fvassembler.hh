@@ -210,8 +210,8 @@ public:
             LocalAssembler::assemble(*this, r, element, curSol);
     }
 
-    //! computes the global residual
-    Scalar globalResidual(const SolutionVector& curSol) const
+    //! computes the residual norm
+    Scalar residualNorm(const SolutionVector& curSol) const
     {
         ResidualType residual(numDofs());
         assembleResidual(residual, curSol);

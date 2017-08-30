@@ -470,7 +470,7 @@ public:
 
             if (enableResidualCriterion_)
             {
-                residualNorm_ = assembler.globalResidual(uCurrentIter);
+                residualNorm_ = assembler.residualNorm(uCurrentIter);
                 reduction_ = residualNorm_;
                 reduction_ /= initialResidual_;
             }
@@ -632,7 +632,7 @@ protected:
             uCurrentIter *= -lambda;
             uCurrentIter += uLastIter;
 
-            residualNorm_ = assembler.globalResidual(uCurrentIter);
+            residualNorm_ = assembler.residualNorm(uCurrentIter);
             reduction_ = residualNorm_;
             reduction_ /= initialResidual_;
 
