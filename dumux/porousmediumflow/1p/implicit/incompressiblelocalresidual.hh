@@ -63,14 +63,16 @@ public:
                                const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
-                               const VolumeVariables& curVolVars) const {}
+                               const VolumeVariables& curVolVars,
+                               const SubControlVolume& scv) const {}
 
     template<class PartialDerivativeMatrix>
     void addSourceDerivatives(PartialDerivativeMatrix& partialDerivatives,
                               const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curVolVars) const {}
+                              const VolumeVariables& curVolVars,
+                              const SubControlVolume& scv) const {}
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
     std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>

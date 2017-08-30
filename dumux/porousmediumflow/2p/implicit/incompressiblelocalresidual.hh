@@ -70,14 +70,15 @@ public:
                                const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
-                               const VolumeVariables& curVolVars) const
+                               const VolumeVariables& curVolVars,
+                               const SubControlVolume& scv) const
     {
         // we know that these values are constant throughout the simulation
         static const auto phi = curVolVars.porosity();
         static const auto phi_rho_w = phi*curVolVars.density(FluidSystem::wPhaseIdx);
         static const auto phi_rho_n = phi*curVolVars.density(FluidSystem::nPhaseIdx);
 
-        const auto volume = element.geometry().volume();
+        const auto volume = scv.volume();
 
         // partial derivative of wetting phase storage term w.r.t. p_w
         partialDerivatives[contiWEqIdx][pressureIdx] += 0.0;
@@ -94,7 +95,8 @@ public:
                               const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curVolVars) const {}
+                              const VolumeVariables& curVolVars,
+                              const SubControlVolume& scv) const {}
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
     std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>

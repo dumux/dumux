@@ -162,14 +162,14 @@ public:
                                const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
-                               const VolumeVariables& curVolVars) const
+                               const VolumeVariables& curVolVars,
+                               const SubControlVolume& scv) const
     {
         // we know that these values are constant throughout the simulation
         static const auto phi = curVolVars.porosity();
         static const auto phi_rho = phi*curVolVars.density();
 
-        const auto volume = element.geometry().volume();
-        partialDerivatives[0][0] += volume*phi_rho/this->timeLoop().timeStepSize();
+        partialDerivatives[0][0] += scv.volume()*phi_rho/this->timeLoop().timeStepSize();
     }
 
     // TODO: IMPLICIT ANALYTICAL DERIVATIVE CONTRIBUTIONS
@@ -178,7 +178,8 @@ public:
     //                           const Problem& problem,
     //                           const Element& element,
     //                           const FVElementGeometry& fvGeometry,
-    //                           const VolumeVariables& curVolVars) const {}
+    //                           const VolumeVariables& curVolVars,
+    //                           const SubControlVolume& scv) const {}
 
     // TODO: IMPLICIT ANALYTICAL DERIVATIV CONTRIBUTIONS
     // template<class PartialDerivativeMatrices>

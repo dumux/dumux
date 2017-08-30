@@ -694,10 +694,8 @@ private:
         auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
 
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
+        // compatibility with box method
         ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
 
         // the actual element's previous time step residual
         auto residual = localResidual.eval(problem,
@@ -1108,7 +1106,8 @@ private:
         }
 
         // get reference to the element's current vol vars
-        const auto& volVars = curElemVolVars[fvGeometry.scv(globalI)];
+        const auto& scv = fvGeometry.scv(globalI);
+        const auto& volVars = curElemVolVars[scv];
 
         // if the problem is instationary, add derivative of storage term
         if (!isStationary)
@@ -1116,14 +1115,16 @@ private:
                                                 problem,
                                                 element,
                                                 fvGeometry,
-                                                volVars);
+                                                volVars,
+                                                scv);
 
         // add source term derivatives
         localResidual.addSourceDerivatives(A[globalI][globalI],
                                            problem,
                                            element,
                                            fvGeometry,
-                                           volVars);
+                                           volVars,
+                                           scv);
 
         // add flux derivatives for each scvf
         for (const auto& scvf : scvfs(fvGeometry))
@@ -1366,14 +1367,16 @@ private:
         }
 
         // get reference to the element's current vol vars
-        const auto& volVars = curElemVolVars[fvGeometry.scv(globalI)];
+        const auto& scv = fvGeometry.scv(globalI);
+        const auto& volVars = curElemVolVars[scv];
 
         // add derivative of storage term
         localResidual.addStorageDerivatives(A[globalI][globalI],
                                             problem,
                                             element,
                                             fvGeometry,
-                                            volVars);
+                                            volVars,
+                                            scv);
 
         // return the original residual
         return residual;

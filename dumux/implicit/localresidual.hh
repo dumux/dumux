@@ -403,7 +403,8 @@ public:
                                const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
-                               const VolumeVariables& curVolVars) const
+                               const VolumeVariables& curVolVars,
+                               const SubControlVolume& scv) const
     {
         DUNE_THROW(Dune::NotImplemented, "analytic storage derivative");
     }
@@ -413,7 +414,8 @@ public:
                               const Problem& problem,
                               const Element& element,
                               const FVElementGeometry& fvGeometry,
-                              const VolumeVariables& curVolVars) const
+                              const VolumeVariables& curVolVars,
+                              const SubControlVolume& scv) const
     {
         DUNE_THROW(Dune::NotImplemented, "analytic source derivative");
     }
