@@ -96,14 +96,15 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const VolumeVariables& curVolVars) const {}
 
-    template<class PartialDerivativeMatrices>
-    void addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-                            const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& curElemVolVars,
-                            const ElementFluxVariablesCache& elemFluxVarsCache,
-                            const SubControlVolumeFace& scvf) const
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& curElemVolVars,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       const SubControlVolumeFace& scvf) const
     {
         using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
@@ -183,13 +184,13 @@ public:
     }
 
     template<class PartialDerivativeMatrices>
-    void addDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-                                     const Problem& problem,
-                                     const Element& element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& curElemVolVars,
-                                     const ElementFluxVariablesCache& elemFluxVarsCache,
-                                     const SubControlVolumeFace& scvf) const
+    void addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                       const Problem& problem,
+                                       const Element& element,
+                                       const FVElementGeometry& fvGeometry,
+                                       const ElementVolumeVariables& curElemVolVars,
+                                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                                       const SubControlVolumeFace& scvf) const
     {
         using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);

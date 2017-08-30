@@ -107,14 +107,13 @@ int main(int argc, char** argv)
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     static constexpr int dofCodim = isBox ? GridView::dimension : 0;
     SolutionVector x(leafGridView.size(dofCodim));
-    // x = 1e5;
 
     // the grid variables
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
 
     // make assemble and attach linear system
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
@@ -126,27 +125,33 @@ int main(int argc, char** argv)
     assembler->assembleJacobianAndResidual(x);
     assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
+    // print matrix
+    // Dune::printmatrix(std::cout, *A, "", "");
+    // Dune::printvector(std::cout, *r, "", "");
+
     // we solve Ax = -r to save update and copy
     (*r) *= -1.0;
 
     // // solve the linear system
     Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
-    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
+    using LinearSolver = UMFPackBackend<TypeTag>;
     auto linearSolver = std::make_shared<LinearSolver>(*problem);
     linearSolver->solve(*A, x, *r);
     solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
 
-    // the non-linear solver
+    // // the non-linear solver
     // using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
     // auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
     // NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
     // nonLinearSolver.solve(x);
 
     // output result to vtk
+    Dune::Timer outputTimer; std::cout << "Writing result to file "<< problem->name() <<" ..." << std::flush;
     Dune::VTKWriter<GridView> vtkwriter(leafGridView);
     if (isBox) vtkwriter.addVertexData(x, "p");
     else vtkwriter.addCellData(x, "p");
-    vtkwriter.write("test_1pincompressible");
+    vtkwriter.write(problem->name());
+    outputTimer.stop(); std::cout << " took " << outputTimer.elapsed() << " seconds." << std::endl;
 
     timer.stop();
 

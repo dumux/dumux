@@ -76,12 +76,14 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 
     using CoordScalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
 
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
@@ -98,7 +100,13 @@ public:
         const auto ipLocal = geometry.local(scvf.center());
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
-        localBasis.evaluateFunction(ipLocal, shapeValues_); // do we need the shapeValues for the flux?
+        localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
+
+        // compute the gradN at for every scv/dof
+        gradN_.resize(fvGeometry.numScv());
+        for (const auto& scv: scvs(fvGeometry))
+            jacInvT_.mv(shapeJacobian_[scv.indexInElement()][0], gradN_[scv.indexInElement()]);
+
     }
 
     const std::vector<ShapeJacobian>& shapeJacobian() const
@@ -110,7 +118,11 @@ public:
     const JacobianInverseTransposed& jacInvT() const
     { return jacInvT_; }
 
+    const GlobalPosition& gradN(unsigned int scvIdxInElement) const
+    { return gradN_[scvIdxInElement]; }
+
 private:
+    std::vector<GlobalPosition> gradN_;
     std::vector<ShapeJacobian> shapeJacobian_;
     std::vector<ShapeValue> shapeValues_;
     JacobianInverseTransposed jacInvT_;

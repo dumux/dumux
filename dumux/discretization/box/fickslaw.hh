@@ -95,22 +95,15 @@ public:
 
         // evaluate gradX at integration point and interpolate density
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& jacInvT = fluxVarsCache.jacInvT();
-        const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
         Scalar rho(0.0);
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv());
-
         for (auto&& scv : scvs(fvGeometry))
         {
             const auto& volVars = elemVolVars[scv];
 
             // density interpolation
             rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
-
-            // the ansatz function gradient
-            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN[scv.indexInElement()]);
         }
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
@@ -121,11 +114,11 @@ public:
             // effective diffusion tensors
             using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
             auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                            insideVolVars.saturation(phaseIdx),
-                                                            insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+                                                              insideVolVars.saturation(phaseIdx),
+                                                              insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
             auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                            outsideVolVars.saturation(phaseIdx),
-                                                            outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+                                                               outsideVolVars.saturation(phaseIdx),
+                                                               outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -140,7 +133,7 @@ public:
                 const auto& volVars = elemVolVars[scv];
 
                 // the mole/mass fraction gradient
-                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN[scv.indexInElement()]);
+                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
             }
 
             // apply the diffusion tensor and return the flux

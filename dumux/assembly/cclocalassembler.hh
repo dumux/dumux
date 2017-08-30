@@ -1145,13 +1145,13 @@ private:
                 // add Dirichlet boundary flux derivatives
                 if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
                 {
-                    localResidual.addDirichletFluxDerivatives(A[globalI],
-                                                              problem,
-                                                              element,
-                                                              fvGeometry,
-                                                              curElemVolVars,
-                                                              elemFluxVarsCache,
-                                                              scvf);
+                    localResidual.addCCDirichletFluxDerivatives(A[globalI],
+                                                                problem,
+                                                                element,
+                                                                fvGeometry,
+                                                                curElemVolVars,
+                                                                elemFluxVarsCache,
+                                                                scvf);
                 }
                 // add Robin ("solution dependent Neumann") boundary flux derivatives
                 else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())

@@ -183,6 +183,32 @@ private:
 
         for (const auto& scv : scvs(fvGeometry))
             r[scv.dofIndex()] += residual[scv.indexInElement()];
+
+        // enforce Dirichlet boundaries by setting the residual to (privar - dirichletvalue)
+        if (elemBcTypes.hasDirichlet())
+        {
+            for (const auto& scvI : scvs(fvGeometry))
+            {
+                const auto bcTypes = elemBcTypes[scvI.indexInElement()];
+                if (bcTypes.hasDirichlet())
+                {
+                    const auto dirichletValues = problem.dirichlet(element, scvI);
+
+                    // set the dirichlet conditions in residual and jacobian
+                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    {
+                        if (bcTypes.isDirichlet(eqIdx))
+                        {
+                            const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                            assert(0 <= pvIdx && pvIdx < numEq);
+
+                            const auto& priVars = curElemVolVars[scvI].priVars();
+                            r[scvI.dofIndex()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*!
@@ -372,6 +398,39 @@ private:
 
             // TODO additional dof dependencies
         }
+
+        // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        if (elemBcTypes.hasDirichlet())
+        {
+            for (const auto& scvI : scvs(fvGeometry))
+            {
+                const auto bcTypes = elemBcTypes[scvI.indexInElement()];
+                if (bcTypes.hasDirichlet())
+                {
+                    const auto dirichletValues = problem.dirichlet(element, scvI);
+
+                    // set the dirichlet conditions in residual and jacobian
+                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    {
+                        if (bcTypes.isDirichlet(eqIdx))
+                        {
+                            const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                            assert(0 <= pvIdx && pvIdx < numEq);
+
+                            const auto& priVars = curElemVolVars[scvI].priVars();
+                            r[scvI.dofIndex()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
+                            for (const auto& scvJ : scvs(fvGeometry))
+                            {
+                                A[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
+                                if (scvI.indexInElement() == scvJ.indexInElement())
+                                    A[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 private:
     template<class T = TypeTag>
@@ -526,6 +585,32 @@ private:
 
         for (const auto& scv : scvs(fvGeometry))
             r[scv.dofIndex()] += residual[scv.indexInElement()];
+
+        // enforce Dirichlet boundaries by setting the residual to (privar - dirichletvalue)
+        if (elemBcTypes.hasDirichlet())
+        {
+            for (const auto& scvI : scvs(fvGeometry))
+            {
+                const auto bcTypes = elemBcTypes[scvI.indexInElement()];
+                if (bcTypes.hasDirichlet())
+                {
+                    const auto dirichletValues = problem.dirichlet(element, scvI);
+
+                    // set the dirichlet conditions in residual and jacobian
+                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                    {
+                        if (bcTypes.isDirichlet(eqIdx))
+                        {
+                            const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                            assert(0 <= pvIdx && pvIdx < numEq);
+
+                            const auto& priVars = curElemVolVars[scvI].priVars();
+                            r[scvI.dofIndex()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*!
@@ -591,6 +676,9 @@ private:
                                           elemFluxVarsCache);
         }
 
+        for (auto&& scv : scvs(fvGeometry))
+            r[scv.dofIndex()] += residual[scv.indexInElement()];
+
         //////////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                              //
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -599,28 +687,17 @@ private:
         //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        static const int numericDifferenceMethod = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
-
-        // calculation of the derivatives
-        for (const auto& scvJ : scvs(fvGeometry))
+        // calculation of the source and storage derivatives
+        for (const auto& scv : scvs(fvGeometry))
         {
             // dof index and corresponding actual pri vars
-            const auto dofIdx = scvJ.dofIndex();
-            const auto& volVars = curElemVolVars[scvJ];
-
-            // add precalculated residual for this scv into the global container
-            r[dofIdx] += residual[scvJ.indexInElement()];
-
-            // the derivatives all scv's equations with respect to all privars of this scv
-            // partialDeriv[otherScvIdx][eqIdx][priVarIdx]
-             // TODO understand: is this identical for cc models?
-            std::vector<std::array<ResidualVector, numEq>> partialDeriv(element.subEntities(dim));
+            const auto dofIdx = scv.dofIndex();
+            const auto& volVars = curElemVolVars[scv];
 
             // derivative of this scv residual w.r.t the d.o.f. of the same scv (because of mass lumping)
             // only if the problem is instationary we add derivative of storage term
-             // TODO understand: is this identical now to cc models?
             if (!isStationary)
-                localResidual.addStorageDerivatives(partialDeriv[scvJ.indexInElement()],
+                localResidual.addStorageDerivatives(A[dofIdx][dofIdx],
                                                     problem,
                                                     element,
                                                     fvGeometry,
@@ -628,90 +705,81 @@ private:
 
             // derivative of this scv residual w.r.t the d.o.f. of the same scv (because of mass lumping)
             // add source term derivatives
-            // TODO understand: is this identical now to cc models?
-            localResidual.addSourceDerivatives(partialDeriv[scvJ.indexInElement()],
+            localResidual.addSourceDerivatives(A[dofIdx][dofIdx],
                                                problem,
                                                element,
                                                fvGeometry,
                                                volVars);
+        }
 
-            // again the derivatives all scv's equations with respect to all privars of this scv
-            // partialDeriv[otherScvIdx][eqIdx][priVarIdx]
-            for (const auto& scvf : scvfs(fvGeometry))
+        // localJacobian[scvIdx][otherScvIdx][eqIdx][priVarIdx] of the fluxes
+        for (const auto& scvf : scvfs(fvGeometry))
+        {
+            if (!scvf.boundary())
             {
-                if (!scvf.boundary())
+                // add flux term derivatives
+                localResidual.addFluxDerivatives(A,
+                                                 problem,
+                                                 element,
+                                                 fvGeometry,
+                                                 curElemVolVars,
+                                                 elemFluxVarsCache,
+                                                 scvf);
+            }
+
+            // the boundary gets special treatment to simplify
+            // for the user
+            else
+            {
+                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+                if (elemBcTypes[insideScv.indexInElement()].hasNeumann())
                 {
                     // add flux term derivatives
-                    localResidual.addFluxDerivatives(partialDeriv,
-                                                     problem,
-                                                     element,
-                                                     fvGeometry,
-                                                     curElemVolVars,
-                                                     elemBcTypes,
-                                                     elemFluxVarsCache,
-                                                     scvf);
-                }
-
-                // the boundary gets special treatment to simplify
-                // for the user
-                else
-                {
-                    if (elemBcTypes.hasNeumann())
-                    {
-                        // add flux term derivatives
-                        localResidual.addRobinDerivatives(partialDeriv,
+                    localResidual.addRobinFluxDerivatives(A[insideScv.dofIndex()],
                                                           problem,
                                                           element,
                                                           fvGeometry,
                                                           curElemVolVars,
-                                                          elemBcTypes,
                                                           elemFluxVarsCache,
                                                           scvf);
-                    }
                 }
             }
+        }
 
-            // enforce Dirichlet boundaries by overwriting partial derivatives with 1
-            if (elemBcTypes.hasDirichlet())
+        // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
+        // and set the residual to (privar - dirichletvalue)
+        if (elemBcTypes.hasDirichlet())
+        {
+            for (const auto& scvI : scvs(fvGeometry))
             {
-                for (auto&& scvJ : scvs(fvGeometry))
+                const auto bcTypes = elemBcTypes[scvI.indexInElement()];
+                if (bcTypes.hasDirichlet())
                 {
-                    const auto bcTypes = elemBcTypes[scvJ.indexInElement()];
-                    if (bcTypes.hasDirichlet())
+                    const auto dirichletValues = problem.dirichlet(element, scvI);
+
+                    // set the dirichlet conditions in residual and jacobian
+                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
                     {
-                        // set the dirichlet conditions
-                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+                        if (bcTypes.isDirichlet(eqIdx))
                         {
-                            if (bcTypes.isDirichlet(eqIdx))
+                            const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
+                            assert(0 <= pvIdx && pvIdx < numEq);
+
+                            const auto& priVars = curElemVolVars[scvI].priVars();
+                            r[scvI.dofIndex()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
+                            for (const auto& scvJ : scvs(fvGeometry))
                             {
-                                const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                                assert(0 <= pvIdx && pvIdx < numEq);
-                                partialDeriv[scvJ.indexInElement()][eqIdx][pvIdx] = 1.0;
+                                A[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
+                                if (scvI.indexInElement() == scvJ.indexInElement())
+                                    A[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
                             }
                         }
                     }
                 }
             }
-
-
-            // add the partial derivatives to the jacobian
-            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-            {
-                for (auto&& scvI : scvs(fvGeometry))
-                {
-                      for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                      {
-                          // A[i][col][eqIdx][pvIdx] is the rate of change of
-                          // the residual of equation 'eqIdx' at dof 'i'
-                          // depending on the primary variable 'pvIdx' at dof
-                          // 'col'.
-                          A[scvI.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDeriv[scvI.indexInElement()][eqIdx][pvIdx];
-                      }
-                }
-            }
-
-            // TODO additional dof dependencies
         }
+
+        // TODO additional dof dependencies
     }
 
 }; // implicit BoxAssembler with analytic Jacobian

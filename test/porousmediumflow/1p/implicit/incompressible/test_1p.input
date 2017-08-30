@@ -1,7 +1,10 @@
+[Problem]
+Name = incompressible
+
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 101 101
+Cells = 100 100
 
 [SpatialParams]
 LensLowerLeft = 0.2 0.2

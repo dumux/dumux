@@ -51,6 +51,7 @@ class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
+    enum { pressureIdx = Indices::pressureIdx };
 
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
@@ -71,14 +72,15 @@ public:
                               const FVElementGeometry& fvGeometry,
                               const VolumeVariables& curVolVars) const {}
 
-    template<class PartialDerivativeMatrices>
-    void addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-                            const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& curElemVolVars,
-                            const ElementFluxVariablesCache& elemFluxVarsCache,
-                            const SubControlVolumeFace& scvf) const
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& curElemVolVars,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       const SubControlVolumeFace& scvf) const
     {
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
@@ -87,18 +89,50 @@ public:
         const Scalar deriv = tij*up;
 
         // add partial derivatives to the respective given matrices
-        derivativeMatrices[scvf.insideScvIdx()] += deriv;
-        derivativeMatrices[scvf.outsideScvIdx()] -= deriv;
+        derivativeMatrices[scvf.insideScvIdx()][conti0EqIdx][pressureIdx] += deriv;
+        derivativeMatrices[scvf.outsideScvIdx()][conti0EqIdx][pressureIdx] -= deriv;
+    }
+
+    template<class JacobianMatrix, class T = TypeTag>
+    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    addFluxDerivatives(JacobianMatrix& A,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& curElemVolVars,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       const SubControlVolumeFace& scvf) const
+    {
+        using AdvectionType = typename GET_PROP_TYPE(T, AdvectionType);
+        const auto ti = AdvectionType::calculateTransmissibilities(problem,
+                                                                   element,
+                                                                   fvGeometry,
+                                                                   curElemVolVars,
+                                                                   scvf,
+                                                                   elemFluxVarsCache[scvf]);
+
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+
+        // we know the "upwind factor" is constant, get inner one here and compute derivatives
+        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
+                                 / curElemVolVars[scvf.insideScvIdx()].viscosity();
+        for (const auto& scv : scvs(fvGeometry))
+        {
+            auto d = up*ti[scv.indexInElement()];
+            A[insideScv.dofIndex()][scv.dofIndex()][conti0EqIdx][pressureIdx] += d;
+            A[outsideScv.dofIndex()][scv.dofIndex()][conti0EqIdx][pressureIdx] -= d;
+        }
     }
 
     template<class PartialDerivativeMatrices>
-    void addDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-                                     const Problem& problem,
-                                     const Element& element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& curElemVolVars,
-                                     const ElementFluxVariablesCache& elemFluxVarsCache,
-                                     const SubControlVolumeFace& scvf) const
+    void addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                       const Problem& problem,
+                                       const Element& element,
+                                       const FVElementGeometry& fvGeometry,
+                                       const ElementVolumeVariables& curElemVolVars,
+                                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                                       const SubControlVolumeFace& scvf) const
     {
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 

@@ -57,6 +57,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::Box>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElemFluxVarCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -69,7 +70,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::Box>
     enum { dimWorld = GridView::dimensionworld};
 
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
@@ -95,15 +96,12 @@ public:
         outsideK *= outsideVolVars.extrusionFactor();
 
         const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
-
-        const auto& jacInvT = fluxVarCache.jacInvT();
-        const auto& shapeJacobian = fluxVarCache.shapeJacobian();
-        const auto& shapeValues = fluxVarCache.shapeValues();
-
         static const bool enableGravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
 
+        const auto& shapeValues = fluxVarCache.shapeValues();
+
         // evaluate gradP - rho*g at integration point
-        DimVector gradP(0.0);
+        GlobalPosition gradP(0.0);
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
         {
@@ -113,30 +111,59 @@ public:
                 rho += volVars.density(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
             // the global shape function gradient
-            DimVector gradN;
-            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN);
-            gradP.axpy(volVars.pressure(phaseIdx), gradN);
+            gradP.axpy(volVars.pressure(phaseIdx), fluxVarCache.gradN(scv.indexInElement()));
         }
 
         if (enableGravity)
             gradP.axpy(-rho, problem.gravityAtPos(scvf.center()));
 
         // apply the permeability and return the flux
-        auto KGradP = applyPermeability_(K, gradP);
+        const auto KGradP = applyPermeability_(K, gradP);
         return -1.0*(KGradP*scvf.unitOuterNormal())*scvf.area();
     }
 
-private:
-    inline static DimVector applyPermeability_(const DimWorldMatrix& K, const DimVector& gradI)
+    // compute transmissibilities ti for analytical jacobians
+    static std::vector<Scalar> calculateTransmissibilities(const Problem& problem,
+                                                           const Element& element,
+                                                           const FVElementGeometry& fvGeometry,
+                                                           const ElementVolumeVariables& elemVolVars,
+                                                           const SubControlVolumeFace& scvf,
+                                                           const FluxVarCache& fluxVarCache)
     {
-        DimVector result(0.0);
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[outsideScv];
+
+        auto insideK = insideVolVars.permeability();
+        auto outsideK = outsideVolVars.permeability();
+
+        // scale with correct extrusion factor
+        insideK *= insideVolVars.extrusionFactor();
+        outsideK *= outsideVolVars.extrusionFactor();
+
+        const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
+
+        std::vector<Scalar> ti(fvGeometry.numScv());
+        for (const auto& scv : scvs(fvGeometry))
+            ti[scv.indexInElement()] =
+                -1.0*(applyPermeability_(K, fluxVarCache.gradN(scv.indexInElement()))
+                        *scvf.unitOuterNormal())*scvf.area();
+
+        return ti;
+    }
+
+private:
+    inline static GlobalPosition applyPermeability_(const DimWorldMatrix& K, const GlobalPosition& gradI)
+    {
+        GlobalPosition result(0.0);
         K.mv(gradI, result);
         return result;
     }
 
-    inline static DimVector applyPermeability_(const Scalar k, const DimVector& gradI)
+    inline static GlobalPosition applyPermeability_(const Scalar k, const GlobalPosition& gradI)
     {
-        DimVector result(gradI);
+        GlobalPosition result(gradI);
         result *= k;
         return result;
     }

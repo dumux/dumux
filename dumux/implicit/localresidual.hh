@@ -170,8 +170,6 @@ public:
         {
             //! foward to the local residual specialized for the discretization methods
             asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-            if (scvf.boundary())
-                asImp().enforceBoundaryConditions(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
         }
 
         return residual;
@@ -255,8 +253,6 @@ public:
         {
             //! foward to the local residual specialized for the discretization methods
             asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-            if (scvf.boundary())
-                asImp().enforceBoundaryConditions(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
         }
 
         return residual;
@@ -392,16 +388,6 @@ public:
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const {}
 
-    //! e.g. incorporating Dirichlet boundary conditions for box method
-    void enforceBoundaryConditions(ElementResidualVector& residual,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const ElementBoundaryTypes& elemBcTypes,
-                                   const ElementFluxVariablesCache& elemFluxVarsCache,
-                                   const SubControlVolumeFace& scvf) const {}
-
     ResidualVector evalFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
@@ -432,8 +418,9 @@ public:
         DUNE_THROW(Dune::NotImplemented, "analytic source derivative");
     }
 
-    template<class PartialDerivativeMatrices>
-    void addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                             const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
@@ -441,11 +428,24 @@ public:
                             const ElementFluxVariablesCache& elemFluxVarsCache,
                             const SubControlVolumeFace& scvf) const
     {
-        DUNE_THROW(Dune::NotImplemented, "analytic flux derivative");
+        DUNE_THROW(Dune::NotImplemented, "analytic flux derivative for cell-centered models");
+    }
+
+    template<class JacobianMatrix, class T = TypeTag>
+    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    addFluxDerivatives(JacobianMatrix& A,
+                            const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& curElemVolVars,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const
+    {
+        DUNE_THROW(Dune::NotImplemented, "analytic flux derivative for box models");
     }
 
     template<class PartialDerivativeMatrices>
-    void addDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+    void addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                      const Problem& problem,
                                      const Element& element,
                                      const FVElementGeometry& fvGeometry,

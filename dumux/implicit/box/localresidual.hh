@@ -139,45 +139,6 @@ public:
 
         return flux;
     }
-
-    //! enforce Dirichlet boundary conditions strongly
-    void enforceBoundaryConditions(ElementResidualVector& residual,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const ElementBoundaryTypes& elemBcTypes,
-                                   const ElementFluxVariablesCache& elemFluxVarsCache,
-                                   const SubControlVolumeFace& scvf) const
-    {
-        if (elemBcTypes.hasDirichlet())
-        {
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto bcTypes = elemBcTypes[scv.indexInElement()];
-                if (bcTypes.hasDirichlet())
-                {
-                    const auto dirichletValues = problem.dirichlet(element, scv);
-
-                    // set the dirichlet conditions
-                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-                    {
-                        if (bcTypes.isDirichlet(eqIdx))
-                        {
-                            const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                            assert(0 <= pvIdx && pvIdx < numEq);
-
-                            // get the primary variables
-                            const auto& priVars = elemVolVars[scv].priVars();
-                            residual[scv.indexInElement()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
-                        }
-                    }
-
-                }
-            }
-
-        }
-    }
 };
 
 } // end namespace Dumux

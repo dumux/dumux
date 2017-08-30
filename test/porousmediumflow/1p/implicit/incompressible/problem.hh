@@ -86,6 +86,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
     static constexpr int dimWorld = GridView::dimensionworld;
