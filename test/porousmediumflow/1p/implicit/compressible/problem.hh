@@ -25,11 +25,11 @@
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/porousmediumflow/1p/implicit/propertydefaults.hh>
+#include <dumux/implicit/box/properties.hh>
+#include <dumux/porousmediumflow/1p/implicit/model.hh>
 
 #include "spatialparams.hh"
 
@@ -40,21 +40,22 @@ template<class TypeTag> class OnePTestProblem;
 
 namespace Properties
 {
-
-NEW_PROP_TAG(EnableFVGridGeometryCache);
-NEW_PROP_TAG(FVGridGeometry);
-
-NEW_TYPE_TAG(IncompressibleTestProblem, INHERITS_FROM(CCTpfaModel, OneP));
+// create the type tag nodes
+NEW_TYPE_TAG(OnePCompressible, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(OnePCompressibleTpfa, INHERITS_FROM(CCTpfaModel, OnePCompressible));
+NEW_TYPE_TAG(OnePCompressibleBox, INHERITS_FROM(BoxModel, OnePCompressible));
 
 // Set the grid type
-SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePCompressible, Grid, Dune::YaspGrid<2>);
 
 // Set the problem type
-SET_TYPE_PROP(IncompressibleTestProblem, Problem, OnePTestProblem<TypeTag>);
-SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePCompressible, Problem, OnePTestProblem<TypeTag>);
+
+// set the spatial params
+SET_TYPE_PROP(OnePCompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
 
 // the fluid system
-SET_PROP(IncompressibleTestProblem, FluidSystem)
+SET_PROP(OnePCompressible, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -62,10 +63,10 @@ public:
     using type = FluidSystems::LiquidPhase<Scalar, TabulatedComponent<Scalar, H2O<Scalar>>>;
 };
 
-// Enable caching
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalVolumeVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFluxVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, false);
+// Disable caching (for testing purposes)
+SET_BOOL_PROP(OnePCompressible, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(OnePCompressible, EnableGlobalFluxVariablesCache, false);
+SET_BOOL_PROP(OnePCompressible, EnableFVGridGeometryCache, false);
 
 } // end namespace Properties
 
@@ -82,9 +83,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
-
     static constexpr int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -98,13 +98,12 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
+     * \param values The boundary types for the conservation equations
      * \param globalPos The position of the center of the finite volume
      */
-    BoundaryTypes boundaryTypes(const Element &element,
-                                const SubControlVolumeFace &scvf) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        const auto globalPos = scvf.ipGlobal();
 
         Scalar eps = 1.0e-6;
         if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps)
@@ -119,14 +118,15 @@ public:
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
+     * \param values The dirichlet values for the primary variables
      * \param globalPos The center of the finite volume which ought to be set.
+     *
+     * For this method, the \a values parameter stores primary variables.
      */
-    PrimaryVariables dirichlet(const Element &element,
-                               const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const auto& pos = scvf.ipGlobal();
         PrimaryVariables values(0);
-        values[0] = 1.0e+5*(2.0 - pos[dimWorld-1]);
+        values[0] = 1.0e+5*(2.0 - globalPos[dimWorld-1]);
         return values;
     }
 

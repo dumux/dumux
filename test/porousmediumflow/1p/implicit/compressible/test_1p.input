@@ -1,15 +1,15 @@
 [TimeLoop]
 TEnd = 0.02
-DtInitial = 1e-8
+DtInitial = 0.002
 #MaxTimeStepSize = 1.1e-6 #for explicit scheme
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 101 101
+Cells = 100 100
 
 [Problem]
-Name = 1pcc
+Name = 1p
 
 [SpatialParams]
 LensLowerLeft = 0.2 0.2

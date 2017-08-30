@@ -44,28 +44,16 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 
-#include <dumux/assembly/ccassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(IncompressibleTestProblem);
-
-    // some aliases for better readability
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    using TypeTag = TTAG(TYPETAG);
 
     ////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////
@@ -82,6 +70,7 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
 
     // parse command line arguments
+    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
     ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree());
 
     // parse the input file into the parameter tree
@@ -93,6 +82,7 @@ int main(int argc, char** argv)
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     try { GridCreator::makeGrid(); }
     catch (...) {
         std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
@@ -108,22 +98,30 @@ int main(int argc, char** argv)
     const auto& leafGridView = GridCreator::grid().leafGridView();
 
     // create the finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (initial and boundary conditions)
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    SolutionVector x(leafGridView.size(0));
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    SolutionVector x(leafGridView.size(dofCodim));
     problem->applyInitialSolution(x);
     auto xOld = x;
 
     // the grid variables
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
     // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, TEnd);
     auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, DtInitial);
     auto maxDivisions = GET_PARAM_FROM_GROUP(TypeTag, int, TimeLoop, MaxTimeStepDivisions);
@@ -136,6 +134,7 @@ int main(int argc, char** argv)
 
     // intialize the vtk output module
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
 
@@ -144,7 +143,7 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = CCAssembler<TypeTag, DiffMethod::numeric>;
+    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
@@ -152,6 +151,7 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>(*problem);
 
     // the non-linear solver
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
@@ -214,4 +214,28 @@ int main(int argc, char** argv)
 
     return 0;
 
-} // end main
+}
+catch (Dumux::ParameterException &e)
+{
+    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
+    return 1;
+}
+catch (Dune::DGFException & e)
+{
+    std::cerr << "DGF exception thrown (" << e <<
+                 "). Most likely, the DGF file name is wrong "
+                 "or the DGF file is corrupted, "
+                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+                 << " ---> Abort!" << std::endl;
+    return 2;
+}
+catch (Dune::Exception &e)
+{
+    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
+    return 3;
+}
+catch (...)
+{
+    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
+    return 4;
+}

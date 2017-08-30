@@ -51,8 +51,10 @@ SET_TYPE_PROP(OnePIncompressible, Grid, Dune::YaspGrid<2>);
 // Set the problem type
 SET_TYPE_PROP(OnePIncompressible, Problem, OnePTestProblem<TypeTag>);
 
-// spatial params and local residual
+// set the spatial params
 SET_TYPE_PROP(OnePIncompressible, SpatialParams, OnePTestSpatialParams<TypeTag>);
+
+// use the incompressible local residual (provides analytic jacobian)
 SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // the fluid system
@@ -87,9 +89,8 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
-
     static constexpr int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
