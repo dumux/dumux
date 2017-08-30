@@ -87,7 +87,8 @@ public:
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
-        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()/curElemVolVars[scvf.insideScvIdx()].viscosity();
+        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
+                                 / curElemVolVars[scvf.insideScvIdx()].viscosity();
         const Scalar deriv = tij*up;
 
         // add partial derivatives to the respective given matrices
@@ -139,7 +140,8 @@ public:
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
-        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()/curElemVolVars[scvf.insideScvIdx()].viscosity();
+        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
+                                 / curElemVolVars[scvf.insideScvIdx()].viscosity();
         const Scalar deriv = tij*up;
 
         // add partial derivatives to the respective given matrices
