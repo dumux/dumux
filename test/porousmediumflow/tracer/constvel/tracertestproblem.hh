@@ -36,31 +36,31 @@ namespace Dumux
 {
 
 template <class TypeTag>
-class TracerTestProblem;
+class TracerTest;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TracerTestProblem, INHERITS_FROM(Tracer));
-NEW_TYPE_TAG(TracerTestCCProblem, INHERITS_FROM(CCTpfaModel, TracerTestProblem));
-NEW_TYPE_TAG(TracerTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, TracerTestProblem));
-NEW_TYPE_TAG(TracerTestBoxProblem, INHERITS_FROM(BoxModel, TracerTestProblem));
+NEW_TYPE_TAG(TracerTest, INHERITS_FROM(Tracer));
+NEW_TYPE_TAG(TracerTestTpfa, INHERITS_FROM(CCTpfaModel, TracerTest));
+NEW_TYPE_TAG(TracerTestMpfa, INHERITS_FROM(CCMpfaModel, TracerTest));
+NEW_TYPE_TAG(TracerTestBox, INHERITS_FROM(BoxModel, TracerTest));
 
 // enable caching
-SET_BOOL_PROP(TracerTestProblem, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(TracerTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(TracerTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(TracerTest, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TracerTest, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(TracerTest, EnableFVGridGeometryCache, true);
 
 // Set the grid type
-SET_TYPE_PROP(TracerTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TracerTest, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TracerTestProblem, Problem, TracerTestProblem<TypeTag>);
+SET_TYPE_PROP(TracerTest, Problem, TracerTest<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TracerTestProblem, SpatialParams, TracerTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(TracerTest, SpatialParams, TracerTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TracerTestProblem, UseMoles, false);
+SET_BOOL_PROP(TracerTest, UseMoles, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
@@ -97,7 +97,7 @@ public:
     { return 0.0;}//1.0e-9; }
 };
 
-SET_TYPE_PROP(TracerTestProblem, FluidSystem, TracerFluidSystem<TypeTag>);
+SET_TYPE_PROP(TracerTest, FluidSystem, TracerFluidSystem<TypeTag>);
 
 } // end namespace Properties
 
@@ -116,7 +116,7 @@ SET_TYPE_PROP(TracerTestProblem, FluidSystem, TracerFluidSystem<TypeTag>);
  * <tt>./test_cctracer -ParameterFile ./test_cctracer.input</tt>
  */
 template <class TypeTag>
-class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
+class TracerTest : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
@@ -137,7 +137,7 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    TracerTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeom)
+    TracerTest(std::shared_ptr<const FVGridGeometry> fvGridGeom)
     : ParentType(fvGridGeom)
     {
         // stating in the console whether mole or mass fractions are used

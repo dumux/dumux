@@ -1,35 +1,22 @@
-add_input_file_links()
+dune_symlink_to_source_files(FILES "test_tracer.input")
 
 # tracer tests
-add_dumux_test(test_cctracer test_cctracer test_cctracer.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/cctracer-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/cctracer-00027.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cctracer")
+dune_add_test(NAME test_tracer_tpfa
+              SOURCES test_tracer.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa
+              CMD_ARGS test_tracer.input -Problem.Name tracercc)
 
-add_dumux_test(test_ccmpfatracer test_ccmpfatracer test_ccmpfatracer.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfatracer-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/ccmpfatracer-00027.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfatracer")
+dune_add_test(NAME test_tracer_box
+              SOURCES test_tracer.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestBox
+              CMD_ARGS test_tracer.input -Problem.Name tracerbox)
 
-add_dumux_test(test_boxtracer test_boxtracer test_boxtracer.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/boxtracer-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/boxtracer-00027.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxtracer")
+set(CMAKE_BUILD_TYPE Release)
 
 #install sources
 install(FILES
 tracertestproblem.hh
 tracertestspatialparams.hh
-test_cctracer.cc
-test_cctracer.input
-test_ccmpfatracer.cc
-test_ccmpfatracer.input
-test_boxtracer.cc
-test_boxtracer.input
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/tracer/implicit)
+test_tracer.cc
+test_tracer.input
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/tracer/constvel)
