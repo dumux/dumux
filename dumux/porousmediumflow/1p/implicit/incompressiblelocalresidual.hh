@@ -85,10 +85,14 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
+        static_assert(!FluidSystem::isCompressible(0),
+                      "1p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
+        static_assert(FluidSystem::viscosityIsConstant(0),
+                      "1p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
+
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
-        static_assert(!FluidSystem::isCompressible(0), "Only incompressible fluid systems are allowed!");
         static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
         const Scalar deriv = tij*up;
@@ -108,6 +112,11 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache,
                        const SubControlVolumeFace& scvf) const
     {
+        static_assert(!FluidSystem::isCompressible(0),
+                      "1p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
+        static_assert(FluidSystem::viscosityIsConstant(0),
+                      "1p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
+
         using AdvectionType = typename GET_PROP_TYPE(T, AdvectionType);
         const auto ti = AdvectionType::calculateTransmissibilities(problem,
                                                                    element,

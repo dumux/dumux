@@ -87,7 +87,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isLiquid(int phaseIdx)
+    static constexpr bool isLiquid(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -109,6 +109,16 @@ public:
 
         // let the fluid decide
         return Fluid::isCompressible();
+    }
+
+    /*!
+     * \brief Returns true if the fluid viscosity is constant
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    {
+        assert(0 <= phaseIdx && phaseIdx < numPhases);
+
+        return Fluid::viscosityIsConstant();
     }
 
     /*!
@@ -139,7 +149,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealGas(int phaseIdx)
+    static constexpr bool isIdealGas(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
