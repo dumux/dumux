@@ -45,21 +45,22 @@
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
-#include <dumux/assembly/ccassembler.hh>
+#include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(IncompressibleTestProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // some aliases for better readability
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -115,7 +116,9 @@ int main(int argc, char** argv)
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    SolutionVector x(leafGridView.size(0));
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
+    SolutionVector x(leafGridView.size(dofCodim));
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -144,7 +147,7 @@ int main(int argc, char** argv)
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = CCAssembler<TypeTag, DiffMethod::analytic>;
+    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
@@ -213,3 +216,27 @@ int main(int argc, char** argv)
     return 0;
 
 } // end main
+catch (Dumux::ParameterException &e)
+{
+    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
+    return 1;
+}
+catch (Dune::DGFException & e)
+{
+    std::cerr << "DGF exception thrown (" << e <<
+                 "). Most likely, the DGF file name is wrong "
+                 "or the DGF file is corrupted, "
+                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+                 << " ---> Abort!" << std::endl;
+    return 2;
+}
+catch (Dune::Exception &e)
+{
+    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
+    return 3;
+}
+catch (...)
+{
+    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
+    return 4;
+}

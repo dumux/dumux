@@ -26,6 +26,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/2p/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/2p/implicit/incompressiblelocalresidual.hh>
@@ -43,19 +44,21 @@ namespace Properties
 NEW_PROP_TAG(EnableFVGridGeometryCache);
 NEW_PROP_TAG(FVGridGeometry);
 
-NEW_TYPE_TAG(IncompressibleTestProblem, INHERITS_FROM(CCTpfaModel, TwoP, SpatialParams));
+NEW_TYPE_TAG(TwoPIncompressible, INHERITS_FROM(TwoP));
+NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible, SpatialParams));
+NEW_TYPE_TAG(TwoPIncompressibleBox, INHERITS_FROM(BoxModel, TwoPIncompressible, SpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPIncompressible, Grid, Dune::YaspGrid<2>);
 
 // Set the problem type
-SET_TYPE_PROP(IncompressibleTestProblem, Problem, TwoPTestProblem<TypeTag>);
+SET_TYPE_PROP(TwoPIncompressible, Problem, TwoPTestProblem<TypeTag>);
 
 // the local residual containing the analytic derivative methods
-SET_TYPE_PROP(IncompressibleTestProblem, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
 
 // Set the wetting phase
-SET_PROP(IncompressibleTestProblem, WettingPhase)
+SET_PROP(TwoPIncompressible, WettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -64,7 +67,7 @@ public:
 };
 
 // Set the non-wetting phase
-SET_PROP(IncompressibleTestProblem, NonwettingPhase)
+SET_PROP(TwoPIncompressible, NonwettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -73,9 +76,9 @@ public:
 };
 
 // Enable caching
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalVolumeVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGlobalFluxVariablesCache, false);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, false);
+SET_BOOL_PROP(TwoPIncompressible, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(TwoPIncompressible, EnableGlobalFluxVariablesCache, false);
+SET_BOOL_PROP(TwoPIncompressible, EnableFVGridGeometryCache, false);
 } // end namespace Properties
 
 template<class TypeTag>

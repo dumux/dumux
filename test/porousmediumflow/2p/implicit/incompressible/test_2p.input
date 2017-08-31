@@ -12,8 +12,5 @@ LensLowerLeft = 1.0 2.0 # [m] coordinates of the lower left lens corner
 LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
 
 [Problem]
-Name = 2pcc
+Name = 2p
 EnableGravity = true
-
-[Implicit]
-UpwindWeight = 1.0
