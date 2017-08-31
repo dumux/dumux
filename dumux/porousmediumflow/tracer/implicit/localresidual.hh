@@ -123,6 +123,7 @@ public:
         // get upwind weights into local scope
         PrimaryVariables flux(0.0);
         const auto diffusiveFluxes = fluxVars.molecularDiffusionFlux(0);
+
         // formulation with mole balances
         if (useMoles)
         {
@@ -184,52 +185,135 @@ public:
         // TODO maybe forward to the problem? -> necessary for reaction terms
     }
 
-    // template<class PartialDerivativeMatrices, class T = TypeTag>
-    // std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
-    // addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-    //                    const Problem& problem,
-    //                    const Element& element,
-    //                    const FVElementGeometry& fvGeometry,
-    //                    const ElementVolumeVariables& curElemVolVars,
-    //                    const ElementFluxVariablesCache& elemFluxVarsCache,
-    //                    const SubControlVolumeFace& scvf) const
-    // {
-    // }
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& curElemVolVars,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       const SubControlVolumeFace& scvf) const
+    {
+        // advective term: we do the same for all tracer components
+        auto rho = [](const VolumeVariables& volVars)
+        { return useMoles ? volVars.molarDensity() : volVars.density(); };
 
-    // template<class JacobianMatrix, class T = TypeTag>
-    // std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
-    // addFluxDerivatives(JacobianMatrix& A,
-    //                    const Problem& problem,
-    //                    const Element& element,
-    //                    const FVElementGeometry& fvGeometry,
-    //                    const ElementVolumeVariables& curElemVolVars,
-    //                    const ElementFluxVariablesCache& elemFluxVarsCache,
-    //                    const SubControlVolumeFace& scvf) const
-    // {
-    // }
+        // the volume flux
+        const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
 
-    // template<class PartialDerivativeMatrices>
-    // void addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-    //                                    const Problem& problem,
-    //                                    const Element& element,
-    //                                    const FVElementGeometry& fvGeometry,
-    //                                    const ElementVolumeVariables& curElemVolVars,
-    //                                    const ElementFluxVariablesCache& elemFluxVarsCache,
-    //                                    const SubControlVolumeFace& scvf) const
-    // {
-    // }
+        // the upwind weight
+        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
 
-    // template<class PartialDerivativeMatrices>
-    // void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-    //                              const Problem& problem,
-    //                              const Element& element,
-    //                              const FVElementGeometry& fvGeometry,
-    //                              const ElementVolumeVariables& curElemVolVars,
-    //                              const ElementFluxVariablesCache& elemFluxVarsCache,
-    //                              const SubControlVolumeFace& scvf) const
-    // {
-    //     // TODO maybe forward to the problem?
-    // }
+        // get the inside and outside volvars
+        const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
+
+        const auto insideWeight = std::signbit(volFlux) ? (1.0 - upwindWeight) : upwindWeight;
+        const auto outsideWeight = 1.0 - insideWeight;
+        const auto advDerivII = volFlux*rho(insideVolVars)*insideWeight;
+        const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
+
+        // diffusive term
+        const auto& fluxCache = elemFluxVarsCache[scvf];
+        const auto rhoMolar = 0.5*(insideVolVars.molarDensity() + outsideVolVars.molarDensity());
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            // diffusive term
+            const auto diffDeriv = useMoles ? rhoMolar*fluxCache.diffusionTij(/*phaseIdx=*/0, compIdx)
+                                            : rhoMolar*fluxCache.diffusionTij(/*phaseIdx=*/0, compIdx)*FluidSystem::molarMass(compIdx);
+
+            derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII + diffDeriv);
+            derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ - diffDeriv);
+        }
+    }
+
+    template<class JacobianMatrix, class T = TypeTag>
+    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    addFluxDerivatives(JacobianMatrix& A,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& curElemVolVars,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       const SubControlVolumeFace& scvf) const
+    {
+
+        // advective term: we do the same for all tracer components
+        auto rho = [](const VolumeVariables& volVars)
+        { return useMoles ? volVars.molarDensity() : volVars.density(); };
+
+        // the volume flux
+        const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
+
+        // the upwind weight
+        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+
+        // get the inside and outside volvars
+        const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
+
+        const auto insideWeight = std::signbit(volFlux) ? (1.0 - upwindWeight) : upwindWeight;
+        const auto outsideWeight = 1.0 - insideWeight;
+        const auto advDerivII = volFlux*rho(insideVolVars)*insideWeight;
+        const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
+
+        // diffusive term
+        using DiffusionType = typename GET_PROP_TYPE(T, MolecularDiffusionType);
+        const auto ti = DiffusionType::calculateTransmissibilities(problem,
+                                                                   element,
+                                                                   fvGeometry,
+                                                                   curElemVolVars,
+                                                                   scvf,
+                                                                   elemFluxVarsCache[scvf],
+                                                                   /*phaseIdx=*/0);
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                // diffusive term
+                const auto diffDeriv = useMoles ? ti[compIdx][scv.indexInElement()]
+                                                : ti[compIdx][scv.indexInElement()]*FluidSystem::molarMass(compIdx);
+                A[insideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] += diffDeriv;
+                A[outsideScv.dofIndex()][scv.dofIndex()][compIdx][compIdx] -= diffDeriv;
+            }
+
+            A[insideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] += advDerivII;
+            A[insideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] += advDerivIJ;
+            A[outsideScv.dofIndex()][outsideScv.dofIndex()][compIdx][compIdx] -= advDerivII;
+            A[outsideScv.dofIndex()][insideScv.dofIndex()][compIdx][compIdx] -= advDerivIJ;
+        }
+    }
+
+    template<class PartialDerivativeMatrices>
+    void addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                       const Problem& problem,
+                                       const Element& element,
+                                       const FVElementGeometry& fvGeometry,
+                                       const ElementVolumeVariables& curElemVolVars,
+                                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                                       const SubControlVolumeFace& scvf) const
+    {
+        // do the same as for inner facets
+        addFluxDerivatives(derivativeMatrices, problem, element, fvGeometry,
+                           curElemVolVars, elemFluxVarsCache, scvf);
+    }
+
+    template<class PartialDerivativeMatrices>
+    void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                 const Problem& problem,
+                                 const Element& element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& curElemVolVars,
+                                 const ElementFluxVariablesCache& elemFluxVarsCache,
+                                 const SubControlVolumeFace& scvf) const
+    {
+        // TODO maybe forward to the problem?
+    }
 };
 
 } // end namespace Dumux

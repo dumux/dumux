@@ -42,10 +42,13 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         // register standardized vtk output fields
-        vtk.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(0)),
-                                 [](const VolumeVariables& v){ return v.moleFraction(0, 0); });
-        vtk.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(0)),
-                                 [](const VolumeVariables& v){ return v.massFraction(0, 0); });
+        for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
+        {
+            vtk.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(compIdx)),
+                                     [compIdx](const VolumeVariables& v){ return v.moleFraction(0, compIdx); });
+            vtk.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(compIdx)),
+                                     [compIdx](const VolumeVariables& v){ return v.massFraction(0, compIdx); });
+        }
         vtk.addSecondaryVariable("rho", [](const VolumeVariables& v){ return v.density(); });
     }
 };

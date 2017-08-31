@@ -9,6 +9,8 @@ Cells = 50 50
 
 [Problem]
 Name = tracer # name passed to the output routines
+D = 1e-8
+D2 = 0
 
 [Vtk]
 AddVelocity = true

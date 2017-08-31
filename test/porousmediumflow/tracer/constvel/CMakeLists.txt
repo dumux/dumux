@@ -1,15 +1,25 @@
 dune_symlink_to_source_files(FILES "test_tracer.input")
 
 # tracer tests
-dune_add_test(NAME test_tracer_tpfa
+dune_add_test(NAME test_tracer_explicit_tpfa
               SOURCES test_tracer.cc
-              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa
-              CMD_ARGS test_tracer.input -Problem.Name tracercc)
+              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=false
+              CMD_ARGS test_tracer.input -Problem.Name tracer_explicit_tpfa)
 
-dune_add_test(NAME test_tracer_box
+dune_add_test(NAME test_tracer_explicit_box
               SOURCES test_tracer.cc
-              COMPILE_DEFINITIONS TYPETAG=TracerTestBox
-              CMD_ARGS test_tracer.input -Problem.Name tracerbox)
+              COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=false
+              CMD_ARGS test_tracer.input -Problem.Name tracer_explicit_box)
+
+dune_add_test(NAME test_tracer_implicit_tpfa
+              SOURCES test_tracer.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestTpfa IMPLICIT=true
+              CMD_ARGS test_tracer.input -Problem.Name tracer_implicit_tpfa)
+
+dune_add_test(NAME test_tracer_implicit_box
+              SOURCES test_tracer.cc
+              COMPILE_DEFINITIONS TYPETAG=TracerTestBox IMPLICIT=true
+              CMD_ARGS test_tracer.input -Problem.Name tracer_implicit_box)
 
 set(CMAKE_BUILD_TYPE Release)
 

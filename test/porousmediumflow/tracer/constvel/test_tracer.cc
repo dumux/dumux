@@ -134,7 +134,7 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic, /*implicit=*/false>;
+    using Assembler = FVAssembler<TypeTag, DiffMethod::analytic, IMPLICIT>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     auto A = std::make_shared<JacobianMatrix>();

@@ -29,6 +29,7 @@
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/tracer/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/fluidsystems/base.hh>
 
 #include "tracertestspatialparams.hh"
 
@@ -64,7 +65,8 @@ SET_BOOL_PROP(TracerTest, UseMoles, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem
+class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                               TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -73,15 +75,23 @@ class TracerFluidSystem
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
 public:
+    static constexpr bool isTracerFluidSystem()
+    { return true; }
+
+    //! None of the components are the main component of the phase
+    static constexpr bool isMainComponent(int compIdx, int phaseIdx)
+    { return false; }
+
     //! The number of components
-    static constexpr int numComponents = 1;
+    static constexpr int numComponents = 2;
+    static constexpr int numPhases = 1;
 
     //! Human readable component name (index compIdx) (for vtk output)
-    static std::string componentName(int compIdx)
+    static constexpr std::string componentName(int compIdx)
     { return "tracer_" + std::to_string(compIdx); }
 
     //! Human readable phase name (index phaseIdx) (for velocity vtk output)
-    static std::string phaseName(int phaseIdx = 0)
+    static constexpr std::string phaseName(int phaseIdx = 0)
     { return "Groundwater"; }
 
     //! Molar mass in kg/mol of the component with index compIdx
@@ -94,7 +104,26 @@ public:
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)
-    { return 0.0;}//1.0e-9; }
+    {
+        static const Scalar D = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, D);
+        static const Scalar D2 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, D2);
+        if (compIdx == 0)
+            return D;
+        else
+            return D2;
+    }
+
+    /*!
+     * \copydoc BaseFluidSystem::isCompressible
+     */
+    static constexpr bool isCompressible(int phaseIdx)
+    { return false; }
+
+     /*!
+     * \copydoc BaseFluidSystem::viscosityIsConstant
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    { return true; }
 };
 
 SET_TYPE_PROP(TracerTest, FluidSystem, TracerFluidSystem<TypeTag>);
