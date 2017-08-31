@@ -61,6 +61,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -97,14 +98,10 @@ public:
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
+        // density interpolation
         Scalar rho(0.0);
         for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[scv];
-
-            // density interpolation
-            rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
-        }
+            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
@@ -143,6 +140,55 @@ public:
                 componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux;
+    }
+
+    // compute transmissibilities ti for analytical jacobians
+    static std::array<std::vector<Scalar>, numComponents>
+    calculateTransmissibilities(const Problem& problem,
+                                const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolumeFace& scvf,
+                                const FluxVarCache& fluxVarCache,
+                                const int phaseIdx)
+    {
+        Scalar rho(0.0);
+        const auto& shapeValues = fluxVarCache.shapeValues();
+        for (auto&& scv : scvs(fvGeometry))
+            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
+
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        std::array<std::vector<Scalar>, numComponents> ti;
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            if(FluidSystem::isMainComponent(compIdx, phaseIdx))
+                continue;
+
+            // effective diffusion tensors
+            auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
+                                                              insideVolVars.saturation(phaseIdx),
+                                                              insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+            auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
+                                                               outsideVolVars.saturation(phaseIdx),
+                                                               outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+
+            // scale by extrusion factor
+            insideD *= insideVolVars.extrusionFactor();
+            outsideD *= outsideVolVars.extrusionFactor();
+
+            // the resulting averaged diffusion tensor
+            const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
+
+            ti[compIdx].resize(fvGeometry.numScv());
+            for (auto&& scv : scvs(fvGeometry))
+                ti[compIdx][scv.indexInElement()] =
+                    -rho*(applyDiffusionTensor_(D, fluxVarCache.gradN(scv.indexInElement()))
+                            *scvf.unitOuterNormal())*scvf.area();
+        }
+
+        return ti;
     }
 
 private:
