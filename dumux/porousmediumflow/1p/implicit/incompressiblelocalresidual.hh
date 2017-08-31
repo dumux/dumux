@@ -41,6 +41,7 @@ class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -87,6 +88,7 @@ public:
         const auto tij = elemFluxVarsCache[scvf].advectionTij();
 
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
+        static_assert(!FluidSystem::isCompressible(0), "Only incompressible fluid systems are allowed!");
         static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
         const Scalar deriv = tij*up;
