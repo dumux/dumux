@@ -97,7 +97,7 @@ public:
     GlobalPosition velocity(const SubControlVolumeFace& scvf) const
     {
         GlobalPosition vel(1e-5);
-        const auto globalPos = scvf.center();
+        const auto globalPos = scvf.ipGlobal();
         const auto& x = globalPos[0];
         const auto& y = globalPos[1];
 
