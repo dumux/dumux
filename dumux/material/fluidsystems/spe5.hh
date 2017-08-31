@@ -112,7 +112,7 @@ public:
      *
      * In the SPE-5 problems all fluids are compressible...
      */
-    static bool isCompressible(int phaseIdx)
+    static constexpr bool isCompressible(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         return true;
