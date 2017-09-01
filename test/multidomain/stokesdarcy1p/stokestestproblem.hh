@@ -104,7 +104,7 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
+        dimWorld = GridView::dimensionworld
     };
 
     enum {

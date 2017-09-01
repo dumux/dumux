@@ -19,10 +19,11 @@
 /*!
  * \file
  *
- * \brief test for the coupled model
+ * \brief Test for the coupled isothermal two-component Stokes and
+ *        isothermal two-phase two-component Darcy model
  */
 #include <config.h>
-#include "stokesdarcy1pproblem.hh"
+#include "2cstokes2p2cproblem.hh"
 #include <dumux/multidomain/start.hh>
 
 /*!
@@ -39,6 +40,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(TestCoupledStokesDarcyProblem) ProblemTypeTag;
+    typedef TTAG(TwoCStokesTwoPTwoCTestProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

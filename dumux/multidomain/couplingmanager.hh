@@ -92,6 +92,11 @@ class CouplingManagerStokesDarcy
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(StokesProblemTypeTag, CellCenterPrimaryVariables);
     using DarcyPrimaryVariables = typename GET_PROP_TYPE(DarcyProblemTypeTag, PrimaryVariables);
 
+    using StokesFluidSystem = typename GET_PROP_TYPE(StokesProblemTypeTag, FluidSystem);
+    using DarcyFluidSystem = typename GET_PROP_TYPE(DarcyProblemTypeTag, FluidSystem);
+
+    using StokesFluidState = typename GET_PROP_TYPE(StokesProblemTypeTag, FluidState); // TODO ?
+
     enum {
         dim = StokesGridView::dimension,
         dimWorld = StokesGridView::dimensionworld
@@ -107,6 +112,9 @@ class CouplingManagerStokesDarcy
     using DofTypeIndices = typename GET_PROP(StokesProblemTypeTag, DofTypeIndices);
     using cellCenterIdx = typename DofTypeIndices::CellCenterIdx;
     using faceIdx = typename DofTypeIndices::FaceIdx;
+
+    using StokesIndices = typename GET_PROP_TYPE(StokesProblemTypeTag, Indices);
+    using DarcyIndices = typename GET_PROP_TYPE(DarcyProblemTypeTag, Indices);
 
 public:
 
@@ -389,17 +397,43 @@ public:
         Scalar outerNormalScalar = fvGeometry.scvf(couplingScvfIdx).outerNormalScalar();
         Scalar interfaceArea = fvGeometry.scvf(couplingScvfIdx).area();
         // TODO volVars = elemVolVars[scv], only 1 scv --> [0]?
-        Scalar densityStokes = elemVolVars[0].density(); // TODO upwind?
+        Scalar densityStokes = elemVolVars[0].density(0); // TODO upwind? // TODO phaseIdx = 0???
         const Scalar velocity = globalFaceVars.faceVars(couplingScvfIdx).velocity();
 
         // TODO stokesProblem_.massBalanceIdx, temperature, components
         // mass coupling condition
         CellCenterPrimaryVariables stokesCCCouplingResidual(0.0);
-        stokesCCCouplingResidual[0] = densityStokes * velocity * outerNormalScalar * interfaceArea; // TODO nc --> rho_g^ff
+
+        std::cout << "** couplingmanager: Stokes numPhases = " << StokesFluidSystem::numPhases << ", numComponents = " << StokesFluidSystem::numComponents
+                << ", Darcy numPhases = " << DarcyFluidSystem::numPhases << ", numComponents = " << DarcyFluidSystem::numComponents << std::endl;
+        // 1p
+        if (StokesFluidSystem::numComponents == 1) // TODO numphases?
+        {
+            stokesCCCouplingResidual[StokesIndices::pressureIdx] = densityStokes * velocity * outerNormalScalar * interfaceArea;
+        }
+        // 2p2c
+        else if (StokesFluidSystem::numComponents == 2) // TODO numphases?
+        {
+            // TODO check each variable, rough draft/attempt
+            StokesFluidState fluidState;
+            Scalar massFractionVapor = elemVolVars[0].massFraction(StokesFluidSystem::nPhaseIdx, StokesFluidSystem::wCompIdx);
+            Scalar diffusionCoefficient = StokesFluidSystem::binaryDiffusionCoefficient(fluidState, StokesFluidSystem::nPhaseIdx, StokesFluidSystem::wCompIdx, StokesFluidSystem::nCompIdx);
+            Scalar moleFracWaterInGasDarcy = moleFracInDarcyElement(fvGeometry.scvf(couplingScvfIdx));
+            Scalar moleFracStokes = elemVolVars[0].moleFraction(StokesFluidSystem::nPhaseIdx, StokesFluidSystem::wCompIdx); // TODO correct???
+            Scalar deltaX = moleFracWaterInGasDarcy - moleFracStokes;
+            Scalar yPoscenterStokesElement = fvGeometry.scv(fvGeometry.scvf(couplingScvfIdx).insideScvIdx()).center()[1];
+            Scalar yPoscenterDarcyElement = centerInDarcyElement(fvGeometry.scvf(couplingScvfIdx))[1];
+            Scalar distanceCenters = yPoscenterStokesElement - yPoscenterDarcyElement ; // TODO
+            Scalar gradientMassFractionVapor = deltaX / distanceCenters;
+            Scalar diffusiveFlux =  -1.0 * diffusionCoefficient * densityStokes * gradientMassFractionVapor; // j_g^wff = -D_g * rho_g * grad X_g^w
+            stokesCCCouplingResidual[StokesIndices::massOrMoleFracIdx] = (densityStokes * massFractionVapor * velocity + diffusiveFlux) * outerNormalScalar * interfaceArea;
+        }
+        else // TODO error
+        {
+            std::cout << "** WARNING: coupling not implemented for more than two phases!" << std::endl;
+        }
 
         // TODO temperature
-
-        // TODO transport
 
 //        Scalar elemIdx = fvGeometry.scv(fvGeometry.scvf(couplingScvfIdx).insideScvIdx()).elementIndex();
 //        std::cout << "** couplingmanager: StokesCCCouplingResidual = " << stokesCCCouplingResidual[0] << " at cc in element " << elemIdx<< std::endl;
@@ -471,7 +505,14 @@ public:
     //! evaluate coupling residual for the derivative Darcy DOF with respect to Stokes DOF
     auto evalDarcyCouplingResidual(const DarcyElement& element)
     {
-        return (-1.0*fluxStokesToDarcy_); // fluxDarcyToStokesCC
+        DarcyPrimaryVariables fluxDarcyToStokes(0.0);
+        fluxDarcyToStokes[DarcyIndices::pressureIdx] = -1.0 * fluxStokesToDarcy_[StokesIndices::pressureIdx];
+//        // 2p2c
+//        fluxDarcyToStokes[DarcyIndices::contiWEqIdx] = -1.0 * fluxStokesToDarcy_[StokesIndices::massOrMoleFracIdx];
+//        // temperature
+//        fluxDarcyToStokes[DarcyIndices::temperatureIdx] = -1.0 * fluxStokesToDarcy_[StokesIndices::temeratureIdx];
+
+        return fluxDarcyToStokes; // fluxDarcyToStokesCC
     }
 
 protected:
@@ -489,7 +530,7 @@ protected:
     }
 
     // ! Returns the pressure value of the adjacent Darcy element
-    const Scalar pressureInDarcyElement(const StokesSubControlVolumeFace& scvf)
+    const Scalar pressureInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
     {
         const auto& darcyTree = darcyProblem_.boundingBoxTree();
 
@@ -506,7 +547,42 @@ protected:
         darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, darcyProblem_.model().curSol());
         const auto darcyVolVars = darcyElemVolVars[darcyDofIdx];
 
-        return darcyVolVars.pressure();
+        return darcyVolVars.pressure(0); // TODO phaseIdx?!!!
+    }
+
+    const Scalar moleFracInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
+    {
+        const auto& darcyTree = darcyProblem_.boundingBoxTree();
+
+        // create a vector containing all Darcy elements coupled to the Stokes scvf
+        const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
+
+        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
+        DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
+        darcyFvGeometry.bind(darcyCouplingElement);
+
+        const auto darcyDofIdx = darcyCouplingInfo.darcyDofIdx;
+
+        auto darcyElemVolVars = localView(darcyProblem_.model().curGlobalVolVars());
+        darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, darcyProblem_.model().curSol());
+        const auto darcyVolVars = darcyElemVolVars[darcyDofIdx];
+
+        return darcyVolVars.moleFraction(DarcyIndices::nPhaseIdx, DarcyIndices::wCompIdx);
+    }
+
+    const auto centerInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
+    {
+        const auto& darcyTree = darcyProblem_.boundingBoxTree();
+
+        // create a vector containing all Darcy elements coupled to the Stokes scvf
+        const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
+
+        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
+        DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
+        darcyFvGeometry.bind(darcyCouplingElement);
+
+        auto center = darcyFvGeometry.scv(scvf.insideScvIdx()).center();
+        return center;
     }
 
     //! Returns the implementation of the problem (i.e. static polymorphism)
