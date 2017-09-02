@@ -34,7 +34,6 @@
 #include <dumux/linear/matrixconverter.hh>
 #include "newtonconvergencewriter.hh"
 
-
 namespace Dumux {
 
 namespace Properties
@@ -80,75 +79,6 @@ public:
         : ParentType(problem)
     {}
 
-
-    auto createMatrix(JacobianMatrix &A)
-    {
-        // copy the matrix and the vector to types the IterativeSolverBackend can handle
-
-        using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
-        using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-
-        // problem-agnostic version
-        std::size_t numRows = 0;
-        Dune::Hybrid::forEach(A[Dune::Indices::_0], [&numRows](const auto& subMatrixInFirstRow)
-        {
-            std::cout << "in matrix of first row:\n";
-            std::cout << "numRows: " << subMatrixInFirstRow.N() << ", numCols: " << subMatrixInFirstRow.M() << std::endl;
-
-            // The number of rows of the individual submatrice's block equals the respective number of equations.
-            const auto numEq = std::decay_t<decltype(subMatrixInFirstRow)>::block_type::rows; // TODO: is this allways correct?
-            numRows += numEq * subMatrixInFirstRow.M();
-        });
-
-        // /*const std::size_t*/ numRows = this->model_().numCellCenterDofs()*numEqCellCenter + this->model_().numFaceDofs()*numEqFace;
-
-
-        // set the rowsizes
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(numRows, numRows);
-
-        // lambda function to fill the occupation pattern
-        auto addIndices = [&occupationPattern](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
-        {
-            using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
-            const auto blockSizeI = BlockType::rows;
-            const auto blockSizeJ = BlockType::cols;
-            for(auto row = subMatrix.begin(); row != subMatrix.end(); ++row)
-                for(auto col = row->begin(); col != row->end(); ++col)
-                    for(std::size_t i = 0; i < blockSizeI; ++i)
-                        for(std::size_t j = 0; j < blockSizeJ; ++j)
-                            occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
-
-        };
-
-
-        int rowIndex = 0;
-
-        Dune::Hybrid::forEach(A, [&rowIndex, &addIndices, numRows](const auto& rowOfMultiTypeMatrix)
-        {
-            int colIndex = 0;
-
-            std::cout << "processing one row of multitypeblockmatrix " << std::endl;
-            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&colIndex, &addIndices, &rowIndex, numRows](const auto& subMatrix)
-            {
-                std::cout << "numRows: " << subMatrix.N() << ", numCols: " << subMatrix.M() << std::endl;
-                addIndices(subMatrix, rowIndex, colIndex);
-
-                const auto numEq = std::decay_t<decltype(subMatrix)>::block_type::rows;
-                colIndex += numEq*subMatrix.M();
-
-                // if we arrived at the right side of the matrix, increase the row index
-                if(colIndex == numRows)
-                    rowIndex += numEq*subMatrix.N();
-            });
-        });
-
-        auto M = SparseMatrix(numRows, numRows, SparseMatrix::random);
-        occupationPattern.exportIdx(M);
-
-        return M;
-    }
-
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
@@ -168,27 +98,22 @@ public:
                       SolutionVector &x,
                       SolutionVector &b)
     {
-        // createMatrix(A);
         try
         {
             if (this->numSteps_ == 0)
                 this->initialResidual_ = b.two_norm();
 
-            // copy the matrix and the vector to types the IterativeSolverBackend can handle
-            using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
-            using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-
-            // get the new matrix sizes
-            std::size_t numRows = numEqCellCenter*A[cellCenterIdx][cellCenterIdx].N() + numEqFace*A[faceIdx][cellCenterIdx].N();
-            std::size_t numCols = numEqCellCenter*A[cellCenterIdx][cellCenterIdx].M() + numEqFace*A[cellCenterIdx][faceIdx].M();
-
             // check matrix sizes
             assert(A[cellCenterIdx][cellCenterIdx].N() == A[cellCenterIdx][faceIdx].N());
             assert(A[faceIdx][cellCenterIdx].N() == A[faceIdx][faceIdx].N());
-            assert(numRows == numCols);
 
             // create the bcrs matrix the IterativeSolver backend can handle
             const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
+
+            // get the new matrix sizes
+            const std::size_t numRows = M.N();
+            const std::size_t numCols = M.M();
+            assert(numRows == numCols);
 
             // create the vector the IterativeSolver backend can handle
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
