@@ -18,31 +18,21 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 2p1cni specific controller for the newton solver.
+ * \brief A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
  *
- * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the newton method to abort quicker if the solution is
- * way out of bounds.
  */
 #ifndef DUMUX_MATRIX_CONVERTER
 #define DUMUX_MATRIX_CONVERTER
 
-#include "properties.hh"
 
-#include <dumux/nonlinear/newtoncontroller.hh>
-#include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
-#include "newtonconvergencewriter.hh"
-#include <dune/common/tupleutility.hh>
+#include <dune/common/hybridutilities.hh>
 
 namespace Dumux {
 
 /*!
- * \ingroup PNMModel
- * \brief A PNM specific controller for the newton solver.
+ *A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
+ * TODO: allow block sizes for BCRSMatrix other than 1x1 ?
  *
- * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the newton method to abort quicker if the solution is
- * way out of bounds.
  */
 
 template <class MultiTypeBlockMatrix, class Scalar=double>
@@ -103,12 +93,13 @@ private:
             {
                 addIndices(subMatrix, rowIndex, colIndex);
 
-                const auto numEq = std::decay_t<decltype(subMatrix)>::block_type::cols;
-                colIndex += numEq*subMatrix.M();
+                using SubBlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
 
-                // if we arrived at the right side of the matrix, increase the row index
+                colIndex += SubBlockType::cols * subMatrix.M();
+
+                // if we have arrived at the right side of the matrix, increase the row index
                 if(colIndex == numRows)
-                    rowIndex += numEq*subMatrix.N();
+                    rowIndex += SubBlockType::rows * subMatrix.N();
             });
         });
 
@@ -148,12 +139,13 @@ private:
             {
                 copyValues(subMatrix, rowIndex, colIndex);
 
-                const auto numEq = std::decay_t<decltype(subMatrix)>::block_type::cols;
-                colIndex += numEq*subMatrix.M();
+                using SubBlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
 
-                // if we arrived at the right side of the matrix, increase the row index
+                colIndex += SubBlockType::cols * subMatrix.M();
+
+                // if we have arrived at the right side of the matrix, increase the row index
                 if(colIndex == numRows)
-                    rowIndex += numEq*subMatrix.N();
+                    rowIndex += SubBlockType::rows * subMatrix.N();
             });
         });
     }
@@ -165,18 +157,12 @@ private:
      */
     static std::size_t getNumRows_(const MultiTypeBlockMatrix& A)
     {
-        // problem-agnostic version
         std::size_t numRows = 0;
         Dune::Hybrid::forEach(A[Dune::Indices::_0], [&numRows](const auto& subMatrixInFirstRow)
         {
-            // std::cout << "in matrix of first row:\n";
-            // std::cout << "numRows: " << subMatrixInFirstRow.N() << ", numCols: " << subMatrixInFirstRow.M() << std::endl;
-
-            // The number of rows of the individual submatrice's block equals the respective number of equations.
-            const auto numEq = std::decay_t<decltype(subMatrixInFirstRow)>::block_type::cols; // TODO: is this allways correct?
+            // the number of cols of the individual submatrice's block equals the respective number of equations.
+            const auto numEq = std::decay_t<decltype(subMatrixInFirstRow)>::block_type::cols;
             numRows += numEq * subMatrixInFirstRow.M();
-            // std::cout << "numEq: " << numEq << std::endl;
-            // std::cout << "totalNumRows: " << numRows  << std::endl;
         });
 
         return numRows;
