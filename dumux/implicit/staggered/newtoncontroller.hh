@@ -31,11 +31,9 @@
 
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#include <dumux/linear/matrixconverter.hh>
 #include "newtonconvergencewriter.hh"
 
-#include "matrixconverter.hh"
-
-#include <dune/common/tupleutility.hh>
 
 namespace Dumux {
 
