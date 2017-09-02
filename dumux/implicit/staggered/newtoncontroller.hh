@@ -33,6 +33,10 @@
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include "newtonconvergencewriter.hh"
 
+#include "matrixconverter.hh"
+
+#include <dune/common/tupleutility.hh>
+
 namespace Dumux {
 
 namespace Properties
@@ -53,6 +57,7 @@ namespace Properties
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
+
 template <class TypeTag>
 class StaggeredNewtonController : public NewtonController<TypeTag>
 {
@@ -77,6 +82,75 @@ public:
         : ParentType(problem)
     {}
 
+
+    auto createMatrix(JacobianMatrix &A)
+    {
+        // copy the matrix and the vector to types the IterativeSolverBackend can handle
+
+        using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
+        using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
+
+        // problem-agnostic version
+        std::size_t numRows = 0;
+        Dune::Hybrid::forEach(A[Dune::Indices::_0], [&numRows](const auto& subMatrixInFirstRow)
+        {
+            std::cout << "in matrix of first row:\n";
+            std::cout << "numRows: " << subMatrixInFirstRow.N() << ", numCols: " << subMatrixInFirstRow.M() << std::endl;
+
+            // The number of rows of the individual submatrice's block equals the respective number of equations.
+            const auto numEq = std::decay_t<decltype(subMatrixInFirstRow)>::block_type::rows; // TODO: is this allways correct?
+            numRows += numEq * subMatrixInFirstRow.M();
+        });
+
+        // /*const std::size_t*/ numRows = this->model_().numCellCenterDofs()*numEqCellCenter + this->model_().numFaceDofs()*numEqFace;
+
+
+        // set the rowsizes
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(numRows, numRows);
+
+        // lambda function to fill the occupation pattern
+        auto addIndices = [&occupationPattern](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
+        {
+            using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
+            const auto blockSizeI = BlockType::rows;
+            const auto blockSizeJ = BlockType::cols;
+            for(auto row = subMatrix.begin(); row != subMatrix.end(); ++row)
+                for(auto col = row->begin(); col != row->end(); ++col)
+                    for(std::size_t i = 0; i < blockSizeI; ++i)
+                        for(std::size_t j = 0; j < blockSizeJ; ++j)
+                            occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
+
+        };
+
+
+        int rowIndex = 0;
+
+        Dune::Hybrid::forEach(A, [&rowIndex, &addIndices, numRows](const auto& rowOfMultiTypeMatrix)
+        {
+            int colIndex = 0;
+
+            std::cout << "processing one row of multitypeblockmatrix " << std::endl;
+            Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&colIndex, &addIndices, &rowIndex, numRows](const auto& subMatrix)
+            {
+                std::cout << "numRows: " << subMatrix.N() << ", numCols: " << subMatrix.M() << std::endl;
+                addIndices(subMatrix, rowIndex, colIndex);
+
+                const auto numEq = std::decay_t<decltype(subMatrix)>::block_type::rows;
+                colIndex += numEq*subMatrix.M();
+
+                // if we arrived at the right side of the matrix, increase the row index
+                if(colIndex == numRows)
+                    rowIndex += numEq*subMatrix.N();
+            });
+        });
+
+        auto M = SparseMatrix(numRows, numRows, SparseMatrix::random);
+        occupationPattern.exportIdx(M);
+
+        return M;
+    }
+
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
@@ -96,6 +170,7 @@ public:
                       SolutionVector &x,
                       SolutionVector &b)
     {
+        // createMatrix(A);
         try
         {
             if (this->numSteps_ == 0)
@@ -115,75 +190,7 @@ public:
             assert(numRows == numCols);
 
             // create the bcrs matrix the IterativeSolver backend can handle
-            auto M = SparseMatrix(numRows, numCols, SparseMatrix::random);
-
-            // set the rowsizes
-            // A11 and A12
-            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                    M.setrowsize(numEqCellCenter*row.index() + i, row->size()*numEqCellCenter);
-            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                    M.setrowsize(numEqCellCenter*row.index() + i, M.getrowsize(numEqCellCenter*row.index() + i) + row->size()*numEqFace);
-            // A21 and A22
-            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqFace; ++i)
-                    M.setrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, row->size()*numEqCellCenter);
-            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqFace; ++i)
-                    M.setrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, M.getrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter) + row->size()*numEqFace);
-            M.endrowsizes();
-
-            // set the indices
-            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M.addindex(row.index()*numEqCellCenter + i, col.index()*numEqCellCenter + j);
-
-            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M.addindex(row.index()*numEqCellCenter + i, col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter);
-
-            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M.addindex(row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, col.index()*numEqCellCenter + j);
-
-            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M.addindex(row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter);
-            M.endindices();
-
-            // copy values
-            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M[row.index()*numEqCellCenter + i][col.index()*numEqCellCenter + j] = A[cellCenterIdx][cellCenterIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M[row.index()*numEqCellCenter + i][col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter] = A[cellCenterIdx][faceIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M[row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter][col.index()*numEqCellCenter + j] = A[faceIdx][cellCenterIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M[row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter][col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter] = A[faceIdx][faceIdx][row.index()][col.index()][i][j];
+            const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
 
             // create the vector the IterativeSolver backend can handle
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
@@ -202,7 +209,7 @@ public:
             // printmatrix(std::cout, M, "", "");
 
             // solve
-            bool converged = this->linearSolver_.solve(M, y, bTmp);
+            const bool converged = this->linearSolver_.solve(M, y, bTmp);
 
             // copy back the result y into x
             for (std::size_t i = 0; i < x[cellCenterIdx].N(); ++i)
