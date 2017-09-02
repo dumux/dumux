@@ -24,7 +24,12 @@
 #ifndef DUMUX_MATRIX_CONVERTER
 #define DUMUX_MATRIX_CONVERTER
 
-
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/common/indices.hh>
+#include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/multitypeblockvector.hh>
+#include <dune/istl/multitypeblockmatrix.hh>
 #include <dune/common/hybridutilities.hh>
 
 namespace Dumux {
@@ -43,14 +48,21 @@ class MatrixConverter
 
 public:
 
-    // copy the matrix and the vector to types the IterativeSolverBackend can handle
+    /*!
+     * \brief Converts the matrix to a type the IterativeSolverBackend can handle
+     *
+     * \param M The converted matrix
+     * \param A The original multitype blockmatrix
+     */
     static auto multiTypeToBCRSMatrix(const MultiTypeBlockMatrix &A)
     {
-        // get the number of rows for the converted matrix
+        // get the size for the converted matrix
         const auto numRows = getNumRows_(A);
 
+        // create an empty BCRS matrix with 1x1 blocks
         auto M = BCRSMatrix(numRows, numRows, BCRSMatrix::random);
 
+        // set the occupation pattern and copy the values
         setOccupationPattern_(M, A);
         copyValues_(M, A);
 
@@ -60,14 +72,14 @@ public:
 private:
 
     /*!
-     * \brief Sets the occupation pattern (i.e. indices) for the converted matrix
+     * \brief Sets the occupation pattern and indices for the converted matrix
      *
      * \param M The converted matrix
-     * \param A The original subMatrix of the multitype blockmatrix
+     * \param A The original multitype blockmatrix
      */
     static void setOccupationPattern_(BCRSMatrix& M, const MultiTypeBlockMatrix& A)
     {
-        // set the rowsizes
+        // prepare the occupation pattern
         const auto numRows = M.N();
         Dune::MatrixIndexSet occupationPattern;
         occupationPattern.resize(numRows, numRows);
@@ -85,6 +97,7 @@ private:
                             occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
         };
 
+        // fill the pattern
         int rowIndex = 0;
         Dune::Hybrid::forEach(A, [&addIndices, &rowIndex, &occupationPattern, numRows](const auto& rowOfMultiTypeMatrix)
         {
@@ -114,7 +127,7 @@ private:
      */
     static void copyValues_(BCRSMatrix& M, const MultiTypeBlockMatrix& A)
     {
-        // set the rowsizes
+        // get number of rows
         const auto numRows = M.N();
 
         // lambda function to copy the values
@@ -151,14 +164,15 @@ private:
     }
 
     /*!
-     * \brief Calculates the total number of rows (== number of cols) for the converted matrix, assuming a block size of one
+     * \brief Calculates the total number of rows (== number of cols) for the converted matrix, assuming a block size of 1x1
      *
      * \param A The original multitype blockmatrix
      */
     static std::size_t getNumRows_(const MultiTypeBlockMatrix& A)
     {
+        // iterate over the first row of the multitype blockmatrix
         std::size_t numRows = 0;
-        Dune::Hybrid::forEach(A[Dune::Indices::_0], [&numRows](const auto& subMatrixInFirstRow)
+        Dune::Hybrid::forEach(Dune::Hybrid::elementAt(A, Dune::Indices::_0), [&numRows](const auto& subMatrixInFirstRow)
         {
             // the number of cols of the individual submatrice's block equals the respective number of equations.
             const auto numEq = std::decay_t<decltype(subMatrixInFirstRow)>::block_type::cols;
