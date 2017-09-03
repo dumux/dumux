@@ -35,11 +35,8 @@ namespace Dumux
  * \brief Index names for the Richards model.
  */
 
-template <class TypeTag>
 struct RichardsIndices
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
     //////////
     // primary variable indices
     //////////
@@ -47,6 +44,7 @@ struct RichardsIndices
     //! Primary variable index for the wetting phase pressure
     static constexpr int pressureIdx = 0;
     static constexpr int switchIdx = 0;
+
     //////////
     // equation indices
     //////////

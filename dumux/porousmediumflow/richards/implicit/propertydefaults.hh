@@ -96,7 +96,7 @@ SET_BOOL_PROP(Richards, UseKelvinEquation, false);
 SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(Richards, Indices, RichardsIndices);
 
 //! The class with all index definitions for the model
 SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
