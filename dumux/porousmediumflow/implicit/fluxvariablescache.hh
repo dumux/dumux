@@ -118,7 +118,9 @@ private:
 
 // forward declaration of the base class of the tpfa flux variables cache
 template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
-class CCTpfaPorousMediumFluxVariablesCache;
+class CCTpfaPorousMediumFluxVariablesCache : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                             public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
+                                             public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
@@ -127,9 +129,11 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
                                                              GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
                                                              GET_PROP_VALUE(TypeTag, EnableEnergyBalance)> {};
 
-// specialization for the case of pure advection
+// // specialization for the case of pure advection
+// TODO ALL THESE SHOULDNOT BE NECESSARY AND ALWAYS DERIVE FROM ALL CACHES!
 template<class TypeTag>
-class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache {};
+class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                          public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
 
 // specialization for the case of advection & diffusion
 template<class TypeTag>
@@ -139,6 +143,7 @@ class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, true, false> : public 
 // specialization for the case of advection & heat conduction
 template<class TypeTag>
 class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, false, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
+                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
                                                                          public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
 
 // specialization for the case of advection, diffusion & heat conduction
