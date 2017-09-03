@@ -109,6 +109,7 @@ class RichardsLensProblem : public ImplicitPorousMediaProblem<TypeTag>
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
+        bothPhases = Indices::bothPhases,
 
         // Grid and world dimension
         dimWorld = GridView::dimensionworld
@@ -196,7 +197,11 @@ public:
         if (!onInlet_(globalPos))
             return initial_(globalPos);
         else
-            return PrimaryVariables(0.0);
+        {
+            PrimaryVariables values(0.0);
+            values.setState(bothPhases);
+            return values;
+        }
     }
 
     /*!
@@ -241,6 +246,7 @@ private:
         const Scalar sw = 0.0;
         const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
         values[pressureIdx] = nonWettingReferencePressure() - pc;
+        values.setState(bothPhases);
         return values;
     }
 
