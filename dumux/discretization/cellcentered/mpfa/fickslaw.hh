@@ -48,12 +48,14 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -174,7 +176,7 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == phaseIdx)
+            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
               continue;
 
             const auto& fluxVarsCache = elemFluxVarsCache[scvf];
@@ -239,8 +241,8 @@ public:
 
         // accumulate the phase component flux
         for(int compIdx = 0; compIdx < numComponents; compIdx++)
-          if(compIdx != phaseIdx)
-            componentFlux[phaseIdx] -= componentFlux[compIdx];
+            if(compIdx != FluidSystem::getMainComponent(phaseIdx) && Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
 
         return componentFlux;
     }
