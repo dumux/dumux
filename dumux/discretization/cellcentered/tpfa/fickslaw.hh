@@ -53,7 +53,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Model = typename GET_PROP_TYPE(TypeTag, Model);
-    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -177,6 +176,7 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
+        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
         auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
         insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
         const Scalar ti = calculateOmega_(scvf,

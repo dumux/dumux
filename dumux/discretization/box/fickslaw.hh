@@ -57,7 +57,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -120,6 +119,7 @@ public:
                 continue;
 
             // effective diffusion tensors
+            using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
             auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
                                                             insideVolVars.saturation(phaseIdx),
                                                             insideVolVars.diffusionCoefficient(phaseIdx, compIdx));

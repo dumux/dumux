@@ -54,7 +54,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -287,6 +286,8 @@ public:
                                            const unsigned int phaseIdx,
                                            const bool isInteriorBoundary)
     {
+        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+
         // Treat interior boundaries differently
         if (isInteriorBoundary)
         {
