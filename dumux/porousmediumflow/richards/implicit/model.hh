@@ -130,6 +130,15 @@ class RichardsModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 
 public:
 
+    //! "Properties"
+
+    //! If a certain component is balanced in this model
+    // per default all phases are balanced. See e.g. Richards for an example where
+    // the air component exists but is not balanced. Or the tracer model where the
+    // carrier phase main component exists but is not balanced.
+    static constexpr bool mainComponentIsBalanced(int phaseIdx)
+    { return phaseIdx == Indices::wPhaseIdx; }
+
     /*!
      * \brief Apply the initial conditions to the model.
      *

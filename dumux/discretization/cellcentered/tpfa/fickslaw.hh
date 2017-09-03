@@ -52,6 +52,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -135,7 +136,7 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(FluidSystem::isMainComponent(compIdx, phaseIdx))
+            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
             // diffusion tensors are always solution dependent
@@ -156,10 +157,11 @@ public:
                                                         : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = rho*tij*(xInside - xOutside);
-            if (!FluidSystem::isTracerFluidSystem())
-                componentFlux[phaseIdx] -= componentFlux[compIdx];
+            if (Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
-        return componentFlux ;
+
+        return componentFlux;
     }
 
     static Scalar calculateTransmissibility(const Problem& problem,

@@ -56,14 +56,15 @@ public:
     { return false; }
 
     /*!
-     * \brief Return whether a component is the main component of a given phase
+     * \brief Get the main component of a given phase if possible
      *
      * \param compIdx The index of the component to check
      * \param phaseIdx The index of the fluid phase to consider
-     * \note The default assumes that the main component has the same index as its phase
+     * \note This method has to can throw at compile time if the fluid system doesn't assume a
+     *       main phase. Then using e.g. Fick's law will fail compiling.
      */
-    static constexpr bool isMainComponent(int compIdx, int phaseIdx)
-    { return compIdx == phaseIdx; }
+    static constexpr int getMainComponent(int phaseIdx)
+    { return phaseIdx; }
 
     /*!
      * \brief Returns true if and only if a fluid phase is assumed to
