@@ -178,7 +178,7 @@ SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<Typ
 SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
 
 //set isothermal NumEq
 SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);
