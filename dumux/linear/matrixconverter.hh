@@ -198,7 +198,7 @@ public:
      *
      * \param A The original multitype blockvector
      */
-    static auto multitypeToBlockVector(const MultiTypeBlockVector& b)
+    static auto multiTypeToBlockVector(const MultiTypeBlockVector& b)
     {
         const auto size = getSize_(b);
 

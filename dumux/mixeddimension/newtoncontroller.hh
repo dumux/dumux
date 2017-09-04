@@ -359,7 +359,7 @@ public:
             assert(numRows == M.M());
 
             // create the vector the IterativeSolver backend can handle
-            const auto bTmp = VectorConverter<SolutionVector>::multitypeToBlockVector(b);
+            const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
             assert(bTmp.size() == numRows);
 
             // create the vector the IterativeSolver backend can handle
