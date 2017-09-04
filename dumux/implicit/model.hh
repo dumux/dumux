@@ -86,7 +86,6 @@ class ImplicitModel
     using CoordScalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using ReferenceElement = typename Dune::ReferenceElement<CoordScalar, dim>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -759,7 +758,7 @@ protected:
 
         for (const auto& element : elements(gridView_())) {
             Dune::GeometryType geomType = element.geometry().type();
-            const ReferenceElement &refElement = ReferenceElements::general(geomType);
+            const auto &refElement = ReferenceElements::general(geomType);
 
             for (const auto& intersection : intersections(gridView_(), element))
             {
