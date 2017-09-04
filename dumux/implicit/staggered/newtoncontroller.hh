@@ -31,6 +31,7 @@
 
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#include <dumux/linear/matrixconverter.hh>
 #include "newtonconvergencewriter.hh"
 
 namespace Dumux {
@@ -53,6 +54,7 @@ namespace Properties
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
+
 template <class TypeTag>
 class StaggeredNewtonController : public NewtonController<TypeTag>
 {
@@ -101,116 +103,34 @@ public:
             if (this->numSteps_ == 0)
                 this->initialResidual_ = b.two_norm();
 
-            // copy the matrix and the vector to types the IterativeSolverBackend can handle
-            using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
-            using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-
-            // get the new matrix sizes
-            std::size_t numRows = numEqCellCenter*A[cellCenterIdx][cellCenterIdx].N() + numEqFace*A[faceIdx][cellCenterIdx].N();
-            std::size_t numCols = numEqCellCenter*A[cellCenterIdx][cellCenterIdx].M() + numEqFace*A[cellCenterIdx][faceIdx].M();
-
             // check matrix sizes
             assert(A[cellCenterIdx][cellCenterIdx].N() == A[cellCenterIdx][faceIdx].N());
             assert(A[faceIdx][cellCenterIdx].N() == A[faceIdx][faceIdx].N());
-            assert(numRows == numCols);
 
             // create the bcrs matrix the IterativeSolver backend can handle
-            auto M = SparseMatrix(numRows, numCols, SparseMatrix::random);
+            const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
 
-            // set the rowsizes
-            // A11 and A12
-            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                    M.setrowsize(numEqCellCenter*row.index() + i, row->size()*numEqCellCenter);
-            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                    M.setrowsize(numEqCellCenter*row.index() + i, M.getrowsize(numEqCellCenter*row.index() + i) + row->size()*numEqFace);
-            // A21 and A22
-            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqFace; ++i)
-                    M.setrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, row->size()*numEqCellCenter);
-            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqFace; ++i)
-                    M.setrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, M.getrowsize(numEqFace*row.index() + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter) + row->size()*numEqFace);
-            M.endrowsizes();
-
-            // set the indices
-            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M.addindex(row.index()*numEqCellCenter + i, col.index()*numEqCellCenter + j);
-
-            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M.addindex(row.index()*numEqCellCenter + i, col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter);
-
-            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M.addindex(row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, col.index()*numEqCellCenter + j);
-
-            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M.addindex(row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter, col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter);
-            M.endindices();
-
-            // copy values
-            for (auto row = A[cellCenterIdx][cellCenterIdx].begin(); row != A[cellCenterIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M[row.index()*numEqCellCenter + i][col.index()*numEqCellCenter + j] = A[cellCenterIdx][cellCenterIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[cellCenterIdx][faceIdx].begin(); row != A[cellCenterIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqCellCenter; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M[row.index()*numEqCellCenter + i][col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter] = A[cellCenterIdx][faceIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[faceIdx][cellCenterIdx].begin(); row != A[faceIdx][cellCenterIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                            M[row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter][col.index()*numEqCellCenter + j] = A[faceIdx][cellCenterIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[faceIdx][faceIdx].begin(); row != A[faceIdx][faceIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqFace; ++i)
-                        for (std::size_t j = 0; j < numEqFace; ++j)
-                            M[row.index()*numEqFace + i + A[cellCenterIdx][cellCenterIdx].N()*numEqCellCenter][col.index()*numEqFace + j + A[cellCenterIdx][cellCenterIdx].M()*numEqCellCenter] = A[faceIdx][faceIdx][row.index()][col.index()][i][j];
+            // get the new matrix sizes
+            const std::size_t numRows = M.N();
+            assert(numRows == M.M());
 
             // create the vector the IterativeSolver backend can handle
+            const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
+            assert(bTmp.size() == numRows);
+
+            // create a blockvector to which the linear solver writes the solution
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
             using BlockVector = typename Dune::BlockVector<VectorBlock>;
-
-            BlockVector y, bTmp;
+            BlockVector y;
             y.resize(numRows);
-            bTmp.resize(numCols);
-            for (std::size_t i = 0; i < b[cellCenterIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                    bTmp[i*numEqCellCenter + j] = b[cellCenterIdx][i][j];
-            for (std::size_t i = 0; i < b[faceIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqFace; ++j)
-                    bTmp[i*numEqFace + j + b[cellCenterIdx].N()*numEqCellCenter] = b[faceIdx][i][j];
 
             // printmatrix(std::cout, M, "", "");
 
             // solve
-            bool converged = this->linearSolver_.solve(M, y, bTmp);
+            const bool converged = this->linearSolver_.solve(M, y, bTmp);
 
             // copy back the result y into x
-            for (std::size_t i = 0; i < x[cellCenterIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                    x[cellCenterIdx][i][j] = y[i*numEqCellCenter + j];
-            for (std::size_t i = 0; i < x[faceIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqFace; ++j)
-                    x[faceIdx][i][j] = y[i*numEqFace + j + x[cellCenterIdx].N()*numEqCellCenter];
+            VectorConverter<SolutionVector>::retrieveValues(x, y);
 
             if (!converged)
                 DUNE_THROW(NumericalProblem, "Linear solver did not converge");

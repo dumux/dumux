@@ -31,6 +31,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#include <dumux/linear/matrixconverter.hh>
 
 namespace Dumux
 {
@@ -346,110 +347,36 @@ public:
             using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
             using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
 
-            // get the new matrix sizes
-            std::size_t numRows = numEqBulk*A[bulkIdx][bulkIdx].N() + numEqLowDim*A[lowDimIdx][bulkIdx].N();
-            std::size_t numCols = numEqBulk*A[bulkIdx][bulkIdx].M() + numEqLowDim*A[bulkIdx][lowDimIdx].M();
-
             // check matrix sizes
             assert(A[bulkIdx][bulkIdx].N() == A[bulkIdx][lowDimIdx].N());
             assert(A[lowDimIdx][bulkIdx].N() == A[lowDimIdx][lowDimIdx].N());
-            assert(numRows == numCols);
 
             // create the bcrs matrix the IterativeSolver backend can handle
-            auto M = SparseMatrix(numRows, numCols, SparseMatrix::random);
+            const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
 
-            // set the rowsizes
-            // A11 and A12
-            for (auto row = A[bulkIdx][bulkIdx].begin(); row != A[bulkIdx][bulkIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqBulk; ++i)
-                    M.setrowsize(numEqBulk*row.index() + i, row->size()*numEqBulk);
-            for (auto row = A[bulkIdx][lowDimIdx].begin(); row != A[bulkIdx][lowDimIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqBulk; ++i)
-                    M.setrowsize(numEqBulk*row.index() + i, M.getrowsize(numEqBulk*row.index() + i) + row->size()*numEqLowDim);
-            // A21 and A22
-            for (auto row = A[lowDimIdx][bulkIdx].begin(); row != A[lowDimIdx][bulkIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqLowDim; ++i)
-                    M.setrowsize(numEqLowDim*row.index() + i + A[bulkIdx][bulkIdx].N()*numEqBulk, row->size()*numEqBulk);
-            for (auto row = A[lowDimIdx][lowDimIdx].begin(); row != A[lowDimIdx][lowDimIdx].end(); ++row)
-                for (std::size_t i = 0; i < numEqLowDim; ++i)
-                    M.setrowsize(numEqLowDim*row.index() + i + A[bulkIdx][bulkIdx].N()*numEqBulk, M.getrowsize(numEqLowDim*row.index() + i + A[bulkIdx][bulkIdx].N()*numEqBulk) + row->size()*numEqLowDim);
-            M.endrowsizes();
+            // get the new matrix sizes
+            const std::size_t numRows = M.N();
+            assert(numRows == M.M());
 
-            // set the indices
-            for (auto row = A[bulkIdx][bulkIdx].begin(); row != A[bulkIdx][bulkIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqBulk; ++i)
-                        for (std::size_t j = 0; j < numEqBulk; ++j)
-                            M.addindex(row.index()*numEqBulk + i, col.index()*numEqBulk + j);
-
-            for (auto row = A[bulkIdx][lowDimIdx].begin(); row != A[bulkIdx][lowDimIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqBulk; ++i)
-                        for (std::size_t j = 0; j < numEqLowDim; ++j)
-                            M.addindex(row.index()*numEqBulk + i, col.index()*numEqLowDim + j + A[bulkIdx][bulkIdx].M()*numEqBulk);
-
-            for (auto row = A[lowDimIdx][bulkIdx].begin(); row != A[lowDimIdx][bulkIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqLowDim; ++i)
-                        for (std::size_t j = 0; j < numEqBulk; ++j)
-                            M.addindex(row.index()*numEqLowDim + i + A[bulkIdx][bulkIdx].N()*numEqBulk, col.index()*numEqBulk + j);
-
-            for (auto row = A[lowDimIdx][lowDimIdx].begin(); row != A[lowDimIdx][lowDimIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqLowDim; ++i)
-                        for (std::size_t j = 0; j < numEqLowDim; ++j)
-                            M.addindex(row.index()*numEqLowDim + i + A[bulkIdx][bulkIdx].N()*numEqBulk, col.index()*numEqLowDim + j + A[bulkIdx][bulkIdx].M()*numEqBulk);
-            M.endindices();
-
-            // copy values
-            for (auto row = A[bulkIdx][bulkIdx].begin(); row != A[bulkIdx][bulkIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqBulk; ++i)
-                        for (std::size_t j = 0; j < numEqBulk; ++j)
-                            M[row.index()*numEqBulk + i][col.index()*numEqBulk + j] = A[bulkIdx][bulkIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[bulkIdx][lowDimIdx].begin(); row != A[bulkIdx][lowDimIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqBulk; ++i)
-                        for (std::size_t j = 0; j < numEqLowDim; ++j)
-                            M[row.index()*numEqBulk + i][col.index()*numEqLowDim + j + A[bulkIdx][bulkIdx].M()*numEqBulk] = A[bulkIdx][lowDimIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[lowDimIdx][bulkIdx].begin(); row != A[lowDimIdx][bulkIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqLowDim; ++i)
-                        for (std::size_t j = 0; j < numEqBulk; ++j)
-                            M[row.index()*numEqLowDim + i + A[bulkIdx][bulkIdx].N()*numEqBulk][col.index()*numEqBulk + j] = A[lowDimIdx][bulkIdx][row.index()][col.index()][i][j];
-
-            for (auto row = A[lowDimIdx][lowDimIdx].begin(); row != A[lowDimIdx][lowDimIdx].end(); ++row)
-                for (auto col = row->begin(); col != row->end(); ++col)
-                    for (std::size_t i = 0; i < numEqLowDim; ++i)
-                        for (std::size_t j = 0; j < numEqLowDim; ++j)
-                            M[row.index()*numEqLowDim + i + A[bulkIdx][bulkIdx].N()*numEqBulk][col.index()*numEqLowDim + j + A[bulkIdx][bulkIdx].M()*numEqBulk] = A[lowDimIdx][lowDimIdx][row.index()][col.index()][i][j];
+            // create the vector the IterativeSolver backend can handle
+            const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
+            assert(bTmp.size() == numRows);
 
             // create the vector the IterativeSolver backend can handle
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
             using BlockVector = typename Dune::BlockVector<VectorBlock>;
 
-            BlockVector y, bTmp;
+            // create a blockvector to which the linear solver writes the solution
+            using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
+            using BlockVector = typename Dune::BlockVector<VectorBlock>;
+            BlockVector y;
             y.resize(numRows);
-            bTmp.resize(numCols);
-            for (std::size_t i = 0; i < b[bulkIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqBulk; ++j)
-                    bTmp[i*numEqBulk + j] = b[bulkIdx][i][j];
-            for (std::size_t i = 0; i < b[lowDimIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqLowDim; ++j)
-                    bTmp[i*numEqLowDim + j + b[bulkIdx].N()*numEqBulk] = b[lowDimIdx][i][j];
 
             // solve
             bool converged = linearSolver_.solve(M, y, bTmp);
 
             // copy back the result y into x
-            for (std::size_t i = 0; i < x[bulkIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqBulk; ++j)
-                    x[bulkIdx][i][j] = y[i*numEqBulk + j];
-            for (std::size_t i = 0; i < x[lowDimIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqLowDim; ++j)
-                    x[lowDimIdx][i][j] = y[i*numEqLowDim + j + x[bulkIdx].N()*numEqBulk];
+            VectorConverter<SolutionVector>::retrieveValues(x, y);
 
             if (!converged)
                 DUNE_THROW(NumericalProblem, "Linear solver did not converge");
