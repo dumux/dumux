@@ -115,7 +115,7 @@ public:
             assert(numRows == M.M());
 
             // create the vector the IterativeSolver backend can handle
-            const auto bTmp = VectorConverter<decltype(b)>::multitypeToBlockVector(b);
+            const auto bTmp = VectorConverter<SolutionVector>::multitypeToBlockVector(b);
             assert(bTmp.size() == numRows);
 
             // create a blockvector to which the linear solver writes the solution
@@ -130,7 +130,7 @@ public:
             const bool converged = this->linearSolver_.solve(M, y, bTmp);
 
             // copy back the result y into x
-            VectorConverter<decltype(b)>::retrieveValues(x, y);
+            VectorConverter<SolutionVector>::retrieveValues(x, y);
 
             if (!converged)
                 DUNE_THROW(NumericalProblem, "Linear solver did not converge");
