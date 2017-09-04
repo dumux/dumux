@@ -24,22 +24,20 @@
 #ifndef DUMUX_MATRIX_CONVERTER
 #define DUMUX_MATRIX_CONVERTER
 
-#include <dune/common/fvector.hh>
-#include <dune/common/fmatrix.hh>
 #include <dune/common/indices.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
-#include <dune/common/hybridutilities.hh>
 
 namespace Dumux {
 
 /*!
- *A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
+ * A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
  * TODO: allow block sizes for BCRSMatrix other than 1x1 ?
  *
  */
-
 template <class MultiTypeBlockMatrix, class Scalar=double>
 class MatrixConverter
 {
@@ -98,10 +96,10 @@ private:
         };
 
         // fill the pattern
-        int rowIndex = 0;
+        std::size_t rowIndex = 0;
         Dune::Hybrid::forEach(A, [&addIndices, &rowIndex, &occupationPattern, numRows](const auto& rowOfMultiTypeMatrix)
         {
-            int colIndex = 0;
+            std::size_t colIndex = 0;
             Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&addIndices, &occupationPattern, &colIndex, &rowIndex, numRows](const auto& subMatrix)
             {
                 addIndices(subMatrix, rowIndex, colIndex);
@@ -144,10 +142,10 @@ private:
 
         };
 
-        int rowIndex = 0;
+        std::size_t rowIndex = 0;
         Dune::Hybrid::forEach(A, [&copyValues, &rowIndex, numRows](const auto& rowOfMultiTypeMatrix)
         {
-            int colIndex = 0;
+            std::size_t colIndex = 0;
             Dune::Hybrid::forEach(rowOfMultiTypeMatrix, [&copyValues, &colIndex, &rowIndex, numRows](const auto& subMatrix)
             {
                 copyValues(subMatrix, rowIndex, colIndex);
@@ -182,6 +180,86 @@ private:
         return numRows;
     }
 
+};
+
+/*!
+ * A helper classe that converts a Dune::MultiTypeBlockVector into a plain Dune::BlockVector and transfers back values
+ */
+template<class MultiTypeBlockVector, class Scalar=double>
+class VectorConverter
+{
+    using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
+    using BlockVector = typename Dune::BlockVector<VectorBlock>;
+
+public:
+
+    /*!
+     * \brief Converts a Dune::MultiTypeBlockVector to a plain 1x1 Dune::BlockVector
+     *
+     * \param A The original multitype blockvector
+     */
+    static auto multitypeToBlockVector(const MultiTypeBlockVector& b)
+    {
+        const auto size = getSize_(b);
+
+        BlockVector bTmp;
+        bTmp.resize(size);
+
+        std::size_t startIndex = 0;
+        Dune::Hybrid::forEach(b, [&bTmp, &startIndex](const auto& subVector)
+        {
+            const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
+
+            for(std::size_t i = 0; i < subVector.size(); ++i)
+                for(std::size_t j = 0; j < numEq; ++j)
+                    bTmp[startIndex + i*numEq + j] = subVector[i][j];
+
+            startIndex += numEq*subVector.size();
+        });
+
+        return bTmp;
+    }
+
+    /*!
+     * \brief Copys the entries of a Dune::BlockVector to a Dune::MultiTypeBlockVector
+     *
+     * \param x The multitype blockvector where the values are copied to
+     * \param y The regular blockvector where the values are copied from
+     */
+    static void retrieveValues(MultiTypeBlockVector& x, const BlockVector& y)
+    {
+        std::size_t startIndex = 0;
+        Dune::Hybrid::forEach(x, [&y, &startIndex](auto& subVector)
+        {
+            const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
+
+            for(std::size_t i = 0; i < subVector.size(); ++i)
+                for(std::size_t j = 0; j < numEq; ++j)
+                    subVector[i][j] = y[startIndex + i*numEq + j];
+
+            startIndex += numEq*subVector.size();
+        });
+    }
+
+private:
+
+    /*!
+     * \brief Returns the size of the expanded multitype block vector
+     *
+     * \param b The multitype blockvector
+     */
+    static std::size_t getSize_(const MultiTypeBlockVector& b)
+    {
+        std::size_t size = 0;
+        Dune::Hybrid::forEach(b, [&size](const auto& subVector)
+        {
+            // the size of the individual vector blocks equals the respective number of equations.
+            const auto numEq = std::decay_t<decltype(subVector)>::block_type::size();
+            size += numEq * subVector.size();
+        });
+
+        return size;
+    }
 };
 }
 
