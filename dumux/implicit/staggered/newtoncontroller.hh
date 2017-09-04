@@ -112,22 +112,17 @@ public:
 
             // get the new matrix sizes
             const std::size_t numRows = M.N();
-            const std::size_t numCols = M.M();
-            assert(numRows == numCols);
+            assert(numRows == M.M());
 
             // create the vector the IterativeSolver backend can handle
+            const auto bTmp = VectorConverter<decltype(b)>::multitypeToBlockVector(b);
+            assert(bTmp.size() == numRows);
+
+            // create a blockvector to which the linear solver writes the solution
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
             using BlockVector = typename Dune::BlockVector<VectorBlock>;
-
-            BlockVector y, bTmp;
+            BlockVector y;
             y.resize(numRows);
-            bTmp.resize(numCols);
-            for (std::size_t i = 0; i < b[cellCenterIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                    bTmp[i*numEqCellCenter + j] = b[cellCenterIdx][i][j];
-            for (std::size_t i = 0; i < b[faceIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqFace; ++j)
-                    bTmp[i*numEqFace + j + b[cellCenterIdx].N()*numEqCellCenter] = b[faceIdx][i][j];
 
             // printmatrix(std::cout, M, "", "");
 
@@ -135,12 +130,7 @@ public:
             const bool converged = this->linearSolver_.solve(M, y, bTmp);
 
             // copy back the result y into x
-            for (std::size_t i = 0; i < x[cellCenterIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqCellCenter; ++j)
-                    x[cellCenterIdx][i][j] = y[i*numEqCellCenter + j];
-            for (std::size_t i = 0; i < x[faceIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqFace; ++j)
-                    x[faceIdx][i][j] = y[i*numEqFace + j + x[cellCenterIdx].N()*numEqCellCenter];
+            VectorConverter<decltype(b)>::retrieveValues(x, y);
 
             if (!converged)
                 DUNE_THROW(NumericalProblem, "Linear solver did not converge");
