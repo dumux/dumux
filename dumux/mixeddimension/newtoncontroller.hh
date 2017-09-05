@@ -343,10 +343,6 @@ public:
             if (numSteps_ == 0)
                 initialResidual_ = b.two_norm();
 
-            // copy the matrix and the vector to types the IterativeSolverBackend can handle
-            using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
-            using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-
             // check matrix sizes
             assert(A[bulkIdx][bulkIdx].N() == A[bulkIdx][lowDimIdx].N());
             assert(A[lowDimIdx][bulkIdx].N() == A[lowDimIdx][lowDimIdx].N());
@@ -361,10 +357,6 @@ public:
             // create the vector the IterativeSolver backend can handle
             const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
             assert(bTmp.size() == numRows);
-
-            // create the vector the IterativeSolver backend can handle
-            using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
-            using BlockVector = typename Dune::BlockVector<VectorBlock>;
 
             // create a blockvector to which the linear solver writes the solution
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
