@@ -264,7 +264,7 @@ public:
       };
 
       // account for all sub-faces
-      for(auto subFaceData : scvf.pairData())
+      for(const auto& subFaceData : scvf.pairData())
       {
           const auto eIdx = scvf.insideScvIdx();
           const auto& normalFace = fvGeometry.scvf(eIdx, subFaceData.localNormalFaceIdx);
