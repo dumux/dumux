@@ -71,14 +71,15 @@ cp ../.dockerignore .
 touch setpermissions.sh
 cat <<EOT >> setpermissions.sh
 #!/bin/bash
-# The user can pass the user id (UID) by passing --env HOST_UID=$UID
+# The user can pass the user and group id by passing
+# --env HOST_UID=\$(id -u \$USER) --env HOST_GID=\$(id -g \$USER)
 # with the UID on the host to the container. Should work for Linux, Mac and Windows.
 # Allows to manage the writes for shared volumes.
-if [ "$HOST_UID" ]; then
-    usermod -u $HOST_UID dumux
+if [ "\$HOST_UID" ]; then
+    usermod -u \$HOST_UID dumux
 fi
-if [ "$HOST_GID" ]; then
-    groupmod -g $HOST_GID dumux
+if [ "\$HOST_GID" ]; then
+    groupmod -g \$HOST_GID dumux
 fi
 # Make sure that everything in /dumux is accessible by the dumux user
 # sed "1d" removes forst line which is the folder itself
@@ -184,8 +185,8 @@ open()
 {
     IMAGE="\$1"
     COMMAND="docker create -ti \\
-             -e HOST_UID=\$UID \\
-             -e HOST_GID=\$GID \\
+             -e HOST_UID=\$(id -u \$USER) \\
+             -e HOST_GID=\$(id -g \$USER) \\
              -v \$SHARED_DIR_HOST:\$SHARED_DIR_CONTAINER \\
              --name dumuxpub_$DOCKER_TAG \\
              \$IMAGE /bin/bash"
