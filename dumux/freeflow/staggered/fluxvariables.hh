@@ -309,10 +309,10 @@ private:
       const auto outsideScvIdx = normalFace.outsideScvIdx();
 
       // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
-      auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
-      {
-          return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
-      };
+    //   auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
+    //   {
+    //       return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
+    //   };
 
       const bool innerElementIsUpstream = ( sign(normalFace.outerNormalScalar()) == sign(transportingVelocity) );
 
