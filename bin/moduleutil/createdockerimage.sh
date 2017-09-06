@@ -41,7 +41,7 @@ chmod +x $INSTALL_DEP_SCRIPT
 # make a docker folder
 if [ -d docker ]; then
     echo ""
-    read -p "   A docker folder already exists. Continue anyway? (Will be overwritten) [y/N] " DELETE
+    read -p "   A docker folder already exists. Continue anyway? - will be overwritten - [y/N] " DELETE
     echo ""
     if test x$DELETE = xy -o x$DELETE = xY; then
         rm -r docker
@@ -282,8 +282,9 @@ RUN ./$INSTALL_DEP_SCRIPT && rm -f /dumux/$INSTALL_DEP_SCRIPT
 # configure module
 RUN /dumux/dune-common/bin/dunecontrol --opts=/dumux/dumux/optim.opts all
 
-# build doxygen documentation
-RUN cd $MODULE_NAME/build-cmake && make doc
+# build doxygen documentation and tests
+# all applications that use dune_add_test will be built like this
+RUN cd $MODULE_NAME/build-cmake && make doc && make -j4 build_tests
 
 # switch back to root
 USER root
@@ -310,9 +311,9 @@ if test x$BUILD = xy -o x$BUILD = xY; then
     echo "Successfully built docker image: $DOCKER_TAG. Have a look at docker/README.md."
     echo "Check the container running docker run -it $DOCKER_TAG /bin/bash "
     echo "in the same directory as the Dockerfile."
-    echo "And try using the convenience script pubtable_$DOCKER_TAG (see docker/README.md)."
+    echo "And try using the convenience script pubtable_$DOCKER_TAG, see docker/README.md."
 else
     cd ..
     echo "You can build your Docker image later by running docker build -f docker/Dockerfile -t $DOCKER_TAG ."
-    echo "in your module directory (i.e. above the docker folder containing Dockerfile)."
+    echo "in your module directory, i.e. above the docker folder containing Dockerfile."
 fi
