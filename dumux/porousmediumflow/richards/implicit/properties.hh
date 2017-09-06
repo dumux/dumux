@@ -70,6 +70,10 @@ NEW_PROP_TAG(WettingPhase); //!< Fluid which represents the wetting phase
 NEW_PROP_TAG(NonwettingPhase); //!< Fluid which represents the non-wetting phase
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
+//! Enabling the water diffusion in air leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
+NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into extended Richards
+NEW_PROP_TAG(UseKelvinEquation); //!< Property for turning Richards into extended Richards
+NEW_PROP_TAG(ProblemUsePrimaryVariableSwitch); //!< If we should use a primary variable switch
 
 // \}
 }

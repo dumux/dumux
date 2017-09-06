@@ -21,50 +21,65 @@
  *
  * \brief A water infiltration problem with a low-permeability lens
  *        embedded into a high-permeability domain which uses the
- *        Richards box model.
+ *        2p model.
  */
-#ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
-#define DUMUX_RICHARDS_LENSPROBLEM_HH
+#ifndef DUMUX_TWOP_FRINGE_PROBLEM_HH
+#define DUMUX_TWOP_FRINGE_PROBLEM_HH
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/porousmediumflow/richards/implicit/model.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
-#include "richardslensspatialparams.hh"
+#include "fringespatialparams.hh"
 
 namespace Dumux
 {
 
 template <class TypeTag>
-class RichardsLensProblem;
+class TwoPFringeProblem;
 
 
 // Specify the properties for the lens problem
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(Richards, RichardsLensSpatialParams));
-NEW_TYPE_TAG(RichardsLensBoxProblem, INHERITS_FROM(BoxModel, RichardsLensProblem));
-NEW_TYPE_TAG(RichardsLensCCProblem, INHERITS_FROM(CCTpfaModel, RichardsLensProblem));
+NEW_TYPE_TAG(TwoPFringeProblem, INHERITS_FROM(TwoP));
+NEW_TYPE_TAG(TwoPFringeBoxProblem, INHERITS_FROM(BoxModel, TwoPFringeProblem));
+NEW_TYPE_TAG(TwoPFringeCCProblem, INHERITS_FROM(CCTpfaModel, TwoPFringeProblem));
+
+// Set the spatial parameters
+SET_TYPE_PROP(TwoPFringeProblem, SpatialParams, FringeSpatialParams<TypeTag>);
+
+// Set the material law
+SET_PROP(TwoPFringeProblem, MaterialLaw)
+{
+private:
+    // define the material law which is parameterized by effective
+    // saturations
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:
+    // define the material law parameterized by absolute saturations
+    using type = EffToAbsLaw<RegularizedVanGenuchten<Scalar>>;
+};
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPFringeProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsLensProblem, Problem, RichardsLensProblem<TypeTag>);
+SET_TYPE_PROP(TwoPFringeProblem, Problem, TwoPFringeProblem<TypeTag>);
 
 // Set the wetting phase
-SET_PROP(RichardsLensProblem, WettingPhase)
+SET_PROP(TwoPFringeProblem, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
+    using type = FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar>, false>;
 };
 
 // Enable gravity
-SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
+SET_BOOL_PROP(TwoPFringeProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -95,7 +110,7 @@ SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
  * simulation time is 10,000,000 seconds (115.7 days)
  */
 template <class TypeTag>
-class RichardsLensProblem : public ImplicitPorousMediaProblem<TypeTag>
+class TwoPFringeProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     using ParentType = ImplicitPorousMediaProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -107,9 +122,9 @@ class RichardsLensProblem : public ImplicitPorousMediaProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // copy some indices for convenience
-        pressureIdx = Indices::pressureIdx,
+        pwIdx = Indices::pwIdx,
+        snIdx = Indices::snIdx,
         conti0EqIdx = Indices::conti0EqIdx,
-        bothPhases = Indices::bothPhases,
 
         // Grid and world dimension
         dimWorld = GridView::dimensionworld
@@ -124,10 +139,10 @@ public:
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
      */
-    RichardsLensProblem(TimeManager &timeManager, const GridView &gridView)
+    TwoPFringeProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name) + "_2p";
     }
 
     /*!
@@ -176,10 +191,13 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
+        if (onUpperBoundary_(globalPos))
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
+        static const bool bottomDirichlet = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, BottomDirichlet);
+        if (bottomDirichlet && onLowerBoundary_(globalPos))
+            bcTypes.setAllDirichlet();
         return bcTypes;
     }
 
@@ -193,31 +211,22 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        // use initial values as boundary conditions
-        if (!onInlet_(globalPos))
-            return initial_(globalPos);
-        else
-        {
-            PrimaryVariables values(0.0);
-            values.setState(bothPhases);
-            return values;
-        }
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     *
-     * \param globalPos The position for which the Neumann value is set
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
-    {
         PrimaryVariables values(0.0);
-        if (onInlet_(globalPos))
-            values[conti0EqIdx] = -0.04; // kg/(m*s)
+        if (onUpperBoundary_(globalPos))
+        {
+            static const Scalar sw = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, TopSaturation);
+            const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
+            values[pwIdx] = nonWettingReferencePressure() - pc;
+            values[snIdx] = 1.0-sw;
+        }
+        else if(onLowerBoundary_(globalPos))
+        {
+            static const Scalar sw = 1.0;
+            const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
+            values[pwIdx] = nonWettingReferencePressure() - pc;
+            values[snIdx] = 0.0;
+
+        }
         return values;
     }
 
@@ -235,46 +244,44 @@ public:
      * \param globalPos The position for which the boundary type is set
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
-    { return initial_(globalPos); };
+    {
+        static const Scalar levelFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, WaterLevelFactor);
+        static const Scalar swBottom = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, SwBottomInitial);
+        static const Scalar swTop = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, SwTopInitial);
+
+        PrimaryVariables values(0.0);
+        if (globalPos[1] > levelFactor*(this->bBoxMax()[1] - this->bBoxMin()[1]))
+        {
+            const Scalar sw = swTop;
+            const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
+            values[pwIdx] = nonWettingReferencePressure() - pc;
+            values[snIdx] = 1.0-sw;
+        }
+        else
+        {
+            const Scalar sw = swBottom;
+            const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
+            values[pwIdx] = nonWettingReferencePressure() - pc;
+            values[snIdx] = 1.0-sw;
+        }
+        return values;
+    }
+
+    bool shouldWriteRestartFile() const
+    { return false; }
 
     // \}
 
 private:
-    PrimaryVariables initial_(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables values(0.0);
-        const Scalar sw = 0.0;
-        const Scalar pc = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(globalPos), sw);
-        values[pressureIdx] = nonWettingReferencePressure() - pc;
-        values.setState(bothPhases);
-        return values;
-    }
-
-    bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
-    }
-
-    bool onRightBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
-    }
-
-    bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
-    }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
         return globalPos[1] > this->bBoxMax()[1] - eps_;
     }
 
-    bool onInlet_(const GlobalPosition &globalPos) const
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
-        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
-        return onUpperBoundary_(globalPos) && 0.5 < lambda + eps_ && lambda < 2.0/3.0 + eps_;
+        return globalPos[1] < this->bBoxMin()[1] + eps_;
     }
 
     static constexpr Scalar eps_ = 1.5e-7;

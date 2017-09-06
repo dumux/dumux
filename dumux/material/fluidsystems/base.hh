@@ -32,9 +32,8 @@ namespace Dumux
  * \ingroup Fluidsystems
  * \brief Fluid system base class.
  *
- * \note This fluid system neglects the contribution of gas-molecules on the
- *       liquid phase. This contribution is probably not big, but somebody
- *       has to find out its influence.
+ * \note Always derive your fluid system from this class to be sure
+ *       that all basic functionality is available!
  */
 
 namespace FluidSystems
@@ -45,7 +44,76 @@ class BaseFluidSystem
 {
 public:
     //! The type of parameter cache objects
-    typedef NullParameterCache ParameterCache;
+    using ParameterCache = NullParameterCache;
+
+    /*!
+     * \brief Some properties of the fluid system
+     */
+    // \{
+
+    //! If the fluid system only contains tracer components
+    static constexpr bool isTracerFluidSystem()
+    { return false; }
+
+    /*!
+     * \brief Get the main component of a given phase if possible
+     *
+     * \param compIdx The index of the component to check
+     * \param phaseIdx The index of the fluid phase to consider
+     * \note This method has to can throw at compile time if the fluid system doesn't assume a
+     *       main phase. Then using e.g. Fick's law will fail compiling.
+     */
+    static constexpr int getMainComponent(int phaseIdx)
+    { return phaseIdx; }
+
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
+     *        be compressible.
+     *
+     * Compressible means that the partial derivative of the density
+     * to the fluid pressure is always larger than zero.
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool isCompressible(int phaseIdx)
+    { return Implementation::isCompressible(phaseIdx); }
+
+    /*!
+     * \brief Returns true if and only if a fluid phase is assumed to
+     *        have a constant viscosity.
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx)
+    { return false; }
+
+    /*!
+     * \brief Return the human readable name of a fluid phase
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr std::string phaseName(int phaseIdx)
+    { return "DefaultPhaseName"; }
+
+    /*!
+     * \brief Return the human readable name of a fluid phase
+     *
+     * \param phaseIdx The index of the fluid phase to consider
+     */
+    static constexpr std::string componentName(int phaseIdx)
+    { return "DefaultComponentName"; }
+
+    /*!
+     * \brief The number of components of the fluid system
+     */
+    static constexpr int numComponents = Implementation::numComponents;
+
+    /*!
+     * \brief The number of phases of the fluid system
+     */
+    static constexpr int numPhases = Implementation::numPhases;
+
+    // \}
 
     /*!
      * \brief Calculate the density \f$\mathrm{[kg/m^3]}\f$ of a fluid phase
@@ -202,7 +270,8 @@ public:
     }
 };
 
-} // end namespace
-} // end namespace
+} // end namespace FluidSystems
+
+} // end namespace Dumux
 
 #endif

@@ -86,7 +86,6 @@ class ImplicitModel
     using CoordScalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using ReferenceElement = typename Dune::ReferenceElement<CoordScalar, dim>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -100,6 +99,15 @@ public:
      * \brief The constructor.
      */
     ImplicitModel() : problemPtr_(nullptr) {}
+
+    //! "Properties"
+
+    //! If a certain component is balanced in this model
+    // per default all phases are balanced. See e.g. Richards for an example where
+    // the air component exists but is not balanced. Or the tracer model where the
+    // carrier phase main component exists but is not balanced.
+    static constexpr bool mainComponentIsBalanced(int phaseIdx)
+    { return true; }
 
     /*!
      * \brief Apply the initial conditions to the model.
@@ -750,7 +758,7 @@ protected:
 
         for (const auto& element : elements(gridView_())) {
             Dune::GeometryType geomType = element.geometry().type();
-            const ReferenceElement &refElement = ReferenceElements::general(geomType);
+            const auto &refElement = ReferenceElements::general(geomType);
 
             for (const auto& intersection : intersections(gridView_(), element))
             {

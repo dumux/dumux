@@ -111,7 +111,7 @@ public:
     /*!
      * \brief Returns true if the fluid is assumed to be compressible
      */
-    static bool isCompressible(int phaseIdx = 0)
+    static constexpr bool isCompressible(int phaseIdx = 0)
     { return Component::liquidIsCompressible(); }
 
     /*!

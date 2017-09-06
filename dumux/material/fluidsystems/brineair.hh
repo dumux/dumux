@@ -182,7 +182,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isCompressible(int phaseIdx)
+    static constexpr bool isCompressible(int phaseIdx)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
         // ideal gases are always compressible

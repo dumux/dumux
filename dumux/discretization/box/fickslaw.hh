@@ -52,11 +52,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -115,10 +115,11 @@ public:
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == phaseIdx)
+            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
             // effective diffusion tensors
+            using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
             auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
                                                             insideVolVars.saturation(phaseIdx),
                                                             insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
@@ -145,7 +146,8 @@ public:
             // apply the diffusion tensor and return the flux
             auto DGradX = applyDiffusionTensor_(D, gradX);
             componentFlux[compIdx] = -1.0*rho*(DGradX*scvf.unitOuterNormal())*scvf.area();
-            componentFlux[phaseIdx] -= componentFlux[compIdx];
+            if (Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+                componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux;
     }

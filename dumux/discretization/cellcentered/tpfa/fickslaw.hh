@@ -52,7 +52,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -63,6 +63,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static const int dim = GridView::dimension;
@@ -74,14 +75,54 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
+    class TpfaFicksLawCache
+    {
+    public:
+        void updateDiffusion(const Problem& problem,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace &scvf,
+                             const unsigned int phaseIdx,
+                             const unsigned int compIdx)
+        {
+            tij_[phaseIdx][compIdx] = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+        }
+
+        const Scalar& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return tij_[phaseIdx][compIdx]; }
+
+    private:
+        std::array< std::array<Scalar, numComponents>, numPhases> tij_;
+    };
+
+    //! Class that fills the cache corresponding to tpfa Fick's Law
+    class TpfaFicksLawCacheFiller
+    {
+    public:
+        //! Function to fill a TpfaFicksLawCache of a given scvf
+        //! This interface has to be met by any diffusion-related cache filler class
+        template<class FluxVariablesCacheFiller>
+        static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                         unsigned int phaseIdx, unsigned int compIdx,
+                         const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace& scvf,
+                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+        {
+            scvfFluxVarsCache.updateDiffusion(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+        }
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! state the type for the corresponding cache and its filler
-    //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
+    using Cache = TpfaFicksLawCache;
+    using CacheFiller = TpfaFicksLawCacheFiller;
 
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -94,11 +135,11 @@ public:
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(compIdx == phaseIdx)
+            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
             // diffusion tensors are always solution dependent
-            Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+            Scalar tij = elemFluxVarsCache[scvf].diffusionTij(phaseIdx, compIdx);
 
             // get inside/outside volume variables
             const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -107,68 +148,27 @@ public:
             // the inside and outside mole fractions
             const auto xInside = insideVolVars.moleFraction(phaseIdx, compIdx);
             const auto xOutside = scvf.numOutsideScvs() == 1 ? outsideVolVars.moleFraction(phaseIdx, compIdx)
-                                : branchingFacetX_(problem, element, fvGeometry, elemVolVars, scvf, xInside, tij, phaseIdx, compIdx);
+                                : branchingFacetX(problem, element, fvGeometry, elemVolVars,
+                                                   elemFluxVarsCache, scvf, xInside, tij, phaseIdx, compIdx);
+
             const auto rhoInside = insideVolVars.molarDensity(phaseIdx);
-            const auto rhoOutside = scvf.numOutsideScvs() == 1 ? outsideVolVars.molarDensity(phaseIdx)
-                                  : branchingFacetDensity_(elemVolVars, scvf, phaseIdx, rhoInside);
+            const auto rho = scvf.numOutsideScvs() == 1 ? 0.5*(rhoInside + outsideVolVars.molarDensity(phaseIdx))
+                                                        : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
 
-            componentFlux[compIdx] = tij*(rhoInside*xInside - rhoOutside*xOutside);
-            componentFlux[phaseIdx] -= componentFlux[compIdx];
+            componentFlux[compIdx] = rho*tij*(xInside - xOutside);
+            if (Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
-        return componentFlux ;
+
+        return componentFlux;
     }
 
-private:
-
-    //! compute the mole/mass fraction at branching facets for network grids
-    static Scalar branchingFacetX_(const Problem& problem,
-                                   const Element& element,
-                                   const FVElementGeometry& fvGeometry,
-                                   const ElementVolumeVariables& elemVolVars,
-                                   const SubControlVolumeFace& scvf,
-                                   const Scalar insideX, const Scalar insideTi,
-                                   const int phaseIdx, const int compIdx)
-    {
-        Scalar sumTi(insideTi);
-        Scalar sumXTi(insideTi*insideX);
-
-        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-        {
-            const auto outsideScvIdx = scvf.outsideScvIdx(i);
-            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
-            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
-
-            auto outsideTi = calculateTransmissibility_(problem, outsideElement, fvGeometry, elemVolVars, flippedScvf, phaseIdx, compIdx);
-            sumTi += outsideTi;
-            sumXTi += outsideTi*outsideVolVars.moleFraction(phaseIdx, compIdx);
-        }
-        return sumXTi/sumTi;
-    }
-
-    //! compute the density at branching facets for network grids as arithmetic mean
-    static Scalar branchingFacetDensity_(const ElementVolumeVariables& elemVolVars,
-                                         const SubControlVolumeFace& scvf,
-                                         const int phaseIdx,
-                                         const Scalar insideRho)
-    {
-        Scalar rho(insideRho);
-        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-        {
-            const auto outsideScvIdx = scvf.outsideScvIdx(i);
-            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            rho += outsideVolVars.molarDensity(phaseIdx);
-        }
-        return rho/(scvf.numOutsideScvs()+1);
-    }
-
-
-    static Scalar calculateTransmissibility_(const Problem& problem,
-                                             const Element& element,
-                                             const FVElementGeometry& fvGeometry,
-                                             const ElementVolumeVariables& elemVolVars,
-                                             const SubControlVolumeFace& scvf,
-                                             const int phaseIdx, const int compIdx)
+    static Scalar calculateTransmissibility(const Problem& problem,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const SubControlVolumeFace& scvf,
+                                            const int phaseIdx, const int compIdx)
     {
         Scalar tij;
 
@@ -176,6 +176,7 @@ private:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
+        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
         auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
         insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
         const Scalar ti = calculateOmega_(scvf,
@@ -220,6 +221,50 @@ private:
 
         return tij;
     }
+
+    //! compute the mole/mass fraction at branching facets for network grids
+    static Scalar branchingFacetX(const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const SubControlVolumeFace& scvf,
+                                  const Scalar insideX, const Scalar insideTi,
+                                  const int phaseIdx, const int compIdx)
+    {
+        Scalar sumTi(insideTi);
+        Scalar sumXTi(insideTi*insideX);
+
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
+
+            auto outsideTi = elemFluxVarsCache[flippedScvf].diffusionTij(phaseIdx, compIdx);
+            sumTi += outsideTi;
+            sumXTi += outsideTi*outsideVolVars.moleFraction(phaseIdx, compIdx);
+        }
+        return sumXTi/sumTi;
+    }
+
+    //! compute the density at branching facets for network grids as arithmetic mean
+    static Scalar branchingFacetDensity(const ElementVolumeVariables& elemVolVars,
+                                        const SubControlVolumeFace& scvf,
+                                        const int phaseIdx,
+                                        const Scalar insideRho)
+    {
+        Scalar rho(insideRho);
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            rho += outsideVolVars.molarDensity(phaseIdx);
+        }
+        return rho/(scvf.numOutsideScvs()+1);
+    }
+
+private:
 
     static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
                                   const DimWorldMatrix &D,

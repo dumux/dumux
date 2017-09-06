@@ -86,6 +86,39 @@ public:
     }
 
     /*!
+     * \brief Add a capillary pressure-saturation data set to the plot
+     *
+     * \param gnuplot The gnuplot interface
+     * \param params The material law parameters
+     * \param lowerSat Minimum x-value for data set
+     * \param upperSat Maximum x-value for data set
+     * \param curveName Name of the data set
+     * \param curveOptions Plotting options associated with that data set
+     */
+    void addLog10PcSwCurve(GnuplotInterface<Scalar> &gnuplot,
+                           const MaterialLawParams &params,
+                           Scalar lowerSat = 0.0,
+                           Scalar upperSat = 1.0,
+                           std::string curveName = "log10_pc-Sw.dat",
+                           std::string curveOptions = "w l")
+    {
+        std::vector<Scalar> sw(numIntervals_+1);
+        std::vector<Scalar> log10pc(numIntervals_+1);
+        Scalar satInterval = upperSat - lowerSat;
+
+        for (int i = 0; i <= numIntervals_; i++)
+        {
+            sw[i] = lowerSat + satInterval * Scalar(i) / Scalar(numIntervals_);
+            const Scalar pc = std::log10(MaterialLaw::pc(params, sw[i]));
+            log10pc[i] = std::isnan(pc) ? 0.0 : pc;
+        }
+
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("log10 of capillary pressure [Pa]");
+        gnuplot.addDataSetToPlot(sw, log10pc, curveName, curveOptions);
+    }
+
+    /*!
      * \brief Add a saturation-capillary pressure data set to the plot
      *
      * \param gnuplot The gnuplot interface
@@ -119,6 +152,41 @@ public:
         }
 
         gnuplot.setXlabel("capillary pressure [Pa]");
+        gnuplot.setYlabel("wetting phase saturation [-]");
+        gnuplot.addDataSetToPlot(pc, sw, curveName, curveOptions);
+    }
+
+    /*!
+     * \brief Add a saturation-capillary pressure data set to the plot
+     *
+     * \param gnuplot The gnuplot interface
+     * \param params The material law parameters
+     * \param lowerpc Minimum x-value for data set
+     * \param upperpc Maximum x-value for data set
+     * \param curveName Name of the data set
+     * \param curveOptions Plotting options associated with that data set
+     */
+    void addSwLog10PcCurve(GnuplotInterface<Scalar> &gnuplot,
+                           const MaterialLawParams &params,
+                           Scalar lowerpc = 1,
+                           Scalar upperpc = 1e9,
+                           std::string curveName = "Sw-pc",
+                           std::string curveOptions = "w l")
+    {
+        std::vector<Scalar> sw;
+        std::vector<Scalar> pc;
+        Scalar pcInterval = std::log10(upperpc) - std::log10(lowerpc);
+
+        Scalar pcTemp, swTemp = 0.0;
+        for (int i = 0; i <= numIntervals_; i++)
+        {
+            pcTemp = std::log10(lowerpc) + pcInterval * Scalar(i) / Scalar(numIntervals_);
+            swTemp = MaterialLaw::sw(params, std::pow(10, pcTemp));
+            pc.push_back(pcTemp);
+            sw.push_back(swTemp);
+        }
+
+        gnuplot.setXlabel("log10 capillary pressure [Pa]");
         gnuplot.setYlabel("wetting phase saturation [-]");
         gnuplot.addDataSetToPlot(pc, sw, curveName, curveOptions);
     }

@@ -179,7 +179,8 @@ public:
         // bulk interpolation on the circle is only enabled for source in the
         // lower dimensional domain if we use a circle distributed bulk sources
         // (see coupling manager circle sources)
-        BulkPrimaryVariables bulkPriVars(0.0);
+        BulkPrimaryVariables bulkPriVars(sol[0]);
+        bulkPriVars = 0.0;
         if (enableBulkCircleInterpolation_)
         {
             // compute the average of the bulk privars over the circle around the integration point

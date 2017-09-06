@@ -33,13 +33,17 @@
 #include "volumevariables.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
+#include "localresidual.hh"
+#include "primaryvariableswitch.hh"
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux
@@ -54,16 +58,13 @@ namespace Properties {
 SET_INT_PROP(Richards, NumEq, 1);
 
 //! Number of fluid phases considered
-//! Although the number of phases is two for the Richards model the
-//! non-wetting phase is not balanced and thus we only have one
-//! phase with a balance equation
-SET_INT_PROP(Richards, NumPhases, 1);
+SET_INT_PROP(Richards, NumPhases, 2);
 
-//! Only the water component is balanced for Richards
+//! Number of components considered (only water)
 SET_INT_PROP(Richards, NumComponents, 1);
 
 //! The local residual operator
-SET_TYPE_PROP(Richards, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
 
 //! The global model used
 SET_TYPE_PROP(Richards, Model, RichardsModel<TypeTag>);
@@ -77,14 +78,34 @@ SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
 //! Enable advection
 SET_BOOL_PROP(Richards, EnableAdvection, true);
 
-//! The two-phase model has no molecular diffusion
-SET_BOOL_PROP(Richards, EnableMolecularDiffusion, false);
+//! The default richards model computes no diffusion in the air phase
+//! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
+SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
+
+//! The default richards model has no molecular diffusion
+SET_BOOL_PROP(Richards, EnableMolecularDiffusion, GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir));
+
+//! Use the model after Millington (1961) for the effective diffusivity
+SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
+              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+//! The default is not to use the kelvin equation for the water vapor pressure (dependency on pc)
+SET_BOOL_PROP(Richards, UseKelvinEquation, false);
 
 //! Isothermal model by default
 SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
 
 //! The class with all index definitions for the model
-SET_TYPE_PROP(Richards, Indices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(Richards, Indices, RichardsIndices);
+
+//! The class with all index definitions for the model
+SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+
+//! The primary variable switch for the richards model
+SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
+
+//! The primary variable switch for the richards model
+SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
@@ -100,12 +121,12 @@ SET_TYPE_PROP(Richards, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, Mater
 /*!
  *\brief The fluid system used by the model.
  *
- * By default this uses the liquid phase fluid system with simple H2O.
+ * By default this uses the H2O-Air fluid system with Simple H2O (constant density and viscosity).
  */
 SET_PROP(Richards, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
+    using type = FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar>, false>;
 };
 
 /*!
@@ -157,7 +178,7 @@ SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<Typ
 SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
 
 //set isothermal NumEq
 SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);

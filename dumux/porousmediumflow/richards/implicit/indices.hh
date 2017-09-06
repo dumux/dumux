@@ -35,28 +35,32 @@ namespace Dumux
  * \brief Index names for the Richards model.
  */
 
-template <class TypeTag>
 struct RichardsIndices
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
     //////////
     // primary variable indices
     //////////
 
     //! Primary variable index for the wetting phase pressure
-    static const int pressureIdx = 0;
+    static constexpr int pressureIdx = 0;
+    static constexpr int switchIdx = 0;
+
     //////////
     // equation indices
     //////////
     //! Equation index for the mass conservation of the wetting phase
-    static const int conti0EqIdx = 0;
+    static constexpr int conti0EqIdx = 0;
 
     //////////
     // phase indices
     //////////
-    static const int wPhaseIdx = 0; //!< Index of the wetting phase;
-    static const int nPhaseIdx = 1; //!< Index of the non-wetting phase;
+    static constexpr int wPhaseIdx = 0; //!< Index of the wetting phase;
+    static constexpr int nPhaseIdx = 1; //!< Index of the non-wetting phase;
+
+    // present phases (-> 'pseudo' primary variable)
+    static constexpr int wPhaseOnly = 1; //!< Only the non-wetting phase is present
+    static constexpr int nPhaseOnly = 2; //!< Only the wetting phase is present
+    static constexpr int bothPhases = 3; //!< Both phases are present
 };
 // \}
 

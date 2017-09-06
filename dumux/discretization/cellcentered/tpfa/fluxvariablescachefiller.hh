@@ -163,6 +163,7 @@ private:
     {
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
         using DiffusionFiller = typename DiffusionType::CacheFiller;
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
         static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
@@ -170,7 +171,7 @@ private:
         // forward to the filler of the diffusive quantities
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
-                if (phaseIdx != compIdx)
+                if (compIdx != FluidSystem::getMainComponent(phaseIdx))
                     DiffusionFiller::fill(scvfFluxVarsCache, phaseIdx, compIdx, problem(), element, fvGeometry, elemVolVars, scvf, *this);
     }
 
