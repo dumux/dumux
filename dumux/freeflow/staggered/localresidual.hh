@@ -315,12 +315,21 @@ protected:
             // handle the actual boundary conditions:
             const auto bcTypes = this->problem().boundaryTypes(element, scvf);
 
-            // set a fixed value for the velocity
+            // set a fixed value for the velocity for Dirichlet boundary conditions
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
                 const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
                 const Scalar dirichletValue = this->problem().dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
                 this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
+            }
+
+            // For symmetry boundary conditions, there is no flow accross the boundary and
+            // we therefore treat it like a Dirichlet boundary conditions with zero velocity
+            if(bcTypes.isSymmetry())
+            {
+                const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                const Scalar fixedValue = 0.0;
+                this->faceResiduals_[scvf.localFaceIdx()] = velocity - fixedValue;
             }
 
             // outflow condition for the momentum balance equation

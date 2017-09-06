@@ -266,9 +266,25 @@ public:
       // account for all sub-faces
       for(auto subFaceData : scvf.pairData())
       {
-          const int eIdx = scvf.insideScvIdx();
+          const auto eIdx = scvf.insideScvIdx();
           const auto& normalFace = fvGeometry.scvf(eIdx, subFaceData.localNormalFaceIdx);
 
+          // Check if we have a symmetry boundary condition. If yes, the tangental part of the momentum flux can be neglected.
+          if(subFaceData.outerParallelFaceDofIdx < 0)
+          {
+              // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+              auto makeGhostFace = [eIdx] (const GlobalPosition& pos)
+              {
+                  return SubControlVolumeFace(pos, std::vector<unsigned int>{eIdx,eIdx});
+              };
+
+              // use the ghost face to check if there is a symmetry boundary condition and skip any further steps if yes
+              const auto bcTypes = problem.boundaryTypes(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos));
+              if(bcTypes.isSymmetry())
+                continue;
+          }
+
+          // if there is no symmetry boundary condition, proceed to calculate the tangential momentum flux
           if(navierStokes)
               tangentialFlux += computeAdvectivePartOfTangentialMomentumFlux_(problem, element, scvf, normalFace, subFaceData, elemVolVars, velocity);
 
@@ -292,11 +308,11 @@ private:
       const auto insideScvIdx = normalFace.insideScvIdx();
       const auto outsideScvIdx = normalFace.outsideScvIdx();
 
-      // convenience function to create a ghost face, outside of the domain
-    //   auto makeGhostFace = [insideScvIdx, outsideScvIdx] (const GlobalPosition& pos)
-    //   {
-    //       return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
-    //   };
+      // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+      auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
+      {
+          return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
+      };
 
       const bool innerElementIsUpstream = ( sign(normalFace.outerNormalScalar()) == sign(transportingVelocity) );
 
@@ -340,8 +356,8 @@ private:
       const auto& insideVolVars = elemVolVars[insideScvIdx];
       const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-      // convenience function to create a ghost face, outside of the domain
-      auto makeGhostFace = [insideScvIdx, outsideScvIdx] (const GlobalPosition& pos)
+      // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
+      auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
       {
           return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
       };

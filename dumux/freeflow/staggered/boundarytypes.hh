@@ -55,6 +55,7 @@ public:
 
         boundaryInfo_[eqIdx].visited = false;
         boundaryInfo_[eqIdx].isDirichletCell = false;
+        boundaryInfo_[eqIdx].isSymmetry = false;
     }
 
 
@@ -83,11 +84,32 @@ public:
     bool isDirichletCell(unsigned eqIdx) const
     { return boundaryInfo_[eqIdx].isDirichletCell; }
 
+    /*!
+     * \brief Sets a symmetry boundary condition for all equations
+     */
+    void setSymmetry()
+    {
+        for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
+        {
+            resetEq(eqIdx);
+            boundaryInfo_[eqIdx].visited = true;
+            boundaryInfo_[eqIdx].isSymmetry = true;
+            Valgrind::SetDefined(boundaryInfo_[eqIdx]);
+        }
+    }
+
+    /*!
+     * \brief Returns true if the there is a symmetry boundary condition
+     */
+    bool isSymmetry() const
+    { return boundaryInfo_[0].isSymmetry; }
+
 
 protected:
     struct StaggeredFreeFlowBoundaryInfo {
         bool visited;
         bool isDirichletCell;
+        bool isSymmetry;
     };
 
     std::array<StaggeredFreeFlowBoundaryInfo, numEq> boundaryInfo_;
