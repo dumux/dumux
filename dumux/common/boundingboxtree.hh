@@ -539,7 +539,8 @@ public:
         const double n = crossProduct(v1, v2);
 
         // early return if the cross product is larger than zero
-        if (n > v1norm*eps_)
+        using std::abs;
+        if (abs(n) > v1norm*eps_)
             return false;
 
         // we know the points are aligned
