@@ -41,11 +41,7 @@ class InjectionProblem2PNI;
 
 namespace Properties
 {
- /*!
-* dumux-course-task:
-* inherit from the TwoPNI model instead of TwoP here
-*/
-NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(TwoP, InjectionSpatialParams));
+NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(TwoPNI, InjectionSpatialParams));
 NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCModel, InjectionProblem2PNI));
 
 // Set the grid type
@@ -102,11 +98,8 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
 
         contiNEqIdx = Indices::contiNEqIdx,
 
-    /*
-     * dumux-course-task:
-     * get the temperatureIdx as the index for the primary variable temperature and the
-     * energyIdx as the index for the energy conservation equation for your convinience.
-     */
+        temperatureIdx = Indices::temperatureIdx,
+        energyEqIdx = Indices::energyEqIdx,
 
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -196,10 +189,10 @@ public:
         else
             values.setAllNeumann();
 
-         /*!
-          * dumux-course-task:
-          * set dirichlet conditions for the temperature index everywhere
-          */
+
+        // set a dirichlet value for the temperature, use the energy
+        // equation to set the value
+        values.setDirichlet(temperatureIdx);
     }
 
     /*!
@@ -215,11 +208,8 @@ public:
         Scalar densityW = 1000.0;
         values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[saturationIdx] = 0.0;
-       /*!
-        * dumux-course-task:
-        * set a temperature gradient of 0.03 K per m beginning at 283 K here.
-        * Hint: you can use maxDepth_ and the globalPos similar to the pressure gradient
-        */
+        values[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
+
     }
 
     /*!
@@ -279,12 +269,9 @@ public:
         values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[saturationIdx] = 0.0;
 
-        /*!
-        * dumux-course-task:
-        * set a temperature gradient of 0.03 K per m beginning at 283 K here.
-        * Hint: you can use maxDepth_ and the globalPos similar to the pressure gradient
-        * use globalPos[0] and globalpos[1] to implement the high temperature lens with 380 K
-        */
+        values[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
+        if (globalPos[0] > 20 - eps_ && globalPos[0] < 30 + eps_ && globalPos[1] > 5 - eps_ && globalPos[1] < 35 + eps_)
+            values[temperatureIdx] = 380;
     }
 
 
