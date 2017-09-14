@@ -93,7 +93,7 @@ public:
     InjectionSpatialParams(const GridView &gridView)
         : ParentType(gridView)
     {
-        layerBottom_ = 22.0;
+        layerBottom_ = 25.0;
 
         // intrinsic permeabilities
         fineK_ = 1e-13;
@@ -102,6 +102,10 @@ public:
         // porosities
         finePorosity_ = 0.2;
         coarsePorosity_ = 0.4;
+
+        //materialLawParams
+        fineEntryPressure_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureFine);
+        coarseEntryPressure_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureCoarse);
 
         // heat conductivity of granite
         lambdaSolid_ = 2.8;
@@ -113,8 +117,8 @@ public:
         coarseMaterialParams_.setSnr(0.0);
 
         // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(1e4);
-        coarseMaterialParams_.setPe(1e4);
+        fineMaterialParams_.setPe(fineEntryPressure_);
+        coarseMaterialParams_.setPe(coarseEntryPressure_);
         fineMaterialParams_.setLambda(2.0);
         coarseMaterialParams_.setLambda(2.0);
     }
@@ -173,6 +177,10 @@ public:
     }
 
     /*!
+     *  These parameters are only needed for nonisothermal models. Comment them in if you want to implement the 2pni model.
+     */
+
+    /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
@@ -181,12 +189,12 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
-    {
-        return 790; // specific heat capacity of granite [J / (kg K)]
-    }
+//     Scalar solidHeatCapacity(const Element &element,
+//                              const FVElementGeometry &fvGeometry,
+//                              const int scvIdx) const
+//     {
+//         return 790; // specific heat capacity of granite [J / (kg K)]
+//     }
 
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
@@ -197,12 +205,12 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return 2700; // density of granite [kg/m^3]
-    }
+//     Scalar solidDensity(const Element &element,
+//                         const FVElementGeometry &fvGeometry,
+//                         const int scvIdx) const
+//     {
+//         return 2700; // density of granite [kg/m^3]
+//     }
 
     /*!
      * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
@@ -213,12 +221,12 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const int scvIdx) const
-    {
-        return lambdaSolid_;
-    }
+//     Scalar solidThermalConductivity(const Element &element,
+//                                     const FVElementGeometry &fvGeometry,
+//                                     const int scvIdx) const
+//     {
+//         return lambdaSolid_;
+//     }
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
@@ -232,6 +240,9 @@ private:
     Scalar coarsePorosity_;
 
     Scalar lambdaSolid_;
+
+    Scalar fineEntryPressure_;
+    Scalar coarseEntryPressure_;
 
     MaterialLawParams fineMaterialParams_;
     MaterialLawParams coarseMaterialParams_;

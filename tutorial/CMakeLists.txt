@@ -15,3 +15,4 @@ tutorialproblem_sequential.hh
 tutorialspatialparams_implicit.hh
 tutorialspatialparams_sequential.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/tutorial)
+add_subdirectory(dumux-course)

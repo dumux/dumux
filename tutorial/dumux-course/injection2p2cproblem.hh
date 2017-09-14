@@ -69,7 +69,7 @@ SET_BOOL_PROP(Injection2p2cProblem, UseMoles, true);
  *
  * A mixture of Nitrogen and Water vapor, which is composed according to the prevailing conditions (temperature, pressure)
  * enters a water-filled aquifer. This is realized with a solution-dependent Neumann boundary condition at the right boundary
- * (\f$ 5m<y<15m\f$). The aquifer is situated 2700m below sea level. The injected fluid phase migrates upwards due to buoyancy.
+ * (\f$ 7m<y<15m\f$). The aquifer is situated 2700m below sea level. The injected fluid phase migrates upwards due to buoyancy.
  * It accumulates and partially enters the lower permeable aquitard.
  *
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the

@@ -13,3 +13,6 @@ MaxDepth = 2700.0
 [Newton]
 WriteConvergence = 1 # write convergence behaviour to disk?
 
+[SpatialParams]
+EntryPressureFine = 4.5e4
+EntryPressureCoarse = 1e4
