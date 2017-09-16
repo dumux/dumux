@@ -382,14 +382,14 @@ public:
             //! but it shouldn't impact performance too much
             Dune::BlockVector<NumEqVector> xTmp; xTmp.resize(b.size());
             Dune::BlockVector<NumEqVector> bTmp(xTmp);
-            for (int i = 0; i < b.size(); ++i)
-                for (int j = 0; j < numEq; ++j)
+            for (unsigned int i = 0; i < b.size(); ++i)
+                for (unsigned int j = 0; j < numEq; ++j)
                     bTmp[i][j] = b[i][j];
 
             int converged = ls.solve(A, xTmp, bTmp);
 
-            for (int i = 0; i < x.size(); ++i)
-                for (int j = 0; j < numEq; ++j)
+            for (unsigned int i = 0; i < x.size(); ++i)
+                for (unsigned int j = 0; j < numEq; ++j)
                     x[i][j] = xTmp[i][j];
 
             // make sure all processes converged
