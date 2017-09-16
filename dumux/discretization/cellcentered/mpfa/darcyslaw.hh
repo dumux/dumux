@@ -25,8 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 
-#include <dumux/implicit/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
 namespace Dumux
 {
@@ -63,63 +62,57 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
-    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using CoefficientVector = typename BoundaryInteractionVolume::Vector;
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using CoefficientVector = typename PrimaryInteractionVolume::Traits::DynamicVector;
+    using DataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
-    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
 
     //! The cache used in conjunction with the mpfa Darcy's Law
     class MpfaDarcysLawCache
     {
         // We always use the dynamic types here to be compatible on the boundary
-        using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
-        using PositionVector = typename BoundaryInteractionVolume::PositionVector;
+        using Stencil = typename PrimaryInteractionVolume::Traits::DynamicGlobalIndexContainer;
+        using DirichletDataContainer = typename PrimaryInteractionVolume::DirichletDataContainer;
 
     public:
         //! update cached objects
         template<class InteractionVolume>
-        void updateAdvection(const InteractionVolume& iv, const SubControlVolumeFace &scvf)
+        void updateAdvection(const InteractionVolume& iv, const DataHandle& dataHandle, const SubControlVolumeFace &scvf)
         {
             const auto& localFaceData = iv.getLocalFaceData(scvf);
-            // update the quantities that are equal for all phases
-            advectionVolVarsStencil_ = iv.volVarsStencil();
-            advectionVolVarsPositions_ = iv.volVarsPositions();
-            advectionTij_ = iv.getTransmissibilities(localFaceData);
 
-            // The neumann fluxes always have to be set per phase
-            for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                phaseNeumannFluxes_[phaseIdx] = iv.getNeumannFlux(localFaceData, phaseIdx);
+            // update the quantities that are equal for all phases
+            advectionSwitchFluxSign_ = localFaceData.isOutside;
+            advectionTij_ = &iv.getTransmissibilities(scvf, localFaceData, dataHandle);
+            advectionVolVarsStencil_ = &dataHandle.volVarsStencil();
+            advectionDirichletData_ = &dataHandle.dirichletData();
         }
 
-        //! Returns the volume variables indices necessary for flux computation
-        //! This includes all participating boundary volume variables. Since we
-        //! do not allow mixed BC for the mpfa this is the same for all phases.
+        //! Returns the stencil for advective scvf flux computation
         const Stencil& advectionVolVarsStencil() const
-        { return advectionVolVarsStencil_; }
-
-        //! Returns the position on which the volume variables live. This is
-        //! necessary as we need to evaluate gravity also for the boundary volvars
-        const PositionVector& advectionVolVarsPositions() const
-        { return advectionVolVarsPositions_; }
+        { return *advectionVolVarsStencil_; }
 
         //! Returns the transmissibilities associated with the volume variables
         //! All phases flow through the same rock, thus, tij are equal for all phases
         const CoefficientVector& advectionTij() const
-        { return advectionTij_; }
+        { return *advectionTij_; }
 
-        //! If the useTpfaBoundary property is set to false, the boundary conditions
-        //! are put into the local systems leading to possible contributions on all faces
-        Scalar advectionNeumannFlux(unsigned int phaseIdx) const
-        { return phaseNeumannFluxes_[phaseIdx]; }
+        //! On faces that are "outside" w.r.t. a face in the interaction volume,
+        //! we have to take the negative value of the fluxes, i.e. multiply by -1.0
+        bool advectionSwitchFluxSign() const
+        { return advectionSwitchFluxSign_; }
+
+        //! Returns the data on dirichlet boundary conditions affecting
+        //! the flux computation on this face
+        const DirichletDataContainer& advectionDirichletData() const
+        { return *advectionDirichletData_; }
 
     private:
-        // Quantities associated with advection
-        Stencil advectionVolVarsStencil_;
-        PositionVector advectionVolVarsPositions_;
-        CoefficientVector advectionTij_;
-        std::array<Scalar, numPhases> phaseNeumannFluxes_;
+        bool advectionSwitchFluxSign_;
+        const Stencil* advectionVolVarsStencil_;
+        const CoefficientVector* advectionTij_;
+        const DirichletDataContainer* advectionDirichletData_;
     };
 
     //! Class that fills the cache corresponding to mpfa Darcy's Law
@@ -138,10 +131,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
             // get interaction volume from the flux vars cache filler & upate the cache
-            if (problem.model().fvGridGeometry().isInBoundaryInteractionVolume(scvf))
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf);
+            if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.secondaryInteractionVolume(),
+                                                  fluxVarsCacheFiller.dataHandle(),
+                                                  scvf);
             else
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.interactionVolume(), scvf);
+                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.primaryInteractionVolume(),
+                                                  fluxVarsCacheFiller.dataHandle(),
+                                                  scvf);
         }
     };
 
@@ -164,27 +161,19 @@ public:
         static const bool gravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& volVarsStencil = fluxVarsCache.advectionVolVarsStencil();
-        const auto& volVarsPositions = fluxVarsCache.advectionVolVarsPositions();
         const auto& tij = fluxVarsCache.advectionTij();
 
-        const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
-        // For interior Neumann boundaries when using Tpfa on boundaries, return the user-specified flux
-        // We assume phaseIdx = eqIdx here.
-        if (isInteriorBoundary
-            && useTpfaBoundary
-            && fluxVarsCache.interiorBoundaryDataSelf().faceType() == MpfaFaceTypes::interiorNeumann)
-            return scvf.area()*
-                   elemVolVars[scvf.insideScvIdx()].extrusionFactor()*
-                   problem.neumann(element, fvGeometry, elemVolVars, scvf)[phaseIdx];
-
         // Calculate the interface density for gravity evaluation
-        const auto rho = Implementation::interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
+        const auto rho = interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx);
 
-        // calculate Tij*pj
-        Scalar flux(0.0);
-        unsigned int localIdx = 0;
-        for (const auto volVarIdx : volVarsStencil)
+        // Variable for the flux to be computed
+        Scalar scvfFlux(0.0);
+
+        // index counter to get corresponding transmissibilities
+        unsigned int i = 0;
+
+        // add contributions from cell-centered unknowns
+        for (const auto volVarIdx : fluxVarsCache.advectionVolVarsStencil())
         {
             const auto& volVars = elemVolVars[volVarIdx];
             Scalar h = volVars.pressure(phaseIdx);
@@ -193,32 +182,41 @@ public:
             if (gravity)
             {
                 // gravitational acceleration in the center of the actual element
-                const auto x = volVarsPositions[localIdx];
+                const auto x = fvGeometry.scv(volVarIdx).center();
                 const auto g = problem.gravityAtPos(x);
-
                 h -= rho*(g*x);
             }
 
-            flux += tij[localIdx++]*h;
+            scvfFlux += tij[i++]*h;
         }
 
-        // if no interior boundaries are present, return the flux
-        if (!enableInteriorBoundaries)
-            return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
+        // add contributions from possible dirichlet boundary conditions
+        for (const auto& d : fluxVarsCache.advectionDirichletData())
+        {
+            const auto& volVars = elemVolVars[d.volVarIndex];
+            Scalar h = volVars.pressure(phaseIdx);
 
-        // Handle interior boundaries
-        flux += Implementation::computeInteriorBoundaryContribution(problem, fvGeometry, elemVolVars, fluxVarsCache, phaseIdx, rho);
+            // maybe add gravitational acceleration
+            if (gravity)
+            {
+                const auto x = d.ipGlobal;
+                const auto g = problem.gravityAtPos(x);
+                h -= rho*(g*x);
+            }
 
-        // return overall resulting flux
-        return useTpfaBoundary ? flux : flux + fluxVarsCache.advectionNeumannFlux(phaseIdx);
+            scvfFlux += tij[i++]*h;
+        }
+
+        // return the flux (maybe adjust the sign)
+        return fluxVarsCache.advectionSwitchFluxSign() ? -scvfFlux : scvfFlux;
     }
 
+private:
     static Scalar interpolateDensity(const FVElementGeometry& fvGeometry,
                                      const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
                                      const FluxVariablesCache& fluxVarsCache,
-                                     const unsigned int phaseIdx,
-                                     const bool isInteriorBoundary)
+                                     const unsigned int phaseIdx)
     {
         static const bool gravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
 
@@ -226,14 +224,6 @@ public:
             return Scalar(0.0);
         else
         {
-            // Treat interior Dirichlet boundaries differently
-            if (isInteriorBoundary)
-            {
-                const auto& data = fluxVarsCache.interiorBoundaryDataSelf();
-                if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
-                    return data.facetVolVars(fvGeometry).density(phaseIdx);
-            }
-
             // use arithmetic mean of the densities around the scvf
             if (!scvf.boundary())
             {
@@ -245,44 +235,6 @@ public:
             else
                 return elemVolVars[scvf.outsideScvIdx()].density(phaseIdx);
         }
-    }
-
-    static Scalar computeInteriorBoundaryContribution(const Problem& problem,
-                                                      const FVElementGeometry& fvGeometry,
-                                                      const ElementVolumeVariables& elemVolVars,
-                                                      const FluxVariablesCache& fluxVarsCache,
-                                                      unsigned int phaseIdx, Scalar rho)
-    {
-        static const bool gravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
-
-        // obtain the transmissibilites associated with all pressures
-        const auto& tij = fluxVarsCache.advectionTij();
-
-        // the interior dirichlet boundaries local indices start after
-        // the cell and the domain Dirichlet boundary pressures
-        const auto startIdx = fluxVarsCache.advectionVolVarsStencil().size();
-
-        // add interior Dirichlet boundary contributions
-        Scalar flux = 0.0;
-        for (auto&& data : fluxVarsCache.interiorBoundaryData())
-        {
-            if (data.faceType() == MpfaFaceTypes::interiorDirichlet)
-            {
-                Scalar h = data.facetVolVars(fvGeometry).pressure(phaseIdx);
-
-                if (gravity)
-                {
-                    const auto x = fvGeometry.scvf(data.scvfIndex()).ipGlobal();
-                    const auto g = problem.gravityAtPos(x);
-
-                    h -= rho*(g*x);
-                }
-
-                flux += tij[startIdx + data.localIndexInInteractionVolume()]*h;
-            }
-        }
-
-        return flux;
     }
 };
 

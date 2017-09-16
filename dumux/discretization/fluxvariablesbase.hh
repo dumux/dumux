@@ -25,7 +25,6 @@
 
 #include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 #include <dumux/discretization/fluxstencil.hh>
 #include <dumux/discretization/upwindscheme.hh>
 

@@ -21,10 +21,8 @@
  * \brief Stores the face indices corresponding to the neighbors of an element
  *        that contribute to the derivative calculation
  */
-#ifndef DUMUX_CC_MPFA_GENERAL_ASSEMBLY_MAP_HH
-#define DUMUX_CC_MPFA_GENERAL_ASSEMBLY_MAP_HH
-
-#include <dumux/implicit/cellcentered/assemblymap.hh>
+#ifndef DUMUX_CC_MPFA_GENERAL_CONNECTIVITY_MAP_HH
+#define DUMUX_CC_MPFA_GENERAL_CONNECTIVITY_MAP_HH
 
 namespace Dumux
 {
@@ -61,19 +59,19 @@ class CCMpfaGeneralConnectivityMap
 public:
 
     /*!
-     * \brief Initialize the AssemblyMap object.
+     * \brief Initialize the ConnectivityMap object.
      *
-     * \param problem The problem which we want to simulate.
+     * \param fvGridGeometry The grid's finite volume geometry.
      */
-    void init(const Problem& problem)
+    void update(const FVGridGeometry& fvGridGeometry)
     {
-        map_.resize(problem.gridView().size(0));
-        for (const auto& element : elements(problem.gridView()))
+        map_.resize(fvGridGeometry.gridView().size(0));
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // We are looking for the elements I, for which this element J is in the flux stencil
-            auto globalJ = problem.elementMapper().index(element);
+            auto globalJ = fvGridGeometry.elementMapper().index(element);
 
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
             // obtain the data of J in elements I
@@ -83,7 +81,7 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 FluxVariables fluxVars;
-                const auto& stencil = fluxVars.computeStencil(problem, element, fvGeometry, scvf);
+                const auto& stencil = fluxVars.computeStencil(element, fvGeometry, scvf);
 
                 // insert our index in the neighbor stencils of the elements in the flux stencil
                 for (auto globalI : stencil)

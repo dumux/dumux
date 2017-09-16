@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class for an MPFA-O sub control volume face
+ * \brief Class for the sub-control volume face in mpfa schemes
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
@@ -29,40 +29,47 @@ namespace Dumux
 {
 //! Forward declaration of the method specific implementations
 //! Available implementations have to be included at the end of this file.
-template<MpfaMethods M, class G, typename I>
+template<MpfaMethods M, class G, class GT, typename I>
 class CCMpfaSubControlVolumeFaceImplementation;
 
 /*!
- * \ingroup Discretization
+ * \ingroup Mpfa
  * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
  *        of a control volume we compute fluxes on. This class inherits from the actual implementations
  *        and defines the constructor interface.
+ *
+ * \param M the mpfa method used
+ * \param G the geometry type for the scvf geometries
+ * \param GT the traits class for the geometry type
+ * \param I the type used for indices
  */
-template<MpfaMethods M, class G, typename I>
-class CCMpfaSubControlVolumeFace : public CCMpfaSubControlVolumeFaceImplementation<M, G, I>
+template<MpfaMethods M, class G, class GT, typename I>
+class CCMpfaSubControlVolumeFace : public CCMpfaSubControlVolumeFaceImplementation<M, G, GT, I>
 {
-    using ParentType = CCMpfaSubControlVolumeFaceImplementation<M, G, I>;
+    using ParentType = CCMpfaSubControlVolumeFaceImplementation<M, G, GT, I>;
     using Geometry = G;
     using IndexType = I;
 
     using Scalar = typename Geometry::ctype;
     static const int dim = Geometry::mydimension;
-    static const int dimworld = Geometry::coorddimension;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    static const int dimWorld = Geometry::coorddimension;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    //! state the traits class puclicly
+    using Traits = GT;
+
+    //! For convenience, state the corner storage vector from the traits
+    using CornerVector = typename Traits::template CornerStorage<dim, dimWorld>::Type;
+
     /*!
      * \brief Constructor
-     *
-     * We do not use the localIndex here. Its meaning can vary depending on the
-     * implementation (i.e. mpfa method) and is handled by the implementation itself.
      *
      * \param geomHelper The mpfa geometry helper
      * \param corners The corners of the scv face
      * \param unitOuterNormal The unit outer normal vector of the scvf
      * \param vIdxGlobal The global vertex index the scvf is connected to
-     * \param localIndex Some element local index (the local vertex index in mpfao-fps)
+     * \param localIndex Some element local index (e.g. the local vertex index in mpfa-o-fps scheme)
      * \param scvfIndex The global index of this scv face
      * \param insideScvIdx The inside scv index connected to this face
      * \param outsideScvIndices The outside scv indices connected to this face
@@ -71,7 +78,7 @@ public:
      */
     template<class MpfaHelper>
     CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
-                               std::vector<GlobalPosition>&& corners,
+                               CornerVector&& corners,
                                GlobalPosition&& unitOuterNormal,
                                IndexType vIdxGlobal,
                                unsigned int localIndex,
@@ -81,7 +88,7 @@ public:
                                Scalar q,
                                bool boundary)
     : ParentType(helper,
-                 std::forward<std::vector<GlobalPosition>>(corners),
+                 std::forward<CornerVector>(corners),
                  std::forward<GlobalPosition>(unitOuterNormal),
                  vIdxGlobal,
                  localIndex,
@@ -95,8 +102,8 @@ public:
 } // end namespace
 
 //! The available implementations should be included here
-#include <dumux/discretization/cellcentered/mpfa/lmethod/subcontrolvolumeface.hh>
+// #include <dumux/discretization/cellcentered/mpfa/lmethod/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/omethod/subcontrolvolumeface.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethodfps/subcontrolvolumeface.hh>
+// #include <dumux/discretization/cellcentered/mpfa/omethodfps/subcontrolvolumeface.hh>
 
 #endif

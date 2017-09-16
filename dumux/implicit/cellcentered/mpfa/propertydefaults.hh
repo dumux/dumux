@@ -27,12 +27,14 @@
 #ifndef DUMUX_CCMPFA_PROPERTY_DEFAULTS_HH
 #define DUMUX_CCMPFA_PROPERTY_DEFAULTS_HH
 
+#include <dune/geometry/type.hh>
+#include <dune/geometry/multilineargeometry.hh>
+
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
@@ -40,10 +42,6 @@
 #include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
-#include <dumux/discretization/cellcentered/mpfa/globalinteractionvolumeseeds.hh>
-#include <dumux/discretization/cellcentered/mpfa/interiorboundarydata.hh>
-#include <dumux/implicit/cellcentered/mpfa/localresidual.hh>
-#include <dumux/implicit/cellcentered/mpfa/assemblymap.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
 
 namespace Dumux {
@@ -55,9 +53,6 @@ SET_PROP(CCMpfaModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
 };
 
-//! Set the BaseLocalResidual to CCMpfaLocalResidual
-SET_TYPE_PROP(CCMpfaModel, BaseLocalResidual, CCMpfaLocalResidual<TypeTag>);
-
 //! By default we set the o-method as the Mpfa method of choice
 SET_PROP(CCMpfaModel, MpfaMethod)
 {
@@ -67,23 +62,14 @@ SET_PROP(CCMpfaModel, MpfaMethod)
 //! The mpfa helper class
 SET_TYPE_PROP(CCMpfaModel, MpfaHelper, CCMpfaHelper<TypeTag>);
 
-//! The assembly map for mpfa schemes
-SET_TYPE_PROP(CCMpfaModel, AssemblyMap, CCMpfaAssemblyMap<TypeTag>);
-
 //! The interaction volume class
-SET_TYPE_PROP(CCMpfaModel, InteractionVolume, CCMpfaInteractionVolume<TypeTag>);
+SET_TYPE_PROP(CCMpfaModel, PrimaryInteractionVolume, CCMpfaInteractionVolume<TypeTag>);
 
 //! The boundary interaction volume class (for methods other than the omethod)
-SET_TYPE_PROP(CCMpfaModel, BoundaryInteractionVolume, typename GET_PROP_TYPE(TypeTag, InteractionVolume)::BoundaryInteractionVolume);
-
-//! The global interaction volume seeds class
-SET_TYPE_PROP(CCMpfaModel, GlobalInteractionVolumeSeeds, CCMpfaGlobalInteractionVolumeSeeds<TypeTag>);
+SET_TYPE_PROP(CCMpfaModel, SecondaryInteractionVolume, typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume)::Traits::SecondaryInteractionVolume);
 
 //! Set the default for the global finite volume geometry
 SET_TYPE_PROP(CCMpfaModel, FVGridGeometry, CCMpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-
-//! The global current volume variables vector class
-SET_TYPE_PROP(CCMpfaModel, GlobalVolumeVariables, Dumux::CCMpfaGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel, GlobalFluxVariablesCache, CCMpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
@@ -97,30 +83,46 @@ SET_TYPE_PROP(CCMpfaModel, ElementVolumeVariables, Dumux::CCMpfaElementVolumeVar
 //! The local flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel, ElementFluxVariablesCache, Dumux::CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
+//! The sub-control volume face class
 SET_PROP(CCMpfaModel, SubControlVolumeFace)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GridView::ctype;
+    using IndexType = typename GridView::IndexSet::IndexType;
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
+
+    // we use geometry traits that use static corner vectors to and a fixed geometry type
+    template <class ct>
+    struct ScvfGeometryTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2 corners in 2d, 4 corners in 3d)
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+        private:
+            static const int numScvfCorners = dim*2 - 2;
+        public:
+            typedef std::array< Dune::FieldVector< ct, cdim >, numScvfCorners > Type;
+        };
+
+        // we know all scvfs will have the same geometry type
+        template< int dim >
+        struct hasSingleGeometryType
+        {
+            static const bool v = true;
+            static const unsigned int topologyId = Dune::Impl::CubeTopology< dim >::type::id;
+        };
+    };
+
+    using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfGeometryTraits<Scalar> >;
+
 public:
-    typedef Dumux::CCMpfaSubControlVolumeFace<GET_PROP_VALUE(TypeTag, MpfaMethod), ScvfGeometry, IndexType> type;
+    typedef Dumux::CCMpfaSubControlVolumeFace<method, ScvfGeometry, ScvfGeometryTraits<Scalar>, IndexType> type;
 };
-
-// By default, we use tpfa on the boundaries
-SET_BOOL_PROP(CCMpfaModel, UseTpfaBoundary, true);
-
-// By default, interior boundaries are static
-SET_BOOL_PROP(CCMpfaModel, MpfaFacetCoupling, false);
-
-// The default interior Dirichlet boundary data
-SET_TYPE_PROP(CCMpfaModel, InteriorBoundaryData, InteriorBoundaryData<TypeTag>);
-
-// By default, we use simple coupling conditions (Xi = 1)
-SET_SCALAR_PROP(CCMpfaModel, MpfaXi, 1.0);
 
 // By default, we set the quadrature point to the mid point of the element facets
 SET_SCALAR_PROP(CCMpfaModel, MpfaQ, 0.0);

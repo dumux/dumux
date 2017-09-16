@@ -18,21 +18,36 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Face types of the sub control volume faces in cell-centered mpfa methods.
+ * \brief Stores the face indices corresponding to the neighbors of an element
+ *        that contribute to the derivative calculation
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FACETYPES_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_FACETYPES_HH
+#ifndef DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
+#define DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
+
+#include <dumux/discretization/cellcentered/connectivitymap.hh>
+#include <dumux/discretization/cellcentered/mpfa/generalconnectivitymap.hh>
 
 namespace Dumux
 {
-    enum class MpfaFaceTypes : unsigned int
-    {
-        interior,
-        neumann,
-        dirichlet,
-        interiorNeumann,
-        interiorDirichlet
-    };
-} // end namespace
+//! Forward declaration of method specific implementation of the assembly map
+template<class TypeTag, MpfaMethods method>
+class CCMpfaConnectivityMapImplementation;
+
+// //! The Assembly map for models using mpfa methods
+template<class TypeTag>
+using CCMpfaConnectivityMap = CCMpfaConnectivityMapImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
+
+//! The default is the general assembly map for mpfa schemes
+template<class TypeTag, MpfaMethods method>
+class CCMpfaConnectivityMapImplementation : public CCMpfaGeneralConnectivityMap<TypeTag> {};
+
+//! The o-method can use the simple assembly map
+template<class TypeTag>
+class CCMpfaConnectivityMapImplementation<TypeTag, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<TypeTag> {};
+
+//! The o-method with full pressure support can use the simple assembly map
+template<class TypeTag>
+class CCMpfaConnectivityMapImplementation<TypeTag, MpfaMethods::oMethodFps> : public CCSimpleConnectivityMap<TypeTag> {};
+}
 
 #endif

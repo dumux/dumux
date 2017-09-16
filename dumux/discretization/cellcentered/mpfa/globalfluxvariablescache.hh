@@ -51,44 +51,57 @@ class CCMpfaGlobalFluxVariablesCache<TypeTag, true>
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+    using DataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    void update(Problem& problem)
+    void update(const Problem& problem,
+                const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol)
     {
         problemPtr_ = &problem;
+
+        // clear data
+        clear_();
+
+        // reserve memory estimate for caches, interaction volumes and corresponding data
+        fluxVarsCache_.resize(fvGridGeometry.numScvf());
+
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+        const auto numPrimaryIvs = gridIvIndexSets.numPrimaryInteractionVolumes();
+        const auto numSecondaryIVs = gridIvIndexSets.numSecondaryInteractionVolumes();
+        primaryInteractionVolumes_.reserve(numPrimaryIvs);
+        secondaryInteractionVolumes_.reserve(numSecondaryIVs);
+        primaryIvDataHandles_.reserve(numPrimaryIvs);
+        secondaryIvDataHandles_.reserve(numSecondaryIVs);
 
         // instantiate helper class to fill the caches
         FluxVariablesCacheFiller filler(problem);
 
-        const auto& fvGridGeometry = problem.model().fvGridGeometry();
-        fluxVarsCache_.resize(fvGridGeometry.numScvf());
-        for (const auto& element : elements(problem.gridView()))
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // Prepare the geometries within the elements of the stencil
             auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bind(element);
 
-            auto elemVolVars = localView(problem.model().curGlobalVolVars());
-            elemVolVars.bind(element, fvGeometry, problem.model().curSol());
+            auto elemVolVars = localView(gridVolVars);
+            elemVolVars.bind(element, fvGeometry, sol);
 
             // prepare all the caches of the scvfs inside the corresponding interaction volume
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
+            for (const auto& scvf : scvfs(fvGeometry))
                 if (!fluxVarsCache_[scvf.index()].isUpdated())
                     filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf);
-            }
         }
     }
 
@@ -101,6 +114,15 @@ public:
     { return ElementFluxVariablesCache(global); }
 
 private:
+
+    void clear_()
+    {
+        fluxVarsCache_.clear();
+        primaryInteractionVolumes_.clear();
+        secondaryInteractionVolumes_.clear();
+        primaryIvDataHandles_.clear();
+        secondaryIvDataHandles_.clear();
+    }
 
     // access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
@@ -121,7 +143,12 @@ private:
     const Problem* problemPtr_;
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
-    std::vector<IndexType> globalScvfIndices_;
+
+    // store the interaction volumes and handles
+    std::vector<PrimaryInteractionVolume> primaryInteractionVolumes_;
+    std::vector<SecondaryInteractionVolume> secondaryInteractionVolumes_;
+    std::vector<DataHandle> primaryIvDataHandles_;
+    std::vector<DataHandle> secondaryIvDataHandles_;
 };
 
 /*!
@@ -134,11 +161,17 @@ class CCMpfaGlobalFluxVariablesCache<TypeTag, false>
     // the local class needs access to the problem
     friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
 public:
     // When global flux variables caching is disabled, we don't need to update the cache
-    void update(Problem& problem)
+    void update(const Problem& problem,
+                const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol)
     { problemPtr_ = &problem; }
 
     /*!

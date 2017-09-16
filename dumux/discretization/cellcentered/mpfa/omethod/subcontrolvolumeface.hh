@@ -30,41 +30,41 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Discretization
+ * \ingroup Mpfa
  * \brief Class for a sub control volume face in the mpfa-o method. We simply inherit from the base class here.
  */
-template<class G, typename I>
-class CCMpfaSubControlVolumeFace<MpfaMethods::oMethod, G, I> : public CCMpfaSubControlVolumeFaceBase<G, I>
+template<class G, class GT, typename I>
+class CCMpfaSubControlVolumeFaceImplementation<MpfaMethods::oMethod, G, GT, I> : public CCMpfaSubControlVolumeFaceBase<G, GT, I>
 {
-    using ParentType = CCMpfaSubControlVolumeFaceBase<G, I>;
+    using ParentType = CCMpfaSubControlVolumeFaceBase<G, GT, I>;
     using Geometry = G;
     using IndexType = I;
 
     using Scalar = typename Geometry::ctype;
     static const int dim = Geometry::mydimension;
-    static const int dimworld = Geometry::coorddimension;
+    static const int dimWorld = Geometry::coorddimension;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Corners = typename GT::template CornerStorage<dim, dimWorld>::Type;
 
 public:
-    //! We do not use the localIndex variable.
+    //! We do not use the localIndex variable here.
     //! It is here to satisfy the general mpfa scvf interface.
     template<class MpfaGeometryHelper>
-    CCMpfaSubControlVolumeFace(const MpfaGeometryHelper& geomHelper,
-                               std::vector<GlobalPosition>&& corners,
-                               GlobalPosition&& unitOuterNormal,
-                               IndexType vertexIndex,
-                               unsigned int localIndex,
-                               IndexType scvfIndex,
-                               IndexType insideScvIdx,
-                               const std::vector<IndexType>& outsideScvIndices,
-                               Scalar q,
-                               bool boundary)
+    CCMpfaSubControlVolumeFaceImplementation(const MpfaGeometryHelper& geomHelper,
+                                             Corners&& corners,
+                                             GlobalPosition&& unitOuterNormal,
+                                             IndexType vertexIndex,
+                                             unsigned int localIndex,
+                                             IndexType scvfIndex,
+                                             IndexType insideScvIdx,
+                                             const std::vector<IndexType>& outsideScvIndices,
+                                             Scalar q,
+                                             bool boundary)
     : ParentType(geomHelper,
-                 std::forward<std::vector<GlobalPosition>>(corners),
+                 std::forward<Corners>(corners),
                  std::forward<GlobalPosition>(unitOuterNormal),
                  vertexIndex,
-                 localIndex,
                  scvfIndex,
                  insideScvIdx,
                  outsideScvIndices,

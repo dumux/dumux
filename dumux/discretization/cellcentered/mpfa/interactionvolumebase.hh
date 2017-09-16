@@ -18,21 +18,31 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for interaction volumes of mpfa methods. Defines the interface.
+ * \brief Base class for interaction volumes of mpfa methods.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dune/common/dynmatrix.hh>
+
+#include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 
 namespace Dumux
 {
-//! Base class for the interaction volume traits
+
+/*!
+ * \ingroup Mpfa
+ * \brief Base class for the interaction volume traits. The types stated here
+ *        have to be defined in interaction volume traits. It is recommended
+ *        that different implementations inherit from this class and overwrite the
+ *        desired types or publicly state the typedef of this base class.
+ */
 template<class TypeTag>
 class CCMpfaInteractionVolumeTraitsBase
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -40,38 +50,57 @@ class CCMpfaInteractionVolumeTraitsBase
 
 public:
     using LocalIndexType = std::uint8_t;
-    using LocalIndexSet = std::vector<LocalIndexType>;
-    using GlobalIndexType = typename GridView::IndexSet::IndexType;
-    using GlobalIndexSet = std::vector<GlobalIndexType>;
+
+    //! The dynamic types are used e.g. by the mpfa-o method.
+    //! To be compatible with schemes using both dynamic and static
+    //! array types (e.g. L-method using mpfa-o interaction volumes
+    //! on the boudaries), other classes interacting with the interaction
+    //! volumes (e.g. flux vars cache) export the dynamic types. If your
+    //! scheme is fully static on the entire grid, overwrite these traits.
+    using DynamicLocalIndexContainer = std::vector<LocalIndexType>;
+    using DynamicGlobalIndexContainer = std::vector<typename GridView::IndexSet::IndexType>;
+    using DynamicMatrix = Dune::DynamicMatrix<Scalar>;
+    using DynamicVector = typename DynamicMatrix::row_type;
+
+    //! The data handle type. Uses the dynamic types as well per default...
+    using DataHandle = InteractionVolumeDataHandle<TypeTag>;
+
+    using ScvfVector = std::array<const SubControlVolumeFace*, dim>;
+    using ScvBasis = std::array<GlobalPosition, dim>;
 
     //! for network grids this means that we assume the tensors
     //! to be given in world coordinates! If a transformation of
     //! given data has to be performed, it has to be done in the
-    //! spatial parameters method where the permeability is returned
+    //! spatial parameters method where the tensor is returned or
+    //! in the volume variables where it is stored
     using Tensor = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 };
 
 /*!
  * \ingroup Mpfa
- * \brief Base class for the interaction volumes of mpfa methods.
- *        It defines the interface. Actual implementations should derive from this class.
+ * \brief Base class for the interaction volumes of mpfa methods. It defines
+ *        the interface and actual implementations should derive from this class.
  */
-template<class TypeTag, typename Traits>
+template<class TypeTag, typename T>
 class CCMpfaInteractionVolumeBase
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
+    using LocalIndexSet = typename T::DynamicLocalIndexContainer;
+    using LocalIndexType = typename LocalIndexSet::value_type;
+    using GlobalIndexSet = typename T::DynamicGlobalIndexContainer;
+    using GlobalIndexType = typename GlobalIndexSet::value_type;
+    using Vector = typename T::Vector;
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
 public:
-    // some types to be exported
-    using BoundaryInteractionVolume = typename Traits::BoundaryInteractionVolume;
-    using LocalIndexType = typename Traits::LocalIndexType;
-    using LocalIndexSet = typename Traits::LocalIndexSet;
-    using GlobalIndexType = typename Traits::GlobalIndexType;
-    using GlobalIndexSet = typename Traits::GlobalIndexSet;
-    using Vector = typename Traits::Vector;
-    using PositionVector = typename Traits::PositionVector;
-    using Seed = typename Traits::Seed;
+    // state the traits type publicly
+    using Traits = T;
 
     struct LocalFaceData
     {
@@ -79,19 +108,26 @@ public:
         LocalIndexType localScvIndex;
         bool isOutside;
 
-        //! default constructor
-        LocalFaceData() = default;
-
-        //! Constructor fully initializing the members
-        LocalFaceData(const LocalIndexType faceIndex,
-                      const LocalIndexType scvIndex,
-                      bool isOut)
+        //! Constructor
+        LocalFaceData(LocalIndexType faceIndex, LocalIndexType scvIndex, bool isOut)
         : localScvfIndex(faceIndex),
           localScvIndex(scvIndex),
           isOutside(isOut) {}
     };
 
+    struct DirichletData
+    {
+        GlobalIndexType volVarIndex;
+        GlobalPosition ipGlobal;
+
+        DirichletData(const GlobalIndexType index, const GlobalPosition& ip)
+        : volVarIndex(index)
+        , ipGlobal(ip)
+        {}
+    };
+
     using GlobalLocalFaceDataPair = std::pair<const SubControlVolumeFace*, LocalFaceData>;
+    using DirichletDataContainer = std::vector<DirichletData>;
 
     //! solves the local equation system for the computation of the transmissibilities
     template<typename GetTensorFunction>
@@ -102,10 +138,6 @@ public:
     const GlobalIndexSet& volVarsStencil() const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsStencil() method."); }
 
-    //! returns the positions corresponding to the volvars in the stencil of the interaction volume (cell centers or scvf.ipGlobal() on boundary)
-    const PositionVector& volVarsPositions() const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsPositions() method."); }
-
     //! returns the local index of an scvf in the IV and a boolean whether or not it is on the negative side of the local scvf (flux has to be inverted)
     LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getLocalFaceData() method."); }
@@ -113,10 +145,6 @@ public:
     //! returns the transmissibilities corresponding to a local scvf
     Vector getTransmissibilities(const LocalFaceData& localFaceData) const
     { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getTransmissibilities() method."); }
-
-    //! returns the neumann flux corresponding to a local scvf
-    Scalar getNeumannFlux(const LocalFaceData& localFaceData, unsigned int eqIdx) const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getNeumannFlux() method."); }
 
     //! returns the local index in a vector for a given global index
     template<typename IdxType1, typename IdxType2>

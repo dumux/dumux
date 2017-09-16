@@ -18,26 +18,31 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Helper class to get the required information on an interaction volume.
+ * \brief Helper class to get information required for mpfa scheme.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 
 #include "methods.hh"
-#include "facetypes.hh"
 
 namespace Dumux
 {
 
-// Mpfa method-specific implementation of the helper class (again dimension-dependent)
+/*!
+ * \brief Mpfa method-specific implementation of the helper class (dimension-dependent)
+ */
 template<class TypeTag, MpfaMethods Method, int dim, int dimWorld>
 class MpfaMethodHelper;
 
-// dimension-specific implementation of the helper class (common for all methods)
+/*!
+ * \brief Dimension-specific implementation of the helper class (common for all methods)
+ */
 template<class TypeTag, int dim, int dimWorld>
 class MpfaDimensionHelper;
 
-// Specialization for dim == 2, dimWorld == 2
+/*!
+ * \brief Specialization for dim == 2 & dimWorld == 2
+ */
 template<class TypeTag>
 class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
 {
@@ -45,120 +50,135 @@ class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    using ScvfCornerVector = typename SubControlVolumeFace::CornerVector;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
 
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
-
-    // We know that dim = 2 and dimworld = 2, but
-    // the dim = 2, dimWorld = 3 specialization forwards to some methods of this class
-    // Thus, we need to get the GlobalPosition vector etc right
-    static const int dim = GridView::dimension;
+    //! We know that dim = 2 & dimworld = 2. However, the specialization for
+    //! dim = 2 & dimWorld = 3 reuses some methods of this class, thus, we
+    //! obtain the world dimension from the grid view here to get the
+    //! GlobalPosition vector right. Be picky about the dimension though.
+    static_assert(GridView::dimension == 2, "The chosen mpfa helper expects a grid view with dim = 2");
+    static const int dim = 2;
     static const int dimWorld = GridView::dimensionworld;
-
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using ScvfVector = std::array<const SubControlVolumeFace*, dim>;
-    using LocalBasis = std::array<GlobalPosition, dim>;
 
-    using PointVector = std::vector<GlobalPosition>;
-    using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
+    //! Container to store the positions of intersections required for scvf
+    //! corner computation. In 2d, these are the center plus the two corners
+    using ScvfPositionsOnIntersection = std::array<GlobalPosition, 3>;
 
 public:
-    // Gets the two scv faces in the outer element, that share the vertex
-    // orders them to form a right hand system, local indices can be deduced from on the rotational direction
-    static ScvfVector getCommonAndNextScvFace(const SubControlVolumeFace& outsideScvf,
-                                              const FVElementGeometry& fvGeometry,
-                                              const bool clockWise)
-    {
-        LocalIndexType commonFaceIdx = clockWise ? 0 : 1;
-        LocalIndexType nextFaceIdx = clockWise ? 1 : 0;
-        auto vIdxGlobal = outsideScvf.vertexIndex();
-
-        unsigned int count = 0;
-        ScvfVector scvfVector({nullptr});
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            if (scvf.vertexIndex() == vIdxGlobal)
-            {
-                if (scvf.outsideScvIdx() == outsideScvf.insideScvIdx())
-                {
-                    scvfVector[commonFaceIdx] = &scvf;
-                    count++;
-                }
-                else
-                {
-                    scvfVector[nextFaceIdx] = &scvf;
-                    count++;
-                }
-            }
-        }
-
-        // make sure we found two faces
-        assert(count == 2 && "did not find two scv faces sharing the vertex in the outside element");
-        return scvfVector;
-    }
-
-    // calculates the inner normal vectors
-    static LocalBasis calculateInnerNormals(const LocalBasis& localBasis)
+    /*!
+     * \brief Calculates the inner normal vectors to a given scv basis.
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static ScvBasis calculateInnerNormals(const ScvBasis& scvBasis)
     {
         static const Dune::FieldMatrix<Scalar, dim, dim> R = {{0.0, 1.0}, {-1.0, 0.0}};
-        // make sure the basis forms a right hand system
-        assert(isRightHandSystem(localBasis) > 0 && "Local basis does not form a right hand system");
 
-        LocalBasis innerNormals;
-        R.mv(localBasis[1], innerNormals[0]);
-        R.mv(localBasis[0], innerNormals[1]);
-        innerNormals[1] *= -1;
+        ScvBasis innerNormals;
+        R.mv(scvBasis[1], innerNormals[0]);
+        R.mv(scvBasis[0], innerNormals[1]);
+
+        // adjust sign depending on basis being a RHS
+        if (!isRightHandSystem(scvBasis))
+            innerNormals[0] *= -1.0;
+        else
+            innerNormals[1] *= -1.0;
 
         return innerNormals;
     }
 
-    // the determinant of the local basis is equal to the cross product for dim = dimWorld = 2
-    static Scalar calculateDetX(const LocalBasis& localBasis)
+    /*!
+     * \brief Calculates the determinant of an scv basis.
+     *        This is equal to the cross product for dim = dimWorld = 2
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static Scalar calculateDetX(const ScvBasis& scvBasis)
     {
-        // make sure the basis forms a right hand system
-        assert(isRightHandSystem(localBasis) > 0 && "Local basis does not form a right hand system");
-        return crossProduct<Scalar>(localBasis[0], localBasis[1]);
+        using std::abs;
+        return abs(crossProduct<Scalar>(scvBasis[0], scvBasis[1]));
     }
 
     // returns the global number of scvfs in the grid
     static std::size_t getGlobalNumScvf(const GridView& gridView)
     { return gridView.size(Dune::GeometryTypes::triangle)*6 + gridView.size(Dune::GeometryTypes::quadrilateral)*8; }
 
-    //! Check whether or not the local basis forms a right hand system
-    static bool isRightHandSystem(const LocalBasis& localBasis)
-    { return !std::signbit(crossProduct<Scalar>(localBasis[0], localBasis[1])); }
+    /*!
+     * \brief Checks whether or not a given scv basis forms a right hand system.
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static bool isRightHandSystem(const ScvBasis& scvBasis)
+    { return !std::signbit(crossProduct<Scalar>(scvBasis[0], scvBasis[1])); }
 
-    //! get sub control volume face corners on a given face geometry for the given local index
-    static PointVector getScvfCorners(const PointVector& isCorners, unsigned int cornerIdx)
+    /*!
+     * \brief Returns a vector containing the positions on a given intersection
+     *        that are relevant for scvf corner computation.
+     *        Ordering -> 1: facet center, 2: the two facet corners
+     *
+     * \param eg Geometry of the element the facet is embedded in
+     * \param refElement Reference element of the element the facet is embedded in
+     * \param indexInInside The local index of the facet in the element
+     * \param numCorners The number of corners on the facet
+     */
+    template<class ElementGeometry, class ReferenceElement>
+    static ScvfPositionsOnIntersection computeScvfCornersOnIntersection(const ElementGeometry& eg,
+                                                                        const ReferenceElement& refElement,
+                                                                        unsigned int indexInElement,
+                                                                        unsigned int numCorners)
     {
-        // compute intersection center (in 2d intersections have two corners)
-        GlobalPosition center = isCorners[0] + isCorners[1];
-        center /= 2;
+        ScvfPositionsOnIntersection p;
 
+        // compute facet center and corners
+        p[0] = 0.0;
+        for (unsigned int c = 0; c < numCorners; ++c)
+        {
+            p[c+1] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, dim), dim));
+            p[0] += p[c+1];
+        }
+        p[0] /= numCorners;
+
+        return p;
+    }
+
+    /*!
+     * \brief Returns the corners of the sub control volume face constructed
+     *        in a corner (vertex) of an intersection.
+     *
+     * \param scvfCornerPositions Container with all scvf corners of the intersection
+     * \param numIntersectionCorners Number of corners of the intersection (required in 3d)
+     * \param cornerIdx Local vertex index on the intersection
+     */
+    static ScvfCornerVector getScvfCorners(const ScvfPositionsOnIntersection& p,
+                                           unsigned int numIntersectionCorners,
+                                           unsigned int cornerIdx)
+    {
+        // make sure the given input is admissible
+        assert(cornerIdx < 2 && "provided index exceeds the number of corners of facets in 2d");
+
+        // create & return the scvf corner vector
         if (cornerIdx == 0)
-            return PointVector({center, isCorners[0]});
-        else if (cornerIdx == 1)
-            return PointVector({center, isCorners[1]});
+            return ScvfCornerVector({p[0], p[1]});
         else
-            DUNE_THROW(Dune::InvalidStateException, "local index exceeds the number of corners of 2d intersections");
+            return ScvfCornerVector({p[0], p[2]});
     }
 
-    //! calculate integration point on an scvf
-    static GlobalPosition getScvfIntegrationPoint(const PointVector& scvfCorners, Scalar q)
-    {
-        // ordering -> first corner: facet center, last corner: vertex
-        if (q == 0.0)
-            return scvfCorners[0];
-
-        auto d = scvfCorners[1] - scvfCorners[0];
-        d *= q;
-        return scvfCorners[0] + d;
-    }
-
-    //! calculate the area of a scvf
-    static Scalar getScvfArea(const PointVector& scvfCorners)
+    /*!
+     * \brief Calculates the area of an scvf.
+     *
+     * \param scvfCorners Container with the corners of the scvf
+     */
+    static Scalar getScvfArea(const ScvfCornerVector& scvfCorners)
     { return (scvfCorners[1]-scvfCorners[0]).two_norm(); }
 
+    /*!
+     * \brief Calculates the number of scvfs in a given element geometry type.
+     *
+     * \param gt The element geometry type
+     */
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     {
         if (gt == Dune::GeometryTypes::triangle)
@@ -166,91 +186,73 @@ public:
         else if (gt == Dune::GeometryTypes::quadrilateral)
             return 8;
         else
-            DUNE_THROW(Dune::InvalidStateException, "unknown 2d geometry type " << gt);
+            DUNE_THROW(Dune::NotImplemented, "Mpfa for 2d geometry type " << gt);
     }
 };
 
-// Specialization for dim == 2, dimWorld == 3
+/*!
+ * \brief Specialization for dim == 2 & dimWorld == 2. Reuses some
+ *        functionality of the specialization for dim = dimWorld = 2
+ */
 template<class TypeTag>
-class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/3>
+class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/3> : public MpfaDimensionHelper<TypeTag, 2, 2>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
-
-    // We know that dim = 2 and dimworld = 3
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using ScvfVector = std::array<const SubControlVolumeFace*, dim>;
-    using LocalBasis = std::array<GlobalPosition, dim>;
-    using PointVector = std::vector<GlobalPosition>;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
 
 public:
-    // calculates the inner normal vectors
-    static LocalBasis calculateInnerNormals(const LocalBasis& localBasis)
-    {
-        // make sure the basis forms a right hand system
-        assert(isRightHandSystem(localBasis) > 0 && "Local basis does not form a right hand system");
 
+    /*!
+     * \brief Calculates the inner normal vectors to a given scv basis.
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static ScvBasis calculateInnerNormals(const ScvBasis& scvBasis)
+    {
         // compute vector normal to the basis plane
-        auto normal = crossProduct<Scalar>(localBasis[0], localBasis[1]);
-        normal /= normal.two_norm();
+        const auto normal = [&] () {
+                                        auto n = crossProduct<Scalar>(scvBasis[0], scvBasis[1]);
+                                        n /= n.two_norm();
+                                        return n;
+                                    } ();
 
         // compute inner normals using the normal vector
-        LocalBasis innerNormals;
-        innerNormals[0] = crossProduct<Scalar>(localBasis[1], normal);
-        innerNormals[1] = crossProduct<Scalar>(normal, localBasis[0]);
+        ScvBasis innerNormals;
+        innerNormals[0] = crossProduct<Scalar>(scvBasis[1], normal);
+        innerNormals[1] = crossProduct<Scalar>(normal, scvBasis[0]);
 
         return innerNormals;
     }
 
-    // This is actually not the determinant of the basis for dim = 2 < dimWorld = 3
-    // It simply is the area of the parallelogram spanned by the basis vectors
-    static Scalar calculateDetX(const LocalBasis& localBasis)
-    { return std::abs( crossProduct<Scalar>(localBasis[0], localBasis[1]).two_norm() ); }
-
-    // returns the global number of scvfs in the grid
-    static std::size_t getGlobalNumScvf(const GridView& gridView)
+    /*!
+     * \brief Calculates the determinant of an scv basis.
+     *        For dim = 2 < dimWorld = 3 this is actually not the determinant of the
+     *        basis but it is simply the area of the parallelofram spanned by the
+     *        basis vectors.
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static Scalar calculateDetX(const ScvBasis& scvBasis)
     {
-        Dune::GeometryType triangle, quadrilateral;
-        triangle.makeTriangle();
-        quadrilateral.makeQuadrilateral();
-
-        return gridView.size(triangle)*6 + gridView.size(quadrilateral)*8;
+        using std::abs;
+        return abs(crossProduct<Scalar>(scvBasis[0], scvBasis[1]).two_norm());
     }
 
-    //! For 2d in 3d there is no unique basis forming a right hand system
-    static bool isRightHandSystem(const LocalBasis& localBasis)
+    /*!
+     * \brief Checks whether or not a given scv basis forms a right hand system.
+     *        Note that for dim = 2 < dimWorld = 3 the bases forming a right hand system
+     *        are not unique.
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static bool isRightHandSystem(const ScvBasis& scvBasis)
     { return true; }
-
-    //! get sub control volume face corners on a given face geometry for the given local index
-    static PointVector getScvfCorners(const PointVector& isCorners, unsigned int cornerIdx)
-    { return MpfaDimensionHelper<TypeTag, dim, dim>::getScvfCorners(isCorners, cornerIdx); }
-
-    //! calculate integration point on an scvf
-    static GlobalPosition getScvfIntegrationPoint(const PointVector& scvfCorners, Scalar q)
-    { return MpfaDimensionHelper<TypeTag, dim, dim>::getScvfIntegrationPoint(scvfCorners, q); }
-
-    //! calculate the area of a scvf
-    static Scalar getScvfArea(const PointVector& scvfCorners)
-    { return MpfaDimensionHelper<TypeTag, dim, dim>::getScvfArea(scvfCorners); }
-
-    static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
-    { return MpfaDimensionHelper<TypeTag, dim, dim>::getNumLocalScvfs(gt); }
-
-    static ScvfVector getCommonAndNextScvFace(const SubControlVolumeFace& outsideScvf,
-                                              const FVElementGeometry& fvGeometry,
-                                              const bool clockWise)
-    { return MpfaDimensionHelper<TypeTag, dim, dim>::getCommonAndNextScvFace(outsideScvf, fvGeometry, clockWise); }
 };
 
-// Specialization for dim == 3 (dimWorld has to be 3)
+/*!
+ * \brief Specialization for dim == 3 & dimWorld == 3.
+ */
 template<class TypeTag>
 class MpfaDimensionHelper<TypeTag, /*dim*/3, /*dimWorld*/3>
 {
@@ -258,44 +260,70 @@ class MpfaDimensionHelper<TypeTag, /*dim*/3, /*dimWorld*/3>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
+    using ScvfCornerVector = typename SubControlVolumeFace::CornerVector;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
 
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
-
-    // We know that dim = 3 and dimworld = 3
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
+    // Be picky about the dimensions
+    static_assert(GridView::dimension == 3 && GridView::dimensionworld == 3,
+                  "The chosen mpfa helper expects a grid view with dim = 3 & dimWorld = 3");
+    static const int dim = 3;
+    static const int dimWorld = 3;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using ScvfVector = std::array<const SubControlVolumeFace*, dim>;
-    using LocalBasis = std::array<GlobalPosition, dim>;
 
-    using PointVector = std::vector<GlobalPosition>;
-    using FaceReferenceElements = typename Dune::ReferenceElements<Scalar, dim-1>;
+    // container to store the positions of intersections required for
+    // scvf corner computation. Maximum number of points needed is 9
+    // for the supported geometry types (quadrilateral facet)
+    using ScvfPositionsOnIntersection = std::array<GlobalPosition, 9>;
 
 public:
 
-    // calculates the inner normal vectors
-    static LocalBasis calculateInnerNormals(const LocalBasis& localBasis)
+    /*!
+     * \brief Calculates the inner normal vectors to a given scv basis.
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static ScvBasis calculateInnerNormals(const ScvBasis& scvBasis)
     {
-        LocalBasis innerNormals;
+        ScvBasis innerNormals;
 
-        innerNormals[0] = crossProduct<Scalar>(localBasis[1], localBasis[2]);
-        innerNormals[1] = crossProduct<Scalar>(localBasis[2], localBasis[0]);
-        innerNormals[2] = crossProduct<Scalar>(localBasis[0], localBasis[1]);
+        innerNormals[0] = crossProduct<Scalar>(scvBasis[1], scvBasis[2]);
+        innerNormals[1] = crossProduct<Scalar>(scvBasis[2], scvBasis[0]);
+        innerNormals[2] = crossProduct<Scalar>(scvBasis[0], scvBasis[1]);
+
+        if (!isRightHandSystem(scvBasis))
+        {
+            innerNormals[0] *= -1.0;
+            innerNormals[1] *= -1.0;
+            innerNormals[2] *= -1.0;
+        }
 
         return innerNormals;
     }
 
-    // calculates the determinant of the local basis
-    static Scalar calculateDetX(const LocalBasis& localBasis)
+    /*!
+     * \brief Calculates the determinant of an scv basis.
+     *        This is equal to the cross product for dim = dimWorld = 2
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static Scalar calculateDetX(const ScvBasis& scvBasis)
     {
-        assert(isRightHandSystem(localBasis) && "Local basis does not form a right hand system");
-        return tripleProduct<Scalar>(localBasis[0], localBasis[1], localBasis[2]);
+        using std::abs;
+        return abs(tripleProduct<Scalar>(scvBasis[0], scvBasis[1], scvBasis[2]));
     }
 
-    // returns the global number of scvfs in the grid
-    static std::size_t getGlobalNumScvf(const GridView& gridView)
+    /*!
+     * \brief Returns the total number of scvfs in a given grid view. This number can be used to
+     *        to resize e.g. geometry vectors during initialization. However, if generic element
+     *        geometry types are used by the grid, this method should be overloaded as it currently
+     *        only works for basic geometry types. Furthermore, on locally refined grids the computed
+     *        value will be smaller than the actual number of scvfs, thus the name "estimate"
+     *        TODO: return accurate value also for locally refined grids?
+     *
+     * \param gridView The grid view to be checked
+     */
+    static std::size_t estimateNumScvf(const GridView& gridView)
     {
         Dune::GeometryType simplex, pyramid, prism, cube;
         simplex.makeTetrahedron();
@@ -303,113 +331,159 @@ public:
         prism.makePrism();
         cube.makeHexahedron();
 
+        // This assumes the grid to be entirely made up of triangles and quadrilaterals
+        assert(gridView.size(simplex)
+               + gridView.size(pyramid)
+               + gridView.size(prism)
+               + gridView.size(cube) == gridView.size(0)
+               && "Current implementation of mpfa schemes only supports simplices, pyramids, prisms & cubes in 3d.");
+
         return gridView.size(simplex)*12 + gridView.size(pyramid)*16 + gridView.size(prism)*18 + gridView.size(cube)*24;
     }
 
-    //! Check whether or not the local basis forms a right hand system
-    static bool isRightHandSystem(const LocalBasis& localBasis)
-    { return !std::signbit(tripleProduct<Scalar>(localBasis[0], localBasis[1], localBasis[2])); }
+    /*!
+     * \brief Checks whether or not a given scv basis forms a right hand system.
+     *
+     * \param scvBasis The basis of an scv
+     */
+    static bool isRightHandSystem(const ScvBasis& scvBasis)
+    { return !std::signbit(tripleProduct<Scalar>(scvBasis[0], scvBasis[1], scvBasis[2])); }
 
-    //! get sub control volume face corners on a given face geometry for the given local index
-    static PointVector getScvfCorners(const PointVector& isCorners, unsigned int cornerIdx)
+    /*!
+     * \brief Returns a vector containing the positions on a given intersection
+     *        that are relevant for scvf corner computation.
+     *        Ordering -> 1: facet center, 2: facet corners, 3: edge centers
+     *
+     * \param eg Geometry of the element the facet is embedded in
+     * \param refElement Reference element of the element the facet is embedded in
+     * \param indexInInside The local index of the facet in the element
+     * \param numCorners The number of corners on the facet
+     */
+    template<class ElementGeometry, class ReferenceElement>
+    static ScvfPositionsOnIntersection computeScvfCornersOnIntersection(const ElementGeometry& eg,
+                                                                        const ReferenceElement& refElement,
+                                                                        unsigned int indexInElement,
+                                                                        unsigned int numCorners)
     {
-        // maximum number of necessary points is 9 (for quadrilateral)
-        GlobalPosition p[9];
-        auto numCorners = isCorners.size();
+        ScvfPositionsOnIntersection p;
 
-        // fill point vector with center and corners
+        // compute facet center and corners
         p[0] = 0.0;
-        for (int i = 0; i < numCorners; ++i)
+        for (unsigned int c = 0; c < numCorners; ++c)
         {
-            p[0] += isCorners[i];
-            p[i+1] = isCorners[i];
+            p[c+1] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, dim), dim));
+            p[0] += p[c+1];
         }
         p[0] /= numCorners;
 
         // proceed according to number of corners
         switch (numCorners)
         {
-        case 3: // triangle
-        {
-            // add edge midpoints, there are 3 for triangles
-            p[numCorners+1] = isCorners[1] + isCorners[0];
-            p[numCorners+1] /= 2;
-            p[numCorners+2] = isCorners[2] + isCorners[0];
-            p[numCorners+2] /= 2;
-            p[numCorners+3] = isCorners[2] + isCorners[1];
-            p[numCorners+3] /= 2;
-
-            //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t eo = 4; //! edge offset in point vector p
-            static const std::uint8_t map[3][4] =
+            case 3: // triangle
             {
-                {0, eo+1, eo+0, vo+0},
-                {0, eo+0, eo+2, vo+1},
-                {0, eo+2, eo+1, vo+2}
-            };
-
-            return PointVector( {p[map[cornerIdx][0]],
-                                 p[map[cornerIdx][1]],
-                                 p[map[cornerIdx][2]],
-                                 p[map[cornerIdx][3]]} );
-        }
-        case 4: // quadrilateral
-        {
-            // add edge midpoints, there are 4 for quadrilaterals
-            p[numCorners+1] = isCorners[2] + isCorners[0];
-            p[numCorners+1] /= 2;
-            p[numCorners+2] = isCorners[3] + isCorners[1];
-            p[numCorners+2] /= 2;
-            p[numCorners+3] = isCorners[1] + isCorners[0];
-            p[numCorners+3] /= 2;
-            p[numCorners+4] = isCorners[3] + isCorners[2];
-            p[numCorners+4] /= 2;
-
-            //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t eo = 5; //! face offset in point vector p
-            static const std::uint8_t map[4][4] =
+                // add edge midpoints, there are 3 for triangles
+                p[numCorners+1] = p[2] + p[1];
+                p[numCorners+1] /= 2;
+                p[numCorners+2] = p[3] + p[1];
+                p[numCorners+2] /= 2;
+                p[numCorners+3] = p[3] + p[2];
+                p[numCorners+3] /= 2;
+            }
+            case 4: // quadrilateral
             {
-                {0, eo+0, eo+2, vo+0},
-                {0, eo+2, eo+1, vo+1},
-                {0, eo+3, eo+0, vo+2},
-                {0, eo+1, eo+3, vo+3}
-            };
+                // add edge midpoints, there are 4 for quadrilaterals
+                p[numCorners+1] = p[3] + p[1];
+                p[numCorners+1] /= 2;
+                p[numCorners+2] = p[4] + p[2];
+                p[numCorners+2] /= 2;
+                p[numCorners+3] = p[2] + p[1];
+                p[numCorners+3] /= 2;
+                p[numCorners+4] = p[4] + p[3];
+                p[numCorners+4] /= 2;
+            }
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Mpfa scvf corners for dim = " << dim
+                                                              << ", dimWorld = " << dimWorld
+                                                              << ", corners = " << numCorners);
+        }
 
-            return PointVector( {p[map[cornerIdx][0]],
-                                 p[map[cornerIdx][1]],
-                                 p[map[cornerIdx][2]],
-                                 p[map[cornerIdx][3]]} );
-        }
-        default:
-            DUNE_THROW(Dune::NotImplemented, "Mpfa scvf corners for dim=" << dim
-                                                            << " dimWorld=" << dimWorld
-                                                            << " corners=" << numCorners);
-        }
+        return p;
     }
 
-    //! calculate integration point on a scvf
-    static GlobalPosition getScvfIntegrationPoint(const PointVector& scvfCorners, Scalar q)
+    /*!
+     * \brief Returns the corners of the sub control volume face constructed
+     *        in a corner (vertex) of an intersection.
+     *
+     * \param scvfCornerPositions Container with all scvf corners of the intersection
+     * \param numIntersectionCorners Number of corners of the intersection
+     * \param cornerIdx Local vertex index on the intersection
+     */
+    static ScvfCornerVector getScvfCorners(const ScvfPositionsOnIntersection& p,
+                                           unsigned int numIntersectionCorners,
+                                           unsigned int cornerIdx)
     {
-        // scvfs in 3d are always quadrilaterals
-        // ordering -> first corner: facet center, last corner: vertex
-        if (q == 0.0)
-            return scvfCorners[0];
+        // proceed according to number of corners
+        // we assume the ordering according to the above method computeScvfCornersOnIntersection()
+        switch (numIntersectionCorners)
+        {
+            case 3: // triangle
+            {
+                //! Only build the maps the first time we encounter a triangle
+                static const std::uint8_t vo = 1; //! vertex offset in point vector p
+                static const std::uint8_t eo = 4; //! edge offset in point vector p
+                static const std::uint8_t map[3][4] =
+                {
+                    {0, eo+1, eo+0, vo+0},
+                    {0, eo+0, eo+2, vo+1},
+                    {0, eo+2, eo+1, vo+2}
+                };
 
-        auto d = scvfCorners[3] - scvfCorners[0];
-        d *= q;
-        return scvfCorners[0] + d;
+                return ScvfCornerVector( {p[map[cornerIdx][0]],
+                                          p[map[cornerIdx][1]],
+                                          p[map[cornerIdx][2]],
+                                          p[map[cornerIdx][3]]} );
+            }
+            case 4: // quadrilateral
+            {
+                //! Only build the maps the first time we encounter a quadrilateral
+                static const std::uint8_t vo = 1; //! vertex offset in point vector p
+                static const std::uint8_t eo = 5; //! face offset in point vector p
+                static const std::uint8_t map[4][4] =
+                {
+                    {0, eo+0, eo+2, vo+0},
+                    {0, eo+2, eo+1, vo+1},
+                    {0, eo+3, eo+0, vo+2},
+                    {0, eo+1, eo+3, vo+3}
+                };
+
+                return ScvfCornerVector( {p[map[cornerIdx][0]],
+                                          p[map[cornerIdx][1]],
+                                          p[map[cornerIdx][2]],
+                                          p[map[cornerIdx][3]]} );
+            }
+            default:
+                DUNE_THROW(Dune::NotImplemented, "Mpfa scvf corners for dim = " << dim
+                                                              << ", dimWorld = " << dimWorld
+                                                              << ", corners = " << numIntersectionCorners);
+        }
     }
 
-    //! calculate scvf area
-    static Scalar getScvfArea(const PointVector& scvfCorners)
+    /*!
+     * \brief Calculates the area of an scvf.
+     *
+     * \param scvfCorners Container with the corners of the scvf
+     */
+    static Scalar getScvfArea(const ScvfCornerVector& scvfCorners)
     {
         // after Wolfram alpha quadrilateral area
         return 0.5*Dumux::crossProduct(scvfCorners[3]-scvfCorners[0], scvfCorners[2]-scvfCorners[1]).two_norm();
     }
 
-    //! determine the number of scvfs of an element
+    /*!
+     * \brief Calculates the number of scvfs in a given element geometry type.
+     *
+     * \param gt The element geometry type
+     */
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     {
         if (gt == Dune::GeometryType(Dune::GeometryType::simplex, 3))
@@ -421,7 +495,7 @@ public:
         else if (gt == Dune::GeometryType(Dune::GeometryType::cube, 3))
             return 24;
         else
-            DUNE_THROW(Dune::InvalidStateException, "unknown 3d geometry type " << gt);
+            DUNE_THROW(Dune::NotImplemented, "Mpfa for 3d geometry type " << gt);
     }
 };
 
@@ -434,140 +508,44 @@ template<class TypeTag, MpfaMethods Method, int dim, int dimWorld>
 class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimWorld>,
                                    public MpfaMethodHelper<TypeTag, Method, dim, dimWorld>
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, InteractionVolume);
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    using GlobalIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    using ScvfCornerVector = typename SubControlVolumeFace::CornerVector;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
+    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using ScvfVector = std::array<const SubControlVolumeFace*, dim>;
-    using LocalBasis = std::array<GlobalPosition, dim>;
-
     using CoordScalar = typename GridView::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
-
 public:
-    // returns shared pointers to the scv faces that share a vertex in the order of a right hand system
-    static ScvfVector getScvFacesAtVertex(const GlobalIndexType vIdxGlobal,
-                                          const Element& element,
-                                          const FVElementGeometry& fvGeometry)
+    /*!
+     * \brief Calculates the integration point on an scvf.
+     *
+     * \param scvfCorners Container with the corners of the scvf
+     * \param q Parameterization of the integration point on the scvf
+     */
+    static GlobalPosition getScvfIntegrationPoint(const ScvfCornerVector& scvfCorners, Scalar q)
     {
-        ScvfVector scvfVector({nullptr});
-        LocalBasis basisVectors;
-
-        // The element center
-        auto elementCenter = element.geometry().center();
-
-        LocalIndexType count = 0;
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            if (scvf.vertexIndex() == vIdxGlobal)
-            {
-                scvfVector[count] = &scvf;
-                basisVectors[count] = scvf.ipGlobal();
-                basisVectors[count] -= elementCenter;
-                count++;
-            }
-        }
-
-        // We should always find dim faces sharing the vertex
-        assert(count == dim);
-
-        // sort the scv faces to form a right hand system
-        if (!Implementation::isRightHandSystem(basisVectors))
-            std::swap(scvfVector[0], scvfVector[1]);
-
-        return scvfVector;
+        // scvfs in 3d are always quadrilaterals
+        // ordering -> first corner: facet center, last corner: vertex
+        if (q == 0.0) return scvfCorners[0];
+        const auto d = [&] () { auto tmp = scvfCorners.back() - scvfCorners.front(); tmp *= q; return tmp; } ();
+        return scvfCorners[0] + d;
     }
 
-    // Finds the local index in an ScvfVector that corresponds to the face that shares a facet with the given outsideScvf
-    static LocalIndexType getCommonFaceLocalIndex(const SubControlVolumeFace& outsideScvf,
-                                                  const ScvfVector& insideScvFaces)
-    {
-        auto outsideScvIdx = outsideScvf.insideScvIdx();
-        for (int i = 0; i < insideScvFaces.size(); i++)
-            if (contains(insideScvFaces[i]->outsideScvIndices(), outsideScvIdx))
-                return i;
-
-        DUNE_THROW(Dune::InvalidStateException, "Could not find corresponding scvf in the provided vector of scvfs.");
-    }
-
-    // Finds the local index in an ScvfVector that corresponds to a given scvf
-    static LocalIndexType getLocalFaceIndex(const SubControlVolumeFace& scvf,
-                                            const ScvfVector& scvFaces)
-    {
-        for (int i = 0; i < scvFaces.size(); i++)
-            if (scvFaces[i]->index() == scvf.index())
-                return i;
-
-        DUNE_THROW(Dune::InvalidStateException, "Could not find corresponding scvf in the provided vector of scvfs.");
-    }
-
-    // Returns the MpfaFaceType of an scv face
-    static MpfaFaceTypes getMpfaFaceType(const Problem& problem,
-                                         const Element& element,
-                                         const SubControlVolumeFace& scvf)
-    {
-        // We do simplified checks if interior boundaries are disabled
-        if (!enableInteriorBoundaries)
-        {
-            if (!scvf.boundary())
-                return MpfaFaceTypes::interior;
-
-            const auto bcTypes = problem.boundaryTypes(element, scvf);
-            if (bcTypes.hasOnlyNeumann())
-                return MpfaFaceTypes::neumann;
-            if (bcTypes.hasOnlyDirichlet())
-                return MpfaFaceTypes::dirichlet;
-
-            // throw exception
-            return throwBoundaryExceptionMessage(bcTypes);
-        }
-        else
-        {
-            const auto bcTypes = problem.boundaryTypes(element, scvf);
-
-            // if we are on an interior boundary return interior types
-            if (problem.model().fvGridGeometry().isOnInteriorBoundary(scvf))
-            {
-                if (bcTypes.hasOnlyNeumann())
-                    return MpfaFaceTypes::interiorNeumann;
-                if (bcTypes.hasOnlyDirichlet())
-                    return MpfaFaceTypes::interiorDirichlet;
-
-                // throw exception
-                return throwBoundaryExceptionMessage(bcTypes);
-            }
-
-            if (scvf.boundary())
-            {
-                if (bcTypes.hasOnlyNeumann())
-                    return MpfaFaceTypes::neumann;
-                if (bcTypes.hasOnlyDirichlet())
-                    return MpfaFaceTypes::dirichlet;
-
-                // throw exception
-                return throwBoundaryExceptionMessage(bcTypes);
-            }
-
-            // This is an interior scvf
-            return MpfaFaceTypes::interior;
-        }
-    }
-
-    // returns a vector, which maps a bool (true if ghost vertex) to each vertex index
-    static std::vector<bool> findGhostVertices(const Problem& problem, const GridView& gridView)
+    // returns a vector which maps true to each vertex on processor boundaries and false otherwise
+    // TODO: Does this really NOT work with ghosts? Adjust to make it work with ghosts or rename the function!
+    static std::vector<bool> findGhostVertices(const GridView& gridView, const VertexMapper& vertexMapper)
     {
         std::vector<bool> ghostVertices(gridView.size(dim), false);
 
@@ -590,10 +568,10 @@ public:
                 if (!is.neighbor() && !is.boundary())
                 {
                     const auto& refElement = ReferenceElements::general(element.geometry().type());
-                    for (unsigned int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
+                    for (int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
                     {
                         const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);
-                        const auto vIdxGlobal = problem.vertexMapper().subIndex(element, vIdxLocal, dim);
+                        const auto vIdxGlobal = vertexMapper.subIndex(element, vIdxLocal, dim);
 
                         ghostVertices[vIdxGlobal] = true;
                     }
@@ -606,13 +584,11 @@ public:
 
     //! returns whether or not a value exists in a vector
     template<typename V1, typename V2>
-    static bool contains(const std::vector<V1>& vector, const V2 value)
+    static bool vectorContainsValue(const std::vector<V1>& vector, const V2 value)
     { return std::find(vector.begin(), vector.end(), value) != vector.end(); }
 
     // calculates the product of a transposed vector n, a Matrix M and another vector v (n^T M v)
-    static Scalar nT_M_v(const GlobalPosition& n,
-                         const DimWorldMatrix& M,
-                         const GlobalPosition& v)
+    static Scalar nT_M_v(const GlobalPosition& n, const DimWorldMatrix& M, const GlobalPosition& v)
     {
         GlobalPosition tmp;
         M.mv(v, tmp);
@@ -620,23 +596,9 @@ public:
     }
 
     // calculates the product of a transposed vector n, a Scalar M and another vector v (n^T M v)
-    static Scalar nT_M_v(const GlobalPosition& n,
-                         const Scalar M,
-                         const GlobalPosition& v)
+    static Scalar nT_M_v(const GlobalPosition& n, const Scalar M, const GlobalPosition& v)
     {
         return M*(n*v);
-    }
-
-private:
-    static MpfaFaceTypes throwBoundaryExceptionMessage(const BoundaryTypes& bcTypes)
-    {
-        // throw for outflow or mixed boundary conditions
-        if (bcTypes.hasOutflow())
-            DUNE_THROW(Dune::NotImplemented, "outflow BC for mpfa schemes");
-        if (bcTypes.hasDirichlet() && bcTypes.hasNeumann())
-            DUNE_THROW(Dune::InvalidStateException, "Mixed BC are not allowed for cellcentered schemes");
-
-        DUNE_THROW(Dune::InvalidStateException, "unknown boundary condition type");
     }
 };
 
@@ -654,8 +616,8 @@ using CCMpfaHelper = CCMpfaHelperImplementation<TypeTag,
 } // end namespace
 
 // The implemented helper classes need to be included here
-#include <dumux/discretization/cellcentered/mpfa/lmethod/helper.hh>
+// #include <dumux/discretization/cellcentered/mpfa/lmethod/helper.hh>
 #include <dumux/discretization/cellcentered/mpfa/omethod/helper.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethodfps/helper.hh>
+// #include <dumux/discretization/cellcentered/mpfa/omethodfps/helper.hh>
 
 #endif

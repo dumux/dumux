@@ -24,7 +24,6 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_L_HELPER_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 
 #include "localsubcontrolentityseeds.hh"

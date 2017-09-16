@@ -118,10 +118,10 @@ public:
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
 
         // return the scv (element) indices in the interaction region
-        if (fvGridGeometry.isInBoundaryInteractionVolume(scvf))
-            return fvGridGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
+        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            return fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).nodalIndexSet().globalScvIndices();
         else
-            return fvGridGeometry.interactionVolumeSeed(scvf).globalScvIndices();
+            return fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).nodalIndexSet().globalScvIndices();
     }
 };
 

@@ -24,7 +24,6 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_L_LOCALSUBCONTROLENTITYSEEDS_HH
 
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 
 namespace Dumux
 {

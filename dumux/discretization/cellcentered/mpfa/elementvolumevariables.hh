@@ -24,7 +24,6 @@
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
 
 #include <dumux/implicit/properties.hh>
-#include "facetypes.hh"
 
 namespace Dumux
 {
@@ -101,7 +100,6 @@ class CCMpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
-    static const bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -117,23 +115,23 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        const auto& problem = globalVolVars().problem_();
-        const auto& fvGridGeometry = problem.model().fvGridGeometry();
+        const auto& problem = globalVolVars().problem();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
 
         // stencil information
-        const auto globalI = problem.elementMapper().index(element);
-        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
-        const auto numDofs = assemblyMapI.size() + 1;
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto& assemblyMapI = fvGridGeometry.connectivityMap()[globalI];
+        const auto numVolVars = assemblyMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
-        volumeVariables_.resize(numDofs);
-        volVarIndices_.resize(numDofs);
-        int localIdx = 0;
+        volumeVariables_.resize(numVolVars);
+        volVarIndices_.resize(numVolVars);
+        unsigned int localIdx = 0;
 
         // update the volume variables of the element at hand
-        auto eIdx = problem.elementMapper().index(element);
-        auto&& scvI = fvGeometry.scv(eIdx);
-        volumeVariables_[localIdx].update(problem.model().elementSolution(element, sol),
+        const auto& scvI = fvGeometry.scv(globalI);
+        volumeVariables_[localIdx].update(ElementSolution({sol[globalI]}),
                                           problem,
                                           element,
                                           scvI);
@@ -144,8 +142,8 @@ public:
         for (auto&& dataJ : assemblyMapI)
         {
             const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
-            auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
+            const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
+            volumeVariables_[localIdx].update(ElementSolution({sol[dataJ.globalJ]}),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -154,106 +152,87 @@ public:
         }
 
         // eventually prepare boundary volume variables
-        auto estimate = boundaryVolVarsEstimate_(element, fvGeometry);
-        if (estimate > 0)
+        const auto maxNumBoundaryVolVars = maxNumBoundaryVolVars_(fvGeometry);
+        if (maxNumBoundaryVolVars > 0)
         {
-            volumeVariables_.reserve(numDofs+estimate);
-            volVarIndices_.reserve(numDofs+estimate);
+            volumeVariables_.reserve(numVolVars+maxNumBoundaryVolVars);
+            volVarIndices_.reserve(numVolVars+maxNumBoundaryVolVars);
 
             // treat the BCs inside the element
-            if (element.hasBoundaryIntersections())
+            for (const auto& scvf : scvfs(fvGeometry))
             {
-                for (auto&& scvf : scvfs(fvGeometry))
+                // if we are not on a boundary, skip to the next scvf
+                if (!scvf.boundary())
+                    continue;
+
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
+
+                // on dirichlet boundaries use dirichlet values
+                if (bcTypes.hasOnlyDirichlet())
                 {
-                    // if we are not on a boundary, skip to the next scvf
-                    if (!scvf.boundary())
-                        continue;
+                    // boundary volume variables
+                    VolumeVariables dirichletVolVars;
+                    dirichletVolVars.update(ElementSolution({problem.dirichlet(element, scvf)}),
+                                            problem,
+                                            element,
+                                            scvI);
 
-                    // on dirichlet boundaries use dirichlet values
-                    if (MpfaHelper::getMpfaFaceType(problem, element, scvf) == MpfaFaceTypes::dirichlet)
-                    {
-                        // boundary volume variables
-                        VolumeVariables dirichletVolVars;
-                        dirichletVolVars.update(ElementSolution({problem.dirichlet(element, scvf)}),
-                                                problem,
-                                                element,
-                                                scvI);
-
-                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
-                        volVarIndices_.push_back(scvf.outsideScvIdx());
-                    }
-                    // use the inside volume variables for neumann boundaries
-                    else if (!useTpfaBoundary)
-                    {
-                        volumeVariables_.emplace_back(volumeVariables_[0]);
-                        volVarIndices_.push_back(scvf.outsideScvIdx());
-                    }
+                    volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                    volVarIndices_.push_back(scvf.outsideScvIdx());
+                }
+                // use the inside volume variables for neumann boundaries
+                else
+                {
+                    volumeVariables_.emplace_back(volumeVariables_[0]);
+                    volVarIndices_.push_back(scvf.outsideScvIdx());
                 }
             }
 
             // Update boundary volume variables in the neighbors
-            for (auto&& scvf : scvfs(fvGeometry))
+            for (const auto& scvf : scvfs(fvGeometry))
             {
-                // skip the rest if the scvf does not touch a domain boundary
-                if (!fvGridGeometry.touchesDomainBoundary(scvf))
-                    continue;
-
-                // loop over all the scvfs in the interaction region
-                const auto& ivSeed = fvGridGeometry.boundaryInteractionVolumeSeed(scvf);
-                for (auto scvfIdx : ivSeed.globalScvfIndices())
+                if (fvGridGeometry.vertexUsesPrimaryInteractionVolume(scvf.vertexIndex()))
                 {
-                    auto&& ivScvf = fvGeometry.scvf(scvfIdx);
-                    // only proceed for scvfs on the boundary and not in the inside element
-                    if (!ivScvf.boundary() || ivScvf.insideScvIdx() == eIdx)
-                        continue;
+                    const auto& nodalIndexSet = gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet();
 
-                    auto insideScvIdx = ivScvf.insideScvIdx();
-                    auto insideElement = fvGridGeometry.element(insideScvIdx);
+                    // if present, insert boundary vol vars
+                    if (nodalIndexSet.numBoundaryScvfs() > 0)
+                        addBoundaryVolVars_(problem, fvGeometry, nodalIndexSet);
 
-                    // on dirichlet boundaries use dirichlet values
-                    if (MpfaHelper::getMpfaFaceType(problem, insideElement, ivScvf) == MpfaFaceTypes::dirichlet)
-                    {
-                        // boundary volume variables
-                        VolumeVariables dirichletVolVars;
-                        auto&& ivScv = fvGeometry.scv(insideScvIdx);
-                        dirichletVolVars.update(ElementSolution({problem.dirichlet(insideElement, ivScvf)}),
-                                                problem,
-                                                insideElement,
-                                                ivScv);
+                }
+                else
+                {
+                    const auto& nodalIndexSet = gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet();
 
-                        volumeVariables_.emplace_back(std::move(dirichletVolVars));
-                        volVarIndices_.push_back(ivScvf.outsideScvIdx());
-                    }
-                    // use the inside volume variables for neumann boundaries
-                    else if (!useTpfaBoundary)
-                    {
-                        volumeVariables_.emplace_back((*this)[insideScvIdx]);
-                        volVarIndices_.push_back(ivScvf.outsideScvIdx());
-                    }
+                    // if present, insert boundary vol vars
+                    if (nodalIndexSet.numBoundaryScvfs() > 0)
+                        addBoundaryVolVars_(problem, fvGeometry, nodalIndexSet);
                 }
             }
         }
 
-        //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
-        //! on additional DOFs not included in the discretization schemes' occupation pattern
-        const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
-        if (!additionalDofDependencies.empty())
-        {
-            volumeVariables_.resize(volumeVariables_.size() + additionalDofDependencies.size());
-            volVarIndices_.resize(volVarIndices_.size() + additionalDofDependencies.size());
-            for (auto globalJ : additionalDofDependencies)
-            {
-                const auto& elementJ = fvGeometry.fvGridGeometry().element(globalJ);
-                auto&& scvJ = fvGeometry.scv(globalJ);
+        // //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
+        // //! on additional DOFs not included in the discretization schemes' occupation pattern
+        // const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
+        // if (!additionalDofDependencies.empty())
+        // {
+        //     volumeVariables_.reserve(volumeVariables_.size() + additionalDofDependencies.size());
+        //     volVarIndices_.reserve(volVarIndices_.size() + additionalDofDependencies.size());
+        //     for (auto globalJ : additionalDofDependencies)
+        //     {
+        //         const auto& elementJ = fvGridGeometry.element(globalJ);
+        //         const auto& scvJ = fvGeometry.scv(globalJ);
 
-                volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
-                                                  problem,
-                                                  elementJ,
-                                                  scvJ);
-                volVarIndices_[localIdx] = scvJ.dofIndex();
-                ++localIdx;
-            }
-        }
+        //         VolumeVariables additionalVolVars;
+        //         additionalVolVars.update(problem.model().elementSolution(elementJ, sol),
+        //                                  problem,
+        //                                  elementJ,
+        //                                  scvJ);
+
+        //         volumeVariables_.emplace_back(std::move(additionalVolVars));
+        //         volVarIndices_.push_back(globalJ);
+        //     }
+        // }
     }
 
     // Binding of an element, prepares only the volume variables of the element
@@ -261,14 +240,14 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        auto eIdx = globalVolVars().problem_().elementMapper().index(element);
+        auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
-        auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(globalVolVars().problem_().model().elementSolution(element, sol),
-                                   globalVolVars().problem_(),
+        const auto& scv = fvGeometry.scv(eIdx);
+        volumeVariables_[0].update(ElementSolution({sol[scv.dofIndex()]}),
+                                   globalVolVars().problem(),
                                    element,
                                    scv);
         volVarIndices_[0] = scv.dofIndex();
@@ -293,22 +272,66 @@ public:
 private:
     const GlobalVolumeVariables* globalVolVarsPtr_;
 
-    //! checks whether an scvf touches the boundary and returns an estimate of how many
-    //! boundary vol vars will be necessary. In 2d, this is the sum of faces touching
-    //! the boundary, which should be correct. In 3d, we count each face double - probably
-    //! too much for hexahedrons but might be even too little for simplices.
-    int boundaryVolVarsEstimate_(const Element& element,
-                                 const FVElementGeometry& fvGeometry)
+    //! Computes how many boundary vol vars come into play for flux calculations
+    //! on this element. This number is probably almost always higher than the actually
+    //! needed number of volume variables. However, memory is not an issue for the global
+    //! caching being deactivated and we want to make sure we reserve enough memory here.
+    // TODO: What about non-symmetric schemes? Is there a better way for estimating this?
+    std::size_t maxNumBoundaryVolVars_(const FVElementGeometry& fvGeometry)
     {
-        int bVolVarEstimate = 0;
-        for (auto&& scvf : scvfs(fvGeometry))
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
+
+        std::size_t numBoundaryVolVars = 0;
+        for (const auto& scvf : scvfs(fvGeometry))
         {
-            bool boundary = scvf.boundary();
-            if (boundary || (!boundary && fvGeometry.fvGridGeometry().touchesDomainBoundary(scvf)))
-                bVolVarEstimate += dim-1;
+            if (fvGridGeometry.vertexUsesPrimaryInteractionVolume(scvf.vertexIndex()))
+                numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
+            else
+                numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
         }
 
-        return bVolVarEstimate;
+        return numBoundaryVolVars;
+    }
+
+    //! adds the volume variables from a given nodal index set to the local containers
+    template<class NodalIndexSet>
+    void addBoundaryVolVars_(const Problem& problem, const FVElementGeometry& fvGeometry, const NodalIndexSet& nodalIndexSet)
+    {
+        // check each scvf in the index set for boundary presence
+        for (auto scvfIdx : nodalIndexSet.globalScvfIndices())
+        {
+            const auto& ivScvf = fvGeometry.scvf(scvfIdx);
+
+            // only proceed for scvfs on the boundary and not in the inside element
+            if (!ivScvf.boundary() || ivScvf.insideScvIdx() == volVarIndices_[0])
+                continue;
+
+            const auto insideScvIdx = ivScvf.insideScvIdx();
+            const auto insideElement = fvGeometry.fvGridGeometry().element(insideScvIdx);
+            const auto bcTypes = problem.boundaryTypes(insideElement, ivScvf);
+
+            // on dirichlet boundaries use dirichlet values
+            if (bcTypes.hasOnlyDirichlet())
+            {
+                // boundary volume variables
+                VolumeVariables dirichletVolVars;
+                const auto& ivScv = fvGeometry.scv(insideScvIdx);
+                dirichletVolVars.update(ElementSolution({problem.dirichlet(insideElement, ivScvf)}),
+                                        problem,
+                                        insideElement,
+                                        ivScv);
+
+                volumeVariables_.emplace_back(std::move(dirichletVolVars));
+                volVarIndices_.push_back(ivScvf.outsideScvIdx());
+            }
+            // use the inside volume variables for neumann boundaries
+            else
+            {
+                volumeVariables_.emplace_back((*this)[insideScvIdx]);
+                volVarIndices_.push_back(ivScvf.outsideScvIdx());
+            }
+        }
     }
 
     int getLocalIdx_(const int volVarIdx) const
