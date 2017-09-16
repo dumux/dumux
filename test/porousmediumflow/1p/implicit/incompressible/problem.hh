@@ -27,6 +27,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/1p/implicit/incompressiblelocalresidual.hh>
@@ -43,6 +44,7 @@ namespace Properties
 // create the type tag nodes
 NEW_TYPE_TAG(OnePIncompressible, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, OnePIncompressible));
+NEW_TYPE_TAG(OnePIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, OnePIncompressible));
 NEW_TYPE_TAG(OnePIncompressibleBox, INHERITS_FROM(BoxModel, OnePIncompressible));
 
 // Set the grid type
