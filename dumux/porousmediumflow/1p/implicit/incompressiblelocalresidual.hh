@@ -25,6 +25,7 @@
 #ifndef DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
 #define DUMUX_1P_INCOMPRESSIBLE_LOCAL_RESIDUAL_HH
 
+#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 
 namespace Dumux
@@ -75,8 +76,10 @@ public:
                               const VolumeVariables& curVolVars,
                               const SubControlVolume& scv) const {}
 
+    //! flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
+                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -90,18 +93,52 @@ public:
         static_assert(FluidSystem::viscosityIsConstant(0),
                       "1p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
 
-        const auto tij = elemFluxVarsCache[scvf].advectionTij();
-
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
         static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
-        const Scalar deriv = tij*up;
+        const auto deriv = elemFluxVarsCache[scvf].advectionTij()*up;
 
         // add partial derivatives to the respective given matrices
         derivativeMatrices[scvf.insideScvIdx()][conti0EqIdx][pressureIdx] += deriv;
         derivativeMatrices[scvf.outsideScvIdx()][conti0EqIdx][pressureIdx] -= deriv;
     }
 
+    //! flux derivatives for the cell-centered mpfa scheme
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
+                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, void>
+    addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& curElemVolVars,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       const SubControlVolumeFace& scvf) const
+    {
+        static_assert(!FluidSystem::isCompressible(0),
+                      "1p/incompressiblelocalresidual.hh: Only incompressible fluids are allowed!");
+        static_assert(FluidSystem::viscosityIsConstant(0),
+                      "1p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
+
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        const auto& volVarIndices = fluxVarsCache.advectionVolVarsStencil();
+        const auto& tij = fluxVarsCache.advectionTij();
+
+        // we know the "upwind factor" is constant, get inner one here and compute derivatives
+        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
+                                 / curElemVolVars[scvf.insideScvIdx()].viscosity();
+
+        // add partial derivatives to the respective given matrices
+        for (unsigned int i = 0; i < volVarIndices.size();++i)
+        {
+            if (fluxVarsCache.advectionSwitchFluxSign())
+                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
+            else
+                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+        }
+    }
+
+    //! flux derivatives for the box scheme
     template<class JacobianMatrix, class T = TypeTag>
     std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
     addFluxDerivatives(JacobianMatrix& A,
@@ -139,24 +176,55 @@ public:
         }
     }
 
-    template<class PartialDerivativeMatrices>
-    void addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
-                                       const Problem& problem,
-                                       const Element& element,
-                                       const FVElementGeometry& fvGeometry,
-                                       const ElementVolumeVariables& curElemVolVars,
-                                       const ElementFluxVariablesCache& elemFluxVarsCache,
-                                       const SubControlVolumeFace& scvf) const
+    //! Dirichlet flux derivatives for the cell-centered tpfa scheme
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
+                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
+    addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& curElemVolVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const SubControlVolumeFace& scvf) const
     {
-        const auto tij = elemFluxVarsCache[scvf].advectionTij();
+        // we know the "upwind factor" is constant, get inner one here
+        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
+                                 / curElemVolVars[scvf.insideScvIdx()].viscosity();
+        const auto deriv = elemFluxVarsCache[scvf].advectionTij()*up;
+
+        // compute and add partial derivative to the respective given matrices
+        derivativeMatrices[scvf.insideScvIdx()][conti0EqIdx][pressureIdx] += deriv;
+    }
+
+    //! Dirichlet flux derivatives for the cell-centered mpfa scheme
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
+                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, void>
+    addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& curElemVolVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const SubControlVolumeFace& scvf) const
+    {
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        const auto& volVarIndices = fluxVarsCache.advectionVolVarsStencil();
+        const auto& tij = fluxVarsCache.advectionTij();
 
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
         static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
-        const Scalar deriv = tij*up;
 
         // add partial derivatives to the respective given matrices
-        derivativeMatrices[scvf.insideScvIdx()] += deriv;
+        for (unsigned int i = 0; i < volVarIndices.size();++i)
+        {
+            if (fluxVarsCache.advectionSwitchFluxSign())
+                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
+            else
+                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+        }
     }
 
     template<class PartialDerivativeMatrices>
