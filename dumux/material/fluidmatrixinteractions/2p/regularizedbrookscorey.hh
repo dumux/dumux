@@ -25,7 +25,7 @@
 #ifndef REGULARIZED_BROOKS_COREY_HH
 #define REGULARIZED_BROOKS_COREY_HH
 
-#include "brookscorey.hh"
+#include "testlaw.hh"
 #include "regularizedbrookscoreyparams.hh"
 
 

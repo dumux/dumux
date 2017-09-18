@@ -15,3 +15,5 @@ LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
 Name = lensccff # name passed to the output routines
 UseHybridUpwinding = false
 TotalVelocity = 1e-5 0 
+LiquidDensity = 100
+LiquidKinematicViscosity = 1e-6

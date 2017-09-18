@@ -26,7 +26,9 @@
 #define DUMUX_FRACFLOW_CONSTVEL_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/testlaw.hh>
+#include <dumux/io/plotmateriallaw.hh>
+#include<dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -54,7 +56,7 @@ private:
     // define the material law which is parameterized by effective
     // saturations
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
+    using EffectiveLaw = Testlaw<Scalar>;
 public:
     // define the material law parameterized by absolute saturations
     using type = EffToAbsLaw<EffectiveLaw>;
@@ -102,8 +104,8 @@ public:
     : ParentType(problem, gridView)
     {
         // residual saturations
-        materialParams_.setSwr(0.0);
-        materialParams_.setSnr(0.0);
+       materialParams_.setSwr(0.0);
+       materialParams_.setSnr(0.0);
 
         // parameters for the Brooks-Corey law
         // alpha and n
@@ -111,9 +113,50 @@ public:
         materialParams_.setLambda(4.0);
 
         K_ = 100 * 9.86923* 1.0e-16;
+
+PlotMaterialLaw<TypeTag> plotMaterialLaw;
+        GnuplotInterface<Scalar> gnuplot(true);
+
+      plotMaterialLaw.addDswcurve( gnuplot, materialParams_, 0.0, 1.0);
+       gnuplot.setOption("set xrange [0:1]");
+       gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+       gnuplot.plot("D-Sw");
+
+
+
+   /*    plotMaterialLaw.addlamswcurve( gnuplot, materialParams_, 0.0, 1.0);
+
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("LambdarTerm-Sw");
+
+
+
+
+plotMaterialLaw.addkrcurves( gnuplot, materialParams_, 0.0, 1.0);
+
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("Kr-Sw");689
+
+
+plotMaterialLaw.addpcswcurve( gnuplot, materialParams_, 0.0, 1.0);
+
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("pc-Sw");
+
+
+       plotMaterialLaw.adddpcdswcurve( gnuplot, materialParams_, 0.0, 1.0);
+       gnuplot.setOption("set xrange [0.1:1]");
+       gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+       gnuplot.plot("dpcdsw-Sw");
+*/
+
     }
 
-    /*!
+ /*!
+
      * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
      * \param globalPos The global position
@@ -140,7 +183,6 @@ public:
     {
         return materialParams_;
     }
-
 
 private:
     Scalar K_;
