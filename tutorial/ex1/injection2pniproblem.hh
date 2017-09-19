@@ -42,7 +42,7 @@ class InjectionProblem2PNI;
 namespace Properties
 {
  /*!
-* dumux-course-task:
+* TODO:dumux-course-task:
 * inherit from the TwoPNI model instead of TwoP here
 */
 NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(TwoP, InjectionSpatialParams));
@@ -103,7 +103,7 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
         contiNEqIdx = Indices::contiNEqIdx,
 
     /*
-     * dumux-course-task:
+     *  TODO:dumux-course-task:
      * get the temperatureIdx as the index for the primary variable temperature and the
      * energyIdx as the index for the energy conservation equation for your convinience.
      */
@@ -216,7 +216,7 @@ public:
         values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         values[saturationIdx] = 0.0;
        /*!
-        * dumux-course-task:
+        *  TODO:dumux-course-task:
         * set a temperature gradient of 0.03 K per m beginning at 283 K here.
         * Hint: you can use maxDepth_ and the globalPos similar to the pressure gradient
         */
@@ -280,7 +280,7 @@ public:
         values[saturationIdx] = 0.0;
 
         /*!
-        * dumux-course-task:
+        *  TODO:dumux-course-task:
         * set a temperature gradient of 0.03 K per m beginning at 283 K here.
         * Hint: you can use maxDepth_ and the globalPos similar to the pressure gradient
         * use globalPos[0] and globalpos[1] to implement the high temperature lens with 380 K
