@@ -5,7 +5,7 @@
 N2 is injected in an aquifer previously saturated with water with an injection rate of  $`0.001~kg/m*s`$.
 The aquifer is situated 2700 m below see level and the domain size is 60 m x 40 m. It consists of two layers, a moderately permeable one ($`\Omega 1`$) and a lower permeable one ($`\Omega 2`$).
 
-<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/master/tutorial/doc/exercise1_setup.png" width="200"/>
+<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise1_setup.png" width="200"/>
 
 ## Preparing the exercise
 
@@ -27,14 +27,19 @@ Locate all the files you will need for this exercise (_exercise 1_)
 ### 2. Compiling and running an executable
 
 * Change to the build-directory
+
 ```bash
 cd build-cmake/tutorial/exercise1
 ```
+
 * Compile both executables `exercise1_2p` and `exercise1_2p2c`
+
 ```bash
 make exercise1_2p exercise1_2p2c
 ```
+
 * Execute the two problems and inspect the result
+
 ```bash
 ./exercise1_2p exercise1.input
 ./exercise1_2p2c exercise1.input
@@ -62,10 +67,12 @@ code snippet
 
 We want to be able to set it at runtime. To this end,
 * use the following DuMuX macro to read a runtime parameter from the input file
+
 ```c++
 // read the injection rate from the input file at run time
 const auto injectionRate = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, <TYPE>, <GROUPNAME>, <PARAMNAME>);
 ```
+
 * Replace
 `<TYPE>`,`<GROUPNAME>`,`<PARAMNAME>` by what is appropriate for your case:
   * `<TYPE>` is the type of the parameter to read
@@ -81,16 +88,21 @@ Again, you don't need to recompile the program.
 ### 5. Setting up a new executable (for a non-isothermal simulation)
 
 * Set up a new cc file called `exercise1_2pni.cc` by copying and renaming `exercise1_2p.cc`
+
 ```bash
 cp exercise1_2p.cc exercise1_2pni.cc
 ```
+
 * In  `exercise1_2pni.cc`, include the header `injection2pniproblem.hh` instead of the isothermal problem file `injection2pproblem.hh`.
 * Add a new executable in `CMakeLists.txt` by adding the lines
+
 ```cmake
 dune_add_test(NAME injection2pniproblem
               SOURCES injection2pniproblem.cc)
 ```
+
 * Test that everything compiles without error
+
 ```bash
 make # should rerun cmake
 make injection2pniproblem # builds new executable
@@ -99,15 +111,17 @@ make injection2pniproblem # builds new executable
 ### 6. Setting up a non-isothermal __2pni__ test problem
 
 * Open the file `injection2pniproblem.hh`. It is a copy of the `injection2pproblem.hh` with some useful comments on how to implement a non-isothermal model. Look for comments containing
+
 ```c++
 // TODO: dumux-course-task
 ```
+
 * The following set-up should be realized:
 
   __Boundary conditions:__ Dirichlet conditions for the temperature with a temperature gradient of 0.03 K/m and a starting temperature of 283 K.
 
   __Initial conditions:__ The same temperature gradient as in the boundary conditions with an additional lens (with position: 20 < x < 30, 5 < y < 35), which has an initial temperature of 380 K.
 
-<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/master/tutorial/extradoc/exercise1_nonisothermal.png" width="200"/>
+<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise1_nonisothermal.png" width="200"/>
 
 The non-isothermal model requires additional spatial parameters like the thermal conductivity. They are already implemented in `injection2pspatialparams.hh`, you just need to _uncomment_ them.
