@@ -15,7 +15,7 @@ _Exercise 1_ deals with two problems: a two-phase immiscible problem (__2p__) an
 
 ### 1. Getting familiar with the code
 
-Locate all the files you will need for this exercise (_exercise 1_)
+Locate all the files you will need for this exercise
 * The __main file__ for the __2p__ problem: `exercise1_2p.cc`
 * The __problem file__ for the __2p__ problem: `injection2pproblem.hh`
 * The __main file__ for the __2p2c__ problem: `exercise1_2p2c.cc`
