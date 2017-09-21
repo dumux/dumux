@@ -2,7 +2,7 @@
 <br>
 ## Problem set-up
 
-The problem setup is identical to the previous [_exercise 1_](../ex1/README.md) with a lower injection rate of 1e-6 kg/(m*s) so that diffusion plays a more dominant role in the transport process.
+The problem setup is identical to the previous [_exercise 1_](../ex1/README.md).
 
 ## Preparing the exercise
 
