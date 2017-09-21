@@ -54,7 +54,7 @@ DuMuX uses the term _material law_ to describe the law used to compute
 
 The file `mymateriallaw.hh` contains a custom implementation of such a material law.
 
-* Implement the method `Scalar pc(Scalar sw)` by implementing your own capillary pressure relationship, e.g. pc(Sw) = 1e5*(1-Sw).
+* Implement the method `Scalar pc(Scalar sw)` by implementing your own capillary pressure relationship, e.g. a simple linear relationship $`p_C(S_w) = 1\cdot 10^5 \cdot (1-S_w)`$.
 
 The type (i.e. C++ type) of the material law is set in the file `injection2pspatialparams.hh` by using the DuMuX property system
 
@@ -74,7 +74,7 @@ Verify your changes by recompiling and running the program. You should see a plo
 
 Most types in DuMuX are properties that can be changed just like the material law. In the following task we implement our own 2p2c local residual, i.e. the class that computes the element residual  in every Newton step. The file `mylocalresidual.hh` contains a copy of the original local residual class used for the 2p2c model renamed to `template<class TypeTag> class MyTwoPTwoCLocalResidual`.
 
-* Make DuMuX use this new local residual by setting the corresponding property in the `Property` namespace in the file `injection2p2cproblem.hh`
+* Make DuMuX use this new local residual by inluding the header `mylocalresidual.hh` and setting the corresponding property in the `Property` namespace in the file `injection2p2cproblem.hh`
 
 ```c++
 // note that every property struct knows about TypeTag
@@ -116,7 +116,23 @@ namespace Properties
 ...
 ```
 
+* Then enhance the problem TypeTag (the master TypeTag) by inheriting from the created node (in `injection2p2cproblem.hh`)
+
+```c++
+...
+  NEW_TYPE_TAG(Injection2p2cProblem, // the problem TypeTag
+               INHERITS_FROM(TwoPTwoC, // the 2p2c model TypeTag node
+                            InjectionSpatialParams, // the spatial params TypeTag node
+                            MyLocalResidualParams)); // the local residual params TypeTag node
+...
+```
+Note: the property inheritance graph now looks like this
+
+![property tree](../extradoc/exercise2_properties.png)
+
+
 * Modify the `computeFlux` method to only call the `diffusiveFlux` method if diffusion is enabled. You can get the new parameter by adding the lines
+
 ```c++
 // ... in the constructor of MyTwoPTwoCLocalResidual
     enableDiffusion_ = GET_PARAM_FROM_GROUP(TypeTag, bool,
@@ -126,3 +142,12 @@ namespace Properties
 private:
     bool enableDiffusion_;
 ```
+
+You can now enable and disable diffusion through the input file
+
+```ini
+[Problem]
+EnableDiffusion = true / false
+```
+
+Verify the difference at the non-wetting saturation front with and without diffusion.
