@@ -19,24 +19,24 @@ here you can use `--only=Module-Name`
 
 ## Create a new test case within your new DuMuX module
 
-### 1. Create a new folder (in your module folder), e.g. appl
+* Create a new folder (in your module folder), e.g. appl
 
-### 2. Copy some test case from the dumux module, e.g. test_box1p
+* Copy some test case from the dumux module, e.g. test_box1p
 
-### 3. Incorporate this test case into your cmake files
+* Incorporate this test case into your cmake files
 
-### 4. Re-run **dunecontrol** 
+* Re-run **dunecontrol** 
 
-### 5. Execute your test problem
+* Execute your test problem
 
 
 ## Create a new gitlab project
 
-### 1. Login with your username and password (<https://git.iws.uni-stuttgart.de>)
+* Login with your username and password (<https://git.iws.uni-stuttgart.de>)
 
-### 2. Click the **New project** button
+* Click the **New project** button
 
-### 3. Follow the given instructions for an *existing folder* 
+* Follow the given instructions for an *existing folder* 
 
 **Important**: Before executing the `git add .` command, you should add your cmake build folder to gitignore. 
 The easiest way to do so is to just copy the *.gitignore* file from your dumux module into your module path. 
