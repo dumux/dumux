@@ -2,7 +2,7 @@
 <br>
 ## Problem set-up
 
-N2 is injected in an aquifer previously saturated with water with an injection rate of  0.001 kg/m*s.
+N2 is injected in an aquifer previously saturated with water with an injection rate of 0.001 kg/(s*m$`^2`$).
 The aquifer is situated 2700 m below see level and the domain size is 60 m x 40 m. It consists of two layers, a moderately permeable one ($`\Omega_1`$) and a lower permeable one ($`\Omega_2`$).
 
 <img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise1_setup.png" width="200"/>
