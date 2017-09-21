@@ -73,8 +73,7 @@ SET_BOOL_PROP(DarcyTestProblem, ProblemEnableGravity, false);
 // Set the grid parameter group
 SET_STRING_PROP(DarcyTestProblem, GridParameterGroup, "DarcyGrid");
 
-SET_BOOL_PROP(DarcyTestProblem, EnableGlobalFVGeometryCache, true); // TODO default = false, but true needed for couplingmanager (access Darcy element)
-
+SET_BOOL_PROP(DarcyTestProblem, EnableGlobalFVGeometryCache, true);
 NEW_PROP_TAG(GlobalProblemTypeTag);
 NEW_PROP_TAG(CouplingManager);
 }
@@ -86,15 +85,11 @@ class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables) ;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry) ;
-    using ElementIterator = typename GridView::template Codim<0>::Iterator;
-
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
@@ -106,13 +101,10 @@ class DarcyTestProblem : public ImplicitPorousMediaProblem<TypeTag>
         dimworld = GridView::dimensionworld,
 
         // primary variable indices
-        conti0EqIdx = Indices::conti0EqIdx,
         pressureIdx = Indices::pressureIdx
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
     using GlobalTypeTag = typename GET_PROP_TYPE(TypeTag, GlobalProblemTypeTag);
@@ -136,8 +128,7 @@ public:
     // \{
 
     /*!
-     * \brief Returns true if a restart file should be written to
-     *        disk.
+     * \brief Returns true if a restart file should be written to disk.
      */
     bool shouldWriteRestartFile() const
     { return false; }
@@ -157,7 +148,7 @@ public:
         return name_+"_darcy";
     }
 
-    bool shouldWriteOutput() const //define output
+    bool shouldWriteOutput() const // define output
     {
         // write initial conditions
         return (this->timeManager().time() < 0.0);
@@ -173,7 +164,6 @@ public:
     void postTimeStep()
     {
     }
-
 
     /*!
      * \brief Return the temperature within the domain in [K].
@@ -200,15 +190,14 @@ public:
         return values;
     }
 
-
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
+     * \brief Evaluate the boundary conditions for a Dirichlet
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex (pore body) for which the condition is evaluated
+     * \param element The element for which the Dirichlet boundary condition is set
+     * \param scvf The boundary subcontrolvolumeface
      *
-     * For this method, the \a values parameter stores primary variables.
+     * For this method, the \a values variable stores primary variables.
      */
     PrimaryVariables dirichlet(const Element &element,
                                const SubControlVolumeFace &scvf) const
@@ -222,17 +211,21 @@ public:
      * \brief Evaluate the boundary conditions for a Neumann
      *        control volume.
      *
-     * \param values The dirichlet values for the primary variables
-     * \param vertex The vertex (pore body) for which the condition is evaluated
+     * \param element The element for which the Neumann boundary condition is set
+     * \param fvGeomentry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param scvf The boundary subcontrolvolumeface
      *
-     * For this method, the \a values parameter stores primary variables.
+     * For this method, the \a values variable stores primary variables.
      */
     PrimaryVariables neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolvars,
                              const SubControlVolumeFace& scvf) const
     {
-        return PrimaryVariables(0.0);
+        PrimaryVariables values(0.0);
+
+        return values;
     }
 
 
@@ -247,7 +240,12 @@ public:
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
-     * For this method, the \a values parameter stores the rate mass
+     * \param element The element for which the source term is set
+     * \param fvGeomentry The fvGeometry
+     * \param elemVolVars The element volume variables
+     * \param scv The subcontrolvolume
+     *
+     * For this method, the \a values variable stores the rate mass
      * of a component is generated or annihilate per volume
      * unit. Positive values mean that mass is created, negative ones
      * mean that it vanishes.
@@ -257,14 +255,18 @@ public:
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
-        return PrimaryVariables(0.0);
+        PrimaryVariables values(0.0);
+
+        return values;
     }
     // \}
 
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * For this method, the \a priVars parameter stores primary
+     * \param element The element for which the initial condition is set
+     *
+     * For this method, the \a values variable stores primary
      * variables.
      */
     PrimaryVariables initial(const Element &element) const
@@ -274,22 +276,31 @@ public:
         return values;
     }
 
-
     // \}
 
+    /*!
+     * \brief Set the coupling manager
+     *
+     * \param couplingManager The coupling manager for the global problem
+     */
     void setCouplingManager(std::shared_ptr<CouplingManager> couplingManager)
     {
         couplingManager_ = couplingManager;
     }
 
-    //! Get the coupling manager
+    /*!
+     * \brief Get the coupling manager
+     */
     CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
     /*!
-     * \brief Return the coupling boundary
+     * \brief Check if on coupling interface
      *
      * \param globalPos The global position
+     *
+     * Returns true if globalPos is on coupling interface
+     * (here: upper boundary of Darcy domain)
      */
     bool onCouplingInterface(const GlobalPosition &globalPos) const
     {return onUpperBoundary_(globalPos); }

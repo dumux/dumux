@@ -37,7 +37,6 @@ namespace Properties
 {
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(OnePSpatialParams);
-
 }
 
 /*!
@@ -54,18 +53,14 @@ class OnePSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using IndexSet = typename GridView::IndexSet;
-    using ScalarVector = std::vector<Scalar>;
 
     enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
 public:
     // export permeability type
@@ -75,6 +70,7 @@ public:
         : ParentType(problem, gridView)
     {
         permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
+//        permeabilityLens_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
 
 //        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
 //        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
@@ -83,14 +79,12 @@ public:
     /*!
      * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
+     * \param globalPos The global position
      * \return the intrinsic permeability
      */
     PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-//        if (isInLens_(scv.dofPosition()))
+//        if (isInLens_(globalPos))
 //        {
 //                return permeabilityLens_;
 //        }
@@ -100,11 +94,15 @@ public:
 
     /*! \brief Define the porosity in [-].
    *
-   * \param globalPos The global position where we evaluate
+   * \param globalPos The global position
    */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
+    /*! \brief Define the Beavers-Joseph coefficient in [-].
+   *
+   * \param globalPos The global position
+   */
     Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
     {return 1.0; }
 

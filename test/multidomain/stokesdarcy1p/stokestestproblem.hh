@@ -98,8 +98,15 @@ template <class TypeTag>
 class StokesTestProblem : public NavierStokesProblem<TypeTag>
 {
     using ParentType = NavierStokesProblem<TypeTag>;
+
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CoordScalar = typename GridView::ctype;
+
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using SubControlVolumeFace =  typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
@@ -117,22 +124,12 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
         velocityYIdx = Indices::velocityYIdx
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
-    using CoordScalar = typename GridView::ctype;
-
-    using SubControlVolumeFace =  typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using Fluid = typename GET_PROP_TYPE(TypeTag, Fluid);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
-
     using GlobalTypeTag = typename GET_PROP_TYPE(TypeTag, GlobalProblemTypeTag);
     using CouplingManager = typename GET_PROP_TYPE(GlobalTypeTag, CouplingManager);
 
+    using Fluid = typename GET_PROP_TYPE(TypeTag, Fluid);
+
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
@@ -168,6 +165,8 @@ public:
 
     /*!
      * \brief Returns the temperature within the domain.
+     *
+     * \param globalPos The global position at which the temperature is set
      *
      * This problem assumes a constant temperature of 10 degrees Celsius.
      */
@@ -259,8 +258,8 @@ public:
 
     /*!
      * \brief Set the coupling manager
-     * \param couplingManager The coupling manager
      *
+     * \param couplingManager The coupling manager
      */
     void setCouplingManager(std::shared_ptr<CouplingManager> couplingManager)
     {
@@ -269,15 +268,17 @@ public:
 
     /*!
      * \brief Get the coupling manager
-     *
      */
     CouplingManager& couplingManager() const
     { return *couplingManager_; }
 
     /*!
-     * \brief Return the coupling boundary
+     * \brief Check if on coupling interface
      *
      * \param globalPos The global position
+     *
+     * Returns true if globalPos is on coupling interface
+     * (here: lower boundary of Stokes domain)
      */
     bool onCouplingInterface(const GlobalPosition &globalPos) const
     {return onLowerBoundary_(globalPos); }

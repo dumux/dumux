@@ -67,7 +67,7 @@ SET_TYPE_PROP(StokesTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDar
 SET_PROP(DarcyTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
 SET_PROP(StokesTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
 
-NEW_PROP_TAG(DarcyToStokesMapValue); // TODO: make specialized map value class
+NEW_PROP_TAG(DarcyToStokesMapValue);
 SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);
 
 #if HAVE_UMFPACK
