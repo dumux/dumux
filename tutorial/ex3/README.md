@@ -6,7 +6,8 @@ The aim of this exercise is to get familiar with the _DuMuX_ way of implementing
 
 The domain has a size of 60 x 60 m and contains two low-permeable lenses. Initially, the domain is fully water saturated and the fictitious component is injected through the middle portion of the upper boundary by means of a Neumann boundary condition. The remaining parts of the upper and the entire lower boundary are Neumann no-flow while on the two lateral sides Dirichlet boundary conditions are applied (hydrostatic conditions for the pressure and zero saturation).
 
-<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise3_setup.png" width="200"/>
+![](../extradoc/exercise3_setup.png)
+
 
 ## Preparing the exercise
 
@@ -145,7 +146,7 @@ and by typing
 
 The saturation distribution at the final simulation time should look like this:
 
-<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise3_a_solution.png" width="200"/>
+![](../extradoc/exercise3_a_solution.png)
 
 ### 2.1. incompressible component
 
@@ -155,7 +156,7 @@ $` \rho_{min} + (\rho_{max} - \rho_{min})/(1 + \rho_{min}*exp(-1.0*k*(\rho_{max}
 
 where $`p`$ is the pressure and $`\rho_{min} = 1440 `$, $`\rho_{max} = 1480 `$ and $`k = 5 \cdot 10^{-7} `$. Also, make sure the header is included in the `ex3_a_problem.hh` file by uncommenting line 42. Furthermore, the new component has to be set as the non-wetting phase in the fluid system, i.e. comment line 81 and uncomment line 82. The non-wetting density distribution at the final simulation time should look like this:
 
-<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise3_a_solution2.png" width="200"/>
+![](../extradoc/exercise3_a_solution2.png)
 
 ### 3. Implement a new fluid system
 
