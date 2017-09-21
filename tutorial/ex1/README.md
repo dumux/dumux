@@ -51,7 +51,7 @@ In the input file `exercise1.input` you can find the following section
 
 ```ini
 [SpatialParams]
-EntryPressureFine = 1e4
+EntryPressureFine = 4.5e4
 EntryPressureCoarse = 1e4
 ```
 
