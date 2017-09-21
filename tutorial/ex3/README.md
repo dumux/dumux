@@ -99,7 +99,7 @@ public:
 };
 ```
 
-### 2.1. incompressible component
+### 2.1. Incompressible component
 
 Open the file `myincompressiblecomponent.hh`. You can see in line 40 that a component should always derive from the _Component_ class (see `dumux/material/components/component.hh`), which defines the interface of a _DuMuX_ component with all possibly required functions to be overloaded by the actual implementation.
 
@@ -148,11 +148,11 @@ The saturation distribution at the final simulation time should look like this:
 
 ![](../extradoc/exercise3_a_solution.png)
 
-### 2.1. incompressible component
+### 2.2. Compressible component
 
 We now want to implement a pressure-dependent density for our component. Open the file `mycompressiblecomponent.hh` and copy in the functions you implemented for the incompressible variant. Now substitute the method that returns the density by the following expression:
 
-$` \rho_{min} + (\rho_{max} - \rho_{min})/(1 + \rho_{min}*exp(-1.0*k*(\rho_{max} - \rho_{min})*p)) `$,
+$`\rho_{MyComp} = \rho_{min} + \frac{ \rho_{max} - \rho_{min} }{ 1 + \rho_{min}*e^{-1.0*k*(\rho_{max} - \rho_{min})*p} } `$,
 
 where $`p`$ is the pressure and $`\rho_{min} = 1440 `$, $`\rho_{max} = 1480 `$ and $`k = 5 \cdot 10^{-7} `$. Also, make sure the header is included in the `ex3_a_problem.hh` file by uncommenting line 42. Furthermore, the new component has to be set as the non-wetting phase in the fluid system, i.e. comment line 81 and uncomment line 82. The non-wetting density distribution at the final simulation time should look like this:
 
