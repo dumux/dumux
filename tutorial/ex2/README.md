@@ -1,5 +1,5 @@
 # Exercise #2 (DuMuX course)
-
+<hr>
 ## Problem set-up
 
 The problem setup is identical to the previous [_exercise 1_](../ex1/README.md) with a lower injection rate of 1e-6 kg/(m*s) so that diffusion plays a more dominant role in the transport process.
@@ -10,6 +10,7 @@ The problem setup is identical to the previous [_exercise 1_](../ex1/README.md) 
 
 _Exercise 2_ deals with a two-phase compositional problem (__2p2c__). Goal is to learn how to use compile and runtime parameters and the _DuMuX property system_.
 
+<br><br><hr>
 ### 1. Getting familiar with the code
 
 Locate all the files you will need for this exercise
@@ -21,6 +22,8 @@ Locate all the files you will need for this exercise
   * a custom __local residual__ in: `mylocalresidual.hh`
   * a custom __material law__ in:: `mymateriallaw.hh`
 
+
+<br><br><hr>
 ### 2. Compiling and running the program
 
 * Change to the build-directory
@@ -45,6 +48,7 @@ executable, DuMuX will find it automatically.
 
 If gnuplot is installed on your system, you should see a plot of the capillary pressure - saturation relationship.
 
+<br><br><hr>
 ### 3. Implement and use a different material law
 
 DuMuX uses the term _material law_ to describe the law used to compute
@@ -70,6 +74,7 @@ SET_PROP(InjectionSpatialParams, MaterialLaw)
 
 Verify your changes by recompiling and running the program. You should see a plot of your new function.
 
+<br><br><hr>
 ### 4. Implement your own local residual
 
 Most types in DuMuX are properties that can be changed just like the material law. In the following task we implement our own 2p2c local residual, i.e. the class that computes the element residual  in every Newton step. The file `mylocalresidual.hh` contains a copy of the original local residual class used for the 2p2c model renamed to `template<class TypeTag> class MyTwoPTwoCLocalResidual`.
