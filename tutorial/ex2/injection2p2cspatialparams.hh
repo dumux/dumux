@@ -30,16 +30,22 @@
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
+// TODO: dumux-course-task
+// Inlcude your own material law
+
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/plotmateriallaw.hh>
 
 #include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
 
 namespace Dumux
 {
 
-//forward declaration
+// forward declaration
 template<class TypeTag>
 class InjectionSpatialParams;
 
+// setup property TypeTag
 namespace Properties
 {
 // The spatial parameters TypeTag
@@ -48,11 +54,16 @@ NEW_TYPE_TAG(InjectionSpatialParams);
 // Set the spatial parameters
 SET_TYPE_PROP(InjectionSpatialParams, SpatialParams, InjectionSpatialParams<TypeTag>);
 
+// TODO: dumux-course-task
+// Use your own material law instead
 // Set the material law parameterized by absolute saturations
-SET_TYPE_PROP(InjectionSpatialParams,
-              MaterialLaw,
-              EffToAbsLaw<RegularizedBrooksCorey<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
-}
+SET_PROP(InjectionSpatialParams, MaterialLaw)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
+};
+
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPTwoCModel
@@ -65,25 +76,22 @@ template<class TypeTag>
 class InjectionSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     typedef ImplicitSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    typedef typename GridView::ctype CoordinateType;
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
+    typedef Dune::FieldVector<CoordinateType, dimWorld> GlobalPosition;
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GridView::template Codim<0>::Entity Element;
-
-public:
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef typename MaterialLaw::Params MaterialLawParams;
+
+public:
 
     /*!
      * \brief The constructor
@@ -91,36 +99,36 @@ public:
      * \param gridView The grid view
      */
     InjectionSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    : ParentType(gridView)
     {
-        layerBottom_ = 25.0;
+        aquiferHeightFromBottom_ = 30.0;
 
         // intrinsic permeabilities
-        fineK_ = 1e-13;
-        coarseK_ = 1e-12;
+        aquitardK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityAquitard);
+        aquiferK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityAquifer);
 
         // porosities
-        finePorosity_ = 0.2;
-        coarsePorosity_ = 0.4;
-
-        //materialLawParams
-        fineEntryPressure_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureFine);
-        coarseEntryPressure_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureCoarse);
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
+        aquitardPorosity_ = 0.2;
+        aquiferPorosity_ = 0.4;
 
         // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
+        aquitardMaterialParams_.setSwr(0.2);
+        aquitardMaterialParams_.setSnr(0.0);
+        aquiferMaterialParams_.setSwr(0.2);
+        aquiferMaterialParams_.setSnr(0.0);
 
         // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(fineEntryPressure_);
-        coarseMaterialParams_.setPe(coarseEntryPressure_);
-        fineMaterialParams_.setLambda(2.0);
-        coarseMaterialParams_.setLambda(2.0);
+        aquitardMaterialParams_.setPe(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureAquitard));
+        aquiferMaterialParams_.setPe(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureAquifer));
+        aquitardMaterialParams_.setLambda(2.0);
+        aquiferMaterialParams_.setLambda(2.0);
+
+        // plot the material laws using gnuplot and exit
+        if (GET_RUNTIME_PARAM(TypeTag, bool, Problem.OnlyPlotMaterialLaws))
+        {
+            plotMaterialLaws();
+            exit(0);
+        }
     }
 
     /*!
@@ -130,14 +138,14 @@ public:
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
      */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvGeometry,
-                                       const int scvIdx) const
+    Scalar intrinsicPermeability(const Element &element,
+                                 const FVElementGeometry &fvGeometry,
+                                 const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
-            return fineK_;
-        return coarseK_;
+        if (isInAquitard_(globalPos))
+            return aquitardK_;
+        return aquiferK_;
     }
 
     /*!
@@ -152,9 +160,9 @@ public:
                     const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
-            return finePorosity_;
-        return coarsePorosity_;
+        if (isInAquitard_(globalPos))
+            return aquitardPorosity_;
+        return aquiferPorosity_;
     }
 
 
@@ -171,83 +179,43 @@ public:
                                                const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        return coarseMaterialParams_;
+        if (isInAquitard_(globalPos))
+            return aquitardMaterialParams_;
+        return aquiferMaterialParams_;
     }
 
     /*!
-     *  These parameters are only needed for nonisothermal models. Comment them in if you want to implement the 2pni model.
+     * \brief Creates a gnuplot output of the pc-Sw curve
      */
-
-    /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-//     Scalar solidHeatCapacity(const Element &element,
-//                              const FVElementGeometry &fvGeometry,
-//                              const int scvIdx) const
-//     {
-//         return 790; // specific heat capacity of granite [J / (kg K)]
-//     }
-
-    /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
-     */
-//     Scalar solidDensity(const Element &element,
-//                         const FVElementGeometry &fvGeometry,
-//                         const int scvIdx) const
-//     {
-//         return 2700; // density of granite [kg/m^3]
-//     }
-
-    /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
-     *
-     * This is only required for non-isothermal models.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     */
-//     Scalar solidThermalConductivity(const Element &element,
-//                                     const FVElementGeometry &fvGeometry,
-//                                     const int scvIdx) const
-//     {
-//         return lambdaSolid_;
-//     }
+    void plotMaterialLaws()
+    {
+        PlotMaterialLaw<TypeTag> plotMaterialLaw;
+        GnuplotInterface<Scalar> gnuplot;
+        plotMaterialLaw.addpcswcurve(gnuplot, aquitardMaterialParams_, 0.2, 1.0, "upper layer (fine, aquitard)", "w lp");
+        plotMaterialLaw.addpcswcurve(gnuplot, aquiferMaterialParams_, 0.2, 1.0, "lower layer (coarse, aquifer)", "w l");
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("pc-Sw");
+    }
 
 private:
-    bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return globalPos[dimWorld-1] > layerBottom_; }
 
-    Scalar fineK_;
-    Scalar coarseK_;
-    Scalar layerBottom_;
+    static constexpr Scalar eps_ = 1e-6;
 
-    Scalar finePorosity_;
-    Scalar coarsePorosity_;
+    bool isInAquitard_(const GlobalPosition &globalPos) const
+    { return globalPos[dimWorld-1] > aquiferHeightFromBottom_ + eps_; }
 
-    Scalar lambdaSolid_;
+    Scalar aquitardK_;
+    Scalar aquiferK_;
+    Scalar aquiferHeightFromBottom_;
 
-    Scalar fineEntryPressure_;
-    Scalar coarseEntryPressure_;
+    Scalar aquitardPorosity_;
+    Scalar aquiferPorosity_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    MaterialLawParams aquitardMaterialParams_;
+    MaterialLawParams aquiferMaterialParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

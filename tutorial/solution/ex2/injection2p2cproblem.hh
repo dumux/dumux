@@ -32,6 +32,7 @@
 
 // TODO: dumux-course-task
 // Include the local residual header
+#include "mylocalresidual.hh"
 
 namespace Dumux
 {
@@ -45,7 +46,7 @@ namespace Properties
 {
 // TODO: dumux-course-task
 // inherit from MyLocalResidualParams
-NEW_TYPE_TAG(Injection2p2cProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
+NEW_TYPE_TAG(Injection2p2cProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams, MyLocalResidualParams));
 NEW_TYPE_TAG(Injection2p2cBoxProblem, INHERITS_FROM(BoxModel, Injection2p2cProblem));
 NEW_TYPE_TAG(Injection2p2pcCCProblem, INHERITS_FROM(CCModel, Injection2p2cProblem));
 
@@ -57,6 +58,7 @@ SET_TYPE_PROP(Injection2p2cProblem, Problem, Injection2p2cProblem<TypeTag>);
 
 // TODO: dumux-course-task
 // change the local residual type to MyTwoPTwoCLocalResidual<TypeTag>
+SET_TYPE_PROP(Injection2p2cProblem, LocalResidual, MyTwoPTwoCLocalResidual<TypeTag>);
 
 // Set fluid configuration
 SET_TYPE_PROP(Injection2p2cProblem,
