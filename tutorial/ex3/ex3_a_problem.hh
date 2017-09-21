@@ -39,12 +39,12 @@
 
 // The components that will be created in this exercise
 #include "components/myincompressiblecomponent.hh"
-#include "components/mycompressiblecomponent.hh"
+// #include "components/mycompressiblecomponent.hh"
 
 // We will only have liquid phases Here
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-// The fluid system that is used
+// The two-phase immiscible fluid system
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 namespace Dumux{
@@ -74,14 +74,12 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef TabulatedComponent<Scalar, H2O<Scalar>> TabulatedH2O;
     typedef typename FluidSystems::LiquidPhase<Scalar, TabulatedH2O> WettingPhase;
-
     /*!
-     * TODO: define the liquid phase of your component as the non-wetting phase
-     * Solution: Uncomment first line and comment second line for exercise 3a
-     *           Uncomment second line and comment first line for exercise 3b
+     * Uncomment first line and comment second line for using the incompressible component
+     * Uncomment second line and comment first line for using the compressible component
      */
-    // typedef typename FluidSystems::LiquidPhase<Scalar, MyIncompressibleComponent<Scalar> > NonWettingPhase;
-    typedef typename FluidSystems::LiquidPhase<Scalar, MyCompressibleComponent<Scalar> > NonWettingPhase;
+    typedef typename FluidSystems::LiquidPhase<Scalar, MyIncompressibleComponent<Scalar> > NonWettingPhase;
+    // typedef typename FluidSystems::LiquidPhase<Scalar, MyCompressibleComponent<Scalar> > NonWettingPhase;
 
 public:
     typedef typename FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonWettingPhase> type;
@@ -242,6 +240,28 @@ public:
     {
         values[Indices::contiWEqIdx] = 0.0;
         values[Indices::contiNEqIdx]= 0.0;
+    }
+
+    /*!
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer. Adjust this in case of anisotropic permeabilities.
+     */
+    void addOutputVtkFields()
+    {
+        // get the number of elements in the grid
+        unsigned numElements = this->gridView().size(/*codim=*/0);
+
+        // create the scalar field required for the output of the lenses
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        ScalarField *isInLens = this->resultWriter().allocateManagedBuffer(numElements);
+
+        // add data to the scalar field
+        for (const auto& element : elements(this->gridView()))
+            (*isInLens)[this->model().elementMapper().index(element)] = this->spatialParams().isInLens(element.geometry().center());
+
+        // attach to writer
+        this->resultWriter().attachCellData(*isInLens, "isInLens");
     }
 
 private:

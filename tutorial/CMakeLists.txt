@@ -1,3 +1,4 @@
 add_subdirectory(ex1)
+add_subdirectory(ex3)
 add_subdirectory(tutorial_implicit)
 add_subdirectory(tutorial_sequential)

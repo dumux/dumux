@@ -19,10 +19,10 @@
 /*!
  * \file
  * \ingroup Components
- * \brief A ficitious component to be implemented in exercise 3.
+ * \brief A ficitious component to be implemented in tutorial exercise 3.
  */
-#ifndef DUMUX_MYCOMPRESSIBLECOMPONENT_HH
-#define DUMUX_MYCOMPRESSIBLECOMPONENT_HH
+#ifndef DUMUX_MYINCOMPRESSIBLECOMPONENT_HH
+#define DUMUX_MYINCOMPRESSIBLECOMPONENT_HH
 
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/components/component.hh>
@@ -37,20 +37,44 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class MyCompressibleComponent : public Component<Scalar, MyCompressibleComponent<Scalar> >
+class MyIncompressibleComponent : public Component<Scalar, MyIncompressibleComponent<Scalar> >
 {
-
 public:
     /*!
-     * \brief A human readable name for MyCompressibleComponent.
+     * \brief A human readable name for MyIncompressibleComponent.
      */
     static std::string name()
-    { return "MyCompressibleComponent"; }
+    { return "MyIncompressibleComponent"; }
 
     /*!
-     * TODO: Copy the methods implemented in MyIncompressibleComponent and substitute
-     *       the density calculation by the expression given in the exercise description.
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of MyIncompressibleComponent.
      */
+    static Scalar molarMass()
+    {
+        return 131.39e-3; // [kg/mol]
+    }
+
+    /*!
+     * \brief The density of MyIncompressibleComponent at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    {
+        return 1460.0; // [kg/m^3]
+    }
+
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of MyIncompressibleComponent.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    {
+        return 5.7e-4;// [Pa*s]
+    }
 };
 
 } // end namespace

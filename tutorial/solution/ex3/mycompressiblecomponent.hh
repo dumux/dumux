@@ -39,7 +39,6 @@ namespace Dumux
 template <class Scalar>
 class MyCompressibleComponent : public Component<Scalar, MyCompressibleComponent<Scalar> >
 {
-
 public:
     /*!
      * \brief A human readable name for MyCompressibleComponent.
@@ -48,9 +47,60 @@ public:
     { return "MyCompressibleComponent"; }
 
     /*!
-     * TODO: Copy the methods implemented in MyIncompressibleComponent and substitute
-     *       the density calculation by the expression given in the exercise description.
+     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of MyCompressibleComponent.
      */
+    static Scalar molarMass()
+    {
+        return 131.39e-3; // [kg/mol]
+    }
+
+    /*!
+     * \brief The density of MyCompressibleComponent at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
+    {
+        static const Scalar rho_min = 1440;
+        static const Scalar rho_max = 1480;
+        static const Scalar k = 5e-7;
+
+        using std::exp;
+        return rho_min + (rho_max - rho_min)/(1 + rho_min*exp(-1.0*k*(rho_max - rho_min)*pressure)); // [kg/m^3]
+    }
+
+    /*!
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of MyCompressibleComponent.
+     *
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
+    {
+        return 5.7e-4;// [Pa*s]
+    }
+
+    /*****************************************************************
+     * The function below is implemented in the scope of exercise 3b *
+     *****************************************************************/
+
+    /*!
+     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of MyCompressibleComponent
+     *        at a given temperature.
+     *
+     * \param T temperature of component in \f$\mathrm{[K]}\f$
+     */
+    static Scalar vaporPressure(Scalar T)
+    {
+        return 3900; // [Pa] (at 20C)
+    }
+
+    /*!
+     * \brief Returns true if the liquid phase is assumed to be compressible
+     */
+    static bool liquidIsCompressible()
+    { return false; }
 };
 
 } // end namespace

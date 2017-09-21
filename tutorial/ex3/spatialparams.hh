@@ -105,7 +105,7 @@ public:
                                                     const FVElementGeometry &fvGeometry,
                                                     const int scvIdx) const
     {
-        if (isInLens_(element.geometry().center()))
+        if (isInLens(element.geometry().center()))
             return KLens_;
         return K_;
     }
@@ -125,7 +125,7 @@ public:
                     const FVElementGeometry &fvGeometry,
                     const int scvIdx) const
     {
-        if (isInLens_(element.geometry().center()))
+        if (isInLens(element.geometry().center()))
             return 0.1;
         return 0.2;
     }
@@ -145,7 +145,7 @@ public:
                                                const FVElementGeometry &fvGeometry,
                                                const int scvIdx) const
     {
-        if (isInLens_(element.geometry().center()))
+        if (isInLens(element.geometry().center()))
             return materialParamsLens_;
         return materialParams_;
     }
@@ -177,14 +177,15 @@ public:
         materialParamsLens_.setLambda(2);
     }
 
-private:
-    bool isInLens_(const Dune::FieldVector<Scalar, dimWorld>& globalPos) const
+    bool isInLens(const Dune::FieldVector<Scalar, dimWorld>& globalPos) const
     {
         const auto x = globalPos[0];
         const auto y = globalPos[1];
         return (x < 40 && x > 20 && y > 35 && y < 45) ||
                (x < 50 && x > 30 && y < 30 && y > 15);
     }
+
+private:
 
     Dune::FieldMatrix<Scalar, dim, dim> K_;
     Dune::FieldMatrix<Scalar, dim, dim> KLens_;

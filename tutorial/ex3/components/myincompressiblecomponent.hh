@@ -39,11 +39,6 @@ namespace Dumux
 template <class Scalar>
 class MyIncompressibleComponent : public Component<Scalar, MyIncompressibleComponent<Scalar> >
 {
-
-  /*!
-   * TODO: Implement the missing specifications from the given data sheet.
-   */
-
 public:
     /*!
      * \brief A human readable name for MyIncompressibleComponent.
@@ -52,111 +47,8 @@ public:
     { return "MyIncompressibleComponent"; }
 
     /*!
-     * TODO
-     * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of MyIncompressibleComponent.
+     * TODO: Implement the methods for the component data given in the exercise description.
      */
-    static Scalar molarMass()
-    {
-        return 131.39e-3; // [kg/mol]
-    }
-
-    /*!
-     * \brief Returns the critical temperature \f$\mathrm{[K]}\f$ of MyIncompressibleComponent.
-     */
-    static Scalar criticalTemperature()
-    {
-        DUNE_THROW(Dune::NotImplemented, "criticalTemperature for MyIncompressibleComponent");
-    }
-
-    /*!
-     * \brief Returns the critical pressure \f$\mathrm{[Pa]}\f$ of MyIncompressibleComponent.
-     */
-    static Scalar criticalPressure()
-    {
-        DUNE_THROW(Dune::NotImplemented, "criticalPressure for MyIncompressibleComponent");
-    }
-
-    /*!
-     * \brief Returns the temperature \f$\mathrm{[K]}\f$ at MyIncompressibleComponent's triple point.
-     */
-    static Scalar tripleTemperature()
-    {
-        DUNE_THROW(Dune::NotImplemented, "tripleTemperature for MyIncompressibleComponent");
-    }
-
-    /*!
-     * \brief Returns the pressure \f$\mathrm{[Pa]}\f$ at MyIncompressibleComponent's triple point.
-     */
-    static Scalar triplePressure()
-    {
-        DUNE_THROW(Dune::NotImplemented, "triplePressure for MyIncompressibleComponent");
-    }
-
-    /*!
-     * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure MyIncompressibleComponent
-     *        at a given temperature.
-     *
-     * \param T temperature of component in \f$\mathrm{[K]}\f$
-     */
-    static Scalar vaporPressure(Scalar T)
-    {
-        return 3900; // [Pa] (at 20C)
-    }
-
-    /*!
-     * \brief Returns true if the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return true; }
-
-    /*!
-     * \brief Returns true if the liquid phase is assumed to be compressible
-     */
-    static bool liquidIsCompressible()
-    { return false; }
-
-    /*!
-     * \brief The density of steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-    */
-    static Scalar gasDensity(Scalar temperature, Scalar pressure)
-    {
-        return IdealGas<Scalar>::density(molarMass(),
-                                         temperature,
-                                         pressure);
-    }
-
-    /*!
-     * \brief Returns true if the gas phase is assumed to be ideal
-     */
-    static bool gasIsIdeal()
-    { return true; }
-
-    /*!
-     * TODO
-     * \brief The density of pure TCE at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidDensity(Scalar temperature, Scalar pressure)
-    {
-        return 1460.0; // [kg/m^3]
-    }
-
-    /*!
-     * TODO
-     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of pure TCE.
-     *
-     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
-     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     */
-    static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
-    {
-        return 5.7e-4;// [Pa*s]
-    }
 };
 
 } // end namespace

@@ -62,9 +62,6 @@ SET_PROP(ExerciseThreeProblem, FluidSystem)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    /*!
-     * TODO: set the fluid system created in this exercise as the property
-     */
     typedef FluidSystems::H2OMyCompressibleComponent<TypeTag, Scalar> type;
 };
 
@@ -224,6 +221,28 @@ public:
     //! Evaluates the initial phase presence
     int initialPhasePresenceAtPos(const GlobalPosition &globalPos) const
     { return Indices::wPhaseOnly; }
+
+    /*!
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer. Adjust this in case of anisotropic permeabilities.
+     */
+    void addOutputVtkFields()
+    {
+        // get the number of elements in the grid
+        unsigned numElements = this->gridView().size(/*codim=*/0);
+
+        // create the scalar field required for the output of the lenses
+        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        ScalarField *isInLens = this->resultWriter().allocateManagedBuffer(numElements);
+
+        // add data to the scalar field
+        for (const auto& element : elements(this->gridView()))
+            (*isInLens)[this->model().elementMapper().index(element)] = this->spatialParams().isInLens(element.geometry().center());
+
+        // attach to writer
+        this->resultWriter().attachCellData(*isInLens, "isInLens");
+    }
 
 private:
     // small epsilon value

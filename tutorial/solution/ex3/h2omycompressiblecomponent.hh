@@ -222,10 +222,8 @@ public:
             Scalar x_H2O = fluidState.moleFraction(wPhaseIdx, H2OIdx);
             Scalar x_myComp = fluidState.moleFraction(wPhaseIdx, NAPLIdx);
 
-            /*!
-             * TODO: implement the composition-dependent water density from the exercise sheet.
-             */
-            return ???;
+            // return composition-dependent water phase density
+            return clH2O*(H2O::molarMass()*x_H2O + MyCompressibleComponent::molarMass()*x_myComp);
         }
         else {
             // assume the density of the fictious component to be independent of the composition
