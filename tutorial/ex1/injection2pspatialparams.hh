@@ -118,12 +118,6 @@ public:
         aquitardMaterialParams_.setLambda(2.0);
         aquiferMaterialParams_.setLambda(2.0);
 
-         // plot the material laws using gnuplot and exit
-        if (GET_RUNTIME_PARAM(TypeTag, bool, Problem.OnlyPlotMaterialLaws))
-        {
-            plotMaterialLaws();
-            exit(0);
-        }
     }
 
     /*!
@@ -230,20 +224,6 @@ public:
 //     {
 //         return lambdaSolid_;
 //     }
-
-    /*!
-     * \brief Creates a gnuplot output of the pc-Sw curve
-     */
-    void plotMaterialLaws()
-    {
-        PlotMaterialLaw<TypeTag> plotMaterialLaw;
-        GnuplotInterface<Scalar> gnuplot;
-        plotMaterialLaw.addpcswcurve(gnuplot, aquitardMaterialParams_, 0.2, 1.0, "upper layer (fine, aquitard)", "w lp");
-        plotMaterialLaw.addpcswcurve(gnuplot, aquiferMaterialParams_, 0.2, 1.0, "lower layer (coarse, aquifer)", "w l");
-        gnuplot.setOption("set xrange [0:1]");
-        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
-        gnuplot.plot("pc-Sw");
-    }
 
 private:
 

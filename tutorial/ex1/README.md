@@ -48,6 +48,12 @@ make exercise1_2p exercise1_2p2c
 ./exercise1_2p2c exercise1.input
 ```
 
+* you can look at the results with paraview
+
+```bash
+paraview injection-2p2c.pvd
+```
+
 <hr><br><br>
 ### Task 3: Changing input parameters
 <hr>
