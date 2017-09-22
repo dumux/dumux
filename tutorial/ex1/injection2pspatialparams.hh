@@ -31,6 +31,9 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/plotmateriallaw.hh>
+
 #include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
 
 namespace Dumux
@@ -93,34 +96,34 @@ public:
     InjectionSpatialParams(const GridView &gridView)
         : ParentType(gridView)
     {
-        layerBottom_ = 25.0;
+        aquiferHeightFromBottom_ = 30.0;
 
         // intrinsic permeabilities
-        fineK_ = 1e-13;
-        coarseK_ = 1e-12;
+        aquitardK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityAquitard);
+        aquiferK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityAquifer);
 
         // porosities
-        finePorosity_ = 0.2;
-        coarsePorosity_ = 0.4;
-
-        //materialLawParams
-        fineEntryPressure_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureFine);
-        coarseEntryPressure_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureCoarse);
-
-        // heat conductivity of granite
-        lambdaSolid_ = 2.8;
+        aquitardPorosity_ = 0.2;
+        aquiferPorosity_ = 0.4;
 
         // residual saturations
-        fineMaterialParams_.setSwr(0.2);
-        fineMaterialParams_.setSnr(0.0);
-        coarseMaterialParams_.setSwr(0.2);
-        coarseMaterialParams_.setSnr(0.0);
+        aquitardMaterialParams_.setSwr(0.2);
+        aquitardMaterialParams_.setSnr(0.0);
+        aquiferMaterialParams_.setSwr(0.2);
+        aquiferMaterialParams_.setSnr(0.0);
 
         // parameters for the Brooks-Corey law
-        fineMaterialParams_.setPe(fineEntryPressure_);
-        coarseMaterialParams_.setPe(coarseEntryPressure_);
-        fineMaterialParams_.setLambda(2.0);
-        coarseMaterialParams_.setLambda(2.0);
+        aquitardMaterialParams_.setPe(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureAquitard));
+        aquiferMaterialParams_.setPe(GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.EntryPressureAquifer));
+        aquitardMaterialParams_.setLambda(2.0);
+        aquiferMaterialParams_.setLambda(2.0);
+
+         // plot the material laws using gnuplot and exit
+        if (GET_RUNTIME_PARAM(TypeTag, bool, Problem.OnlyPlotMaterialLaws))
+        {
+            plotMaterialLaws();
+            exit(0);
+        }
     }
 
     /*!
@@ -135,9 +138,9 @@ public:
                                        const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
-            return fineK_;
-        return coarseK_;
+        if (isInAquitard_(globalPos))
+            return aquitardK_;
+        return aquiferK_;
     }
 
     /*!
@@ -152,9 +155,9 @@ public:
                     const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
-            return finePorosity_;
-        return coarsePorosity_;
+        if (isInAquitard_(globalPos))
+            return aquitardPorosity_;
+        return aquiferPorosity_;
     }
 
 
@@ -171,9 +174,9 @@ public:
                                                const int scvIdx) const
     {
         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(globalPos))
-            return fineMaterialParams_;
-        return coarseMaterialParams_;
+        if (isInAquitard_(globalPos))
+            return aquitardMaterialParams_;
+        return aquiferMaterialParams_;
     }
 
     /*!
@@ -228,24 +231,37 @@ public:
 //         return lambdaSolid_;
 //     }
 
+    /*!
+     * \brief Creates a gnuplot output of the pc-Sw curve
+     */
+    void plotMaterialLaws()
+    {
+        PlotMaterialLaw<TypeTag> plotMaterialLaw;
+        GnuplotInterface<Scalar> gnuplot;
+        plotMaterialLaw.addpcswcurve(gnuplot, aquitardMaterialParams_, 0.2, 1.0, "upper layer (fine, aquitard)", "w lp");
+        plotMaterialLaw.addpcswcurve(gnuplot, aquiferMaterialParams_, 0.2, 1.0, "lower layer (coarse, aquifer)", "w l");
+        gnuplot.setOption("set xrange [0:1]");
+        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+        gnuplot.plot("pc-Sw");
+    }
+
 private:
-    bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return globalPos[dimWorld-1] > layerBottom_; }
 
-    Scalar fineK_;
-    Scalar coarseK_;
-    Scalar layerBottom_;
+    static constexpr Scalar eps_ = 1e-6;
 
-    Scalar finePorosity_;
-    Scalar coarsePorosity_;
+    bool isInAquitard_(const GlobalPosition &globalPos) const
+    { return globalPos[dimWorld-1] > aquiferHeightFromBottom_ + eps_; }
 
-    Scalar lambdaSolid_;
+    Scalar aquitardK_;
+    Scalar aquiferK_;
+    Scalar aquiferHeightFromBottom_;
 
-    Scalar fineEntryPressure_;
-    Scalar coarseEntryPressure_;
 
-    MaterialLawParams fineMaterialParams_;
-    MaterialLawParams coarseMaterialParams_;
+    Scalar aquitardPorosity_;
+    Scalar aquiferPorosity_;
+
+    MaterialLawParams aquitardMaterialParams_;
+    MaterialLawParams aquiferMaterialParams_;
 };
 
 }

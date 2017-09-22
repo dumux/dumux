@@ -64,21 +64,19 @@ SET_BOOL_PROP(Injection2p2cProblem, UseMoles, true);
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately
- * permeable one (\f$ K=10e-12\f$) for \f$ y<22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
+ * permeable one (\f$ K=10e-12\f$) and one with a lower permeablility (\f$ K=10e-13\f$)
  * in the rest of the domain.
  *
- * A mixture of Nitrogen and Water vapor, which is composed according to the prevailing conditions (temperature, pressure)
- * enters a water-filled aquifer. This is realized with a solution-dependent Neumann boundary condition at the right boundary
+ * Nitrogen is injected into a water-filled aquifer through a well. First, we inject for one month.
+ * Then, we continue simulating the development of the nitrogen plume for 10 years.This is realized with a solution-dependent Neumann boundary condition at the right boundary
  * (\f$ 7m<y<15m\f$). The aquifer is situated 2700m below sea level. The injected fluid phase migrates upwards due to buoyancy.
  * It accumulates and partially enters the lower permeable aquitard.
  *
- * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
- * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
- *
+ * The default setting for useMoles is true, i.e. each component is balaced in units of mole.
  * This problem uses the \ref TwoPTwoCModel.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./exercise1_2p2c -parameterFile exercise1.input>
+ * <tt>./exercise1_2p2c -ParameterFile exercise1.input>
  */
 template <class TypeTag>
 class Injection2p2cProblem : public ImplicitPorousMediaProblem<TypeTag>
@@ -89,44 +87,15 @@ class Injection2p2cProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
 
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    // grid world dimension
+    static constexpr auto dimWorld = GridView::dimensionworld;
 
-    // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        contiH2OEqIdx = Indices::contiWEqIdx,
-        contiN2EqIdx = Indices::contiNEqIdx
-    };
-
-
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-
-    //! property that defines whether mole or mass fractions are used
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
@@ -139,8 +108,6 @@ public:
                      const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        maxDepth_  = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.MaxDepth);
-
          // initialize the tables of the fluid system
         FluidSystem::init(/*tempMin=*/273.15,
                 /*tempMax=*/423.15,
@@ -149,15 +116,16 @@ public:
                 /*pMax=*/30e6,
                 /*numP=*/300);
 
-        //stateing in the console whether mole or mass fractions are used
-        if(useMoles)
-        {
-            std::cout<<"problem uses mole-fractions"<<std::endl;
-        }
-        else
-        {
-            std::cout<<"problem uses mass-fractions"<<std::endl;
-        }
+        // name of the problem and output file
+        name_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        // depth of the aquifer, units: m
+        aquiferDepth_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, AquiferDepth);
+        // the duration of the injection, units: second
+        injectionDuration_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionDuration);
+
+        // TODO: dumux-course-task
+        // Get the specific inflow of 1e-4 kg/(s m^2) from the input file (totalAreaSpecificInflow_) here as it is done for the injectionDuration_.
+
     }
 
     /*!
@@ -169,8 +137,8 @@ public:
     {
         // Calculate storage terms
         PrimaryVariables storageW, storageN;
-        this->model().globalPhaseStorage(storageW, wPhaseIdx);
-        this->model().globalPhaseStorage(storageN, nPhaseIdx);
+        this->model().globalPhaseStorage(storageW, Indices::wPhaseIdx);
+        this->model().globalPhaseStorage(storageN, Indices::nPhaseIdx);
 
         // Write mass balance information for rank 0
         if (this->gridView().comm().rank() == 0) {
@@ -190,8 +158,8 @@ public:
      *
      * This is used as a prefix for files generated by the simulation.
      */
-    const std::string name() const
-    { return "injection-2p2c"; }
+    std::string name() const
+    { return name_+"-2p2c"; }
 
     /*!
      * \brief Returns the temperature \f$ K \f$
@@ -231,8 +199,11 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
-        if (globalPos[0] < eps_)
+        if (globalPos[dimWorld-1] < eps_)
             values.setAllDirichlet();
+
+        // and Neuman boundary conditions everywhere else
+        // note that we don't differentiate between Neumann and Robin boundary types
         else
             values.setAllNeumann();
     }
@@ -247,49 +218,34 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+       initialAtPos(values, globalPos);
     }
 
     /*!
-     * \brief Evaluates the boundary conditions for a Neumann
-     *        boundary segment in dependency on the current solution.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param values Stores the Neumann values for the conservation equations in
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
-     * \param elemVolVars All volume variables for the element
-     *
-     * This method is used for cases, when the Neumann condition depends on the
-     * solution and requires some quantities that are specific to the fully-implicit method.
-     * The \a values store the mass flux of each phase normal to the boundary.
-     * Negative values indicate an inflow.
+     * \param globalPos The globalPosition of the boundary interface
      */
-     void solDependentNeumann(PrimaryVariables &values,
-                      const Element &element,
-                      const FVElementGeometry &fvGeometry,
-                      const Intersection &intersection,
-                      const int scvIdx,
-                      const int boundaryFaceIdx,
-                      const ElementVolumeVariables &elemVolVars) const
+     void neumannAtPos(PrimaryVariables &values,
+                       const GlobalPosition &globalPos) const
     {
+         // initialize values to zero, i.e. no-flow Neumann boundary conditions
          values = 0;
 
-         GlobalPosition globalPos;
-         if (isBox)
-             globalPos = element.geometry().corner(scvIdx);
-         else
-             globalPos = intersection.geometry().center();
+        //if we are inside the injection zone set inflow Neumann boundary conditions
+        if (this->timeManager().time() + this->timeManager().timeStepSize() < injectionDuration_
+            && globalPos[1] < 15 + eps_ && globalPos[1] > 7 - eps_ && globalPos[0] > 0.9*this->bBoxMax()[0])
+        {
+            // TODO: dumux-course-task
+            //instead of setting -1e-4 here directly use totalAreaSpecificInflow_ in the computation
 
-         Scalar injectedPhaseMass = 1e-3;
-         Scalar moleFracW = elemVolVars[scvIdx].moleFraction(nPhaseIdx, wCompIdx);
-         if (globalPos[1] < 15 + eps_ && globalPos[1] > 7 -eps_) {
-             values[contiN2EqIdx] = -(1-moleFracW)*injectedPhaseMass/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
-             values[contiH2OEqIdx] = -moleFracW*injectedPhaseMass/FluidSystem::molarMass(wCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
-         }
+            // set the Neumann values for the Nitrogen component balance
+            // convert from units kg/(s*m^2) to mole/(s*m^2)
+            values[Indices::contiNEqIdx] = -1e-4/FluidSystem::molarMass(FluidSystem::nCompIdx);
+            values[Indices::contiWEqIdx] = 0.0;
+        }
     }
 
     // \}
@@ -308,7 +264,23 @@ public:
      */
     void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+        // get the water density at atmospheric conditions
+        const Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1.0e5);
+
+        // assume an intially hydrostatic liquid pressure profile
+        // note: we subtract rho_w*g*h because g is defined negative
+        const Scalar pw = 1.0e5 - densityW*this->gravity()[dimWorld-1]*(aquiferDepth_ - globalPos[dimWorld-1]);
+
+        // initially we have some nitrogen dissolved
+        // saturation mole fraction would be
+        // moleFracLiquidN2 = (pw + pc + p_vap^sat)/henry;
+        const Scalar moleFracLiquidN2 = pw*0.95/BinaryCoeff::H2O_N2::henry(temperature());
+
+        // note that because we start with a single phase system the primary variables
+        // are pl and x^w_N2. This will switch as soon after we start injecting to a two
+        // phase system so the primary variables will be pl and Sn (non-wetting saturation).
+        values[Indices::switchIdx] = moleFracLiquidN2;
+        values[Indices::pressureIdx] = pw;
     }
 
     /*!
@@ -322,44 +294,12 @@ public:
     // \}
 
 private:
-    /*!
-     * \brief Evaluates the initial values for a control volume
-     *
-     * The internal method for the initial condition
-     *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
-     * \param globalPos The global position
-     */
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
-    {
-        Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1e5);
-
-        Scalar pl = 1e5 - densityW*this->gravity()[1]*(maxDepth_ - globalPos[1]);
-        Scalar moleFracLiquidN2 = pl*0.95/BinaryCoeff::H2O_N2::henry(temperature());
-        Scalar moleFracLiquidH2O = 1.0 - moleFracLiquidN2;
-
-        Scalar meanM =
-            FluidSystem::molarMass(wCompIdx)*moleFracLiquidH2O +
-            FluidSystem::molarMass(nCompIdx)*moleFracLiquidN2;
-        if(useMoles)
-        {
-            //mole-fraction formulation
-            values[Indices::switchIdx] = moleFracLiquidN2;
-        }
-        else
-        {
-            //mass fraction formulation
-            Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
-            values[Indices::switchIdx] = massFracLiquidN2;
-        }
-        values[Indices::pressureIdx] = pl;
-    }
-
-
     static constexpr Scalar eps_ = 1e-6;
-    Scalar maxDepth_;
+    std::string name_; //! Problem name
+    Scalar aquiferDepth_; //! Depth of the aquifer in m
+    Scalar injectionDuration_; //! Duration of the injection in seconds
+    //TODO: dumux-course-task
+    //define the Scalar totalAreaSpecificInflow_ here
 
 };
 } //end namespace

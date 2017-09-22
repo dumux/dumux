@@ -123,8 +123,6 @@ public:
     InjectionProblem2P(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        maxDepth_  = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.MaxDepth);
-
         // initialize the tables of the fluid system
         FluidSystem::init(/*tempMin=*/273.15,
                 /*tempMax=*/423.15,
@@ -132,6 +130,14 @@ public:
                 /*pMin=*/0.0,
                 /*pMax=*/30e6,
                 /*numP=*/300);
+
+        // name of the problem and output file
+        name_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        // depth of the aquifer, units: m
+        aquiferDepth_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, AquiferDepth);
+        // inflow rate of nitrogen water vapor mixture, units: kg/(s m^2)
+        // the duration of the injection, units: second
+        injectionDuration_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionDuration);
     }
 
     /*!
@@ -204,49 +210,33 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1e5);
-        values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
-        values[saturationIdx] = 0.0;
+        initialAtPos(values, globalPos);
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Neumann boundary segment.
      *
      * \param values Stores the Neumann values for the conservation equations in
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
-     *
-     * The \a values store the mass flux of each phase normal to the boundary.
-     * Negative values indicate an inflow.
+     * \param globalPos The globalPosition of the boundary interface
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+     void neumannAtPos(PrimaryVariables &values,
+                       const GlobalPosition &globalPos) const
     {
+         // initialize values to zero, i.e. no-flow Neumann boundary conditions
+         values = 0;
         values = 0;
 
-        GlobalPosition globalPos;
-        if (isBox)
-            globalPos = element.geometry().corner(scvIdx);
-        else
-            globalPos = intersection.geometry().center();
-
-        if (globalPos[1] < 15 + eps_ && globalPos[1] > 7 - eps_) {
+        if (this->timeManager().time() + this->timeManager().timeStepSize() < injectionDuration_
+            && globalPos[1] < 15 + eps_ && globalPos[1] > 7 - eps_ && globalPos[0] > 0.9*this->bBoxMax()[0])
+        {
             // inject air. negative values mean injection
-            values[contiNEqIdx] = -1e-3; // kg/(s*m^2)
+            values[Indices::contiNEqIdx] = -1e-4; // kg/(s*m^2)
+            values[Indices::contiWEqIdx] = 0.0;
         }
     }
 
     // \}
-
 
     /*!
      * \name Volume terms
@@ -262,15 +252,24 @@ public:
      */
     void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
     {
-        Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1e5);
-        values[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
+
+        // get the water density at atmospheric conditions
+        const Scalar densityW = FluidSystem::H2O::liquidDensity(temperature(), 1.0e5);
+
+        // assume an intially hydrostatic liquid pressure profile
+        // note: we subtract rho_w*g*h because g is defined negative
+        const Scalar pw = 1.0e5 - densityW*this->gravity()[dimWorld-1]*(aquiferDepth_ - globalPos[dimWorld-1]);
+
+        values[Indices::pressureIdx] = pw;
         values[saturationIdx] = 0.0;
     }
     // \}
 
 private:
-    Scalar maxDepth_;
-    static constexpr Scalar eps_ = 1.5e-7;
+    static constexpr Scalar eps_ = 1e-6;
+    std::string name_; //! Problem name
+    Scalar aquiferDepth_; //! Depth of the aquifer in m
+    Scalar injectionDuration_; //! Duration of the injection in seconds
 };
 } //end namespace
 

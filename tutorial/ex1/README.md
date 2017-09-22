@@ -66,10 +66,13 @@ EntryPressureCoarse = 1e4
 ### Task 4: Runtime parameters
 <hr>
 
-The injection rate is currently hard-coded in `injection2pproblem.hh`.
+The injection rate is currently hard-coded in `injection2p2cproblem.hh` to $`1e-4 kg/(s m^2)`$.
 
 ```c++
-code snippet
+ // set the Neumann values for the Nitrogen component balance
+ // convert from units kg/(s*m^2) to mole/(s*m^2)
+values[Indices::contiNEqIdx] = -1e-4/FluidSystem::molarMass(FluidSystem::nCompIdx);
+values[Indices::contiWEqIdx] = 0.0;
 ```
 
 We want to be able to set it at runtime. To this end,
@@ -77,7 +80,7 @@ We want to be able to set it at runtime. To this end,
 
 ```c++
 // read the injection rate from the input file at run time
-const auto injectionRate = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, <TYPE>, <GROUPNAME>, <PARAMNAME>);
+const auto totalAreaSpecificInflow_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, <TYPE>, <GROUPNAME>, <PARAMNAME>);
 ```
 
 * Replace
@@ -86,9 +89,14 @@ const auto injectionRate = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, <TYPE>, <GROUPN
   * `<GROUPNAME>` is the group in the input file
   * `<PARAMNAME>` is the name of the parameter in the input file
 
-Note that due to the way the macro works, the names are specified as plain text without "quotation marks".
+Note that due to the way the macro works, the names are specified as plain text without "quotation marks". Follow the instructions given as a
 
-* Check the influence of that parameter on the simulation result by rerunning the simulation with different injection rates.
+```c++
+// TODO: dumux-course-task
+```
+in the `injection2p2cproblem.hh` file and also remember to also set the parameter totalAreaSpecificInflow in the input file.
+
+* Check the influence of that parameter on the simulation result by rerunning the simulation with different injection rates. Remember to also set the parameter totalAreaSpecificInflow in the input file.
 
 Again, you don't need to recompile the program.
 

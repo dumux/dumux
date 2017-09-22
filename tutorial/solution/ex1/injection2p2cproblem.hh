@@ -30,9 +30,6 @@
 
 #include "injection2p2cspatialparams.hh"
 
-// TODO: dumux-course-task
-// Include the local residual header
-
 namespace Dumux
 {
 
@@ -43,7 +40,7 @@ class Injection2p2cProblem;
 // setup property TypeTag
 namespace Properties
 {
-// TODO: dumux-course-task
+
 // inherit from MyLocalResidualParams
 NEW_TYPE_TAG(Injection2p2cProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
 NEW_TYPE_TAG(Injection2p2cBoxProblem, INHERITS_FROM(BoxModel, Injection2p2cProblem));
@@ -54,9 +51,6 @@ SET_TYPE_PROP(Injection2p2cProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(Injection2p2cProblem, Problem, Injection2p2cProblem<TypeTag>);
-
-// TODO: dumux-course-task
-// change the local residual type to MyTwoPTwoCLocalResidual<TypeTag>
 
 // Set fluid configuration
 SET_TYPE_PROP(Injection2p2cProblem,
