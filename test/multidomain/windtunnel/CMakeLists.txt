@@ -1,0 +1,1 @@
+add_executable(test_windtunnel test_windtunnel test_windtunnel.cc)

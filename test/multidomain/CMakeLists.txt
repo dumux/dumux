@@ -1,2 +1,3 @@
 add_subdirectory(stokesdarcy1p)
 add_subdirectory(2cstokes2p2c)
+add_subdirectory(windtunnel)
