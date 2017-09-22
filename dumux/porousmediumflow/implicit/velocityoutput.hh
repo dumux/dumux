@@ -31,6 +31,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 
@@ -144,7 +146,11 @@ public:
             const auto geometry = element.geometry();
 
             Dune::GeometryType geomType = geometry.type();
-            const auto referenceElement = ReferenceElements::general(geomType);
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto refElement = ReferenceElements::general(geomType);
+#else
+            const auto &refElement = ReferenceElements::general(geomType);
+#endif
 
             const Dune::FieldVector<Scalar, dim>& localPos
                 = referenceElement.position(0, 0);
