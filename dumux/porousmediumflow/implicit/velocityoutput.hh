@@ -153,7 +153,7 @@ public:
 #endif
 
             const Dune::FieldVector<Scalar, dim>& localPos
-                = referenceElement.position(0, 0);
+                = refElement.position(0, 0);
 
             // get the transposed Jacobian of the element mapping
             const typename Element::Geometry::JacobianTransposed jacobianT2 =
