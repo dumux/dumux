@@ -136,6 +136,19 @@ public:
         setLocalScope_(dataHandle);
     }
 
+    //! Sets only the pointers to the local views
+    //! Using the IV afterwards requires having called bind once before!
+    //! Calling this with an fvGeometry or elemVolVars that differ from the
+    //! ones that have been passed when calling bind leads to undefined behaviour
+    void resetPointers(const FVElementGeometry& fvGeometry, const ElementVolumeVariables& elemVolVars)
+    {
+        fvGeometryPtr_ = &fvGeometry;
+        elemVolVarsPtr_ = &elemVolVars;
+
+        for (unsigned i = 0; i < globalLocalScvfPairedData_.size(); ++i)
+            globalLocalScvfPairedData_[i].first = &fvGeometry.scvf(globalScvfIndices_[i]);
+    }
+
     //! solves for the transmissibilities subject to a given tensor
     template<typename GetTensorFunction>
     void solveLocalSystem(const GetTensorFunction& getTensor, DataHandle& dataHandle)
@@ -398,15 +411,15 @@ private:
         for (unsigned int faceIdx = 0; faceIdx < numFaces_; ++faceIdx)
         {
             const auto& curLocalScvf = localScvf(faceIdx);
-            const auto& curGlobalScvf = curLocalScvf.globalScvf();
+            const auto& curGlobalScvf = fvGeometry().scvf(curLocalScvf.globalScvfIndex());
             const auto curIsDirichlet = curLocalScvf.isDirichlet();
             const auto curLocalDofIdx = curLocalScvf.localDofIndex();
 
             // get diffusion tensor in "positive" sub volume
-            const auto& neighborScvIndices = curLocalScvf.neighborScvIndicesLocal();
+            const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto posLocalScvIdx = neighborScvIndices[0];
             const auto& posLocalScv = localScv(posLocalScvIdx);
-            const auto& posGlobalScv = posLocalScv.globalScv();
+            const auto& posGlobalScv = fvGeometry().scv(posLocalScv.globalScvIndex());
             const auto& posVolVars = elemVolVars()[posGlobalScv];
             const auto& posElement = element(posLocalScvIdx);
             const auto tensor = getTensor(problem(), posElement, posVolVars, fvGeometry(), posGlobalScv);
@@ -418,7 +431,7 @@ private:
             // go over the coordinate directions in the positive sub volume
             for (unsigned int localDir = 0; localDir < dim; localDir++)
             {
-                const auto otherLocalScvfIdx = posLocalScv.localScvfIndex(localDir);
+                const auto otherLocalScvfIdx = posLocalScv.scvfIdxLocal(localDir);
                 const auto& otherLocalScvf = localScvf(otherLocalScvfIdx);
                 const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
 
@@ -457,7 +470,7 @@ private:
                 {
                     const auto negLocalScvIdx = neighborScvIndices[idxInOutside+1];
                     const auto& negLocalScv = localScv(negLocalScvIdx);
-                    const auto& negGlobalScv = negLocalScv.globalScv();
+                    const auto& negGlobalScv = fvGeometry().scv(negLocalScv.globalScvIndex());
                     const auto& negVolVars = elemVolVars()[negGlobalScv];
                     const auto& negElement = element(negLocalScvIdx);
                     const auto negTensor = getTensor(problem(), negElement, negVolVars, fvGeometry(), negGlobalScv);
@@ -482,7 +495,7 @@ private:
                     // go over the coordinate directions in the positive sub volume
                     for (int localDir = 0; localDir < dim; localDir++)
                     {
-                        const auto otherLocalScvfIdx = negLocalScv.localScvfIndex(localDir);
+                        const auto otherLocalScvfIdx = negLocalScv.scvfIdxLocal(localDir);
                         const auto& otherLocalScvf = localScvf(otherLocalScvfIdx);
                         const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
 
@@ -514,13 +527,13 @@ private:
         for (unsigned int faceIdx = 0; faceIdx < numFaces_; ++faceIdx)
         {
             const auto& curLocalScvf = localScvf(faceIdx);
-            const auto& curGlobalScvf = curLocalScvf.globalScvf();
+            const auto& curGlobalScvf = fvGeometry().scvf(curLocalScvf.globalScvfIndex());
 
             // get diffusion tensor in "positive" sub volume
-            const auto& neighborScvIndices = curLocalScvf.neighborScvIndicesLocal();
+            const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto posLocalScvIdx = neighborScvIndices[0];
             const auto& posLocalScv = localScv(posLocalScvIdx);
-            const auto& posGlobalScv = posLocalScv.globalScv();
+            const auto& posGlobalScv = fvGeometry().scv(posLocalScv.globalScvIndex());
             const auto& posVolVars = elemVolVars()[posGlobalScv];
             const auto& posElement = element(posLocalScvIdx);
             const auto tensor = getTensor(problem(), posElement, posVolVars, fvGeometry(), posGlobalScv);
@@ -532,7 +545,7 @@ private:
             const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
             for (int localDir = 0; localDir < dim; localDir++)
             {
-                const auto otherLocalScvfIdx = posLocalScv.localScvfIndex(localDir);
+                const auto otherLocalScvfIdx = posLocalScv.scvfIdxLocal(localDir);
                 const auto& otherLocalScvf = localScvf(otherLocalScvfIdx);
                 const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
                 T[faceIdx][otherLocalDofIdx] -= posWijk[localDir];
@@ -558,7 +571,7 @@ private:
             const auto localScvfIdx = localFaceData.localScvfIndex;
             const auto& posLocalScv = localScv(localScvIdx);
 
-            const auto idxInNeighbors = this->findIndexInVector(localScvf(localScvfIdx).neighborScvIndicesLocal(), localScvIdx);
+            const auto idxInNeighbors = this->findIndexInVector(localScvf(localScvfIdx).neighboringLocalScvIndices(), localScvIdx);
             const auto& wijk = wijk_[localScvfIdx][idxInNeighbors];
 
             // store the calculated transmissibilities in the data handle
@@ -568,7 +581,7 @@ private:
 
             for (int localDir = 0; localDir < dim; localDir++)
             {
-                const auto curLocalScvfIdx = posLocalScv.localScvfIndex(localDir);
+                const auto curLocalScvfIdx = posLocalScv.scvfIdxLocal(localDir);
                 const auto& curLocalScvf = localScvf(curLocalScvfIdx);
                 if (!curLocalScvf.isDirichlet())
                 {

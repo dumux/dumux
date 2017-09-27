@@ -62,6 +62,8 @@ class CCLocalAssembler<TypeTag,
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
+    static constexpr bool enableGlobalFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache);
+
 public:
 
     /*!
@@ -331,7 +333,10 @@ private:
 
                 // update the volume variables and the flux var cache
                 curVolVars.update(elemSol, problem, element, scv);
-                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
+                if (enableGlobalFluxVarsCache)
+                    gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+                else
+                    elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables
                 if (!isGhost)
@@ -390,7 +395,10 @@ private:
 
                 // update the volume variables and the flux var cache
                 curVolVars.update(elemSol, problem, element, scv);
-                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
+                if (enableGlobalFluxVarsCache)
+                    gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+                else
+                    elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables and subtract it
                 if (!isGhost)
@@ -861,7 +869,6 @@ private:
 
                 // update the volume variables and the flux var cache
                 curVolVars.update(elemSol, problem, element, scv);
-                elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables and subtract it
                 if (!isGhost)

@@ -58,27 +58,31 @@ class BoxGlobalFluxVariablesCache<TypeTag, true>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
-    void update(const Problem& problem,
-                const FVGridGeometry& fvGridGeometry,
+    BoxGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+
+    void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
-                const SolutionVector& sol)
+                const SolutionVector& sol,
+                bool forceUpdate = false)
     {
-        problemPtr_ = &problem;
-
-        fluxVarsCache_.resize(fvGridGeometry.gridView().size(0));
-        for (const auto& element : elements(fvGridGeometry.gridView()))
+        // Here, we do not do anything unless it is a forced update
+        if (forceUpdate)
         {
-            auto eIdx = fvGridGeometry.elementMapper().index(element);
-            // bind the geometries and volume variables to the element (all the elements in stencil)
-            auto fvGeometry = localView(fvGridGeometry);
-            fvGeometry.bind(element);
+            fluxVarsCache_.resize(fvGridGeometry.gridView().size(0));
+            for (const auto& element : elements(fvGridGeometry.gridView()))
+            {
+                auto eIdx = fvGridGeometry.elementMapper().index(element);
+                // bind the geometries and volume variables to the element (all the elements in stencil)
+                auto fvGeometry = localView(fvGridGeometry);
+                fvGeometry.bind(element);
 
-            auto elemVolVars = localView(gridVolVars);
-            elemVolVars.bind(element, fvGeometry, sol);
+                auto elemVolVars = localView(gridVolVars);
+                elemVolVars.bind(element, fvGeometry, sol);
 
-            fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
-            for (auto&& scvf : scvfs(fvGeometry))
-                cache(eIdx, scvf.index()).update(problem, element, fvGeometry, elemVolVars, scvf);
+                fluxVarsCache_[eIdx].resize(fvGeometry.numScvf());
+                for (auto&& scvf : scvfs(fvGeometry))
+                    cache(eIdx, scvf.index()).update(problem(), element, fvGeometry, elemVolVars, scvf);
+            }
         }
     }
 
@@ -128,12 +132,12 @@ class BoxGlobalFluxVariablesCache<TypeTag, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
+    BoxGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    void update(const Problem& problem,
-                const FVGridGeometry& fvGridGeometry,
+    void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
-                const SolutionVector& sol)
-    { problemPtr_ = &problem; }
+                const SolutionVector& sol,
+                bool forceUpdate = false) {}
 
     /*!
      * \brief Return a local restriction of this global object

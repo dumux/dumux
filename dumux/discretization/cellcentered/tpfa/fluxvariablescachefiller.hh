@@ -55,6 +55,10 @@ class CCTpfaFluxVariablesCacheFiller
     static constexpr bool soldependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
 
 public:
+    static constexpr bool isSolDependent = (doAdvection && soldependentAdvection) ||
+                                           (doDiffusion && soldependentDiffusion) ||
+                                           (doHeatConduction && soldependentHeatConduction);
+
     //! The constructor. Sets the problem pointer
     CCTpfaFluxVariablesCacheFiller(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -67,7 +71,7 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param elemVolVars The element volume variables
      * \param scvf The corresponding sub-control volume face
-     * \param doSubCaches Array of bools indicating which sub caches have to be updated
+     * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
      */
     template<class FluxVariablesCacheContainer>
     void fill(FluxVariablesCacheContainer& fluxVarsCacheContainer,
@@ -76,10 +80,10 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace& scvf,
-              bool isUpdate = false)
+              bool forceUpdateAll = false)
     {
         // fill the physics-related quantities of the caches
-        if (!isUpdate)
+        if (forceUpdateAll)
         {
             fillAdvection(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
             fillDiffusion(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
@@ -94,31 +98,6 @@ public:
             if (doHeatConduction && soldependentHeatConduction)
                 fillHeatConduction(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
         }
-    }
-
-    /*!
-     * \brief function to update the flux variables caches during derivative calculation
-     *
-     * \copydoc fill
-     */
-    template<class FluxVariablesCacheContainer>
-    void update(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                FluxVariablesCache& scvfFluxVarsCache,
-                const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace& scvf)
-    {
-        // forward to fill routine
-        fill(fluxVarsCacheContainer, scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf, true);
-    }
-
-    static bool isSolutionIndependent()
-    {
-        static const bool isSolDependent = (doAdvection && soldependentAdvection) ||
-                                           (doDiffusion && soldependentDiffusion) ||
-                                           (doHeatConduction && soldependentHeatConduction);
-        return !isSolDependent;
     }
 
 private:

@@ -55,10 +55,10 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
-    {
-        problemPtr_ = &problem;
+    CCGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    {
         const auto numScv = fvGridGeometry.numScv();
         const auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
 
@@ -71,7 +71,7 @@ public:
             for (auto&& scv : scvs(fvGeometry))
             {
                 const ElementSolution elemSol({sol[scv.dofIndex()]});
-                volumeVariables_[scv.dofIndex()].update(elemSol, problem, element, scv);
+                volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
 
             // handle the boundary volume variables
@@ -82,15 +82,15 @@ public:
                     continue;
 
                 // check if boundary is a pure dirichlet boundary
-                const auto bcTypes = problem.boundaryTypes(element, scvf);
+                const auto bcTypes = problem().boundaryTypes(element, scvf);
                 if (bcTypes.hasOnlyDirichlet())
                 {
                     const auto insideScvIdx = scvf.insideScvIdx();
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const ElementSolution dirichletPriVars({problem.dirichlet(element, scvf)});
+                    const ElementSolution dirichletPriVars({problem().dirichlet(element, scvf)});
 
                     volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
-                                                                  problem,
+                                                                  problem(),
                                                                   element,
                                                                   insideScv);
                 }
@@ -132,7 +132,6 @@ public:
 
 private:
     const Problem* problemPtr_;
-
     std::vector<VolumeVariables> volumeVariables_;
 };
 
@@ -147,8 +146,9 @@ class CCGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
-    { problemPtr_ = &problem; }
+    CCGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     /*!
      * \brief Return a local restriction of this global object
@@ -163,7 +163,6 @@ public:
     { return *problemPtr_;}
 
 private:
-
     const Problem* problemPtr_;
 };
 

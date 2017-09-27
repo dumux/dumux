@@ -82,7 +82,7 @@ public:
 
     // access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
+    { return (*globalFluxVarsCachePtr_)[scvf]; }
 
     //! The global object we are a restriction of
     const GlobalFluxVariablesCache& globalFluxVarsCache() const
@@ -99,7 +99,8 @@ private:
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, false>
 {
-    // the flux variables cache filler needs to be friend to fill the matrices
+    // the flux variables cache filler needs to be friend to fill
+    // the interaction volumes and data handles
     friend CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -143,14 +144,11 @@ public:
         clear_();
 
         // some references for convenience
-        const auto& problem = globalFluxVarsCache().problem_();
+        const auto& problem = globalFluxVarsCache().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
 
-        // the global index the cache will be bound to
-        globalI_ = fvGridGeometry.elementMapper().index(element);
-
         // the assembly map of the given element
-        const auto& assemblyMapI = fvGridGeometry.connectivityMap()[globalI_];
+        const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
 
         // reserve memory for scvf index container
         unsigned int numNeighborScvfs = 0;
@@ -186,7 +184,7 @@ public:
         {
             auto& scvfCache = fluxVarsCache_[i++];
             if (!scvfCache.isUpdated())
-                filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
+                filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf, true);
         }
 
         for (const auto& dataJ : assemblyMapI)
@@ -196,7 +194,7 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[i++];
                 if (!scvfCache.isUpdated())
-                    filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
+                    filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx), true);
             }
         }
     }
@@ -210,24 +208,18 @@ public:
         DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes");
     }
 
-    // This function updates the transmissibilities (e.g. after the solution has been deflected)
+    // This function is used to update the transmissibilities if the volume variables have changed
+    // Results in undefined behaviour if called before bind() or with a different element
     void update(const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
     {
-        // make sure this is not called for a different element than a previous bind()
-        assert(globalI_ == fvGeometry.gridFvGeometry().elementMapper().index(element)
-               && "The element flux variables cache can only be updated for the element it was bound to");
-
-        // ask for solution dependency only once per simulation
-        static const bool isSolDependent = FluxVariablesCacheFiller::isSolutionDependent();
-
         // update only if transmissibilities are solution-dependent
-        if (isSolDependent)
+        if (FluxVariablesCacheFiller::isSolDependent)
         {
-            const auto& problem = globalFluxVarsCache().problem_();
+            const auto& problem = globalFluxVarsCache().problem();
             const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
-            const auto& assemblyMapI = fvGridGeometry.connectivityMap()[globalI_];
+            const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
 
             // helper class to fill flux variables caches
             FluxVariablesCacheFiller filler(problem);
@@ -242,7 +234,7 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[i++];
                 if (!scvfCache.isUpdated())
-                    filler.update(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
+                    filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
             }
 
             for (const auto& dataJ : assemblyMapI)
@@ -252,7 +244,7 @@ public:
                 {
                     auto& scvfCache = fluxVarsCache_[i++];
                     if (!scvfCache.isUpdated())
-                        filler.update(*this, scvfCache, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
+                        filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
                 }
             }
         }
@@ -316,8 +308,6 @@ private:
         return std::distance(globalScvfIndices_.begin(), it);
     }
 
-    // the global index of the actual bound element
-    IndexType globalI_;
 
     // the local flux vars caches and the index set
     std::vector<FluxVariablesCache> fluxVarsCache_;

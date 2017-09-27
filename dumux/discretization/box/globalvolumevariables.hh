@@ -56,10 +56,10 @@ class BoxGlobalVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
-    {
-        problemPtr_ = &problem;
+    BoxGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    {
         volumeVariables_.resize(fvGridGeometry.gridView().size(0));
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
@@ -77,7 +77,7 @@ public:
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem, element, scv);
+                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem(), element, scv);
         }
     }
 
@@ -115,9 +115,9 @@ class BoxGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
+    BoxGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-    void update(const Problem& problem, const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
-    { problemPtr_ = &problem; }
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     /*!
      * \brief Return a local restriction of this global object

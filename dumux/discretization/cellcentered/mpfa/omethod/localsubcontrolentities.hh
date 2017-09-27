@@ -32,6 +32,7 @@ class CCMpfaOInteractionVolumeLocalScv
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GlobalIndexType = typename GridView::IndexSet::IndexType;
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -50,8 +51,8 @@ public:
                                      const SubControlVolume& scv,
                                      const LocalIndexType localIndex,
                                      const IvIndexSet& indexSet)
-    : globalScv_(scv)
-    , indexSet_(indexSet)
+    : indexSet_(indexSet)
+    , globalScvIndex_(scv.dofIndex())
     , localDofIndex_(localIndex)
     {
         const auto& nodeLocalScvfIndices = indexSet.nodalIndexSet().localScvfIndicesInScv(localIndex);
@@ -71,10 +72,10 @@ public:
         detX_ = Helper::calculateDetX(localBasis);
     }
 
-    const SubControlVolume& globalScv() const
-    { return globalScv_; }
+    GlobalIndexType globalScvIndex() const
+    { return globalScvIndex_; }
 
-    LocalIndexType localScvfIndex(const unsigned int coordDir) const
+    LocalIndexType scvfIdxLocal(const unsigned int coordDir) const
     {
         assert(coordDir < dim);
         return indexSet_.localScvfIndexInScv(localDofIndex_, coordDir);
@@ -95,8 +96,8 @@ public:
     { return detX_; }
 
 private:
-    const SubControlVolume& globalScv_;
     const IvIndexSet& indexSet_;
+    GlobalIndexType globalScvIndex_;
     LocalIndexType localDofIndex_;
     LocalBasis innerNormals_;
     Scalar detX_;
@@ -109,6 +110,8 @@ struct CCMpfaOInteractionVolumeLocalScvf
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     //! The mpfa-o method always uses the dynamic types
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GlobalIndexType = typename GridView::IndexSet::IndexType;
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using LocalIndexContainer = typename InteractionVolume::Traits::DynamicLocalIndexContainer;
     using LocalIndexType = typename LocalIndexContainer::value_type;
@@ -118,16 +121,16 @@ public:
                                       const LocalIndexContainer& localScvIndices,
                                       const bool isDirichlet,
                                       const LocalIndexType localDofIdx)
-    : scvf_(scvf)
+    : scvfIdxGlobal_(scvf.index())
     , neighborScvIndicesLocal_(localScvIndices)
     , isDirichlet_(isDirichlet)
     , localDofIndex_(localDofIdx)
     {}
 
-    const SubControlVolumeFace& globalScvf() const
-    { return scvf_; }
+    GlobalIndexType globalScvfIndex() const
+    { return scvfIdxGlobal_; }
 
-    const LocalIndexContainer& neighborScvIndicesLocal() const
+    const LocalIndexContainer& neighboringLocalScvIndices() const
     { return neighborScvIndicesLocal_; }
 
     bool isDirichlet() const
@@ -137,7 +140,7 @@ public:
     { return localDofIndex_; }
 
 private:
-    const SubControlVolumeFace& scvf_;
+    GlobalIndexType scvfIdxGlobal_;
     const LocalIndexContainer& neighborScvIndicesLocal_;
 
     bool isDirichlet_;

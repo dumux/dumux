@@ -65,6 +65,10 @@ class CCMpfaFluxVariablesCacheFiller
     static constexpr bool soldependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
 
 public:
+    static constexpr bool isSolDependent = (doAdvection && soldependentAdvection) ||
+                                           (doDiffusion && soldependentDiffusion) ||
+                                           (doHeatConduction && soldependentHeatConduction);
+
     //! The constructor. Sets the problem pointer
     CCMpfaFluxVariablesCacheFiller(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -77,7 +81,7 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param elemVolVars The element volume variables
      * \param scvf The corresponding sub-control volume face
-     * \param doSubCaches Array of bools indicating which sub caches have to be updated
+     * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
      */
     template<class FluxVariablesCacheContainer>
     void fill(FluxVariablesCacheContainer& fluxVarsCacheContainer,
@@ -86,7 +90,7 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace& scvf,
-              bool isUpdate = false)
+              bool forceUpdateAll = false)
     {
         // Set pointers
         elementPtr_ = &element;
@@ -98,7 +102,7 @@ public:
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
         if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
         {
-            if (!isUpdate)
+            if (forceUpdateAll)
             {
                 // the local index of the interaction volume to be created in its container
                 const auto ivIndexInContainer = fluxVarsCacheContainer.secondaryInteractionVolumes_.size();
@@ -118,7 +122,7 @@ public:
                                    *ivDataHandle_);
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *secondaryIv_, *ivDataHandle_, ivIndexInContainer);
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *secondaryIv_, *ivDataHandle_, ivIndexInContainer, true);
             }
             else
             {
@@ -127,12 +131,12 @@ public:
                 ivDataHandle_ = &fluxVarsCacheContainer.secondaryIvDataHandles_[ivIndexInContainer];
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *secondaryIv_, *ivDataHandle_, ivIndexInContainer, true);
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *secondaryIv_, *ivDataHandle_, ivIndexInContainer);
             }
         }
         else
         {
-            if (!isUpdate)
+            if (forceUpdateAll)
             {
                 // the local index of the interaction volume to be created in its container
                 const auto ivIndexInContainer = fluxVarsCacheContainer.primaryInteractionVolumes_.size();
@@ -152,7 +156,7 @@ public:
                                  *ivDataHandle_);
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *primaryIv_, *ivDataHandle_, ivIndexInContainer);
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *primaryIv_, *ivDataHandle_, ivIndexInContainer, true);
             }
             else
             {
@@ -161,34 +165,9 @@ public:
                 ivDataHandle_ = &fluxVarsCacheContainer.primaryIvDataHandles_[ivIndexInContainer];
 
                 // fill the caches for all the scvfs in the interaction volume
-                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *primaryIv_, *ivDataHandle_, ivIndexInContainer, true);
+                fillCachesInInteractionVolume_(fluxVarsCacheContainer, *primaryIv_, *ivDataHandle_, ivIndexInContainer);
             }
         }
-    }
-
-    /*!
-     * \brief function to update the flux variables caches during derivative calculation
-     *
-     * \copydoc fill
-     */
-    template<class FluxVariablesCacheContainer>
-    void update(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                FluxVariablesCache& scvfFluxVarsCache,
-                const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace& scvf)
-    {
-        // forward to fill routine
-        fill(fluxVarsCacheContainer, scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf, true);
-    }
-
-    static bool isSolutionDependent()
-    {
-        static const bool isSolDependent = (doAdvection && soldependentAdvection) ||
-                                           (doDiffusion && soldependentDiffusion) ||
-                                           (doHeatConduction && soldependentHeatConduction);
-        return isSolDependent;
     }
 
     const PrimaryInteractionVolume& primaryInteractionVolume() const
@@ -223,12 +202,12 @@ private:
                                         InteractionVolumeType& iv,
                                         DataHandle& handle,
                                         unsigned int ivIndexInContainer,
-                                        bool isUpdate = false)
+                                        bool forceUpdateAll = false)
     {
         // First we upate data which are not dependent on the physical processes.
         // We store pointers to the other flux var caches, so that we have to obtain
         // this data only once and can use it again in the sub-cache fillers.
-        if (!isUpdate)
+        if (forceUpdateAll)
         {
             std::vector<FluxVariablesCache*> ivFluxVarCaches(iv.globalLocalScvfPairedData().size());
             unsigned int i = 0;
@@ -306,8 +285,7 @@ private:
     fillAdvection(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                   InteractionVolumeType& iv,
                   DataHandle& handle,
-                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
-    {}
+                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches) {}
 
     //! method to fill the diffusive quantities
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool diffusionEnabled = doDiffusion>
@@ -362,8 +340,7 @@ private:
     fillDiffusion(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                   InteractionVolumeType& iv,
                   DataHandle& handle,
-                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
-    {}
+                  const std::vector<FluxVariablesCache*>& ivFluxVarCaches) {}
 
     //! method to fill the quantities related to heat conduction
     template<class FluxVariablesCacheContainer, class InteractionVolumeType, bool heatConductionEnabled = doHeatConduction>
@@ -404,8 +381,7 @@ private:
     fillHeatConduction(FluxVariablesCacheContainer& fluxVarsCacheContainer,
                        InteractionVolumeType& iv,
                        DataHandle& handle,
-                       const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
-    {}
+                       const std::vector<FluxVariablesCache*>& ivFluxVarCaches) {}
 
     const Problem* problemPtr_;
     const Element* elementPtr_;
