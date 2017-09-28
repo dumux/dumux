@@ -119,9 +119,9 @@ public:
 
         // return the scv (element) indices in the interaction region
         if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-            return fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).nodalIndexSet().globalScvIndices();
+            return fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).globalScvIndices();
         else
-            return fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).nodalIndexSet().globalScvIndices();
+            return fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).globalScvIndices();
     }
 };
 

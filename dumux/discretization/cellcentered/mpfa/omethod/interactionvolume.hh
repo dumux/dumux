@@ -175,7 +175,7 @@ public:
         }
 
         // // set vol vars stencil & positions pointer in handle
-        dataHandle.setVolVarsStencilPointer(indexSet().nodalIndexSet().globalScvIndices());
+        dataHandle.setVolVarsStencilPointer(indexSet().globalScvIndices());
         dataHandle.setDirichletDataPointer(dirichletData_);
 
         // on surface grids, additionally prepare the outside transmissibilities
@@ -293,7 +293,7 @@ private:
         numFaces_ = indexSet().numFaces();
 
         //! number of interaction-volume-local (and node-local) scvs
-        const auto& scvIndices = indexSet().nodalIndexSet().globalScvIndices();
+        const auto& scvIndices = indexSet().globalScvIndices();
         const auto numLocalScvs = scvIndices.size();
 
         //! number of global scvfs appearing in this interaction volume
@@ -327,7 +327,7 @@ private:
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
         {
             const auto scvfIdxGlobal = indexSet().scvfIdxGlobal(faceIdxLocal);
-            const auto& neighborScvIndicesLocal = indexSet().localNeighboringScvIndices(faceIdxLocal);
+            const auto& neighborScvIndicesLocal = indexSet().neighboringLocalScvIndices(faceIdxLocal);
             const auto insideLocalScvIdx = neighborScvIndicesLocal[0];
 
             // we have to use the "inside" scv face here
@@ -363,10 +363,9 @@ private:
                     // loop over scvfs in outside scv until we find the one coinciding with current scvf
                     for (int coord = 0; coord < dim; ++coord)
                     {
-                        if (indexSet().localScvfIndexInScv(outsideLocalScvIdx, coord) == faceIdxLocal)
+                        if (indexSet().scvfIdxLocal(outsideLocalScvIdx, coord) == faceIdxLocal)
                         {
-                            const auto nodeLocalScvfIdx = indexSet().nodalIndexSet().localScvfIndicesInScv(outsideLocalScvIdx)[coord];
-                            const auto globalScvfIdx = indexSet().nodalIndexSet().scvfIdxGlobal(nodeLocalScvfIdx);
+                            const auto globalScvfIdx = indexSet().nodalIndexSet().scvfIdxGlobal(outsideLocalScvIdx, coord);
                             const auto& flipScvf = fvGeometry().scvf(globalScvfIdx);
                             globalLocalScvfPairedData_.emplace_back(&flipScvf, LocalFaceData(faceIdxLocal, outsideLocalScvIdx, true));
                             globalScvfIndices_.push_back(flipScvf.index());

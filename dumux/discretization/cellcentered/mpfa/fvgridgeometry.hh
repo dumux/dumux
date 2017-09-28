@@ -361,9 +361,6 @@ public:
             }
         }
 
-        // make the local index sets of the dual grid
-        dualIdSet.makeLocalIndexSets();
-
         // calculate the total number of vertices using the primary/secondary interaction volumes
         numVertUsingPrimaryIV_ = 0;
         numVertUsingSecondaryIV_ = 0;
@@ -713,9 +710,6 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
-
-        // make the local index sets of the dual grid
-        dualIdSet.makeLocalIndexSets();
 
         // calculate the total number of vertices using the primary/secondary interaction volumes
         numVertUsingPrimaryIV_ = 0;

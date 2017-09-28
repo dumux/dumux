@@ -55,14 +55,14 @@ public:
     , globalScvIndex_(scv.dofIndex())
     , localDofIndex_(localIndex)
     {
-        const auto& nodeLocalScvfIndices = indexSet.nodalIndexSet().localScvfIndicesInScv(localIndex);
+        // center of the global scv
         const auto center = scv.center();
 
         // set up local basis
         LocalBasis localBasis;
         for (unsigned int coordIdx = 0; coordIdx < dim; ++coordIdx)
         {
-            const auto scvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(nodeLocalScvfIndices[coordIdx]);
+            const auto scvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(localDofIndex_, coordIdx);
             const auto& scvf = fvGeometry.scvf(scvfIdx);
             localBasis[coordIdx] = scvf.ipGlobal();
             localBasis[coordIdx] -= center;
@@ -78,7 +78,7 @@ public:
     LocalIndexType scvfIdxLocal(const unsigned int coordDir) const
     {
         assert(coordDir < dim);
-        return indexSet_.localScvfIndexInScv(localDofIndex_, coordDir);
+        return indexSet_.scvfIdxLocal(localDofIndex_, coordDir);
     }
 
     //! returns the index in the set of cell unknowns of the iv

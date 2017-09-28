@@ -67,10 +67,7 @@ public:
                 const std::vector<IndexType>& outsideScvIndices)
     {
         // check if it this really hasn't been called yet
-        assert( std::find_if( scvfIndices_.begin(),
-                              scvfIndices_.end(),
-                              scvfIdx
-                            ) == scvfIndices_.end() && "scvf has already been inserted!");
+        assert( std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx ) == scvfIndices_.end() && "scvf has already been inserted!");
 
         // the local index of the scvf data about to be inserted
         const LocalIndexType curScvfLocalIdx = scvfIndices_.size();
@@ -82,12 +79,12 @@ public:
         scvIndices.insert(scvIndices.end(), outsideScvIndices.begin(), outsideScvIndices.end());
 
         // if scvf is on boundary, increase counter
-        if (boundary)
-            numBoundaryScvfs_++;
+        if (boundary) numBoundaryScvfs_++;
 
+        // insert data on the new scv
         scvfIndices_.push_back(scvfIdx);
         scvfIsOnBoundary_.push_back(boundary);
-        scvfNeighborScvIndicesGlobal_.emplace_back( std::move(scvIndices) );
+        scvfNeighborScvIndices_.emplace_back( std::move(scvIndices) );
 
         // if entry for the inside scv exists append scvf local index, create otherwise
         auto it = std::find( scvIndices_.begin(), scvIndices_.end(), insideScvIdx );
@@ -104,28 +101,6 @@ public:
             localScvfIndicesInScv_.emplace_back( std::move(localScvfIndices) );
             scvIndices_.push_back(insideScvIdx);
         }
-    }
-
-    // This should be called AFTER (!) all scvf data has been inserted
-    void makeLocal()
-    {
-        // make sure the created index set makes sense so far
-        assert(checkGlobalIndexSet_());
-
-        // compute local neighboring scv indices for the scvfs
-        scvfNeighborScvIndices_.resize(numScvfs());
-        for (unsigned int i = 0; i < numScvfs(); ++i)
-        {
-            const auto& neighborsGlobal = scvfNeighborScvIndicesGlobal_[i];
-            const auto numNeighbors = scvfIsOnBoundary_[i] ? 1 : neighborsGlobal.size();
-
-            scvfNeighborScvIndices_[i].resize(numNeighbors);
-            for (unsigned int j = 0; j < numNeighbors; ++j)
-                scvfNeighborScvIndices_[i][j] = findLocalScvIdx_(neighborsGlobal[j]);
-        }
-
-        // delete global neighboring scv data (not used anymore)
-        scvfNeighborScvIndicesGlobal_.clear();
     }
 
     //! returns the number of scvs
@@ -148,52 +123,37 @@ public:
     const GlobalIndexContainer& globalScvfIndices() const
     { return scvfIndices_; }
 
-    //! returns a global scv idx for a given local scv index
-    IndexType scvIdxGlobal(LocalIndexType scvIdxLocal) const
-    { return scvIndices_[scvIdxLocal]; }
+    //! returns the global scv idx of the i-th scv
+    IndexType scvIdxGlobal(unsigned int i) const
+    { return scvIndices_[i]; }
 
-    //! returns the local indices of the scvfs embedded in a local scv
-    const LocalIndexContainer& localScvfIndicesInScv(LocalIndexType scvIdxLocal) const
-    { return localScvfIndicesInScv_[scvIdxLocal]; }
+    //! returns the global index of the j-th scvf embedded in the i-th scv
+    IndexType scvfIdxGlobal(unsigned int i, unsigned int j) const
+    {
+        assert(j < dim); // only dim faces can be embedded in an scv
+        return scvfIndices_[ localScvfIndicesInScv_[i][j] ];
+    }
 
-    //! returns a global scvf idx for a given local scvf index
-    IndexType scvfIdxGlobal(LocalIndexType scvfIdxLocal) const
-    { return scvfIndices_[scvfIdxLocal]; }
+    //! returns the nodel-local index of the j-th scvf embedded in the i-th scv
+    IndexType scvfIdxLocal(unsigned int i, unsigned int j) const
+    {
+        assert(j < dim); // only dim faces can be embedded in an scv
+        return localScvfIndicesInScv_[i][j];
+    }
 
-    //! returns whether or not an scvf touches the boundary
-    bool scvfIsOnBoundary(LocalIndexType scvfIdxLocal) const
-    { return scvfIsOnBoundary_[scvfIdxLocal]; }
+    //! returns the index of the i-th scvf
+    IndexType scvfIdxGlobal(unsigned int i) const
+    { return scvfIndices_[i]; }
 
-    //! returns the local indices of the neighboring scvs of an scvf
-    const LocalIndexContainer& localNeighboringScvIndices(LocalIndexType scvfIdxLocal) const
-    { return scvfNeighborScvIndices_[scvfIdxLocal]; }
+    //! returns whether or not the i-th scvf touches the boundary
+    bool scvfIsOnBoundary(unsigned int i) const
+    { return scvfIsOnBoundary_[i]; }
+
+    //! returns the indices of the neighboring scvs of the i-th scvf
+    const GlobalIndexContainer& neighboringScvIndices(unsigned int i) const
+    { return scvfNeighborScvIndices_[i]; }
 
 private:
-    //! returns the node-local scv index to a given global scv index
-    unsigned int findLocalScvIdx_(IndexType globalScvIdx) const
-    {
-        auto it = std::find( scvIndices_.begin(), scvIndices_.end(), globalScvIdx );
-        assert(it != scvIndices_.end() && "Global scv index not found in local container!");
-        return std::distance(scvIndices_.begin(), it);
-    }
-
-    //! checks whether or not the inserted index set makes sense
-    bool checkGlobalIndexSet_() const
-    {
-        //! do all scvs have dim embedded scvfs?
-        for (const auto& scvfIndices : localScvfIndicesInScv_)
-            if (scvfIndices.size() != dim)
-                DUNE_THROW(Dune::InvalidStateException, "Number of scv faces found for an scv != dimension");
-
-        //! are all scvfs unique?
-        for (const auto& scvfIdx : scvfIndices_)
-            for (const auto& scvfIdx2 : scvfIndices_)
-                if (scvfIdx == scvfIdx2)
-                    DUNE_THROW(Dune::InvalidStateException, "Inserted scvfs seem to not be unique");
-
-        return true;
-    }
-
     //! the indices of the scvs around a dual grid node
     GlobalIndexContainer scvIndices_;
     //! maps to each scv a list of scvf indices embedded in it
@@ -203,12 +163,9 @@ private:
     GlobalIndexContainer scvfIndices_;
     //! maps to each scvf a boolean to indicate if it is on the boundary
     std::vector<bool> scvfIsOnBoundary_;
-    //! maps to each scvf a list of neighbouring local scv indices
+    //! maps to each scvf a list of neighbouring scv indices
     //! ordering: 0 - inside scv idx; 1..n - outside scv indices
-    std::vector<LocalIndexContainer> scvfNeighborScvIndices_;
-    //! maps to each scvf a list of neighbouring global scv indices
-    //! This container is destroyed when makeLocal() is called
-    std::vector<GlobalIndexContainer> scvfNeighborScvIndicesGlobal_;
+    std::vector<GlobalIndexContainer> scvfNeighborScvIndices_;
     //! stores how many boundary scvfs are embedded in this dual grid node
     std::size_t numBoundaryScvfs_;
 };
@@ -234,14 +191,6 @@ public:
     CCMpfaDualGridIndexSet(const GridView& gridView)
     {
         (*this).resize(gridView.size(dim));
-    }
-
-    //! after the global data has been inserted, this
-    //! method should be called to set up the local index sets
-    void makeLocalIndexSets()
-    {
-        for (auto& node : (*this))
-            node.makeLocal();
     }
 
     //! access with an scvf

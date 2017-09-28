@@ -52,12 +52,14 @@ public:
         ivToNodeScvf_.reserve(numFaces_);
         nodeToIvScvf_.resize(numNodalScvfs);
 
+        //! the local neighboring scv indices of the faces
+        scvfNeighborScvLocalIndices_.reserve(numFaces_);
+
         //! keeps track of which nodal scvfs have been handled already
         std::vector<bool> isHandled(numNodalScvfs, false);
 
-        //! go over faces in nodal index set, check if iv-local face
-        //! has been inserted already for this scvf and if not, insert
-        //! the index transformation
+        //! go over faces in nodal index set, check if iv-local face has been
+        //! inserted already for this scvf and if not, insert index mapping
         unsigned int findCounter = 0;
         for (LocalIndexType i = 0; i < numNodalScvfs; ++i)
         {
@@ -78,7 +80,7 @@ public:
             //! to this face as well by comparing the set of neighboring scv indices.
             const auto scvIndices = [&nodalIndexSet, i] ()
                                     {
-                                        auto tmp = nodalIndexSet.localNeighboringScvIndices(i);
+                                        auto tmp = nodalIndexSet.neighboringScvIndices(i);
                                         std::sort(tmp.begin(), tmp.end());
                                         return tmp;
                                     } ();
@@ -92,7 +94,7 @@ public:
                 {
                     const auto scvIndices2 = [&nodalIndexSet, j] ()
                                              {
-                                                 auto tmp = nodalIndexSet.localNeighboringScvIndices(j);
+                                                 auto tmp = nodalIndexSet.neighboringScvIndices(j);
                                                  std::sort(tmp.begin(), tmp.end());
                                                  return tmp;
                                              } ();
@@ -122,6 +124,18 @@ public:
 
         //! ensure we found as many faces as anticipated
         assert(findCounter == numFaces_ && "Couldn't find as many faces as anticipated");
+
+        // compute local neighboring scv indices for the iv-local scvfs
+        scvfNeighborScvLocalIndices_.resize(numFaces());
+        for (unsigned int i = 0; i < numFaces(); ++i)
+        {
+            const auto& neighborsGlobal = nodalIndexSet_.neighboringScvIndices(ivToNodeScvf_[i]);
+            const auto numNeighbors = nodalIndexSet_.scvfIsOnBoundary(ivToNodeScvf_[i]) ? 1 : neighborsGlobal.size();
+
+            scvfNeighborScvLocalIndices_[i].resize(numNeighbors);
+            for (unsigned int j = 0; j < numNeighbors; ++j)
+                scvfNeighborScvLocalIndices_[i][j] = findLocalScvIdx_(neighborsGlobal[j]);
+        }
     }
 
     //! returns the corresponding nodal index set
@@ -132,17 +146,17 @@ public:
     GlobalIndexType scvfIdxGlobal(LocalIndexType ivLocalScvfIdx) const
     { return nodalIndexSet_.scvfIdxGlobal(ivToNodeScvf_[ivLocalScvfIdx]); }
 
-    //! returns the iv-local scvf idx of the i-th (coordDir) scvfs embedded in a local scv
-    LocalIndexType localScvfIndexInScv(LocalIndexType scvIdxLocal, unsigned int coordDir) const
-    { return nodeToIvScvf_[nodalIndexSet_.localScvfIndicesInScv(scvIdxLocal)[coordDir]]; }
+    //! returns the iv-local scvf idx of the i-th scvfs embedded in a local scv
+    LocalIndexType scvfIdxLocal(LocalIndexType scvIdxLocal, unsigned int i) const
+    { return nodeToIvScvf_[nodalIndexSet_.scvfIdxLocal(scvIdxLocal, i)]; }
 
     //! returns whether or not an scvf touches the boundary
     bool scvfTouchesBoundary(LocalIndexType ivLocalScvfIdx) const
     { return nodalIndexSet_.scvfTouchesBoundary(ivToNodeScvf_[ivLocalScvfIdx]); }
 
     //! returns the local indices of the neighboring scvs of an scvf
-    const LocalIndexContainer& localNeighboringScvIndices(LocalIndexType ivLocalScvfIdx) const
-    { return nodalIndexSet_.localNeighboringScvIndices(ivToNodeScvf_[ivLocalScvfIdx]); }
+    const LocalIndexContainer& neighboringLocalScvIndices(LocalIndexType ivLocalScvfIdx) const
+    { return scvfNeighborScvLocalIndices_[ivLocalScvfIdx]; }
 
     //! returns the number of faces in the interaction volume
     std::size_t numFaces() const
@@ -152,12 +166,31 @@ public:
     std::size_t numScvs() const
     { return nodalIndexSet_.numScvs(); }
 
+    //! returns the global scv indices connected to this dual grid node
+    const GlobalIndexContainer& globalScvIndices() const
+    { return nodalIndexSet_.globalScvIndices(); }
+
+    //! returns the global scvf indices connected to this dual grid node
+    const GlobalIndexContainer& globalScvfIndices() const
+    { return nodalIndexSet_.globalScvfIndices(); }
+
 private:
+    //! returns the local scv index to a given global scv index
+    unsigned int findLocalScvIdx_(GlobalIndexType globalScvIdx) const
+    {
+        auto it = std::find( nodalIndexSet_.globalScvIndices().begin(), nodalIndexSet_.globalScvIndices().end(), globalScvIdx );
+        assert(it != nodalIndexSet_.globalScvIndices().end() && "Global scv index not found in local container!");
+        return std::distance(nodalIndexSet_.globalScvIndices().begin(), it);
+    }
+
     const DualGridNodalIndexSet& nodalIndexSet_;
 
     std::size_t numFaces_;
     LocalIndexContainer ivToNodeScvf_;
     LocalIndexContainer nodeToIvScvf_;
+    //! maps to each scvf a list of neighbouring scv indices
+    //! ordering: 0 - inside scv idx; 1..n - outside scv indices
+    std::vector<LocalIndexContainer> scvfNeighborScvLocalIndices_;
 };
 } // end namespace
 
