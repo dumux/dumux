@@ -118,6 +118,7 @@ public:
           center_ = dofPosition;
           scvIndices_ = scvIndices;
           scvfIndex_ = -1;
+          dofIdx_ = -1;
       }
     /*//! The copy constrcutor
     StaggeredSubControlVolumeFace(const StaggeredSubControlVolumeFace& other) = delete;
