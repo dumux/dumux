@@ -63,7 +63,12 @@
 // FoamGrid specific includes
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+#include <dune/foamgrid/dgffoam.hh>
+#else
 #include <dune/foamgrid/dgffoam.cc>
+#endif
 #endif
 
 #include <dumux/common/propertysystem.hh>
