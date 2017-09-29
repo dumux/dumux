@@ -105,6 +105,7 @@ NEW_PROP_TAG(GridVariables);
  * The default is to not limit the step size.
  */
 NEW_PROP_TAG(TimeLoopMaxTimeStepSize);
+NEW_PROP_TAG(TimeManagerMaxTimeStepSize);
 
 //! the maximum allowed number of timestep divisions for the
 //! Newton solver
@@ -135,6 +136,7 @@ SET_TYPE_PROP(NumericModel, PrimaryVariables, typename GET_PROP_TYPE(TypeTag, Nu
 
 //! use an unlimited time step size by default
 SET_SCALAR_PROP(NumericModel, TimeLoopMaxTimeStepSize, std::numeric_limits<typename GET_PROP_TYPE(TypeTag,Scalar)>::max());
+SET_SCALAR_PROP(NumericModel, TimeManagerMaxTimeStepSize, std::numeric_limits<typename GET_PROP_TYPE(TypeTag,Scalar)>::max());
 
 //! set number of maximum timestep divisions to 10
 SET_INT_PROP(NumericModel, TimeLoopMaxTimeStepDivisions, 10);

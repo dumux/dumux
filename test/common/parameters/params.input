@@ -1,0 +1,6 @@
+[TimeLoop]
+TEnd = 1e6
+
+[Grid]
+Cells = 100 100
+Bells = 10 10

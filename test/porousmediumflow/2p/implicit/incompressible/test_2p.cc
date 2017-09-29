@@ -40,6 +40,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
+#include <dumux/common/loggingparametertree.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
@@ -89,16 +90,13 @@ int main(int argc, char** argv) try
     // check first if the user provided an input file through the command line, if not use the default
     const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
     ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName);
+    LoggingParameterTree params(ParameterTree::tree());
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    try { GridCreator::makeGrid(); }
-    catch (...) {
-        std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
-        throw;
-    }
+    GridCreator::makeGrid(params);
     GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
@@ -211,7 +209,10 @@ int main(int argc, char** argv) try
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
+    {
+        params.reportAll();
         DumuxMessage::print(/*firstCall=*/false);
+    }
 
     return 0;
 

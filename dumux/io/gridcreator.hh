@@ -338,14 +338,11 @@ protected:
     /*!
      * \brief Refines a grid after construction if GridParameterGroup.Refinement is set in the input file
      */
-    static void maybeRefineGrid()
+    template<class Parameters>
+    static void maybeRefineGrid(const Parameters& params, const std::string& gridKey)
     {
-        try {
-            const int level = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Refinement);
-            grid().globalRefine(level);
-        }
-        catch (ParameterException &e) {}
-        catch (...) { throw; }
+        if (params.hasKey(gridKey + ".Refinement"))
+            grid().globalRefine(params.template get<int>(gridKey + ".Refinement"));
     }
 
     /*!
@@ -391,7 +388,8 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this class.
      */
-    static void makeGrid()
+    template<class Parameters>
+    static void makeGrid(const Parameters& params)
     {
         DUNE_THROW(Dune::NotImplemented,
             "The GridCreator for grid type " << Dune::className<Grid>() << " is not implemented! Consider providing your own GridCreator.");
@@ -480,74 +478,66 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid()
+    template<class Parameters>
+    static void makeGrid(const Parameters& params)
     {
         // First try to create it from a DGF file in GridParameterGroup.File
-        try {
-            const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromDgfFile(fileName);
-            postProcessing_();
+        const std::string gridKey = params.get("GridParameterGroup", "Grid");
+        if (params.hasKey(gridKey + ".File"))
+        {
+            ParentType::makeGridFromDgfFile(params.template get<std::string>(gridKey + ".File"));
+            postProcessing_(params, gridKey);
             return;
         }
-        catch (ParameterException &e) {}
-        catch (...) { throw; }
 
         // Then look for the necessary keys to construct from the input file
-        try {
-            // The required parameters
-            typedef Dune::FieldVector<ct, dim> GlobalPosition;
-            const GlobalPosition upperRight = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UpperRight);
+        if (!params.hasKey(gridKey + ".UpperRight"))
+            DUNE_THROW(ParameterException, "Please supply the mandatory parameter "
+                                          << gridKey <<  ".UpperRight or a grid file in "
+                                          << gridKey << ".File.");
 
-            // The optional parameters (they have a default)
-            typedef std::array<int, dim> CellArray;
-            CellArray cells;
-            std::fill(cells.begin(), cells.end(), 1);
-            try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-            catch (ParameterException &e) { }
+        // get the upper right corner coordinates
+        const auto upperRight = params.template get<Dune::FieldVector<ct, dim>>(gridKey + ".UpperRight");
 
-            typedef std::bitset<dim> BitSet;
-            BitSet periodic;
-            try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
-            catch (ParameterException &e) { }
+        // number of cells in each direction
+        std::array<int, dim> cells; cells.fill(1);
+        cells = params.template get<std::array<int, dim>>(gridKey + ".Cells", cells);
 
-            // get the overlap dependent on some template parameters
-            int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
+        // periodic boundaries
+        const auto periodic = params.template get<std::bitset<dim>>(gridKey + ".Periodic", std::bitset<dim>());
 
-            bool default_lb = false;
-            CellArray partitioning;
-            try { partitioning = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Partitioning);}
-            catch (ParameterException &e) { default_lb = true; }
+        // get the overlap dependent on some template parameters
+        const int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
 
-            //make the grid
-            if (default_lb)
-                ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap);
-            else
-            {
-                typename Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
-                ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
-            }
-            postProcessing_();
+        bool default_lb = !params.hasKey(gridKey + ".Partitioning");
+
+        // make the grid
+        if (default_lb)
+        {
+            // construct using default load balancing
+            ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap);
         }
-        catch (ParameterException &e) {
-                DUNE_THROW(ParameterException, "Please supply the mandatory parameter "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) <<  ".UpperRight or a grid file in "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
+        else
+        {
+            // construct using user defined partitioning
+            const auto partitioning = params.template get<std::array<int, dim>>(gridKey + ".Partitioning");
+            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
+            ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
         }
-        catch (...) { throw; }
+        postProcessing_(params, gridKey);
     }
 
 private:
     /*!
      * \brief Postprocessing for YaspGrid
      */
-    static void postProcessing_()
+    template<class Parameters>
+    static void postProcessing_(const Parameters& params, const std::string& gridKey)
     {
         // Check if should refine the grid
-        bool keepPhysicalOverlap = true;
-        try { keepPhysicalOverlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), KeepPhysicalOverlap);}
-        catch (ParameterException &e) { }
+        bool keepPhysicalOverlap = params.template get<bool>(gridKey + ".KeepPhysicalOverlap", true);
         ParentType::grid().refineOptions(keepPhysicalOverlap);
-        ParentType::maybeRefineGrid();
+        ParentType::maybeRefineGrid(params, gridKey);
     }
 };
 
