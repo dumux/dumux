@@ -68,7 +68,7 @@ class CCMpfaGlobalFluxVariablesCache<TypeTag, true>
 public:
     CCMpfaGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
+    // When global caching is enabled, precompute transmissibilities for all scv faces
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
@@ -139,17 +139,7 @@ public:
             {
                 auto& scvfCache = fluxVarsCache_[scvf.index()];
                 if (!scvfCache.isUpdated())
-                {
-                    // reset the pointers to the local views in the corresponding interaction volume
-                    const auto ivIndexInContainer = scvfCache.ivIndexInContainer();
-                    if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                        secondaryInteractionVolumes_[ivIndexInContainer].resetPointers(fvGeometry, elemVolVars);
-                    else
-                        primaryInteractionVolumes_[ivIndexInContainer].resetPointers(fvGeometry, elemVolVars);
-
-                    // update cache
                     filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
-                }
             }
 
             for (const auto& dataJ : assemblyMapI)
@@ -160,16 +150,8 @@ public:
                     auto& scvfCache = fluxVarsCache_[scvfIdx];
                     if (!scvfCache.isUpdated())
                     {
-                        const auto& scvf = fvGeometry.scvf(scvfIdx);
-                        const auto ivIndexInContainer = scvfCache.ivIndexInContainer();
-
-                        // reset the pointers to the local views in the corresponding interaction volume
-                        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                            secondaryInteractionVolumes_[ivIndexInContainer].resetPointers(fvGeometry, elemVolVars);
-                        else
-                            primaryInteractionVolumes_[ivIndexInContainer].resetPointers(fvGeometry, elemVolVars);
-
                         // update cache
+                        const auto& scvf = fvGeometry.scvf(scvfIdx);
                         filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, scvf);
                     }
                 }

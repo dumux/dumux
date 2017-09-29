@@ -48,8 +48,7 @@ public:
     using typename BaseTraits::DynamicGlobalIndexContainer;
     using IndexSet = CCMpfaOInteractionVolumeIndexSet<NodalIndexSet, DynamicGlobalIndexContainer, DynamicLocalIndexContainer>;
 
-    // The matrix & vector types used in the interaction
-    // volume are actually the dynamic types in the o-scheme
+    // In the o-scheme, matrix & vector types are dynamic types
     using typename BaseTraits::DynamicVector;
     using typename BaseTraits::DynamicMatrix;
     using Vector = DynamicVector;
@@ -88,8 +87,6 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Tra
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -115,59 +112,145 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Tra
     using DataHandle = typename Traits::DataHandle;
 public:
 
-    using typename ParentType::GlobalLocalFaceDataPair;
     using typename ParentType::LocalFaceData;
     using typename ParentType::DirichletDataContainer;
+    using typename ParentType::LocalFaceDataContainer;
 
-    //! Sets up the local scope for a given seed
-    //! This function has to be called before using the IV!
-    void bind(const IndexSet& indexSet,
-              const Problem& problem,
-              const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& elemVolVars,
-              DataHandle& dataHandle)
+    //! Sets up the local scope for a given iv index set!
+    void setUpLocalScope(const IndexSet& indexSet,
+                         const Problem& problem,
+                         const FVElementGeometry& fvGeometry)
     {
-        problemPtr_ = &problem;
-        fvGeometryPtr_ = &fvGeometry;
-        elemVolVarsPtr_ = &elemVolVars;
+        //! store a pointer to the index set
         indexSetPtr_ = &indexSet;
 
-        // set up the local scope of this interaction volume
-        setLocalScope_(dataHandle);
+        //! clear previous data
+        clear_();
+
+        //! number of interaction-volume-local faces
+        numFaces_ = indexSet.numFaces();
+
+        //! number of interaction-volume-local (and node-local) scvs
+        const auto& scvIndices = indexSet.globalScvIndices();
+        const auto numLocalScvs = indexSet.numScvs();
+
+        //! number of global scvfs appearing in this interaction volume
+        const auto numGlobalScvfs = indexSet.nodalIndexSet().numScvfs();
+
+        //! reserve memory for local entities
+        elements_.reserve(numLocalScvs);
+        scvs_.reserve(numLocalScvs);
+        scvfs_.reserve(numFaces_);
+        dirichletData_.reserve(numFaces_);
+        localFaceData_.reserve(numGlobalScvfs);
+
+        // set up quantities related to sub-control volumes
+        for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numLocalScvs; scvIdxLocal++)
+        {
+            const auto scvIdxGlobal = scvIndices[scvIdxLocal];
+            scvs_.emplace_back(fvGeometry, fvGeometry.scv(scvIdxGlobal), scvIdxLocal, indexSet);
+            elements_.emplace_back(fvGeometry.fvGridGeometry().element(scvIdxGlobal));
+        }
+
+        // keep track of the number of unknowns etc
+        numUnknowns_ = 0;
+        numOutsideFaces_ = 0;
+        numPotentials_ = numLocalScvs;
+
+        // set up quantitites related to sub-control volume faces
+        for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
+        {
+            const auto scvfIdxGlobal = indexSet.scvfIdxGlobal(faceIdxLocal);
+            const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
+            const auto insideLocalScvIdx = neighborScvIndicesLocal[0];
+
+            // we have to use the "inside" scv face here
+            const auto& scvf = fvGeometry.scvf(scvfIdxGlobal);
+
+            // create local face data object for this face
+            localFaceData_.emplace_back(faceIdxLocal, insideLocalScvIdx, scvf.index());
+
+            // create iv-local scvf object
+            if (scvf.boundary())
+            {
+                const auto insideElement = elements_[insideLocalScvIdx];
+                const auto bcTypes = problem.boundaryTypes(insideElement, scvf);
+
+                if (bcTypes.hasOnlyDirichlet())
+                {
+                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, /*isDirichlet*/true, numPotentials_++);
+                    dirichletData_.emplace_back(scvf.outsideScvIdx(), scvf.ipGlobal());
+                }
+                else
+                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, /*isDirichlet*/false, numUnknowns_++);
+            }
+            else
+            {
+                scvfs_.emplace_back(scvf, neighborScvIndicesLocal, /*isDirichlet*/false, numUnknowns_++);
+
+                // add local face data object for the outside faces
+                for (unsigned int i = 1; i < neighborScvIndicesLocal.size(); ++i)
+                {
+                    const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
+
+                    // loop over scvfs in outside scv until we find the one coinciding with current scvf
+                    for (int coord = 0; coord < dim; ++coord)
+                    {
+                        if (indexSet.scvfIdxLocal(outsideLocalScvIdx, coord) == faceIdxLocal)
+                        {
+                            const auto globalScvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(outsideLocalScvIdx, coord);
+                            const auto& flipScvf = fvGeometry.scvf(globalScvfIdx);
+                            localFaceData_.emplace_back(faceIdxLocal,         //! iv-local scvf idx
+                                                        outsideLocalScvIdx,   //! iv-local scv index
+                                                        numOutsideFaces_++,    //! iv-local index in outside faces
+                                                        i-1,                  //! scvf-local index in outside faces
+                                                        flipScvf.index());   //! global scvf index
+                        }
+                    }
+                }
+            }
+        }
+
+        // resize the local matrices
+        A_.resize(numUnknowns_, numUnknowns_);
+        B_.resize(numUnknowns_, numPotentials_);
+        C_.resize(numFaces_, numUnknowns_);
+        D_.resize(numFaces_, numPotentials_);
     }
 
-    //! Sets only the pointers to the local views
-    //! Using the IV afterwards requires having called bind once before!
-    //! Calling this with an fvGeometry or elemVolVars that differ from the
-    //! ones that have been passed when calling bind leads to undefined behaviour
-    void resetPointers(const FVElementGeometry& fvGeometry, const ElementVolumeVariables& elemVolVars)
+    //! sets the sizes of the corresponding matrices in the data handle
+    void prepareDataHandle(DataHandle& dataHandle)
     {
-        fvGeometryPtr_ = &fvGeometry;
-        elemVolVarsPtr_ = &elemVolVars;
+      // resize the transmissibility matrix in the data handle
+      dataHandle.resizeT(numFaces_, numPotentials_);
 
-        for (unsigned i = 0; i < globalLocalScvfPairedData_.size(); ++i)
-            globalLocalScvfPairedData_[i].first = &fvGeometry.scvf(globalScvfIndices_[i]);
+      // resize possible additional containers in the data handle
+      if (requireABMatrix_()) dataHandle.resizeAB(numUnknowns_, numPotentials_);
+      if (dim < dimWorld) dataHandle.resizeOutsideTij(numOutsideFaces_, numPotentials_);
     }
 
     //! solves for the transmissibilities subject to a given tensor
     template<typename GetTensorFunction>
-    void solveLocalSystem(const GetTensorFunction& getTensor, DataHandle& dataHandle)
+    void solveLocalSystem(const GetTensorFunction& getTensor,
+                          const Problem& problem,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          DataHandle& dataHandle)
     {
         // if only dirichlet faces are present, assemble T_ directly
         if (numUnknowns_ == 0)
-            assemblePureDirichletSystem_(getTensor, dataHandle.T());
+            assemblePureDirichletSystem_(getTensor, problem, fvGeometry, elemVolVars, dataHandle.T());
         else
         {
             // assemble
-            assembleLocalMatrices_(getTensor);
+            assembleLocalMatrices_(getTensor, problem, fvGeometry, elemVolVars);
 
             // solve
             A_.invert();
 
             // T = C*A^-1*B + D
-            auto& T = dataHandle.T();
-            T = multiplyMatrices(C_.rightmultiply(A_), B_);
-            T += D_;
+            dataHandle.T() = multiplyMatrices(C_.rightmultiply(A_), B_);
+            dataHandle.T() += D_;
 
             // store A-1B only when gradient reconstruction is necessary
             if (requireABMatrix_())
@@ -183,63 +266,41 @@ public:
             computeOutsideTransmissibilities_(dataHandle);
     }
 
-    //! Gets the transmissibilities for a sub-control volume face within the interaction volume.
-    //! specialization for dim == dimWorld
-    template<int d = dim, int dw = dimWorld>
-    typename std::enable_if< (d == dw), const Vector& >::type
-    getTransmissibilities(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
-    { return dataHandle.T()[localFaceData.localScvfIndex]; }
-
-    //! Gets the transmissibilities for a sub-control volume face within the interaction volume.
-    //! specialization for dim < dimWorld.
-    template<int d = dim, int dw = dimWorld>
-    typename std::enable_if< (d < dw), const Vector& >::type
-    getTransmissibilities(const SubControlVolumeFace& scvf, const LocalFaceData& localFaceData, const DataHandle& dataHandle) const
-    {
-        // If we come from the inside, simply return tij
-        if (!localFaceData.isOutside)
-            return dataHandle.T()[localFaceData.localScvfIndex];
-        else
-            return dataHandle.outsideTij()[this->findIndexInVector(outsideScvfIndices_, scvf.index())];
-    }
-
     //! obtain the local data object for a given global scvf
     const LocalFaceData& getLocalFaceData(const SubControlVolumeFace& scvf) const
-    { return globalLocalScvfPairedData_[this->findIndexInVector(globalScvfIndices_, scvf.index())].second; }
+    {
+        //! find corresponding entry in the local face data container
+        const auto scvfIdxGlobal = scvf.index();
+        auto it = std::find_if(localFaceData_.begin(),
+                               localFaceData_.end(),
+                               [scvfIdxGlobal] (const LocalFaceData& d) { return d.globalScvfIndex() == scvfIdxGlobal; });
+        assert(it != localFaceData_.end() && "Could not find the local face data corresponding to the given scvf");
+        return localFaceData_[std::distance(localFaceData_.begin(), it)];
+    }
 
-    //! returns the vector of data pairs storing the local face data for each global scvf
-    const std::vector<GlobalLocalFaceDataPair>& globalLocalScvfPairedData() const
-    { return globalLocalScvfPairedData_; }
+    //! returns the grid element corresponding to a given iv-local scv idx
+    const Element& element(const LocalIndexType ivLocalScvIdx) const
+    { return elements_[ivLocalScvIdx]; }
 
-    //! returns the grid element corresponding to a given local (in the iv) scv idx
-    const Element& element(const LocalIndexType localScvIdx) const
-    { return elements_[localScvIdx]; }
+    //! returns the local scvf entity corresponding to a given iv-local scvf idx
+    const LocalScvfType& localScvf(const LocalIndexType ivLocalScvfIdx) const
+    { return scvfs_[ivLocalScvfIdx]; }
 
-    //! returns the local scvf entity corresponding to a given local (in the iv) scvf idx
-    const LocalScvfType& localScvf(const LocalIndexType localScvfIdx) const
-    { return scvfs_[localScvfIdx]; }
+    //! returns the local scv entity corresponding to a given iv-local scv idx
+    const LocalScvType& localScv(const LocalIndexType ivLocalScvfIdx) const
+    { return scvs_[ivLocalScvfIdx]; }
 
-    //! returns the local scv entity corresponding to a given local (in the iv) scv idx
-    const LocalScvType& localScv(const LocalIndexType localScvIdx) const
-    { return scvs_[localScvIdx]; }
+    //! returns a reference to the container with the data on Dirichlet boundaries
+    const DirichletDataContainer& dirichletData() const
+    { return dirichletData_; }
 
-    //! returns a reference to the problem to be solved
-    const Problem& problem() const
-    { return *problemPtr_; }
+    //! returns a reference to the container with the local face data
+    const std::vector<LocalFaceData>& localFaceData() const
+    { return localFaceData_; }
 
-    //! returns a reference to the fvGeometry object
-    const FVElementGeometry& fvGeometry() const
-    { return *fvGeometryPtr_; }
-
-    //! returns a reference to the element volume variables
-    const ElementVolumeVariables& elemVolVars() const
-    { return *elemVolVarsPtr_; }
-
-    //! returns a reference to the corresponding iv index set
+    //! returns a reference to the index set of this iv
     const IndexSet& indexSet() const
     { return *indexSetPtr_; }
-
-    const DirichletDataContainer& dirichletData() const { return dirichletData_; }
 
     //! returns the number of interaction volumes living around a vertex
     //! the mpfa-o scheme always constructs one iv per vertex
@@ -273,129 +334,21 @@ private:
     }
 
     //! clears all the containers
-    void reset_()
+    void clear_()
     {
         elements_.clear();
         scvs_.clear();
         scvfs_.clear();
-        globalLocalScvfPairedData_.clear();
-        outsideScvfIndices_.clear();
+        localFaceData_.clear();
         dirichletData_.clear();
-    }
-
-    //! sets up the local scvs and scvfs etc.. using the iv index set
-    void setLocalScope_(DataHandle& dataHandle)
-    {
-        //! clear previous data
-        reset_();
-
-        //! number of interaction-volume-local faces
-        numFaces_ = indexSet().numFaces();
-
-        //! number of interaction-volume-local (and node-local) scvs
-        const auto& scvIndices = indexSet().globalScvIndices();
-        const auto numLocalScvs = scvIndices.size();
-
-        //! number of global scvfs appearing in this interaction volume
-        const auto numGlobalScvfs = indexSet().nodalIndexSet().numScvfs();
-
-        //! reserve memory for local entities
-        elements_.reserve(numLocalScvs);
-        scvs_.reserve(numLocalScvs);
-        scvfs_.reserve(numFaces_);
-        dirichletData_.reserve(numFaces_);
-        globalLocalScvfPairedData_.reserve(numGlobalScvfs);
-        globalScvfIndices_.reserve(numGlobalScvfs);
-
-        // store outside scvf idx set on surface grids
-        if (dim < dimWorld)
-            outsideScvfIndices_.reserve(numGlobalScvfs);
-
-        // set up quantities related to sub-control volumes
-        for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numLocalScvs; scvIdxLocal++)
-        {
-            const auto scvIdxGlobal = scvIndices[scvIdxLocal];
-            scvs_.emplace_back(fvGeometry(), fvGeometry().scv(scvIdxGlobal), scvIdxLocal, indexSet());
-            elements_.emplace_back(fvGeometry().fvGridGeometry().element(scvIdxGlobal));
-        }
-
-        // keep track of the number of unknowns etc
-        numUnknowns_ = 0;
-        numPotentials_ = numLocalScvs;
-
-        // set up quantitites related to sub-control volume faces
-        for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
-        {
-            const auto scvfIdxGlobal = indexSet().scvfIdxGlobal(faceIdxLocal);
-            const auto& neighborScvIndicesLocal = indexSet().neighboringLocalScvIndices(faceIdxLocal);
-            const auto insideLocalScvIdx = neighborScvIndicesLocal[0];
-
-            // we have to use the "inside" scv face here
-            const auto& scvf = fvGeometry().scvf(scvfIdxGlobal);
-
-            // create global/local face data for this face and the global/local map
-            globalLocalScvfPairedData_.emplace_back(&scvf, LocalFaceData(faceIdxLocal, insideLocalScvIdx, false));
-            globalScvfIndices_.push_back(scvf.index());
-
-            // create iv-local scvf
-            if (scvf.boundary())
-            {
-                const auto insideElement = elements_[insideLocalScvIdx];
-                const auto bcTypes = problem().boundaryTypes(insideElement, scvf);
-
-                if (bcTypes.hasOnlyDirichlet())
-                {
-                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, /*isDirichlet*/true, numPotentials_++);
-                    dirichletData_.emplace_back(scvf.outsideScvIdx(), scvf.ipGlobal());
-                }
-                else
-                    scvfs_.emplace_back(scvf, neighborScvIndicesLocal, /*isDirichlet*/false, numUnknowns_++);
-            }
-            else
-            {
-                scvfs_.emplace_back(scvf, neighborScvIndicesLocal, /*isDirichlet*/false, numUnknowns_++);
-
-                // add outside faces to the global/local face data
-                for (unsigned int i = 1; i < neighborScvIndicesLocal.size(); ++i)
-                {
-                    const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
-
-                    // loop over scvfs in outside scv until we find the one coinciding with current scvf
-                    for (int coord = 0; coord < dim; ++coord)
-                    {
-                        if (indexSet().scvfIdxLocal(outsideLocalScvIdx, coord) == faceIdxLocal)
-                        {
-                            const auto globalScvfIdx = indexSet().nodalIndexSet().scvfIdxGlobal(outsideLocalScvIdx, coord);
-                            const auto& flipScvf = fvGeometry().scvf(globalScvfIdx);
-                            globalLocalScvfPairedData_.emplace_back(&flipScvf, LocalFaceData(faceIdxLocal, outsideLocalScvIdx, true));
-                            globalScvfIndices_.push_back(flipScvf.index());
-                            if (dim < dimWorld)
-                                outsideScvfIndices_.push_back(flipScvf.index());
-                        }
-                    }
-                }
-            }
-        }
-
-        // resize the matrices in the data handle
-        dataHandle.resizeT(numFaces_, numPotentials_);
-        if (requireABMatrix_())
-            dataHandle.resizeAB(numUnknowns_, numPotentials_);
-
-        // resize the local matrices
-        A_.resize(numUnknowns_, numUnknowns_);
-        B_.resize(numUnknowns_, numPotentials_);
-        C_.resize(numFaces_, numUnknowns_);
-        D_.resize(numFaces_, numPotentials_);
-
-        // on surface grids, resize the vector containing the "outside" transmissibilities
-        if (dim < dimWorld)
-            dataHandle.resizeOutsideTij(outsideScvfIndices_.size(), numPotentials_);
     }
 
     //! Assembles the local matrices that define the local system of equations and flux expressions
     template<typename GetTensorFunction>
-    void assembleLocalMatrices_(const GetTensorFunction& getTensor)
+    void assembleLocalMatrices_(const GetTensorFunction& getTensor,
+                                const Problem& problem,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars)
     {
         // reset matrices
         A_ = 0.0;
@@ -410,7 +363,7 @@ private:
         for (unsigned int faceIdx = 0; faceIdx < numFaces_; ++faceIdx)
         {
             const auto& curLocalScvf = localScvf(faceIdx);
-            const auto& curGlobalScvf = fvGeometry().scvf(curLocalScvf.globalScvfIndex());
+            const auto& curGlobalScvf = fvGeometry.scvf(curLocalScvf.globalScvfIndex());
             const auto curIsDirichlet = curLocalScvf.isDirichlet();
             const auto curLocalDofIdx = curLocalScvf.localDofIndex();
 
@@ -418,10 +371,10 @@ private:
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto posLocalScvIdx = neighborScvIndices[0];
             const auto& posLocalScv = localScv(posLocalScvIdx);
-            const auto& posGlobalScv = fvGeometry().scv(posLocalScv.globalScvIndex());
-            const auto& posVolVars = elemVolVars()[posGlobalScv];
+            const auto& posGlobalScv = fvGeometry.scv(posLocalScv.globalScvIndex());
+            const auto& posVolVars = elemVolVars[posGlobalScv];
             const auto& posElement = element(posLocalScvIdx);
-            const auto tensor = getTensor(problem(), posElement, posVolVars, fvGeometry(), posGlobalScv);
+            const auto tensor = getTensor(problem, posElement, posVolVars, fvGeometry, posGlobalScv);
 
             // the omega factors of the "positive" sub volume
             auto posWijk = calculateOmegas_(posLocalScv, curGlobalScvf.unitOuterNormal(), curGlobalScvf.area(), tensor);
@@ -469,10 +422,10 @@ private:
                 {
                     const auto negLocalScvIdx = neighborScvIndices[idxInOutside+1];
                     const auto& negLocalScv = localScv(negLocalScvIdx);
-                    const auto& negGlobalScv = fvGeometry().scv(negLocalScv.globalScvIndex());
-                    const auto& negVolVars = elemVolVars()[negGlobalScv];
+                    const auto& negGlobalScv = fvGeometry.scv(negLocalScv.globalScvIndex());
+                    const auto& negVolVars = elemVolVars[negGlobalScv];
                     const auto& negElement = element(negLocalScvIdx);
-                    const auto negTensor = getTensor(problem(), negElement, negVolVars, fvGeometry(), negGlobalScv);
+                    const auto negTensor = getTensor(problem, negElement, negVolVars, fvGeometry, negGlobalScv);
 
                     // the omega factors of the "negative" sub volume
                     DimVector negWijk;
@@ -480,7 +433,7 @@ private:
                     // if dim < dimWorld, use outside normal vector
                     if (dim < dimWorld)
                     {
-                        const auto& flipScvf = fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside);
+                        const auto& flipScvf = fvGeometry.flipScvf(curGlobalScvf.index(), idxInOutside);
                         auto negNormal = flipScvf.unitOuterNormal();
                         negNormal *= -1.0;
                         negWijk = calculateOmegas_(negLocalScv, negNormal, curGlobalScvf.area(), negTensor);
@@ -517,7 +470,11 @@ private:
     //! for interaction volumes that have only dirichlet scvfs,
     //! the transmissibility matrix can be assembled directly
     template<typename GetTensorFunction>
-    void assemblePureDirichletSystem_(const GetTensorFunction& getTensor, Matrix& T)
+    void assemblePureDirichletSystem_(const GetTensorFunction& getTensor,
+                                      const Problem& problem,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& elemVolVars,
+                                      Matrix& T)
     {
         // reset the transmissibility matrix beforehand
         T = 0.0;
@@ -526,16 +483,16 @@ private:
         for (unsigned int faceIdx = 0; faceIdx < numFaces_; ++faceIdx)
         {
             const auto& curLocalScvf = localScvf(faceIdx);
-            const auto& curGlobalScvf = fvGeometry().scvf(curLocalScvf.globalScvfIndex());
+            const auto& curGlobalScvf = fvGeometry.scvf(curLocalScvf.globalScvfIndex());
 
             // get diffusion tensor in "positive" sub volume
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto posLocalScvIdx = neighborScvIndices[0];
             const auto& posLocalScv = localScv(posLocalScvIdx);
-            const auto& posGlobalScv = fvGeometry().scv(posLocalScv.globalScvIndex());
-            const auto& posVolVars = elemVolVars()[posGlobalScv];
+            const auto& posGlobalScv = fvGeometry.scv(posLocalScv.globalScvIndex());
+            const auto& posVolVars = elemVolVars[posGlobalScv];
             const auto& posElement = element(posLocalScvIdx);
-            const auto tensor = getTensor(problem(), posElement, posVolVars, fvGeometry(), posGlobalScv);
+            const auto tensor = getTensor(problem, posElement, posVolVars, fvGeometry, posGlobalScv);
 
             // the omega factors of the "positive" sub volume
             auto posWijk = calculateOmegas_(posLocalScv, curGlobalScvf.unitOuterNormal(), curGlobalScvf.area(), tensor);
@@ -556,32 +513,31 @@ private:
     //! computes the transmissibilities associated with "outside" faces on surface grids
     void computeOutsideTransmissibilities_(DataHandle& dataHandle) const
     {
-        assert(dim < dimWorld && "transmissibilities for outside scvfs can only be computed for dim < dimWorld!");
+        assert(dim < dimWorld && "only for dim < dimWorld the outside transmissiblity container has the right size");
 
-        for (const auto& globalLocalData : globalLocalScvfPairedData_)
+        for (const auto& localFaceData : localFaceData_)
         {
-            const auto& localFaceData = globalLocalData.second;
+            //! continue only for "outside" faces
+            if (!localFaceData.isOutside()) continue;
 
-            // continue only for "outside" faces
-            if (!localFaceData.isOutside)
-                continue;
-
-            const auto localScvIdx = localFaceData.localScvIndex;
-            const auto localScvfIdx = localFaceData.localScvfIndex;
+            const auto localScvIdx = localFaceData.ivLocalInsideScvIndex();
+            const auto localScvfIdx = localFaceData.ivLocalScvfIndex();
             const auto& posLocalScv = localScv(localScvIdx);
+            const auto& wijk = wijk_[localScvfIdx][localFaceData.scvfLocalOutsideScvfIndex() + 1];
 
-            const auto idxInNeighbors = this->findIndexInVector(localScvf(localScvfIdx).neighboringLocalScvIndices(), localScvIdx);
-            const auto& wijk = wijk_[localScvfIdx][idxInNeighbors];
+            //! store the calculated transmissibilities in the data handle
+            auto& tij = dataHandle.outsideTij()[localFaceData.ivLocalOutsideScvfIndex()];
 
-            // store the calculated transmissibilities in the data handle
-            const auto idxInOutsideFaces = this->findIndexInVector(outsideScvfIndices_, globalLocalData.first->index());
-            auto& tij = dataHandle.outsideTij()[idxInOutsideFaces];
+            //! reset transmissibility vector
             tij = 0.0;
 
+            //! add contributions from all local directions
             for (int localDir = 0; localDir < dim; localDir++)
             {
-                const auto curLocalScvfIdx = posLocalScv.scvfIdxLocal(localDir);
-                const auto& curLocalScvf = localScvf(curLocalScvfIdx);
+                //! the scvf corresponding to this local direction in the scv
+                const auto& curLocalScvf = localScvf(posLocalScv.scvfIdxLocal(localDir));
+
+                //! on interior faces the coefficients of the AB matrix come into play
                 if (!curLocalScvf.isDirichlet())
                 {
                     auto tmp = dataHandle.AB()[curLocalScvf.localDofIndex()];
@@ -640,24 +596,20 @@ private:
         return wijk;
     }
 
-    const Problem* problemPtr_;
-    const FVElementGeometry* fvGeometryPtr_;
-    const ElementVolumeVariables* elemVolVarsPtr_;
     const IndexSet* indexSetPtr_;
 
     // Variables defining the local scope
     std::vector<Element> elements_;
     std::vector<LocalScvType> scvs_;
     std::vector<LocalScvfType> scvfs_;
-    std::vector<GlobalLocalFaceDataPair> globalLocalScvfPairedData_;
+    std::vector<LocalFaceData> localFaceData_;
     DirichletDataContainer dirichletData_;
-    GlobalIndexContainer globalScvfIndices_;
-    GlobalIndexContainer outsideScvfIndices_;
 
     // sizes involved in the local matrices
     unsigned int numFaces_;
     unsigned int numUnknowns_;
     unsigned int numPotentials_;
+    unsigned int numOutsideFaces_;
 
     // The omega factors and the matrix A⁻1*B are stored
     // in order to recover the transmissibilities of outside faces on network grids

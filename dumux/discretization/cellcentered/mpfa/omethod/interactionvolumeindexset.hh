@@ -20,7 +20,7 @@
  * \file
  * \brief Class for the index set within an interaction volume of the mpfa-o scheme.
  */
-#ifndef DUMUX_DISCRETIZATION_MPFA_O_NTERACTIONVOLUME_INDEXSET_HH
+#ifndef DUMUX_DISCRETIZATION_MPFA_O_INTERACTIONVOLUME_INDEXSET_HH
 #define DUMUX_DISCRETIZATION_MPFA_O_INTERACTIONVOLUME_INDEXSET_HH
 
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>

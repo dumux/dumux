@@ -66,6 +66,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using DataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
     //! The cache used in conjunction with the mpfa Darcy's Law
     class MpfaDarcysLawCache
@@ -82,10 +84,17 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
             const auto& localFaceData = iv.getLocalFaceData(scvf);
 
             // update the quantities that are equal for all phases
-            advectionSwitchFluxSign_ = localFaceData.isOutside;
-            advectionTij_ = &iv.getTransmissibilities(scvf, localFaceData, dataHandle);
+            advectionSwitchFluxSign_ = localFaceData.isOutside();
             advectionVolVarsStencil_ = &dataHandle.volVarsStencil();
             advectionDirichletData_ = &dataHandle.dirichletData();
+
+            // the transmissibilities on surface grids have to be obtained from the outside
+            if (dim == dimWorld)
+                advectionTij_ = &dataHandle.T()[localFaceData.ivLocalScvfIndex()];
+            else
+                advectionTij_ = localFaceData.isOutside() ?
+                                &dataHandle.outsideTij()[localFaceData.ivLocalOutsideScvfIndex()] :
+                                &dataHandle.T()[localFaceData.ivLocalScvfIndex()];
         }
 
         //! Returns the stencil for advective scvf flux computation
@@ -192,13 +201,13 @@ public:
         // add contributions from possible dirichlet boundary conditions
         for (const auto& d : fluxVarsCache.advectionDirichletData())
         {
-            const auto& volVars = elemVolVars[d.volVarIndex];
+            const auto& volVars = elemVolVars[d.volVarIndex()];
             Scalar h = volVars.pressure(phaseIdx);
 
             // maybe add gravitational acceleration
             if (gravity)
             {
-                const auto x = d.ipGlobal;
+                const auto x = d.ipGlobal();
                 const auto g = problem.gravityAtPos(x);
                 h -= rho*(g*x);
             }

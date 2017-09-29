@@ -129,12 +129,6 @@ public:
     { return primaryInteractionVolumeVertices_[vIdxGlobal]; }
 
     /*!
-     * \brief Returns the number of vertices using the primary interaction volume type
-     */
-    std::size_t numVerticesUsingPrimaryInteractionVolume() const
-    { return numVertUsingPrimaryIV_; }
-
-    /*!
      * \brief Returns if primary interaction volumes are used around a given vertex.
      */
     bool vertexUsesSecondaryInteractionVolume(const Vertex& v) const
@@ -146,12 +140,6 @@ public:
      */
     bool vertexUsesSecondaryInteractionVolume(IndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
-
-    /*!
-     * \brief Returns the number of vertices using the secondary interaction volume type.
-     */
-    std::size_t numVerticesUsingSecondaryInteractionVolume() const
-    { return numVertUsingSecondaryIV_; }
 
     /*!
      * \brief Updates all finite volume geometries of the grid. This has to be called again
@@ -361,11 +349,7 @@ public:
             }
         }
 
-        // calculate the total number of vertices using the primary/secondary interaction volumes
-        numVertUsingPrimaryIV_ = 0;
-        numVertUsingSecondaryIV_ = 0;
-        std::accumulate(primaryInteractionVolumeVertices_.begin(), primaryInteractionVolumeVertices_.end(), 0);
-        std::accumulate(secondaryInteractionVolumeVertices_.begin(), secondaryInteractionVolumeVertices_.end(), 0);
+        // building the geometries has finished
         std::cout << "Initializing of the grid finite volume geometry took " << timer.elapsed() << " seconds." << std::endl;
 
         // Initialize the grid interaction volume seeds
@@ -430,8 +414,6 @@ private:
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<bool> primaryInteractionVolumeVertices_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
-    std::size_t numVertUsingPrimaryIV_;
-    std::size_t numVertUsingSecondaryIV_;
     std::size_t numBoundaryScvf_;
 
     // needed for embedded surface and network grids (dim < dimWorld)
@@ -520,12 +502,6 @@ public:
     { return primaryInteractionVolumeVertices_[vIdxGlobal]; }
 
     /*!
-     * \brief Returns the number of vertices using the primary interaction volume type
-     */
-    std::size_t numVerticesUsingPrimaryInteractionVolume() const
-    { return numVertUsingPrimaryIV_; }
-
-    /*!
      * \brief Returns if primary interaction volumes are used around a given vertex.
      */
     bool vertexUsesSecondaryInteractionVolume(const Vertex& v) const
@@ -537,12 +513,6 @@ public:
      */
     bool vertexUsesSecondaryInteractionVolume(IndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
-
-    /*!
-     * \brief Returns the number of vertices using the secondary interaction volume type.
-     */
-    std::size_t numVerticesUsingSecondaryInteractionVolume() const
-    { return numVertUsingSecondaryIV_; }
 
     /*!
      * \brief Returns true if a given vertex lies on a processor boundary inside a ghost element.
@@ -711,11 +681,7 @@ public:
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
 
-        // calculate the total number of vertices using the primary/secondary interaction volumes
-        numVertUsingPrimaryIV_ = 0;
-        numVertUsingSecondaryIV_ = 0;
-        std::accumulate(primaryInteractionVolumeVertices_.begin(), primaryInteractionVolumeVertices_.end(), 0);
-        std::accumulate(secondaryInteractionVolumeVertices_.begin(), secondaryInteractionVolumeVertices_.end(), 0);
+        // building the geometries has finished
         std::cout << "Initializing of the grid finite volume geometry took " << timer.elapsed() << " seconds." << std::endl;
 
         // Initialize the grid interaction volume seeds
@@ -765,8 +731,6 @@ private:
     std::vector<bool> primaryInteractionVolumeVertices_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
     std::vector<bool> isGhostVertex_;
-    std::size_t numVertUsingPrimaryIV_;
-    std::size_t numVertUsingSecondaryIV_;
     std::size_t numScvs_;
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;

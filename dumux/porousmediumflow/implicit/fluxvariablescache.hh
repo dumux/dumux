@@ -176,6 +176,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
                                                              GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
                                                              GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
 {
+    using IndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
     using ParentType = CCMpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
                                                                      GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
                                                                      GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
@@ -187,30 +188,23 @@ public:
     {}
 
     //! Returns whether or not this cache has been updated
-    bool isUpdated() const
-    { return isUpdated_; }
+    bool isUpdated() const { return isUpdated_; }
 
-    //! Sets the update status from outside. This is used to only update
-    //! the cache once after solving the local system. When visiting an scvf
-    //! of the same interaction region again, the update is skipped.
-    void setUpdateStatus(bool status)
-    { isUpdated_ = status; }
+    //! Sets the update status. When set to true, consecutive updates will be skipped
+    void setUpdateStatus(bool status) { isUpdated_ = status; }
 
-    //! Sets the local index of the iv (see comment above private ivIndexInContainer_)
-    void setIvIndexInContainer(unsigned int localIndex)
-    { ivIndexInContainer_ = localIndex; }
+    //! Sets the index of the iv (this scvf is embedded in) in its container
+    void setIvIndexInContainer(IndexType ivIndex) { ivIndexInContainer_ = ivIndex; }
 
-    //! Returns the local index of the iv (see comment above private ivIndexInContainer_)
-    unsigned int ivIndexInContainer() const
-    { return ivIndexInContainer_; }
+    //! Returns the index of the iv (this scvf is embedded in) in its container
+    IndexType ivIndexInContainer() const { return ivIndexInContainer_; }
 
 private:
     //! indicates if cache has been fully updated
     bool isUpdated_;
 
-    //! the local index of the corresponding interaction volume within
-    //! the container in the elem flux vars cache (where it is stored in)
-    unsigned int ivIndexInContainer_;
+    //! the index of the iv (this scvf is embedded in) in its container
+    IndexType ivIndexInContainer_;
 };
 
 // specialization for the case of pure advection

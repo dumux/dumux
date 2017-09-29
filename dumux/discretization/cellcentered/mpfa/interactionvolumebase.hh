@@ -86,13 +86,17 @@ class CCMpfaInteractionVolumeBase
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
-    using LocalIndexSet = typename T::DynamicLocalIndexContainer;
-    using LocalIndexType = typename LocalIndexSet::value_type;
-    using GlobalIndexSet = typename T::DynamicGlobalIndexContainer;
-    using GlobalIndexType = typename GlobalIndexSet::value_type;
-    using Vector = typename T::Vector;
+    using DataHandle = typename T::DataHandle;
+    using IndexSet = typename T::IndexSet;
+    using LocalIndexContainer = typename T::DynamicLocalIndexContainer;
+    using LocalIndexType = typename LocalIndexContainer::value_type;
+    using GlobalIndexContainer = typename T::DynamicGlobalIndexContainer;
+    using GlobalIndexType = typename GlobalIndexContainer::value_type;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -102,49 +106,99 @@ public:
     // state the traits type publicly
     using Traits = T;
 
-    struct LocalFaceData
+    class LocalFaceData
     {
-        LocalIndexType localScvfIndex;
-        LocalIndexType localScvIndex;
-        bool isOutside;
+        LocalIndexType ivLocalScvfIndex_;          //! the iv-local scvf index this scvf maps to
+        LocalIndexType ivLocalInsideScvIndex_;     //! the iv-local index of the scvfs' inside scv
+        LocalIndexType ivLocalOutsideScvfIndex_;   //! the index of this scvf in the iv-local outside faces
+        LocalIndexType scvfLocalOutsideScvfIndex_; //! the index of this scvf in the scvf-local outside faces
+        GlobalIndexType globalScvfIndex_;          //! the index of the corresponding global scvf
+        bool isOutside_;                           //! indicates if this face maps to the iv-local index from "outside"
 
-        //! Constructor
-        LocalFaceData(LocalIndexType faceIndex, LocalIndexType scvIndex, bool isOut)
-        : localScvfIndex(faceIndex),
-          localScvIndex(scvIndex),
-          isOutside(isOut) {}
+      public:
+        //! Constructor for "inside" faces
+        LocalFaceData(LocalIndexType faceIndex,
+                      LocalIndexType scvIndex,
+                      GlobalIndexType globalScvfIndex)
+        : ivLocalScvfIndex_(faceIndex),
+          ivLocalInsideScvIndex_(scvIndex),
+          globalScvfIndex_(globalScvfIndex),
+          isOutside_(false) {}
+
+        //! Constructor for "outside" faces
+        LocalFaceData(LocalIndexType faceIndex,
+                      LocalIndexType scvIndex,
+                      LocalIndexType indexInIvOutsideFaces,
+                      LocalIndexType indexInScvfOutsideFaces,
+                      GlobalIndexType globalScvfIndex)
+        : ivLocalScvfIndex_(faceIndex),
+          ivLocalInsideScvIndex_(scvIndex),
+          ivLocalOutsideScvfIndex_(indexInIvOutsideFaces),
+          scvfLocalOutsideScvfIndex_(indexInScvfOutsideFaces),
+          globalScvfIndex_(globalScvfIndex),
+          isOutside_(true) {}
+
+        //! The index of the scvf within the inside faces
+        LocalIndexType ivLocalScvfIndex() const { return ivLocalScvfIndex_; }
+        LocalIndexType ivLocalInsideScvIndex() const { return ivLocalInsideScvIndex_; }
+        LocalIndexType ivLocalOutsideScvfIndex() const { assert(isOutside_); return ivLocalOutsideScvfIndex_; }
+        LocalIndexType scvfLocalOutsideScvfIndex() const { assert(isOutside_); return scvfLocalOutsideScvfIndex_; }
+        GlobalIndexType globalScvfIndex() const { return globalScvfIndex_; }
+        bool isOutside() const { return isOutside_; }
     };
 
     struct DirichletData
     {
-        GlobalIndexType volVarIndex;
-        GlobalPosition ipGlobal;
+        GlobalIndexType volVarIndex_;
+        GlobalPosition ipGlobal_;
 
+      public:
         DirichletData(const GlobalIndexType index, const GlobalPosition& ip)
-        : volVarIndex(index)
-        , ipGlobal(ip)
+        : volVarIndex_(index)
+        , ipGlobal_(ip)
         {}
+
+        const GlobalPosition& ipGlobal() const { return ipGlobal_; }
+        GlobalIndexType volVarIndex() const { return volVarIndex_; }
     };
 
-    using GlobalLocalFaceDataPair = std::pair<const SubControlVolumeFace*, LocalFaceData>;
     using DirichletDataContainer = std::vector<DirichletData>;
+    using LocalFaceDataContainer = std::vector<LocalFaceData>;
 
-    //! solves the local equation system for the computation of the transmissibilities
+    //! Sets up the local scope (geometries etc) for a given iv index set!
+    void setUpLocalScope(const IndexSet& indexSet,
+                         const Problem& problem,
+                         const FVElementGeometry& fvGeometry)
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a setUpLocalScope() method."); }
+
+    //! sets the sizes of the corresponding matrices in the data handle
+    void prepareDataHandle(DataHandle& dataHandle)
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a prepareDataHandle() method."); }
+
+    //! solves for the transmissibilities subject to a given tensor
     template<typename GetTensorFunction>
-    void solveLocalSystem(const GetTensorFunction& getTensor)
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a solveLocalSystem() method."); }
+    void solveLocalSystem(const GetTensorFunction& getTensor,
+                          const Problem& problem,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          DataHandle& dataHandle)
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a solveLocalSystem() method."); }
+
+    //! obtain the local data object for a given global scvf
+    const LocalFaceData& getLocalFaceData(const SubControlVolumeFace& scvf) const
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a getLocalFaceData() method."); }
+
+    //!returns a reference to the container with the local face data
+    const LocalFaceDataContainer& localFaceData() const
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() method."); }
+
+    //! returns a reference to the container with the data on Dirichlet boundaries
+    const DirichletDataContainer& dirichletData() const
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a dirichletData() method."); }
 
     //! returns the indices of the volvars in the stencil of the interaction volume
-    const GlobalIndexSet& volVarsStencil() const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a volVarsStencil() method."); }
-
-    //! returns the local index of an scvf in the IV and a boolean whether or not it is on the negative side of the local scvf (flux has to be inverted)
-    LocalFaceData getLocalFaceData(const SubControlVolumeFace& scvf) const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getLocalFaceData() method."); }
-
-    //! returns the transmissibilities corresponding to a local scvf
-    Vector getTransmissibilities(const LocalFaceData& localFaceData) const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a getTransmissibilities() method."); }
+    const GlobalIndexContainer& volVarsStencil() const
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a volVarsStencil() method."); }
 
     //! returns the local index in a vector for a given global index
     template<typename IdxType1, typename IdxType2>
@@ -154,10 +208,6 @@ public:
         assert(it != vector.end() && "could not find local index in the vector for the given global index!");
         return std::distance(vector.begin(), it);
     }
-
-    //! returns GlobalLocalFaceDataPair objects for the scvfs involved in this interaction volume
-    const std::vector<GlobalLocalFaceDataPair>& globalLocalScvfPairedData() const
-    { DUNE_THROW(Dune::NotImplemented, "Actual interaction volume implementation does not provide a globalLocalScvfPairedData() method."); }
 };
 
 } // end namespace
