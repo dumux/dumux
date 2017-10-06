@@ -28,6 +28,8 @@
 #include <dumux/implicit/fem/properties.hh>
 #include <dumux/implicit/fem/problem.hh>
 
+#include <dumux/linear/seqsolverbackend.hh>
+
 #include "elasticspatialparams.hh"
 
 namespace Dumux
@@ -49,7 +51,7 @@ SET_TYPE_PROP(ElasticMatrixProblem, Problem, Dumux::ElasticMatrixProblem<TypeTag
 // Quadrature order
 SET_INT_PROP(ElasticMatrixProblem, FemBasisOrder, 1);
 
-SET_TYPE_PROP(ElasticMatrixProblem, LinearSolver, UMFPackBackend<TypeTag>);
+SET_TYPE_PROP(ElasticMatrixProblem, LinearSolver, ILUnBiCGSTABBackend<TypeTag>);
 }
 
 /*!

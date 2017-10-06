@@ -76,9 +76,9 @@ public:
 
         // retrieve Lame parameters and rock density from spatialParams
         const Dune::FieldVector<Scalar, 2> &lameParams = problem.spatialParams().lameParams(element, scv);
-        lambda_ = lameParams[0];
+        //lambda_ = lameParams[0];
         mu_ = lameParams[1];
-        rockDensity_ = problem.spatialParams().rockDensity(element, scv);
+        //rockDensity_ = problem.spatialParams().rockDensity(element, scv);
     }
 
     /*!
@@ -96,8 +96,8 @@ public:
     /*!
       * \brief Return the Lame parameter lambda \f$\mathrm{[Pa]}\f$ within the control volume.
       */
-    Scalar lambda() const
-    { return lambda_; }
+    //Scalar lambda() const
+    //{ return lambda_; }
 
     /*!
       * \brief Return the Lame parameter mu \f$\mathrm{[Pa]}\f$ within the control volume.
@@ -108,8 +108,8 @@ public:
     /*!
      * \brief Returns the rock density \f$\mathrm{[kg / m^3]}\f$ within the control volume .
      */
-    Scalar rockDensity() const
-    { return rockDensity_; }
+    //Scalar rockDensity() const
+    //{ return rockDensity_; }
 
     /*!
      * \brief Returns the solid displacement \f$\mathrm{[m]}\f$ in space
@@ -128,9 +128,9 @@ public:
 protected:
     PrimaryVariables primaryVars_;
     DimVector displacement_;
-    Scalar lambda_;
+    //Scalar lambda_;
     Scalar mu_;
-    Scalar rockDensity_;
+    //Scalar rockDensity_;
 };
 
 }

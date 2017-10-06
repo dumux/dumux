@@ -71,18 +71,18 @@ public:
 
         // retrieve Lame parameters and rock density from spatialParams
         const auto& lameParams = problem.spatialParams().lameParams(element, this->priVars());
-        lambda_ = lameParams[0];
+        //lambda_ = lameParams[0];
         mu_ = lameParams[1];
 
         // the density of the solid material
-        rockDensity_ = problem.spatialParams().rockDensity(element, this->priVars());
+       // rockDensity_ = problem.spatialParams().rockDensity(element, this->priVars());
     }
 
     /*!
       * \brief Return the Lame parameter lambda \f$\mathrm{[Pa]}\f$ at the integration point.
       */
-    Scalar lambda() const
-    { return lambda_; }
+    //Scalar lambda() const
+    //{ return lambda_; }
 
     /*!
       * \brief Return the Lame parameter mu \f$\mathrm{[Pa]}\f$ at the integration point.
@@ -93,8 +93,8 @@ public:
     /*!
      * \brief Returns the rock density \f$\mathrm{[kg / m^3]}\f$ at the integration point.
      */
-    Scalar rockDensity() const
-    { return rockDensity_; }
+    //Scalar rockDensity() const
+    //{ return rockDensity_; }
 
     /*!
      * \brief Returns the solid displacement \f$\mathrm{[m]}\f$ in space
@@ -112,9 +112,9 @@ public:
 
 protected:
     DimVector displacement_;
-    Scalar lambda_;
+    //Scalar lambda_;
     Scalar mu_;
-    Scalar rockDensity_;
+    //Scalar rockDensity_;
 };
 
 }
