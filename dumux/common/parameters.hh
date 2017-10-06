@@ -31,11 +31,15 @@
 #include <list>
 #include <sstream>
 #include <unordered_map>
+#include <fstream>
 
 #include <dune/common/parametertree.hh>
+#include <dune/common/parallel/mpihelper.hh>
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/exceptions.hh>
+#include <dumux/common/defaultusagemessage.hh>
+#include <dumux/common/loggingparametertree.hh>
 
 /*!
  * \ingroup Parameter
@@ -50,10 +54,8 @@
  * GET_PARAM(TypeTag, Scalar, UpwindWeight);
  * \endcode
  */
-#define GET_PARAM(TypeTag, ParamType, ParamName)                        \
-    ::Dumux::Parameters::get<TypeTag,                                   \
-                           ParamType,                                   \
-                           PTAG_(ParamName)>(#ParamName, #ParamName)
+// #define GET_PARAM(TypeTag, ParamType, ParamName)
+//     ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#ParamName), GET_PROP_VALUE(TypeTag, ParamName))
 
 /*!
  * \ingroup Parameter
@@ -72,9 +74,8 @@
  * \endcode
  */
 #define GET_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName)  \
-    ::Dumux::Parameters::get<TypeTag,                                   \
-                           ParamType,                                   \
-                           PTAG_(GroupName##ParamName)>(#GroupName#ParamName, #GroupName, #ParamName)
+    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName), GET_PROP_VALUE(TypeTag, GroupName##ParamName))
+
 
 /*!
  * \ingroup Parameter
@@ -89,7 +90,7 @@
  * \endcode
  */
 #define GET_RUNTIME_PARAM(TypeTag, ParamType, ParamName) \
-    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(#ParamName)
+    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#ParamName))
 
 /*!
  * \ingroup Parameter
@@ -118,7 +119,7 @@
  * \endcode
  */
 #define GET_RUNTIME_PARAM_CSTRING(TypeTag, ParamType, ParamName) \
-    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(ParamName)
+    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(ParamName))
 
 /*!
  * \ingroup Parameter
@@ -136,7 +137,7 @@
  * \endcode
  */
 #define GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName) \
-    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(#GroupName, #ParamName)
+    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName))
 
 /*!
  * \ingroup Parameter
@@ -167,343 +168,173 @@
  * \endcode
  */
 #define GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, ParamType, GroupName, ParamName) \
-    ::Dumux::Parameters::getRuntime<TypeTag, ParamType>(GroupName, #ParamName)
+    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(GroupName) + "." + std::string(#ParamName))
 
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG(ParameterTree);
-NEW_PROP_TAG(ModelParameterGroup);
-} // namespace Properties
 
-namespace Parameters {
+//! The runtime parameter managing class
+class Parameters {
 
-template <class TypeTag>
-void findUnusedKeys_(std::list<std::string> &unusedParams,
-                     const Dune::ParameterTree &tree,
-                     const std::string prefix="")
-{
-    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-    const Dune::ParameterTree &rt = Params::runTimeParams();
-    const Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
-
-    // loop over all keys of the current tree
-    const Dune::ParameterTree::KeyVector &keys =
-        tree.getValueKeys();
-    for (unsigned int i = 0; i < keys.size(); ++i) {
-        std::string canonicalName = prefix + keys[i];
-
-        // store keys which were not accessed
-        if (!rt.hasKey(canonicalName) && !drt.hasKey(canonicalName))
-        {
-            unusedParams.push_back(canonicalName);
-        }
-    }
-
-    // loop over all subtrees
-    const Dune::ParameterTree::KeyVector &subKeys =
-        tree.getSubKeys();
-    for (unsigned int i = 0; i < subKeys.size(); ++i) {
-        std::string newPrefix = prefix + subKeys[i] + ".";
-
-        findUnusedKeys_<TypeTag>(unusedParams,
-                                 tree.sub(subKeys[i]),
-                                 newPrefix);
-    }
-
-}
-
-template <class TypeTag>
-bool hasDeprecatedKeys_(const Dune::ParameterTree &tree)
-{
-    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-    const Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
-
-    // loop over all keys of the current tree
-    const Dune::ParameterTree::KeyVector &keys =
-        tree.getValueKeys();
-    for (unsigned int i = 0; i < keys.size(); ++i) {
-        std::string canonicalName = keys[i];
-
-        // check whether the key was accessed
-        if (drt.hasKey(canonicalName))
-            return true;
-    }
-    return false;
-}
-
-/*!
- * \ingroup Parameter
- * \brief Print the run- and compile-time parameters.
- */
-template <class TypeTag>
-void print(std::ostream &os = std::cout)
-{
-    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-
-    const Dune::ParameterTree &tree = Params::tree();
-    const Dune::ParameterTree &rt = Params::runTimeParams();
-    const Dune::ParameterTree &ct = Params::compileTimeParams();
-    const Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
-    const Dune::ParameterTree &unrt = Params::unusedNewRunTimeParams();
-
-    os << "# Run-time specified parameters:" << std::endl;
-    rt.report(os);
-
-    if (hasDeprecatedKeys_<TypeTag>(tree))
-    {
-        os << "# DEPRECATED run-time specified parameters:" << std::endl;
-        drt.report(os);
-        os << "# Replace by:" << std::endl;
-        unrt.report(os);
-    }
-
-    os << "# Compile-time specified parameters:" << std::endl;
-    ct.report(os);
-
-    std::list<std::string> unusedParams;
-    findUnusedKeys_<TypeTag>(unusedParams, tree);
-
-    if (unusedParams.size() > 0)
-    {
-        os << "# UNUSED parameters:" << std::endl;
-        for (auto it = unusedParams.begin(); it != unusedParams.end(); ++it)
-        {
-            os << *it << " = \"" << tree.get(*it, "") << "\"" << std::endl;
-        }
-    }
-}
-
-const char *getString_(const char *foo = 0)
-{ return foo; }
-
-template <class TypeTag>
-class Param
-{
-    typedef typename GET_PROP(TypeTag, ParameterTree) Params;
 public:
-    template <class ParamType, class PropTag>
-    static const ParamType &get(const char *propertyName,
-                                const char *groupOrParamName,
-                                const char *paramNameOrNil = 0)
+
+    //! Initialize the parameter tree singletons
+    static void init(int argc, char **argv,
+                     std::string parameterFileName = "",
+                     void (*usage)(const char *, const std::string &) = [](const char *, const std::string &){})
     {
-        static const ParamType &value = retrieve_<ParamType, PropTag>(propertyName, groupOrParamName, paramNameOrNil);
-        return value;
+        const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+
+        // check whether the user wanted to see the help message
+        for (int i = 1; i < argc; ++i)
+        {
+            if (std::string("--help") == argv[i] || std::string("-h") == argv[i])
+            {
+                // return usage message and return;
+                if (mpiHelper.rank() == 0)
+                    usage(argv[0], defaultUsageMessage(argv[0]));
+
+                exit(0);
+            }
+        }
+
+        // apply the default parameters
+        defaultParameters(defaultParamTree());
+
+        // parse paramters from the command line
+        for (int i = 1; i < argc; ++i)
+        {
+            if (argv[i][0] != '-' && i == 1)
+            {
+                // try to pass first argument as parameter file
+                parameterFileName = argv[1];
+                break;
+            }
+
+            if (argv[i][0] != '-')
+                DUNE_THROW(ParameterException, "-> Command line argument " << i << " (='" << argv[i] << "') is invalid. <-");
+
+            if (i+1 == argc)
+                DUNE_THROW(ParameterException, "-> No argument given for parameter '" << argv[i] << "'! <-");
+
+            // check for the ParameterFile argument
+            if (argv[i]+1 == std::string("ParameterFile")) // +1 removes the '-'
+            {
+                parameterFileName = argv[i+1];
+                ++i;
+            }
+
+            // add all other options as key value pairs
+            else
+            {
+                // read a -MyOpt VALUE option
+                std::string paramName = argv[i]+1; // +1 removes the '-'
+                std::string paramValue = argv[i+1];
+                ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
+
+                // Put the key=value pair into the parameter tree
+                paramTree()[paramName] = paramValue;
+            }
+        }
+
+        // otherwise use the default name (executable name + .input)
+        if (parameterFileName == "")
+        {
+            if (mpiHelper.size() > 1)
+                std::cout << "Rank " << mpiHelper.rank() << ": ";
+            std::cout << "No parameter file given. "
+                      << "Defaulting to '"
+                      << argv[0]
+                      << ".input' for input file.\n";
+
+            parameterFileName = std::string(argv[0]) + ".input";
+        }
+
+        // open and check whether the parameter file exists.
+        std::ifstream parameterFile(parameterFileName.c_str());
+        if (!parameterFile.is_open())
+        {
+            if (mpiHelper.size() > 1)
+                std::cout << "Rank " << mpiHelper.rank() << ": ";
+            std::cout << " -> Could not open file '"
+                      << parameterFileName
+                      << "'. <- \n\n";
+
+            usage(argv[0], defaultUsageMessage(argv[0]));
+
+            DUNE_THROW(ParameterException, "Error opening input file " << parameterFileName << ".");
+        }
+        else
+        {
+            // read parameters from the file without overwriting the command line params
+            // because the command line arguments have precedence
+            Dune::ParameterTreeParser::readINITree(parameterFileName,
+                                                   paramTree(),
+                                                   /*overwrite=*/false);
+        }
+        parameterFile.close();
     }
 
-    template <class ParamType>
-    static const ParamType &getRuntime(const char *groupOrParamName,
-                                       const char *paramNameOrNil = 0)
+    //! returns the logging parameter tree recording which parameters are used during the simulation
+    static const LoggingParameterTree& getTree()
     {
-        return retrieveRuntime_<ParamType>(groupOrParamName, paramNameOrNil);
+        static LoggingParameterTree tree(paramTree(), defaultParamTree());
+        return tree;
     }
 
 private:
-    struct Blubb {
-        std::string propertyName;
-        std::string paramTypeName;
-        std::string groupName;
 
-        Blubb &operator=(const Blubb &b)
-        {
-            propertyName = b.propertyName;
-            paramTypeName = b.paramTypeName;
-            groupName = b.groupName;
-            return *this;
-        }
-    };
-
-    template <class ParamType, class PropTag>
-    static const ParamType &retrieve_(const char *propertyName,
-                                      const char *groupOrParamName,
-                                      const char *paramNameOrNil = 0)
+    //! the actual internal parameter tree storing all user-specfied runtime parameters
+    static Dune::ParameterTree& paramTree()
     {
-        const char *paramName, *groupName;
-        if (paramNameOrNil && strlen(paramNameOrNil) > 0) {
-            groupName = groupOrParamName;
-            paramName = paramNameOrNil;
-        }
-        else {
-            groupName = "";
-            paramName = groupOrParamName;
-        }
-
-        // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
-        // and 'WriteConvergence' becomes 'Newton.WriteConvergence'
-        // with the default value specified by the
-        // 'NewtonWriteConvergence' property. in an INI file this
-        // would look like:
-        //
-        // [Newton]
-        // WriteConvergence = true
-        std::string canonicalName(paramName);
-        if (strlen(groupName) > 0) {
-            canonicalName.insert(0, ".");
-            canonicalName.insert(0, groupName);
-        }
-
-        std::string modelParamGroup(GET_PROP_VALUE(TypeTag, ModelParameterGroup));
-        // prefix the parameter with the parameter group of the
-        // model. this allows things like sub-model specific parameters like
-        //
-        // [Stokes.Newton]
-        // WriteConvergence = false
-        // [Darcy.Newton]
-        // WriteConvergence = true
-        if (modelParamGroup.size()) {
-            canonicalName.insert(0, ".");
-            canonicalName.insert(0, modelParamGroup);
-        }
-
-        static ParamType value;
-        // retrieve actual parameter from the parameter tree
-        ParamType defaultValue = GET_PROP_VALUE_(TypeTag, PropTag);
-        if (!Params::tree().hasKey(canonicalName) && Params::tree().hasKey(paramName))//functionality to catch deprecated params
-        {
-            value = Params::tree().template get<ParamType>(paramName, defaultValue);
-//            std::cout<<"\nWarning: Using the parameter: "<<paramName<<" without group name: "<<groupName<<" is deprecated!"<<"\n\n";
-        }
-        else
-            value = Params::tree().template get<ParamType>(canonicalName, defaultValue);
-
-        // remember whether the parameter was taken from the parameter
-        // tree or the default from the property system was taken.
-        Dune::ParameterTree &rt = Params::runTimeParams();
-        Dune::ParameterTree &ct = Params::compileTimeParams();
-        Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
-        Dune::ParameterTree &unrt = Params::unusedNewRunTimeParams();
-        if (Params::tree().hasKey(canonicalName)) {
-            rt[canonicalName] = Params::tree()[canonicalName];
-        }
-        else if (Params::tree().hasKey(paramName))//functionality to catch deprecated params
-        {
-            drt[paramName] = Params::tree()[paramName];
-            unrt[canonicalName] = Params::tree()[paramName];
-        }
-        else {
-            std::string s;
-            std::ostringstream oss(s);
-            oss << defaultValue;
-            ct[canonicalName] = oss.str();
-        }
-        return value;
+        static Dune::ParameterTree tree;
+        return tree;
     }
 
-    template <class ParamType>
-    static const ParamType &retrieveRuntime_(const char *groupOrParamName, const char *paramNameOrNil = 0)
+    //! the parameter tree storing the Dumux global defaults for some parameters
+    static Dune::ParameterTree& defaultParamTree()
     {
-        const char *paramName, *groupName;
-        if (paramNameOrNil && paramNameOrNil[0] != '\0') {
-            groupName = groupOrParamName;
-            paramName = paramNameOrNil;
-        }
-        else {
-            groupName = "";
-            paramName = groupOrParamName;
-        }
+        static Dune::ParameterTree tree;
+        return tree;
+    }
 
-        static std::string modelParamGroup(GET_PROP(TypeTag, ModelParameterGroup)::value);
+    //! This method puts all default arguments into the parameter tree
+    //! we do this once per simulation on call to Parameters::init();
+    static void defaultParameters(Dune::ParameterTree& params)
+    {
+        // parameters in the problem group
+        params["Problem.EnableGravity"] = "true";
 
-        std::string canonicalName(modelParamGroup);
-
-        // prefix the parameter with the parameter group of the
-        // model. this allows things like sub-model specific parameters like
-        //
-        // [Stokes.Newton]
-        // WriteConvergence = false
-        // [Darcy.Newton]
-        // WriteConvergence = true
-        if (modelParamGroup.size()) {
-            canonicalName.push_back('.');
-        }
-
-        // prefix the parameter name by 'GroupName.'. E.g. 'Newton'
-        // and 'WriteConvergence' becomes 'Newton.WriteConvergence'
-        // with the default value specified by the
-        // 'NewtonWriteConvergence' property. in an INI file this
-        // would look like:
-        //
-        // [Newton]
-        // WriteConvergence = true
-        if (strlen(groupName) > 0) {
-            canonicalName.append(groupName);
-            canonicalName.push_back('.');
-        }
-
-        // append the name of the parameter
-        canonicalName.append(paramName);
-
-        // cache parameters using a hash_map (Dune::Parameter tree is slow!)
-        typedef std::unordered_map<std::string, ParamType> ParamCache;
-        static ParamCache paramCache;
-        typename ParamCache::iterator it = paramCache.find(canonicalName);
-        if (it != paramCache.end())
-            return it->second;
-
-        it = paramCache.find(paramName);
-        if (it != paramCache.end())
-                    return it->second;
-
-        // retrieve actual parameter from the parameter tree
-        if (!Params::tree().hasKey(canonicalName) && !Params::tree().hasKey(paramName)) {
-            DUNE_THROW(::Dumux::ParameterException,
-                       "Mandatory parameter '" << canonicalName
-                       << "' was not specified");
-        }
-
-        // update the cache
-        ParamType value;
-        if (!Params::tree().hasKey(canonicalName) && Params::tree().hasKey(paramName))//functionality to catch deprecated params
-        {
-            value = Params::tree().template get<ParamType>(paramName);
-            paramCache[paramName] = value;
-
-            // remember whether the parameter was taken from the parameter
-            // tree or the default from the property system was taken.
-            Dune::ParameterTree &drt = Params::deprecatedRunTimeParams();
-            Dune::ParameterTree &unrt = Params::unusedNewRunTimeParams();
-
-            drt[paramName] = Params::tree()[paramName];
-            unrt[canonicalName] = Params::tree()[paramName];
-            return paramCache[paramName];
-        }
-        else
-        {
-            value = Params::tree().template get<ParamType>(canonicalName);
-            paramCache[canonicalName] = value;
-
-            // remember whether the parameter was taken from the parameter
-            // tree or the default from the property system was taken.
-            Dune::ParameterTree &rt = Params::runTimeParams();
-
-            rt[canonicalName] = Params::tree()[canonicalName];
-            return paramCache[canonicalName];
-        }
+        // parameters in the newton group
+        params["Newton.TargetSteps"] = "16";
     }
 };
 
-template <class TypeTag, class ParamType, class PropTag>
-const ParamType &get(const char *propertyName,
-                     const char *paramOrGroupName,
-                     const char *paramNameOrNil = 0)
+enum class ParamLookup {
+    simple, tree
+};
+
+// a free function to get a parameter from the parameter tree singleton
+// e.g. auto endTime = getParam<double>("TimeManager.TEnd");
+template<typename T, typename... Args>
+T getParam(Args&&... args)
 {
-    return Param<TypeTag>::template get<ParamType, PropTag>(propertyName,
-                                                            paramOrGroupName,
-                                                            paramNameOrNil);
+    const auto& p = Parameters::getTree();
+    return p.template get<T>(std::forward<Args>(args)... );
 }
 
-template <class TypeTag, class ParamType>
-const ParamType &getRuntime(const char *paramOrGroupName,
-                            const char *paramNameOrNil = 0)
+template<typename T, typename... Args>
+DUNE_DEPRECATED_MSG("Using preprocessor MACROS for getting parameters is deprecated on next. Please use the new getParam method.")
+T getParam_UsingDeprecatedMacro(Args&&... args)
 {
-    return Param<TypeTag>::template getRuntime<ParamType>(paramOrGroupName,
-                                                          paramNameOrNil);
+    const auto& p = Parameters::getTree();
+    return p.template get<T>(std::forward<Args>(args)... );
 }
 
-} // namespace Parameters
+// a free function to report all parameters stating currently unused ones
+void reportParams()
+{ Parameters::getTree().reportAll(); }
 
 } // namespace Dumux
-
 
 #endif

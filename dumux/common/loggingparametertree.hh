@@ -48,8 +48,8 @@ public:
     /*
      * \brief Create LoggingParameterTree from ParameterTree
      */
-    LoggingParameterTree(const Dune::ParameterTree& params)
-    : params_(params) {}
+    LoggingParameterTree(const Dune::ParameterTree& params, const Dune::ParameterTree& defaultParams)
+    : params_(params), defaultParams_(defaultParams) {}
 
     /** \brief test for key
      *
@@ -181,6 +181,12 @@ public:
             usedRuntimeParams_[key] = params_[key];
         }
 
+        else if(defaultParams_.hasKey(key))
+        {
+            // use the default
+            return defaultParams_.template get<T>(key);
+        }
+
         return params_.template get<T>(key);
     }
 
@@ -221,6 +227,7 @@ private:
     }
 
     const Dune::ParameterTree& params_;
+    const Dune::ParameterTree& defaultParams_;
     mutable Dune::ParameterTree usedRuntimeParams_;
 };
 
