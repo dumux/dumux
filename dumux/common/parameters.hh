@@ -310,10 +310,6 @@ private:
     }
 };
 
-enum class ParamLookup {
-    simple, tree
-};
-
 // a free function to get a parameter from the parameter tree singleton
 // e.g. auto endTime = getParam<double>("TimeManager.TEnd");
 template<typename T, typename... Args>
@@ -321,6 +317,15 @@ T getParam(Args&&... args)
 {
     const auto& p = Parameters::getTree();
     return p.template get<T>(std::forward<Args>(args)... );
+}
+
+// a free function to get a parameter from the parameter tree singleton
+// e.g. auto endTime = getParam<double>("TimeManager.TEnd");
+template<typename T, typename... Args>
+T getParamFromGroup(Args&&... args)
+{
+    const auto& p = Parameters::getTree();
+    return p.template getFromGroup<T>(std::forward<Args>(args)... );
 }
 
 template<typename T, typename... Args>
