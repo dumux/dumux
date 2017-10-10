@@ -6,7 +6,7 @@ The problem setup is identical to the previous [_exercise 1_](../ex1/README.md).
 
 ## Preparing the exercise
 
-* Navigate to the directory `dumux/tutorial/dumux-course`
+* Navigate to the directory `dumux/tutorial/ex2`
 
 _Exercise 2_ deals with a two-phase compositional problem (__2p2c__). Goal is to learn how to use compile and runtime parameters and the _DuMuX property system_.
 
@@ -17,7 +17,7 @@ _Exercise 2_ deals with a two-phase compositional problem (__2p2c__). Goal is to
 Locate all the files you will need for this exercise
 * The __main file__: `exercise2.cc`
 * The __problem file__: `injection2p2cproblem.hh`
-* The __spatial parameters file__: `injection2pspatialparams.hh`
+* The __spatial parameters file__: `injection2p2cspatialparams.hh`
 * The __input file__: `exercise2.input`
 * Two header files containing:
   * a custom __local residual__ in: `mylocalresidual.hh`
@@ -31,7 +31,7 @@ Locate all the files you will need for this exercise
 * Change to the build-directory
 
 ```bash
-cd build-cmake/tutorial/exercise2
+cd ../../build-cmake/tutorial/exercise2
 ```
 
 * Compile the executable `exercise2`
@@ -44,7 +44,6 @@ make exercise2
 
 ```bash
 ./exercise2
-paraview *pvd
 ```
 Note: Because the input file has the same name as the
 executable, DuMuX will find it automatically.
