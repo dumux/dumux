@@ -126,19 +126,25 @@ Implement an incompressible component into the file `myincompressiblecomponent.h
 
 In order to do so, have a look at the file `dumux/material/components/component.hh` to see how the interfaces are defined and overload them accordingly.
 
-Execute the program by changing to the build-directory
+In order to execute the program, change to the build-directory
 
 ```bash
 cd build-cmake/tutorial/ex3
 ```
 
-and by compiling the executable for part a
+Uncomment the line for the corresponding executable in the `CMakeLists.txt` file:
+
+```cmake
+dune_add_test(NAME ex3_a SOURCES ex3_a.cc)
+```
+
+Now you can compile and execute the program by typing
 
 ```bash
 make ex3_a
 ```
 
-and by typing
+and
 
 ```bash
 ./ex3_a ex3_a.input
