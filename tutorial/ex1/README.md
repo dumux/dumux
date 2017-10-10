@@ -5,11 +5,11 @@
 N2 is injected in an aquifer previously saturated with water with an injection rate of 0.001 kg/(s*m$`^2`$).
 The aquifer is situated 2700 m below see level and the domain size is 60 m x 40 m. It consists of two layers, a moderately permeable one ($`\Omega_1`$) and a lower permeable one ($`\Omega_2`$).
 
-<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise1_setup.png" width="200"/>
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/master/tutorial/extradoc/exercise1_setup.png" width="1000">
 
 ## Preparing the exercise
 
-* Navigate to the directory `dumux/tutorial/dumux-course`
+* Navigate to the directory `dumux/tutorial/ex1`
 
 _Exercise 1_ deals with two problems: a two-phase immiscible problem (__2p__) and a two-phase compositional problem (__2p2c__). They both set up the same scenario with the difference that the 2p2c assumes a miscible fluid state for the two fluids (water and gaseous N2) and the 2p model assumes an immiscible fluid state.
 
@@ -32,7 +32,7 @@ Locate all the files you will need for this exercise
 * Change to the build-directory
 
 ```bash
-cd build-cmake/tutorial/exercise1
+cd ../../build-cmake/tutorial/exercise1
 ```
 
 * Compile both executables `exercise1_2p` and `exercise1_2p2c`
@@ -147,6 +147,6 @@ make injection2pniproblem # builds new executable
 
   __Initial conditions:__ The same temperature gradient as in the boundary conditions with an additional lens (with position: 20 < x < 30, 5 < y < 35), which has an initial temperature of 380 K.
 
-<img scr="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/feature/dumux-course-exercise1/tutorial/extradoc/exercise1_nonisothermal.png" width="200"/>
+<img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/master/tutorial/extradoc/exercise1_nonisothermal.png" width="800">
 
 The non-isothermal model requires additional spatial parameters like the thermal conductivity. They are already implemented in `injection2pspatialparams.hh`, you just need to _uncomment_ them.
