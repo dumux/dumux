@@ -1,8 +1,6 @@
 # executables for exercise part a & b
-dune_add_test(NAME ex3_a
-              SOURCES ex3_a.cc)
-dune_add_test(NAME ex3_b
-              SOURCES ex3_b.cc)
+# dune_add_test(NAME ex3_a SOURCES ex3_a.cc)
+# dune_add_test(NAME ex3_b SOURCES ex3_b.cc)
 
 # add a symlink for the input file
 dune_symlink_to_source_files(FILES "ex3_a.input" "ex3_b.input")
