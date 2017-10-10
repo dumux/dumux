@@ -65,12 +65,12 @@ The solved equations are the mass balances of water and oil:
 
 \subsection{The Main File}
 Listing \ref{tutorial-implicit:mainfile} shows the main application file
-\texttt{tutorial/tutorial\_implicit.cc} for the implicit two-phase
+\texttt{tutorial/tutorial\_implicit/tutorial\_implicit.cc} for the implicit two-phase
 model. This file has to be compiled and executed in order to solve the problem described
 above.
 
-\begin{lst}[File tutorial/tutorial\_implicit.cc]\label{tutorial-implicit:mainfile} \mbox{}
-  \lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_implicit.cc}
+\begin{lst}[File tutorial/tutorial\_implicit/tutorial\_implicit.cc]\label{tutorial-implicit:mainfile} \mbox{}
+  \lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_implicit/tutorial_implicit.cc}
 \end{lst}
 
 From line \ref{tutorial-implicit:include-begin} to line
@@ -99,8 +99,8 @@ values provided in the command line have
 precedence. Listing~\ref{tutorial-implicit:parameter-file} shows the
 default parameter file for the tutorial problem.
 
-\begin{lst}[File tutorial/tutorial\_implicit.input]\label{tutorial-implicit:parameter-file} \mbox{}
-\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_implicit.input}
+\begin{lst}[File tutorial/tutorial\_implicit/tutorial\_implicit.input]\label{tutorial-implicit:parameter-file} \mbox{}
+\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_implicit/tutorial_implicit.input}
 \end{lst}
 
 To provide an error message, the usage message which is displayed to
@@ -116,8 +116,8 @@ When solving a problem using \Dumux, the most important file is the
 so-called \textit{problem file} as shown in
 listing~\ref{tutorial-implicit:problemfile}.
 
-\begin{lst}[File tutorial/tutorialproblem\_implicit.hh]\label{tutorial-implicit:problemfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialproblem_implicit.hh}
+\begin{lst}[File tutorial/tutorial\_implicit/tutorialproblem\_implicit.hh]\label{tutorial-implicit:problemfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_implicit/tutorialproblem_implicit.hh}
 \end{lst}
 
 First, a new type tag is created for the problem in line
@@ -247,7 +247,7 @@ interactions such as solubility effects come into play and properties
 of mixtures such as density or enthalpy are of interest. These
 interactions are defined by {\em fluid systems}, which are located in
 \verb+dumux/material/fluidsystems+. A more thorough overview of the
-\Dumux fluid framework can be found 
+\Dumux fluid framework can be found
 at \url{http://www.dumux.org/doxygen-stable/html-\DumuxVersion/modules.php}
 %in chapter~\ref{sec:fluidframework}.
 
@@ -270,8 +270,8 @@ should be derived from the base class
 \ref{tutorial-implicit:spatialparametersfile} shows the file \\
 \verb+tutorialspatialparams_implicit.hh+:
 
-\begin{lst}[File tutorial/tutorialspatialparams\_implicit.hh]\label{tutorial-implicit:spatialparametersfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=25, firstnumber=25]{../../tutorial/tutorialspatialparams_implicit.hh}
+\begin{lst}[File tutorial/tutorial\_implicit/tutorialspatialparams\_implicit.hh]\label{tutorial-implicit:spatialparametersfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=25, firstnumber=25]{../../tutorial/tutorial_implicit/tutorialspatialparams_implicit.hh}
 \end{lst}
 
 First, the spatial parameters type tag is created on line
@@ -411,7 +411,7 @@ To do that, you have to select different components via the property system in t
 \end{enumerate}
 If you want to take a closer look on how the fluid classes are defined and which
 substances are already available please browse through the files in the directory
-\texttt{/dumux/material/components} and read 
+\texttt{/dumux/material/components} and read
 the doxygen documentation \url{http://www.dumux.org/doxygen-stable/html-\DumuxVersion/modules.php}.
 %chapter~\ref{sec:fluidframework}.
 
@@ -597,7 +597,7 @@ As you have experienced, compilation takes quite some time. Therefore,
 via \textit{parameter input files}.
 
 In the code, parameters can be read via the macro
-\texttt{GET\_RUNTIME\_PARAM(TypeTag, Scalar, 
+\texttt{GET\_RUNTIME\_PARAM(TypeTag, Scalar,
 MyWonderful\allowbreak Group.MyWonderfulParameter);}. In this exercise we will explore the possibilities of the
 parameter file. For this we take a look at the file \texttt{ex3\_tutorial\_implicit.input} in the \texttt{solutions\_implicit} folder.
 Besides the parameters which you already used in the parameter file above,

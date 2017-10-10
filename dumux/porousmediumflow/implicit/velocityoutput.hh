@@ -31,6 +31,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 
@@ -66,7 +68,6 @@ class ImplicitVelocityOutput
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -145,11 +146,14 @@ public:
             const auto geometry = element.geometry();
 
             Dune::GeometryType geomType = geometry.type();
-            const ReferenceElement &referenceElement
-                = ReferenceElements::general(geomType);
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto refElement = ReferenceElements::general(geomType);
+#else
+            const auto &refElement = ReferenceElements::general(geomType);
+#endif
 
             const Dune::FieldVector<Scalar, dim>& localPos
-                = referenceElement.position(0, 0);
+                = refElement.position(0, 0);
 
             // get the transposed Jacobian of the element mapping
             const typename Element::Geometry::JacobianTransposed jacobianT2 =

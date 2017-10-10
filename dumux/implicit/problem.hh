@@ -30,6 +30,8 @@
 #include <dumux/implicit/adaptive/gridadapt.hh>
 #include <dumux/common/boundingboxtree.hh>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 /*!
@@ -103,11 +105,17 @@ public:
         : gridView_(gridView)
         , bBoxMin_(std::numeric_limits<double>::max())
         , bBoxMax_(-std::numeric_limits<double>::max())
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        , elementMapper_(gridView, Dune::mcmgElementLayout())
+        , vertexMapper_(gridView, Dune::mcmgVertexLayout())
+#else
         , elementMapper_(gridView)
         , vertexMapper_(gridView)
+#endif
         , timeManager_(&timeManager)
         , newtonMethod_(asImp_())
         , newtonCtl_(asImp_())
+
     {
         // calculate the bounding box of the local partition of the grid view
         for (const auto& vertex : vertices(gridView)) {

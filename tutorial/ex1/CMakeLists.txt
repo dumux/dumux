@@ -1,0 +1,10 @@
+# the immiscible two-phase simulation program
+dune_add_test(NAME exercise1_2p
+              SOURCES exercise1_2p.cc)
+
+# the compositional two-phase simulation program
+dune_add_test(NAME exercise1_2p2c
+              SOURCES exercise1_2p2c.cc)
+
+# add a symlink for the input file
+dune_symlink_to_source_files(FILES "exercise1.input")

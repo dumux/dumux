@@ -31,6 +31,8 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 
@@ -69,7 +71,6 @@ class ImplicitModel
     typedef typename GridView::template Codim<0>::Entity Element;
 
     typedef typename Dune::ReferenceElements<CoordScalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<CoordScalar, dim> ReferenceElement;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
@@ -959,8 +960,12 @@ protected:
 
         for (const auto& element : elements(gridView_())) {
             Dune::GeometryType geomType = element.geometry().type();
-            const ReferenceElement &refElement = ReferenceElements::general(geomType);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto refElement = ReferenceElements::general(geomType);
+#else
+            const auto &refElement = ReferenceElements::general(geomType);
+#endif
             for (const auto& intersection : intersections(gridView_(), element)) {
                 if (intersection.boundary()) {
                     if (isBox)

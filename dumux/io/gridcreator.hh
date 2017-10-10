@@ -35,6 +35,7 @@
 #include <dune/common/classname.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/version.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/grid/common/gridfactory.hh>
@@ -63,7 +64,11 @@
 // FoamGrid specific includes
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+#include <dune/foamgrid/dgffoam.hh>
+#else
 #include <dune/foamgrid/dgffoam.cc>
+#endif
 #endif
 
 #include <dumux/common/propertysystem.hh>

@@ -57,8 +57,8 @@ executed, has to be set up, if the problem described above is to be solved using
 a sequential model. This main file can be found in the directory \texttt{/tutorial}
 of the stable part of \Dumux.
 
-\begin{lst}[File tutorial/tutorial\_sequential.cc]\label{tutorial-sequential:mainfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_sequential.cc}
+\begin{lst}[File tutorial/tutorial\_sequential/tutorial\_sequential.cc]\label{tutorial-sequential:mainfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_sequential/tutorial_sequential.cc}
 \end{lst}
 
 First, from line \ref{tutorial-sequential:include-begin} to line
@@ -85,8 +85,8 @@ values provided in the command line have
 precedence. Listing~\ref{tutorial-sequential:parameter-file} shows the
 default parameter file for the tutorial problem.
 
-\begin{lst}[File tutorial/tutorial\_sequential.input]\label{tutorial-sequential:parameter-file} \mbox{}
-\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_sequential.input}
+\begin{lst}[File tutorial/tutorial\_sequential/tutorial\_sequential.input]\label{tutorial-sequential:parameter-file} \mbox{}
+\lstinputlisting[style=DumuxParameterFile]{../../tutorial/tutorial_sequential/tutorial_sequential.input}
 \end{lst}
 
 To provide an error message, the usage message which is displayed to
@@ -104,8 +104,8 @@ so-called \textit{problem file} as shown in listing
 \ref{tutorial-sequential:problemfile} of
 \texttt{tutorialproblem\_sequential.hh}.
 
-\begin{lst}[File tutorial/tutorialproblem\_sequential.hh]\label{tutorial-sequential:problemfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialproblem_sequential.hh}
+\begin{lst}[File tutorial/tutorial\_sequential/tutorialproblem\_sequential.hh]\label{tutorial-sequential:problemfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_sequential/tutorialproblem_sequential.hh}
 \end{lst}
 
 First, both \Dune  grid handlers and the sequential model of \Dumux
@@ -189,8 +189,8 @@ on the functions, consult the documentation in the code.
 Listing \ref{tutorial-sequential:spatialparamsfile} shows the file
 \verb+tutorialspatialparams_sequential.hh+:
 
-\begin{lst}[File tutorial/tutorialspatialparams\_sequential.hh]\label{tutorial-sequential:spatialparamsfile} \mbox{}
-\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorialspatialparams_sequential.hh}
+\begin{lst}[File tutorial/tutorial\_sequential/tutorialspatialparams\_sequential.hh]\label{tutorial-sequential:spatialparamsfile} \mbox{}
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=24, firstnumber=24]{../../tutorial/tutorial_sequential/tutorialspatialparams_sequential.hh}
 \end{lst}
 As this file only slightly differs from the implicit version, consult
 chapter \ref{tutorial-implicit:description-spatialParameters} for explanations.
@@ -211,18 +211,18 @@ For Exercise 1 you only have to make some small changes in the tutorial files.
 \item \textbf{Altering output}
 
 To get an impression what the results should look like you can first run the
-original version of the sequential tutorial model by typing  \texttt{./tutorial\_sequential}.
+original version of the sequential tutorial model by typing  \texttt{./tutorial/tutorial\_sequential/tutorial\_sequential}.
 The runtime parameters which are set can be found in the input file (listing~\ref{tutorial-sequential:parameter-file}).
-If the input file has the same name than the main file (e.g. \texttt{tutorial\_sequential.cc}
-and \texttt{tutorial\_sequential.input}), it is automatically chosen. If the name differs
-the program has to be started typing \texttt{./tutorial\_sequential -parameterFile <filename>.input}.
-For more options you can also type \texttt{./tutorial\_sequential -h}. For the
+If the input file has the same name than the main file (e.g. \texttt{tutorial/tutorial\_sequential/tutorial\_sequential.cc}
+and \texttt{tutorial/tutorial\_sequential/tutorial\_sequential.input}), it is automatically chosen. If the name differs
+the program has to be started typing \texttt{./tutorial/tutorial\_sequential/tutorial\_sequential -parameterFile <filename>.input}.
+For more options you can also type \texttt{./tutorial/tutorial\_sequential/tutorial\_sequential -h}. For the
 visualisation with paraview please refer to \ref{quick-start-guide}.\\
 As you can see, the simulation creates many output files. To reduce these in order
 to perform longer simulations, change the method responsible for output (line
 \ref{tutorial-sequential:outputinterval} in the file \texttt{tutorialproblem\_\allowbreak sequential})
 as to write an output only every 20 time-steps. Compile the main file by typing
-\texttt{make tutorial\_sequential} and run the model. Now, run the simulation for 5e5 seconds.
+\texttt{make tutorial/tutorial\_sequential/tutorial\_sequential} and run the model. Now, run the simulation for 5e5 seconds.
 
 \item \textbf{Changing the Model Domain and the Boundary Conditions} \\
 Change the size of the model domain so that you get a rectangle
@@ -527,4 +527,3 @@ so both models can also work with functions based ond \mbox{\texttt{...AtPos(Glo
 no matter if we model implicit or sequential. Try to formulate a spatial parameters
 file that works with both problems, the implicit and the sequential. Therein, only
 use functions at the position.
-
