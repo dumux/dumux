@@ -105,7 +105,7 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
     /*
      *  TODO:dumux-course-task:
      * get the temperatureIdx as the index for the primary variable temperature and the
-     * energyIdx as the index for the energy conservation equation for your convinience.
+     * energyIdx as the index for the energy conservation equation for your convenience.
      */
 
         // world dimension
@@ -230,7 +230,7 @@ public:
        /*!
         *  TODO:dumux-course-task:
         * set a temperature gradient of 0.03 K per m beginning at 283 K here.
-        * Hint: you can use maxDepth_ and the globalPos similar to the pressure gradient
+        * Hint: you can use aquiferDepth_ and the globalPos similar to the pressure gradient
         */
     }
 
@@ -287,8 +287,8 @@ public:
         /*!
         *  TODO:dumux-course-task:
         * set a temperature gradient of 0.03 K per m beginning at 283 K here.
-        * Hint: you can use maxDepth_ and the globalPos similar to the pressure gradient
-        * use globalPos[0] and globalpos[1] to implement the high temperature lens with 380 K
+        * Hint: you can use aquiferDepth_ and the globalPos similar to the pressure gradient
+        * use globalPos[0] and globalPos[1] to implement the high temperature lens with 380 K
         */
     }
 
