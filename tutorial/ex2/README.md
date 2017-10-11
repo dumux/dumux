@@ -31,7 +31,7 @@ Locate all the files you will need for this exercise
 * Change to the build-directory
 
 ```bash
-cd ../../build-cmake/tutorial/exercise2
+cd ../../build-cmake/tutorial/ex2
 ```
 
 * Compile the executable `exercise2`
@@ -69,7 +69,7 @@ Note: `MyMaterialLaw` uses the `BrooksCoreyParams` class as parameter input. You
 const auto pe = params.pe();
 ```
 
-The type (i.e. C++ type) of the material law is set in the file `injection2pspatialparams.hh` by using the DuMuX property system
+The type (i.e. C++ type) of the material law is set in the file `injection2p2cspatialparams.hh` by using the DuMuX property system
 
 ```c++
 SET_PROP(InjectionSpatialParams, MaterialLaw)
@@ -115,7 +115,7 @@ A list of parameters that can be set through the input file is given [here](http
 ### Task 5: Implement your own local residual
 <hr>
 
-Most types in DuMuX are properties that can be changed just like the material law. In the following task we implement our own 2p2c local residual, i.e. the class that computes the element residual  in every Newton step. The file `mylocalresidual.hh` contains a copy of the original local residual class used for the 2p2c model renamed to `template<class TypeTag> class MyTwoPTwoCLocalResidual`.
+Most types in DuMuX are properties that can be changed just like the material law. In the following task we implement our own 2p2c local residual, i.e. the class that computes the element residual  in every Newton iteration. The file `mylocalresidual.hh` contains a copy of the original local residual class used for the 2p2c model renamed to `template<class TypeTag> class MyTwoPTwoCLocalResidual`.
 
 * Make DuMuX use this new local residual by inluding the header `mylocalresidual.hh` and setting the corresponding property in the `Property` namespace in the file `injection2p2cproblem.hh`
 
@@ -123,12 +123,12 @@ Most types in DuMuX are properties that can be changed just like the material la
 // note that every property struct knows about TypeTag
 SET_PROP(Injection2p2cProblem, LocalResidual)
 {
-    using type = MyTwoPTwoCLocalResidualocal<TypeTag>;
+    using type = MyTwoPTwoCLocalResidual<TypeTag>;
 };
 
 // or using the convenience macro
 SET_TYPE_PROP(Injection2p2cProblem, LocalResidual,
-              MyTwoPTwoCLocalResidualocal<TypeTag>);
+              MyTwoPTwoCLocalResidual<TypeTag>);
 ```
 
 * Implement an output to the terminal in the constructor of `MyTwoPTwoCLocalResidual` e.g.
