@@ -100,7 +100,7 @@ public:
      * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static bool liquidIsCompressible()
-    { return false; }
+    { return true; }
 };
 
 } // end namespace
