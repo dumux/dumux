@@ -104,7 +104,7 @@ in the `injection2p2cproblem.hh` file and also remember to also set the paramete
 
 * Check the influence of that parameter on the simulation result by rerunning the simulation with different injection rates. Remember to also set the parameter totalAreaSpecificInflow in the input file.
 
-Again, you don't need to recompile the program.
+Since you have changed your header hile, you have to recompile the program.
 
 <hr><br><br>
 ### 5. Setting up a new executable (for a non-isothermal simulation)
