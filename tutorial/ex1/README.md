@@ -3,7 +3,7 @@
 ## Problem set-up
 
 N2 is injected in an aquifer previously saturated with water with an injection rate of 0.001 kg/(s*m$`^2`$).
-The aquifer is situated 2700 m below see level and the domain size is 60 m x 40 m. It consists of two layers, a moderately permeable one ($`\Omega_1`$) and a lower permeable one ($`\Omega_2`$).
+The aquifer is situated 2700 m below sea level and the domain size is 60 m x 40 m. It consists of two layers, a moderately permeable one ($`\Omega_1`$) and a lower permeable one ($`\Omega_2`$).
 
 <img src="https://git.iws.uni-stuttgart.de/dumux-repositories/dumux/raw/master/tutorial/extradoc/exercise1_setup.png" width="1000">
 
@@ -32,7 +32,7 @@ Locate all the files you will need for this exercise
 * Change to the build-directory
 
 ```bash
-cd ../../build-cmake/tutorial/exercise1
+cd ../../build-cmake/tutorial/ex1
 ```
 
 * Compile both executables `exercise1_2p` and `exercise1_2p2c`
@@ -62,11 +62,11 @@ In the input file `exercise1.input` you can find the following section
 
 ```ini
 [SpatialParams]
-EntryPressureFine = 4.5e4
-EntryPressureCoarse = 1e4
+EntryPressureAquitard = 4.5e4
+EntryPressureAquifer = 1e4
 ```
 
-* Change the values for the fine entry pressure in the input file to a lower value and compare the results with the previous solution. You don't need to recompile the executable.
+* Change the values for the aquitard entry pressure in the input file to a lower value and compare the results with the previous solution. You don't need to recompile the executable.
 
 <hr><br><br>
 ### Task 4: Runtime parameters
@@ -117,18 +117,19 @@ cp exercise1_2p.cc exercise1_2pni.cc
 ```
 
 * In  `exercise1_2pni.cc`, include the header `injection2pniproblem.hh` instead of the isothermal problem file `injection2pproblem.hh`.
+* In the main routine of `exercise1_2pni.cc`, replace `TTAG(InjectionCCProblem2P)` by `TTAG(InjectionCCProblem2PNI)`.
 * Add a new executable in `CMakeLists.txt` by adding the lines
 
 ```cmake
-dune_add_test(NAME injection2pniproblem
-              SOURCES injection2pniproblem.cc)
+dune_add_test(NAME exercise1_2pni
+              SOURCES exercise1_2pni.cc)
 ```
 
 * Test that everything compiles without error
 
 ```bash
 make # should rerun cmake
-make injection2pniproblem # builds new executable
+make exercise1_2pni # builds new executable
 ```
 
 <hr><br><br>
