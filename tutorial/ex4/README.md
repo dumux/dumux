@@ -19,7 +19,7 @@ workflow to develop code on top of DuMuX.
     * as name of the new module: `dumux-example`
     * as module dependencies: `dumux`
     * a version at your choice
-    * your email adress
+    * your email address
 
 <hr><br><br>
 ### Task 2: Rerun dunecontrol to configure your new project 
@@ -49,13 +49,13 @@ mkdir appl
 * Add a new CMakeLists.txt in the folder `appl` with the content
 
 ```cmake
-// add a new box 1p test
+# add a new box 1p test
 dune_add_test(NAME test_box1p
               SOURCES test_box1p.cc)
-              
-// link the input file to the build folder
+
+# link the input file to the build folder
 dune_symlink_to_source_files(FILES test_box1p.input)
-              
+ 
 ```
 
 * Reconfigure your module by running in the topmost directory of your new module
@@ -74,7 +74,7 @@ cd appl
 ```
 
 <hr><br><br>
-### Task 4: Create a new gitlab project
+### Task 4: Create a new GitLab project
 <hr>
 
 * Login with your username and password at https://git.iws.uni-stuttgart.de/
@@ -83,6 +83,8 @@ Note: If you don't have an account create one. We allow anyone to host repositor
 on our GitLab instance as long as it is DuMuX related.
 
 * Click the **New project** button
+
+* Specify your project name and click the **Create project** button
 
 * Follow the given instructions for an *existing folder* 
 
