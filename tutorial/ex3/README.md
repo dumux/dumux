@@ -208,21 +208,23 @@ Under the assumption that one molecule of _MyCompressibleComponent_ displaces ex
 
 $` \rho_{w} = \frac{ \rho_{w, pure} }{ M_{H_2O} }*(M_{H_2O}*x_{H_2O} + M_{MyComponent}*x_{MyComponent}) `$
 
-Implement this dependency in the _density()_ method in the fluid system. Then, execute the program by changing to the build-directory
+Implement this dependency in the _density()_ method in the fluid system. In order to compile and execute the program, uncomment the line for the corresponding executable in the `CMakeLists.txt` file
+
+```cmake
+dune_add_test(NAME ex3_b SOURCES ex3_b.cc)
+```
+
+Then, change to the build-directory
 
 ```bash
 cd build-cmake/tutorial/ex3
 ```
 
-and by compiling the executable for part b
+and type
 
 ```bash
+make
 make ex3_b
-```
-
-and by typing
-
-```bash
 ./ex3_b ex3_b.input
 ```
 
