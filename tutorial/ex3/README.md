@@ -154,7 +154,7 @@ The saturation distribution at the final simulation time should look like this:
 
 We now want to implement a pressure-dependent density for our component. Open the file `mycompressiblecomponent.hh` and copy in the functions you implemented for the incompressible variant. Now substitute the method that returns the density by the following expression:
 
-$`\rho_{MyComp} = \rho_{min} + \frac{ \rho_{max} - \rho_{min} }{ 1 + \rho_{min}*e^{-1.0*k*(\rho_{max} - \rho_{min})*p} } `$,
+$`\displaystyle \rho_{MyComp} = \rho_{min} + \frac{ \rho_{max} - \rho_{min} }{ 1 + \rho_{min}*e^{-1.0*k*(\rho_{max} - \rho_{min})*p} } `$
 
 where $`p`$ is the pressure and $`\rho_{min} = 1440 `$, $`\rho_{max} = 1480 `$ and $`k = 5 \cdot 10^{-7} `$. Also, make sure the header is included in the `ex3_a_problem.hh` file by uncommenting line 42. Furthermore, the new component has to be set as the non-wetting phase in the fluid system, i.e. comment line 81 and uncomment line 82. The non-wetting density distribution at the final simulation time should look like this:
 
