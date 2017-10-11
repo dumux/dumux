@@ -4,12 +4,12 @@
 if test "$1" = "--help" || test "$1" = "-help" \
    || test "$1" = "help" || test "$1" = ""; then
   echo ""
-  echo "USAGE: $0 MODULE_DIR PATH_1 [PATH_2 ...]"
+  echo "USAGE: $0 MODULE_DIR FOLDER_1 [FOLDER_2 ...]"
   echo ""
   echo "MODULE_DIR is the folder containing the DUNE module from which you"
   echo "want to extract. The script has to be called one level above it."
   echo ""
-  echo "The PATHs need to indicate subfolders of MODULE_DIR. At least one"
+  echo "The FOLDERs need to indicate subfolders of MODULE_DIR. At least one"
   echo "of them has to contain a source file *.cc of an executable for which"
   echo "you would like to timber a table in dumux-pub."
   exit 0
