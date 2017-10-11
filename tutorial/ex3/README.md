@@ -141,12 +141,8 @@ dune_add_test(NAME ex3_a SOURCES ex3_a.cc)
 Now you can compile and execute the program by typing
 
 ```bash
+make
 make ex3_a
-```
-
-and
-
-```bash
 ./ex3_a ex3_a.input
 ```
 
