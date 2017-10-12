@@ -61,7 +61,7 @@ DuMuX uses the term _material law_ to describe the law used to compute
 
 The file `mymateriallaw.hh` contains a custom implementation of such a material law.
 
-* Implement the method `Scalar pc(Scalar sw)` by implementing your own capillary pressure relationship, e.g. a simple linear relationship $`p_C(S_w) = 1\cdot 10^5 \cdot (1-S_w) + p_e`$.
+* Implement the method `Scalar pc(const Params &params, Scalar swe)` by implementing your own capillary pressure relationship, e.g. a simple linear relationship $`p_C(S_w) = 1\cdot 10^5 \cdot (1-S_w) + p_e`$.
 
 Note: `MyMaterialLaw` uses the `BrooksCoreyParams` class as parameter input. You can get the entry pressure that is set in the spatial params as follows
 
