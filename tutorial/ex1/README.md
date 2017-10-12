@@ -86,7 +86,7 @@ We want to be able to set it at runtime. To this end,
 
 ```c++
 // read the injection rate from the input file at run time
-const auto totalAreaSpecificInflow_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, <TYPE>, <GROUPNAME>, <PARAMNAME>);
+totalAreaSpecificInflow_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, <TYPE>, <GROUPNAME>, <PARAMNAME>);
 ```
 
 * Replace
