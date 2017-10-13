@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief An assembler for the global linear system for fully implicit models
- *        and cell-centered discretization schemes using Newton's method.
+ * \brief An enum class to define various methods available in order to compute
+          the derivatives of the residual i.e. the entries in the jacobian matrix.
  */
 #ifndef DUMUX_JACOBIAN_DIFFERENTIATION_METHODS_HH
 #define DUMUX_JACOBIAN_DIFFERENTIATION_METHODS_HH

@@ -57,6 +57,9 @@ SET_TYPE_PROP(TwoPIncompressible, Problem, TwoPTestProblem<TypeTag>);
 // the local residual containing the analytic derivative methods
 SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
 
+// the linear solver type
+SET_TYPE_PROP(TwoPIncompressible, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
+
 // Set the wetting phase
 SET_PROP(TwoPIncompressible, WettingPhase)
 {

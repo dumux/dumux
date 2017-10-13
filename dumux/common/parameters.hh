@@ -314,6 +314,10 @@ private:
 
         // parameters in the newton group
         params["Newton.TargetSteps"] = "16";
+
+        // parameters in the time loop group
+        params["TimeLoop.MaxTimeStepSize"] = std::to_string(std::numeric_limits<double>::max());
+        params["TimeLoop.MaxTimeStepDivisions"] = "10";
     }
 };
 

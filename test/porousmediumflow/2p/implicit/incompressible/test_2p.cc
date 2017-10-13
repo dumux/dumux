@@ -19,203 +19,20 @@
 /*!
  * \file
  *
- * \brief test for the one-phase CC model
+ * \brief test for the two-phase porousmedium flow model
  */
 #include <config.h>
 
 #include "problem.hh"
-
-#include <ctime>
-#include <iostream>
-
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/timer.hh>
-#include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
-
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
-#include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
-#include <dumux/common/loggingparametertree.hh>
-
-#include <dumux/linear/seqsolverbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/nonlinear/newtoncontroller.hh>
-
-#include <dumux/assembly/fvassembler.hh>
-#include <dumux/assembly/diffmethod.hh>
-
-#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/common/start/instationarynonlinear.hh>
 
 int main(int argc, char** argv) try
 {
-    using namespace Dumux;
-
     // define the type tag for this problem
     using TypeTag = TTAG(TYPETAG);
 
-    // some aliases for better readability
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-
-    ////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////
-
-    // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
-
-    // print dumux start message
-    if (mpiHelper.rank() == 0)
-        DumuxMessage::print(/*firstCall=*/true);
-
-    ////////////////////////////////////////////////////////////
-    // parse the command line arguments and input file
-    ////////////////////////////////////////////////////////////
-
-    // parse command line arguments
-    ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree());
-
-    // parse the input file into the parameter tree
-    // check first if the user provided an input file through the command line, if not use the default
-    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
-    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName);
-    LoggingParameterTree params(ParameterTree::tree());
-
-    //////////////////////////////////////////////////////////////////////
-    // try to create a grid (from the given grid file or the input file)
-    /////////////////////////////////////////////////////////////////////
-
-    GridCreator::makeGrid(params);
-    GridCreator::loadBalance();
-
-    ////////////////////////////////////////////////////////////
-    // run instationary non-linear problem on this grid
-    ////////////////////////////////////////////////////////////
-
-    // we compute on the leaf grid view
-    const auto& leafGridView = GridCreator::grid().leafGridView();
-
-    // create the finite volume grid geometry
-    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
-
-    // the problem (initial and boundary conditions)
-    auto problem = std::make_shared<Problem>(fvGridGeometry);
-
-    // the solution vector
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
-    SolutionVector x(leafGridView.size(dofCodim));
-    problem->applyInitialSolution(x);
-    auto xOld = x;
-
-    // the grid variables
-    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
-
-    // get some time loop parameters
-    auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, TEnd);
-    auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, DtInitial);
-    auto maxDivisions = GET_PARAM_FROM_GROUP(TypeTag, int, TimeLoop, MaxTimeStepDivisions);
-    auto maxDt = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, MaxTimeStepSize);
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeLoop.Restart"))
-        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, Restart);
-
-    // intialize the vtk output module
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
-    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
-    vtkWriter.write(0.0);
-
-    // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-
-    // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
-
-    // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>();
-
-    // the non-linear solver
-    using NewtonController = Dumux::NewtonController<TypeTag>;
-    using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
-    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
-
-    // time loop
-    timeLoop->start(); do
-    {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
-
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
-
-            if (converged)
-                break;
-
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                           "Newton solver didn't converge after "
-                           << maxDivisions
-                           << " time-step divisions. dt="
-                           << timeLoop->timeStepSize()
-                           << ".\nThe solutions of the current and the previous time steps "
-                           << "have been saved to restart files.");
-        }
-
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
-
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
-
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
-
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
-
-        // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
-
-    } while (!timeLoop->finished());
-
-    timeLoop->finalize(leafGridView.comm());
-
-    ////////////////////////////////////////////////////////////
-    // finalize, print dumux message to say goodbye
-    ////////////////////////////////////////////////////////////
-
-    // print dumux end message
-    if (mpiHelper.rank() == 0)
-    {
-        params.reportAll();
-        DumuxMessage::print(/*firstCall=*/false);
-    }
-
-    return 0;
-
+    // run implict non-linear simulation with it
+    Dumux::InstationaryNonLinearSimulation<TypeTag>::start(argc, argv);
 } // end main
 catch (Dumux::ParameterException &e)
 {
