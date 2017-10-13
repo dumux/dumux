@@ -222,7 +222,7 @@ public:
 //                                     const FVElementGeometry &fvGeometry,
 //                                     const int scvIdx) const
 //     {
-//         return lambdaSolid_;
+//         return 2.8;
 //     }
 
 private:
