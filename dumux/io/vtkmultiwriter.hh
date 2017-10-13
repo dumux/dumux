@@ -251,8 +251,8 @@ public:
      */
     void endWrite(bool onlyDiscard = false)
     {
-        if (!onlyDiscard) {
-            ++curWriterNum_;
+        if (!onlyDiscard)
+        {
             curWriter_->write(curOutFileName_.c_str(), OutputValue);
 
             // determine name to write into the multi-file for the
@@ -278,6 +278,8 @@ public:
                                << " file=\"" << fileName << "." << suffix << "\"/>\n";
                 }
             }
+
+            ++curWriterNum_;
         }
 
         // discard managed objects
