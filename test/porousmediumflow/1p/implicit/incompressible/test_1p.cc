@@ -30,7 +30,6 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 
@@ -40,7 +39,6 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -74,18 +72,13 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
     // parse command line arguments
-    ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree());
-
-    // parse the input file into the parameter tree
-    // check first if the user provided an input file through the command line, if not use the default
-    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
-    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName);
+    Parameters::init(argc, argv);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    try { GridCreator::makeGrid(); }
+    try { GridCreator::makeGrid(Parameters::getTree()); }
     catch (...) {
         std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
         throw;
@@ -124,10 +117,6 @@ int main(int argc, char** argv) try
     assembler->assembleJacobianAndResidual(x);
     assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
-    // print matrix
-    // Dune::printmatrix(std::cout, *A, "", "");
-    // Dune::printvector(std::cout, *r, "", "");
-
     // we solve Ax = -r to save update and copy
     (*r) *= -1.0;
 
@@ -137,12 +126,6 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(*problem);
     linearSolver->solve(*A, x, *r);
     solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
-
-    // // the non-linear solver
-    // using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
-    // auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
-    // NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
-    // nonLinearSolver.solve(x);
 
     // output result to vtk
     Dune::Timer outputTimer; std::cout << "Writing result to file "<< problem->name() <<" ..." << std::flush;
@@ -158,6 +141,8 @@ int main(int argc, char** argv) try
     std::cout << "Simulation took " << timer.elapsed() << " seconds on "
               << comm.size() << " processes.\n"
               << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+
+    Parameters::print();
 
     return 0;
 

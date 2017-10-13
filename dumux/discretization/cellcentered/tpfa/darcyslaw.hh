@@ -126,6 +126,8 @@ public:
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
+        static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // Get the inside and outside volume variables
@@ -133,7 +135,7 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (gravity)
         {
             // do averaging for the density over all neighboring elements
             const auto rho = [&]()

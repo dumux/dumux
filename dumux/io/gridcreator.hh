@@ -679,8 +679,6 @@ public:
         // Only construction from the input file is possible
         // Look for the necessary keys to construct from the input file
         try {
-            typedef typename GET_PROP(TypeTag, ParameterTree) Params;
-            auto params = Params::tree();
             typedef ct Scalar;
             typedef std::vector<int> IntVector;
             typedef std::vector<Scalar> ScalarVector;

@@ -166,7 +166,7 @@ public:
                        const unsigned int phaseIdx,
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        static const bool gravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& tij = fluxVarsCache.advectionTij();

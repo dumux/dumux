@@ -34,6 +34,7 @@
 #include <fstream>
 
 #include <dune/common/parametertree.hh>
+#include <dune/common/parametertreeparser.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
 #include <dumux/common/propertysystem.hh>
@@ -74,7 +75,7 @@
  * \endcode
  */
 #define GET_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName)  \
-    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName), GET_PROP_VALUE(TypeTag, GroupName##ParamName))
+    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName), decltype(GET_PROP_VALUE(TypeTag, GroupName##ParamName))(GET_PROP_VALUE(TypeTag, GroupName##ParamName)))
 
 
 /*!
@@ -275,6 +276,12 @@ public:
         parameterFile.close();
     }
 
+    //! prints all used and unused parameters
+    static void print()
+    {
+        getTree().reportAll();
+    }
+
     //! returns the logging parameter tree recording which parameters are used during the simulation
     static const LoggingParameterTree& getTree()
     {
@@ -335,10 +342,6 @@ T getParam_UsingDeprecatedMacro(Args&&... args)
     const auto& p = Parameters::getTree();
     return p.template get<T>(std::forward<Args>(args)... );
 }
-
-// a free function to report all parameters stating currently unused ones
-void reportParams()
-{ Parameters::getTree().reportAll(); }
 
 } // namespace Dumux
 

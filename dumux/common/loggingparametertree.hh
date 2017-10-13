@@ -29,6 +29,7 @@
 
 #include <dune/common/parametertree.hh>
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
 
 namespace Dumux
@@ -85,6 +86,9 @@ public:
     {
         stream << "\n# Runtime-specified parameters used:" << std::endl;
         usedRuntimeParams_.report(stream);
+
+        stream << "\n# Default parameters used:" << std::endl;
+        usedDefaultParams_.report(stream);
 
         const auto unusedParams = getUnusedKeys();
         if (!unusedParams.empty())
@@ -321,15 +325,17 @@ public:
         {
             // log that we used this parameter
             usedRuntimeParams_[key] = params_[key];
+            return params_.template get<T>(key);
         }
 
         else if(defaultParams_.hasKey(key))
         {
             // use the default
+            usedDefaultParams_[key] = defaultParams_[key];
             return defaultParams_.template get<T>(key);
         }
 
-        return params_.template get<T>(key);
+        DUNE_THROW(Dumux::ParameterException, "Key " << key << " not found in the parameter tree");
     }
 
     /** \brief get value as string, preferably from the sub-tree corresponding
@@ -425,7 +431,10 @@ private:
 
     const Dune::ParameterTree& params_;
     const Dune::ParameterTree& defaultParams_;
+
+    // logging caches
     mutable Dune::ParameterTree usedRuntimeParams_;
+    mutable Dune::ParameterTree usedDefaultParams_;
 };
 
 } // end namespace Dumux
