@@ -633,9 +633,9 @@ protected:
 
                     //saturation of the wetting phase set to 0.0001
                     if (formulation == pnsw)
-                        globalSol[dofIdxGlobal][switchIdx] = 0.0001;
+                        globalSol[dofIdxGlobal][switchIdx] = 0.0;
                     else if (formulation == pwsn)
-                        globalSol[dofIdxGlobal][switchIdx] = 0.9999;
+                        globalSol[dofIdxGlobal][switchIdx] = 1.0;
 
                     //switch all secondary components back to wetting mole fraction
                     for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
@@ -664,9 +664,9 @@ protected:
                     newPhasePresence = bothPhases;
                     //saturation of the wetting phase set to 0.9999
                     if (formulation == pnsw)
-                        globalSol[dofIdxGlobal][switchIdx] = 0.9999;
+                        globalSol[dofIdxGlobal][switchIdx] = 0.999;
                     else if (formulation == pwsn)
-                        globalSol[dofIdxGlobal][switchIdx] = 0.0001;
+                        globalSol[dofIdxGlobal][switchIdx] = 0.001;
                 }
             }
 
