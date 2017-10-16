@@ -34,10 +34,6 @@
 
 namespace Dumux
 {
-  enum class ParamLookup {
-      simple, tree
-  };
-
 /*!
  * \ingroup Common
  * \brief A parameter tree that logs which parameters have been used
@@ -124,23 +120,21 @@ public:
     }
 
     /** \brief get value as string, preferably from the sub-tree corresponding
-     *         to a given prefix. The sub-tree is searched for the parameter
-     *         recursively until its "first" occurrence if tree lookup is specified.
+     *         to a given prefix. The sub-tree is searched backwards for the parameter
+     *         until its "first" occurrence.
      *
      * Returns pure string value for given key.
      *
      * \param groupPrefix The prefix of the sub tree the search should start in
      * \param key key name
      * \param defaultValue default if key does not exist
-     * \param lookup specifies if tree should be searched backwards for the key
      * \return value as string
      * \note This might be quite slow so call it only once,
      *       e.g. on initialization of the class configured by runtime parameters
      */
     std::string getFromGroup(const std::string& groupPrefix,
                              const std::string& key,
-                             const std::string& defaultValue,
-                             const ParamLookup lookup = ParamLookup::simple) const
+                             const std::string& defaultValue) const
     {
         if (groupPrefix == "")
             return get(key, defaultValue);
@@ -155,32 +149,27 @@ public:
             return returnValue;
         }
 
-        // if tree lookup has been specified, search backwards until key is found
-        if (lookup == ParamLookup::tree)
+        // search backwards until key is found
+        std::string prefix = groupPrefix;
+        auto dot = prefix.rfind(".");
+        while (dot != std::string::npos)
         {
-            std::string prefix = groupPrefix;
-            auto dot = prefix.rfind(".");
-            while (dot != std::string::npos)
+            prefix = prefix.substr(0, dot);
+            compoundKey = prefix + "." + key;
+            if (params_.hasKey(compoundKey))
             {
-                prefix = prefix.substr(0, dot);
-                compoundKey = prefix + "." + key;
-                if (params_.hasKey(compoundKey))
-                {
-                    // log that we used this parameter
-                    const auto returnValue = params_[compoundKey];
-                    usedRuntimeParams_[compoundKey] = returnValue;
-                    return returnValue;
-                }
-
-                // look for the next dot in the current prefix
-                dot = prefix.rfind(".");
+                // log that we used this parameter
+                const auto returnValue = params_[compoundKey];
+                usedRuntimeParams_[compoundKey] = returnValue;
+                return returnValue;
             }
 
-            // finally, look for the key without prefix
-            return get(key, defaultValue);
+            // look for the next dot in the current prefix
+            dot = prefix.rfind(".");
         }
-        else
-            return defaultValue;
+
+        // finally, look for the key without prefix
+        return get(key, defaultValue);
     }
 
     /** \brief get value as string
@@ -210,18 +199,16 @@ public:
      * \param groupPrefix The prefix of the sub tree the search should start in
      * \param key key name
      * \param defaultValue default if key does not exist
-     * \param lookup specifies if tree should be searched backwards for the key
      * \return value as string
      * \note This might be quite slow so call it only once,
      *       e.g. on initialization of the class configured by runtime parameters
      */
     std::string getFromGroup(const std::string& groupPrefix,
                              const std::string& key,
-                             const char* defaultValue,
-                             const ParamLookup lookup = ParamLookup::simple) const
+                             const char* defaultValue) const
     {
         const std::string dv = defaultValue;
-        return getFromGroup(groupPrefix, key, dv, lookup);
+        return getFromGroup(groupPrefix, key, dv);
     }
 
 
@@ -251,14 +238,13 @@ public:
 
     /** \brief get value as string, preferably from the sub-tree corresponding
      *         to a given prefix. The sub-tree is searched for the parameter
-     *         recursively until its "first" occurrence if tree lookup is specified.
+     *         recursively until its "first" occurrence.
      *
      * Returns pure string value for given key.
      *
      * \param groupPrefix The prefix of the sub tree the search should start in
      * \param key key name
      * \param defaultValue default if key does not exist
-     * \param lookup specifies if tree should be searched backwards for the key
      * \return value as string
      * \note This might be quite slow so call it only once,
      *       e.g. on initialization of the class configured by runtime parameters
@@ -266,8 +252,7 @@ public:
     template<typename T>
     T getFromGroup(const std::string& groupPrefix,
                    const std::string& key,
-                   const T& defaultValue,
-                   const ParamLookup lookup = ParamLookup::simple) const
+                   const T& defaultValue) const
     {
         if (groupPrefix == "")
             return get<T>(key, defaultValue);
@@ -281,31 +266,26 @@ public:
             return params_.template get<T>(compoundKey);
         }
 
-        // if tree lookup has been specified, search backwards until key is found
-        if (lookup == ParamLookup::tree)
+        // search backwards until key is found
+        std::string prefix = groupPrefix;
+        auto dot = prefix.rfind(".");
+        while (dot != std::string::npos)
         {
-            std::string prefix = groupPrefix;
-            auto dot = prefix.rfind(".");
-            while (dot != std::string::npos)
+            prefix = prefix.substr(0, dot);
+            compoundKey = prefix + "." + key;
+            if (params_.hasKey(compoundKey))
             {
-                prefix = prefix.substr(0, dot);
-                compoundKey = prefix + "." + key;
-                if (params_.hasKey(compoundKey))
-                {
-                    // log that we used this parameter
-                    usedRuntimeParams_[compoundKey] = params_[compoundKey];
-                    return params_.template get<T>(compoundKey);
-                }
-
-                // look for the next dot in the current prefix
-                dot = prefix.rfind(".");
+                // log that we used this parameter
+                usedRuntimeParams_[compoundKey] = params_[compoundKey];
+                return params_.template get<T>(compoundKey);
             }
 
-            // finally, look for the key without prefix
-            return get<T>(key, defaultValue);
+            // look for the next dot in the current prefix
+            dot = prefix.rfind(".");
         }
-        else
-            return defaultValue;
+
+        // finally, look for the key without prefix
+        return get<T>(key, defaultValue);
     }
 
     /** \brief Get value
@@ -340,28 +320,23 @@ public:
 
     /** \brief get value as string, preferably from the sub-tree corresponding
      *         to a given prefix. The sub-tree is searched for the parameter
-     *         recursively until its "first" occurrence if tree lookup is specified.
+     *         recursively until its "first" occurrence.
      *
      * Returns pure string value for given key.
      *
      * \param groupPrefix The prefix of the sub tree the search should start in
      * \param key key name
-     * \param lookup specifies if tree should be searched backwards for the key
      * \return value as string
      * \note This might be quite slow so call it only once,
      *       e.g. on initialization of the class configured by runtime parameters
      */
     template<typename T>
     T getFromGroup(const std::string& groupPrefix,
-                   const std::string& key,
-                   const ParamLookup lookup = ParamLookup::simple) const
+                   const std::string& key) const
     {
         if (groupPrefix == "")
             return get<T>(key);
-        else if (lookup == ParamLookup::simple)
-            return get<T>(groupPrefix + "." + key);
 
-        // If we get here, tree lookup has been specified
         // first, look for the compound key
         std::string compoundKey = groupPrefix + "." + key;
         if (params_.hasKey(compoundKey))
