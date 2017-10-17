@@ -426,7 +426,7 @@ public:
         // our cc models only work with overlap > 0
         static const int isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
         int overlap = isBox ? 0 : 1;
-        try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
+        try { overlap = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, GridParameterGroup), "Overlap"); }
         catch (ParameterException &e) { }
 
         if (isBox && overlap != 0)
@@ -443,7 +443,7 @@ public:
     getOverlap()
     {
         int overlap = 1;
-        try { overlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, int, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Overlap);}
+        try { overlap = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, GridParameterGroup), "Overlap"); }
         catch (ParameterException &e) { }
         return overlap;
     }
