@@ -33,7 +33,7 @@
 #include "volumevariables.hh"
 #include "properties.hh"
 
-#include <dumux/porousmediumflow/compositional/localresidual.hh>
+// #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/1pnc/implicit/newtoncontroller.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -80,9 +80,9 @@ public:
 };
 
 //physical processes to be considered by the isothermal model
-SET_BOOL_PROP(OnePNCMin, EnableAdvection, true);
-SET_BOOL_PROP(OnePNCMin, EnableMolecularDiffusion, true);
-SET_BOOL_PROP(OnePNCMin, EnableEnergyBalance, false);
+// SET_BOOL_PROP(OnePNCMin, EnableAdvection, true);
+// SET_BOOL_PROP(OnePNCMin, EnableMolecularDiffusion, true);
+// SET_BOOL_PROP(OnePNCMin, EnableEnergyBalance, false);
 
 /*!
  * \brief Set the property for the number of equations.
@@ -135,7 +135,7 @@ SET_TYPE_PROP(OnePNCMin, Indices, OnePNCMinIndices <TypeTag, /*PVOffset=*/0>);
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
 //        porous medium. Taking it as a constant is only a first approximation
 //        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(OnePNCMin, SpatialParamsForchCoeff, 0.55);
+// SET_SCALAR_PROP(OnePNCMin, SpatialParamsForchCoeff, 0.55);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNCMin, IsothermalVolumeVariables, OnePNCMinVolumeVariables<TypeTag>);

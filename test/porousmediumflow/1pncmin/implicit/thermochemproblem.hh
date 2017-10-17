@@ -25,6 +25,9 @@
 #define DUMUX_THERMOCHEM_PROBLEM_HH
 
 #include <dumux/porousmediumflow/1pncmin/implicit/model.hh>
+#include <dumux/implicit/box/properties.hh>
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/fluidsystems/simplesteamaircao2h2.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
@@ -45,11 +48,11 @@ namespace Properties
 #if NONISOTHERMAL
 NEW_TYPE_TAG(ThermoChemProblem, INHERITS_FROM(OnePNCMinNI, ThermoChemSpatialParams));
 NEW_TYPE_TAG(ThermoChemBoxProblem, INHERITS_FROM(BoxModel, ThermoChemProblem));
-NEW_TYPE_TAG(ThermoChemCCProblem, INHERITS_FROM(CCModel, ThermoChemProblem));
+NEW_TYPE_TAG(ThermoChemCCProblem, INHERITS_FROM(CCTpfaModel, ThermoChemProblem));
 #else
 NEW_TYPE_TAG(ThermoChemProblem, INHERITS_FROM(OnePNCMin, ThermoChemSpatialParams));
 NEW_TYPE_TAG(ThermoChemBoxProblem, INHERITS_FROM(BoxModel, ThermoChemProblem));
-NEW_TYPE_TAG(ThermoChemCCProblem, INHERITS_FROM(CCModel, ThermoChemProblem));
+NEW_TYPE_TAG(ThermoChemCCProblem, INHERITS_FROM(CCTpfaModel, ThermoChemProblem));
 #endif
 // Set the grid type
 SET_TYPE_PROP(ThermoChemProblem, Grid, Dune::YaspGrid<2>);
@@ -72,7 +75,7 @@ SET_TYPE_PROP(ThermoChemProblem, LinearSolver, UMFPackBackend<TypeTag>);
 
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThermoChemProblem, SpatialParams, Dumux::ThermoChemSpatialParams<TypeTag>);
+SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialParams<TypeTag>);
 }
 
 /*!
@@ -137,13 +140,9 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using DimVector = Dune::FieldVector<Scalar, dim> ;
 
-//     typedef Dumux::Constants<Scalar> Constant;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+//     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+//     enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!

@@ -126,7 +126,6 @@ class OnePNCMinModel: public OnePNCModel<TypeTag>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
@@ -160,6 +159,15 @@ public:
 
        // register standardized vtk output fields
         auto& vtkOutputModule = problem.vtkOutputModule();
+
+        vtkOutputModule.addSecondaryVariable("Kxx",
+                                             [this](const VolumeVariables& v){ return this->perm_(v.permeability())[0][0]; });
+        if (dim >= 2)
+            vtkOutputModule.addSecondaryVariable("Kyy",
+                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[1][1]; });
+        if (dim >= 3)
+            vtkOutputModule.addSecondaryVariable("Kzz",
+                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[2][2]; });
 
         vtkOutputModule.addSecondaryVariable("permeabilityFactor", [](const VolumeVariables& v)
                                              { return v.permeabilityFactor(); });

@@ -28,10 +28,6 @@
 
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/porousmediumflow/1pncmin/implicit/indices.hh>
-// #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
-// #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
-// #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-// #include <dumux/material/fluidmatrixinteractions/2p/philtophoblaw.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityreactivebed.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
 
@@ -63,7 +59,6 @@ class ThermoChemSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
     using ThisType = ThermoChemSpatialParams<TypeTag>;
     using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
-//     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -80,11 +75,8 @@ class ThermoChemSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     };
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
-//     typedef Dune::FieldVector<CoordScalar,dim> DimVector;
-//     typedef Dune::FieldMatrix<CoordScalar,dim,dim> DimMatrix;
     using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-//     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+//     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using Element = typename GridView::template Codim<0>::Entity;
 
