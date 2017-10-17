@@ -26,12 +26,10 @@
 #ifndef DUMUX_1PNC_MODEL_HH
 #define DUMUX_1PNC_MODEL_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 
 #include "properties.hh"
-#include "indices.hh"
-// #include "localresidual.hh"
+
 
 namespace Dumux
 {
@@ -82,34 +80,12 @@ class OnePNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-//    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     static const int phaseIdx = Indices::phaseIdx;
 
     enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-//
-//     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
-//
     enum {  numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-//
-//      enum {
-//             pressureIdx = Indices::pressureIdx,
-//             firstMoleFracIdx = Indices::firstMoleFracIdx,
-//     };
-
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-//     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CoordScalar = typename GridView::ctype;
-    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -129,52 +105,15 @@ public:
         vtkOutputModule.addSecondaryVariable("rho", [](const VolumeVariables& v){ return v.density(phaseIdx); });
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
 
-        vtkOutputModule.addSecondaryVariable("Kxx",
-                                             [this](const VolumeVariables& v){ return this->perm_(v.permeability())[0][0]; });
-        if (dim >= 2)
-            vtkOutputModule.addSecondaryVariable("Kyy",
-                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[1][1]; });
-        if (dim >= 3)
-            vtkOutputModule.addSecondaryVariable("Kzz",
-                                                 [this](const VolumeVariables& v){ return this->perm_(v.permeability())[2][2]; });
-
        for (int i = 0; i < numComponents; ++i)
-           vtkOutputModule.addSecondaryVariable("x_" + FluidSystem::componentName(i),
+           vtkOutputModule.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(i)),
                                                 [i](const VolumeVariables& v){ return v.moleFraction(phaseIdx, i); });
 
-//        for (int i = 0; i < numComponents; ++i)
-//            vtkOutputModule.addSecondaryVariable("m^w_" + FluidSystem::componentName(i),
-//                                                  [i](const VolumeVariables& v){ return v.molarity(phaseIdx,i); });
+       for (int i = 0; i < numComponents; ++i)
+           vtkOutputModule.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(i)),
+                                                 [i](const VolumeVariables& v){ return v.massFraction(phaseIdx,i); });
 
         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
-    }
-
-
-    /*!
-     * \brief Called by the update() method if applying the newton
-     *         method was unsuccessful.
-     */
-    void updateFailed()
-    {
-        ParentType::updateFailed();
-    }
-
-
-
-private :
-    Tensor perm_(Scalar perm)
-    {
-        Tensor K(0.0);
-
-        for(int i=0; i<dim; i++)
-            K[i][i] = perm;
-
-       return K;
-    }
-
-    Tensor perm_(Tensor perm)
-    {
-       return perm;
     }
 
 };
