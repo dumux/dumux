@@ -27,6 +27,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 
+#include <math.h>
 namespace Dumux
 {
 
@@ -125,24 +126,86 @@ public:
                 Scalar S_min = std::min(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
                 Scalar S_max = std::max(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
 
-                Scalar D_max = 0.0;
+                Scalar D_max =0.0 ;
+
                 //Here, we assume constant viscosity and constant material laws
-                //ToDo generalize for non-constant material laws, etc.
                 const auto& fvGeometry = fluxVars.fvGeometry();
                 const auto& scvf = fluxVars.scvFace();
                 const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
-                auto materialLaws = fluxVars.problem().spatialParams().materialLawParamsAtPos(scv.center());
-                unsigned int numIntervals = 10;
+                const auto& materialLaws = fluxVars.problem().spatialParams().materialLawParamsAtPos(scv.center());
+
+                // compute D_max
+                // TODO use the real maximum of D or a approximation
+
+
+//naehrungsformel
+/*Scalar Sw = 0.0 ;
+                Scalar Swmax = 0.37+0.2*log10 (insideVolVars.viscosity(wPhaseIdx)/insideVolVars.viscosity(nPhaseIdx));
+                if (S_max < Swmax)
+                {
+                     Sw = S_max ;
+                }
+                else
+                {
+                    if (S_min > Swmax)
+                    {
+                         Sw =S_min;
+                    }
+                    else
+                    {
+                         Sw = Swmax;
+                    }
+                }
+
+                    Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
+                    Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
+                    Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
+                    D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
+
+*/
+
+
+//numerische Methode
+///////////////////////////////////////////////
+ /*               unsigned int numIntervals = 10;
                 for(int k=0; k <= numIntervals; k++)
                 {
                     Scalar Sw = S_min + (S_max-S_min)*k/numIntervals;
                     Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
                     Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
                     Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
-
                     D_max = std::max(D_max, -(mobW*mobN)/(mobW + mobN)*dPc_dSw);
+
                 }
+                ///////////////////////////////////////////////
+*/
+
+
+//Mittelwert of Sw_max and Sw_min
+/*                   Scalar Sw = (insideVolVars.saturation(wPhaseIdx) + outsideVolVars.saturation(wPhaseIdx))/2.0;
+                    Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
+                    Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
+                    Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
+                    D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
+
+*/
+
+Scalar Sw = 0.0 ;
+                if (S_max < 0.5782)
+                {
+                     Sw = S_max ;
+                }
+                else
+                {
+                 Sw = (  S_min > 0.5782) ? S_min :  0.5782;
+                }
+
+                    Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
+                    Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
+                    Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
+                    D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
+
 
                 return viscousFlux
                        + D_max*flux[capillaryFluxIdx]

@@ -25,7 +25,7 @@
 #ifndef REGULARIZED_BROOKS_COREY_HH
 #define REGULARIZED_BROOKS_COREY_HH
 
-#include "brookscorey.hh"
+#include "testlaw.hh"
 #include "regularizedbrookscoreyparams.hh"
 
 
@@ -60,9 +60,9 @@ namespace Dumux
  * \see BrooksCorey
  */
 template <class ScalarT, class ParamsT = RegularizedBrooksCoreyParams<ScalarT> >
-class RegularizedBrooksCorey
+class Regularizedtestlaw
 {
-    typedef Dumux::BrooksCorey<ScalarT, ParamsT> BrooksCorey;
+    typedef Dumux::Testlaw<ScalarT, ParamsT> Testlaw;
 
 public:
     typedef ParamsT Params;
@@ -92,19 +92,19 @@ public:
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
         if (swe <= sThres) {
-            Scalar m = BrooksCorey::dpc_dswe(params, sThres);
-            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
+            Scalar m = Testlaw::dpc_dswe(params, sThres);
+            Scalar pcsweLow = Testlaw::pc(params, sThres);
             return pcsweLow + m*(swe - sThres);
         }
         else if (swe > 1.0) {
-            Scalar m = BrooksCorey::dpc_dswe(params, 1.0);
-            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
+            Scalar m = Testlaw::dpc_dswe(params, 1.0);
+            Scalar pcsweHigh = Testlaw::pc(params, 1.0);
             return pcsweHigh + m*(swe - 1.0);
         }
 
         // if the effective saturation is in an 'reasonable'
         // range, we use the real Brooks-Corey law...
-        return BrooksCorey::pc(params, swe);
+        return Testlaw::pc(params, swe);
     }
 
     /*!
@@ -128,7 +128,7 @@ public:
         // calculate the saturation which corrosponds to the
         // saturation in the non-regularized version of
         // the Brooks-Corey law
-        Scalar swe = BrooksCorey::sw(params, pc);
+        Scalar swe = Testlaw::sw(params, pc);
 
         // make sure that the capilary pressure observes a
         // derivative != 0 for 'illegal' saturations. This is
@@ -138,17 +138,17 @@ public:
         // temporarily is in an 'illegal' range.
         if (swe <= sThres) {
             // invert the low saturation regularization of pc()
-            Scalar m = BrooksCorey::dpc_dswe(params, sThres);
-            Scalar pcsweLow = BrooksCorey::pc(params, sThres);
+            Scalar m = Testlaw::dpc_dswe(params, sThres);
+            Scalar pcsweLow = Testlaw::pc(params, sThres);
             return sThres + (pc - pcsweLow)/m;
         }
         else if (swe > 1.0) {
-            Scalar m = BrooksCorey::dpc_dswe(params, 1.0);
-            Scalar pcsweHigh = BrooksCorey::pc(params, 1.0);
+            Scalar m = Testlaw::dpc_dswe(params, 1.0);
+            Scalar pcsweHigh = Testlaw::pc(params, 1.0);
             return 1.0 + (pc - pcsweHigh)/m;
         }
 
-        return BrooksCorey::sw(params, pc);
+        return Testlaw::sw(params, pc);
     }
 
     /*!
@@ -182,16 +182,16 @@ public:
         // derivative of the regualarization
         if (swe <= sThres) {
             // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dswe(params, sThres);
+            Scalar m = Testlaw::dpc_dswe(params, sThres);
             return m;
         }
         else if (swe > 1.0) {
             // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dswe(params, 1.0);
+            Scalar m = Testlaw::dpc_dswe(params, 1.0);
             return m;
         }
 
-        return BrooksCorey::dpc_dswe(params, swe);
+        return Testlaw::dpc_dswe(params, swe);
     }
 
     /*!
@@ -225,20 +225,20 @@ public:
         if (pc < 0)
             swe = 1.5; // make sure we regularize below
         else
-            swe = BrooksCorey::sw(params, pc);
+            swe = Testlaw::sw(params, pc);
 
         // derivative of the regularization
         if (swe <= sThres) {
             // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dswe(params, sThres);
+            Scalar m = Testlaw::dpc_dswe(params, sThres);
             return 1/m;
         }
         else if (swe > 1.0) {
             // calculate the slope of the straight line used in pc()
-            Scalar m = BrooksCorey::dpc_dswe(params, 1.0);
+            Scalar m = Testlaw::dpc_dswe(params, 1.0);
             return 1/m;
         }
-        return 1.0/BrooksCorey::dpc_dswe(params, swe);
+        return 1.0/Testlaw::dpc_dswe(params, swe);
     }
 
     /*!
@@ -262,7 +262,7 @@ public:
         else if (swe >= 1.0)
             return 1.0;
 
-        return BrooksCorey::krw(params, swe);
+        return Testlaw::krw(params, swe);
     }
 
     /*!
@@ -286,7 +286,28 @@ public:
         else if (swe <= 0.0)
             return 1.0;
 
-        return BrooksCorey::krn(params, swe);
+        return Testlaw::krn(params, swe);
+    }
+    static Scalar D(const Params &params, Scalar swe)
+    {
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        return (-dpc_dswe(params,swe)*krn(params,swe)*krw(params, swe))/(1e-03*krn(params,swe) + 1e-03*krw(params,swe));
+    }
+
+    static Scalar LambdarTerm(const Params &params, Scalar swe)
+    {
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        return -krn(params,swe)*krw(params, swe)/(1e-03*krn(params,swe) + 1e-04*krw(params,swe));
     }
 };
 }

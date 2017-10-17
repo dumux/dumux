@@ -170,7 +170,7 @@ public:
 
         pc = max(pc, 0.0); // the equation below is undefined for negative pcs
 
-        return -params.lambda()/params.pe() * pow(pc/params.pe(), - params.lambda() - 1);
+       return - params.pe()/params.lambda() * pow(sw, -1/params.lambda() - 1);
     }
 
     /*!
@@ -288,7 +288,7 @@ public:
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        return (-dpc_dswe(params,swe)*krn(params,swe)*krw(params, swe))/(1e-03*krn(params,swe)+4e-04*krw(params,swe));
+        return (-dpc_dswe(params,swe)*krn(params,swe)*krw(params, swe))/(1e-03*krn(params,swe) + 1e-03*krw(params,swe));
     }
 
     static Scalar LambdarTerm(const Params &params, Scalar swe)
@@ -299,7 +299,7 @@ public:
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        return -krn(params,swe)*krw(params, swe)/(1e-03*krn(params,swe)+1e-04*krw(params,swe));
+        return -krn(params,swe)*krw(params, swe)/(1e-03*krn(params,swe) + 1e-03*krw(params,swe));
     }
 
 
