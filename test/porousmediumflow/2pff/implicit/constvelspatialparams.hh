@@ -26,7 +26,7 @@
 #define DUMUX_FRACFLOW_CONSTVEL_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/implicit.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/testlaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/regularizedtestlaw.hh>
 #include <dumux/io/plotmateriallaw.hh>
 #include<dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -56,7 +56,7 @@ private:
     // define the material law which is parameterized by effective
     // saturations
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = Testlaw<Scalar>;
+    using EffectiveLaw = Regularizedtestlaw<Scalar>;
 public:
     // define the material law parameterized by absolute saturations
     using type = EffToAbsLaw<EffectiveLaw>;

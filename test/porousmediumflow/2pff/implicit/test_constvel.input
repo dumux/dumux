@@ -14,4 +14,4 @@ TotalVelocity = 0 0
 EnableGravity = false
 
 LiquidDensity = 100
-LiquidKinematicViscosity = 1e-6
+LiquidKinematicViscosity = 1e-8

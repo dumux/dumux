@@ -284,7 +284,7 @@ public:
         }
 
         gnuplot.setXlabel("wetting phase saturation [-]");
-        gnuplotdumux/io/plotmateriallaw.hh:314:.setYlabel("D");
+        gnuplot.setYlabel("D");
         gnuplot.addDataSetToPlot(sw, D, curveName, curveOptions);
 
     }
