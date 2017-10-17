@@ -446,87 +446,89 @@ public:
                                             const CellCenterPrimaryVariables& ccResidual,
                                             const FaceSolutionVector& faceResidualCache)
     {
-//#if TREAT_STOKES_COUPLED_CC_DERIVATIVES
-        const auto& couplingStencilCC = globalProblem_().couplingManager().couplingStencil(element);
-        const auto ccGlobalI = globalProblem_().couplingManager().stokesProblem().elementMapper().index(element);
-
-        // treat cell-center derivatives
-        for (auto globalJ : couplingStencilCC)
-        {
-            const auto originalResidual = globalProblem_().couplingManager().evalStokesCCCouplingResidual(element,
-                                                                                                 fvGeometry,
-                                                                                                 curElemVolVars,
-                                                                                                 curGlobalFaceVars);
-
-            auto& otherPriVars = otherProblem_().model().curSol()[globalJ];
-            auto originalOtherPriVars = otherPriVars;
-
-            // derivatives in the neighbors with repect to the current elements
-            std::decay_t<decltype(originalResidual)> partialDeriv;
-            for (int pvIdx = 0; pvIdx < partialDeriv.size(); pvIdx++)
-            {
-                const Scalar eps = this->numericEpsilon(otherPriVars[pvIdx], cellCenterIdx, cellCenterIdx);
-                Scalar delta = 0;
-
-                if (numericDifferenceMethod_ >= 0)
-                {
-                    // we are not using backward differences, i.e. we need to
-                    // calculate f(x + \epsilon)
-
-                    // deflect primary variables
-                    otherPriVars[pvIdx] += eps;
-                    delta += eps;
-
-                    // calculate the residual with the deflected primary variables
-                    partialDeriv = globalProblem_().couplingManager().evalStokesCCCouplingResidual(element,
-                                                                                                 fvGeometry,
-                                                                                                 curElemVolVars,
-                                                                                                 curGlobalFaceVars);
-                }
-                else
-                {
-                    // we are using backward differences, i.e. we don't need
-                    // to calculate f(x + \epsilon) and we can recycle the
-                    // (already calculated) residual f(x)
-                    partialDeriv = originalResidual;
-                }
-
-
-                if (numericDifferenceMethod_ <= 0)
-                {
-                    // we are not using forward differences, i.e. we
-                    // need to calculate f(x - \epsilon)
-
-                    // deflect the primary variables
-                    otherPriVars[pvIdx] -= 2*eps;
-                    delta += eps;
-
-                    // calculate the residual with the deflected primary variables
-                    partialDeriv -= globalProblem_().couplingManager().evalStokesCCCouplingResidual(element,
-                                                                                                 fvGeometry,
-                                                                                                 curElemVolVars,
-                                                                                                 curGlobalFaceVars);
-                }
-                else
-                {
-                    // we are using forward differences, i.e. we don't need to
-                    // calculate f(x - \epsilon) and we can recycle the
-                    // (already calculated) residual f(x)
-                    partialDeriv -= originalResidual;
-                }
-
-                // divide difference in residuals by the magnitude of the
-                // deflections between the two function evaluation
-                partialDeriv /= delta;
-
-                // restore the original state of the element solution vector
-                otherPriVars = originalOtherPriVars;
-
-                // update the global jacobian matrix (coupling block)
-                this->updateGlobalJacobian_(couplingMatrix[cellCenterIdx][localDarcyIdx], ccGlobalI, globalJ, pvIdx, partialDeriv);
-            }
-        }
-//#endif
+////#if TREAT_STOKES_COUPLED_CC_DERIVATIVES
+//        const auto& couplingStencilCC = globalProblem_().couplingManager().couplingStencil(element);
+//        const auto ccGlobalI = globalProblem_().couplingManager().stokesProblem().elementMapper().index(element);
+//
+//        std::cout << "** subproblemlocaljacobian: couplingStencilCC.size() = " << couplingStencilCC.size() << std::endl;
+//        std::cout << "** subproblemlocaljacobian: cSCC = " << couplingStencilCC[0] << std::endl;
+//        // treat cell-center derivatives
+//        for (auto globalJ : couplingStencilCC)
+//        {
+//            const auto originalResidual = globalProblem_().couplingManager().evalStokesCCCouplingResidual(element,
+//                                                                                                 fvGeometry,
+//                                                                                                 curElemVolVars,
+//                                                                                                 curGlobalFaceVars);
+//
+//            auto& otherPriVars = otherProblem_().model().curSol()[globalJ];
+//            auto originalOtherPriVars = otherPriVars;
+//
+//            // derivatives in the neighbors with repect to the current elements
+//            std::decay_t<decltype(originalResidual)> partialDeriv;
+//            for (int pvIdx = 0; pvIdx < partialDeriv.size(); pvIdx++)
+//            {
+//                const Scalar eps = this->numericEpsilon(otherPriVars[pvIdx], cellCenterIdx, cellCenterIdx);
+//                Scalar delta = 0;
+//
+//                if (numericDifferenceMethod_ >= 0)
+//                {
+//                    // we are not using backward differences, i.e. we need to
+//                    // calculate f(x + \epsilon)
+//
+//                    // deflect primary variables
+//                    otherPriVars[pvIdx] += eps;
+//                    delta += eps;
+//
+//                    // calculate the residual with the deflected primary variables
+//                    partialDeriv = globalProblem_().couplingManager().evalStokesCCCouplingResidual(element,
+//                                                                                                 fvGeometry,
+//                                                                                                 curElemVolVars,
+//                                                                                                 curGlobalFaceVars);
+//                }
+//                else
+//                {
+//                    // we are using backward differences, i.e. we don't need
+//                    // to calculate f(x + \epsilon) and we can recycle the
+//                    // (already calculated) residual f(x)
+//                    partialDeriv = originalResidual;
+//                }
+//
+//
+//                if (numericDifferenceMethod_ <= 0)
+//                {
+//                    // we are not using forward differences, i.e. we
+//                    // need to calculate f(x - \epsilon)
+//
+//                    // deflect the primary variables
+//                    otherPriVars[pvIdx] -= 2*eps;
+//                    delta += eps;
+//
+//                    // calculate the residual with the deflected primary variables
+//                    partialDeriv -= globalProblem_().couplingManager().evalStokesCCCouplingResidual(element,
+//                                                                                                 fvGeometry,
+//                                                                                                 curElemVolVars,
+//                                                                                                 curGlobalFaceVars);
+//                }
+//                else
+//                {
+//                    // we are using forward differences, i.e. we don't need to
+//                    // calculate f(x - \epsilon) and we can recycle the
+//                    // (already calculated) residual f(x)
+//                    partialDeriv -= originalResidual;
+//                }
+//
+//                // divide difference in residuals by the magnitude of the
+//                // deflections between the two function evaluation
+//                partialDeriv /= delta;
+//
+//                // restore the original state of the element solution vector
+//                otherPriVars = originalOtherPriVars;
+//
+//                // update the global jacobian matrix (coupling block)
+//                this->updateGlobalJacobian_(couplingMatrix[cellCenterIdx][localDarcyIdx], ccGlobalI, globalJ, pvIdx, partialDeriv);
+//            }
+//        }
+////#endif
 
         // treat face derivatives
         for(auto&& scvf : scvfs(fvGeometry))

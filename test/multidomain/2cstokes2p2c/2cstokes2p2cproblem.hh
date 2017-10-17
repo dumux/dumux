@@ -31,11 +31,10 @@
 #define DUMUX_2CSTOKES2P2CPROBLEM_HH
 
 // TODO copied and adapted from stokesdarcy1p
-#include "stokes2csubproblem.hh"
 #include "2p2csubproblem.hh"
+#include "stokes2csubproblem.hh"
 #include <dumux/material/fluidsystems/h2oair.hh>
 
-//#include <dumux/multidomain/2cstokes2p2c/problem.hh> // TODO?
 #include <dumux/multidomain/problem.hh>
 #include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/multidomain/map.hh>
@@ -45,18 +44,6 @@
 #include <dumux/multidomain/staggered-ccfv/assembler.hh>
 #include <dumux/multidomain/staggered-ccfv/newtoncontroller.hh>
 #include <dumux/multidomain/staggered-ccfv/subproblemlocaljacobian.hh>
-
-// TODO remove if not needed:
-//#include <dune/common/float_cmp.hh>
-//#include <dune/grid/common/gridinfo.hh>
-//#include <dune/grid/multidomaingrid.hh>
-//
-//#include <dumux/material/fluidsystems/h2oair.hh>
-//#include <dumux/multidomain/2cstokes2p2c/localoperator.hh>
-//#include <dumux/multidomain/2cstokes2p2c/problem.hh>
-//#include <dumux/multidomain/2cstokes2p2c/propertydefaults.hh>
-//
-//#include "2cstokes2p2cspatialparams.hh"
 
 #ifdef HAVE_PARDISO
 #include <dumux/linear/pardisobackend.hh>
@@ -70,7 +57,6 @@ class TwoCStokesTwoPTwoCTestProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(TwoCStokesTwoPTwoCTestProblem, INHERITS_FROM(MultiDomain, CouplingStokesStaggeredModel));
-//NEW_TYPE_TAG(TwoCStokesTwoPTwoCTestProblem, INHERITS_FROM(TwoCStokesTwoPTwoC)); TODO which one?
 
 // Set the problem property
 SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, Problem, Dumux::TwoCStokesTwoPTwoCTestProblem<TypeTag>);
@@ -95,34 +81,8 @@ SET_PROP(Stokes2cSubProblem, ParameterTree) : GET_PROP(TTAG(TwoCStokesTwoPTwoCTe
 NEW_PROP_TAG(DarcyToStokesMapValue); // TODO: make specialized map value class
 SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);
 
-//
-//// Set the local coupling operator
-//SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, MultiDomainCouplingLocalOperator,
-//              TwoCStokesTwoPTwoCLocalOperator<TypeTag>);
-
-//// Set the two sub-problems of the global problem
-//SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, SubDomain1TypeTag, TTAG(Stokes2cSubProblem));
-//SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, SubDomain2TypeTag, TTAG(TwoPTwoCSubProblem));
-
-//// Set the global problem in the context of the two sub-problems
-//SET_TYPE_PROP(Stokes2cSubProblem, MultiDomainTypeTag, TTAG(TwoCStokesTwoPTwoCTestProblem));
-//SET_TYPE_PROP(TwoPTwoCSubProblem, MultiDomainTypeTag, TTAG(TwoCStokesTwoPTwoCTestProblem));
-
-//// Set the other sub-problem for each of the two sub-problems
-//SET_TYPE_PROP(Stokes2cSubProblem, OtherSubDomainTypeTag, TTAG(TwoPTwoCSubProblem));
-//SET_TYPE_PROP(TwoPTwoCSubProblem, OtherSubDomainTypeTag, TTAG(Stokes2cSubProblem));
-
-// TODO not needed for stokesdarcy1p, necessary for 2cstokes2p2c?
-//// Set the grid type
-//SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
-
-// Set the spatial parameters used for the problems
-//SET_TYPE_PROP(TwoPTwoCSubProblem, SpatialParams, TwoCStokesTwoPTwoCSpatialParams<TypeTag>);
-
 // Set the fluid system to use simple relations (last argument)
-SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, FluidSystem,
-//              FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-        H2OAirFluidSystem<TypeTag>);
+SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, FluidSystem, H2OAirFluidSystem<TypeTag>);
 
 // if you do not have PARDISO, the SuperLU solver is used:
 #ifdef HAVE_PARDISO
@@ -143,8 +103,6 @@ SET_TYPE_PROP(TwoCStokesTwoPTwoCTestProblem, LinearSolver, SuperLUBackend<TypeTa
  * The initial and boundary conditions of the submodels are specified in the two subproblems,
  * 2p2csubproblem.hh and stokes2csubproblem.hh, which are accessible via the coupled problem.
  */
-//template <class TypeTag = TTAG(TwoCStokesTwoPTwoCTestProblem) > // TODO
-//class TwoCStokesTwoPTwoCTestProblem : public TwoCStokesTwoPTwoCProblem<TypeTag>
 template <class TypeTag>
 class TwoCStokesTwoPTwoCTestProblem : public MultiDomainProblem<TypeTag>
 {
@@ -181,8 +139,8 @@ public:
         verbose_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, Verbose);
 
         // TODO from 2cstokes2p2c
-        interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
-        noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
+        interfacePosY_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, DarcyGrid, InterfacePosY);
+        noDarcyX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, DarcyGrid, NoDarcyX);
         episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
         initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
 
@@ -193,8 +151,6 @@ public:
 //        stokes2c_ = this->sdID1();
 //        twoPtwoC_ = this->sdID2();
 
-//        initializeGrid(); TODO not necessary (no multidomaingrid)
-
         // initialize the tables of the fluid system
         FluidSystem::init(/*tempMin=*/273.15, /*tempMax=*/323.15, /*numTemp=*/50,
                           /*pMin=*/5e4, /*pMax=*/1.5e5, /*numP=*/100);
@@ -204,37 +160,6 @@ public:
         else
             this->timeManager().startNextEpisode(episodeLength_);
     }
-
-    // TODO not necessary (no multidomaingrid)
-//    /*!
-//     * \brief Initialization of the grids
-//     *
-//     * This function splits the multidomain grid in the two
-//     * individual subdomain grids and takes care of parallelization.
-//     */
-//    void initializeGrid()
-//    {
-//        MDGrid& mdGrid = this->mdGrid();
-//        mdGrid.startSubDomainMarking();
-//
-//        // subdivide grid in two subdomains
-//        for (const auto& element : elements(mdGrid.leafGridView(), Dune::Partitions::interior))
-//        {
-//            GlobalPosition globalPos = element.geometry().center();
-//
-//            if (globalPos[1] > interfacePosY_ - eps_)
-//                mdGrid.addToSubDomain(stokes2c_,element);
-//            else
-//                if(globalPos[0] > noDarcyX_ - eps_)
-//                    mdGrid.addToSubDomain(twoPtwoC_,element);
-//        }
-//        mdGrid.preUpdateSubDomains();
-//        mdGrid.updateSubDomains();
-//        mdGrid.postUpdateSubDomains();
-//
-//        gridinfo(this->sdGrid1());
-//        gridinfo(this->sdGrid2());
-//    }
 
     /*!
      * \brief Called by the time manager after the time integration to

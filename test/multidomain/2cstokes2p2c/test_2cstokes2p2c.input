@@ -4,6 +4,7 @@ MaxTimeStepSize = 360 # [s]
 InitTime = 0 # [s] Initialization time without coupling
 TEnd = 7200 # [s]
 EpisodeLength = 3600 # [s]
+EpisodeTime = 3600 # [s]
 
 [Grid]
 Cells0 = 30
@@ -20,13 +21,15 @@ Cells0 = 40
 Cells1 = 20
 
 [DarcyGrid]
-LowerLeft = 0 0
-UpperRight = 2 1
+LowerLeft = 0.0 0.0
+UpperRight = 2.0 1.0
+Positions0 = 0.0 2.0 # m
+Positions1 = 0.0 1.0 # m
 Cells = 40 20
 
 RunUpDistanceX = 0.0 # [m] Horizontal position without coupling to PM
 NoDarcyX = 0.0 # [m] Horizontal position without PM below
-InterfacePosY = 0.25 # [m] Vertical position of coupling interface
+InterfacePosY = 1.0 # 0.25 # [m] Vertical position of coupling interface
 
 [Output]
 NameFF = stokes2c
@@ -35,6 +38,10 @@ NamePM = 2p2c
 FreqRestart = 1000      # how often restart files are written out 
 FreqOutput = 50         # frequency of VTK output
 FreqMassOutput = 2      # frequency of mass and evaporation rate output (Darcy)
+
+[Problem]
+Name = test_2cstokes2p2c
+Verbose = true
 
 [Stokes]
 StabilizationAlpha = -1.0

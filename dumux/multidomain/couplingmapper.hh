@@ -140,6 +140,7 @@ public:
 
                 // if the Darcy scv is at the coupling interface determine the respective scvf
                 auto darcyPos = darcyScv.center();
+
                 for(auto& darcyScvf : scvfs(darcyFVElementGeometry))
                 {
                     if(darcyProblem_.onCouplingInterface(darcyScvf.center()))

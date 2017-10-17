@@ -31,6 +31,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
+#include <dumux/linear/matrixconverter.hh>
 
 namespace Dumux
 {
@@ -360,10 +361,6 @@ public:
             if (numSteps_ == 0)
                 initialResidual_ = b.two_norm();
 
-            // copy the matrix and the vector to types the IterativeSolverBackend can handle
-            using MatrixBlock = typename Dune::FieldMatrix<Scalar, 1, 1>;
-            using SparseMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-
             // get the individual matrices
             const auto& stokesBlock = A[stokesIdx][stokesIdx];
             const auto& darcyBlock = A[darcyIdx][darcyIdx];
@@ -382,15 +379,6 @@ public:
             const auto& A32 = darcyToStokesBlock[localDarcyIdx][faceIdx];
             const auto& A33 = darcyBlock[localDarcyIdx][localDarcyIdx];
 
-            // get the new matrix sizes
-            const auto numRows = numEqStokesCellCenter*A11.N()
-                               + numEqStokesFace*A21.N()
-                               + numEqDarcy*A31.N();
-
-            const auto numCols = numEqStokesCellCenter*A11.M()
-                               + numEqDarcy*A12.M()
-                               + numEqDarcy*A13.M();
-
             // check matrix sizes
             assert((A11.N() == A12.N()) && (A12.N() == A13.N()));
             assert((A21.N() == A22.N()) && (A22.N() == A23.N()));
@@ -398,108 +386,45 @@ public:
             assert((A11.M() == A21.M()) && (A21.M() == A31.M()));
             assert((A12.M() == A22.M()) && (A22.M() == A32.M()));
             assert((A13.M() == A23.M()) && (A23.M() == A33.M()));
-            assert(numRows == numCols);
 
             // create the bcrs matrix the IterativeSolver backend can handle
-            auto M = SparseMatrix(numRows, numCols, SparseMatrix::random);
+            // The matrix converter used below expects un-nested multitype blockmatrices or blockvectors, therefore
+            // we store a tuple of references to the individual sub matrices/vectors and pass that to the converter
+            // TODO: Perfomance? Are submatrices copied? Using std::forward_as_tuple for the sub tuples
+            // results in a segfault for some systems ...
+            const auto pseudoMultiTypeBlockMatrix = std::make_tuple(std::forward_as_tuple(A11, A12, A13),
+                                                                    std::forward_as_tuple(A21, A22, A23),
+                                                                    std::forward_as_tuple(A31, A32, A33));
 
-            // set the rowsizes
-            Dune::MatrixIndexSet occupationPattern;
-            occupationPattern.resize(numRows, numCols);
+            const auto M = MatrixConverter<decltype(pseudoMultiTypeBlockMatrix)>::multiTypeToBCRSMatrix(pseudoMultiTypeBlockMatrix);
+            const auto numRows = M.N();
+            assert(numRows == M.M());
 
-            // lambda function to fill the occupation pattern
-            auto addIndices = [&occupationPattern](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
-            {
-                using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
-                const auto blockSizeI = BlockType::rows;
-                const auto blockSizeJ = BlockType::cols;
-                for(auto row = subMatrix.begin(); row != subMatrix.end(); ++row)
-                    for(auto col = row->begin(); col != row->end(); ++col)
-                        for(std::size_t i = 0; i < blockSizeI; ++i)
-                            for(std::size_t j = 0; j < blockSizeJ; ++j)
-                                occupationPattern.add(startRow + row.index()*blockSizeI + i, startCol + col.index()*blockSizeJ + j);
-
-            };
-
-            // lambda function to copy the values
-            auto copyValues = [&M](const auto& subMatrix, const std::size_t startRow, const std::size_t startCol)
-            {
-                using BlockType = typename std::decay_t<decltype(subMatrix)>::block_type;
-                const auto blockSizeI = BlockType::rows;
-                const auto blockSizeJ = BlockType::cols;
-                for (auto row = subMatrix.begin(); row != subMatrix.end(); ++row)
-                    for (auto col = row->begin(); col != row->end(); ++col)
-                        for (std::size_t i = 0; i < blockSizeI; ++i)
-                            for (std::size_t j = 0; j < blockSizeJ; ++j)
-                                M[startRow + row.index()*blockSizeI + i][startCol + col.index()*blockSizeJ + j] = subMatrix[row.index()][col.index()][i][j];
-
-            };
-
-            // set the indices
-            addIndices(A11, 0, 0);
-            addIndices(A12, 0, A11.M());
-            addIndices(A13, 0, A11.M() + A12.M());
-
-            addIndices(A21, A11.N(), 0);
-            addIndices(A22, A11.N(), A11.M());
-            addIndices(A23, A11.N(), A11.M() + A12.M());
-
-            addIndices(A31, A11.N() + A21.N(), 0);
-            addIndices(A32, A11.N() + A21.N(), A11.M());
-            addIndices(A33, A11.N() + A21.N(), A11.M() + A12.M());
-
-            occupationPattern.exportIdx(M);
-
-            //copy values
-            copyValues(A11, 0, 0);
-            copyValues(A12, 0, A11.M());
-            copyValues(A13, 0, A11.M() + A12.M());
-
-            copyValues(A21, A11.N(), 0);
-            copyValues(A22, A11.N(), A11.M());
-            copyValues(A23, A11.N(), A11.M() + A12.M());
-
-            copyValues(A31, A11.N() + A21.N(), 0);
-            copyValues(A32, A11.N() + A21.N(), A11.M());
-            copyValues(A33, A11.N() + A21.N(), A11.M() + A12.M());
+            // create the vector the IterativeSolver backend can handle
+            const auto& b1 = b[stokesIdx][cellCenterIdx];
+            const auto& b2 = b[stokesIdx][faceIdx];
+            const auto& b3 = b[darcyIdx];
+            const auto pseudoMultiTypeBlockVector = std::forward_as_tuple(b1, b2, b3);
+            const auto bTmp = VectorConverter<decltype(pseudoMultiTypeBlockVector)>::multiTypeToBlockVector(pseudoMultiTypeBlockVector);
+            assert(bTmp.size() == numRows);
 
             // create the vector the IterativeSolver backend can handle
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
             using BlockVector = typename Dune::BlockVector<VectorBlock>;
-//
-            BlockVector y, bTmp;
+
+            BlockVector y;
             y.resize(numRows);
-            bTmp.resize(numCols);
-            // stokes cell-center
-            for (std::size_t i = 0; i < b[stokesIdx][cellCenterIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqStokesCellCenter; ++j)
-                    bTmp[i*numEqStokesCellCenter + j] = b[stokesIdx][cellCenterIdx][i][j];
-
-            for (std::size_t i = 0; i < b[stokesIdx][faceIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqStokesFace; ++j)
-                    bTmp[i*numEqStokesFace + j + b[stokesIdx][cellCenterIdx].N()*numEqStokesCellCenter] = b[stokesIdx][faceIdx][i][j];
-
-            for (std::size_t i = 0; i < b[darcyIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqDarcy; ++j)
-                    bTmp[i*numEqDarcy + j + b[stokesIdx][cellCenterIdx].N()*numEqStokesCellCenter
-                       + b[stokesIdx][faceIdx].N()*numEqStokesFace] = b[darcyIdx][i][j];
 
             // solve
             bool converged = linearSolver_.solve(M, y, bTmp);
 
             // copy back the result y into x
-            for (std::size_t i = 0; i < x[stokesIdx][cellCenterIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqStokesCellCenter; ++j)
-                    x[stokesIdx][cellCenterIdx][i][j] = y[i*numEqStokesCellCenter + j];
+            auto& x1 = x[stokesIdx][cellCenterIdx];
+            auto& x2 = x[stokesIdx][faceIdx];
+            auto& x3 = x[darcyIdx];
+            auto pseudoSolMultiTypeBlockVector = std::forward_as_tuple(x1, x2, x3);
 
-            for (std::size_t i = 0; i < x[stokesIdx][faceIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqStokesFace; ++j)
-                    x[stokesIdx][faceIdx][i][j] = y[i*numEqStokesFace + j + x[stokesIdx][cellCenterIdx].N()*numEqStokesCellCenter];
-
-            for (std::size_t i = 0; i < x[darcyIdx].N(); ++i)
-                for (std::size_t j = 0; j < numEqDarcy; ++j)
-                    x[darcyIdx][i][j] = y[i*numEqDarcy + j + x[stokesIdx][cellCenterIdx].N()*numEqStokesCellCenter +
-                    x[stokesIdx][faceIdx].N()*numEqStokesFace];
+            VectorConverter<decltype(pseudoSolMultiTypeBlockVector)>::retrieveValues(pseudoSolMultiTypeBlockVector, y);
 
             if (!converged)
                 DUNE_THROW(NumericalProblem, "Linear solver did not converge");

@@ -131,6 +131,17 @@ public:
     }
 
     /*!
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+     *
+     * \param globalPos The global position
+     * \return the intrinsic permeability
+     */
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
+    {
+        return permeability_;
+    }
+
+    /*!
      * \brief Returns the porosity \f$[-]\f$
      *
      * \param element The finite element

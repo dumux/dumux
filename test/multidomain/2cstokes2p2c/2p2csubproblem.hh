@@ -34,14 +34,6 @@
 // coupling-specific includes
 #include <dumux/multidomain/subproblemproperties.hh>
 
-// TODO necessary?
-//#include <dune/common/float_cmp.hh>
-//
-//#include <dumux/porousmediumflow/2p2c/implicit/indices.hh>
-//#include <dumux/multidomain/2cstokes2p2c/2p2ccouplinglocalresidual.hh>
-//#include <dumux/multidomain/subdomainpropertydefaults.hh>
-//#include <dumux/multidomain/localoperator.hh>
-
 
 namespace Dumux
 {
@@ -53,7 +45,8 @@ namespace Properties
 NEW_TYPE_TAG(TwoPTwoCSubProblem, INHERITS_FROM(CCTpfaModel, TwoPTwoC, TwoCStokesTwoPTwoCSpatialParams));
 
 // Set the problem property
-SET_TYPE_PROP(TwoPTwoCSubProblem, Problem, TwoPTwoCSubProblem<TTAG(TwoPTwoCSubProblem)>);
+//SET_TYPE_PROP(TwoPTwoCSubProblem, Problem, TwoPTwoCSubProblem<TTAG(TwoPTwoCSubProblem)>);
+SET_TYPE_PROP(TwoPTwoCSubProblem, Problem, Dumux::TwoPTwoCSubProblem<TypeTag>);
 
 //// TODO from stokesdarcy1p, here: set in global problem?
 // Set the spatial parameters
@@ -78,7 +71,6 @@ SET_BOOL_PROP(TwoPTwoCSubProblem, VtkAddVelocity, true);
 // Enable gravity
 SET_BOOL_PROP(TwoPTwoCSubProblem, ProblemEnableGravity, false); // TODO ?
 
-// TODO not needed in old multidomain, used in darcytestproblem 1p
 // Set the grid type
 #if ENABLE_3D
 SET_TYPE_PROP(TwoPTwoCSubProblem, Grid, Dune::YaspGrid<3>);
@@ -172,21 +164,21 @@ public:
      * \param timeManager The TimeManager which is used by the simulation
      * \param gridView The simulation's idea about physical space
      */
-    TwoPTwoCSubProblem(TimeManager &timeManager, const GridView gridView)
+    TwoPTwoCSubProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        Scalar noDarcyX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, NoDarcyX);
-        std::vector<Scalar> positions0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions0);
-        std::vector<Scalar> positions1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions1);
+        Scalar noDarcyX = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, DarcyGrid, NoDarcyX);
+        std::vector<Scalar> positions0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, DarcyGrid, Positions0);
+        std::vector<Scalar> positions1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, DarcyGrid, Positions1);
 
         using std::max;
         bBoxMin_[0] = max(positions0.front(),noDarcyX);
         bBoxMax_[0] = positions0.back();
 
         bBoxMin_[1] = positions1.front();
-        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, DarcyGrid, InterfacePosY);
 
-        runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX); // first part of the interface without coupling
+        runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, DarcyGrid, RunUpDistanceX); // first part of the interface without coupling
         initializationTime_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, InitTime);
 
         refTemperature_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, PorousMedium, RefTemperature);
@@ -426,7 +418,7 @@ public:
     { return *couplingManager_; }
 
     bool onCouplingInterface(const GlobalPosition &globalPos) const
-    {return onLowerBoundary_(globalPos); }
+    { return onUpperBoundary_(globalPos); }
 
 private:
     /*!
@@ -436,6 +428,8 @@ private:
     void initial_(PrimaryVariables &values,
                   const GlobalPosition &globalPos) const
     {
+        values.setState(Indices::wPhaseOnly);
+
         values[pressureIdx] = refPressure_
                               + 1000.*this->gravity()[1]*(globalPos[1]-bBoxMax_[1]);
         values[switchIdx] = initialSw_;

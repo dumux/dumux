@@ -183,14 +183,14 @@ public:
     Stokes2cSubProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        std::vector<Scalar> positions0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions0);
-        std::vector<Scalar> positions1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Grid, Positions1);
+        std::vector<Scalar> positions0 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, StokesGrid, Positions0);
+        std::vector<Scalar> positions1 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, StokesGrid, Positions1);
 
         bBoxMin_[0] = positions0.front();
         bBoxMax_[0] = positions0.back();
-        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, InterfacePosY);
+        bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, DarcyGrid, InterfacePosY);
         bBoxMax_[1] = positions1.back();
-        runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RunUpDistanceX); // first part of the interface without coupling
+        runUpDistanceX_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, DarcyGrid, RunUpDistanceX); // first part of the interface without coupling
 
         refVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefVelocity);
         refPressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FreeFlow, RefPressure);
@@ -297,14 +297,17 @@ public:
 
         // set pressure at one point, do NOT specify this
         // if the Darcy domain has a Dirichlet condition for pressure
-        if (onRightBoundary_(globalPos))
-        {
-            if (time > initializationTime_)
-                values.setDirichlet(pressureIdx);
-            else
-                if (!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
-                    values.setDirichlet(pressureIdx);
-        }
+//        if (onRightBoundary_(globalPos))
+//        {
+//            if (time > initializationTime_)
+//                values.setDirichlet(pressureIdx);
+//            else
+//                if (!onLowerBoundary_(globalPos) && !onUpperBoundary_(globalPos))
+//                    values.setDirichlet(pressureIdx);
+//        }
+
+        if(values.isOutflow(momentumXIdx) || values.isOutflow(momentumYIdx))
+            values.setDirichlet(massBalanceIdx);
 
         return values;
     }
