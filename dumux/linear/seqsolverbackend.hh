@@ -63,14 +63,13 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");;
-    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
+    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
+    const int maxIter = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.MaxIterations");
+    const double residReduction = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.ResidualReduction");
+    const double relaxation = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.PreconditionerRelaxation");
+    const int precondIter = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolverPreconditionerIterations");
 
     Vector bTmp(b);
-
-    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
-    const int precondIter = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, PreconditionerIterations);
 
     Preconditioner precond(A, precondIter, relaxation);
 
@@ -89,13 +88,12 @@ public:
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
     const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
-    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
+    const int maxIter = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.MaxIterations");
+    const double residReduction = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.ResidualReduction");
+    const double relaxation = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.PreconditionerRelaxation");
+    const int precondIter = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolverPreconditionerIterations");
 
     Vector bTmp(b);
-
-    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
-    const int precondIter = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, PreconditionerIterations);
 
     Preconditioner precond(A, precondIter, relaxation);
 
@@ -557,7 +555,7 @@ public:
   {
     typedef Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel> Preconditioner;
     typedef Dune::RestartedGMResSolver<Vector> Solver;
-    const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
+    const int restart = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.GMResRestart");
 
     return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }
@@ -588,12 +586,11 @@ public:
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
     const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
-    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
+    const int maxIter = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.MaxIterations");
+    const double residReduction = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.ResidualReduction");
+    const double relaxation = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.PreconditionerRelaxation");
 
     Vector bTmp(b);
-
-    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
 
     Preconditioner precond(A, relaxation);
 
@@ -612,12 +609,11 @@ public:
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
     const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
-    const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
-    const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
+    const int maxIter = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.MaxIterations");
+    const double residReduction = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.ResidualReduction");
+    const double relaxation = getParamFromGroup<double>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.PreconditionerRelaxation");
 
     Vector bTmp(b);
-
-    const double relaxation = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, PreconditionerRelaxation);
 
     Preconditioner precond(A, relaxation);
 
@@ -754,7 +750,7 @@ public:
   {
       typedef Dune::SeqILU0<Matrix, Vector, Vector, blockLevel> Preconditioner;
       typedef Dune::RestartedGMResSolver<Vector> Solver;
-      const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
+      const int restart = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.GMResRestart");
 
       return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }
@@ -793,7 +789,7 @@ public:
   {
       typedef Dune::SeqILUn<Matrix, Vector, Vector, blockLevel> Preconditioner;
       typedef Dune::RestartedGMResSolver<Vector> Solver;
-      const int restart = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, GMResRestart);
+      const int restart = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.GMResRestart");
 
       return ParentType::template solve<Preconditioner, Solver>(A, x, b, restart);
   }

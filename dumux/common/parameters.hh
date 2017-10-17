@@ -313,6 +313,11 @@ private:
         params["Implicit.UpwindWeight"] = "1.0";
 
         // parameters in the linear solver group
+        params["LinearSolver.GMResRestart"] = "10";
+        params["LinearSolver.MaxIterations"] = "250";
+        params["LinearSolver.PreconditionerIterations"] = "1";
+        params["LinearSolver.PreconditionerRelaxation"] = "1.0";
+        params["LinearSolver.ResidualReduction"] = "1e-6";
         params["LinearSolver.Verbosity"] = "0";
 
         // parameters in the problem group

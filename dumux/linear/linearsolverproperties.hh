@@ -40,15 +40,19 @@ NEW_TYPE_TAG(LinearSolverTypeTag);
 NEW_PROP_TAG(LinearSolver);
 
 //! target reduction of the initial residual
+// TODO: remove this once the sequential models don't use the tag anymore
 NEW_PROP_TAG(LinearSolverResidualReduction);
 
 //! maximum number of iterations of solver
+// TODO: remove this once the sequential models don't use the tag anymore
 NEW_PROP_TAG(LinearSolverMaxIterations);
 
 //! relaxation parameter for the preconditioner
+// TODO: remove this once the sequential models don't use the tag anymore
 NEW_PROP_TAG(LinearSolverPreconditionerRelaxation);
 
 //! number of preconditioner iterations per solver iteration
+// TODO: remove this once the sequential models don't use the tag anymore
 NEW_PROP_TAG(LinearSolverPreconditionerIterations);
 
 //! Block level depth for the preconditioner
@@ -69,15 +73,18 @@ NEW_PROP_TAG(LinearSolverGMResRestart);
 NEW_PROP_TAG(LinearSolverBlockSize);
 
 //! set the preconditioner relaxation parameter to 1.0 by default
+// TODO: remove this once the sequential models don't use the tag anymore
 SET_SCALAR_PROP(LinearSolverTypeTag, LinearSolverPreconditionerRelaxation, 1.0);
 
 //! set the preconditioner iterations to 1 by default
+// TODO: remove this once the sequential models don't use the tag anymore
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerIterations, 1);
 
 //! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerBlockLevel, 1);
 
 //! set the GMRes restart parameter to 10 by default
+// TODO: remove this once the sequential models don't use the tag anymore
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverGMResRestart, 10);
 
 } // namespace Properties
