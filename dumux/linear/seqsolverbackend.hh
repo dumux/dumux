@@ -63,7 +63,7 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");;
     const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
     const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
@@ -88,7 +88,7 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
     const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
     const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
@@ -587,7 +587,7 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b)
   {
-    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
     const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
     const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
@@ -611,7 +611,7 @@ public:
   template<class Preconditioner, class Solver, class Matrix, class Vector>
   bool solve(const Matrix& A, Vector& x, const Vector& b, const int restartGMRes)
   {
-    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
     const int maxIter = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
     const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
 
@@ -831,7 +831,7 @@ public:
     typedef typename Dune::FieldMatrix<Scalar, blockSize, blockSize> MatrixBlock;
     typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
 
-    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
     Dune::SuperLU<ISTLMatrix> solver(A, verbosity > 0);
 
     solver.apply(x, bTmp, result_);
@@ -898,7 +898,7 @@ public:
     typedef typename Dune::FieldMatrix<Scalar, blockSize, blockSize> MatrixBlock;
     typedef typename Dune::BCRSMatrix<MatrixBlock> ISTLMatrix;
 
-    int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    const int verbosity = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "LinearSolver.Verbosity");
     Dune::UMFPack<ISTLMatrix> solver(A, verbosity > 0);
 
     solver.apply(x, bTmp, result_);

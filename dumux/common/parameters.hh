@@ -312,6 +312,9 @@ private:
         // parameters in the implicit group
         params["Implicit.UpwindWeight"] = "1.0";
 
+        // parameters in the linear solver group
+        params["LinearSolver.Verbosity"] = "0";
+
         // parameters in the problem group
         params["Problem.EnableGravity"] = "true";
 

@@ -39,15 +39,6 @@ NEW_TYPE_TAG(LinearSolverTypeTag);
 //! The type of the linear solver to be used
 NEW_PROP_TAG(LinearSolver);
 
-/*!
- * \brief Specifies the verbosity of the linear solver
- *
- * By default it is 0, i.e. it doesn't print anything. Setting this
- * property to 1 prints aggregated convergence rates, 2 prints the
- * convergence rate of every iteration of the scheme.
- */
-NEW_PROP_TAG(LinearSolverVerbosity);
-
 //! target reduction of the initial residual
 NEW_PROP_TAG(LinearSolverResidualReduction);
 
@@ -76,8 +67,6 @@ NEW_PROP_TAG(LinearSolverGMResRestart);
  * (Especially important for the SuperLU solver!)
  */
 NEW_PROP_TAG(LinearSolverBlockSize);
-
-SET_INT_PROP(LinearSolverTypeTag, LinearSolverVerbosity, 0);
 
 //! set the preconditioner relaxation parameter to 1.0 by default
 SET_SCALAR_PROP(LinearSolverTypeTag, LinearSolverPreconditionerRelaxation, 1.0);
