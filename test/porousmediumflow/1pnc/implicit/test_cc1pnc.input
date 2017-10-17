@@ -1,0 +1,15 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 20 2
+
+[Problem]
+Name = 1pnctestcc # name passed to the output routines
+EnableGravity = 0 # disable gravity
+
+[Vtk]
+AddVelocity = 1 # enable velocity output

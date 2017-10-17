@@ -39,7 +39,7 @@
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-//#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
+#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
@@ -81,9 +81,8 @@ private:
 
 public:
     static const int value = FluidSystem::numComponents;
-;
-
 };
+
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_PROP(OnePNC, ReplaceCompEqIdx)
 {
@@ -110,7 +109,7 @@ SET_PROP(OnePNC, FluidState){
 };
 
 //! Use the 1pnc local residual
-// SET_TYPE_PROP(OnePNC, LocalResidual, OnePNCLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //! Use the 1pnc newton controller
 SET_TYPE_PROP(OnePNC, NewtonController, OnePNCNewtonController<TypeTag>);
@@ -173,6 +172,16 @@ SET_PROP(OnePNC, EffectiveDiffusivityModel)
  public:
     typedef DiffusivityMillingtonQuirk<Scalar> type;
 };
+
+
+//! Enable advection
+SET_BOOL_PROP(OnePNC, EnableAdvection, true);
+
+//! Enable molecular diffusion
+SET_BOOL_PROP(OnePNC, EnableMolecularDiffusion, true);
+
+//! Isothermal model by default
+SET_BOOL_PROP(OnePNC, EnableEnergyBalance, false);
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
@@ -183,17 +192,11 @@ SET_TYPE_PROP(OnePNCNI, IsothermalModel, OnePNCModel<TypeTag>);
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNC, IsothermalVolumeVariables, OnePNCVolumeVariables<TypeTag>);
 
-//! temperature is already written by the isothermal model
-// SET_BOOL_PROP(OnePNCNI, NiOutputLevel, 0);
-
-// set isothermal FluxVariables
-// SET_TYPE_PROP(OnePNCNI, IsothermalFluxVariables, OnePNCFluxVariables<TypeTag>);
-
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNCNI, IsothermalVolumeVariables, OnePNCVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-// SET_TYPE_PROP(OnePNCNI, IsothermalLocalResidual, OnePNCLocalResidual<TypeTag>);
+SET_TYPE_PROP(OnePNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(OnePNCNI, IsothermalIndices, OnePNCIndices<TypeTag, /*PVOffset=*/0>);

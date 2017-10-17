@@ -1,10 +1,10 @@
 add_input_file_links()
 
 # isothermal tests
-add_executable(test test_box1p2c.cc)
+# add_executable(test test_box1p2c.cc)
 
-# add_executable(test_cc1pnc test_cc1pnc.cc)
-
+add_executable(test_box1pnc test_box1pnc.cc)
+add_executable(test_cc1pnc test_cc1pnc.cc)
 
 
 
