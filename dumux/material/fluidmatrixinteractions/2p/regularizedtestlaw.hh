@@ -92,9 +92,12 @@ public:
         // saturation moving to the right direction if it
         // temporarily is in an 'illegal' range.
         if (swe <= sThres) {
-            Scalar m = Testlaw::dpc_dswe(params, sThres);
             Scalar pcsweLow = Testlaw::pc(params, sThres);
-            return pcsweLow + m*(swe - sThres);
+            Scalar m = Testlaw::dpc_dswe(params, sThres);
+            Scalar m2 = Testlaw::d2pc_dswe2(params, sThres);
+            return m2*(swe*swe/2.0 + sThres*sThres/2.0 - sThres*swe)
+                   + m *(swe - sThres)
+                   + pcsweLow;
         }
         else if (swe > 1.0) {
             Scalar m = Testlaw::dpc_dswe(params, 1.0);
@@ -121,35 +124,35 @@ public:
      *
      * \copydetails BrooksCorey::sw()
      */
-    static Scalar sw(const Params &params, Scalar pc)
-    {
-        const Scalar sThres = params.thresholdSw();
-
-        // calculate the saturation which corrosponds to the
-        // saturation in the non-regularized version of
-        // the Brooks-Corey law
-        Scalar swe = Testlaw::sw(params, pc);
-
-        // make sure that the capilary pressure observes a
-        // derivative != 0 for 'illegal' saturations. This is
-        // required for example by newton solvers (if the
-        // derivative calculated numerically) in order to get the
-        // saturation moving to the right direction if it
-        // temporarily is in an 'illegal' range.
-        if (swe <= sThres) {
-            // invert the low saturation regularization of pc()
-            Scalar m = Testlaw::dpc_dswe(params, sThres);
-            Scalar pcsweLow = Testlaw::pc(params, sThres);
-            return sThres + (pc - pcsweLow)/m;
-        }
-        else if (swe > 1.0) {
-            Scalar m = Testlaw::dpc_dswe(params, 1.0);
-            Scalar pcsweHigh = Testlaw::pc(params, 1.0);
-            return 1.0 + (pc - pcsweHigh)/m;
-        }
-
-        return Testlaw::sw(params, pc);
-    }
+    // static Scalar sw(const Params &params, Scalar pc)
+    // {
+    //     const Scalar sThres = params.thresholdSw();
+    //
+    //     // calculate the saturation which corrosponds to the
+    //     // saturation in the non-regularized version of
+    //     // the Brooks-Corey law
+    //     Scalar swe = Testlaw::sw(params, pc);
+    //
+    //     // make sure that the capilary pressure observes a
+    //     // derivative != 0 for 'illegal' saturations. This is
+    //     // required for example by newton solvers (if the
+    //     // derivative calculated numerically) in order to get the
+    //     // saturation moving to the right direction if it
+    //     // temporarily is in an 'illegal' range.
+    //     if (swe <= sThres) {
+    //         // invert the low saturation regularization of pc()
+    //         Scalar m = Testlaw::dpc_dswe(params, sThres);
+    //         Scalar pcsweLow = Testlaw::pc(params, sThres);
+    //         return sThres + (pc - pcsweLow)/m;
+    //     }
+    //     else if (swe > 1.0) {
+    //         Scalar m = Testlaw::dpc_dswe(params, 1.0);
+    //         Scalar pcsweHigh = Testlaw::pc(params, 1.0);
+    //         return 1.0 + (pc - pcsweHigh)/m;
+    //     }
+    //
+    //     return Testlaw::sw(params, pc);
+    // }
 
     /*!
      * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
@@ -183,7 +186,8 @@ public:
         if (swe <= sThres) {
             // calculate the slope of the straight line used in pc()
             Scalar m = Testlaw::dpc_dswe(params, sThres);
-            return m;
+            Scalar m2 = Testlaw::d2pc_dswe2(params, sThres);
+            return m2*(swe - sThres) + m;
         }
         else if (swe > 1.0) {
             // calculate the slope of the straight line used in pc()
@@ -194,52 +198,52 @@ public:
         return Testlaw::dpc_dswe(params, swe);
     }
 
-    /*!
-     * \brief A regularized version of the partial derivative
-     *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
-     *        according to Brooks & Corey.
-     *
-     *  regularized part:
-     *    - low saturation:  use the slope of the regularization point (i.e. no kink).
-     *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
-     *                       by a straight line and use that slope (yes, there is a kink :-( ).
-     *
-     * For the non-regularized part:
-     *
-     * \copydetails BrooksCorey::dswe_dpc()
-     */
-    static Scalar dswe_dpc(const Params &params, Scalar pc)
-    {
-        const Scalar sThres = params.thresholdSw();
-
-        //instead of return value = inf, return a very large number
-        if (params.pe() == 0.0)
-        {
-            return 1e100;
-        }
-
-        // calculate the saturation which corresponds to the
-        // saturation in the non-regularized version of the
-        // Brooks-Corey law
-        Scalar swe;
-        if (pc < 0)
-            swe = 1.5; // make sure we regularize below
-        else
-            swe = Testlaw::sw(params, pc);
-
-        // derivative of the regularization
-        if (swe <= sThres) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = Testlaw::dpc_dswe(params, sThres);
-            return 1/m;
-        }
-        else if (swe > 1.0) {
-            // calculate the slope of the straight line used in pc()
-            Scalar m = Testlaw::dpc_dswe(params, 1.0);
-            return 1/m;
-        }
-        return 1.0/Testlaw::dpc_dswe(params, swe);
-    }
+    // /*!
+    //  * \brief A regularized version of the partial derivative
+    //  *        of the \f$\mathrm{\overline{S}_w(p_c)}\f$ w.r.t. cap.pressure
+    //  *        according to Brooks & Corey.
+    //  *
+    //  *  regularized part:
+    //  *    - low saturation:  use the slope of the regularization point (i.e. no kink).
+    //  *    - high saturation: connect the high regularization point with \f$\mathrm{\overline{S}_w =1}\f$
+    //  *                       by a straight line and use that slope (yes, there is a kink :-( ).
+    //  *
+    //  * For the non-regularized part:
+    //  *
+    //  * \copydetails BrooksCorey::dswe_dpc()
+    //  */
+    // static Scalar dswe_dpc(const Params &params, Scalar pc)
+    // {
+    //     const Scalar sThres = params.thresholdSw();
+    //
+    //     //instead of return value = inf, return a very large number
+    //     if (params.pe() == 0.0)
+    //     {
+    //         return 1e100;
+    //     }
+    //
+    //     // calculate the saturation which corresponds to the
+    //     // saturation in the non-regularized version of the
+    //     // Brooks-Corey law
+    //     Scalar swe;
+    //     if (pc < 0)
+    //         swe = 1.5; // make sure we regularize below
+    //     else
+    //         swe = Testlaw::sw(params, pc);
+    //
+    //     // derivative of the regularization
+    //     if (swe <= sThres) {
+    //         // calculate the slope of the straight line used in pc()
+    //         Scalar m = Testlaw::dpc_dswe(params, sThres);
+    //         return 1/m;
+    //     }
+    //     else if (swe > 1.0) {
+    //         // calculate the slope of the straight line used in pc()
+    //         Scalar m = Testlaw::dpc_dswe(params, 1.0);
+    //         return 1/m;
+    //     }
+    //     return 1.0/Testlaw::dpc_dswe(params, swe);
+    // }
 
     /*!
      * \brief   Regularized version of the  relative permeability

@@ -104,59 +104,60 @@ public:
     : ParentType(problem, gridView)
     {
         // residual saturations
-       materialParams_.setSwr(0.0);
-       materialParams_.setSnr(0.0);
+        materialParams_.setSwr(0.0);
+        materialParams_.setSnr(0.0);
 
         // parameters for the Brooks-Corey law
         // alpha and n
         materialParams_.setPe(5171.068);
         materialParams_.setLambda(4.0);
 
+        // regularization
+        materialParams_.setThresholdSw(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RegularizationSw));
+
         K_ = 100 * 9.86923* 1.0e-16;
 
-PlotMaterialLaw<TypeTag> plotMaterialLaw;
-        GnuplotInterface<Scalar> gnuplot(true);
+        if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, PlotMaterialLaw))
+        {
+            static const auto plotRange = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::vector<Scalar>, Problem, PlotRange);
+            static const std::string rangeString = "[" + std::to_string(plotRange[0]) + ":" + std::to_string(plotRange[1]) + "]";
+            PlotMaterialLaw<TypeTag> plotMaterialLaw;
 
-      plotMaterialLaw.addDswcurve( gnuplot, materialParams_, 0.0, 1.0);
-       gnuplot.setOption("set xrange [0:1]");
-       gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
-       gnuplot.plot("D-Sw");
+            GnuplotInterface<Scalar> gnuplot(true);
+            plotMaterialLaw.addDswcurve( gnuplot, materialParams_, plotRange[0], plotRange[1]);
+            gnuplot.setOption("set xrange " + rangeString);
+            gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+            gnuplot.plot("D-Sw");
 
+            GnuplotInterface<Scalar> gnuplot2(true);
+            plotMaterialLaw.addpcswcurve( gnuplot2, materialParams_, plotRange[0], plotRange[1]);
+            gnuplot2.setOption("set xrange " + rangeString);
+            gnuplot2.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+            gnuplot2.plot("pc-Sw");
 
+            GnuplotInterface<Scalar> gnuplot3(true);
+            plotMaterialLaw.addkrcurves( gnuplot3, materialParams_, plotRange[0], plotRange[1]);
+            gnuplot3.setOption("set xrange " + rangeString);
+            gnuplot3.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+            gnuplot3.plot("krw-Sw");
 
-   /*    plotMaterialLaw.addlamswcurve( gnuplot, materialParams_, 0.0, 1.0);
+            GnuplotInterface<Scalar> gnuplot4(true);
+            plotMaterialLaw.addkrcurves( gnuplot4, materialParams_, plotRange[0], plotRange[1]);
+            gnuplot4.setOption("set xrange " + rangeString);
+            gnuplot4.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+            gnuplot4.plot("kr-Sw");
 
-        gnuplot.setOption("set xrange [0:1]");
-        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
-        gnuplot.plot("LambdarTerm-Sw");
+            GnuplotInterface<Scalar> gnuplot5(true);
+            plotMaterialLaw.adddpcdswcurve( gnuplot5, materialParams_, plotRange[0], plotRange[1]);
+            gnuplot5.setOption("set xrange " + rangeString);
+            gnuplot5.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
+            gnuplot5.plot("dpc-dSw");
 
-
-
-
-plotMaterialLaw.addkrcurves( gnuplot, materialParams_, 0.0, 1.0);
-
-        gnuplot.setOption("set xrange [0:1]");
-        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
-        gnuplot.plot("Kr-Sw");689
-
-
-plotMaterialLaw.addpcswcurve( gnuplot, materialParams_, 0.0, 1.0);
-
-        gnuplot.setOption("set xrange [0:1]");
-        gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
-        gnuplot.plot("pc-Sw");
-
-
-       plotMaterialLaw.adddpcdswcurve( gnuplot, materialParams_, 0.0, 1.0);
-       gnuplot.setOption("set xrange [0.1:1]");
-       gnuplot.setOption("set label \"residual\\nsaturation\" at 0.1,100000 center");
-       gnuplot.plot("dpcdsw-Sw");
-*/
-
+            exit(0);
+        }
     }
 
- /*!
-
+    /*!
      * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
      * \param globalPos The global position
