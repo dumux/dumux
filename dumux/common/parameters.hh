@@ -324,6 +324,10 @@ private:
         // parameters in the time loop group
         params["TimeLoop.MaxTimeStepSize"] = std::to_string(std::numeric_limits<double>::max());
         params["TimeLoop.MaxTimeStepDivisions"] = "10";
+
+        // parameters in the vtk group
+        params["Vtk.AddVelocity"] = "false";
+        params["Vtk.AddProcessRank"] = "true";
     }
 };
 

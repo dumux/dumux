@@ -105,8 +105,6 @@ NEW_PROP_TAG(SolutionDependentHeatConduction); //!< specifies if the parameters 
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
 
 // vtk output
-NEW_PROP_TAG(VtkAddVelocity); //!< specifies if an element velocity it reconstructed for the output
-NEW_PROP_TAG(VtkAddProcessRank); //!< specifies if the process rank should be added the output
 NEW_PROP_TAG(VtkOutputModule); //!< specifies the output module to be used
 NEW_PROP_TAG(VelocityOutput); //!< specifies the velocity calculation module to be used
 
@@ -145,7 +143,6 @@ NEW_PROP_TAG(DofMapper);
 
 //! indicate whether discretization is box or not
 NEW_PROP_TAG(ImplicitIsBox);
-
 
 //! the local fem space used for the AMG backend
 NEW_PROP_TAG(ImplicitLocalFemMap);

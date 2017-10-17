@@ -329,7 +329,7 @@ private:
     //! returns a boolean whether or not the AB matrix has to be passed to the handles
     bool requireABMatrix_() const
     {
-        static const bool requireAB = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity) || dim < dimWorld;
+        static const bool requireAB = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.AddVelocity") || dim < dimWorld;
         return requireAB;
     }
 
