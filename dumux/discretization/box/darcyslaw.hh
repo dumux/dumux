@@ -40,12 +40,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(ProblemEnableGravity);
-}
-
 /*!
  * \ingroup DarcysLaw
  * \brief Specialization of Darcy's Law for the box method.
@@ -96,7 +90,7 @@ public:
         outsideK *= outsideVolVars.extrusionFactor();
 
         const auto K = problem.spatialParams().harmonicMean(insideK, outsideK, scvf.unitOuterNormal());
-        static const bool enableGravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
 
         const auto& shapeValues = fluxVarCache.shapeValues();
 

@@ -38,12 +38,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(ProblemEnableGravity);
-}
-
 /*!
  * \ingroup DarcysLaw
  * \brief Specialization of Darcy's Law for the CCTpfa method.

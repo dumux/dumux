@@ -67,7 +67,8 @@ public:
     , spatialParams_(std::make_shared<SpatialParams>(this->asImp_()))
     {
         // TODO: spatial params init?
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        if (enableGravity)
             gravity_[dimWorld-1]  = -9.81;
     }
 

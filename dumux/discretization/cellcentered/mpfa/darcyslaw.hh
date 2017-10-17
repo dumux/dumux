@@ -33,7 +33,6 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration of properties
-NEW_PROP_TAG(ProblemEnableGravity);
 NEW_PROP_TAG(MpfaHelper);
 }
 
@@ -226,7 +225,7 @@ private:
                                      const FluxVariablesCache& fluxVarsCache,
                                      const unsigned int phaseIdx)
     {
-        static const bool gravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
+        static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
 
         if (!gravity)
             return Scalar(0.0);
