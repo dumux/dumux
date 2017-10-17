@@ -47,11 +47,11 @@ public:
     OnePTestSpatialParams(const Problem& problem)
     : ParentType(problem)
     {
-        permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
-        permeabilityLens_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
+        permeability_ = getParam<Scalar>("SpatialParams.Permeability");
+        permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
 
-        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
-        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
+        lensLowerLeft_ =  getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
+        lensUpperRight_ =  getParam<GlobalPosition>("SpatialParams.LensUpperRight");
     }
 
     /*!
