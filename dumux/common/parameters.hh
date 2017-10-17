@@ -309,6 +309,9 @@ private:
     //! we do this once per simulation on call to Parameters::init();
     static void defaultParameters(Dune::ParameterTree& params)
     {
+        // parameters in the implicit group
+        params["Implicit.UpwindWeight"] = "1.0";
+
         // parameters in the problem group
         params["Problem.EnableGravity"] = "true";
 

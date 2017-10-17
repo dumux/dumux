@@ -146,8 +146,6 @@ NEW_PROP_TAG(DofMapper);
 //! indicate whether discretization is box or not
 NEW_PROP_TAG(ImplicitIsBox);
 
-//! the upwind weight for the advective term
-NEW_PROP_TAG(ImplicitUpwindWeight);
 
 //! the local fem space used for the AMG backend
 NEW_PROP_TAG(ImplicitLocalFemMap);

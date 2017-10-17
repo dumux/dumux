@@ -169,7 +169,7 @@ public:
         // retrieve the upwind weight for the mass conservation equations. Use the value
         // specified via the property system as default, and overwrite
         // it by the run-time parameter from the Dune::ParameterTree
-        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
         const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
         const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
