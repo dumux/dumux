@@ -12,4 +12,10 @@ dune_add_test(NAME test_2p_incompressible_box
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
               CMD_ARGS test_2p.input -Problem.Name 2p_box)
 
+# using mpfa
+dune_add_test(NAME test_2p_incompressible_mpfa
+              SOURCES test_2p.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleMpfa
+            CMD_ARGS test_2p.input -Problem.Name 2p_mpfa)
+
 set(CMAKE_BUILD_TYPE Release)
