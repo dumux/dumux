@@ -71,8 +71,7 @@ SET_PROP(ThermoChemProblem, FluidSystem)
 // Enable velocity output
 SET_BOOL_PROP(ThermoChemProblem, VtkAddVelocity, false);
 
-SET_TYPE_PROP(ThermoChemProblem, LinearSolver, UMFPackBackend<TypeTag>);
-
+// SET_TYPE_PROP(ThermoChemProblem, LinearSolver, UMFPackBackend<TypeTag>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialParams<TypeTag>);
@@ -211,7 +210,7 @@ public:
 
         if(globalPos[0] < eps_ )
         {
-//             values.setDirichlet(pressureIdx);
+            values.setDirichlet(pressureIdx);
             values.setDirichlet(firstMoleFracIdx);
             values.setDirichlet(temperatureIdx);
         }
@@ -234,43 +233,44 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-      PrimaryVariables priVars(0.0);
+        PrimaryVariables priVars(0.0);
 
-      //input parameters
-//       Scalar pIn;
-      Scalar pOut;
-      Scalar tIn;
-       Scalar tOut;
-       Scalar vaporIn;
+        //input parameters
+        Scalar pIn;
+        Scalar pOut;
+        Scalar tIn;
+        Scalar tOut;
+        Scalar vaporIn;
 
       // read input parameters
-      if (isCharge_ == true){
-//       pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureIn);
-      pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureOut);
-      tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureIn);
-      tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureOut);
-      vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporIn);
+        if (isCharge_ == true){
+            pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureIn);
+            pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureOut);
+            tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureIn);
+            tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureOut);
+            vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporIn);
+        }
 
-      }
       else{
-//       pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureIn);
-      pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureOut);
-      tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureIn);
-      tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureOut);
-      vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporIn);
-      }
+            pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureIn);
+            pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureOut);
+            tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureIn);
+            tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureOut);
+            vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporIn);
+        }
 
         if(globalPos[0] < eps_)
         {
+            priVars[pressureIdx] = pIn;
             priVars[firstMoleFracIdx]     = vaporIn; // Saturation outer boundary
             priVars[temperatureIdx] = tIn;
         }
+
         if(globalPos[0] > this->bBoxMax()[0] - eps_)
         {
             priVars[pressureIdx] = pOut;
             priVars[firstMoleFracIdx] = 0.01; // Saturation inner boundary
             priVars[temperatureIdx] = tOut;
-
         }
 
         return priVars;
@@ -299,16 +299,16 @@ public:
     {
         PrimaryVariables priVars(0.0);
 
-        if(globalPos[0] < eps_)
-        {
+//         if(globalPos[0] < eps_)
+//         {
+//
+//         if (isCharge_ == true){
+//             priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, InFlow); //[mol/s] gas inflow; negative sign: inflow
+//         }
+//         else
+//         priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, InFlow); //[mol/s] gas inflow
+//         }
 
-        if (isCharge_ == true){
-            priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, InFlow); //[mol/s] gas inflow; negative sign: inflow
-        }
-        else
-        priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, InFlow); //[mol/s] gas inflow
-        }
-//           std::cout << " test neumann " << "\n";
         return priVars;
     }
 
@@ -334,22 +334,21 @@ public:
         Scalar CaO2H2Init;
 
         if (isCharge_ == true){
-        pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureInitial);
-        tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureInitial);
-        h2oInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporInitial);
-        CaOInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaOInitial);
-        CaO2H2Init = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaO2H2Initial);
+            pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureInitial);
+            tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureInitial);
+            h2oInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporInitial);
+            CaOInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaOInitial);
+            CaO2H2Init = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaO2H2Initial);
         }
 
         else {
-        std::cout << "false " << "\n";
-        pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureInitial);
-        tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureInitial);
-        h2oInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporInitial);
-        CaOInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaOInitial);
-        CaO2H2Init = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaO2H2Initial);
+            pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureInitial);
+            tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureInitial);
+            h2oInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporInitial);
+            CaOInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaOInitial);
+            CaO2H2Init = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaO2H2Initial);
         }
-        std::cout << "CaO2H2Init =  " << CaO2H2Init << "\n";
+
         priVars[pressureIdx] = pInit;
         priVars[firstMoleFracIdx]   = h2oInit;
 #if NONISOTHERMAL
@@ -385,10 +384,10 @@ public:
 
         if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) > 1e-3)
             moleFractionVapor = volVars.moleFraction(phaseIdx, firstMoleFracIdx) ;
-        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) >= 1.0){
-            moleFractionVapor = 1;
-//           std::cout << " test vapor = " << "\n";
-        }
+
+        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) >= 1.0) moleFractionVapor = 1;
+
+
         Scalar vaporPressure = volVars.pressure(phaseIdx) *moleFractionVapor ;
         vaporPressure *= 1.0e-5;
         Scalar pFactor = log(vaporPressure);
@@ -423,9 +422,9 @@ public:
 
             // make sure not more CaO reacts than present
 
-            if (- q*this->timeManager().timeStepSize() + moleFracCaO_sPhase* volVars.molarDensity(cPhaseIdx) < 0 + eps_){
+            if (- q*this->timeManager().timeStepSize() + moleFracCaO_sPhase* volVars.molarDensity(cPhaseIdx) < 0 + eps_)
+            {
                 q = moleFracCaO_sPhase/this->timeManager().timeStepSize();
-//                 std::cout << "q_discharge = " << q << "\n";
             }
 
             source[conti0EqIdx+CaO2H2Idx] = q;
@@ -449,9 +448,9 @@ public:
 
             Scalar q =  -rDehydration;
 
-            if (- q*this->timeManager().timeStepSize() + moleFracCaO2H2_sPhase*volVars.molarDensity(hPhaseIdx) < 0){
+            if (- q*this->timeManager().timeStepSize() + moleFracCaO2H2_sPhase*volVars.molarDensity(hPhaseIdx) < 0)
+            {
                 q = moleFracCaO2H2_sPhase/this->timeManager().timeStepSize();
-
             }
 
             source[conti0EqIdx+CaO2H2Idx] = -q;
