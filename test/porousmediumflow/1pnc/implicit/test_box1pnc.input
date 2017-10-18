@@ -8,7 +8,7 @@ UpperRight = 1 1
 Cells = 20 2
 
 [Problem]
-Name = outflowbox # name passed to the output routines
+Name = 1pnctestbox # name passed to the output routines
 EnableGravity = 0 # disable gravity
 
 [Vtk]

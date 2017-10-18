@@ -70,13 +70,10 @@ class ThermoChemSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
-
-//         wPhaseIdx = FluidSystem::wPhaseIdx
     };
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-//     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -94,12 +91,6 @@ public:
     ThermoChemSpatialParams(const Problem& problem, const GridView &gridView)
     : ParentType(problem, gridView)
     {
-        // intrinsic permeabilities
-//         K_[0][0] = 5e-12;
-//         K_[1][1] = 5e-12;
-//         K_[0][0] = 2.23e-14;
-//         K_[1][1] = 2.23e-14;
-
         //thermal conductivity of CaO
         lambdaSolid_ = 0.4; //[W/(m*K)] Nagel et al [2013b]
 
@@ -119,19 +110,6 @@ public:
         permLaw_.init(*this);
     }
 
-    /*! Old
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
-     *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     */
-//     const DimMatrix intrinsicPermeability(const Element &element,
-//                                        const FVElementGeometry &fvGeometry,
-//                                        const int scvIdx) const
-//     { return K_; }
-//
     /*!
      *  \brief Define the initial permeability \f$[m^2]\f$ distribution
      *
@@ -237,9 +215,6 @@ public:
                              const ElementSolutionVector& elemSol) const
     {
         return 790;
-//             42 // specific heat capacity of CaO [J / (kg K)]
-//             * 3370 // density of CaO [kg/m^3]
-//             * (1 - porosity(element, fvGeometry, scvIdx));  // for CaO only!!
     }
 
     /*!
@@ -272,11 +247,9 @@ public:
     { return lambdaSolid_; }
 
 private:
-//     DimMatrix K_;
-//     Scalar porosity_;
-    Scalar eps_;
-//     MaterialLawParams materialParams_;
-    Scalar lambdaSolid_;
+
+   Scalar eps_;
+   Scalar lambdaSolid_;
    bool isCharge_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
    PorosityLaw poroLaw_;
    PermeabilityLaw permLaw_;
