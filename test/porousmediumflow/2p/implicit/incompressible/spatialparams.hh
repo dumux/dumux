@@ -79,8 +79,8 @@ public:
     TwoPTestSpatialParams(const Problem& problem)
     : ParentType(problem)
     {
-        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
-        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
+        lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
+        lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);
