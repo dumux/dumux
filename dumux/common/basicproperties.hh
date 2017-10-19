@@ -59,6 +59,9 @@ NEW_PROP_TAG(ParameterTree);
 //! Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(ModelParameterGroup);
 
+//! Property which defines the group that is queried for parameters by default
+NEW_PROP_TAG(ModelDefaultParameters);
+
 //! Property which defines the group that is queried for grid (creator) parameters by default
 NEW_PROP_TAG(GridParameterGroup);
 
@@ -180,7 +183,12 @@ SET_PROP(NumericModel, ParameterTree)
 //! use the global group as default for the model's parameter group
 SET_STRING_PROP(NumericModel, ModelParameterGroup, "");
 
-//! use the Grid group as default for the grid parameter group
+//! do not specific any model-specific default parameters here
+SET_PROP(NumericModel, ModelDefaultParameters)
+{
+    static void defaultParams(Dune::ParameterTree& tree, const std::string& group = "") { }
+};
+
 SET_STRING_PROP(NumericModel, GridParameterGroup, "Grid");
 
 //! Use the DgfGridCreator by default

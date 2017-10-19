@@ -177,12 +177,25 @@ namespace Dumux
 //! The runtime parameter managing class
 class Parameters {
 
+    using DefaultParams = std::function<void (Dune::ParameterTree&)>;
+    using Usage = std::function<void (const char *, const std::string &)>;
+
 public:
+
 
     //! Initialize the parameter tree singletons
     static void init(int argc, char **argv,
+                    std::string parameterFileName,
+                    const Usage& usage = [](const char *, const std::string &){})
+    {
+        init(argc, argv, [] (Dune::ParameterTree&) {}, parameterFileName, usage);
+    }
+
+    //! Initialize the parameter tree singletons
+    static void init(int argc, char **argv,
+                     const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {},
                      std::string parameterFileName = "",
-                     void (*usage)(const char *, const std::string &) = [](const char *, const std::string &){})
+                     const Usage& usage = [](const char *, const std::string &){})
     {
         const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
@@ -200,7 +213,8 @@ public:
         }
 
         // apply the default parameters
-        defaultParameters(defaultParamTree());
+        globalDefaultParameters(defaultParamTree());
+        defaultParams(defaultParamTree());
 
         // parse paramters from the command line
         for (int i = 1; i < argc; ++i)
@@ -307,7 +321,7 @@ private:
 
     //! This method puts all default arguments into the parameter tree
     //! we do this once per simulation on call to Parameters::init();
-    static void defaultParameters(Dune::ParameterTree& params)
+    static void globalDefaultParameters(Dune::ParameterTree& params)
     {
         // parameters in the implicit group
         params["Implicit.UpwindWeight"] = "1.0";
@@ -335,6 +349,18 @@ private:
         params["Vtk.AddProcessRank"] = "true";
     }
 };
+
+// a free function to set model- or problem-specific default parameters
+void setParam(Dune::ParameterTree& params,
+              const std::string& group,
+              const std::string& key,
+              const std::string& value)
+{
+    if(group == "")
+        params[key] = value;
+    else
+        params[group + "." + key] = value;
+}
 
 // a free function to get a parameter from the parameter tree singleton
 // e.g. auto endTime = getParam<double>("TimeManager.TEnd");
