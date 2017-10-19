@@ -363,10 +363,10 @@ public:
             // look for the next dot in the current prefix
             dot = prefix.rfind(".");
         }
-
-        // TODO: doc me!
-        // TODO: clean up
+        // reset the compoundKey
         compoundKey = groupPrefix + "." + key;
+
+        // if the backward search did not succeed, try the bare key without any prefix
         if (params_.hasKey(key))
         {
             // log that we used this parameter
@@ -374,6 +374,7 @@ public:
             return params_.template get<T>(key);
         }
 
+        // if this did not work, repeat the procedure using the default parameters
         else if(defaultParams_.hasKey(compoundKey))
         {
             // use the default
