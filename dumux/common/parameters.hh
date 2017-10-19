@@ -325,6 +325,9 @@ private:
     {
         // parameters in the implicit group
         params["Implicit.UpwindWeight"] = "1.0";
+        params["Implicit.EnablePartialReassemble"] = "false";
+        params["Implicit.EnableJacobianRecycling"] = "false";
+        params["Implicit.NumericDifferenceMethod"] = "1";
 
         // parameters in the linear solver group
         params["LinearSolver.GMResRestart"] = "10";
@@ -338,7 +341,16 @@ private:
         params["Problem.EnableGravity"] = "true";
 
         // parameters in the newton group
-        params["Newton.TargetSteps"] = "16";
+        params["Newton.MaxSteps"] = "18";
+        params["Newton.TargetSteps"] = "10";
+        params["Newton.UseLineSearch"] = "false";
+        params["Newton.EnableShiftCriterion"] = "true";
+        params["Newton.MaxRelativeShift"] = "1e-8";
+        params["Newton.EnableResidualCriterion"] = "false";
+        params["Newton.ResidualReduction"] = "1e-5";
+        params["Newton.EnableAbsoluteResidualCriterion"] = "false";
+        params["Newton.MaxAbsoluteResidual"] = "1e-5";
+        params["Newton.SatisfyResidualAndShiftCriterion"] = "false";
 
         // parameters in the time loop group
         params["TimeLoop.MaxTimeStepSize"] = "1e300";
