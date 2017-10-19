@@ -3,6 +3,9 @@ add_input_file_links()
 add_dumux_test(tutorial_implicit tutorial_implicit tutorial_implicit.cc
   ${CMAKE_CURRENT_BINARY_DIR}/tutorial_implicit)
 
+# add tutorial to the common target
+add_dependencies(build_tutorials tutorial_implicit)
+
 #install sources
 install(FILES
 tutorial_implicit.cc
