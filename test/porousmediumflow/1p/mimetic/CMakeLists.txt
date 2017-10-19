@@ -9,6 +9,10 @@ dune_symlink_to_source_files(FILES runTestAnisotropic.sh)
 dune_symlink_to_source_files(FILES runTestAnisotropicCase2.sh)
 dune_symlink_to_source_files(FILES runTestAnisotropicCase3.sh)
 
+dune_symlink_to_source_files(FILES runAllTestsWeakConv.sh)
+dune_symlink_to_source_files(FILES runTestWeakConv.sh)
+dune_symlink_to_source_files(FILES runTestWeakConvMPFAL.sh)
+
 # isothermal tests
 add_dumux_test(test_mimetic1p test_mimetic1p test_mimetic1p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
@@ -28,6 +32,12 @@ add_dumux_test(test_1plinear test_1plinear test_1plinear.cc
 
 add_dumux_test(test_mimetic1pniconduction test_mimetic1pniconduction test_mimetic1pniconduction.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_mimetic1pniconduction)
+
+add_dumux_test(test_1pweakconv test_1pweakconv test_1pweakconv.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/test_1pweakconv)
+
+add_dumux_test(test_1pweakconv_mpfal test_1pweakconv_mpfal test_1pweakconv_mpfal.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/test_1pweakconv_mpfal)
 
 #install sources
 install(FILES

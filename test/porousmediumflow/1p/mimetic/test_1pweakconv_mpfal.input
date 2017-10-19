@@ -1,0 +1,22 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = ../implicit/grids/test_weakconvstructured.msh
+Refinement = 3
+
+[Problem]
+Name = 1pweakconv_mpfal_caseOne_harmPoints
+TestCase = 3
+  
+#[Newton]
+#EnableShiftCriterion = 0
+#EnableResidualCriterion = 1
+#EnableAbsoluteResidualCriterion = 1
+#MaxAbsoluteResidual = 1.0e-5
+#UseLineSearch = 0
+#MaxSteps = 100
+
+[SpatialParams]
+useScalar = 0

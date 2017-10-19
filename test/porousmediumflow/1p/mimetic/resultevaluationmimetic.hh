@@ -34,8 +34,6 @@ struct ResultEvaluation
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // Grid and world dimension
     static const int dim = GridView::dimension;
@@ -57,6 +55,9 @@ struct ResultEvaluation
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     typedef typename GridView::Intersection Intersection;
@@ -72,8 +73,12 @@ public:
     Scalar absL2Error;
     Scalar absH1ErrorApproxMin;
     Scalar absH1ErrorDiffMin;
+    Scalar absH1Error;
     Scalar bilinearFormApprox;
     Scalar bilinearFormDiffApprox;
+    Scalar residualTermApprox;
+    Scalar residualTermDiff;
+    Scalar residualTermError;
     Scalar relativeL2Error;
     Scalar relativeL2ErrorIn;
     Scalar relativeL2ErrorOut;
@@ -109,8 +114,12 @@ public:
 
         absH1ErrorApproxMin = 0.0;
         absH1ErrorDiffMin = 0.0;
+        absH1Error = 0.0;
         bilinearFormApprox = 0.0;
         bilinearFormDiffApprox = 0.0;
+        residualTermApprox = 0.0;
+        residualTermDiff = 0.0;
+        residualTermError = 0.0;
 
         Scalar numerator = 0;
         Scalar denominator = 0;
@@ -165,6 +174,21 @@ public:
 
             Dune::FieldVector<Scalar,dim> exactGradient(0.0);
 
+            auto elemVolVars = localView(problem.model().curGlobalVolVars());
+            elemVolVars.bind(element, fvGeometry, problem.model().curSol());
+
+            auto prevElemVolVars = localView(problem.model().prevGlobalVolVars());
+            prevElemVolVars.bind(element, fvGeometry, problem.model().prevSol());
+
+            auto elemFluxVarsCache = localView(problem.model().globalFluxVarsCache());
+            elemFluxVarsCache.bindElement(element, fvGeometry, elemVolVars);
+
+            auto prevElemFluxVarsCache = localView(problem.model().globalFluxVarsCache());
+            prevElemFluxVarsCache.bindElement(element, fvGeometry, prevElemVolVars);
+
+            auto& curGlobalFaceVars = problem.model().curGlobalFaceVars();
+            auto& prevGlobalFaceVars = problem.model().prevGlobalFaceVars();
+
             //loops over faces of element
             for (auto&& scvf : scvfs(fvGeometry))
             {
@@ -185,28 +209,38 @@ public:
                 Scalar exactVel = KGrad*unitOuterNormal;
                 exactVel *= -1;
 
-                auto elemVolVars = localView(problem.model().curGlobalVolVars());
-                elemVolVars.bind(element, fvGeometry, problem.model().curSol());
                 const auto& insideVolVars = elemVolVars[insideScvIdx];
-//
-//                FluxVariables& fluxVars = problem.model().fluxVars(scvFace.fIdxGlobal);
-//                fluxVars.update(problem, element, fvGeometry, scvfIdx, volVarsCur);
-//
-//
-//                Scalar approximateVel = fluxVars.volumeFlux(/*phaseIdx=*/0)/faceVol;
-//
-//                // calculate the difference in the normal velocity
-//                Scalar velDiff = exactVel - approximateVel;
-//
-//                // calculate the fluxes through the element faces
-//                Scalar exactFlux = faceVol*exactVel;
-//                Scalar approximateFlux = faceVol*approximateVel;
-//                Scalar fluxDiff = faceVol*velDiff;
+
+                FluxVariables fluxVars;
+                fluxVars.init(problem, element, fvGeometry, elemVolVars, curGlobalFaceVars, scvf, elemFluxVarsCache);
+
+                // Assuming that the initial Data is the exact solution
+                FluxVariables fluxVarsExact;
+                fluxVarsExact.init(problem, element, fvGeometry, prevElemVolVars, prevGlobalFaceVars, scvf, prevElemFluxVarsCache);
+
+
+                // the physical quantities for which we perform upwinding
+                auto upwindTerm = [](const auto& volVars)
+                                  { return volVars.density(0)*volVars.mobility(0); };
+
+                PrimaryVariables flux(fluxVars.advectiveFlux(0, upwindTerm));
+
+                PrimaryVariables fluxExact(fluxVarsExact.advectiveFlux(0, upwindTerm));
+
+                Scalar approximateVel = flux[conti0EqIdx]/faceVol;
+
+                // calculate the difference in the normal velocity
+                Scalar velDiff = exactVel - approximateVel;
+
+                // calculate the fluxes through the element faces
+                Scalar exactFlux = faceVol*exactVel;
+                Scalar approximateFlux = faceVol*approximateVel;
+                Scalar fluxDiff = faceVol*velDiff;
 
                 Scalar faceDist = (unitOuterNormal*(faceCenter - cellCenter));
 
                 if(scvf.boundary()){
-                    Scalar facePressure = problem.model().curSol()[faceIdx][scvf.dofIndex()][facePressureIdx];
+                    Scalar facePressure = problem.dirichletAtPos(faceCenter)[cellCenterIdx];
 
                     Scalar valDiffApprox = (facePressure-approxPressure);
                     Scalar valDiffExact = (facePressure-exactPressure);
@@ -214,33 +248,33 @@ public:
                     absH1ErrorDiffMin += faceVol/faceDist*(valDiffApprox-valDiffExact)*(valDiffApprox-valDiffExact);
 
                     //Different signs are used than in the paper
-//                    bilinearFormApprox += fluxVars.volumeFlux(0)*approxPressure;
-//                    bilinearFormDiffApprox += (fluxVars.volumeFlux(0)-fluxForBilinearForm)*(approxPressure-exactPressure);
-//
-//                    Scalar associatedVolume = scvFace.normal*(scvFace.ipGlobal - fvGeometry.subContVol[0].global);
-//                    numeratorFaceFlux += fluxDiff*fluxDiff*associatedVolume;
-//                    denominatorFaceFlux += exactFlux*exactFlux*associatedVolume;
-//
-//                    numeratorFaceFluxBound +=  fluxDiff*fluxDiff*associatedVolume;
-//                    denominatorFaceFluxBound += exactFlux*exactFlux*associatedVolume;
-//
-//                    denominatorFaceFlux_relVol += associatedVolume;
-//
-//                    numeratorFaceVel += associatedVolume*velDiff*velDiff;
-//                    totalVelSum += associatedVolume*exactVel*exactVel;
-//
-//                    localRelativeFaceFluxDiff[eIdx] += fluxDiff*fluxDiff*associatedVolume;
-//                    localRelativeFaceVelError[eIdx] += associatedVolume*velDiff*velDiff;
-//
-////                    faceFluxesDiff[scvFace.indexInInside] += fluxDiff;
-////                    faceFluxesVols[scvFace.indexInInside] = volume;
-//
-//                    absL2ErrorFaceFluxes += fluxDiff*fluxDiff;
+                    bilinearFormApprox += flux[conti0EqIdx]*approxPressure;
+                    bilinearFormDiffApprox += (flux[conti0EqIdx]-fluxExact[conti0EqIdx])*(approxPressure-exactPressure);
+
+                    Scalar associatedVolume = faceDist * faceVol;
+                    numeratorFaceFlux += fluxDiff*fluxDiff*associatedVolume;
+                    denominatorFaceFlux += exactFlux*exactFlux*associatedVolume;
+
+                    numeratorFaceFluxBound +=  fluxDiff*fluxDiff*associatedVolume;
+                    denominatorFaceFluxBound += exactFlux*exactFlux*associatedVolume;
+
+                    denominatorFaceFlux_relVol += associatedVolume;
+
+                    numeratorFaceVel += associatedVolume*velDiff*velDiff;
+                    totalVelSum += associatedVolume*exactVel*exactVel;
+
+                    localRelativeFaceFluxDiff[eIdx] += fluxDiff*fluxDiff*associatedVolume;
+                    localRelativeFaceVelError[eIdx] += associatedVolume*velDiff*velDiff;
+
+                    absL2ErrorFaceFluxes += fluxDiff*fluxDiff;
 
                 }else{
                     const auto outsideScvIdx = scvf.outsideScvIdx();
                     const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
                     const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+
+                    const auto outsideElement = fvGeometry.globalFvGeometry().element(outsideScvIdx);
+                    int eIdxJ = problem.elementMapper().index(outsideElement);
 
                     Scalar exactPressureJ = problem.exact(outsideScv.center());
                     Scalar approxPressureJ = problem.model().curSol()[cellCenterIdx][outsideScv.elementIndex()][pressureIdx];
@@ -252,44 +286,34 @@ public:
                     absH1ErrorDiffMin += faceVol/faceDist*(valMinDiffApprox-valMinDiffExact)*(valMinDiffApprox-valMinDiffExact);
 
                     //Different signs are used than in the paper
-//                    bilinearFormApprox += fluxVars.volumeFlux(0)*approxPressure;
-//                    bilinearFormDiffApprox += (fluxVars.volumeFlux(0)-fluxForBilinearForm)*(approxPressure-exactPressure);
-//
-//                    if(!alreadyVisited[indexJ.first]){
-//                        absL2ErrorFaceFluxes += fluxDiff*fluxDiff;
-//                        //get volume of neighbored element
-//                        Scalar associatedVolumeJ = 0.0;
-//                        for (int scvfIdxSecond = 0; scvfIdxSecond < fvGeometryJ.numScvf; scvfIdxSecond++)
-//                        {
-//                            SCVFace scvFaceSecond = fvGeometryJ.subContVolFace[scvfIdxSecond];
-//                            if(scvFaceSecond.fIdxGlobal == scvFace.fIdxGlobal)
-//                            {
-//                                associatedVolumeJ = scvFaceSecond.normal*(scvFaceSecond.ipGlobal - fvGeometryJ.subContVol[0].global);
-//                                break;
-//                            }
-//                        }
-//
-//                        Scalar associatedVolumeI = scvFace.normal*(scvFace.ipGlobal - fvGeometry.subContVol[0].global);
-//                        Scalar volumeAverage = 0.5*(associatedVolumeJ + associatedVolumeI);
-//
-//                        numeratorFaceFlux +=  fluxDiff*fluxDiff*volumeAverage;
-//                        denominatorFaceFlux += exactFlux*exactFlux*volumeAverage;
-//
-//                        numeratorFaceFluxInner +=  fluxDiff*fluxDiff*volumeAverage;
-//                        denominatorFaceFluxInner += exactFlux*exactFlux*volumeAverage;
-//
-//                        numeratorFaceVel += volumeAverage*velDiff*velDiff;
-//                        totalVelSum += volumeAverage*exactVel*exactVel;
-//
-//                        localRelativeFaceFluxDiff[eIdx] += fluxDiff*fluxDiff*volumeAverage;
-//                        localRelativeFaceVelError[eIdx] += volumeAverage*velDiff*velDiff;
-//
-//                        localRelativeFaceFluxDiff[indexJ.first] += fluxDiff*fluxDiff*volumeAverage;
-//                        localRelativeFaceVelError[indexJ.first] += volumeAverage*velDiff*velDiff;
-//
-//                        denominatorFaceFlux_relVol += volumeAverage;
-//
-//                    }
+                    bilinearFormApprox += flux[conti0EqIdx]*approxPressure;
+                    bilinearFormDiffApprox += (flux[conti0EqIdx]-fluxExact[conti0EqIdx])*(approxPressure-exactPressure);
+
+                    if(!alreadyVisited[eIdxJ]){
+                        absL2ErrorFaceFluxes += fluxDiff*fluxDiff;
+                        //get volume of neighbored element
+                        Scalar associatedVolumeJ = faceDistL * faceVol;
+                        Scalar associatedVolumeI = faceDist * faceVol;
+                        Scalar volumeAverage = 0.5*(associatedVolumeJ + associatedVolumeI);
+
+                        numeratorFaceFlux +=  fluxDiff*fluxDiff*volumeAverage;
+                        denominatorFaceFlux += exactFlux*exactFlux*volumeAverage;
+
+                        numeratorFaceFluxInner +=  fluxDiff*fluxDiff*volumeAverage;
+                        denominatorFaceFluxInner += exactFlux*exactFlux*volumeAverage;
+
+                        numeratorFaceVel += volumeAverage*velDiff*velDiff;
+                        totalVelSum += volumeAverage*exactVel*exactVel;
+
+                        localRelativeFaceFluxDiff[eIdx] += fluxDiff*fluxDiff*volumeAverage;
+                        localRelativeFaceVelError[eIdx] += volumeAverage*velDiff*velDiff;
+
+                        localRelativeFaceFluxDiff[eIdxJ] += fluxDiff*fluxDiff*volumeAverage;
+                        localRelativeFaceVelError[eIdxJ] += volumeAverage*velDiff*velDiff;
+
+                        denominatorFaceFlux_relVol += volumeAverage;
+
+                    }
                 }
             }
 
@@ -334,122 +358,6 @@ public:
         relativeL2ErrorFaceFluxesInner = std::sqrt(numeratorFaceFluxInner/denominatorFaceFluxInner);
 
         return;
-    }
-
-//    template <class Problem>
-//    Scalar calculateExactFluxForBilinearForm(Problem& problem, FluxVariables& fluxVars, const ElementVolumeVariables& volVarsCur)
-//    {
-//        const FaceStencil* faceStencilI = fluxVars.getStencil().faceStencilI;
-//        const FaceStencil* faceStencilJ = fluxVars.getStencil().faceStencilJ;
-//        auto coeffienctsK = faceStencilI->getCoefficients();
-//        auto coeffienctsL = faceStencilJ->getCoefficients();
-//        std::vector<std::pair<int,int>> globalIdxVectorK = faceStencilI->getStencilGlobalIdxVector();
-//        std::vector<std::pair<int,int>> globalIdxVectorL = faceStencilJ->getStencilGlobalIdxVector();
-//        auto evalPointsK = faceStencilI->getEvalPoints();
-//        auto evalPointsL = faceStencilJ->getEvalPoints();
-//
-//        Scalar Flux_K = 0.0;
-//        Scalar Flux_L = 0.0;
-//
-//        Scalar u_K = problem.exact(faceStencilI->getEvalPoint());
-//        Scalar u_L = problem.exact(faceStencilJ->getEvalPoint());
-//
-//        auto localK = fluxVars.getStencil().localI;
-//        auto localL = fluxVars.getStencil().localJ;
-//
-//        Scalar flux = 0.0;
-//
-//        if(fluxVars.getStencil().useNltpfa && evalPointsL.size() > 0)
-//        {
-//            std::pair<int,int> indexK = fluxVars.getStencil()[localK].globalIdx;
-//            std::pair<int,int> indexL = fluxVars.getStencil()[localL].globalIdx;
-//            Scalar lambdaK = 0.0;
-//            Scalar lambdaL = 0.0;
-//            Scalar mu_K = 0.0;
-//            Scalar mu_L = 0.0;
-//            Scalar Res = 0.0;
-//
-//            Scalar tK = 0.0;
-//            Scalar tL = 0.0;
-//
-//            for(int i=0; i<coeffienctsK.size(); i++)
-//            {
-//                tK += coeffienctsK[i];
-//                if(!(globalIdxVectorK[i] == indexL))
-//                {
-//                    lambdaK += coeffienctsK[i] * problem.exact(evalPointsK[i]);
-//                }
-//            }
-//            for(int i=0; i<coeffienctsL.size(); i++)
-//            {
-//                tL += coeffienctsL[i];
-//                if(!(globalIdxVectorL[i] == indexK))
-//                {
-//                    lambdaL += coeffienctsL[i] * problem.exact(evalPointsL[i]);
-//                }
-//            }
-//
-//            mu_K = fluxVars.getStencil().muIJ_;
-//            mu_L = fluxVars.getStencil().muJI_;
-//
-//            Res = mu_L*lambdaL - mu_K*lambdaK;
-//
-//            tK *= mu_K;
-//            if(globalIdxVectorL[0].first == indexK.first)
-//            {
-//                tK += mu_L*coeffienctsL[0];
-//            }
-//
-//            tL *= mu_L;
-//            if(globalIdxVectorK[0].first == indexL.first)
-//            {
-//                tL += mu_K*coeffienctsK[0];
-//            }
-//
-//            unsigned int localIdxK = volVarsCur.getLocalIndex(indexK);
-//            Scalar appoxPressureK = volVarsCur[localIdxK].pressure(0);
-//
-//            unsigned int localIdxL = volVarsCur.getLocalIndex(indexL);
-//            Scalar appoxPressureL = volVarsCur[localIdxL].pressure(0);
-//
-//            Scalar eps = 1.0e-6;
-//            Scalar hLength = 1.0/std::pow(problem.gridView().size(0),1.0/dim);
-//
-////            Scalar Res_1 = (sign(fluxVars.getStencil().ResidualPart) + 1)*Res;
-////            Res_1 /= 2.0*(appoxPressureK + eps*hLength);
-////
-////            Scalar Res_2 = (sign(fluxVars.getStencil().ResidualPart) - 1)*Res;
-////            Res_2 /= 2.0*(appoxPressureL + eps*hLength);
-////
-////            flux = tK*u_K + Res_1*appoxPressureK - tL*u_L - Res_2*appoxPressureL;
-////
-////            Scalar neglectedTerm = std::abs((fluxVars.getStencil().neglectedTerm)/(eps*hLength) - (Res_1 - Res_2));
-////            neglectedTermDiff = std::max(neglectedTermDiff, neglectedTerm);
-//
-//            flux = tK*u_K - tL*u_L + Res;
-//
-//            Scalar residualTerm = std::abs(fluxVars.getStencil().ResidualPart - Res);
-//            residualTermDiff = std::max(residualTermDiff, residualTerm);
-//        }
-//        else{
-//            for(int i=0; i<coeffienctsK.size(); i++)
-//            {
-//                Flux_K += coeffienctsK[i]*(u_K - problem.exact(evalPointsK[i]));
-//            }
-//
-//            for(int i=0; i<coeffienctsL.size(); i++)
-//            {
-//                Flux_L += coeffienctsL[i]*(u_L - problem.exact(evalPointsL[i]));
-//            }
-//
-//            flux = fluxVars.getStencil().muIJ_*Flux_K - fluxVars.getStencil().muJI_*Flux_L;
-//        }
-//        return flux;
-//    }
-
-    int sign(Scalar u)
-    {
-        return (u > 0) ? 1 : ((u < 0) ? -1 : 0);
     }
 
 };
