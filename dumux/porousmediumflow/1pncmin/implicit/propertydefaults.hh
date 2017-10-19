@@ -33,7 +33,6 @@
 #include "volumevariables.hh"
 #include "properties.hh"
 
-// #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/1pnc/implicit/newtoncontroller.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -48,15 +47,7 @@ namespace Properties {
 // Property values
 //////////////////////////////////////////////////////////////////
 
-/*!
- * \brief Set the property for the number of secondary components.
- * Secondary components are components calculated from
- * primary components by equilibrium relations and
- * do not have mass balance equation on their own.
- * These components are important in the context of bio-mineralization applications.
- * We just forward the number from the fluid system
- *
- */
+
 SET_PROP(OnePNCMin, NumSComponents)
 {
 private:
@@ -78,11 +69,6 @@ private:
 public:
     static const int value = FluidSystem::numSPhases;
 };
-
-//physical processes to be considered by the isothermal model
-// SET_BOOL_PROP(OnePNCMin, EnableAdvection, true);
-// SET_BOOL_PROP(OnePNCMin, EnableMolecularDiffusion, true);
-// SET_BOOL_PROP(OnePNCMin, EnableEnergyBalance, false);
 
 /*!
  * \brief Set the property for the number of equations.

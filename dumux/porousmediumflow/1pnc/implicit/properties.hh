@@ -60,18 +60,13 @@ NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(PhaseIdx); //!< A phase index in to allow that a two-phase fluidsystem is used
 NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
 NEW_PROP_TAG(Indices); //!< Enumerations for the model
-//NEW_PROP_TAG(OnePNCIndices); //!< Enumerations for the 1pncMin models
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computation of the effective diffusivity
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 NEW_PROP_TAG(FluidState); //!< Type of the fluid state to be used
-//NEW_PROP_TAG(Chemistry); //!< The chemistry class with which solves equlibrium reactions
-//NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
 //NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UseMoles); //!< Defines whether mole (true) or mass (false) fractions are used
-// NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind weight for the mass conservation equations
-// NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< The value of the upwind parameter for the mobility
 //NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 NEW_PROP_TAG(TauTortuosity); //!< Tortuosity value (tau) used in macroscopic diffusion

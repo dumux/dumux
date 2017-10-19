@@ -91,14 +91,9 @@ class OnePNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     static const int dimWorld = GridView::dimensionworld;
 
     using Element = typename GridView::template Codim<0>::Entity;
-
-// new
     using DimVector = Dune::FieldVector<Scalar,dim>;
     using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
-//     typedef typename Grid::ctype CoordScalar; ?? deprecated ?
 
-//     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-//     enum { dofCodim = isBox ? dim : 0 };
 public:
 
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -143,8 +138,6 @@ public:
 //             Valgrind::CheckDefined(diffCoeff_[compJIdx]);
         }
 
-        // energy related quantities not contained in the fluid state
-//         asImp_().callProtectedUpdateEnergy(elemSol, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
    /*!
@@ -159,9 +152,6 @@ public:
                                    FluidState& fluidState)
 
     {
-//    old
-//         Scalar t = IsothermalVolumeVariables::callProtectedTemperature(priVars, problem, element,
-//                                                                        fvGeometry, scvIdx);
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
         fluidState.setSaturation(phaseIdx, 1.);
@@ -291,13 +281,6 @@ public:
     Scalar porosity() const
     { return porosity_; }
 
-
-//     /*!
-//      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
-//      */
-//     Scalar diffCoeff(int compIdx) const
-//     { return diffCoeff_[compIdx]; }
-
     /*!
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
@@ -312,7 +295,7 @@ public:
      */
      Scalar molarity(int compIdx) const // [moles/m^3]
     { return fluidState_.molarity(phaseIdx, compIdx);}
-// old    { return this->fluidState_.molarity(phaseIdx, compIdx);}
+
      /*!
       * \brief Returns the mass fraction of a component in the phase
       *
@@ -323,32 +306,6 @@ public:
 //      {
 //         return this->fluidState_.massFraction(phaseIdx, compIdx);
 //      }
-
-
-   /*!
-    * Circumvents the inheritance architecture of the ninisothermal model
-    */
-//     static Scalar callProtectedTemperature(const PrimaryVariables &priVars,
-//                                            const Problem& problem,
-//                                            const Element &element,
-//                                            const FVElementGeometry &fvGeometry,
-//                                            int scvIdx)
-//     {
-//          return Implementation::temperature_(priVars, problem,element, fvGeometry, scvIdx);
-//     }
-//
-//    /*!
-//     * Circumvents the inheritance architecture of the ninisothermal model
-//     */
-//    void callProtectedUpdateEnergy(const PrimaryVariables &priVars,
-//                                    const Problem &problem,
-//                                    const Element &element,
-//                                    const FVElementGeometry &fvGeometry,
-//                                    const int scvIdx,
-//                                    bool isOldSol)
-//     {
-//         asImp_().updateEnergy_(priVars, problem,element, fvGeometry, scvIdx, isOldSol);
-//     };
 
     /*!
      * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
@@ -367,25 +324,7 @@ protected:
          return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
     }
 
-//     template<class ParameterCache>
-//     static Scalar enthalpy_(const FluidState& fluidState,
-//                             const ParameterCache& paramCache,
-//                             int phaseIdx)
-//     {
-//         return 0;
-//     }
 
-    /*!
-        * \brief Called by update() to compute the energy related quantities
-        */
-//     void updateEnergy_(const PrimaryVariables &priVars,
-//                         const Problem &problem,
-//                         const Element &element,
-//                         const FVElementGeometry &fvGeometry,
-//                         const int scvIdx,
-//                         bool isOldSol)
-//     { };
-//
     Scalar porosity_;        //!< Effective porosity within the control volume
     PermeabilityType permeability_;
     Scalar density_;

@@ -30,7 +30,6 @@
 
 #include "indices.hh"
 #include "model.hh"
-//#include "fluxvariables.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
@@ -120,18 +119,6 @@ SET_TYPE_PROP(OnePNC, Model, OnePNCModel<TypeTag>);
 //! the VolumeVariables property
 SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);
 
-//! the FluxVariables property
-// SET_TYPE_PROP(OnePNC, FluxVariables, OnePNCFluxVariables<TypeTag>);
-
-//! define the base flux variables to realize Darcy flow
-// SET_TYPE_PROP(OnePNC, BaseFluxVariables, ImplicitDarcyFluxVariables<TypeTag>);
-
-//! the upwind weight for the mass conservation equations.
-// SET_SCALAR_PROP(OnePNC, ImplicitMassUpwindWeight, 1.0);
-
-// //! Set default mobility upwind weight to 1.0, i.e. fully upwind
-// SET_SCALAR_PROP(OnePNC, ImplicitMobilityUpwindWeight, 1.0);
-
 //! The indices required by the isothermal 2pnc model
 SET_TYPE_PROP(OnePNC, Indices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);
 
@@ -146,16 +133,6 @@ SET_BOOL_PROP(OnePNC, ProblemEnableGravity, false);
 
 //! Disable velocity output by default
 SET_BOOL_PROP(OnePNC, VtkAddVelocity, false);
-
-//! Somerton is used as default model to compute the effective thermal heat conductivity
-// SET_PROP(OnePNCNI, ThermalConductivityModel)
-// {
-// private:
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-// public:
-//     typedef ThermalConductivityAverage<Scalar> type;
-// };
 
 //! average is used as default model to compute the effective thermal heat conductivity
 SET_PROP(OnePNC, ThermalConductivityModel)
