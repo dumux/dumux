@@ -27,8 +27,14 @@
 
 #include <dune/alugrid/grid.hh>
 
+#if PROBLEM==1
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/porousmediumflow/1p/mimetic/model.hh>
+#elif PROBLEM==2
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#endif
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -52,8 +58,11 @@ namespace Capabilities
 
 namespace Properties
 {
+#if PROBLEM==1
 NEW_TYPE_TAG(OnePGermanBasinProblem, INHERITS_FROM(StaggeredModel, OnePMimetic));
-
+#elif PROBLEM==2
+NEW_TYPE_TAG(OnePGermanBasinProblem, INHERITS_FROM(CCMpfaModel, OneP));
+#endif
 
 SET_PROP(OnePGermanBasinProblem, Fluid)
 {
@@ -66,7 +75,7 @@ public:
 // Set the grid type
 //SET_TYPE_PROP(OnePGermanBasinProblem, Grid, Dune::YaspGrid<2>);
 //SET_TYPE_PROP(OnePGermanBasinProblem, Grid, Dune::UGGrid<2>);
-SET_TYPE_PROP(OnePGermanBasinProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(OnePGermanBasinProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
 SET_TYPE_PROP(OnePGermanBasinProblem, Problem, Dumux::OnePGermanBasinProblem<TypeTag> );
@@ -77,7 +86,7 @@ SET_TYPE_PROP(OnePGermanBasinProblem, SpatialParams, Dumux::OnePGermanBasinSpati
 // Linear solver settings
 //SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::UMFPackBackend<TypeTag> );
 //SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-//SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(OnePGermanBasinProblem, ProblemEnableGravity, false);
@@ -86,8 +95,6 @@ SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalFVGeometryCache, true);
 
 SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalVolumeVariablesCache, true);
-
-SET_BOOL_PROP(OnePGermanBasinProblem, VtkWriteFaceData, false);
 }
 
 template<class TypeTag>
@@ -110,13 +117,9 @@ class OnePGermanBasinProblem : public ImplicitPorousMediaProblem<TypeTag>
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,
         pressureIdx = Indices::pressureIdx,
-        facePressureIdx = Indices::facePressureIdx
     };
 
-
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
@@ -201,20 +204,17 @@ public:
      */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
-        PrimaryVariables values;
         const GlobalPosition& normal = scvf.unitOuterNormal();
         if(normal[dimWorld-1] > 1.0e-5)
         {
-            values[pressureIdx] = 281.15;
-            values[facePressureIdx] = 281.15;
+            PrimaryVariables values(281.15);
+            return values;
         }
         else
         {
-            values[pressureIdx] = 423.15;
-            values[facePressureIdx] = 423.15;
+            PrimaryVariables values(423.15);
+            return values;
         }
-
-        return values;
     }
 
 
@@ -239,10 +239,8 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables priVars(0);
         Scalar z = globalPos[dim-1];
-        priVars[pressureIdx] = 281.15*(z+6071.39)/(11496.0+6071.39) - 423.15*(z-11496.0)/(11496.0+6071.39);
-        priVars[facePressureIdx] = 281.15*(z+6071.39)/(11496.0+6071.39) - 423.15*(z-11496.0)/(11496.0+6071.39);
+        PrimaryVariables priVars(281.15*(z+6071.39)/(11496.0+6071.39) - 423.15*(z-11496.0)/(11496.0+6071.39));
 
         return priVars;
     }

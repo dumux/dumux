@@ -19,13 +19,13 @@
 /*!
  * \file
  *
- * \brief test for the one-phase CC model
+ * \brief test for the 1pni CC model
  */
 
 #define PROBLEM 1
 
-#include "config.h"
-#include "1pgermanbasinproblem.hh"
+#include <config.h>
+#include "1pniconductionproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -43,18 +43,12 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.File                      Name of the file containing the grid \n"
-                                        "\t                                definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeftX   x-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensLowerLeftY   y-coordinate of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightX  x-coordinate of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRightY  y-coordinate of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
-
+                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
+                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
+                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
+                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
+                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n";
         std::cout << errorMessageOut
                   << "\n";
     }
@@ -62,6 +56,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(OnePGermanBasinProblem) ProblemTypeTag;
+    typedef TTAG(OnePNIConductionProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

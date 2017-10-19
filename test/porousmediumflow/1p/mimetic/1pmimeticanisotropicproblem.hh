@@ -79,7 +79,7 @@ SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalVolumeVariablesCache, t
 // Enable gravity
 SET_BOOL_PROP(OnePMimeticAnisotropicProblem, ProblemEnableGravity, false);
 
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, LinearSolver, SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(OnePMimeticAnisotropicProblem, LinearSolver, UMFPackBackend<TypeTag> );
 
 SET_BOOL_PROP(OnePMimeticAnisotropicProblem, VtkWriteFaceData, false);
 }
@@ -111,6 +111,7 @@ class OnePMimeticAnisotropicProblem : public ImplicitPorousMediaProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
@@ -261,6 +262,11 @@ public:
         BoundaryTypes values;
         values.setAllDirichlet();
 
+//        if(onUpperBoundary_(globalPos) || onLowerBoundary_(globalPos))
+//            values.setAllNeumann();
+//        else
+//            values.setAllDirichlet();
+
         return values;
     }
 
@@ -289,9 +295,22 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables neumann(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolumeFace &scvf) const
     {
-        return PrimaryVariables(0);
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        auto gradu = this->exactGrad(scvf.center(), insideScv.center());
+
+        auto K = this->spatialParams().permeability(element, insideScv,
+                this->model().elementSolution(element, this->model().curSol()));
+
+        GlobalPosition Knormal;
+        K.mv(scvf.unitOuterNormal(), Knormal);
+        Knormal*=-1;
+        PrimaryVariables values(Knormal*gradu);
+        return values;
     }
 
     // \}
@@ -433,10 +452,31 @@ public:
     // \}
 
 private:
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] < this->bBoxMin()[0] + eps_;
+    }
+
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] > this->bBoxMax()[0] - eps_;
+    }
+
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] < this->bBoxMin()[1] + eps_;
+    }
+
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] > this->bBoxMax()[1] - eps_;
+    }
+
     std::string name_;
     Scalar pi_;
     unsigned int testCase_;
     Dumux::ResultEvaluation<TypeTag> result;
+    static constexpr Scalar eps_ = 3e-6;
 };
 } //end namespace
 

@@ -3,12 +3,12 @@ DtInitial = 1 # [s]
 TEnd = 1 # [s]
 
 [Grid]
-File = ../implicit/grids/northEastGermanBasinI169_2D_ref2.dgf
-#File = ../implicit/grids/northEastGermanBasin.dgf
+#File = ../implicit/grids/northEastGermanBasinI169_2D_ref2.dgf
+File = ../implicit/grids/thermalPropertiesNEGermanBasin.dgf
 Refinement = 0
 
 [Problem]
-Name = 1pgermanbasin_2D_mimetic_ref2
+Name = 1pgermanbasin_3D_newData_mpfao
 
 [Newton]
 #EnableShiftCriterion = 0
@@ -18,4 +18,4 @@ MaxSteps = 100
 
 [LinearSolver]
 MaxIterations = 250
-#ResidualReduction = 1.0e-2
+Verbosity = 1

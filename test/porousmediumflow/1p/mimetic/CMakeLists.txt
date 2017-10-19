@@ -26,6 +26,9 @@ add_dumux_test(test_1pmimeticanisotropic test_1pmimeticanisotropic test_1pmimeti
 add_dumux_test(test_1plinear test_1plinear test_1plinear.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1plinear)
 
+add_dumux_test(test_mimetic1pniconduction test_mimetic1pniconduction test_mimetic1pniconduction.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/test_mimetic1pniconduction)
+
 #install sources
 install(FILES
 1ptestproblem.hh
