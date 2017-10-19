@@ -88,17 +88,18 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Mimetic>
                                     const SubControlVolumeFace &scvf)
         {
             W_ = calculateMatrix(problem, element, fvGeometry, elemVolVars, scvf);
+            lambdai_ = calculateThermalCond_(problem, element, fvGeometry, elemVolVars, scvf);
         }
 
         const DynamicMatrix& WTemp() const
         { return W_; }
 
-        const Scalar& tij() const
-        { return ti_; }
+        const Scalar& lambdaij() const
+        { return lambdai_; }
 
     private:
         DynamicMatrix W_;
-        Scalar ti_;
+        Scalar lambdai_;
     };
 
     //! Class that fills the cache corresponding to mpfa Darcy's Law
@@ -163,11 +164,16 @@ public:
         }
 
         return insideLambda*flux;
+
+        //Scalar tFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[temperatureIdx];
+        //flux = fluxVarsCache.lambdaij()* (tInside - tFace);
+        //
+        //return flux;
     }
 
 private:
 
-    static Scalar calculateTransmissibility_(const Problem& problem,
+    static Scalar calculateThermalCond_(const Problem& problem,
                                              const Element& element,
                                              const FVElementGeometry& fvGeometry,
                                              const ElementVolumeVariables& elemVolVars,

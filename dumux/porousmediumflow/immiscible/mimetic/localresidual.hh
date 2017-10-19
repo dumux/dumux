@@ -217,7 +217,7 @@ public:
         {
             // the physical quantities for which we perform upwinding
             auto upwindTerm = [phaseIdx](const VolumeVariables& volVars)
-                              { return 1.0; };
+                              { return volVars.density(phaseIdx)/volVars.viscosity(phaseIdx); };
 
             auto eqIdx = conti0EqIdx + phaseIdx;
             flux[eqIdx] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
@@ -229,24 +229,6 @@ public:
     }
 
 protected:
-
-     /*!
-     * \brief Evaluate boundary conditions
-     */
-    void evalBoundary_(const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const GlobalFaceVars& globalFaceVars,
-                       const ElementBoundaryTypes& elemBcTypes,
-                       const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, globalFaceVars, elemBcTypes, elemFluxVarsCache);
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, globalFaceVars, elemBcTypes, elemFluxVarsCache);
-        }
-    }
-
      /*!
      * \brief Evaluate boundary conditions for a cell center dof
      */
@@ -330,6 +312,11 @@ protected:
 
                 this->faceResiduals_[scvf.localFaceIdx()] = flux[cellCenterIdx];
                 this->faceResiduals_[scvf.localFaceIdx()] -= neumannFlux;
+
+//                this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()
+//                                                          - insideVolVars.pressure(0);
+
+//               this->faceResiduals_[scvf.localFaceIdx()] = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars();
 
             }
             else if(!bcTypes.hasNeumann() && bcTypes.hasDirichlet())

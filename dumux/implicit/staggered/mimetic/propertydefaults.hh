@@ -84,6 +84,8 @@ SET_TYPE_PROP(MimeticModel, VelocityOutput, MimeticVelocityOutput<TypeTag>);
 SET_BOOL_PROP(MimeticModel, EnableEnergyBalance, false);
 
 SET_TYPE_PROP(MimeticModel, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
+
+SET_BOOL_PROP(MimeticModel, VtkWriteFaceData, false);
 } // namespace Properties
 
 } // namespace Dumux

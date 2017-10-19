@@ -144,7 +144,7 @@ public:
         // Get the inside and outside volume variables
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
-        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
         if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
         {
@@ -211,6 +211,13 @@ public:
 
 //            Scalar pFace = globalFaceVars.faceVars(scvf.dofIndex()).facePriVars()[phaseIdx];
 //            flux = fluxVarsCache.tij()* (pInside - pFace);
+
+//            if(!scvf.boundary())
+//                flux = fluxVarsCache.tij()* (pInside - outsideVolVars.pressure(phaseIdx));
+
+//            Scalar pOutside = outsideVolVars.pressure(phaseIdx);
+//            if(scvf.boundary())
+//                flux = fluxVarsCache.tij()* (pInside - pOutside);
         }
 
         return flux;
@@ -284,6 +291,16 @@ public:
             const auto& insideVolVars = elemVolVars[insideScv];
 
             int index = scvf.localFaceIdx();
+
+//            const auto bcTypes = problem.boundaryTypes(element, scvf);
+//            if (bcTypes.hasNeumann())
+//            {
+//                for (auto&& scvfIt : scvfs(fvGeometry))
+//                {
+//                    int indexIt = scvfIt.localFaceIdx();
+//                    W[indexIt][index] = 0.0;
+//                }
+//            }
             //W[index] *= coNormalNorms[index];
         }
 
@@ -298,6 +315,8 @@ public:
                                               const ElementVolumeVariables& elemVolVars,
                                               const SubControlVolumeFace& scvf)
     {
+        Scalar tij;
+
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
@@ -312,12 +331,39 @@ public:
                                         return volVars.permeability();
                                };
 
-        Scalar ti = calculateOmega_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()),
-                                    insideScv, insideVolVars.extrusionFactor());
+        const Scalar ti = calculateOmega_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()),
+                                          insideScv, insideVolVars.extrusionFactor());
 
-        ti = scvf.area()*ti;
+        // for the boundary (dirichlet) or at branching points we only need ti
+//        if (scvf.boundary() || scvf.numOutsideScvs() > 1)
+//        {
+//            tij = scvf.area()*ti;
+//        }
+//
+//        // otherwise we compute a tpfa harmonic mean
+//        else
+//        {
+//            const auto outsideScvIdx = scvf.outsideScvIdx();
+//            // as we assemble fluxes from the neighbor to our element the outside index
+//            // refers to the scv of our element, so we use the scv method
+//            const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
+//            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+//
+//            const Scalar tj = [&]()
+//            {
+//                    return -1.0*calculateOmega_(scvf, getPermeability(outsideVolVars, scvf.ipGlobal()),
+//                                            outsideScv, outsideVolVars.extrusionFactor());
+//
+//            }();
+//
+//            // harmonic mean (check for division by zero!)
+//            if (ti*tj <= 0.0)
+//                tij = 0;
+//            else
+//                tij = scvf.area()*(ti * tj)/(ti + tj);
+//        }
 
-        return ti;
+        return scvf.area()*ti;
     }
 
 private:
