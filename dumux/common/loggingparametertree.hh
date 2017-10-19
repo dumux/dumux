@@ -364,8 +364,52 @@ public:
             dot = prefix.rfind(".");
         }
 
-        // finally, look for the key without prefix
-        return get<T>(key);
+        // TODO: doc me!
+        // TODO: clean up
+        compoundKey = groupPrefix + "." + key;
+        if (params_.hasKey(key))
+        {
+            // log that we used this parameter
+            usedRuntimeParams_[key] = params_[key];
+            return params_.template get<T>(key);
+        }
+
+        else if(defaultParams_.hasKey(compoundKey))
+        {
+            // use the default
+            usedDefaultParams_[compoundKey] = defaultParams_[compoundKey];
+            return defaultParams_.template get<T>(compoundKey);
+        }
+
+        else
+        {
+            // search backwards until key is found
+            std::string prefix = groupPrefix;
+            auto dot = prefix.rfind(".");
+            while (dot != std::string::npos)
+            {
+                prefix = prefix.substr(0, dot);
+                compoundKey = prefix + "." + key;
+                if (defaultParams_.hasKey(compoundKey))
+                {
+                    // log that we used this parameter
+                    usedDefaultParams_[compoundKey] = defaultParams_[compoundKey];
+                    return defaultParams_.template get<T>(compoundKey);
+                }
+
+                // look for the next dot in the current prefix
+                dot = prefix.rfind(".");
+            }
+
+            if(defaultParams_.hasKey(key))
+            {
+                // use the default
+                usedDefaultParams_[key] = defaultParams_[key];
+                return defaultParams_.template get<T>(key);
+            }
+
+            DUNE_THROW(Dumux::ParameterException, "Key " << key << " not found in the parameter tree");
+        }
     }
 
     /** \brief Find the keys that haven't been used yet
