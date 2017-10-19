@@ -67,14 +67,11 @@ public:
     }
 
     /*!
-     * \brief The specific heat capacity \f$\mathrm{[J/molK]}\f$ of CaO.
+     * \brief The specific heat capacity \f$\mathrm{[J/kg K]}\f$ of CaO.
      */
     static Scalar heatCapacity()
     {
-        return 0.0166;
-        //Literature values:
-        //Nagel et al. (2014) : 934 J/kgK
-        // actually 47.719 at T = 500 K cf. http://link.springer.com/chapter/10.1007/10681719_232
+        return 934;  //Nagel et al. (2014) : 934 J/kgK
     }
 };
 

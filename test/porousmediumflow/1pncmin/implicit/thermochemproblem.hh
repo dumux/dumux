@@ -84,6 +84,7 @@ SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialParams<TypeTag>
  *
  * To run the simulation execute the following line in shell:
  * <tt>./test_box1pncmin</tt>
+ * <tt>./test_cc1pncmin</tt>
  */
 template <class TypeTag>
 class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
@@ -116,7 +117,6 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
         //Equation Indices
         conti0EqIdx = Indices::conti0EqIdx,
         firstTransportEqIdx = Indices::firstTransportEqIdx,
-//         solidEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
 
         // Phase Indices
         phaseIdx = FluidSystem::gPhaseIdx,
@@ -139,10 +139,6 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-
-//     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-//     enum { dofCodim = isBox ? dim : 0 };
-
 public:
     /*!
      * \brief The constructor
@@ -163,6 +159,7 @@ public:
 
         isCharge_               = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
 
+//      // initialize, if a complex fluidsystem is used
 //         FluidSystem::init(/*Tmin=*/temperatureLow_,
 //                           /*Tmax=*/temperatureHigh_,
 //                           /*nT=*/nTemperature_,
@@ -170,10 +167,6 @@ public:
 //                           /*pmax=*/pressureHigh_,
 //                           /*np=*/nPressure_);
     }
-
-    /*!
-     * \name Problem parameters
-     */
 
     /*!
      * \brief The problem name.
@@ -193,10 +186,7 @@ public:
 
     /*!
      * \name Boundary conditions
-     */
-    // \{
-
-    /*!
+     *
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
@@ -280,17 +270,8 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment in dependency on the current solution.
      *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
-     * \param elemVolVars All volume variables for the element
-     *
-     * This method is used for cases, when the Neumann condition depends on the
-     * solution and requires some quantities that are specific to the fully-implicit method.
+     * \param priVars stores the Neumann values for the conservation equations in
+     * \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
@@ -319,7 +300,7 @@ public:
     /*!
      * \brief Evaluates the initial values for a control volume
      *
-     * \param values Stores the initial values for the conservation equations in
+     * \param priVars Stores the initial values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
@@ -361,11 +342,24 @@ public:
     }
 
     /*!
-     * \brief Return the initial phase state inside a sub control volume.
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
      *
-     * \param element The element of the sub control volume
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The sub control volume index
+     * This is the method for the case where the source term is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param values The source and sink values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scv The subcontrolvolume
+     *
+     * For this method, the \a values parameter stores the conserved quantity rate
+     * generated or annihilate per volume unit. Positive values mean
+     * that the conserved quantity is created, negative ones mean that it vanishes.
+     * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
     PrimaryVariables source(const Element &element,
                             const FVElementGeometry& fvGeometry,
@@ -397,13 +391,19 @@ public:
 
         Scalar moleFracH2O_fPhase = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
 
-        Scalar moleFracCaO_sPhase = volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.molarDensity(cPhaseIdx)
-                                     /(volVars.precipitateVolumeFraction(hPhaseIdx)*volVars.molarDensity(hPhaseIdx)
-                                        + volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.molarDensity(cPhaseIdx));
+        Scalar moleFracCaO_sPhase = volVars.precipitateVolumeFraction(cPhaseIdx)
+                                    *volVars.molarDensity(cPhaseIdx)
+                                    /(volVars.precipitateVolumeFraction(hPhaseIdx)
+                                      *volVars.molarDensity(hPhaseIdx)
+                                        + volVars.precipitateVolumeFraction(cPhaseIdx)
+                                        *volVars.molarDensity(cPhaseIdx));
 
-        Scalar moleFracCaO2H2_sPhase = volVars.precipitateVolumeFraction(hPhaseIdx)*volVars.molarDensity(hPhaseIdx)
-                                       /(volVars.precipitateVolumeFraction(hPhaseIdx)*volVars.molarDensity(hPhaseIdx)
-                                          + volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.molarDensity(cPhaseIdx));
+        Scalar moleFracCaO2H2_sPhase = volVars.precipitateVolumeFraction(hPhaseIdx)
+                                       *volVars.molarDensity(hPhaseIdx)
+                                       /(volVars.precipitateVolumeFraction(hPhaseIdx)
+                                         *volVars.molarDensity(hPhaseIdx)
+                                          + volVars.precipitateVolumeFraction(cPhaseIdx)
+                                          *volVars.molarDensity(cPhaseIdx));
 
         Scalar deltaH = 112e3; // J/mol
 

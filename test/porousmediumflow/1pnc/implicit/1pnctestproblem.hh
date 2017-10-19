@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Definition of a problem, for the 1p2c problem:
+ * \brief Definition of a problem, for the 1pnc problem:
  * Component transport of nitrogen dissolved in the water phase.
  */
 #ifndef DUMUX_1PNC_TEST_PROBLEM_HH
@@ -87,7 +87,7 @@ SET_BOOL_PROP(OnePNCTestProblem, ProblemEnableGravity, false);
  * \ingroup OnePNCModel
  * \ingroup ImplicitTestProblems
  *
- * \brief Definition of a problem, for the 1p2c problem:
+ * \brief Definition of a problem, for the 1pnc problem:
  * Nitrogen is dissolved in the water phase and
  * is transported with the water flow from the left side to the right.
  *
@@ -103,14 +103,11 @@ SET_BOOL_PROP(OnePNCTestProblem, ProblemEnableGravity, false);
  * where again Dirichlet boundary conditions are applied. Here, the nitrogen mole
  * fraction is set to 0.0 mol/mol.
  *
- * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
- * problem file. Make sure that the according units are used in the problem setup. The default setting for useMoles is true.
- *
  * This problem uses the \ref OnePNCModel model.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box1p2c -parameterFile ./test_box1p2c.input</tt> or
- * <tt>./test_cc1p2c -parameterFile ./test_cc1p2c.input</tt>
+ * <tt>./test_box1pnc -parameterFile ./test_box1pnc.input</tt> or
+ * <tt>./test_cc1pnc -parameterFile ./test_cc1pnc.input</tt>
  */
 template <class TypeTag>
 class OnePNCTestProblem : public ImplicitPorousMediaProblem<TypeTag>

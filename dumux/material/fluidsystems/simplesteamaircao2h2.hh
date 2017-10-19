@@ -383,17 +383,12 @@ public:
 
         if (!useComplexRelations){
             // for the gas phase assume an ideal gas
-           // std::cout <<"gasDensity (" << T << ")=" << IdealGas::molarDensity(T, p)
-//                 * fluidState.averageMolarMass(nPhaseIdx)
-//                 / std::max(1e-5, sumMoleFrac) << "\n";
             return
                 IdealGas::molarDensity(T, p)
                 * fluidState.averageMolarMass(nPhaseIdx)
                 / std::max(1e-5, sumMoleFrac);}
         else
         {
-            //std::cout <<"gasDensity (" << T << ")=" << H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
-              //  Air::gasDensity(T, fluidState.partialPressure(nPhaseIdx, AirIdx)) << "\n";
             return
                 H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
                 Air::gasDensity(T, fluidState.partialPressure(nPhaseIdx, AirIdx));
@@ -443,7 +438,6 @@ public:
             }
             muResult += fluidState.moleFraction(phaseIdx, i)/sumx * mu[i] / divisor;
         }
-        //std::cout << "simple gasviscosity (T =" << T << ")"  << muResult << "\n";
         return muResult;
     }
 
@@ -479,8 +473,6 @@ public:
         Scalar result = 0.0;
         if(compJIdx == H2OIdx)
         result = H2O_Air::gasDiffCoeff(temperature, pressure);
-//         else if (compJIdx == CaO2H2Idxdx)
-//             result = 0.12e-9; //Just added to avoid numerical problem. does not have any physical significance
         else
             DUNE_THROW(Dune::NotImplemented, "Binary diffusion coefficient of components "
                                                  << compIIdx << " and " << compJIdx

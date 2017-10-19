@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for the 1p2c
+ * \brief Definition of the spatial parameters for the 1pnc
  *        outlfow problem.
  */
 #ifndef DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
@@ -34,8 +34,8 @@ namespace Dumux
  * \ingroup OnePNCModel
  * \ingroup ImplicitTestProblems
  *
- * \brief Definition of the spatial parameters for the 1p2c
- *        outflow problem.
+ * \brief Definition of the spatial parameters for the 1pnc
+ *        test problem.
  */
 template<class TypeTag>
 class OnePNCTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
