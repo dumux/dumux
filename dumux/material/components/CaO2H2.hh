@@ -67,13 +67,11 @@ public:
     }
 
     /*!
-     * \brief The specific heat capacity \f$\mathrm{[J/molK]}\f$ of CaO2H2.
+     * \brief The specific heat capacity \f$\mathrm{[J/kgK]}\f$ of CaO2H2.
      */
     static Scalar heatCapacity()
     {
-        return 0.0206;//
-        //Literature:
-        //Nagel et al. (2014) : 1530 J/kgK
+        return 0.0206;  //Nagel et al. (2014) : 1530 J/kgK
     }
 };
 
