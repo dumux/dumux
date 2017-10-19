@@ -20,7 +20,7 @@
  * \file
  *
  * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the one-phase n-component mineralisation box model.
+ *        using the one-phase n-component mineralisation model.
  */
 
 #ifndef DUMUX_1PNCMIN_LOCAL_RESIDUAL_BASE_HH
@@ -51,14 +51,6 @@ protected:
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-//     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-//     typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-//     typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
-//     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-//     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-
 
     enum
     {
@@ -76,10 +68,6 @@ protected:
         conti0EqIdx = Indices::conti0EqIdx,
     };
 
-//     typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-//     typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-//     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-//     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
 
 public:
     /*!

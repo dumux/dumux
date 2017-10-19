@@ -38,9 +38,9 @@ namespace Dumux
  * \brief Adaption of the fully implicit scheme to the
  *        one-phase n-component flow model.
  *
-* This model implements a one-phase flow of a compressible fluid, that consists of n components,
- * using a standard Darcy
- * approach as the equation for the conservation of momentum:
+ * This model implements a one-phase flow of a compressible fluid, that consists
+ * of n components, using a standard Darcy approach as the equation for the
+ * conservation of momentum:
  \f[
  v = - \frac{\textbf K}{\mu}
  \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
@@ -68,7 +68,7 @@ namespace Dumux
  * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
  * problem file. Make sure that the according units are used in the problem setup. useMoles is set to true by default.
  *
- * The primary variables are the pressure \f$p\f$ and the mole or mass fraction of dissolved component \f$x\f$.
+ * The primary variables are the pressure \f$p\f$ and the mole fraction of dissolved components \f$x^\kappa\f$.
  */
 
 template<class TypeTag>

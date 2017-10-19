@@ -107,9 +107,6 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-//         ParentType::update(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
-//         completeFluidState(priVars, problem, element, fvGeometry, scvIdx, this->fluidState_, isOldSol);
-
         /////////////
         // calculate the remaining quantities
         /////////////
@@ -118,8 +115,6 @@ public:
 
         // porosity evaluation
         initialPorosity_ = problem.spatialParams().initialPorosity(element, scv);
-//         minimumPorosity_ = problem.spatialParams().porosityMin(element, scv);
-//         maximumPorosity_ = problem.spatialParams().porosityMax(element, scv);
 
         sumPrecipitates_ = 0.0;
         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
@@ -145,7 +140,6 @@ public:
                                    FluidState& fluidState)
 
     {
-//         Scalar t = ParentType::temperature(elemSol, problem, element, scv); //old
         Scalar t = BaseType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
@@ -178,23 +172,14 @@ public:
 
         moleFrac[0] = 1 -sumMoleFracNotWater;
 
-//         //mole fractions for the solid phase
-//         moleFrac[firstMoleFracIdx+1]= priVars[firstMoleFracIdx+1];
-//         moleFrac[firstMoleFracIdx +2] = 1- moleFrac[firstMoleFracIdx+1];
-
         // convert mass to mole fractions and set the fluid state
         for (int compIdx=0; compIdx<numComponents; ++compIdx)
         {
             fluidState.setMoleFraction(phaseIdx, compIdx, moleFrac[compIdx]);
         }
 
-//         // set mole fractions for the solid phase
-//         fluidState.setMoleFraction(cPhaseIdx, firstMoleFracIdx+1, moleFrac[firstMoleFracIdx+1]);
-//         fluidState.setMoleFraction(hPhaseIdx, firstMoleFracIdx+2, moleFrac[firstMoleFracIdx+2]);
-
         paramCache.updateAll(fluidState);
 
-//         Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
         Scalar h = BaseType::enthalpy(fluidState, paramCache, phaseIdx);
         fluidState.setEnthalpy(phaseIdx, h);
     }
@@ -256,8 +241,6 @@ public:
             return this->fluidState_.molarDensity(phaseIdx);
         else if (phaseIdx >= 1){
             /*Attention: sPhaseIdx of the fluidsystem and the model can be different.*/
-//             std::cout << "FluidSystem::precipitateMolarDensity("<<phaseIdx<<") = " << FluidSystem::precipitateMolarDensity(phaseIdx) << "\n";
-//             for (int phaseIdx=1; phaseIdx<numSPhases; ++phaseIdx)
             return FluidSystem::precipitateMolarDensity(phaseIdx);
         }
         else
@@ -287,7 +270,6 @@ public:
                                         const Element& element,
                                         const SubControlVolume& scv)
     {
-//          return Implementation::temperature_(priVars, problem,element, fvGeometry, scvIdx);
         return BaseType::temperature(elemSol, problem, element, scv);
     }
 

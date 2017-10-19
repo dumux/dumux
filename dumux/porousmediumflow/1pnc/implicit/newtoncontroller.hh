@@ -62,68 +62,6 @@ public:
 //     void newtonEndStep(SolutionVector &uCurrentIter,
 //                        const SolutionVector &uLastIter)
 //     {
-//         int succeeded;
-//         try {
-//             // call the method of the base class
-//             this->method().model().updateStaticData(uCurrentIter, uLastIter);
-//             ParentType::newtonEndStep(uCurrentIter, uLastIter);
-
-
-//TODO
-            // loop over all element analogous to model.hh -> elemVolVars
-            // call solDependentSource
-            // evaluate if source term is admissible using some of the calculation from solDependentSource
-            // if source is too large, throw NumericalProblem like in region2.hh
-//             for (const auto& element : elements(this->problem_().gridView()))
-//             {
-//                 FVElementGeometry fvGeometry;
-//                 fvGeometry.update(this->problem_().gridView(), element);
-//
-//                 ElementVolumeVariables elemVolVars;
-//                 elemVolVars.update(this->problem_(),
-//                                   element,
-//                                   fvGeometry,
-//                                   false /* oldSol? */);
-//
-//                 for (unsigned int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-//                 {
-//                   PrimaryVariables source(0.0);
-//
-//                   this->problem_().solDependentSource(source, element, fvGeometry, scvIdx, elemVolVars);
-//
-//                   const auto& volVars = elemVolVars[scvIdx];
-//                   Scalar moleFracCaO_sPhase = volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.molarDensity(cPhaseIdx)
-//                                             /(volVars.precipitateVolumeFraction(hPhaseIdx)*volVars.molarDensity(hPhaseIdx)
-//                                             + volVars.precipitateVolumeFraction(cPhaseIdx)*volVars.molarDensity(cPhaseIdx));
-//                   // if (isCharge = true)
-//                   if (- source[CaOIdx]*this->problem_().timeManager().timeStepSize() + moleFracCaO_sPhase* volVars.molarDensity(cPhaseIdx)
-//                       < 0 + 1e-6){
-//                       DUNE_THROW(NumericalProblem,
-//                           "Source term delivers unphysical value");
-//                   }
-//                  }
-//              }
-
-
-
-//             succeeded = 1;
-//             if (this->gridView_().comm().size() > 1)
-//                 succeeded = this->gridView_().comm().min(succeeded);
-//         }
-//         catch (Dumux::NumericalProblem &e)
-//         {
-//             std::cout << "rank " << this->problem_().gridView().comm().rank()
-//                       << " caught an exception while updating:" << e.what()
-//                       << "\n";
-//             succeeded = 0;
-//             if (this->gridView_().comm().size() > 1)
-//                 succeeded = this->gridView_().comm().min(succeeded);
-//         }
-//
-//         if (!succeeded) {
-//             DUNE_THROW(NumericalProblem,
-//                        "A process did not succeed in linearizing the system");
-//         }
 //     }
 
     bool newtonConverged()
