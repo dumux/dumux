@@ -148,7 +148,7 @@ struct InstationaryNonLinearSimulationImpl<TypeTag, DiscretizationMethods::CCTpf
 
         // the linear solver
         using LinearSolver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
-        auto linearSolver = std::make_shared<LinearSolver>();
+        auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
 
         // the non-linear solver
         using NewtonController = Dumux::NewtonController<TypeTag>;
@@ -293,7 +293,7 @@ struct InstationaryNonLinearSimulationImpl<TypeTag, DiscretizationMethods::Box, 
 
         // the linear solver
         using LinearSolver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
-        auto linearSolver = std::make_shared<LinearSolver>();
+        auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->vertexMapper());
 
         // the non-linear solver
         using NewtonController = Dumux::NewtonController<TypeTag>;
@@ -366,6 +366,6 @@ template <class TypeTag, DiffMethod diffMeth, bool isImplicit>
 struct InstationaryNonLinearSimulationImpl<TypeTag, DiscretizationMethods::CCMpfa, diffMeth, isImplicit>
        : public InstationaryNonLinearSimulationImpl<TypeTag, DiscretizationMethods::CCTpfa, diffMeth, isImplicit> {};
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

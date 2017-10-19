@@ -26,7 +26,6 @@
 #ifndef DUMUXAMGPROPERTIES_HH
 #define DUMUXAMGPROPERTIES_HH
 
-
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
 #include <dune/istl/owneroverlapcopy.hh>
@@ -56,10 +55,10 @@ template <class MType, class VType, bool isParallel>
 class NonoverlappingSolverTraits
 {
 public:
-    typedef Dune::Amg::SequentialInformation Comm;
-    typedef Dune::MatrixAdapter<MType,VType,VType> LinearOperator;
-    typedef Dune::SeqScalarProduct<VType> ScalarProduct;
-    typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
+    using Comm = Dune::Amg::SequentialInformation;
+    using LinearOperator = Dune::MatrixAdapter<MType,VType,VType>;
+    using ScalarProduct = Dune::SeqScalarProduct<VType>;
+    using Smoother = Dune::SeqSSOR<MType,VType, VType>;
 };
 
 #if HAVE_MPI
@@ -67,10 +66,10 @@ template <class MType, class VType>
 class NonoverlappingSolverTraits<MType, VType, true>
 {
 public:
-    typedef Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int> Comm;
-    typedef Dune::NonoverlappingSchwarzOperator<MType,VType, VType,Comm> LinearOperator;
-    typedef Dune::NonoverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
-    typedef Dune::NonoverlappingBlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int>;
+    using LinearOperator = Dune::NonoverlappingSchwarzOperator<MType,VType, VType,Comm>;
+    using ScalarProduct = Dune::NonoverlappingSchwarzScalarProduct<VType,Comm>;
+    using Smoother = Dune::NonoverlappingBlockPreconditioner<Comm,Dune::SeqSSOR<MType,VType, VType> >;
 };
 #endif
 
@@ -78,32 +77,34 @@ public:
 SET_PROP(BoxModel, AmgTraits)
 {
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     enum {
         numEq = JacobianMatrix::block_type::rows,
         dofCodim = Grid::dimension,
         isNonOverlapping = true,
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
-    typedef NonoverlappingSolverTraits<MType, VType, isParallel> SolverTraits;
-    typedef typename SolverTraits::Comm Comm;
-    typedef typename SolverTraits::LinearOperator LinearOperator;
-    typedef typename SolverTraits::ScalarProduct ScalarProduct;
-    typedef typename SolverTraits::Smoother Smoother;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
+    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
+    using SolverTraits = NonoverlappingSolverTraits<MType, VType, isParallel>;
+    using Comm = typename SolverTraits::Comm;
+    using LinearOperator = typename SolverTraits::LinearOperator;
+    using ScalarProduct = typename SolverTraits::ScalarProduct;
+    using Smoother = typename SolverTraits::Smoother;
+
+    using DofMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
 };
 
 template <class MType, class VType, bool isParallel>
 class OverlappingSolverTraits
 {
 public:
-    typedef Dune::Amg::SequentialInformation Comm;
-    typedef Dune::MatrixAdapter<MType,VType,VType> LinearOperator;
-    typedef Dune::SeqScalarProduct<VType> ScalarProduct;
-    typedef Dune::SeqSSOR<MType,VType, VType> Smoother;
+    using Comm = Dune::Amg::SequentialInformation;
+    using LinearOperator = Dune::MatrixAdapter<MType,VType,VType>;
+    using ScalarProduct = Dune::SeqScalarProduct<VType>;
+    using Smoother = Dune::SeqSSOR<MType,VType, VType>;
 };
 
 #if HAVE_MPI
@@ -111,10 +112,10 @@ template <class MType, class VType>
 class OverlappingSolverTraits<MType, VType, true>
 {
 public:
-    typedef Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int> Comm;
-    typedef Dune::OverlappingSchwarzOperator<MType,VType, VType,Comm> LinearOperator;
-    typedef Dune::OverlappingSchwarzScalarProduct<VType,Comm> ScalarProduct;
-    typedef Dune::BlockPreconditioner<VType,VType,Comm,Dune::SeqSSOR<MType,VType, VType> > Smoother;
+    using Comm = Dune::OwnerOverlapCopyCommunication<Dune::bigunsignedint<96>,int>;
+    using LinearOperator = Dune::OverlappingSchwarzOperator<MType,VType, VType,Comm>;
+    using ScalarProduct = Dune::OverlappingSchwarzScalarProduct<VType,Comm>;
+    using Smoother = Dune::BlockPreconditioner<VType,VType,Comm,Dune::SeqSSOR<MType,VType, VType> >;
 };
 #endif
 
@@ -122,44 +123,48 @@ public:
 SET_PROP(CCModel, AmgTraits)
 {
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     enum {
         numEq = JacobianMatrix::block_type::rows,
         dofCodim = 0,
         isNonOverlapping = false,
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
-    typedef OverlappingSolverTraits<MType, VType, isParallel> SolverTraits;
-    typedef typename SolverTraits::Comm Comm;
-    typedef typename SolverTraits::LinearOperator LinearOperator;
-    typedef typename SolverTraits::ScalarProduct ScalarProduct;
-    typedef typename SolverTraits::Smoother Smoother;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
+    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
+    using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
+    using Comm = typename SolverTraits::Comm;
+    using LinearOperator = typename SolverTraits::LinearOperator;
+    using ScalarProduct = typename SolverTraits::ScalarProduct;
+    using Smoother = typename SolverTraits::Smoother;
+
+    using DofMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
 };
 
 //! Sequential model: use the overlapping AMG
 SET_PROP(SequentialModel, AmgTraits)
 {
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     enum {
         numEq = JacobianMatrix::block_type::rows,
         dofCodim = 0,
         isNonOverlapping = false,
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> > MType;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,numEq> > VType;
-    typedef OverlappingSolverTraits<MType, VType, isParallel> SolverTraits;
-    typedef typename SolverTraits::Comm Comm;
-    typedef typename SolverTraits::LinearOperator LinearOperator;
-    typedef typename SolverTraits::ScalarProduct ScalarProduct;
-    typedef typename SolverTraits::Smoother Smoother;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
+    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
+    using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
+    using Comm = typename SolverTraits::Comm;
+    using LinearOperator = typename SolverTraits::LinearOperator;
+    using ScalarProduct = typename SolverTraits::ScalarProduct;
+    using Smoother = typename SolverTraits::Smoother;
+
+    using DofMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
 };
 
 } // namespace Properties

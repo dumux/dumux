@@ -200,16 +200,6 @@ public:
 //! use the AMGBackend solver by default
 SET_TYPE_PROP(ImplicitBase, LinearSolver, Dumux::AMGBackend<TypeTag> );
 
-// if the deflection of the newton method is large, we do not
-// need to solve the linear approximation accurately. Assuming
-// that the initial value for the delta vector u is quite
-// close to the final value, a reduction of 6 orders of
-// magnitude in the defect should be sufficient...
-SET_SCALAR_PROP(ImplicitBase, LinearSolverResidualReduction, 1e-6);
-
-//! set the default number of maximum iterations for the linear solver
-SET_INT_PROP(ImplicitBase, LinearSolverMaxIterations, 250);
-
 //! set number of equations of the mathematical model as default
 SET_INT_PROP(ImplicitBase, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 

@@ -223,7 +223,7 @@ public:
             {
                 // try to pass first argument as parameter file
                 parameterFileName = argv[1];
-                break;
+                continue;
             }
 
             if (argv[i][0] != '-')
@@ -331,7 +331,7 @@ private:
         params["LinearSolver.MaxIterations"] = "250";
         params["LinearSolver.PreconditionerIterations"] = "1";
         params["LinearSolver.PreconditionerRelaxation"] = "1.0";
-        params["LinearSolver.ResidualReduction"] = "1e-6";
+        params["LinearSolver.ResidualReduction"] = "1e-13";
         params["LinearSolver.Verbosity"] = "0";
 
         // parameters in the problem group
@@ -341,7 +341,7 @@ private:
         params["Newton.TargetSteps"] = "16";
 
         // parameters in the time loop group
-        params["TimeLoop.MaxTimeStepSize"] = std::to_string(std::numeric_limits<double>::max());
+        params["TimeLoop.MaxTimeStepSize"] = "1e300";
         params["TimeLoop.MaxTimeStepDivisions"] = "10";
 
         // parameters in the vtk group

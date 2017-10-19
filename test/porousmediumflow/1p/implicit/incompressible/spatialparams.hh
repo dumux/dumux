@@ -50,8 +50,8 @@ public:
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
 
-        lensLowerLeft_ =  getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
-        lensUpperRight_ =  getParam<GlobalPosition>("SpatialParams.LensUpperRight");
+        lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
+        lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
     }
 
     /*!

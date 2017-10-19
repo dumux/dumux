@@ -59,6 +59,9 @@ SET_TYPE_PROP(OnePIncompressible, SpatialParams, OnePTestSpatialParams<TypeTag>)
 // use the incompressible local residual (provides analytic jacobian)
 SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
+// set the linear solver
+SET_TYPE_PROP(OnePIncompressible, LinearSolver, SSORCGBackend<TypeTag>);
+
 // the fluid system
 SET_PROP(OnePIncompressible, Fluid)
 {
@@ -69,9 +72,9 @@ public:
 };
 
 // Enable caching
-SET_BOOL_PROP(OnePIncompressible, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(OnePIncompressible, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(OnePIncompressible, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(OnePIncompressible, EnableGlobalFluxVariablesCache, false);
+SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, false);
 
 } // end namespace Properties
 

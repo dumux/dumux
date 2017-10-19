@@ -50,16 +50,6 @@ int main(int argc, char** argv) try
 
     using TypeTag = TTAG(TYPETAG);
 
-    // some aliases for better readability
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
@@ -78,71 +68,83 @@ int main(int argc, char** argv) try
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    try { GridCreator::makeGrid(Parameters::getTree()); }
-    catch (...) {
-        std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
-        throw;
-    }
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    GridCreator::makeGrid(Parameters::getTree());
     GridCreator::loadBalance();
 
     // we compute on the leaf grid view
     const auto& leafGridView = GridCreator::grid().leafGridView();
 
     // create the finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
     // the problem (boundary conditions)
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     static constexpr int dofCodim = isBox ? GridView::dimension : 0;
     SolutionVector x(leafGridView.size(dofCodim));
 
     // the grid variables
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
 
     // make assemble and attach linear system
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     auto A = std::make_shared<JacobianMatrix>();
     auto r = std::make_shared<SolutionVector>();
     assembler->setLinearSystem(A, r);
 
     Dune::Timer timer;
     // assemble the local jacobian and the residual
-    Dune::Timer assemblyTimer; std::cout << "Assembling linear system ..." << std::flush;
+    Dune::Timer assemblyTimer;
+    if (mpiHelper.rank() == 0) std::cout << "Assembling linear system ..." << std::flush;
     assembler->assembleJacobianAndResidual(x);
-    assemblyTimer.stop(); std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
+    assemblyTimer.stop();
+    if (mpiHelper.rank() == 0) std::cout << " took " << assemblyTimer.elapsed() << " seconds." << std::endl;
 
     // we solve Ax = -r to save update and copy
     (*r) *= -1.0;
 
     // // solve the linear system
-    Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
-    using LinearSolver = UMFPackBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(*problem);
+    Dune::Timer solverTimer;
+    using LinearSolver = GET_PROP_TYPE(TypeTag, LinearSolver);
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+
+    if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;
     linearSolver->solve(*A, x, *r);
-    solverTimer.stop(); std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
+    solverTimer.stop();
+    if (mpiHelper.rank() == 0) std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
 
     // output result to vtk
-    Dune::Timer outputTimer; std::cout << "Writing result to file "<< problem->name() <<" ..." << std::flush;
+    Dune::Timer outputTimer;
+    if (mpiHelper.rank() == 0) std::cout << "Writing result to file "<< problem->name() <<" ..." << std::flush;
     Dune::VTKWriter<GridView> vtkwriter(leafGridView);
     if (isBox) vtkwriter.addVertexData(x, "p");
     else vtkwriter.addCellData(x, "p");
     vtkwriter.write(problem->name());
-    outputTimer.stop(); std::cout << " took " << outputTimer.elapsed() << " seconds." << std::endl;
+    outputTimer.stop();
+    if (mpiHelper.rank() == 0) std::cout << " took " << outputTimer.elapsed() << " seconds." << std::endl;
 
     timer.stop();
 
     const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
-    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
-              << comm.size() << " processes.\n"
-              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
+    if (mpiHelper.rank() == 0)
+        std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+                  << comm.size() << " processes.\n"
+                  << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
-    Parameters::print();
+    if (mpiHelper.rank() == 0)
+        Parameters::print();
 
     return 0;
 

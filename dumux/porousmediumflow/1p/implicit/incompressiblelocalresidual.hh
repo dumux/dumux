@@ -34,7 +34,7 @@ namespace Dumux
 template<class TypeTag>
 class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using ParentType = ImmiscibleLocalResidual<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);

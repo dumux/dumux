@@ -17,49 +17,64 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
- * \ingroup Linear
  * \file
- *
- * \brief Defines a type tag and some fundamental properties for
- *        linear solvers
+ * \brief Dumux linear solver backend
  */
-#ifndef DUMUX_LINEAR_SOLVER_PROPERTIES_HH
-#define DUMUX_LINEAR_SOLVER_PROPERTIES_HH
-
-#include <dumux/common/basicproperties.hh>
+#ifndef DUMUX_SOLVER_BACKEND_HH
+#define DUMUX_SOLVER_BACKEND_HH
 
 namespace Dumux
 {
+
 namespace Properties
 {
-//! Linear solver type tag for all models.
-NEW_TYPE_TAG(LinearSolverTypeTag);
+NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(ImplicitIsBox);
+NEW_PROP_TAG(VertexMapper);
+NEW_PROP_TAG(ElementMapper);
+}
 
-//! The type of the linear solver to be used
-NEW_PROP_TAG(LinearSolver);
-
-//! Block level depth for the preconditioner
-// Set this to more than one if the matrix to solve is nested multiple times
-// e.g. for Dune::MultiTypeBlockMatrix'es.
-NEW_PROP_TAG(LinearSolverPreconditionerBlockLevel);
-
-//! Size of the matrix/vector blocks
 /*!
- * The number of different types of equations which build the system of equations to solve
- * can differ from the number of equations given by the mathematical/physical model (e.g. IMPES).
- * Thus, the block size does not have to be equal to NumEq.
- * (Especially important for the SuperLU solver!)
+ * \ingroup Linear
+ * \brief Base class for linear solvers
  */
-NEW_PROP_TAG(LinearSolverBlockSize);
+template<class TypeTag>
+class LinearSolver
+{
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using DofMapper = std::conditional_t<GET_PROP_VALUE(TypeTag, ImplicitIsBox),
+                                         typename GET_PROP_TYPE(TypeTag, VertexMapper),
+                                         typename GET_PROP_TYPE(TypeTag, ElementMapper)>;
 
-//! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
-SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerBlockLevel, 1);
+public:
+    LinearSolver (const GridView& gridView, const DofMapper& mapper)
+    : gridView_(gridView)
+    , mapper_(mapper)
+    {}
 
-//! set the block size to 1 as default
-SET_INT_PROP(LinearSolverTypeTag, LinearSolverBlockSize, 1);
+    //! solve the linear system Ax = b
+    template<class Matrix, class Vector>
+    bool solve(const Matrix& A, Vector& x, const Vector& b)
+    { return false; };
 
-} // namespace Properties
-} // namespace Dumux
+    //! the name of the linear solver
+    std::string name() const
+    { return "undefined solver"; }
+
+protected:
+    //! the grid view for communication in parallel
+    const GridView& gridView() const
+    { return gridView_; }
+
+    //! the dof mapper for communication in parallel
+    const DofMapper& dofMapper() const
+    { return mapper_; }
+
+private:
+    const GridView gridView_;
+    const DofMapper mapper_;
+};
+
+} // end namespace Dumux
 
 #endif
