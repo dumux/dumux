@@ -86,7 +86,7 @@ public:
     : fvGridGeometry_(fvGridGeometry)
     {
         // set a default name for the problem
-        problemName_ = GET_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        problemName_ = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Name");
 
         // TODO this has to be moved to the main file most probably
         // // if we are calculating on an adaptive grid get the grid adapt model
