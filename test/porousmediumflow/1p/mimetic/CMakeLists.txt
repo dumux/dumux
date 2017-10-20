@@ -27,6 +27,9 @@ add_dumux_test(test_1pgermanbasin test_1pgermanbasin test_1pgermanbasin.cc
 add_dumux_test(test_1pmimeticanisotropic test_1pmimeticanisotropic test_1pmimeticanisotropic.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pmimeticanisotropic)
 
+add_dumux_test(test_1panisotropic_mpfao test_1panisotropic_mpfao test_1panisotropic_mpfao.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/test_1panisotropic_mpfao)
+
 add_dumux_test(test_1plinear test_1plinear test_1plinear.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1plinear)
 

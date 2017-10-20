@@ -21,7 +21,7 @@
  *
  * \brief test for the one-phase CC model
  */
-#define PROBLEM 1
+#define PROBLEM 2
 
 #include "config.h"
 #include "1pmimeticanisotropicproblem.hh"

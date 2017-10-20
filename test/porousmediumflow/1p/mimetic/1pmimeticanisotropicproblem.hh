@@ -25,16 +25,21 @@
 #ifndef DUMUX_1PMIMETICANISOTROPIC_PROBLEM_HH
 #define DUMUX_1PMIMETICANISOTROPIC_PROBLEM_HH
 
-//#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-//#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-//#include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/1p/mimetic/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
+#if PROBLEM==1
+#include <dumux/porousmediumflow/1p/mimetic/model.hh>
+#include "resultevaluationmimetic.hh"
+#else
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include "resultevaluationcc.hh"
+#endif
+
 #include <dumux/material/components/unit.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 #include "1pmimeticanisotropicspatialparams.hh"
-#include "resultevaluationmimetic.hh"
 
 namespace Dumux
 {
@@ -50,8 +55,17 @@ namespace Capabilities
 
 namespace Properties
 {
-//NEW_TYPE_TAG(OnePMimeticAnisotropicProblem, INHERITS_FROM(CCMpfaModel, OneP, OnePMimeticTestSpatialParams));
+#if PROBLEM==1
 NEW_TYPE_TAG(OnePMimeticAnisotropicProblem, INHERITS_FROM(OnePMimetic, OnePMimeticTestSpatialParams));
+#else
+NEW_TYPE_TAG(OnePMimeticAnisotropicProblem, INHERITS_FROM(CCMpfaModel, OneP, OnePMimeticTestSpatialParams));
+
+SET_PROP(OnePMimeticAnisotropicProblem, MpfaMethod)
+{
+    static const MpfaMethods value = MpfaMethods::oMethod;
+};
+#endif
+
 
 SET_PROP(OnePMimeticAnisotropicProblem, Fluid)
 {
@@ -80,8 +94,6 @@ SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalVolumeVariablesCache, t
 SET_BOOL_PROP(OnePMimeticAnisotropicProblem, ProblemEnableGravity, false);
 
 SET_TYPE_PROP(OnePMimeticAnisotropicProblem, LinearSolver, UMFPackBackend<TypeTag> );
-
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, VtkWriteFaceData, false);
 }
 
 template <class TypeTag>
@@ -351,21 +363,30 @@ public:
         if (file.fail())
             throw std::ios_base::failure(std::strerror(errno));
 
-        file    << result.absL2Error  << "\t\t " << result.relativeL2Error  << "\t\t "
-                << result.absH1ErrorApproxMin << "\t\t " << result.absH1ErrorDiffMin << "\t\t "
-                << this->newtonController().newtonNumSteps() << "\t\t "
-                << result.hMax << "\t\t " << result.hMin << "\t\t "
-                << result.uMax << "\t\t " << result.uMin << "\t\ "
+        file    << result.absL2Error  << "\t " << result.relativeL2Error  << "\t\t "<< result.absH1Error << "\t "
+                << result.absH1ErrorApproxMin << "\t\t " << result.absH1ErrorDiffMin << "\t "
+                << result.bilinearFormApprox <<"\t " << result.bilinearFormDiffApprox << "\t "
+                << result.residualTermApprox <<"\t " << result.residualTermDiff << "\t "
+                << result.residualTermError << "\t "
+                << this->newtonController().newtonNumSteps() << "\t "
+#if PROBLEM==1
+                << -1 << "\t "
+#else
+                << this->model().jacobianAssembler().matrix().nonzeroes() << "\t "
+#endif
+                << result.hMax << "\t " << result.hMin << "\t "
+                << result.uMax << "\t " << result.uMin << "\t "
                 << this->gridView().size(0) << "\t " << std::endl;
 
         std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
         std::cout.precision(2);
 
         std::cout
-                << "\t absL2Error \t pRelErrorL2  \t absH1ErrorApproxMin \t absH1ErrorDiffMin \t hMax \t\t hMin \t\t numEle"
+                << "\t absL2Error \t absH1ErrorDiffMin \t bilinearFormApprox \t bilinearFormDiffApprox \t hMax \t\t hMin \t\t numEle"
                 << std::endl;
-        std::cout << "\t " << result.absL2Error  << "\t " << result.relativeL2Error  << "\t "
-                << result.absH1ErrorApproxMin << "\t\t " << result.absH1ErrorDiffMin << "\t\t "
+        std::cout << "\t " << result.absL2Error  << "\t "
+                << result.absH1ErrorDiffMin << "\t\t "
+                <<  result.bilinearFormApprox <<"\t\t " << result.bilinearFormDiffApprox << "\t\t\t "
                 << result.hMax << "\t " << result.hMin << "\t " << this->gridView().size(0) << "\t " << std::endl;
     }
 

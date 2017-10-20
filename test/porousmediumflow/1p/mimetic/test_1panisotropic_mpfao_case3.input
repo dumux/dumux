@@ -1,0 +1,26 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+UpperRight = 1.0 1.0
+Cells = 10 10
+Refinement = 3
+
+[Problem]
+Name = 1panisotropic_mpfao_case3
+TestCase = 3
+Alpha = 1.0e-3
+
+[Newton]
+EnableShiftCriterion = 0
+EnableResidualCriterion = 1
+UseAbsoluteResidualCriterion = 1
+MaxAbsoluteResidual = 1.0e-5
+UseLineSearch = 1
+MaxSteps = 500
+
+[SpatialParams]
+k1 = 1.0
+k2 = 1.0e-3
+k12 = 0.0
