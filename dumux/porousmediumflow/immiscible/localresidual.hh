@@ -40,6 +40,7 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
@@ -69,12 +70,12 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    PrimaryVariables computeStorage(const Problem& problem,
-                                    const SubControlVolume& scv,
-                                    const VolumeVariables& volVars) const
+    ResidualVector computeStorage(const Problem& problem,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars) const
     {
         // partial time derivative of the phase mass
-        PrimaryVariables storage;
+        ResidualVector storage;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             auto eqIdx = conti0EqIdx + phaseIdx;
@@ -97,17 +98,17 @@ public:
      * \brief Evaluate the mass flux over a face of a sub control volume
      * \param scvf The sub control volume face to compute the flux on
      */
-    PrimaryVariables computeFlux(const Problem& problem,
-                                 const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
+    ResidualVector computeFlux(const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVolumeVariables& elemVolVars,
+                               const SubControlVolumeFace& scvf,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
         fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        PrimaryVariables flux;
+        ResidualVector flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // the physical quantities for which we perform upwinding
