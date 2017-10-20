@@ -29,14 +29,14 @@
 #define DUMUX_2P2C_PROPERTY_DEFAULTS_HH
 
 #include "properties.hh"
-#include "model.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
-#include "newtoncontroller.hh"
 #include "primaryvariableswitch.hh"
+#include "vtkoutputfields.hh"
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
+#include <dumux/porousmediumflow/compositional/privarswitchnewtoncontroller.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -47,6 +47,7 @@ namespace Dumux
 {
 
 namespace Properties {
+
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
@@ -134,10 +135,7 @@ SET_BOOL_PROP(TwoPTwoC, EnableMolecularDiffusion, true);
 SET_BOOL_PROP(TwoPTwoC, EnableEnergyBalance, false);
 
 //! Use the 2p2c Newton controller
-SET_TYPE_PROP(TwoPTwoC, NewtonController, TwoPTwoCNewtonController<TypeTag>);
-
-//! Use the 2p2c model
-SET_TYPE_PROP(TwoPTwoC, Model, TwoPTwoCModel<TypeTag>);
+SET_TYPE_PROP(TwoPTwoC, NewtonController, PriVarSwitchNewtonController<TypeTag>);
 
 //! The primary variable switch for the 2p2c model
 SET_TYPE_PROP(TwoPTwoC, PrimaryVariableSwitch, TwoPTwoCPrimaryVariableSwitch<TypeTag>);
@@ -186,6 +184,9 @@ SET_SCALAR_PROP(TwoPTwoC, SpatialParamsForchCoeff, 0.55);
  * \cite carman1937
  */
 SET_SCALAR_PROP(TwoPTwoC, TauTortuosity, 0.5);
+
+//! Set the vtk output fields specific to the TwoPTwoC model
+SET_TYPE_PROP(TwoPTwoC, VtkOutputFields, TwoPTwoCVtkOutputFields<TypeTag>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPTwoCNI, ThermalConductivityModel)

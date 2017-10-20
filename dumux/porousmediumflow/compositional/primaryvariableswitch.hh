@@ -64,16 +64,26 @@ class PrimaryVariableSwitch
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dim = GridView::dimension };
 
 public:
 
-    void init(Problem& problem)
+    PrimaryVariableSwitch(const std::size_t& numDofs)
     {
-        wasSwitched_.resize(problem.model().numDofs(), false);
+        wasSwitched_.resize(numDofs, false);
     }
 
     //! If the primary variables were recently switched
@@ -87,23 +97,23 @@ public:
      * \param problem The problem
      * \param curSol The current solution to be updated / modified
      */
-    template<class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), bool>::type
-    update(Problem& problem, SolutionVector& curSol)
+    bool update(SolutionVector& curSol,
+                GridVariables& gridVariables,
+                const Problem& problem,
+                const FVGridGeometry& fvGridGeometry)
     {
         bool switched = false;
         visited_.assign(wasSwitched_.size(), false);
-        for (const auto& element : elements(problem.gridView()))
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
-            auto elemVolVars = localView(problem.model().curGlobalVolVars());
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
-            auto curElemSol = problem.model().elementSolution(element, curSol);
-
+            const auto curElemSol = elementSolution(fvGridGeometry, element, curSol);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
@@ -112,9 +122,9 @@ public:
                     // Note this implies that volume variables don't differ
                     // in any sub control volume associated with the dof!
                     visited_[dofIdxGlobal] = true;
-                    // Compute temporary volVars on which grounds we decide
+                    // Compute volVars on which grounds we decide
                     // if we need to switch the primary variables
-                    auto&& volVars = elemVolVars[scv];
+                    auto& volVars = getVolVarAccess(gridVariables.curGridVolVars(), elemVolVars, scv);
                     volVars.update(curElemSol, problem, element, scv);
 
                     if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
@@ -126,55 +136,8 @@ public:
 
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag for our partition.
-        if (problem.gridView().comm().size() > 1)
-            switched = problem.gridView().comm().max(switched);
-
-        return switched;
-    }
-
-    template<class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), bool>::type
-    update(Problem& problem, SolutionVector& curSol)
-    {
-        bool switched = false;
-        visited_.assign(wasSwitched_.size(), false);
-        for (const auto& element : elements(problem.gridView()))
-        {
-            // make sure FVElementGeometry is bound to the element
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
-            fvGeometry.bindElement(element);
-
-            const auto eIdx = problem.elementMapper().index(element);
-
-            auto curElemSol = problem.model().elementSolution(element, curSol);
-
-            auto& curGlobalVolVars = problem.model().nonConstCurGlobalVolVars();
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                // Update volVars on which grounds we decide
-                // if we need to switch the primary variables
-                auto&& volVars = curGlobalVolVars.volVars(eIdx, scv.indexInElement());
-                volVars.update(curElemSol, problem, element, scv);
-
-                auto dofIdxGlobal = scv.dofIndex();
-
-                if (!visited_[dofIdxGlobal])
-                {
-                    // Note this implies that volume variables don't differ
-                    // in any sub control volume associated with the dof!
-                    visited_[dofIdxGlobal] = true;
-
-                    if (asImp_().update_(curSol[dofIdxGlobal], volVars, dofIdxGlobal, scv.dofPosition()))
-                        switched = true;
-                }
-            }
-        }
-
-        // make sure that if there was a variable switch in an
-        // other partition we will also set the switch flag for our partition.
-        if (problem.gridView().comm().size() > 1)
-            switched = problem.gridView().comm().max(switched);
+        if (fvGridGeometry.gridView().comm().size() > 1)
+            switched = fvGridGeometry.gridView().comm().max(switched);
 
         return switched;
     }
@@ -202,6 +165,42 @@ protected:
 
     std::vector<bool> wasSwitched_;
     std::vector<bool> visited_;
+
+private:
+    template<class T = TypeTag>
+    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables&>::type
+    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return elemVolVars[scv]; }
+
+    template<class T = TypeTag>
+    static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables&>::type
+    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return gridVolVars.volVars(scv); }
+
+    /*!
+     * \brief Obtains the current solution inside a given element.
+     *        Specialization for the box method.
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), ElementSolution>::type
+    elementSolution(const FVGridGeometry& fvGridGeometry, const Element& element, const SolutionVector& sol) const
+    {
+        auto numVert = element.subEntities(dim);
+        ElementSolution elemSol(numVert);
+        for (int v = 0; v < numVert; ++v)
+            elemSol[v] = sol[fvGridGeometry.vertexMapper().subIndex(element, v, dim)];
+        return elemSol;
+    }
+
+    /*!
+     * \brief Obtains the current solution inside a given element.
+     *        Specialization for cell-centered methods.
+     */
+    template<class T = TypeTag>
+    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), ElementSolution>::type
+    elementSolution(const FVGridGeometry& fvGridGeometry, const Element& element, const SolutionVector& sol) const
+    { return ElementSolution({ sol[fvGridGeometry.elementMapper().index(element)] }); }
+
 };
 
 } // end namespace dumux

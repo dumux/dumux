@@ -90,8 +90,8 @@ public:
      *
      * \param gridView The grid view
      */
-    InjectionSpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView)
+    InjectionSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         layerBottom_ = 22.0;
 

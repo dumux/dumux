@@ -27,7 +27,7 @@
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 
 #include "injectionspatialparams.hh"
@@ -85,10 +85,11 @@ SET_BOOL_PROP(InjectionProblem, UseMoles, true);
  * <tt>./test_cc2p2c</tt>
  */
 template <class TypeTag>
-class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
@@ -138,28 +139,18 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InjectionProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    InjectionProblem(std::shared_ptr<FVGridGeometry>& fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, Problem.NTemperature);
-        nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, Problem.NPressure);
-        pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureLow);
-        pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.PressureHigh);
-        temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureLow);
-        temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.TemperatureHigh);
-        temperature_        = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InitialTemperature);
-        depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.DepthBOR);
-        name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
-
-        /* Alternative syntax:
-         * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-         * const Dune::ParameterTree &tree = ParameterTree::tree();
-         * nTemperature_       = tree.template get<int>("Problem.NTemperature");
-         *
-         * + We see what we do
-         * - Reporting whether it was used does not work
-         * - Overwriting on command line not possible
-         */
+        nTemperature_       = getParam<int>("Problem.NTemperature");
+        nPressure_          = getParam<int>("Problem.NPressure");
+        pressureLow_        = getParam<Scalar>("Problem.PressureLow");
+        pressureHigh_       = getParam<Scalar>("Problem.PressureHigh");
+        temperatureLow_     = getParam<Scalar>("Problem.TemperatureLow");
+        temperatureHigh_    = getParam<Scalar>("Problem.TemperatureHigh");
+        temperature_        = getParam<Scalar>("Problem.InitialTemperature");
+        depthBOR_           = getParam<Scalar>("Problem.DepthBOR");
+        name_               = getParam<std::string>("Problem.Name");
 
         // initialize the tables of the fluid system
         FluidSystem::init(/*Tmin=*/temperatureLow_,
@@ -185,18 +176,18 @@ public:
      *
      * Will be called diretly after the time integration.
      */
-    void postTimeStep()
-    {
-        // Calculate storage terms
-        PrimaryVariables storage;
-        this->model().globalStorage(storage);
-
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0) {
-            std::cout<<"Storage: wetting=[" << storage[wPhaseIdx] << "]"
-                     << " nonwetting=[" << storage[nPhaseIdx] << "]\n";
-        }
-    }
+    // void postTimeStep()
+    // {
+    //     // Calculate storage terms
+    //     PrimaryVariables storage;
+    //     this->model().globalStorage(storage);
+    //
+    //     // Write mass balance information for rank 0
+    //     if (this->gridView().comm().rank() == 0) {
+    //         std::cout<<"Storage: wetting=[" << storage[wPhaseIdx] << "]"
+    //                  << " nonwetting=[" << storage[nPhaseIdx] << "]\n";
+    //     }
+    // }
 
 
     /*!
