@@ -34,7 +34,6 @@
 #include "properties.hh"
 
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
-#include <dumux/porousmediumflow/1pnc/implicit/newtoncontroller.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
@@ -81,7 +80,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
 public:
-//     static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
     static const int value = FluidSystem::numComponents + FluidSystem::numSComponents; //steamaircao2h2 has 2 components in the fluidphase
 };
 
@@ -110,18 +108,8 @@ SET_TYPE_PROP(OnePNCMin, Model, OnePNCMinModel<TypeTag>);
 //! the VolumeVariables property
 SET_TYPE_PROP(OnePNCMin, VolumeVariables, OnePNCMinVolumeVariables<TypeTag>);
 
-//! the FluxVariables property
-// SET_TYPE_PROP(OnePNCMin, FluxVariables, OnePNCMinFluxVariables<TypeTag>);
-
 //! The indices required by the isothermal 2pNcMin model
 SET_TYPE_PROP(OnePNCMin, Indices, OnePNCMinIndices <TypeTag, /*PVOffset=*/0>);
-
-//! default value for the forchheimer coefficient
-// Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
-//        Actually the Forchheimer coefficient is also a function of the dimensions of the
-//        porous medium. Taking it as a constant is only a first approximation
-//        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-// SET_SCALAR_PROP(OnePNCMin, SpatialParamsForchCoeff, 0.55);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNCMin, IsothermalVolumeVariables, OnePNCMinVolumeVariables<TypeTag>);
@@ -145,9 +133,6 @@ SET_BOOL_PROP(OnePNCMinNI, NiOutputLevel, 0);
 
 // set isothermal Model
 SET_TYPE_PROP(OnePNCMinNI, IsothermalModel, OnePNCMinModel<TypeTag>);
-
-// set isothermal FluxVariables
-//SET_TYPE_PROP(OnePNCMinNI, IsothermalFluxVariables, OnePNCMinFluxVariables<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(OnePNCMinNI, IsothermalVolumeVariables, OnePNCMinVolumeVariables<TypeTag>);
