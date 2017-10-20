@@ -29,7 +29,6 @@
 #include "indices.hh"
 #include "localresidual.hh"
 
-// #include <dumux/material/constants.hh>
 #include <dumux/porousmediumflow/1pnc/implicit/model.hh>
 #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 

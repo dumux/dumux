@@ -61,8 +61,6 @@ class OnePNCMinVolumeVariables : public OnePNCVolumeVariables<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-//     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-
     enum
     {
         dim = GridView::dimension,
@@ -107,10 +105,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        /////////////
         // calculate the remaining quantities
-        /////////////
-
         auto&& priVars = isBox ? elemSol[scv.index()] : elemSol[0];
 
         // porosity evaluation
@@ -124,8 +119,7 @@ public:
 
         }
 
-
-//         energy related quantities not contained in the fluid state
+        // energy related quantities not contained in the fluid state
         asImp_().updateEnergy_(elemSol, problem, element, scv);
     }
 
@@ -143,22 +137,14 @@ public:
         Scalar t = BaseType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
 
-        /////////////
         // set the saturations
-        /////////////
-
         fluidState.setSaturation(phaseIdx, 1.0 );
 
-        /////////////
         // set the pressures of the fluid phase
-        /////////////
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
-        /////////////
         // calculate the phase compositions
-        /////////////
-
         typename FluidSystem::ParameterCache paramCache;
 
         Dune::FieldVector<Scalar, numComponents> moleFrac;
@@ -240,7 +226,7 @@ public:
         if (phaseIdx <  1)
             return this->fluidState_.molarDensity(phaseIdx);
         else if (phaseIdx >= 1){
-            /*Attention: sPhaseIdx of the fluidsystem and the model can be different.*/
+            //Attention: sPhaseIdx of the fluidsystem and the model can be different.
             return FluidSystem::precipitateMolarDensity(phaseIdx);
         }
         else

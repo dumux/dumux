@@ -64,7 +64,6 @@ class ThermoChemSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum {

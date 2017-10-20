@@ -43,7 +43,6 @@ template<class TypeTag>
 class OnePNCMinLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
 protected:
-//     typedef OnePNCLocalResidual<TypeTag> ParentType;
     using ParentType = CompositionalLocalResidual<TypeTag>;
     using ThisType = OnePNCMinLocalResidual<TypeTag>;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
