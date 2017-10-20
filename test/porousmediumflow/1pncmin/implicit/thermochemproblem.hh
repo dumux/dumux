@@ -97,8 +97,6 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     enum
     {
-//         replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx),
-
         numComponents = FluidSystem::numComponents,
         numSComponents = FluidSystem::numSComponents,
 
@@ -379,7 +377,7 @@ public:
         Scalar solidDensityAverage = moleFracCaO_sPhase*volVars.molarDensity(cPhaseIdx)
                                      + moleFracCaO2H2_sPhase* volVars.molarDensity(hPhaseIdx);
 
-//         //discharge or hydration
+         //discharge or hydration
         if (T < Teq){
 
             Scalar krh =0.08;  //0.006

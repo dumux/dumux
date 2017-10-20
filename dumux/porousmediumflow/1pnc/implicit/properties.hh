@@ -64,10 +64,8 @@ NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computation of the effective diffusivity
 NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
 NEW_PROP_TAG(FluidState); //!< Type of the fluid state to be used
-//NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(UseMoles); //!< Defines whether mole (true) or mass (false) fractions are used
-//NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 NEW_PROP_TAG(TauTortuosity); //!< Tortuosity value (tau) used in macroscopic diffusion
 

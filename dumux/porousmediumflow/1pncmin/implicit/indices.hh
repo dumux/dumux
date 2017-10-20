@@ -41,8 +41,6 @@ template <class TypeTag, int PVOffset = 0>
 {
 };
 
-// \}
-
 }
 
 #endif
