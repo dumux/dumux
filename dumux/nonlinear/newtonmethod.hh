@@ -164,12 +164,18 @@ public:
                 controller_->newtonEndStep(*assembler_, uCurrentIter, uLastIter);
             }
 
+            // tell controller we are done
+            controller_->newtonEnd();
+
             // reset state if newton failed
             if (!controller_->newtonConverged())
             {
                 controller_->newtonFail(*assembler_, u);
                 return false;
             }
+
+            // tell controller we converged successfully
+            controller_->newtonSucceed();
 
             if (controller_->verbose()) {
                 const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();

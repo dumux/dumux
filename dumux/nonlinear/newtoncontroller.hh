@@ -513,8 +513,19 @@ public:
     }
 
     /*!
+     * \brief Called if the Newton method ended
+     *        (not known yet if we failed or succeeded)
+     */
+    void newtonEnd() {}
+
+    /*!
+     * \brief Called if the Newton method ended succcessfully
+     * This method is called _after_ newtonEnd()
+     */
+    void newtonSucceed() {}
+
+    /*!
      * \brief Called if the Newton method broke down.
-     *
      * This method is called _after_ newtonEnd()
      */
     template<class Assembler, class SolutionVector>
@@ -591,9 +602,6 @@ protected:
 
     void initParams_()
     {
-        enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
-        enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
-
         useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
         enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
         enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
@@ -702,7 +710,6 @@ protected:
 
     // further parameters
     bool enablePartialReassemble_;
-    bool enableJacobianRecycling_;
     bool useLineSearch_;
     bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
