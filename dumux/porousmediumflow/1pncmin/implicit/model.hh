@@ -197,7 +197,7 @@ public:
     {
         Tensor K(0.0);
 
-        for(int i=0; i<dim; i++)
+        for(int i=0; i<dimWorld; i++)
             K[i][i] = perm;
 
        return K;

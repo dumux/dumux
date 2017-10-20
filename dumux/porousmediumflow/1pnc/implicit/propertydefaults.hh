@@ -32,7 +32,6 @@
 #include "model.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
-#include "newtoncontroller.hh"
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
@@ -92,7 +91,6 @@ public:
     static const int value = FluidSystem::numComponents;
 };
 
-
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen
@@ -109,9 +107,6 @@ SET_PROP(OnePNC, FluidState){
 
 //! Use the 1pnc local residual
 SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>);
-
-//! Use the 1pnc newton controller
-SET_TYPE_PROP(OnePNC, NewtonController, OnePNCNewtonController<TypeTag>);
 
 //! the Model property
 SET_TYPE_PROP(OnePNC, Model, OnePNCModel<TypeTag>);
@@ -149,7 +144,6 @@ SET_PROP(OnePNC, EffectiveDiffusivityModel)
  public:
     typedef DiffusivityMillingtonQuirk<Scalar> type;
 };
-
 
 //! Enable advection
 SET_BOOL_PROP(OnePNC, EnableAdvection, true);
@@ -193,7 +187,7 @@ SET_BOOL_PROP(OnePNCNI, EnableAdvection, true);
 SET_BOOL_PROP(OnePNCNI, EnableMolecularDiffusion, true);
 SET_BOOL_PROP(OnePNCNI, EnableEnergyBalance, true);
 
-}
-}
+} //end namespace
+} //end namespace
 
 #endif

@@ -105,15 +105,13 @@ public:
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const SubControlVolume &scv
-                /*bool isOldSol ??*/)
+                const SubControlVolume &scv)
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_/*, isOldSol*/);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
         porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
-        // dispersivity_ = problem.spatialParams().dispersivity(element, scv, elemSol);
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
 
         // Second instance of a parameter cache.
@@ -135,7 +133,6 @@ public:
                                                              compIIdx,
                                                              compJIdx);
                 }
-//             Valgrind::CheckDefined(diffCoeff_[compJIdx]);
         }
 
     }
@@ -156,11 +153,10 @@ public:
         fluidState.setTemperature(t);
         fluidState.setSaturation(phaseIdx, 1.);
 
-        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv); // new in next ??
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
         fluidState.setPressure(phaseIdx, priVars[pressureIdx]);
 
         // calculate the phase composition
-
         Dune::FieldVector<Scalar, numComponents> moleFrac;
 
         Scalar sumMoleFracNotWater = 0;
@@ -302,10 +298,10 @@ public:
       * \param phaseIdx the index of the fluid phase
       * \param compIdx the index of the component
       */
-//      Scalar massFraction(int compIdx) const
-//      {
-//         return this->fluidState_.massFraction(phaseIdx, compIdx);
-//      }
+     Scalar massFraction(int compIdx) const
+     {
+        return this->fluidState_.massFraction(phaseIdx, compIdx);
+     }
 
     /*!
      * \brief Returns the permeability within the control volume in \f$[m^2]\f$.
