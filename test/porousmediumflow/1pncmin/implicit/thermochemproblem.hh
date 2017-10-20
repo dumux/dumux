@@ -65,13 +65,8 @@ SET_PROP(ThermoChemProblem, FluidSystem)
     using type = FluidSystems::SteamAirCaO2H2<Scalar>;
 };
 
-// Set the transport equation that is replaced by the total mass balance
-// SET_INT_PROP(ThermoChemProblem, ReplaceCompEqIdx, 1 /*3*/ /*1*/);
-
 // Enable velocity output
 SET_BOOL_PROP(ThermoChemProblem, VtkAddVelocity, false);
-
-// SET_TYPE_PROP(ThermoChemProblem, LinearSolver, UMFPackBackend<TypeTag>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialParams<TypeTag>);
@@ -149,23 +144,8 @@ public:
     ThermoChemProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
     {
-        nTemperature_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NTemperature);
-        nPressure_              = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NPressure);
-        pressureLow_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureLow);
-        pressureHigh_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureHigh);
-        temperatureLow_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
-        temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
-        name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-
-        isCharge_               = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
-
-//      // initialize, if a complex fluidsystem is used
-//         FluidSystem::init(/*Tmin=*/temperatureLow_,
-//                           /*Tmax=*/temperatureHigh_,
-//                           /*nT=*/nTemperature_,
-//                           /*pmin=*/pressureLow_,
-//                           /*pmax=*/pressureHigh_,
-//                           /*np=*/nPressure_);
+        name_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        isCharge_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
     }
 
     /*!
@@ -279,17 +259,6 @@ public:
         PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables priVars(0.0);
-
-//         if(globalPos[0] < eps_)
-//         {
-//
-//         if (isCharge_ == true){
-//             priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, InFlow); //[mol/s] gas inflow; negative sign: inflow
-//         }
-//         else
-//         priVars[pressureIdx] = -GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, InFlow); //[mol/s] gas inflow
-//         }
-
         return priVars;
     }
 
@@ -370,19 +339,18 @@ public:
         PrimaryVariables source(0.0);
         const auto& volVars = elemVolVars[scv];
 
-
+        // calculate the equilibrium temperature Teq
         Scalar T= volVars.temperature();
         Scalar Teq = 0;
 
         Scalar moleFractionVapor = 1e-3;
 
         if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) > 1e-3)
-            moleFractionVapor = volVars.moleFraction(phaseIdx, firstMoleFracIdx) ;
+            moleFractionVapor = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
 
         if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) >= 1.0) moleFractionVapor = 1;
 
-
-        Scalar vaporPressure = volVars.pressure(phaseIdx) *moleFractionVapor ;
+        Scalar vaporPressure = volVars.pressure(phaseIdx) *moleFractionVapor;
         vaporPressure *= 1.0e-5;
         Scalar pFactor = log(vaporPressure);
 
@@ -391,6 +359,7 @@ public:
 
         Scalar moleFracH2O_fPhase = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
 
+        // reaction kinetics according to Shao et al. 2013
         Scalar moleFracCaO_sPhase = volVars.precipitateVolumeFraction(cPhaseIdx)
                                     *volVars.molarDensity(cPhaseIdx)
                                     /(volVars.precipitateVolumeFraction(hPhaseIdx)
@@ -470,56 +439,9 @@ public:
         return source;
     }
 
-
-    /*!
-     * \brief Add problem specific vtk output for the electrochemistry
-     */
-//     void addOutputVtkFields()
-//     {
-//         // add the output field specific to the electrochemistry
-//         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-//
-//         // get the number of degrees of freedom
-// //         auto numDofs = this->model().numDofs();
-//
-//         for (const auto& element : elements(this->gridView()))
-//         {
-//             FVElementGeometry fvGeometry;
-//             fvGeometry.update(this->gridView(), element);
-//
-//             ElementVolumeVariables elemVolVars;
-//             elemVolVars.update(*this,
-//                                element,
-//                                fvGeometry,
-//                                false /* oldSol? */);
-//
-// //             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-// //             {
-// //                 const auto& globalPos = isBox ? element.geometry().corner(scvIdx)
-// //                                               : element.geometry().center();
-// //
-// //                 auto dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
-// //             }
-//         }
-//     }
-
 private:
-
-        static Scalar massTomoleFrac_(Scalar XlNaCl)
-    {
-       const Scalar Mw = 18.015e-3; /* molecular weight of water [kg/mol] */
-       const Scalar Ms = 58.44e-3; /* molecular weight of NaCl  [kg/mol] */
-
-       const Scalar X_NaCl = XlNaCl;
-       /* XlNaCl: conversion from mass fraction to mol fraction */
-       auto xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
-       return xlNaCl;
-    }
-
     int nTemperature_;
     int nPressure_;
-
-//     PrimaryVariables storageLastTimestep_;
 
     std::string name_;
 
@@ -535,7 +457,6 @@ private:
     std::ofstream outfile;
 
     bool isCharge_ ;
-
 };
 
 } //end namespace

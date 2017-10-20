@@ -99,23 +99,21 @@ public:
         ParentType::init(problem);
 
         // register standardized vtk output fields
-
         auto& vtkOutputModule = problem.vtkOutputModule();
         vtkOutputModule.addSecondaryVariable("pressure", [](const VolumeVariables& v){ return v.pressure(phaseIdx); });
         vtkOutputModule.addSecondaryVariable("rho", [](const VolumeVariables& v){ return v.density(phaseIdx); });
         vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
 
-       for (int i = 0; i < numComponents; ++i)
+        for (int i = 0; i < numComponents; ++i)
            vtkOutputModule.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(i)),
                                                 [i](const VolumeVariables& v){ return v.moleFraction(phaseIdx, i); });
 
-       for (int i = 0; i < numComponents; ++i)
+        for (int i = 0; i < numComponents; ++i)
            vtkOutputModule.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(i)),
                                                  [i](const VolumeVariables& v){ return v.massFraction(phaseIdx,i); });
 
         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
     }
-
 };
 
 }

@@ -120,28 +120,6 @@ public:
     { return 5e-12; }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
-     */
-//     Scalar porosity(const Element &element,
-//                     const FVElementGeometry &fvGeometry,
-//                     const int scvIdx) const
-//     {
-//         const GlobalPosition &globalPos = fvGeometry.subContVol[scvIdx].global;
-//
-//         if (globalPos[1]<eps_)
-//             return porosity_;
-//         else
-//             return 0.2;
-//
-//     }
-
-
-    /*!
      *  \brief Define the initial porosity \f$[-]\f$ distribution
      *
      *  \param element The finite element
@@ -151,12 +129,10 @@ public:
     {
          Scalar phi;
 
-         if(isCharge_==true)
-         phi = 0.8;  //direct charging acc. to Nagel et al 2014
-//              phi = 0.887; //indirect charging acc. to Schmitt 2016
+         if(isCharge_==true) phi = 0.8;  //direct charging acc. to Nagel et al 2014
+
          else
           phi = 0.604;  //direct charging acc. to Nagel et al 2014
-//             phi = 0.772;  //indirect charging acc. to Schmitt 2016
 
          return phi;
     }
@@ -181,8 +157,8 @@ public:
      *  \param scv The sub-control volume
      */
     Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
-    { return 0.604; //intrinsic porosity of CaO2H2 (see Nagel et al. 2014)
-        //        return 0.772;  //indirect charging acc. to Schmitt 2016
+    {
+        return 0.604; //intrinsic porosity of CaO2H2 (see Nagel et al. 2014)
     }
 
     /*!
@@ -230,8 +206,7 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     {
-//      return 3370; // density of CaO [kg/m^3]
-        return 2600;
+        return 2600; //(see Nagel et al. 2014)
     }
 
     /*!
