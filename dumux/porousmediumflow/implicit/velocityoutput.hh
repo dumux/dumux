@@ -91,7 +91,8 @@ public:
     , sol_(sol)
     {
         // check, if velocity output can be used (works only for cubes so far)
-        velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
+        const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        velocityOutput_ = getParamFromGroup<bool>(modelParamGroup, "Vtk.AddVelocity");
         if (velocityOutput_)
         {
             // set the number of scvs the vertices are connected to

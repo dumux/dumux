@@ -265,7 +265,8 @@ private:
         //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        static const int numericDifferenceMethod = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
+        static const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        static const int numericDifferenceMethod = getParamFromGroup<int>(group, "Implicit.NumericDifferenceMethod");
 
         // get stencil informations
         const auto numNeighbors = connectivityMap[globalI].size();
@@ -798,7 +799,8 @@ private:
         // derivatives are non-zero.                                                                    //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        static const int numericDifferenceMethod = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
+        static const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        static const int numericDifferenceMethod = getParamFromGroup<int>(group, "Implicit.NumericDifferenceMethod");
 
         // reference to the element's scv (needed later) and corresponding vol vars
         const auto& scv = fvGeometry.scv(globalI);

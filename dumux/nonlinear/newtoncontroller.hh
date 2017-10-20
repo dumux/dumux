@@ -602,12 +602,13 @@ protected:
 
     void initParams_()
     {
-        useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
-        enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
-        enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
-        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion)
-                                   || enableAbsoluteResidualCriterion_;
-        satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
+        const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+
+        useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch");
+        enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion");
+        enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
+        enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
+        satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
         if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
             DUNE_THROW(Dune::NotImplemented,
@@ -615,11 +616,11 @@ protected:
                        << "NewtonEnableResidualCriterion has to be set to true");
         }
 
-        setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxRelativeShift));
-        setMaxAbsoluteResidual(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxAbsoluteResidual));
-        setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, ResidualReduction));
-        setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
-        setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
+        setMaxRelativeShift(getParamFromGroup<Scalar>(group, "Newton.MaxRelativeShift"));
+        setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual"));
+        setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction"));
+        setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps"));
+        setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps"));
 
         verbose_ = true;
         numSteps_ = 0;

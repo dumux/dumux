@@ -86,6 +86,8 @@ class VtkOutputModule
     struct PriVarVectorDataInfo { std::vector<unsigned int> pvIdx; std::string name; };
     struct SecondVarScalarDataInfo { std::function<Scalar(const VolumeVariables&)> get; std::string name; };
 
+    const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+
 public:
 
     VtkOutputModule(const Problem& problem,
@@ -220,8 +222,8 @@ public:
 
         // maybe allocate space for the process rank
         std::vector<Scalar> rank;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
-            rank.resize(numCells);
+        static bool addProcessRank = getParamFromGroup<bool>(modelParamGroup, "Vtk.AddProcessRank");
+        if (addProcessRank) rank.resize(numCells);
 
         for (const auto& element : elements(gridGeom_.gridView(), Dune::Partitions::interior))
         {
@@ -288,7 +290,7 @@ public:
                     velocityOutput.calculateVelocity(velocity[phaseIdx], elemVolVars, fvGeometry, element, phaseIdx);
 
             //! the rank
-            if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
+            if (addProcessRank)
                 rank[eIdxGlobal] = gridGeom_.gridView().comm().rank();
         }
 
@@ -330,7 +332,7 @@ public:
         }
 
         // the process rank
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddProcessRank))
+        if (addProcessRank)
             sequenceWriter_.addCellData(rank, "process rank");
 
         // also register additional (non-standardized) user fields
