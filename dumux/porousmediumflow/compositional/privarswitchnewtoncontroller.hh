@@ -1,0 +1,200 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \brief Reference implementation of a controller class for the Newton solver.
+ *
+ * Usually this controller should be sufficient.
+ */
+#ifndef DUMUX_PRIVARSWITCH_NEWTON_CONTROLLER_HH
+#define DUMUX_PRIVARSWITCH_NEWTON_CONTROLLER_HH
+
+#include <memory>
+#include <dune/common/hybridutilities.hh>
+#include <dumux/nonlinear/newtoncontroller.hh>
+
+namespace Dumux
+{
+
+/*!
+ * \ingroup Newton
+ * \brief A newton controller that handles primary variable switches
+ */
+template <class TypeTag>
+class PriVarSwitchNewtonController : public NewtonController<TypeTag>
+{
+    using ParentType = NewtonController<TypeTag>;
+    using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Implementation =  typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
+    using Communicator = typename GridView::CollectiveCommunication;
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
+    using ElementSolutionVector =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+
+    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+
+    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+
+public:
+    /*!
+     * \brief Constructor for stationary problems
+     */
+    PriVarSwitchNewtonController(const Communicator& comm)
+    : ParentType(comm)
+    , switchedInLastIteration_(false)
+    {}
+
+    /*!
+     * \brief Constructor for stationary problems
+     */
+    PriVarSwitchNewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+    : ParentType(comm, timeLoop)
+    , switchedInLastIteration_(false)
+    {}
+
+    /*!
+     * \brief Returns true if the error of the solution is below the
+     *        tolerance.
+     */
+    bool newtonConverged() const
+    {
+        if (switchedInLastIteration_)
+            return false;
+
+        return ParentType::newtonConverged();
+    }
+
+    /*!
+     * \brief Called before the Newton method is applied to an
+     *        non-linear system of equations.
+     *
+     * \param u The initial solution
+     */
+    template<class SolutionVector>
+    void newtonBegin(const SolutionVector &u)
+    {
+        ParentType::newtonBegin(u);
+        priVarSwitch_ = std::make_unique<PrimaryVariableSwitch>(u.size());
+    }
+
+    /*!
+     * \brief Indicates that one Newton iteration was finished.
+     *
+     * \param assembler The jacobian assembler
+     * \param uCurrentIter The solution after the current Newton iteration
+     * \param uLastIter The solution at the beginning of the current Newton iteration
+     */
+    template<class JacobianAssembler, class SolutionVector>
+    void newtonEndStep(JacobianAssembler& assembler,
+                       SolutionVector &uCurrentIter,
+                       const SolutionVector &uLastIter)
+    {
+        ParentType::newtonEndStep(assembler, uCurrentIter, uLastIter);
+
+        // update the variable switch (returns true if the pri vars at at least one dof were switched)
+        // for disabled grid variable caching
+        const auto& fvGridGeometry = assembler.fvGridGeometry();
+        const auto& problem = assembler.problem();
+        auto& gridVariables = assembler.gridVariables();
+
+        switchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
+                                                         problem, fvGridGeometry);
+
+        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>(),
+        [&](auto IF) {
+
+            std::cout << "blub";
+
+            // update the secondary variables if global caching is enabled
+            // \note we only updated if phase presence changed as the volume variables
+            //       are already updated once by the switch
+            for (const auto& element : elements(fvGridGeometry.gridView()))
+            {
+                // make sure FVElementGeometry & vol vars are bound to the element
+                auto fvGeometry = localView(fvGridGeometry);
+                fvGeometry.bindElement(element);
+
+                if (switchedInLastIteration_)
+                {
+                    for (auto&& scv : scvs(fvGeometry))
+                    {
+                        const auto dofIdxGlobal = scv.dofIndex();
+                        if (priVarSwitch_->wasSwitched(dofIdxGlobal))
+                        {
+                            const auto eIdx = fvGridGeometry.elementMapper().index(element);
+                            const auto elemSol = this->elementSolution(element, this->curSol());
+                            this->nonConstCurGlobalVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
+                                                                                                        problem,
+                                                                                                        element,
+                                                                                                        scv);
+                        }
+                    }
+                }
+
+                // handle the boundary volume variables for cell-centered models
+                if(!isBox)
+                {
+                    for (auto&& scvf : scvfs(fvGeometry))
+                    {
+                        // if we are not on a boundary, skip the rest
+                        if (!scvf.boundary())
+                            continue;
+
+                        // check if boundary is a pure dirichlet boundary
+                        const auto bcTypes = problem.boundaryTypes(element, scvf);
+                        if (bcTypes.hasOnlyDirichlet())
+                        {
+                            const auto insideScvIdx = scvf.insideScvIdx();
+                            const auto& insideScv = fvGeometry.scv(insideScvIdx);
+                            const auto elemSol = ElementSolutionVector{problem.dirichlet(element, scvf)};
+
+                            this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, problem, element, insideScv);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /*!
+     * \brief Called if the Newton method ended
+     *        (not known yet if we failed or succeeded)
+     */
+    void newtonEnd()
+    {
+        ParentType::newtonEnd();
+
+        // in any way, we have to reset the switch flag
+        switchedInLastIteration_ = false;
+        // free some memory
+        priVarSwitch_.release();
+    }
+
+private:
+
+    //! the class handling the primary variable switch
+    std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
+    //! if we switched primary variables in the last iteration
+    bool switchedInLastIteration_;
+};
+
+} // end namespace Dumux
+
+#endif
