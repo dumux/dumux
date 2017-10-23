@@ -191,6 +191,7 @@ public:
             DUNE_THROW(Dune::IOError, "Could not deserialize entity " << dofIdxGlobal);
     }
 
+private:
 
     Tensor perm_(Scalar perm) const
     {
