@@ -285,7 +285,7 @@ public:
         lowDimGridPtr_() = std::shared_ptr<LowDimGrid>(lowDimFactory.createGrid());
 
         // set up the map from insertion to actual global indices for bulk elements
-        BulkElementMapper elementMapper(bulkGrid().leafGridView());
+        BulkElementMapper elementMapper(bulkGrid().leafGridView(), Dune::mcmgElementLayout());
         auto& map = bulkInsertionToGlobalIdxMap_();
         map.resize(bulkElementCounter);
         for (const auto& element : elements(bulkGrid().leafGridView()))
