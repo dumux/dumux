@@ -1,0 +1,19 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 77 77
+
+[Problem]
+Name = 1pdmpwell_mimetic
+TestCase = 2
+
+#[Newton]
+#EnableShiftCriterion = 0
+#EnableResidualCriterion = 1
+#EnableAbsoluteResidualCriterion = 1
+#MaxAbsoluteResidual = 1.0e-5
+#UseLineSearch = 0
+#MaxSteps = 1000

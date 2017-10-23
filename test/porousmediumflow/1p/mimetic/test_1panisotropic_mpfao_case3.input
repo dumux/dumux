@@ -17,7 +17,7 @@ EnableShiftCriterion = 0
 EnableResidualCriterion = 1
 UseAbsoluteResidualCriterion = 1
 MaxAbsoluteResidual = 1.0e-5
-UseLineSearch = 1
+UseLineSearch = 0
 MaxSteps = 500
 
 [SpatialParams]

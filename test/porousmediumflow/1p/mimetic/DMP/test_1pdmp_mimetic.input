@@ -1,0 +1,22 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = ./grids/holeMiddle.msh
+Refinement = 3
+#UpperRight = 1 1
+#Cells = 77 77
+#Refinement = 0
+
+[Problem]
+Name = 1pdmp_mimetic
+TestCase = 1
+
+#[Newton]
+#EnableShiftCriterion = 0
+#EnableResidualCriterion = 1
+#EnableAbsoluteResidualCriterion = 1
+#MaxAbsoluteResidual = 1.0e-5
+#UseLineSearch = 0
+#MaxSteps = 1000

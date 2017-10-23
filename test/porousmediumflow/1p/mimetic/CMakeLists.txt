@@ -1,3 +1,5 @@
+add_subdirectory("DMP")
+
 add_input_file_links()
 
 add_input_file_links()
