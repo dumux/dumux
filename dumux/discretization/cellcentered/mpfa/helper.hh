@@ -122,13 +122,7 @@ public:
 
     // returns the global number of scvfs in the grid
     static std::size_t getGlobalNumScvf(const GridView& gridView)
-    {
-        Dune::GeometryType triangle, quadrilateral;
-        triangle.makeTriangle();
-        quadrilateral.makeQuadrilateral();
-
-        return gridView.size(triangle)*6 + gridView.size(quadrilateral)*8;
-    }
+    { return gridView.size(Dune::GeometryTypes::triangle)*6 + gridView.size(Dune::GeometryTypes::quadrilateral)*8; }
 
     //! Check whether or not the local basis forms a right hand system
     static bool isRightHandSystem(const LocalBasis& localBasis)
@@ -167,9 +161,9 @@ public:
 
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     {
-        if (gt == Dune::GeometryType(Dune::GeometryType::simplex, 2))
+        if (gt == Dune::GeometryTypes::triangle)
             return 6;
-        else if (gt == Dune::GeometryType(Dune::GeometryType::cube, 2))
+        else if (gt == Dune::GeometryTypes::quadrilateral)
             return 8;
         else
             DUNE_THROW(Dune::InvalidStateException, "unknown 2d geometry type " << gt);

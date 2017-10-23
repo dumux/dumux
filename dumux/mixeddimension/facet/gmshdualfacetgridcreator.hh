@@ -196,9 +196,6 @@ public:
 
                 case 1: // 2-node line
                 {
-                    // the geometry type for lines
-                    static const Dune::GeometryType gt = [] () { Dune::GeometryType t; t.makeLine(); return t; } ();
-
                     // get the connected vertex indices
                     std::vector<LowDimIndexType> elemVertexIndices(2);
 
@@ -233,7 +230,7 @@ public:
                     lowDimElemVertices.push_back(std::vector<BulkIndexType>({vIdx1, vIdx2}));
 
                     // insert element into the factory
-                    lowDimFactory.insertElement(gt, elemVertexIndices);
+                    lowDimFactory.insertElement(Dune::GeometryTypes::line, elemVertexIndices);
 
                     // increase low dim element counter
                     lowDimElementCounter++;
@@ -242,9 +239,6 @@ public:
 
                 case 2: // 3-node triangle
                 {
-                    // the geometry type for triangles
-                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::simplex,2);
-
                     // we know that the low dim elements have been read already
                     if (lowDimCouplingMap.empty())
                         lowDimCouplingMap.resize(lowDimElementCounter);
@@ -268,7 +262,7 @@ public:
                     elemVertexIndices[2] -= 1;
 
                     // insert bulk element into the factory
-                    bulkFactory.insertElement(gt, elemVertexIndices);
+                    bulkFactory.insertElement(Dune::GeometryTypes::triangle, elemVertexIndices);
 
                     // increase bulk element counter
                     bulkElementCounter++;
