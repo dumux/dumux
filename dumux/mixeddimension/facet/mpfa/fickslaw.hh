@@ -41,12 +41,14 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -60,8 +62,10 @@ class CCMpfaFacetCouplingFicksLaw : public FicksLawImplementation<TypeTag, Discr
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
     static constexpr bool useTpfaBoundary = GET_PROP_VALUE(TypeTag, UseTpfaBoundary);
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
+    using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFacetCouplingFicksLawCache
@@ -140,53 +144,72 @@ public:
     // state the new type for the corresponding cache
     using Cache = MpfaFacetCouplingFicksLawCache;
 
-    static Scalar flux(const Problem& problem,
-                       const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const SubControlVolumeFace& scvf,
-                       int phaseIdx, int compIdx,
-                       const ElementFluxVariablesCache& elemFluxVarsCache,
-                       bool useMoles = true)
+    static ComponentFluxVector flux(const Problem& problem,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables& elemVolVars,
+                                    const SubControlVolumeFace& scvf,
+                                    int phaseIdx,
+                                    const ElementFluxVariablesCache& elemFluxVarsCache,
+                                    bool useMoles = true)
     {
-        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& volVarsStencil = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx);
-        const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
+        ComponentFluxVector componentFlux(0.0);
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
+              continue;
 
-        const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
+            const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+            const auto& volVarsStencil = fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx);
+            const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
 
-        // get the scaling factor for the effective diffusive fluxes
-        const auto effFactor = computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
+            const bool isInteriorBoundary = enableInteriorBoundaries && fluxVarsCache.isInteriorBoundary();
 
-        // if factor is zero, the flux will end up zero anyway
-        if (effFactor == 0.0)
-            return 0.0;
+            // get the scaling factor for the effective diffusive fluxes
+            const auto effFactor = computeEffectivityFactor(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx, isInteriorBoundary);
 
-        // lambda functions depending on if we use mole or mass fractions
-        auto getX = [useMoles, phaseIdx, compIdx] (const auto& volVars)
-        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+            // if factor is zero, the flux will end up zero anyway
+            if (effFactor == 0.0)
+            {
+                componentFlux[compIdx] = 0.0;
+                continue;
+            }
 
-        auto getRho = [useMoles, phaseIdx] (const auto& volVars)
-        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
+            // lambda functions depending on if we use mole or mass fractions
+            auto getX = [useMoles, phaseIdx, compIdx] (const auto& volVars)
+            { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
 
-        // calculate the density at the interface
-        const auto rho = interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, getRho, isInteriorBoundary);
+            auto getRho = [useMoles, phaseIdx] (const auto& volVars)
+            { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
-        // calculate Tij*xj
-        Scalar flux(0.0);
-        unsigned int localIdx = 0;
-        for (const auto volVarIdx : volVarsStencil)
-            flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
+            // calculate the density at the interface
+            const auto rho = interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, getRho, isInteriorBoundary);
 
-        // if no interior boundaries are present, return effective mass flux
-        if (!enableInteriorBoundaries)
-            return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+            // calculate Tij*xj
+            Scalar flux(0.0);
+            unsigned int localIdx = 0;
+            for (const auto volVarIdx : volVarsStencil)
+                flux += tij[localIdx++]*getX(elemVolVars[volVarIdx]);
 
-        // Handle interior boundaries
-        flux += computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
+            // if no interior boundaries are present, return effective mass flux
+            if (!enableInteriorBoundaries)
+                componentFlux[compIdx] = useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+            else
+            {
+                // Handle interior boundaries
+                flux += computeInteriorBoundaryContribution(fvGeometry, elemVolVars, fluxVarsCache, getX, phaseIdx, compIdx);
 
-        // return overall resulting flux
-        return useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+                // return overall resulting flux
+                componentFlux[compIdx] = useTpfaBoundary ? flux*rho*effFactor : flux*rho*effFactor + fluxVarsCache.componentNeumannFlux(compIdx);
+            }
+        }
+
+        // accumulate the phase component flux
+        for(int compIdx = 0; compIdx < numComponents; compIdx++)
+            if(compIdx != FluidSystem::getMainComponent(phaseIdx) && Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+                componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
+
+        return componentFlux;
     }
 
     template<typename GetRhoFunction>
