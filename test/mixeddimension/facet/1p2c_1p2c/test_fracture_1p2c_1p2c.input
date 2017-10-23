@@ -1,12 +1,12 @@
 [TimeManager]
 DtInitial = 1 # [s]
-TEnd = 10000000 # [s]
+TEnd = 100000 # [s]
 DtInitialBulkProblem = 1 # [s]
 DtInitialLowDimProblem = 1 # [s]
 EpisodeTime = 1000 # [s]
 
 [Grid]
-File = ./grids/simplefracture_long.msh
+File = ./grids/simplefracture.msh
 
 [Problem]
 Name = test_1dfracture

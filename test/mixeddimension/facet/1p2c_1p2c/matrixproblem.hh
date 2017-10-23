@@ -71,11 +71,8 @@ SET_BOOL_PROP(OnePTwoCIMatrixProblem, ProblemEnableGravity, false);
 SET_BOOL_PROP(OnePTwoCNIMatrixProblem, ProblemEnableGravity, false);
 
 // Solution-independent tensor
-// SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentHeatConduction, false);
+SET_BOOL_PROP(OnePTwoCICCMpfaMatrixProblem, SolutionDependentAdvection, false);
+SET_BOOL_PROP(OnePTwoCNICCMpfaMatrixProblem, SolutionDependentAdvection, false);
 
 // change mpfa method
 //SET_PROP(OnePMatrixProblem, MpfaMethod) { static const MpfaMethods value = MpfaMethods::lMethod; };
@@ -180,7 +177,7 @@ public:
         const auto globalPos = scvf.ipGlobal();
 
         values.setAllNeumann();
-        if (globalPos[1] < eps_ && globalPos[1] > this->bBoxMax()[1] - eps_)
+        if (globalPos[0] > this->bBoxMax()[0] - eps_)
             values.setAllDirichlet();
 
         if (couplingManager().isInteriorBoundary(element, scvf))
@@ -220,7 +217,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5; // + 1.0e5*globalPos[1]/this->bBoxMax()[1];
+        values[pressureIdx] = 1.0e5;
         return values;
     }
 
@@ -232,7 +229,7 @@ public:
     initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5; // + 1.0e5*globalPos[1]/this->bBoxMax()[1];
+        values[pressureIdx] = 1.0e5;
         values[Indices::temperatureIdx] = temperature();
         return values;
     }

@@ -71,12 +71,9 @@ SET_TYPE_PROP(OnePTwoCNIFractureProblem, LinearSolver, SuperLUBackend<TypeTag>);
 SET_BOOL_PROP(OnePTwoCIFractureProblem, ProblemEnableGravity, false);
 SET_BOOL_PROP(OnePTwoCNIFractureProblem, ProblemEnableGravity, false);
 
-// Solution-independent tensor
-// SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
-// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentMolecularDiffusion, false);
-// SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentHeatConduction, false);
+// Solution-independent permeability tensor
+SET_BOOL_PROP(OnePTwoCICCFractureProblem, SolutionDependentAdvection, false);
+SET_BOOL_PROP(OnePTwoCNICCFractureProblem, SolutionDependentAdvection, false);
 }
 
 /*!
@@ -187,7 +184,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition& globalPos) const
     {
         BoundaryTypes values;
-        if (globalPos[0] < eps_ /*|| globalPos[0] > this->bBoxMax()[0] - eps_*/)
+        if (globalPos[0] < eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -201,9 +198,11 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition& globalPos) const
     {
         auto values = initialAtPos(globalPos);
-        // values[pressureIdx] = 2.0e5 - 1.0e5*globalPos[0]/this->bBoxMax()[0];
         if (globalPos[0] < eps_)
+        {
+            values[pressureIdx] += 1e5;
             values[massOrMoleFracIdx] = 2.0e-5;
+        }
         return values;
     }
 
