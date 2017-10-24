@@ -25,3 +25,6 @@ EnableResidualCriterion = true
 EnableShiftCriterion = false
 TargetSteps = 500
 MaxSteps = 500
+
+[Implicit]
+MaxTimeStepDivisions = 40

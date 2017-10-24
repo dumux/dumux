@@ -32,6 +32,7 @@
 #include <dumux/porousmediumflow/2pff/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include "verbosenewtoncontroller.hh"
 
 #include "constvelspatialparams.hh"
 
@@ -76,6 +77,8 @@ public:
 SET_TYPE_PROP(ConstVelCCProblem, LinearSolver, UMFPackBackend<TypeTag> );
 
 SET_INT_PROP(ConstVelCCProblem, Formulation, TwoPFormulation::pnsw);
+
+SET_TYPE_PROP(ConstVelProblem, NewtonController, VerboseNewtonController<TypeTag>);
 
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(ConstVelCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
