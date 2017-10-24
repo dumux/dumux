@@ -33,7 +33,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
-#include <dumux/linear/solver.hh>
 
 namespace Dumux
 {
@@ -188,12 +187,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILUnBiCGSTABBackend : public LinearSolver<TypeTag>
+class ILUnBiCGSTABBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -229,12 +226,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SORBiCGSTABBackend : public LinearSolver<TypeTag>
+class SORBiCGSTABBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -270,12 +265,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SSORBiCGSTABBackend : public LinearSolver<TypeTag>
+class SSORBiCGSTABBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -311,12 +304,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class GSBiCGSTABBackend : public LinearSolver<TypeTag>
+class GSBiCGSTABBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -351,12 +342,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class JacBiCGSTABBackend : public LinearSolver<TypeTag>
+class JacBiCGSTABBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -391,12 +380,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILUnCGBackend : public LinearSolver<TypeTag>
+class ILUnCGBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -431,12 +418,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SORCGBackend : public LinearSolver<TypeTag>
+class SORCGBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -471,12 +456,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SSORCGBackend : public LinearSolver<TypeTag>
+class SSORCGBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -511,12 +494,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class GSCGBackend : public LinearSolver<TypeTag>
+class GSCGBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -550,12 +531,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class JacCGBackend : public LinearSolver<TypeTag>
+class JacCGBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -591,12 +570,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SSORRestartedGMResBackend : public LinearSolver<TypeTag>
+class SSORRestartedGMResBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -631,12 +608,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILU0BiCGSTABBackend : public LinearSolver<TypeTag>
+class ILU0BiCGSTABBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -670,12 +645,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILU0CGBackend : public LinearSolver<TypeTag>
+class ILU0CGBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -710,12 +683,10 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILU0RestartedGMResBackend : public LinearSolver<TypeTag>
+class ILU0RestartedGMResBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -751,13 +722,11 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILUnRestartedGMResBackend : public LinearSolver<TypeTag>
+class ILUnRestartedGMResBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
     enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -779,13 +748,11 @@ public:
  * http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
  */
 template <class TypeTag>
-class SuperLUBackend : public LinearSolver<TypeTag>
+class SuperLUBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
     enum { blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize) };
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
@@ -843,13 +810,11 @@ private:
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
  */
 template <class TypeTag>
-class UMFPackBackend : public LinearSolver<TypeTag>
+class UMFPackBackend
 {
     const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
     enum { blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize) };
 public:
-    //! constructor for compatibility with parallel solvers
-    using LinearSolver<TypeTag>::LinearSolver;
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)

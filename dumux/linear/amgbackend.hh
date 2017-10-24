@@ -31,7 +31,6 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
-#include <dumux/linear/solver.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/amgproperties.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
@@ -72,7 +71,7 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
  * \brief Provides a linear solver using the ISTL AMG.
  */
 template <class TypeTag>
-class AMGBackend : public LinearSolver<TypeTag>
+class AMGBackend
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
@@ -96,8 +95,9 @@ public:
      *
      * \param problem the problem at hand
      */
-    AMGBackend(const GridView& gridView, const DofMapper& mapper)
-    : LinearSolver<TypeTag>(gridView, mapper)
+    AMGBackend(const GridView& gridView, const DofMapper& dofMapper)
+    : gridView_(gridView)
+    , dofMapper_(dofMapper)
     , phelper_(gridView, mapper)
     , firstCall_(true)
     {}
@@ -183,8 +183,11 @@ private:
     {
         LinearAlgebraPreparator<TypeTag, isParallel>
           ::prepareLinearAlgebra(A, b, rank, comm, fop, sp,
-                                 this->gridView(), this->dofMapper(), phelper_, firstCall_);
+                                 gridView_, dofMapper_, phelper_, firstCall_);
     }
+
+    GridView gridView_;
+    DofMapper dofMapper_;
 
     ParallelISTLHelper<TypeTag> phelper_;
     Dune::InverseOperatorResult result_;
