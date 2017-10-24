@@ -1,6 +1,7 @@
 add_input_file_links()
 
-add_input_file_links()
+dune_symlink_to_source_files(FILES runAllTestsDMP.sh)
+dune_symlink_to_source_files(FILES runAllTestsWell.sh)
 
 add_dumux_test(test_1pdmp_mimetic test_1pdmp_mimetic test_1pdmp_mimetic.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pdmp_mimetic)

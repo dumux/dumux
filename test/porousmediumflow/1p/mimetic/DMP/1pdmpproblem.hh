@@ -210,9 +210,9 @@ public:
             Scalar y = globalPos[1];
 
             if(std::abs(x-7.0/22.0) < 1.0e-8 && std::abs(y-0.5) < 1.0e-8)
-                values[conti0EqIdx] = 1e3*(p - 0.0);
+                values[conti0EqIdx] = 1e12*(p - 0.0);
             else if(std::abs(x-15.0/22.0) < 1.0e-8 && std::abs(y-0.5) < 1.0e-8)
-                values[conti0EqIdx] = 1e3*(p - 1.0);
+                values[conti0EqIdx] = 1e12*(p - 1.0);
 
             values[conti0EqIdx] /= scv.volume();
         }

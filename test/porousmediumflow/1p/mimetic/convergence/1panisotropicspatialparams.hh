@@ -22,21 +22,14 @@
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */
-#ifndef DUMUX_1PMIMETICANISOTROPIC_SPATIALPARAMS_HH
-#define DUMUX_1PMIMETICANISOTROPIC_SPATIALPARAMS_HH
+#ifndef DUMUX_1P_ANISOTROPIC_SPATIALPARAMS_HH
+#define DUMUX_1P_ANISOTROPIC_SPATIALPARAMS_HH
 
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dune/geometry/quadraturerules.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// The spatial parameters TypeTag
-NEW_TYPE_TAG(OnePMimeticTestSpatialParams);
-}
-
 
 /*!
  * \ingroup OnePModel
@@ -46,7 +39,7 @@ NEW_TYPE_TAG(OnePMimeticTestSpatialParams);
  *        1p box model
  */
 template<class TypeTag>
-class OnePMimeticTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePAnisotropicSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
 {
     using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -77,7 +70,7 @@ public:
     // export permeability type
     using PermeabilityType = DimWorldMatrix;
 
-    OnePMimeticTestSpatialParams(const Problem& problem, const GridView& gridView)
+    OnePAnisotropicSpatialParams(const Problem& problem, const GridView& gridView)
         : ParentType(problem, gridView)
     {
         perm_[0][0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, k1);
@@ -111,7 +104,6 @@ public:
 
         if(testCase_ != 1)
         {
-
             Scalar alpha_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
                                                     Scalar,
                                                     Problem,

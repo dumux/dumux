@@ -1,3 +1,4 @@
+
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
@@ -21,10 +22,10 @@
  *
  * \brief test for the one-phase CC model
  */
-#define PROBLEM 2
+#define PROBLEM 1
 
 #include "config.h"
-#include "1pmimeticanisotropicproblem.hh"
+#include "1panisotropicproblem.hh"
 #include <dumux/common/start.hh>
 
 /*!
@@ -61,7 +62,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(OnePMimeticAnisotropicProblem) ProblemTypeTag;
+    typedef TTAG(OnePAnisotropicProblem) ProblemTypeTag;
 
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

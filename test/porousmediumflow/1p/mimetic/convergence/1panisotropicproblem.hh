@@ -22,52 +22,52 @@
  * \brief A test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  */
-#ifndef DUMUX_1PMIMETICANISOTROPIC_PROBLEM_HH
-#define DUMUX_1PMIMETICANISOTROPIC_PROBLEM_HH
+#ifndef DUMUX_1P_ANISOTROPIC_PROBLEM_HH
+#define DUMUX_1P_ANISOTROPIC_PROBLEM_HH
 
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #if PROBLEM==1
 #include <dumux/porousmediumflow/1p/mimetic/model.hh>
-#include "resultevaluationmimetic.hh"
+#include "../resultevaluationmimetic.hh"
 #else
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include "resultevaluationcc.hh"
+#include "../resultevaluationcc.hh"
 #endif
 
 #include <dumux/material/components/unit.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include "1pmimeticanisotropicspatialparams.hh"
+#include "1panisotropicspatialparams.hh"
 
 namespace Dumux
 {
 template <class TypeTag>
-class OnePMimeticAnisotropicProblem;
+class OnePAnisotropicProblem;
 
 namespace Capabilities
 {
     template<class TypeTag>
-    struct isStationary<OnePMimeticAnisotropicProblem<TypeTag>>
+    struct isStationary<OnePAnisotropicProblem<TypeTag>>
     { static const bool value = true; };
 }
 
 namespace Properties
 {
 #if PROBLEM==1
-NEW_TYPE_TAG(OnePMimeticAnisotropicProblem, INHERITS_FROM(OnePMimetic, OnePMimeticTestSpatialParams));
+NEW_TYPE_TAG(OnePAnisotropicProblem, INHERITS_FROM(OnePMimetic));
 #else
-NEW_TYPE_TAG(OnePMimeticAnisotropicProblem, INHERITS_FROM(CCMpfaModel, OneP, OnePMimeticTestSpatialParams));
+NEW_TYPE_TAG(OnePAnisotropicProblem, INHERITS_FROM(CCMpfaModel, OneP));
 
-SET_PROP(OnePMimeticAnisotropicProblem, MpfaMethod)
+SET_PROP(OnePAnisotropicProblem, MpfaMethod)
 {
     static const MpfaMethods value = MpfaMethods::oMethod;
 };
 #endif
 
 
-SET_PROP(OnePMimeticAnisotropicProblem, Fluid)
+SET_PROP(OnePAnisotropicProblem, Fluid)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -76,28 +76,28 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(OnePAnisotropicProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, Problem, Dumux::OnePMimeticAnisotropicProblem<TypeTag> );
+SET_TYPE_PROP(OnePAnisotropicProblem, Problem, Dumux::OnePAnisotropicProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, SpatialParams, Dumux::OnePMimeticTestSpatialParams<TypeTag> );
+SET_TYPE_PROP(OnePAnisotropicProblem, SpatialParams, Dumux::OnePAnisotropicSpatialParams<TypeTag> );
 
 
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalFVGeometryCache, true);
+SET_BOOL_PROP(OnePAnisotropicProblem, EnableGlobalFVGeometryCache, true);
 
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(OnePAnisotropicProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(OnePAnisotropicProblem, EnableGlobalVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(OnePMimeticAnisotropicProblem, ProblemEnableGravity, false);
+SET_BOOL_PROP(OnePAnisotropicProblem, ProblemEnableGravity, false);
 
-SET_TYPE_PROP(OnePMimeticAnisotropicProblem, LinearSolver, UMFPackBackend<TypeTag> );
+SET_TYPE_PROP(OnePAnisotropicProblem, LinearSolver, UMFPackBackend<TypeTag> );
 }
 
 template <class TypeTag>
-class OnePMimeticAnisotropicProblem : public ImplicitPorousMediaProblem<TypeTag>
+class OnePAnisotropicProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
     using ParentType = ImplicitPorousMediaProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -149,7 +149,7 @@ class OnePMimeticAnisotropicProblem : public ImplicitPorousMediaProblem<TypeTag>
     typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
 
 public:
-    OnePMimeticAnisotropicProblem(TimeManager &timeManager, const GridView &gridView)
+    OnePAnisotropicProblem(TimeManager &timeManager, const GridView &gridView)
     : ParentType(timeManager, gridView)
     {
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,

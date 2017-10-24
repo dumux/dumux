@@ -1,15 +1,7 @@
+add_subdirectory("convergence")
 add_subdirectory("DMP")
 
 add_input_file_links()
-
-add_input_file_links()
-
-dune_symlink_to_source_files(FILES runAllTestsAnisotropic.sh)
-dune_symlink_to_source_files(FILES runAllTestsAnisotropicCase2.sh)
-dune_symlink_to_source_files(FILES runAllTestsAnisotropicCase3.sh)
-dune_symlink_to_source_files(FILES runTestAnisotropic.sh)
-dune_symlink_to_source_files(FILES runTestAnisotropicCase2.sh)
-dune_symlink_to_source_files(FILES runTestAnisotropicCase3.sh)
 
 dune_symlink_to_source_files(FILES runAllTestsWeakConv.sh)
 dune_symlink_to_source_files(FILES runTestWeakConv.sh)
@@ -25,12 +17,6 @@ add_dumux_test(test_mimetic1p test_mimetic1p test_mimetic1p.cc
 
 add_dumux_test(test_1pgermanbasin test_1pgermanbasin test_1pgermanbasin.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pgermanbasin)
-
-add_dumux_test(test_1pmimeticanisotropic test_1pmimeticanisotropic test_1pmimeticanisotropic.cc
-                ${CMAKE_CURRENT_BINARY_DIR}/test_1pmimeticanisotropic)
-
-add_dumux_test(test_1panisotropic_mpfao test_1panisotropic_mpfao test_1panisotropic_mpfao.cc
-                ${CMAKE_CURRENT_BINARY_DIR}/test_1panisotropic_mpfao)
 
 add_dumux_test(test_1plinear test_1plinear test_1plinear.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1plinear)
