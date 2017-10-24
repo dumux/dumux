@@ -82,7 +82,7 @@ public:
     // e.g. for integration
     Geometry geometry() const
     {
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_);
+        return Geometry(Dune::GeometryTypes::cube(dim), corners_);
     }
 
     //! The global index of this scv
