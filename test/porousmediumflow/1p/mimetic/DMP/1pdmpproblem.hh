@@ -35,6 +35,11 @@
 #elif PROBLEM==4
 #include <dumux/porousmediumflow/1p/mimetic/model.hh>
 #include "wellmimeticlocalresidual.hh"
+#elif PROBLEM==5
+#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include "wellcclocalresidual.hh"
 #endif
 
 #include <dumux/material/components/unit.hh>
@@ -70,6 +75,16 @@ NEW_TYPE_TAG(OnePDMPProblem, INHERITS_FROM(OnePMimetic));
 
 //! The local residual function
 SET_TYPE_PROP(OnePDMPProblem, LocalResidual, WellImmiscibleMimeticLocalResidual<TypeTag>);
+#elif PROBLEM==5
+NEW_TYPE_TAG(OnePDMPProblem, INHERITS_FROM(CCMpfaModel, OneP));
+
+SET_PROP(OnePDMPProblem, MpfaMethod)
+{
+    static const MpfaMethods value = MpfaMethods::oMethod;
+};
+
+//! The local residual function
+SET_TYPE_PROP(OnePDMPProblem, LocalResidual, WellImmiscibleLocalResidual<TypeTag>);
 #endif
 
 

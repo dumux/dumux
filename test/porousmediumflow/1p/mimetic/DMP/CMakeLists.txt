@@ -10,3 +10,6 @@ add_dumux_test(test_1pdmp_mpfao test_1pdmp_mpfao test_1pdmp_mpfao.cc
 
 add_dumux_test(test_1pdmpwell_mimetic test_1pdmpwell_mimetic test_1pdmpwell_mimetic.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pdmpwell_mimetic)
+
+add_dumux_test(test_1pdmpwell_mpfao test_1pdmpwell_mpfao test_1pdmpwell_mpfao.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/test_1pdmpwell_mpfao)
