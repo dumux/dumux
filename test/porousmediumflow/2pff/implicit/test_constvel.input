@@ -1,6 +1,7 @@
 [TimeManager]
-DtInitial = 1e7 # [s]
-TEnd = 1.0368e9 # [s]
+DtInitial = 1.728e+7 # [s]
+TEnd = 1.0368e8 # [s]
+MaxTimeStepSize = 1.728e+7 # [s]
 
 [Grid]
 LowerLeft = 0 0
@@ -12,9 +13,15 @@ Name = constvelff_hybrid # name passed to the output routines
 UseHybridUpwinding = true
 TotalVelocity = 0 0
 EnableGravity = false
-InitialSaturations = 1.0 0.0
-PlotMaterialLaw = true
+InitialSaturations = 0.9999999 1.0e-7
+PlotMaterialLaw = false
 PlotRange = 0.0 1.0
-RegularizationSw = 0.5
 LiquidDensity = 100
 LiquidKinematicViscosity = 1e-5
+
+[Newton]
+ResidualReduction = 1.0e-7
+EnableResidualCriterion = true
+EnableShiftCriterion = false
+TargetSteps = 500
+MaxSteps = 500

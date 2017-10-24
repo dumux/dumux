@@ -272,6 +272,13 @@ public:
     }
     // \}
 
+    /*!
+     * \brief Returns true if a restart file should be written to
+     *        disk.
+     */
+    bool shouldWriteRestartFile() const
+    { return false; }
+
 private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const

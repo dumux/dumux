@@ -206,7 +206,7 @@ public:
 
         swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
 
-        return pow(swe, 2.0);
+        return pow(swe, 2.5);
     }
     /*!
      * \brief The derivative of the relative permeability for the

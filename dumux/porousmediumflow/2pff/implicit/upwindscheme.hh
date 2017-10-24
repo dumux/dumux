@@ -169,16 +169,16 @@ public:
 
 //numerische Methode
 ///////////////////////////////////////////////
-                // unsigned int numIntervals = 10;
-                // for(int k=0; k <= numIntervals; k++)
-                // {
-                //     Scalar Sw = S_min + (S_max-S_min)*k/numIntervals;
-                //     Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
-                //     Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
-                //     Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
-                //     D_max = std::max(D_max, -(mobW*mobN)/(mobW + mobN)*dPc_dSw);
-                //
-                // }
+                 unsigned int numIntervals = 10;
+                 for(int k=0; k <= numIntervals; k++)
+                 {
+                     Scalar Sw = S_min + (S_max-S_min)*k/numIntervals;
+                     Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
+                     Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
+                     Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
+                     D_max = std::max(D_max, -(mobW*mobN)/(mobW + mobN)*dPc_dSw);
+
+                 }
                 ///////////////////////////////////////////////
 
 
@@ -193,19 +193,19 @@ public:
 */
 
 //Exact sw_max
-                Scalar Sw = 0.0 ;
-                if (S_max < 0.5782)
-                {
-                        Sw = S_max ;
-                }
-                else
-                {
-                    Sw = (  S_min > 0.5782) ? S_min :  0.5782;
-                }
-                Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
-                Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
-                Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
-                D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
+//                Scalar Sw = 0.0 ;
+//                if (S_max < 0.5782)
+//                {
+//                        Sw = S_max ;
+//                }
+//                else
+//                {
+//                    Sw = (  S_min > 0.5782) ? S_min :  0.5782;
+//                }
+//                Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
+//                Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
+//                Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
+//                D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
 
 
                 return viscousFlux

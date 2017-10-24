@@ -27,6 +27,7 @@
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedtestlaw.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/testlaw.hh>
 #include <dumux/io/plotmateriallaw.hh>
 #include<dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
@@ -56,7 +57,7 @@ private:
     // define the material law which is parameterized by effective
     // saturations
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using EffectiveLaw = Regularizedtestlaw<Scalar>;
+    using EffectiveLaw = Testlaw<Scalar>;
 public:
     // define the material law parameterized by absolute saturations
     using type = EffToAbsLaw<EffectiveLaw>;
@@ -113,9 +114,9 @@ public:
         materialParams_.setLambda(4.0);
 
         // regularization
-        materialParams_.setThresholdSw(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RegularizationSw));
+        //materialParams_.setThresholdSw(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RegularizationSw));
 
-        K_ = 100 * 9.86923* 1.0e-16;
+        K_ = 9.86923* 1.0e-13; // 1 Darcy = 1000 milliDarcy
 
         if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, PlotMaterialLaw))
         {
@@ -173,7 +174,7 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.4; }
+    { return 0.2; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law
