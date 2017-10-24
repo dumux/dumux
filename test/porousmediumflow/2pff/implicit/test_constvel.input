@@ -1,17 +1,20 @@
 [TimeManager]
-DtInitial = 10 # [s]
-TEnd = 1.0368e+9 # [s]
+DtInitial = 1e7 # [s]
+TEnd = 1.0368e9 # [s]
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 100
-Cells = 1 1000
+Cells = 1 20
 
 [Problem]
 Name = constvelff_hybrid # name passed to the output routines
 UseHybridUpwinding = true
 TotalVelocity = 0 0
 EnableGravity = false
-
+InitialSaturations = 1.0 0.0
+PlotMaterialLaw = true
+PlotRange = 0.0 1.0
+RegularizationSw = 0.5
 LiquidDensity = 100
-LiquidKinematicViscosity = 1e-8
+LiquidKinematicViscosity = 1e-5

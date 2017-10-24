@@ -146,6 +146,8 @@ public:
     {
         temperature_ = 273.15 + 20; // -> 20°C
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        using SatVector = std::array<Scalar, 2>;
+        initSaturations_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, SatVector, Problem, InitialSaturations);
     }
 
     /*!
@@ -208,9 +210,8 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values;
+        PrimaryVariables values(0.0);
         values[saturationIdx] = 0.9;
-
         return values;
     }
 
@@ -220,28 +221,28 @@ public:
                              const SubControlVolumeFace& scvf) const
     {
         NeumannFluxes values(0.0);
-        const auto globalPos = scvf.ipGlobal();
-
-        static const GlobalPosition v_t = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, TotalVelocity);
-
-        if(onLowerBoundary_(globalPos))
-        {
-            //we assume constant saturation at the lower boundary
-            const auto& volVars = elemVolvars[scvf.insideScvIdx()];
-
-            Scalar mobW = volVars.mobility(wPhaseIdx);
-            Scalar mobN = volVars.mobility(nPhaseIdx);
-            Scalar mobT = mobW + mobN;
-            auto K = this->spatialParams().permeabilityAtPos(globalPos);
-
-            Scalar densityW = volVars.density(wPhaseIdx);
-            Scalar densityN = volVars.density(nPhaseIdx);
-
-            //ToDo use fluxVars for calculation
-            Scalar fracW = mobW/mobT;
-            Scalar velW = fracW*(v_t*scvf.unitOuterNormal()) + fracW*mobN*K*(densityN-densityW)*this->gravity()[dimWorld-1];
-            values[transportEqIdx] = velW;
-        }
+        // const auto globalPos = scvf.ipGlobal();
+        //
+        // static const GlobalPosition v_t = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, TotalVelocity);
+        //
+        // if(onLowerBoundary_(globalPos))
+        // {
+        //     //we assume constant saturation at the lower boundary
+        //     const auto& volVars = elemVolvars[scvf.insideScvIdx()];
+        //
+        //     Scalar mobW = volVars.mobility(wPhaseIdx);
+        //     Scalar mobN = volVars.mobility(nPhaseIdx);
+        //     Scalar mobT = mobW + mobN;
+        //     auto K = this->spatialParams().permeabilityAtPos(globalPos);
+        //
+        //     Scalar densityW = volVars.density(wPhaseIdx);
+        //     Scalar densityN = volVars.density(nPhaseIdx);
+        //
+        //     //ToDo use fluxVars for calculation
+        //     Scalar fracW = mobW/mobT;
+        //     Scalar velW = fracW*(v_t*scvf.unitOuterNormal()) + fracW*mobN*K*(densityN-densityW)*this->gravity()[dimWorld-1];
+        //     values[transportEqIdx] = velW;
+        // }
         return values;
     }
     // \}
@@ -262,8 +263,10 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        if(globalPos[1] > 65.0)
-            values[saturationIdx] = 1.0;
+        if(globalPos[1] > 0.65*this->bBoxMax()[1] + eps_)
+            values[saturationIdx] = initSaturations_[0];
+        else
+            values[saturationIdx] = initSaturations_[1];
 
         return values;
     }
@@ -294,6 +297,7 @@ private:
     Scalar temperature_;
     static constexpr Scalar eps_ = 1e-7;
     std::string name_;
+    std::array<Scalar, 2> initSaturations_;
 };
 } //end namespace
 

@@ -150,6 +150,17 @@ public:
         return - params.pe()/params.lambda() * pow(swe, -1/params.lambda() - 1);
     }
 
+    static Scalar d2pc_dswe2(const Params &params, Scalar swe)
+    {
+        using std::pow;
+        using std::min;
+        using std::max;
+
+        swe = min(max(swe, 0.0), 1.0); // the equation below is only defined for 0.0 <= sw <= 1.0
+
+        return params.pe()/params.lambda() * (1.0 + 1.0/params.lambda()) * pow(swe, -1/params.lambda() - 2);
+    }
+
     /*!
      * \brief The partial derivative of the effective
      *        saturation w.r.t. the capillary pressure according to Brooks & Corey.

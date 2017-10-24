@@ -65,6 +65,7 @@ public:
                         const Flux& flux, int eqIdx)
     {
         static const bool useHybridUpwinding = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseHybridUpwinding);
+        static const bool enableGravity = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity);
 
         if (useHybridUpwinding)
         {
@@ -84,7 +85,7 @@ public:
 
                 // Calculate gravity flux
                 Scalar gravFlux = 0.0;
-                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+                if (enableGravity)
                 {
                     const auto& scvf = fluxVars.scvFace();
                     // do averaging for the density over all neighboring elements
@@ -126,7 +127,7 @@ public:
                 Scalar S_min = std::min(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
                 Scalar S_max = std::max(insideVolVars.saturation(wPhaseIdx),outsideVolVars.saturation(wPhaseIdx));
 
-                Scalar D_max =0.0 ;
+                Scalar D_max = 0.0;
 
                 //Here, we assume constant viscosity and constant material laws
                 const auto& fvGeometry = fluxVars.fvGeometry();
@@ -168,18 +169,18 @@ public:
 
 //numerische Methode
 ///////////////////////////////////////////////
- /*               unsigned int numIntervals = 10;
-                for(int k=0; k <= numIntervals; k++)
-                {
-                    Scalar Sw = S_min + (S_max-S_min)*k/numIntervals;
-                    Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
-                    Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
-                    Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
-                    D_max = std::max(D_max, -(mobW*mobN)/(mobW + mobN)*dPc_dSw);
-
-                }
+                // unsigned int numIntervals = 10;
+                // for(int k=0; k <= numIntervals; k++)
+                // {
+                //     Scalar Sw = S_min + (S_max-S_min)*k/numIntervals;
+                //     Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
+                //     Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
+                //     Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
+                //     D_max = std::max(D_max, -(mobW*mobN)/(mobW + mobN)*dPc_dSw);
+                //
+                // }
                 ///////////////////////////////////////////////
-*/
+
 
 
 //Mittelwert of Sw_max and Sw_min
@@ -190,16 +191,17 @@ public:
                     D_max =  -(mobW*mobN)/(mobW + mobN)*dPc_dSw;
 
 */
-            Scalar Sw = 0.0 ;
-            if (S_max < 0.5782)
-            {
-                    Sw = S_max ;
-            }
-            else
-            {
-                Sw = (  S_min > 0.5782) ? S_min :  0.5782;
-            }
 
+//Exact sw_max
+                Scalar Sw = 0.0 ;
+                if (S_max < 0.5782)
+                {
+                        Sw = S_max ;
+                }
+                else
+                {
+                    Sw = (  S_min > 0.5782) ? S_min :  0.5782;
+                }
                 Scalar mobW = MaterialLaw::krw(materialLaws, Sw)/insideVolVars.viscosity(wPhaseIdx);
                 Scalar mobN = MaterialLaw::krn(materialLaws, Sw)/insideVolVars.viscosity(nPhaseIdx);
                 Scalar dPc_dSw = MaterialLaw::dpc_dsw(materialLaws, Sw);
@@ -235,7 +237,7 @@ public:
 
                 // Calculate gravity flux
                 Scalar gravFlux = 0.0;
-                if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+                if (enableGravity)
                 {
                     const auto& scvf = fluxVars.scvFace();
                     // do averaging for the density over all neighboring elements
