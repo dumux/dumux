@@ -98,7 +98,7 @@ public:
     AMGBackend(const GridView& gridView, const DofMapper& dofMapper)
     : gridView_(gridView)
     , dofMapper_(dofMapper)
-    , phelper_(gridView, mapper)
+    , phelper_(gridView, dofMapper)
     , firstCall_(true)
     {}
 
