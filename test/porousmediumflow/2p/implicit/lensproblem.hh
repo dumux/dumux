@@ -28,11 +28,15 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
+
+#include <dumux/discretization/cellcentered/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 #include <dumux/porousmediumflow/2p/implicit/adaptionhelper.hh>
+
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
 
 #include "lensspatialparams.hh"
@@ -90,12 +94,7 @@ public:
     typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
 };
 
-// Linear solver settings
-SET_TYPE_PROP(LensCCProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
-SET_TYPE_PROP(LensBoxProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(LensCCAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
-
 SET_BOOL_PROP(LensCCAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensCCAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
@@ -103,8 +102,6 @@ SET_TYPE_PROP(LensCCAdaptiveProblem, AdaptionHelper, TwoPAdaptionHelper<TypeTag>
 #endif
 
 #if HAVE_UG
-SET_TYPE_PROP(LensBoxAdaptiveProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
-
 SET_BOOL_PROP(LensBoxAdaptiveProblem, AdaptiveGrid, true);
 SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionIndicator, TwoPImplicitGridAdaptIndicator<TypeTag>);
 SET_TYPE_PROP(LensBoxAdaptiveProblem,  AdaptionInitializationIndicator, ImplicitGridAdaptInitializationIndicator<TypeTag>);
