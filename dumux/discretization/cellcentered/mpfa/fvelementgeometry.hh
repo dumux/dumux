@@ -328,7 +328,7 @@ private:
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
 
         // the quadrature point to be used on the scvf
-        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+        static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
         // reserve memory for the scv faces
         const auto numLocalScvf = scvFaceIndices.size();
@@ -413,7 +413,7 @@ private:
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdxGlobal);
 
         // the quadrature point to be used on the scvf
-        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+        static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
         // for network grids we only want to do one scvf per half facet
         // this approach assumes conforming grids at branching facets
