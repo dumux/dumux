@@ -39,7 +39,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-// #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
@@ -88,7 +88,7 @@ int main(int argc, char** argv) try
     ////////////////////////////////////////////////////////////
 
     // initialize MPI, finalize is done automatically on exit
-    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv, usage);
+    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
     // print dumux start message
     if (mpiHelper.rank() == 0)
@@ -153,7 +153,7 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = FVAssembler<TypeTag, diffMeth::numeric, isImplicit>;
+    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver

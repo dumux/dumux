@@ -26,6 +26,7 @@
 
 #include <math.h>
 
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
@@ -95,11 +96,12 @@ SET_TYPE_PROP(ThreePNIConductionProblem,
 template <class TypeTag>
 class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = PorousMediumFlowProblem<TypeTag>
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
