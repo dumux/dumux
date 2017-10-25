@@ -110,13 +110,13 @@ SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionHelper, TwoPAdaptionHelper<TypeTag
 #endif
 
 NEW_PROP_TAG(BaseProblem);
-SET_TYPE_PROP(LensBoxProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
-SET_TYPE_PROP(LensCCProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensBoxProblem, BaseProblem, PorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensCCProblem, BaseProblem, PorousMediaProblem<TypeTag>);
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(LensCCAdaptiveProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem, BaseProblem, PorousMediaProblem<TypeTag>);
 #endif
 #if HAVE_UG
-SET_TYPE_PROP(LensBoxAdaptiveProblem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensBoxAdaptiveProblem, BaseProblem, PorousMediaProblem<TypeTag>);
 #endif
 }
 
