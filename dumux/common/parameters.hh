@@ -193,6 +193,13 @@ public:
 
     //! Initialize the parameter tree singletons
     static void init(int argc, char **argv,
+                    const Usage& usage = [](const char *, const std::string &){})
+    {
+        init(argc, argv, [] (Dune::ParameterTree&) {}, "", usage);
+    }
+
+    //! Initialize the parameter tree singletons
+    static void init(int argc, char **argv,
                      const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {},
                      std::string parameterFileName = "",
                      const Usage& usage = [](const char *, const std::string &){})
@@ -359,6 +366,9 @@ private:
         // parameters in the vtk group
         params["Vtk.AddVelocity"] = "false";
         params["Vtk.AddProcessRank"] = "true";
+
+        // parameters in the mpfa group
+        params["Mpfa.Q"] = "0.0";
     }
 };
 
