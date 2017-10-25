@@ -86,8 +86,6 @@ class VtkOutputModule
     struct PriVarVectorDataInfo { std::vector<unsigned int> pvIdx; std::string name; };
     struct SecondVarScalarDataInfo { std::function<Scalar(const VolumeVariables&)> get; std::string name; };
 
-    const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-
 public:
 
     VtkOutputModule(const Problem& problem,
@@ -222,6 +220,7 @@ public:
 
         // maybe allocate space for the process rank
         std::vector<Scalar> rank;
+        static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         static bool addProcessRank = getParamFromGroup<bool>(modelParamGroup, "Vtk.AddProcessRank");
         if (addProcessRank) rank.resize(numCells);
 

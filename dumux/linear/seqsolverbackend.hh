@@ -189,12 +189,12 @@ public:
 template <class TypeTag>
 class ILUnBiCGSTABBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
@@ -228,12 +228,12 @@ public:
 template <class TypeTag>
 class SORBiCGSTABBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
@@ -267,12 +267,12 @@ public:
 template <class TypeTag>
 class SSORBiCGSTABBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
@@ -306,12 +306,12 @@ public:
 template <class TypeTag>
 class GSBiCGSTABBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
@@ -344,12 +344,12 @@ public:
 template <class TypeTag>
 class JacBiCGSTABBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
@@ -382,12 +382,12 @@ public:
 template <class TypeTag>
 class ILUnCGBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
@@ -420,12 +420,12 @@ public:
 template <class TypeTag>
 class SORCGBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
@@ -458,12 +458,12 @@ public:
 template <class TypeTag>
 class SSORCGBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
@@ -496,12 +496,12 @@ public:
 template <class TypeTag>
 class GSCGBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
@@ -533,12 +533,12 @@ public:
 template <class TypeTag>
 class JacCGBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
@@ -572,12 +572,12 @@ public:
 template <class TypeTag>
 class SSORRestartedGMResBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
@@ -610,12 +610,12 @@ public:
 template <class TypeTag>
 class ILU0BiCGSTABBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
@@ -647,12 +647,12 @@ public:
 template <class TypeTag>
 class ILU0CGBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
@@ -685,12 +685,12 @@ public:
 template <class TypeTag>
 class ILU0RestartedGMResBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
         constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
@@ -724,13 +724,13 @@ public:
 template <class TypeTag>
 class ILUnRestartedGMResBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-    enum { blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel) };
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
         using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
@@ -750,13 +750,13 @@ public:
 template <class TypeTag>
 class SuperLUBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-    enum { blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize) };
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        constexpr auto blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize);
         using MatrixBlock = typename Dune::FieldMatrix<double, blockSize, blockSize>;
         using ISTLMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
         static_assert(std::is_same<Matrix, ISTLMatrix>::value, "SuperLU only works with BCRS matrices!");
@@ -812,13 +812,13 @@ private:
 template <class TypeTag>
 class UMFPackBackend
 {
-    const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-    enum { blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize) };
 public:
 
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
+        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        constexpr auto blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize);
         using MatrixBlock = typename Dune::FieldMatrix<double, blockSize, blockSize>;
         using ISTLMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
         static_assert(std::is_same<Matrix, ISTLMatrix>::value, "UMFPack only works with BCRS matrices!");

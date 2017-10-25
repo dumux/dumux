@@ -86,9 +86,6 @@ class AMGBackend
     using AMGType = Dune::Amg::AMG<typename AmgTraits::LinearOperator, VType, Smoother,Comm>;
     using BCRSMat = typename AmgTraits::LinearOperator::matrix_type;
     using DofMapper = typename AmgTraits::DofMapper;
-
-    const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-
 public:
     /*!
      * \brief Construct the backend.
@@ -112,9 +109,10 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        const int verbosity = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
-        const int maxIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
-        const double residReduction = getParamFromGroup<double>(modelParamGroup, "LinearSolver.ResidualReduction");
+        static const auto modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        static const int verbosity = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
+        static const int maxIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
+        static const double residReduction = getParamFromGroup<double>(modelParamGroup, "LinearSolver.ResidualReduction");
 
         int rank = 0;
         std::shared_ptr<Comm> comm;
