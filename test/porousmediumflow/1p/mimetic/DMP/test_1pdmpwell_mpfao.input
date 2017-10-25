@@ -4,7 +4,7 @@ TEnd = 1 # [s]
 
 [Grid]
 UpperRight = 1 1
-Cells = 77 77
+Cells = 33 33
 
 [Problem]
 Name = 1pdmpwell_mpfao
