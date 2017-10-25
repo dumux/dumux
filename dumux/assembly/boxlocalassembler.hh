@@ -282,7 +282,7 @@ private:
         //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        static const int numericDifferenceMethod = GET_PARAM_FROM_GROUP(TypeTag, int, Implicit, NumericDifferenceMethod);
+        static const int numericDifferenceMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.NumericDifferenceMethod");
 
         // calculation of the derivatives
         for (auto&& scv : scvs(fvGeometry))
