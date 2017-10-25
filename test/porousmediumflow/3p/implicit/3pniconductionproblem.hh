@@ -29,7 +29,6 @@
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
@@ -94,9 +93,9 @@ SET_TYPE_PROP(ThreePNIConductionProblem,
  * <tt>./test_cc3pniconduction -ParameterFile ./test_cc3pniconduction.input</tt>
  */
 template <class TypeTag>
-class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -136,8 +135,8 @@ class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    ThreePNIConductionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ThreePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();

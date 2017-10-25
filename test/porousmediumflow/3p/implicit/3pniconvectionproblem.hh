@@ -29,7 +29,6 @@
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
@@ -94,9 +93,9 @@ SET_TYPE_PROP(ThreePNIConvectionProblem,
  * <tt>./test_cc3pcniconvection -ParameterFile ./test_cc3pniconvection.input</tt>
  */
 template <class TypeTag>
-class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -113,7 +112,7 @@ class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -134,15 +133,15 @@ class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection Intersection;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 
 public:
-    ThreePNIConvectionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ThreePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
