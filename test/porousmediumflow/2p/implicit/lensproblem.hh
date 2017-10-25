@@ -29,7 +29,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 #include <dumux/porousmediumflow/2p/implicit/adaptionhelper.hh>
@@ -215,10 +215,7 @@ public:
     {
         temperature_ = 273.15 + 20; // -> 20°C
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
