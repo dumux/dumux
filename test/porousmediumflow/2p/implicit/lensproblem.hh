@@ -28,9 +28,9 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 #include <dumux/porousmediumflow/2p/implicit/adaptionhelper.hh>
 #include <dumux/implicit/adaptive/gridadaptinitializationindicator.hh>
@@ -48,11 +48,13 @@ class LensProblem;
 //////////
 namespace Properties
 {
+NEW_PROP_TAG(AdaptiveGrid);
+
 NEW_TYPE_TAG(LensProblem, INHERITS_FROM(TwoP, LensSpatialParams));
 NEW_TYPE_TAG(LensBoxProblem, INHERITS_FROM(BoxModel, LensProblem));
 NEW_TYPE_TAG(LensBoxAdaptiveProblem, INHERITS_FROM(BoxModel, LensProblem));
 NEW_TYPE_TAG(LensCCProblem, INHERITS_FROM(CCTpfaModel, LensProblem));
-NEW_TYPE_TAG(LensCCAdaptiveProblem, INHERITS_FROM(CCModel, LensProblem));
+NEW_TYPE_TAG(LensCCAdaptiveProblem, INHERITS_FROM(CCTpfaModel, LensProblem));
 
 #if HAVE_UG
 SET_TYPE_PROP(LensCCProblem, Grid, Dune::UGGrid<2>);
@@ -110,13 +112,13 @@ SET_TYPE_PROP(LensBoxAdaptiveProblem, AdaptionHelper, TwoPAdaptionHelper<TypeTag
 #endif
 
 NEW_PROP_TAG(BaseProblem);
-SET_TYPE_PROP(LensBoxProblem, BaseProblem, PorousMediaProblem<TypeTag>);
-SET_TYPE_PROP(LensCCProblem, BaseProblem, PorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensBoxProblem, BaseProblem, PorousMediumFlowProblem<TypeTag>);
+SET_TYPE_PROP(LensCCProblem, BaseProblem, PorousMediumFlowProblem<TypeTag>);
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(LensCCAdaptiveProblem, BaseProblem, PorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensCCAdaptiveProblem, BaseProblem, PorousMediumFlowProblem<TypeTag>);
 #endif
 #if HAVE_UG
-SET_TYPE_PROP(LensBoxAdaptiveProblem, BaseProblem, PorousMediaProblem<TypeTag>);
+SET_TYPE_PROP(LensBoxAdaptiveProblem, BaseProblem, PorousMediumFlowProblem<TypeTag>);
 #endif
 }
 
@@ -190,15 +192,15 @@ class LensProblem : public GET_PROP_TYPE(TypeTag, BaseProblem)
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
-    enum { adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid) };
+    static const bool adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid);
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
@@ -209,9 +211,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    LensProblem(TimeManager &timeManager,
-                const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    LensProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 20; // -> 20°C
 
@@ -323,10 +324,10 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
-        Scalar height = this->bBoxMax()[1] - this->bBoxMin()[1];
-        Scalar depth = this->bBoxMax()[1] - globalPos[1];
+        Scalar height = this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1];
+        Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
         Scalar alpha = 1 + 1.5/height;
-        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
+        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
         Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         // hydrostatic pressure scaled by alpha
@@ -380,7 +381,7 @@ public:
 
         Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
 
-        Scalar depth = this->bBoxMax()[1] - globalPos[1];
+        Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
 
         // hydrostatic pressure
         values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
@@ -393,28 +394,28 @@ private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
+        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
+        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->bBoxMax()[1] - eps_;
+        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
-        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
+        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda && lambda < 2.0/3.0;
     }
 
