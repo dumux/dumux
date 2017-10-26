@@ -52,7 +52,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -64,6 +63,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static const int dim = GridView::dimension;
@@ -156,7 +156,7 @@ public:
                                                         : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = rho*tij*(xInside - xOutside);
-            if (Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
 

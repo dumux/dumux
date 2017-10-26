@@ -59,6 +59,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
@@ -240,7 +241,7 @@ public:
 
         // accumulate the phase component flux
         for(int compIdx = 0; compIdx < numComponents; compIdx++)
-            if(compIdx != FluidSystem::getMainComponent(phaseIdx) && Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+            if(compIdx != FluidSystem::getMainComponent(phaseIdx) && BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
 
         return componentFlux;

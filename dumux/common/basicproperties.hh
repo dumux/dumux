@@ -29,6 +29,7 @@
 #include <dune/common/parametertree.hh>
 #include <dune/common/fvector.hh>
 
+#include <dumux/common/balanceequationopts.hh>
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/pointsource.hh>
@@ -120,6 +121,9 @@ NEW_PROP_TAG(VtkOutputLevel);
 //! A class helping models to define default vtk output parameters
 NEW_PROP_TAG(VtkOutputFields);
 
+//! A class that collects options for the evaluation of the balance eqs
+NEW_PROP_TAG(BalanceEqOpts);
+
 ///////////////////////////////////
 // Default values for properties:
 ///////////////////////////////////
@@ -205,6 +209,9 @@ SET_INT_PROP(NumericModel, VtkOutputLevel, 0);
 
 //! Set the default to a function throwing a NotImplemented error
 SET_TYPE_PROP(NumericModel, VtkOutputFields, DefaultVtkOutputFields);
+
+//! Set the default class for the balance equation options
+SET_TYPE_PROP(NumericModel, BalanceEqOpts, BalanceEquationOptions<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux

@@ -62,6 +62,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -136,7 +137,7 @@ public:
             // apply the diffusion tensor and return the flux
             auto DGradX = applyDiffusionTensor_(D, gradX);
             componentFlux[compIdx] = -1.0*rho*(DGradX*scvf.unitOuterNormal())*scvf.area();
-            if (Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux;
@@ -167,6 +168,7 @@ public:
                 continue;
 
             // effective diffusion tensors
+            using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
             auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
                                                               insideVolVars.saturation(phaseIdx),
                                                               insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
