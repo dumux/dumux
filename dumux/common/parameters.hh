@@ -182,6 +182,11 @@ class Parameters {
 
 public:
 
+    //! Initialize the parameter tree singletons
+    static void init(int argc, char **argv, const Usage& usage)
+    {
+        init(argc, argv, [] (Dune::ParameterTree&) {}, "", usage);
+    }
 
     //! Initialize the parameter tree singletons
     static void init(int argc, char **argv,
@@ -189,13 +194,6 @@ public:
                     const Usage& usage = [](const char *, const std::string &){})
     {
         init(argc, argv, [] (Dune::ParameterTree&) {}, parameterFileName, usage);
-    }
-
-    //! Initialize the parameter tree singletons
-    static void init(int argc, char **argv,
-                    const Usage& usage = [](const char *, const std::string &){})
-    {
-        init(argc, argv, [] (Dune::ParameterTree&) {}, "", usage);
     }
 
     //! Initialize the parameter tree singletons
