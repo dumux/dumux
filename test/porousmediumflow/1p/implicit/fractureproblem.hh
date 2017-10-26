@@ -28,7 +28,7 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
@@ -86,9 +86,9 @@ SET_BOOL_PROP(FractureProblem, ProblemEnableGravity, false);
  * This problem uses the \ref OnePModel.
  */
 template <class TypeTag>
-class FractureProblem : public ImplicitPorousMediaProblem<TypeTag>
+class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -108,6 +108,7 @@ class FractureProblem : public ImplicitPorousMediaProblem<TypeTag>
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
     /*!
@@ -116,10 +117,10 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    FractureProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
