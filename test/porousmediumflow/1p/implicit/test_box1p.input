@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 1 # [s]
 
@@ -16,4 +16,4 @@ LensUpperRight = 0.75 0.75
 
 Permeability = 1e-10 # [m^2]
 PermeabilityLens = 1e-12 # [m^2]
-
+RandomField = false

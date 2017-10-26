@@ -63,6 +63,7 @@ class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexSet = typename GridView::IndexSet;
     using ScalarVector = std::vector<Scalar>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     enum {
         dim=GridView::dimension,
@@ -76,20 +77,20 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePTestSpatialParams(const Problem& problem, const GridView& gridView)
-        : ParentType(problem, gridView),
-          randomPermeability_(gridView.size(dim), 0.0),
-          indexSet_(gridView.indexSet())
+    OnePTestSpatialParams(const Problem& problem)
+        : ParentType(problem),
+          randomPermeability_(problem.fvGridGeometry().gridView().size(dim), 0.0),
+          indexSet_(problem.fvGridGeometry().gridView().indexSet())
     {
         randomField_ = GET_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams, RandomField);
-        permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
+        permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         if(!randomField_)
-            permeabilityLens_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
+            permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
         else
-            initRandomField(gridView);
+            initRandomField(problem.fvGridGeometry().gridView());
 
-        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
-        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
+        lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
+        lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
     }
 
     /*!
