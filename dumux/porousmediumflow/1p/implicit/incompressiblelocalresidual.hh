@@ -78,8 +78,7 @@ public:
 
     //! flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
-                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -105,8 +104,7 @@ public:
 
     //! flux derivatives for the cell-centered mpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
-                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -140,7 +138,7 @@ public:
 
     //! flux derivatives for the box scheme
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
@@ -178,8 +176,7 @@ public:
 
     //! Dirichlet flux derivatives for the cell-centered tpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
-                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
     addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                   const Problem& problem,
                                   const Element& element,
@@ -199,8 +196,7 @@ public:
 
     //! Dirichlet flux derivatives for the cell-centered mpfa scheme
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox) &&
-                      GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, void>
     addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                   const Problem& problem,
                                   const Element& element,

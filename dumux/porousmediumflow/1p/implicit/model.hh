@@ -44,6 +44,5 @@
 #define DUMUX_1P_MODEL_HH
 
 #include "properties.hh"
-#include "propertydefaults.hh"
 
 #endif

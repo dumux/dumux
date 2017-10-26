@@ -23,17 +23,10 @@
 #ifndef DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
 #define DUMUX_POROUS_MEDIUM_FLOW_PROBLEM_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/common/fvproblem.hh>
 
 namespace Dumux
 {
-namespace Properties
-{
-//! Property forward declarations
-NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters object
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-}
 
 /*!
  * \ingroup ImplicitBaseProblems

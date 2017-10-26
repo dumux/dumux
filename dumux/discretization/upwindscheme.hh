@@ -23,17 +23,10 @@
 #ifndef DUMUX_DISCRETIZATION_UPWINDSCHEME_HH
 #define DUMUX_DISCRETIZATION_UPWINDSCHEME_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(ImplicitUpwindWeight);
-}
 
 //! Forward declaration of the upwind scheme implementation
 template<class TypeTag, DiscretizationMethods Method>

@@ -23,8 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-
 namespace Dumux
 {
 template<class TypeTag, class IvIndexSet>

@@ -18,53 +18,44 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup Linear
  * \file
  *
- * \brief Defines a type tag and some fundamental properties for
- *        linear solvers
+ * \brief Declares properties required for finite-volume models models.
  */
-#ifndef DUMUX_LINEAR_SOLVER_PROPERTIES_HH
-#define DUMUX_LINEAR_SOLVER_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
+#ifndef DUMUX_FV_PROPERTIES_HH
+#define DUMUX_FV_PROPERTIES_HH
+
+#include <dune/istl/bvector.hh>
+
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
+
+#include <dumux/implicit/gridvariables.hh>
 
 namespace Dumux
 {
 namespace Properties
 {
-//! Linear solver type tag for all models.
-NEW_TYPE_TAG(LinearSolverTypeTag);
+//! Type tag for finite-volume schemes.
+NEW_TYPE_TAG(FiniteVolumeModel);
 
-///////////////////////////////////
-// Property tag declarations:
-///////////////////////////////////
+//! The grid variables
+SET_TYPE_PROP(FiniteVolumeModel, GridVariables, GridVariables<TypeTag>);
 
-//! Block level depth for the preconditioner
-// Set this to more than one if the matrix to solve is nested multiple times
-// e.g. for Dune::MultiTypeBlockMatrix'es.
-NEW_PROP_TAG(LinearSolverPreconditionerBlockLevel);
+//! The type of a solution for a whole element
+SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
-//! Size of the matrix/vector blocks
-/*!
- * The number of different types of equations which build the system of equations to solve
- * can differ from the number of equations given by the mathematical/physical model (e.g. IMPES).
- * Thus, the block size does not have to be equal to NumEq.
- * (Especially important for the SuperLU solver!)
- */
-NEW_PROP_TAG(LinearSolverBlockSize);
+//! We do not store the FVGeometry by default
+SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
 
-///////////////////////////////////
-// Default values for properties:
-///////////////////////////////////
+//! We do not store the volume variables by default
+SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalVolumeVariablesCache, false);
 
-//! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
-SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerBlockLevel, 1);
-
-//! set the block size to 1 as default
-SET_INT_PROP(LinearSolverTypeTag, LinearSolverBlockSize, 1);
+//! disable flux variables data caching by default
+SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalFluxVariablesCache, false);
 
 } // namespace Properties
 } // namespace Dumux
 
-#endif
+ #endif

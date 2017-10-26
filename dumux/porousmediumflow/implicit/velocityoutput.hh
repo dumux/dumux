@@ -34,11 +34,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-    NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
-}
-
 /*!
  * \brief Velocity output for implicit (porous media) models
  */

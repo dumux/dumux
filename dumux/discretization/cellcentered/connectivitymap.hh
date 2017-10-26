@@ -26,7 +26,6 @@
 #define DUMUX_CC_CONNECTIVITY_MAP_HH
 
 #include <vector>
-#include <dumux/implicit/properties.hh>
 
 namespace Dumux
 {

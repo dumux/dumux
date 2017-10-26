@@ -24,6 +24,7 @@
 #ifndef DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
 #define DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
 
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/mpfa/generalconnectivitymap.hh>
 

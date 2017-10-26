@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEXSET_BASE_HH
 #define DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEXSET_BASE_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 
 namespace Dumux

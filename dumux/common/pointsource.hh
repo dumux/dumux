@@ -31,6 +31,8 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/propertysystem.hh>
 
+#include <dumux/discretization/methods.hh>
+
 namespace Dumux
 {
 
@@ -352,11 +354,11 @@ class BoundingBoxTreePointSourceHelper
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
 
-    static const int dim = GridView::dimension;
-    static const int dimworld = GridView::dimensionworld;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimworld = GridView::dimensionworld;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static constexpr int dofCodim = isBox ? dim : 0;
 
 public:
     //! calculate a DOF index to point source map from given vector of point sources

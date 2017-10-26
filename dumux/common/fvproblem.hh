@@ -72,8 +72,7 @@ class FVProblem
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    // TODO get this from the discretization method property
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
     // using GridAdaptModel = ImplicitGridAdapt<TypeTag, adaptiveGrid>;
 

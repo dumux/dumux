@@ -28,7 +28,6 @@
 #include <dune/common/iteratorrange.hh>
 
 #include <dumux/discretization/scvandscvfiterators.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
 namespace Dumux
 {

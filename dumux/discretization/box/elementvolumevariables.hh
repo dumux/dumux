@@ -23,9 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
-#include <dumux/implicit/model.hh>
-
 namespace Dumux
 {
 
@@ -41,7 +38,6 @@ class BoxElementVolumeVariables
 template<class TypeTag>
 class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 {
-    friend ImplicitModel<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

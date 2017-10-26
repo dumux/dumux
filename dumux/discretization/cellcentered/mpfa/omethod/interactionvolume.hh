@@ -24,7 +24,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUME_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>

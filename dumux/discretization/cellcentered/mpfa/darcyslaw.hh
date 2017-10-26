@@ -25,8 +25,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-
 namespace Dumux
 {
 

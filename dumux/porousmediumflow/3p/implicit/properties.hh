@@ -27,8 +27,6 @@
 #ifndef DUMUX_3P_PROPERTIES_HH
 #define DUMUX_3P_PROPERTIES_HH
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
