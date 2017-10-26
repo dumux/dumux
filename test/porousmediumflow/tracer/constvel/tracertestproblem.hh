@@ -87,11 +87,11 @@ public:
     static constexpr int numPhases = 1;
 
     //! Human readable component name (index compIdx) (for vtk output)
-    static constexpr std::string componentName(int compIdx)
+    static std::string componentName(int compIdx)
     { return "tracer_" + std::to_string(compIdx); }
 
     //! Human readable phase name (index phaseIdx) (for velocity vtk output)
-    static constexpr std::string phaseName(int phaseIdx = 0)
+    static std::string phaseName(int phaseIdx = 0)
     { return "Groundwater"; }
 
     //! Molar mass in kg/mol of the component with index compIdx

@@ -92,7 +92,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr std::string phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     { return "DefaultPhaseName"; }
 
     /*!
@@ -100,7 +100,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr std::string componentName(int phaseIdx)
+    static std::string componentName(int phaseIdx)
     { return "DefaultComponentName"; }
 
     /*!
