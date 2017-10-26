@@ -232,7 +232,9 @@ public:
                                  const ElementFluxVariablesCache& elemFluxVarsCache,
                                  const SubControlVolumeFace& scvf) const
     {
-        // we have no Robin-type boundary conditions here. Do nothing.
+        //! Robin-type boundary conditions are problem-specific.
+        //! We can't put a general implementation here - users defining Robin-type BCs
+        //! while using analytical Jacobian assembly must overload this function!
     }
 };
 
