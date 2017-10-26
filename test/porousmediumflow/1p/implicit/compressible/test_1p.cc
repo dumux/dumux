@@ -42,6 +42,7 @@
 #include <dumux/common/parameterparser.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -65,29 +66,15 @@ int main(int argc, char** argv) try
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    ////////////////////////////////////////////////////////////
-    // parse the command line arguments and input file
-    ////////////////////////////////////////////////////////////
-
     // parse command line arguments
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
-    ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree());
-
-    // parse the input file into the parameter tree
-    // check first if the user provided an input file through the command line, if not use the default
-    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
-    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName);
+    Parameters::init(argc, argv);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    try { GridCreator::makeGrid(); }
-    catch (...) {
-        std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
-        throw;
-    }
+    GridCreator::makeGrid(Parameters::getTree());
     GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
@@ -122,15 +109,10 @@ int main(int argc, char** argv) try
 
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, TEnd);
-    auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, DtInitial);
-    auto maxDivisions = GET_PARAM_FROM_GROUP(TypeTag, int, TimeLoop, MaxTimeStepDivisions);
-    auto maxDt = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, MaxTimeStepSize);
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeLoop.Restart"))
-        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, Restart);
+    auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
+    auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     // intialize the vtk output module
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
@@ -139,7 +121,7 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -148,10 +130,10 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(*problem);
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using NewtonController = Dumux::NewtonController<TypeTag>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
