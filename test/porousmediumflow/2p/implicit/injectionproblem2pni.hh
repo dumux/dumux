@@ -28,7 +28,7 @@
 #define DUMUX_INJECTION_PROBLEM_2PNI_HH
 
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/components/n2.hh>
@@ -112,9 +112,9 @@ SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GE
  * <tt>./test_cc2pni -parameterFile test_cc2pni.input</tt>
  */
 template<class TypeTag>
-class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
+class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    typedef PorousMediumFlowProblem<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
@@ -139,6 +139,7 @@ class InjectionProblem2PNI : public ImplicitPorousMediaProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using GasN2 = N2<Scalar>;
 
@@ -165,8 +166,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InjectionProblem2PNI(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    InjectionProblem2PNI(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         maxDepth_ = 2700.0; // [m]
 
@@ -178,7 +179,7 @@ public:
                 /*pMax=*/30e6,
                 /*numP=*/300);
 
-        name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!

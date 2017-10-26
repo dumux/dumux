@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
