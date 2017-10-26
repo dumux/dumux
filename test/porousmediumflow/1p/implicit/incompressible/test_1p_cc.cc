@@ -86,10 +86,7 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
-    SolutionVector x(leafGridView.size(dofCodim));
+    SolutionVector x(leafGridView.size(0));
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -117,8 +114,8 @@ int main(int argc, char** argv) try
 
     // // solve the linear system
     Dune::Timer solverTimer;
-    using LinearSolver = GET_PROP_TYPE(TypeTag, LinearSolver);
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
+    using LinearSolver = SSORCGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;
     linearSolver->solve(*A, x, *r);
@@ -128,9 +125,10 @@ int main(int argc, char** argv) try
     // output result to vtk
     Dune::Timer outputTimer;
     if (mpiHelper.rank() == 0) std::cout << "Writing result to file "<< problem->name() <<" ..." << std::flush;
+
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     Dune::VTKWriter<GridView> vtkwriter(leafGridView);
-    if (isBox) vtkwriter.addVertexData(x, "p");
-    else vtkwriter.addCellData(x, "p");
+    vtkwriter.addCellData(x, "p");
     vtkwriter.write(problem->name());
     outputTimer.stop();
     if (mpiHelper.rank() == 0) std::cout << " took " << outputTimer.elapsed() << " seconds." << std::endl;

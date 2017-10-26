@@ -59,9 +59,6 @@ SET_TYPE_PROP(OnePIncompressible, SpatialParams, OnePTestSpatialParams<TypeTag>)
 // use the incompressible local residual (provides analytic jacobian)
 SET_TYPE_PROP(OnePIncompressible, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
-// set the linear solver
-SET_TYPE_PROP(OnePIncompressible, LinearSolver, SSORCGBackend<TypeTag>);
-
 // the fluid system
 SET_PROP(OnePIncompressible, Fluid)
 {
