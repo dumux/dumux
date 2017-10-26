@@ -50,8 +50,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNISpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView) {}
+    OnePNISpatialParams(const Problem& problem)
+    : ParentType(problem) {}
 
     /*!
      * \brief Define the intrinsic permeability \f$\mathrm{[m^2]}\f$.

@@ -87,7 +87,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv) try
 {
-        using namespace Dumux;
+    using namespace Dumux;
 
     // define the type tag for this problem
     using TypeTag = TTAG(OnePTestBoxProblem);

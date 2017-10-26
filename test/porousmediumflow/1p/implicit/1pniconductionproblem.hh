@@ -29,7 +29,7 @@
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
@@ -90,9 +90,9 @@ SET_TYPE_PROP(OnePNIConductionProblem,
  * <tt>./test_cc1pniconduction -ParameterFile ./test_cc1pniconduction.input</tt>
  */
 template <class TypeTag>
-class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -125,16 +125,17 @@ class OnePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePNIConductionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    OnePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-        outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
+        name_ = getParam<std::string>("Problem.Name");
+        outputInterval_ = getParam<int>("Problem.OutputInterval");
 
         temperatureHigh_ = 300.0;
     }
@@ -227,7 +228,7 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
