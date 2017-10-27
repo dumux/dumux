@@ -32,25 +32,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration of the needed properties
-NEW_PROP_TAG(ProblemMolarMass);
-NEW_PROP_TAG(ProblemLiquidDensity);
-NEW_PROP_TAG(ProblemLiquidKinematicViscosity);
-NEW_PROP_TAG(ProblemGasDensity);
-NEW_PROP_TAG(ProblemGasKinematicViscosity);
-NEW_PROP_TAG(ComponentName);
-
-// set default values
-SET_SCALAR_PROP(NumericModel, ProblemMolarMass, 1.0);
-SET_SCALAR_PROP(NumericModel, ProblemLiquidDensity, 1.0);
-SET_SCALAR_PROP(NumericModel, ProblemLiquidKinematicViscosity, 1.0);
-SET_SCALAR_PROP(NumericModel, ProblemGasDensity, 1.0);
-SET_SCALAR_PROP(NumericModel, ProblemGasKinematicViscosity, 1.0);
-SET_STRING_PROP(NumericModel, ComponentName, "c");
-} // end namespace Properties
-
 /*!
  * \ingroup Components
  *
@@ -70,7 +51,8 @@ public:
     static const std::string& name()
     {
         static const std::string name
-            = GET_PARAM_FROM_GROUP(TypeTag, std::string, Component, Name);
+         = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.Name", "c");
+
         return name;
     }
 
@@ -80,7 +62,7 @@ public:
     static Scalar molarMass()
     {
         static const Scalar molarMass
-            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, MolarMass);
+        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.MolarMass", 1.0);
         return molarMass;
     }
 
@@ -99,7 +81,7 @@ public:
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
         static const Scalar density
-            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidDensity);
+        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.LiquidDensity", 1.0);
         return density;
     }
 
@@ -115,7 +97,7 @@ public:
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
         static const Scalar kinematicViscosity
-            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidKinematicViscosity);
+        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.LiquidKinematicViscosity", 1.0);
         return kinematicViscosity * liquidDensity(temperature, pressure);
     }
 
@@ -135,7 +117,7 @@ public:
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         static const Scalar density
-            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasDensity);
+        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.GasDensity", 1.0);
         return density;
     }
 
@@ -151,7 +133,7 @@ public:
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
         static const Scalar kinematicViscosity
-            = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, GasKinematicViscosity);
+        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.GasKinematicViscosity", 1.0);
         return kinematicViscosity * gasDensity(temperature, pressure);
     }
 };
