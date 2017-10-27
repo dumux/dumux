@@ -32,7 +32,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 

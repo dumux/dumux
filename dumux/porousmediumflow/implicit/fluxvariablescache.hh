@@ -23,7 +23,6 @@
 #ifndef DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dumux/discretization/methods.hh>
 

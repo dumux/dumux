@@ -25,8 +25,6 @@
 #ifndef DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 #define DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 
-#include <dumux/implicit/properties.hh>
-
 namespace Dumux
 {
 

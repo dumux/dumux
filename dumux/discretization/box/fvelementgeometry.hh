@@ -30,7 +30,6 @@
 
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
-#include <dumux/implicit/box/properties.hh>
 
 namespace Dumux
 {

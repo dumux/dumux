@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_BOX_GRID_FLUXVARSCACHE_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
 
 namespace Dumux

@@ -25,7 +25,6 @@
 
 #include <dune/common/version.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
 //#include <dumux/io/restart.hh>
