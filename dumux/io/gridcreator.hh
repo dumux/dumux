@@ -338,11 +338,10 @@ protected:
     /*!
      * \brief Refines a grid after construction if GridParameterGroup.Refinement is set in the input file
      */
-    template<class Parameters>
-    static void maybeRefineGrid(const Parameters& params, const std::string& gridKey)
+    static void maybeRefineGrid(const std::string& modelParamGroup)
     {
-        if (params.hasKey(gridKey + ".Refinement"))
-            grid().globalRefine(params.template get<int>(gridKey + ".Refinement"));
+        if (haveParamInGroup(modelParamGroup, "Grid.Refinement"))
+            grid().globalRefine(getParamFromGroup<int>(modelParamGroup, "Grid.Refinement"));
     }
 
     /*!
@@ -388,8 +387,7 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this class.
      */
-    template<class Parameters>
-    static void makeGrid(const Parameters& params)
+    static void makeGrid(const std::string& modelParamGroup = "")
     {
         DUNE_THROW(Dune::NotImplemented,
             "The GridCreator for grid type " << Dune::className<Grid>() << " is not implemented! Consider providing your own GridCreator.");
@@ -419,15 +417,13 @@ public:
     // trick to set overlap different for implicit models...
     template<class T = TypeTag>
     static typename std::enable_if<Properties::propertyDefined<T, T, PTAG_(ImplicitIsBox)>::value, int>::type
-    getOverlap()
+    getOverlap(const std::string& modelParamGroup)
     {
         // the default is dependent on the discretization:
         // our box models only work with overlap 0
         // our cc models only work with overlap > 0
         static const int isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-        int overlap = isBox ? 0 : 1;
-        try { overlap = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, GridParameterGroup), "Overlap"); }
-        catch (ParameterException &e) { }
+        int overlap = getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", isBox ? 0 : 1);
 
         if (isBox && overlap != 0)
             DUNE_THROW(Dune::NotImplemented, "Parallel overlapping grids for box models.");
@@ -440,12 +436,9 @@ public:
     //... then for other models (e.g. sequential)
     template<class T = TypeTag>
     static typename std::enable_if<!Properties::propertyDefined<T, T, PTAG_(ImplicitIsBox)>::value, int>::type
-    getOverlap()
+    getOverlap(const std::string& modelParamGroup)
     {
-        int overlap = 1;
-        try { overlap = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, GridParameterGroup), "Overlap"); }
-        catch (ParameterException &e) { }
-        return overlap;
+        return getParamFromGroup<int>(modelParamGroup, "Grid.Overlap", 1);
     }
 
 };
@@ -478,38 +471,36 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    template<class Parameters>
-    static void makeGrid(const Parameters& params)
+    static void makeGrid(const std::string& modelParamGroup = "")
     {
         // First try to create it from a DGF file in GridParameterGroup.File
-        const std::string gridKey = params.get("GridParameterGroup", "Grid");
-        if (params.hasKey(gridKey + ".File"))
+        if (haveParamInGroup(modelParamGroup, "Grid.File"))
         {
-            ParentType::makeGridFromDgfFile(params.template get<std::string>(gridKey + ".File"));
-            postProcessing_(params, gridKey);
+            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            postProcessing_(modelParamGroup);
             return;
         }
 
         // Then look for the necessary keys to construct from the input file
-        if (!params.hasKey(gridKey + ".UpperRight"))
+        if (!haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
             DUNE_THROW(ParameterException, "Please supply the mandatory parameter "
-                                          << gridKey <<  ".UpperRight or a grid file in "
-                                          << gridKey << ".File.");
+                                          << modelParamGroup <<  ".UpperRight or a grid file in "
+                                          << modelParamGroup << ".File.");
 
         // get the upper right corner coordinates
-        const auto upperRight = params.template get<Dune::FieldVector<ct, dim>>(gridKey + ".UpperRight");
+        const auto upperRight = getParamFromGroup<Dune::FieldVector<ct, dim>>(modelParamGroup, "Grid.UpperRight");
 
         // number of cells in each direction
         std::array<int, dim> cells; cells.fill(1);
-        cells = params.template get<std::array<int, dim>>(gridKey + ".Cells", cells);
+        cells = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Cells", cells);
 
         // periodic boundaries
-        const auto periodic = params.template get<std::bitset<dim>>(gridKey + ".Periodic", std::bitset<dim>());
+        const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
 
         // get the overlap dependent on some template parameters
-        const int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
+        const int overlap = YaspOverlapHelper<TypeTag>::getOverlap(modelParamGroup);
 
-        bool default_lb = !params.hasKey(gridKey + ".Partitioning");
+        bool default_lb = !haveParamInGroup(modelParamGroup, "Grid.Partitioning");
 
         // make the grid
         if (default_lb)
@@ -520,24 +511,23 @@ public:
         else
         {
             // construct using user defined partitioning
-            const auto partitioning = params.template get<std::array<int, dim>>(gridKey + ".Partitioning");
+            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
             Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
             ParentType::gridPtr() = std::make_shared<Grid>(upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
         }
-        postProcessing_(params, gridKey);
+        postProcessing_(modelParamGroup);
     }
 
 private:
     /*!
      * \brief Postprocessing for YaspGrid
      */
-    template<class Parameters>
-    static void postProcessing_(const Parameters& params, const std::string& gridKey)
+    static void postProcessing_(const std::string& modelParamGroup)
     {
         // Check if should refine the grid
-        bool keepPhysicalOverlap = params.template get<bool>(gridKey + ".KeepPhysicalOverlap", true);
+        bool keepPhysicalOverlap = getParamFromGroup<bool>(modelParamGroup, "Grid.KeepPhysicalOverlap", true);
         ParentType::grid().refineOptions(keepPhysicalOverlap);
-        ParentType::maybeRefineGrid(params, gridKey);
+        ParentType::maybeRefineGrid(modelParamGroup);
     }
 };
 
@@ -1230,27 +1220,25 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid()
+    template<class Parameters>
+    static void makeGrid(const std::string& modelParamGroup = "")
     {
-        // First try to create it from a DGF or msh file in GridParameterGroup.File
-        try {
-            const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromFile(fileName);
-            ParentType::maybeRefineGrid();
+        // try to create it from file
+        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        {
+            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            ParentType::maybeRefineGrid(modelParamGroup);
             return;
         }
-        catch (ParameterException &e) {}
-        catch (...) { throw; }
 
         // Then look for the necessary keys to construct a structured grid from the input file
         try {
             ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex);
-            ParentType::maybeRefineGrid();
+            ParentType::maybeRefineGrid(modelParamGroup);
         }
         catch (ParameterException &e) {
                 DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
+                                              << "Grid.UpperRight or a grid file in Grid.File.");
         }
         catch (...) { throw; }
     }
@@ -1281,61 +1269,42 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid()
+    static void makeGrid(const std::string& modelParamGroup = "")
     {
-        // First try to create it from a DGF or msh file in GridParameterGroup.File
-        try {
-            const std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, std::string, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), File);
-            ParentType::makeGridFromFile(fileName);
-            ParentType::maybeRefineGrid();
+        // try to create it from file
+        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        {
+            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            ParentType::maybeRefineGrid(modelParamGroup);
             return;
         }
-        catch (ParameterException &e) {}
-        catch (...) { throw; }
 
-        // Then look for the necessary keys to construct a structured grid from the input file
-        try {
-            // The required parameters
-            typedef Dune::FieldVector<typename Grid::ctype, dimworld> GlobalPosition;
-            const GlobalPosition upperRight = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UpperRight);
+        // The required parameters
+        using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
+        const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
+        const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight", GlobalPosition(0.0));
+        using CellArray = std::array<unsigned int, 1>;
+        const auto cells = getParamFromGroup<CellArray>(modelParamGroup, "Grid.Cells", std::array<unsigned int, 1>{{1}});
 
-            // The optional parameters (they have a default)
-            GlobalPosition lowerLeft(0.0);
-            try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
-            catch (ParameterException &e) { }
+        // make the grid (structured interval grid in dimworld space)
+        Dune::GridFactory<Grid> factory;
+        constexpr auto geomType = Dune::GeometryTypes::simplex(1);
 
-            typedef std::array<unsigned int, 1> CellArray;
-            CellArray cells;
-            std::fill(cells.begin(), cells.end(), 1);
-            try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-            catch (ParameterException &e) { }
+        // create a step vector
+        GlobalPosition step = upperRight;
+        step -= lowerLeft, step /= cells[0];
 
-            // make the grid (structured interval grid in dimworld space)
-            Dune::GridFactory<Grid> factory;
-            Dune::GeometryType geomType(1);
+        // create the vertices
+        GlobalPosition globalPos = lowerLeft;
+        for (unsigned int vIdx = 0; vIdx <= cells[0]; vIdx++, globalPos += step)
+            factory.insertVertex(globalPos);
 
-            // create a step vector
-            GlobalPosition step = upperRight;
-            step -= lowerLeft, step /= cells[0];
+        // create the cells
+        for(unsigned int eIdx = 0; eIdx < cells[0]; eIdx++)
+            factory.insertElement(geomType, {eIdx, eIdx+1});
 
-            // create the vertices
-            GlobalPosition globalPos = lowerLeft;
-            for (unsigned int vIdx = 0; vIdx <= cells[0]; vIdx++, globalPos += step)
-                factory.insertVertex(globalPos);
-
-            // create the cells
-            for(unsigned int eIdx = 0; eIdx < cells[0]; eIdx++)
-                factory.insertElement(geomType, {eIdx, eIdx+1});
-
-            ParentType::gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
-            ParentType::maybeRefineGrid();
-        }
-        catch (ParameterException &e) {
-                DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
-        }
-        catch (...) { throw; }
+        ParentType::gridPtr() = std::shared_ptr<Grid>(factory.createGrid());
+        ParentType::maybeRefineGrid(modelParamGroup);
     }
 };
 

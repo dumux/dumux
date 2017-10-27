@@ -83,11 +83,7 @@ int main(int argc, char** argv) try
     /////////////////////////////////////////////////////////////////////
 
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    try { GridCreator::makeGrid(Parameters::getTree()); }
-    catch (...) {
-        std::cout << "\n\t -> Creation of the grid failed! <- \n\n";
-        throw;
-    }
+    GridCreator::makeGrid();
     GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
