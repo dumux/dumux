@@ -55,7 +55,7 @@ public:
     static void maybeAddTemperature(VtkOutputModule& vtkOutputModule)
     {
         // register vtk output field for temperature
-        vtkOutputModule.addPrimaryVariable("temperature", Indices::temperatureIdx);
+        vtkOutputModule.addVolumeVariable([](const auto& volVars){ return volVars.temperature(); }, "temperature");
     }
 };
 
