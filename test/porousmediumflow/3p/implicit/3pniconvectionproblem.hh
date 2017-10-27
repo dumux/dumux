@@ -136,8 +136,7 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection Intersection;
-
+    using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 
@@ -148,13 +147,9 @@ public:
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem, Name);
-        outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                int, Problem, OutputInterval);
-        darcyVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                Scalar, Problem, DarcyVelocity);
+        name_ = getParam<std::string>("Problem.Name");
+        outputInterval_ = getParam<int>("Problem.OutputInterval");
+        darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
 
         temperatureHigh_ = 291.;
         temperatureLow_ = 290.;
@@ -163,17 +158,6 @@ public:
 
 
     }
-
-
-    bool shouldWriteOutput() const
-    {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
-    }
-
 
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
@@ -252,7 +236,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] > this->bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }

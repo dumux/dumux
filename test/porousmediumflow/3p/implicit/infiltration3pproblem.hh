@@ -26,9 +26,9 @@
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-
+#include <dumux/implicit/box/properties.hh>
+#include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
 #include "infiltration3pspatialparams.hh"
@@ -265,7 +265,8 @@ public:
         PrimaryVariables values(0.0);
 
         // negative values for injection
-        if (time()<2592000.)
+        auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, 60, 3600);
+        if (timeLoop->time()<2592000.)
         {
             if ((globalPos[0] <= 175.+eps_) && (globalPos[0] >= 155.-eps_) && (globalPos[1] >= 10.-eps_))
             {

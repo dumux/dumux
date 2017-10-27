@@ -34,6 +34,7 @@
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
+#include "vtkoutputfields.hh"
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
@@ -126,6 +127,9 @@ public:
 
 // enable gravity by default
 SET_BOOL_PROP(ThreeP, ProblemEnableGravity, true);
+
+//! Set the vtk output fields specific to the ThreeP model
+SET_TYPE_PROP(ThreeP, VtkOutputFields, ThreePVtkOutputFields<TypeTag>);
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(ThreePNI, ThermalConductivityModel)

@@ -94,8 +94,8 @@ public:
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using  MaterialLawParams = typename MaterialLaw::Params;
 
-    ThreePNISpatialParams(const Problem& problem, const GridView &gridView)
-        : ParentType(problem, gridView)
+    ThreePNISpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;

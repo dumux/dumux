@@ -93,15 +93,15 @@ public:
      *
      * \param gridView The grid view
      */
-    InfiltrationThreePSpatialParams(const Problem& problem, const GridView &gridView)
-        : ParentType(problem, gridView)
+    InfiltrationThreePSpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
         // intrinsic permeabilities
-        fineK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, permeability);
-        coarseK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, permeability);
+        fineK_ = getParam<Scalar>("SpatialParams.permeability");
+        coarseK_ = getParam<Scalar>("SpatialParams.permeability");
 
         // porosities
-        porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, porosity);
+        porosity_ = getParam<Scalar>("SpatialParams.porosity");
 
         // residual saturations
         materialParams_.setSwr(0.12);
@@ -109,16 +109,15 @@ public:
         materialParams_.setSgr(0.03);
 
         // parameters for the 3phase van Genuchten law
-        materialParams_.setVgAlpha(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenAlpha));
-        materialParams_.setVgn(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenN));
+        materialParams_.setVgAlpha(getParam<Scalar>("SpatialParams.vanGenuchtenAlpha"));
+        materialParams_.setVgn(getParam<Scalar>("SpatialParams.vanGenuchtenN"));
         materialParams_.setKrRegardsSnr(false);
 
         // parameters for adsorption
         materialParams_.setKdNAPL(0.);
         materialParams_.setRhoBulk(1500.);
 
-        plotFluidMatrixInteractions_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output,
-                                                                    PlotFluidMatrixInteractions);
+        plotFluidMatrixInteractions_ =  getParam<bool>("Output.PlotFluidMatrixInteractions");
     }
 
     ~InfiltrationThreePSpatialParams()

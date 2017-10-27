@@ -147,6 +147,7 @@ int main(int argc, char** argv) try
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
+    const auto outputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -199,7 +200,10 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        vtkWriter.write(
+            timeLoop->timeStepIndex()==0 ||
+            timeLoop->timeStepIndex() % outputInterval == 0 ||
+            timeLoop->willBeFinished());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

@@ -143,25 +143,10 @@ public:
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
-        outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                  int, Problem, OutputInterval);
-
+        name_ = getParam<std::string>("Problem.Name");
+        outputInterval_ =getParam<int>("Problem.OutputInterval");
         temperatureHigh_ = 300.0;
 
-    }
-
-
-    bool shouldWriteOutput() const
-    {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
     }
 
 
@@ -240,7 +225,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }
