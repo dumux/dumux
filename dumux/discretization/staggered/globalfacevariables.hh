@@ -34,21 +34,31 @@ class StaggeredGlobalFaceVariables
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
 public:
-    void update(Problem& problem, const FaceSolutionVector& sol)
+    StaggeredGlobalFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
+
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
-        problemPtr_ = &problem;
 
-        faceVariables_.resize(problem.model().numFaceDofs());
-        assert(faceVariables_.size() == sol.size());
+        const auto& faceSol = sol[faceIdx];
 
-        for(int i = 0; i < problem.model().numFaceDofs(); ++i)
+        const auto numFaceDofs = fvGridGeometry.gridView().size(1);
+
+        faceVariables_.resize(numFaceDofs);
+        assert(faceVariables_.size() == faceSol.size());
+
+        for(int i = 0; i < numFaceDofs; ++i)
         {
-            faceVariables_[i].update(sol[i]);
+            faceVariables_[i].update(faceSol[i]);
         }
     }
 

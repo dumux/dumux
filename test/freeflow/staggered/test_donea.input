@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
@@ -11,7 +11,14 @@ Name = test_donea # name passed to the output routines
 LiquidDensity = 1
 EnableGravity = false
 PrintL2Error = false
+LiquidKinematicViscosity = 1
+
+[Component]
+Name = fu
 
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = 1

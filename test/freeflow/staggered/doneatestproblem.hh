@@ -26,12 +26,13 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
+#include <dumux/freeflow/staggered/problem.hh>
 #include <dumux/implicit/staggered/properties.hh>
-#include <dumux/freeflow/staggered/model.hh>
-#include <dumux/implicit/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
+
+#include <dumux/freeflow/staggered/propertydefaults.hh>
 
 
 namespace Dumux
@@ -87,13 +88,13 @@ SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, false);
 template <class TypeTag>
 class DoneaTestProblem : public NavierStokesProblem<TypeTag>
 {
-    typedef NavierStokesProblem<TypeTag> ParentType;
+    using ParentType = NavierStokesProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
@@ -109,16 +110,17 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
         velocityYIdx = Indices::velocityYIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -132,18 +134,12 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
-    DoneaTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView), eps_(1e-6)
+    DoneaTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), eps_(1e-6)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
+        name_ = getParam<std::string>("Problem.Name");
 
-        printL2Error_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                                     bool,
-                                                     Problem,
-                                                     PrintL2Error);
+        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
     }
 
     /*!
@@ -278,8 +274,8 @@ public:
     InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
         InitialValues values;
-        values[pressureIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
+        values[pressureIdx] = 123.0;
+        values[velocityXIdx] = 44.0;
         values[velocityYIdx] = 0.0;
 
         return values;

@@ -115,10 +115,8 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::Staggere
     static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
 
 public:
-    // copying the local residual class is not a good idea
-    StaggeredNavierStokesResidualImpl(const StaggeredNavierStokesResidualImpl &) = delete;
 
-    StaggeredNavierStokesResidualImpl() = default;
+    using ParentType::ParentType;
 
 
     CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,

@@ -128,7 +128,6 @@ public:
     }
 
     void computeCellCenterToCellCenterStencil(Stencil& stencil,
-                                              const Problem& problem,
                                               const Element& element,
                                               const FVElementGeometry& fvGeometry,
                                               const SubControlVolumeFace& scvf)
@@ -141,7 +140,6 @@ public:
     }
 
     void computeCellCenterToFaceStencil(Stencil& stencil,
-                                        const Problem& problem,
                                         const Element& element,
                                         const FVElementGeometry& fvGeometry,
                                         const SubControlVolumeFace& scvf)
@@ -150,7 +148,6 @@ public:
     }
 
     void computeFaceToCellCenterStencil(Stencil& stencil,
-                                        const Problem& problem,
                                         const FVElementGeometry& fvGeometry,
                                         const SubControlVolumeFace& scvf)
     {
@@ -167,7 +164,6 @@ public:
     }
 
     void computeFaceToFaceStencil(Stencil& stencil,
-                                  const Problem& problem,
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
     {

@@ -30,6 +30,7 @@
 #include <dumux/implicit/propertydefaults.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
+// #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -52,14 +53,13 @@
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dumux/common/intersectionmapper.hh>
 
-#include "assembler.hh"
 #include "localresidual.hh"
-#include "localjacobian.hh"
 #include "properties.hh"
 #include "newtoncontroller.hh"
 #include "newtonconvergencewriter.hh"
 #include "model.hh"
 #include "primaryvariables.hh"
+#include "gridvariables.hh"
 
 namespace Dumux {
 
@@ -82,6 +82,9 @@ SET_TYPE_PROP(StaggeredModel, FVGridGeometry, StaggeredFVGridGeometry<TypeTag, G
 
 //! Set the default for the local finite volume geometry
 SET_TYPE_PROP(StaggeredModel, FVElementGeometry, StaggeredFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+// SET_TYPE_PROP(StaggeredModel, FVElementGeometry, Dumux::CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+//TODO: try to use CC
+SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
 
 //! The sub control volume
 SET_PROP(StaggeredModel, SubControlVolume)
@@ -107,12 +110,6 @@ SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, Dumux::StaggeredGlobalVolum
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, Dumux::StaggeredGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
-
-//! The local jacobian operator
-SET_TYPE_PROP(StaggeredModel, LocalJacobian, Dumux::StaggeredLocalJacobian<TypeTag>);
-
-//! Assembler for the global jacobian matrix
-SET_TYPE_PROP(StaggeredModel, JacobianAssembler, Dumux::StaggeredAssembler<TypeTag>);
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, Dumux::StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
@@ -244,7 +241,7 @@ public:
 };
 
 //! use the plain newton convergence writer by default
-SET_TYPE_PROP(StaggeredModel, NewtonConvergenceWriter, StaggeredNewtonConvergenceWriter<TypeTag>);
+// SET_TYPE_PROP(StaggeredModel, NewtonConvergenceWriter, StaggeredNewtonConvergenceWriter<TypeTag>);
 
 //! Write separate vtp files for face variables by default
 SET_BOOL_PROP(StaggeredModel, VtkWriteFaceData, true);

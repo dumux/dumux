@@ -43,8 +43,7 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
     // The local class needs to access and change volVars
     friend StaggeredElementVolumeVariables<TypeTag, true>;
-    // The local jacobian needs to access and change volVars for derivative calculation
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+
     // as does the primary variable switch
     friend class PrimaryVariableSwitch<TypeTag>;
     friend typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
@@ -52,6 +51,7 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -71,17 +71,17 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
 
 public:
-    void update(Problem& problem, const SolutionVector& sol)
-    {
-        problemPtr_ = &problem;
+    StaggeredGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
-        auto numScv = problem.model().fvGridGeometry().numScv();
-        auto numBoundaryScvf = problem.model().fvGridGeometry().numBoundaryScvf();
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    {
+        auto numScv = fvGridGeometry.numScv();
+        auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
 
         volumeVariables_.resize(numScv + numBoundaryScvf);
-        for (const auto& element : elements(problem.gridView()))
+        for (const auto& element : elements(fvGridGeometry.gridView()))
         {
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -89,7 +89,7 @@ public:
                 PrimaryVariables priVars(0.0);
                 priVars[cellCenterIdx] = sol[cellCenterIdx][scv.dofIndex()];
                 ElementSolutionVector elemSol{std::move(priVars)};
-                volumeVariables_[scv.dofIndex()].update(elemSol, problem, element, scv);
+                volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
 
             // handle the boundary volume variables
@@ -99,7 +99,7 @@ public:
                 if (!scvf.boundary())
                     continue;
 
-                const auto bcTypes = problem.boundaryTypes(element, scvf);
+                const auto bcTypes = problem().boundaryTypes(element, scvf);
                 const auto insideScvIdx = scvf.insideScvIdx();
                 const auto& insideScv = fvGeometry.scv(insideScvIdx);
 
@@ -108,7 +108,7 @@ public:
                 for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
                     if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
-                        boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichlet(element, scvf)[cellCenterIdx][eqIdx];
+                        boundaryPriVars[cellCenterIdx][eqIdx] = problem().dirichlet(element, scvf)[cellCenterIdx][eqIdx];
                     else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
                         boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
@@ -118,7 +118,7 @@ public:
                             DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
                 }
                 ElementSolutionVector elemSol{std::move(boundaryPriVars)};
-                volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem, element, insideScv);
+                volumeVariables_[scvf.outsideScvIdx()].update(elemSol, problem(), element, insideScv);
             }
         }
     }
@@ -143,9 +143,10 @@ public:
     VolumeVariables& volVars(const SubControlVolume scv)
     { return volumeVariables_[scv.dofIndex()]; }
 
-private:
-    const Problem& problem_() const
+    const Problem& problem() const
     { return *problemPtr_; }
+
+private:
 
     const Problem* problemPtr_;
 

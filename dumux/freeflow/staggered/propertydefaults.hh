@@ -38,6 +38,7 @@
 #include "fluxvariablescache.hh"
 #include "velocityoutput.hh"
 #include "vtkoutputmodule.hh"
+#include "vtkoutputfields.hh"
 #include "boundarytypes.hh"
 
 #include <dumux/implicit/staggered/localresidual.hh>
@@ -157,6 +158,8 @@ SET_PROP(NavierStokes, FluidState){
 
 // disable velocity output by default
 SET_BOOL_PROP(NavierStokes, VtkAddVelocity, true);
+
+SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
 
 // enable gravity by default
 SET_BOOL_PROP(NavierStokes, ProblemEnableGravity, true);

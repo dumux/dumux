@@ -22,22 +22,22 @@
  *        that contribute to the derivative calculation. This is used for
  *        finite-volume schemes with symmetric sparsity pattern in the global matrix.
  */
-#ifndef DUMUX_STAGGERED_ASSEMBLY_MAP_HH
-#define DUMUX_STAGGERED_ASSEMBLY_MAP_HH
+#ifndef DUMUX_STAGGERED_CONNECTIVITY_MAP_HH
+#define DUMUX_STAGGERED_CONNECTIVITY_MAP_HH
 
-#include <dune/istl/bcrsmatrix.hh>
-
+#include <vector>
 #include <dumux/implicit/properties.hh>
 
 namespace Dumux
 {
 
 template<class TypeTag>
-class StaggeredAssemblyMap
+class StaggeredConnectivityMap
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using IndexType = typename GridView::IndexSet::IndexType;
 
@@ -62,11 +62,11 @@ public:
      *
      * \param problem The problem which we want to simulate.
      */
-    void init(const Problem& problem)
+    void update(const FVGridGeometry& fvGridGeometry)
     {
-        const auto numDofsCC = problem.model().numCellCenterDofs();
-        const auto numDofsFace = problem.model().numFaceDofs();
-        const auto numBoundaryFacets = problem.model().fvGridGeometry().numBoundaryScvf();
+        const auto numDofsCC = fvGridGeometry.gridView().size(0);
+        const auto numDofsFace = fvGridGeometry.gridView().size(1);
+        const auto numBoundaryFacets = fvGridGeometry.numBoundaryScvf();
         cellCenterToCellCenterMap_.resize(numDofsCC);
         cellCenterToFaceMap_.resize(numDofsCC);
         faceToCellCenterMap_.resize(2*numDofsFace - numBoundaryFacets);
@@ -78,22 +78,22 @@ public:
         fullfaceToFaceStencils.resize(numDofsFace);
 
         FluxVariables fluxVars;
-        for(auto&& element: elements(problem.gridView()))
+        for(auto&& element: elements(fvGridGeometry.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
-            auto fvGeometry = localView(problem.model().fvGridGeometry());
+            auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                const auto dofIdxCellCenter = problem.elementMapper().index(element);
-                fluxVars.computeCellCenterToCellCenterStencil(cellCenterToCellCenterMap_[dofIdxCellCenter], problem, element, fvGeometry, scvf);
-                fluxVars.computeCellCenterToFaceStencil(cellCenterToFaceMap_[dofIdxCellCenter], problem, element, fvGeometry, scvf);
+                const auto dofIdxCellCenter = fvGridGeometry.elementMapper().index(element);
+                fluxVars.computeCellCenterToCellCenterStencil(cellCenterToCellCenterMap_[dofIdxCellCenter], element, fvGeometry, scvf);
+                fluxVars.computeCellCenterToFaceStencil(cellCenterToFaceMap_[dofIdxCellCenter], element, fvGeometry, scvf);
 
                 const auto scvfIdx = scvf.index();
-                fluxVars.computeFaceToCellCenterStencil(faceToCellCenterMap_[scvfIdx],problem, fvGeometry, scvf);
-                fluxVars.computeFaceToFaceStencil(faceToFaceMap_[scvfIdx],problem, fvGeometry, scvf);
+                fluxVars.computeFaceToCellCenterStencil(faceToCellCenterMap_[scvfIdx], fvGeometry, scvf);
+                fluxVars.computeFaceToFaceStencil(faceToFaceMap_[scvfIdx], fvGeometry, scvf);
             }
         }
     }

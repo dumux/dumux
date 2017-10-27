@@ -23,9 +23,9 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
-#include <dumux/implicit/problem.hh>
-
+#include <dumux/implicit/properties.hh>
 #include "properties.hh"
+#include <dumux/common/staggeredfvproblem.hh>
 
 namespace Dumux
 {
@@ -37,21 +37,22 @@ namespace Dumux
  * This implements gravity (if desired) and a function returning the temperature.
  */
 template<class TypeTag>
-class NavierStokesProblem : public ImplicitProblem<TypeTag>
+class NavierStokesProblem : public StaggeredFVProblem<TypeTag>
 {
-    typedef ImplicitProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
+    using ParentType = StaggeredFVProblem<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using Grid = typename GridView::Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -75,11 +76,11 @@ class NavierStokesProblem : public ImplicitProblem<TypeTag>
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
-    NavierStokesProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView),
+    NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry),
           gravity_(0)
     {
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
     }
 

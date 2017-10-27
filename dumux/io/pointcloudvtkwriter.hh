@@ -25,7 +25,7 @@
 
 #include <dune/common/fvector.hh>
 
-#include <dumux/io/vtkoutputmodulebase.hh>
+#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 #include <dune/grid/io/file/vtk/common.hh>
 #include <dune/common/path.hh>
