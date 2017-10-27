@@ -1,0 +1,23 @@
+[TimeManager]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+#File = ../grids/test_nonconvex_cossurf_16.dgf
+#File = ../grids/test_nonconvex_16.dgf
+#File = ./../grids/kershaw32.msh.dgf
+#File = ./../grids/test_1p_3d.dgf
+File = ../grids/RandMesh8.msh.dgf
+Refinement = 0
+UseCheckerboard = 0
+
+[Problem]
+Name = test5_conv_mpfao
+
+[Newton]
+EnableShiftCriterion = 0
+EnableResidualCriterion = 1
+EnableAbsoluteResidualCriterion = 1
+MaxAbsoluteResidual = 1.0e-5
+UseLineSearch = 1
+MaxSteps = 1000
