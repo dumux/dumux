@@ -400,6 +400,24 @@ T getParamFromGroup(Args&&... args)
     return p.template getFromGroup<T>(std::forward<Args>(args)... );
 }
 
+// a free function to check whether a key exists
+bool haveParam(const std::string& param)
+{
+    const auto& p = Parameters::getTree();
+    return p.hasKey(param);
+}
+
+// a free function to check whether a key exists
+template<typename... Args>
+bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
+{
+    const auto& p = Parameters::getTree();
+    if (paramGroup == "")
+        return p.hasKey(param);
+    else
+        return p.hasKey(paramGroup + "." + param);
+}
+
 template<typename T, typename... Args>
 DUNE_DEPRECATED_MSG("Using preprocessor MACROS for getting parameters is deprecated on next. Please use the new getParam method.")
 T getParam_UsingDeprecatedMacro(Args&&... args)
