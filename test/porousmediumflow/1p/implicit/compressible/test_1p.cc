@@ -68,7 +68,7 @@ int main(int argc, char** argv) try
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    // parse command line arguments
+    // initialize parameter tree
     Parameters::init(argc, argv);
 
     //////////////////////////////////////////////////////////////////////
