@@ -34,8 +34,9 @@
 #include <dune/grid/common/capabilities.hh>
 #include <dune/common/version.hh>
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include "linearsolverproperties.hh"
@@ -119,8 +120,32 @@ public:
 };
 #endif
 
-//! Cell-centered: use the overlapping AMG
-SET_PROP(CCModel, AmgTraits)
+//! Cell-centered tpfa: use the overlapping AMG
+SET_PROP(CCTpfaModel, AmgTraits)
+{
+public:
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    enum {
+        numEq = JacobianMatrix::block_type::rows,
+        dofCodim = 0,
+        isNonOverlapping = false,
+        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
+    };
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
+    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
+    using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
+    using Comm = typename SolverTraits::Comm;
+    using LinearOperator = typename SolverTraits::LinearOperator;
+    using ScalarProduct = typename SolverTraits::ScalarProduct;
+    using Smoother = typename SolverTraits::Smoother;
+
+    using DofMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+};
+
+//! Cell-centered mpfa: use the overlapping AMG
+SET_PROP(CCMpfaModel, AmgTraits)
 {
 public:
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);

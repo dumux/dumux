@@ -23,8 +23,6 @@
 #ifndef DUMUX_TWOP_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TWOP_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/implicit/properties.hh>
-
 namespace Dumux
 {
 
@@ -41,17 +39,17 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addSecondaryVariable("Sw", [](const VolumeVariables& v){ return v.saturation(Indices::wPhaseIdx); });
-        vtk.addSecondaryVariable("Sn", [](const VolumeVariables& v){ return v.saturation(Indices::nPhaseIdx); });
-        vtk.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(Indices::wPhaseIdx); });
-        vtk.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(Indices::nPhaseIdx); });
-        vtk.addSecondaryVariable("pc", [](const VolumeVariables& v){ return v.capillaryPressure(); });
-        vtk.addSecondaryVariable("rhoW", [](const VolumeVariables& v){ return v.density(Indices::wPhaseIdx); });
-        vtk.addSecondaryVariable("rhoN", [](const VolumeVariables& v){ return v.density(Indices::nPhaseIdx); });
-        vtk.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(Indices::wPhaseIdx); });
-        vtk.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(Indices::nPhaseIdx); });
-        vtk.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
-        vtk.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(Indices::wPhaseIdx); }, "Sw");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.saturation(Indices::nPhaseIdx); }, "Sn");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(Indices::wPhaseIdx); }, "pw");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(Indices::nPhaseIdx); }, "pn");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.capillaryPressure(); }, "pc");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(Indices::wPhaseIdx); }, "rhoW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(Indices::nPhaseIdx); }, "rhoN");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(Indices::wPhaseIdx); }, "mobW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(Indices::nPhaseIdx); }, "mobN");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.temperature(); }, "temperature");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.porosity(); }, "porosity");
     }
 };
 

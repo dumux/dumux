@@ -58,6 +58,9 @@ NEW_PROP_TAG(BalanceEqOpts);          //! A class that collects options for the 
 //! from the BaseLocalResidual property and fulfill its interfaces.
 NEW_PROP_TAG(LocalResidual);
 
+//! TODO: Remove this property as soon as the decoupled models are integrated
+NEW_PROP_TAG(LinearSolver);
+
 
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
@@ -116,6 +119,12 @@ NEW_PROP_TAG(FluidState);                          //! The type of the fluid sta
 NEW_PROP_TAG(PrimaryVariableSwitch);               //! The primary variable switch needed for compositional models
 NEW_PROP_TAG(ThermalConductivityModel);            //! Model to be used for the calculation of the effective conductivity
 NEW_PROP_TAG(VelocityOutput);                      //! specifies the velocity calculation module to be used
+
+NEW_PROP_TAG(MaterialLaw);                         //! The material law which ought to be used (extracted from the spatial parameters)
+NEW_PROP_TAG(MaterialLawParams);                   //! The context material law (extracted from the spatial parameters)
+NEW_PROP_TAG(WettingPhase);                        //! The wetting phase for two-phase models
+NEW_PROP_TAG(NonwettingPhase);                     //! The non-wetting phase for two-phase models
+NEW_PROP_TAG(Formulation);                         //! The formulation of the model
 
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)

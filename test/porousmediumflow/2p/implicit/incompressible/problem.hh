@@ -23,13 +23,15 @@
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
-#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/2p/implicit/propertydefaults.hh>
+
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/2p/implicit/incompressiblelocalresidual.hh>
 
 #include "spatialparams.hh"
@@ -41,10 +43,6 @@ template<class TypeTag> class TwoPTestProblem;
 
 namespace Properties
 {
-
-NEW_PROP_TAG(EnableFVGridGeometryCache);
-NEW_PROP_TAG(FVGridGeometry);
-
 NEW_TYPE_TAG(TwoPIncompressible, INHERITS_FROM(TwoP));
 NEW_TYPE_TAG(TwoPIncompressibleTpfa, INHERITS_FROM(CCTpfaModel, TwoPIncompressible, SpatialParams));
 NEW_TYPE_TAG(TwoPIncompressibleMpfa, INHERITS_FROM(CCMpfaModel, TwoPIncompressible, SpatialParams));
@@ -58,9 +56,6 @@ SET_TYPE_PROP(TwoPIncompressible, Problem, TwoPTestProblem<TypeTag>);
 
 // the local residual containing the analytic derivative methods
 SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
-
-// the linear solver type
-SET_TYPE_PROP(TwoPIncompressible, LinearSolver, ILU0BiCGSTABBackend<TypeTag>);
 
 // Set the wetting phase
 SET_PROP(TwoPIncompressible, WettingPhase)
