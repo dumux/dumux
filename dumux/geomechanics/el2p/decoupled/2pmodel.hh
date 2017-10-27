@@ -108,6 +108,8 @@ public:
 
         // get the number of degrees of freedom
         unsigned numDofs = this->numDofs();
+        unsigned numElements = this->gridView_().size(0);
+        ScalarField *rank = writer.allocateManagedBuffer(numElements);
 
         // create the required scalar fields
         ScalarField *pw = writer.allocateManagedBuffer(numDofs);
@@ -119,8 +121,13 @@ public:
         ScalarField *rhoN = writer.allocateManagedBuffer(numDofs);
         ScalarField *mobW = writer.allocateManagedBuffer(numDofs);
         ScalarField *mobN = writer.allocateManagedBuffer(numDofs);
-        ScalarField *poro = writer.allocateManagedBuffer(numDofs);
+        ScalarField *scvPerNode = writer.allocateManagedBuffer(numDofs);
+        ScalarField *poroNode = writer.allocateManagedBuffer(numDofs);
+//         ScalarField *poroElement = writer.allocateManagedBuffer(numElements);
         ScalarField *Te = writer.allocateManagedBuffer(numDofs);
+        ScalarField *poreCompr = writer.allocateManagedBuffer(numDofs);
+        ScalarField *Kintr = writer.allocateManagedBuffer(numDofs);
+
         VectorField *velocityN = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         VectorField *velocityW = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
@@ -135,8 +142,10 @@ public:
             }
         }
 
-        unsigned numElements = this->gridView_().size(0);
-        ScalarField *rank = writer.allocateManagedBuffer(numElements);
+        for (unsigned int i = 0; i < numDofs; ++i)
+        {
+            (*scvPerNode)[i] = 0.0;
+        }
 
         for (const auto& element : elements(this->gridView_()))
         {
@@ -168,14 +177,25 @@ public:
                     (*rhoN)[dofIdxGlobal] = elemVolVars[scvIdx].density(nPhaseIdx);
                     (*mobW)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(wPhaseIdx);
                     (*mobN)[dofIdxGlobal] = elemVolVars[scvIdx].mobility(nPhaseIdx);
-                    (*poro)[dofIdxGlobal] = elemVolVars[scvIdx].effPorosity();
+                    (*scvPerNode)[dofIdxGlobal] += 1.0;
+                    (*poroNode)[dofIdxGlobal] += elemVolVars[scvIdx].effPorosity();
+//                     (*poroElement)[eIdx] += elemVolVars[scvIdx].effPorosity();
                     (*Te)[dofIdxGlobal] = elemVolVars[scvIdx].temperature();
+                    (*poreCompr)[dofIdxGlobal] = this->problem_().spatialParams().lameParams(element, fvGeometry, scvIdx)[3];
+                    (*Kintr)[dofIdxGlobal] = this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx)[0][0];
                 }
+
+//                 (*poroElement)[eIdx] = (*poroElement)[eIdx] / fvGeometry.numScv;
 
                 // velocity output
                 velocityOutput.calculateVelocity(*velocityW, elemVolVars, fvGeometry, element, wPhaseIdx);
                 velocityOutput.calculateVelocity(*velocityN, elemVolVars, fvGeometry, element, nPhaseIdx);
             }
+        }
+
+        for (unsigned int i = 0; i < numDofs; ++i)
+        {
+            (*poroNode)[i] = (*poroNode)[i] / (*scvPerNode)[i];
         }
 
         writer.attachDofData(*sn, "Sn", isBox);
@@ -187,8 +207,13 @@ public:
         writer.attachDofData(*rhoN, "rhoN", isBox);
         writer.attachDofData(*mobW, "mobW", isBox);
         writer.attachDofData(*mobN, "mobN", isBox);
-        writer.attachDofData(*poro, "porosity", isBox);
+        writer.attachDofData(*scvPerNode, "scvPerNode", isBox);
+        writer.attachDofData(*poroNode, "porosityNode", isBox);
+//         writer.attachCellData(*poroElement, "porosityElement", isBox);
         writer.attachDofData(*Te, "temperature", isBox);
+
+        writer.attachDofData(*poreCompr, "poreCompressibility", isBox);
+        writer.attachDofData(*Kintr, "intrinsicPermeability", isBox);
 
         if (velocityOutput.enableOutput()) // check if velocity output is demanded
         {

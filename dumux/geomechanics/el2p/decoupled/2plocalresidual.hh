@@ -42,6 +42,8 @@ class DecoupledTwoPLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidu
 {
 protected:
     typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
+    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
     typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
@@ -54,7 +56,9 @@ protected:
         contiNEqIdx = Indices::contiNEqIdx,
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        dim = GridView::dimension
+
     };
 
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -94,23 +98,14 @@ public:
 
         const ElementVolumeVariables &elemVolVars = usePrevSol ? this->prevVolVars_() : this->curVolVars_();
         const VolumeVariables &volVars = elemVolVars[scvIdx];
-
-//         Scalar effPorosityOld = this->prevVolVars_()[scvIdx].effPorosity();
-//         Scalar effPorosityNew = this->curVolVars_()[scvIdx].effPorosity();
 //
-//         if(std::abs(effPorosityOld - effPorosityNew) > 1e-6)
-//         {
-//             std::cout << "effPorosityOld[" << scvIdx << "] is " << effPorosityOld << std::endl;
-//             std::cout << "effPorosityNew[" << scvIdx << "] is " << effPorosityNew << std::endl;
-//         }
+//         std::cout << "volVars.density(wPhaseIdx) = " << volVars.density(wPhaseIdx) << std::endl;
+//          std::cout << "volVars.saturation(wPhaseIdx) = " << volVars.saturation(wPhaseIdx) << std::endl;
 
         // wetting phase mass
-//         storage[contiWEqIdx] = 0.0;
         storage[contiWEqIdx] = volVars.density(wPhaseIdx) * volVars.effPorosity()
                 * volVars.saturation(wPhaseIdx);
 
-        // non-wetting phase mass
-//         storage[contiNEqIdx] = 0.0;
         storage[contiNEqIdx] = volVars.density(nPhaseIdx) * volVars.effPorosity()
                 * volVars.saturation(nPhaseIdx);
     }
@@ -170,6 +165,17 @@ public:
 
 //             flux[eqIdx] += up.effPorosity() * up.saturation(phaseIdx)
 //                         * up.density(phaseIdx) * fluxVars.timeDerivUNormal();
+
+                int eIdx = this->problem_().model().elementMapper().index(this->element_());
+
+//                 if (eIdx == 210)
+//                 {
+//                     std::cout << "fluxVars.volumeFlux(0) = " << fluxVars.volumeFlux(0) << std::endl;
+//                 }
+//             std::cout << "up.density(phaseIdx) = " << up.density(phaseIdx) << std::endl;
+//             std::cout << "dn.density(phaseIdx) = " << dn.density(phaseIdx) << std::endl;
+//             std::cout.precision(20);
+//             std::cout << "flux = " << flux << std::endl;
         }
     }
 

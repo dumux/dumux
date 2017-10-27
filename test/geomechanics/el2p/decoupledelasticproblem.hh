@@ -83,7 +83,7 @@ public:
 // Set the CO2 table to be used; in this case not the the default table
 SET_TYPE_PROP(El2P_TestProblem, CO2Table, CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
-SET_SCALAR_PROP(El2P_TestProblem, ProblemSalinity, 1e-1);
+SET_SCALAR_PROP(El2P_TestProblem, ProblemSalinity, 0);
 
 // Set the soil properties
 SET_TYPE_PROP(El2P_TestProblem, SpatialParams, El2PSpatialParams<TypeTag>);
@@ -199,6 +199,7 @@ public:
         // fill the pressure field vector with zeros
         std::fill( pInit_.begin(), pInit_.end(), 0.0 );
         tInitEnd_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd);
+        this->timeManager().startNextEpisode(tInitEnd_);
 
         // variable which determines if output should be written (initially set to false)
         output_ = false;
@@ -208,7 +209,6 @@ public:
         coupled_ = false;
 
         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
-        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLengthMainSimulation);
 
         brineDensity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Fluid.BrineDensity);
     }
@@ -222,7 +222,7 @@ public:
             // or based on a pressure polynomial
             this->initializePressure();
             // output is written
-            this->setOutput(true);
+//             this->setOutput(true);
 
             initializationRun_ = false;
         }
@@ -434,7 +434,6 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
         if(globalPos[0] < eps_)
         {
             values.setDirichlet(Indices::u(0));
-            values.setDirichlet(Indices::u(1));
         }
 
         // The solid displacement at the bottom is fixed in y.
@@ -495,10 +494,10 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        if(initializationRun_ == true)
-        {
+//         if(initializationRun_ == true)
+//         {
             values = 0.0;
-        }
+//         }
     }
 
     /*!
@@ -582,45 +581,41 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
      */
     void episodeEnd()
     {
-        Scalar oldTimeStep = this->timeManager().timeStepSize();
-        //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
-        //and the failureTimeStepSize for anyFailure = true
-        double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
-        std::cout << "newTimeStepSize is " << newTimeStepSize << "\n";
-        std::cout << "newTimeStepSize is " << newTimeStepSize << "\n";
-        if(this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
-        {
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-            std::cout << "episodeLength_ is " << episodeLength_ << "\n";
-        }
-        else
-        {
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-            std::cout << "episodeLength_ is " << episodeLength_ << "\n";
-        }
-//         if(this->timeManager().time() > 12000 - eps_)
+//         Scalar oldTimeStep = this->timeManager().timeStepSize();
+//         //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
+//         //and the failureTimeStepSize for anyFailure = true
+//         double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
+//         std::cout << "elastic: newTimeStepSize is " << newTimeStepSize << "\n";
+//         if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
+//             && ( this->timeManager().episodeIndex() < 2) )
 //         {
-//             episodeLength_ = 100.0;
+//             episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
 //         }
-
-        this->timeManager().startNextEpisode(episodeLength_);
-        this->timeManager().setTimeStepSize(newTimeStepSize);
+//
+//         if( this->timeManager().episodeIndex() >= 2)
+//         {
+//             episodeLength_ = episodeLength_ * 2.0;
+//         }
+//         if( this->timeManager().episodeIndex() == 10)
+//             episodeLength_ = 389.0;
+//         if( this->timeManager().episodeIndex() == 12)
+//             episodeLength_ = 122.0;
+//         if( this->timeManager().episodeIndex() == 16)
+//             episodeLength_ = 92.0;
+//         if( this->timeManager().episodeIndex() == 21)
+//             episodeLength_ = 840;
+//         if( this->timeManager().episodeIndex() == 23)
+//             episodeLength_ = 1820;
+//         if( this->timeManager().episodeIndex() == 24)
+//             episodeLength_ = 100;
+//
+//
+//         std::cout << "elastic: episodeLength_ is " << episodeLength_ << "\n";
+//
+//         this->timeManager().startNextEpisode(episodeLength_);
+//         this->timeManager().setTimeStepSize(episodeLength_);
+//         std::cout << "elastic: TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
     }
-
-    /*!
-       * \brief Get the effective pressure of an element in the transport problem.
-    */
-    Scalar getEffPressure(const Element &element) const
-    {
-        int eIdx = this->model().elementMapper().index(element);
-        return effPressureVector_[eIdx];
-    }
-
-    /*!
-     * \brief Get the effective pressure vector of the transport problem.
-     */
-    std::vector<Scalar> &setEffPressure()
-    { return effPressureVector_; }
 
     /*!
        * \brief Get the non-wetting saturation of an element in the transport problem.
@@ -629,14 +624,14 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return pwVector_[dofIdx];
+        int eIdx = this->model().elementMapper().index(element);
+        return pwVector_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Get the effective pressure vector of the transport problem.
      */
-    std::vector<Scalar> &setpw()
+    std::vector<std::vector<Scalar>> &setpw()
     { return pwVector_; }
 
     /*!
@@ -647,14 +642,14 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return pcVector_[dofIdx];
+        int eIdx = this->model().elementMapper().index(element);
+        return pcVector_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Get the effective pressure vector of the transport problem.
      */
-    std::vector<Scalar> &setpc()
+    std::vector<std::vector<Scalar>> &setpc()
     { return pcVector_; }
 
     /*!
@@ -664,14 +659,14 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return pnVector_[dofIdx];
+        int eIdx = this->model().elementMapper().index(element);
+        return pnVector_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Get the effective pressure vector of the transport problem.
      */
-    std::vector<Scalar> &setpn()
+    std::vector<std::vector<Scalar>> &setpn()
     { return pnVector_; }
 
     /*!
@@ -681,14 +676,14 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return SwVector_[dofIdx];
+        int eIdx = this->model().elementMapper().index(element);
+        return SwVector_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Get the effective pressure vector of the transport problem.
      */
-    std::vector<Scalar> &setSw()
+    std::vector<std::vector<Scalar>> &setSw()
     { return SwVector_; }
 
         /*!
@@ -698,16 +693,15 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return SnVector_[dofIdx];
+        int eIdx = this->model().elementMapper().index(element);
+        return SnVector_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Get the non-wetting saturation vector of the transport problem.
      */
-    std::vector<Scalar> &setSn()
+    std::vector<std::vector<Scalar>> &setSn()
     { return SnVector_; }
-
         /*!
        * \brief Get the non-wetting density of an element in the transport problem.
     */
@@ -715,52 +709,35 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return rhonVector_[dofIdx];
+        int eIdx = this->model().elementMapper().index(element);
+        return rhonVector_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Get the non-wetting density vector of the transport problem.
      */
-    std::vector<Scalar> &setRhon()
+    std::vector<std::vector<Scalar>> &setRhon()
     { return rhonVector_; }
 
-        /*!
-       * \brief Get the wetting density of an element in the transport problem.
+   /*!
+    * \brief Get the wetting density of an element in the transport problem.
     */
     Scalar getRhow(const Element &element,
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return rhowVector_[dofIdx];
+        int eIdx = this->model().elementMapper().index(element);
+        return rhowVector_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Get the wetting density vector of the transport problem.
      */
-    std::vector<Scalar> &setRhow()
+    std::vector<std::vector<Scalar>> &setRhow()
     { return rhowVector_; }
 
-    /*!
-       * \brief Get the reduction factor of the pressure at a node
-    */
-    Scalar getFactorP(const Element &element,
-                const FVElementGeometry &fvGeometry,
-                int scvIdx) const
-    {
-        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
-        return factorP_[dofIdx];
-    }
-
-    /*!
-     * \brief Set the reduction factor of the pressure at a node
-     */
-    std::vector<Scalar> &setFactorP()
-    { return factorP_; }
-
-        /*!
-       * \brief Get the effective Porosity of an element in the transport problem.
+   /*!
+    * \brief Get the effective Porosity of an element in the transport problem.
     */
     Scalar getEffPorosity(const Element &element,
                 const FVElementGeometry &fvGeometry,
@@ -782,23 +759,6 @@ void boundaryTypesAtPos(BoundaryTypes &values, const GlobalPosition& globalPos) 
      */
     std::vector<std::vector<Scalar>> &setEffPorosity()
     { return effPorosityVector_; }
-
-    /*!
-       * \brief Get the effective Porosity of an element for the last iteration.
-    */
-    Scalar getEffPorosityOldIteration(const Element &element,
-                const FVElementGeometry &fvGeometry,
-                int scvIdx) const
-    {
-        int eIdx = this->model().elementMapper().index(element);
-        return effPorosityVectorOldIteration_[eIdx][scvIdx];
-    }
-
-    /*!
-     * \brief Set the effective Porosity of an element for the last iteration.
-     */
-    std::vector<std::vector<Scalar>> &setEffPorosityOldIteration()
-    { return effPorosityVectorOldIteration_; }
 
     /*!
        * \brief Get the effective Porosity of an element for the last timestep.
@@ -846,12 +806,11 @@ private:
 
     std::vector<Scalar> effPressureVector_;
     std::vector<Scalar> pInit_;
-    std::vector<Scalar> pwVector_, pnVector_, pcVector_, SwVector_, SnVector_, rhonVector_, rhowVector_;
+    std::vector<std::vector<Scalar>> pwVector_, pnVector_, pcVector_, SwVector_, SnVector_, rhonVector_, rhowVector_;
     std::vector<std::vector<Scalar>> effPorosityVector_, effPermeabilityVector_;
     std::vector<std::vector<Scalar>> effPorosityVectorOldIteration_;
     std::vector<std::vector<Scalar>> effPorosityVectorOldTimestep_;
     Scalar tInitEnd_;
-    std::vector<Scalar> factorP_;
 public:
     bool initializationRun_, coupled_, output_;
 };

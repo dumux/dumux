@@ -279,9 +279,6 @@ public:
         ScalarField &pInit = *writer.allocateManagedBuffer(numElements);
         ScalarField &deltaEffPressure = *writer.allocateManagedBuffer(numElements);
 
-        ScalarField &rhowElement = *writer.allocateManagedBuffer(numElements);
-        ScalarField &rhonElement = *writer.allocateManagedBuffer(numElements);
-
         ScalarField &Pcrtens = *writer.allocateManagedBuffer(numElements);
         ScalarField &Pcrshe = *writer.allocateManagedBuffer(numElements);
 
@@ -319,9 +316,6 @@ public:
             effectivePressure[eIdx] = Scalar(0.0);
             deltaEffPressure[eIdx] = Scalar(0.0);
             pInit[eIdx] = Scalar(0.0);
-
-            rhowElement[eIdx] = Scalar(0.0);
-            rhonElement[eIdx] = Scalar(0.0);
 
             Pcrtens[eIdx] = Scalar(0.0);
             Pcrshe[eIdx] = Scalar(0.0);
@@ -398,19 +392,30 @@ public:
                     displacement[vIdxGlobal] = elemVolVars[scvIdx].displacement();
 
                 double Keff;
-                Keff = this->problem_().getEffPermeability(element, fvGeometry, scvIdx);
-                effKx[eIdx] += Keff/ numScv;
+//                     double exponent;
+//                     exponent = 22.2 * (elemVolVars[scvIdx].effPorosity
+//                             / elemVolVars[scvIdx].porosity() - 1);
+//                     Keff = this->problem_().spatialParams().intrinsicPermeability(*eIt, fvGeometry, scvIdx)[0][0];
+//                     Keff *= exp(exponent);
+
+                double factor;
+                factor = pow( (elemVolVars[scvIdx].effPorosity / elemVolVars[scvIdx].porosity()),15);
+                Keff = this->problem_().spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx)[0][0];
+//                     Keff *= factor;
+
+                effKx[eIdx] += Keff;
+
                 effectivePressure[eIdx] += (pn[vIdxGlobal] * sn[vIdxGlobal]
-                                            + pw[vIdxGlobal] * sw[vIdxGlobal])
-                                            / numScv;
+                                            + pw[vIdxGlobal] * sw[vIdxGlobal]);
 
-                effPorosity[eIdx] += this->problem().getEffPorosity(element, fvGeometry, scvIdx)  / numScv;
-
-                effPorosityOldIteration[eIdx] += this->problem().getEffPorosityOldIteration(element, fvGeometry, scvIdx) / numScv;
-
-                rhowElement[eIdx] += rhoW[vIdxGlobal] / numScv;
-                rhonElement[eIdx] += rhoW[vIdxGlobal] / numScv;
+                effPorosity[eIdx] += elemVolVars[scvIdx].effPorosity;
             }
+
+            effKx[eIdx] = effKx[eIdx]/ numScv;
+
+            effectivePressure[eIdx] = effectivePressure[eIdx]/ numScv;
+
+            effPorosity[eIdx] = effPorosity[eIdx] / numScv;
 
             const auto geometry = element.geometry();
 
@@ -681,9 +686,6 @@ public:
             writer.attachCellData(initStressY, "initialstressesY", dim);
         if (dim >= 3)
             writer.attachCellData(initStressZ, "initialstressesZ", dim);
-
-        writer.attachCellData(rhowElement, "rhowElement");
-        writer.attachCellData(rhonElement, "rhonElement");
 
         writer.attachCellData(deltaEffPressure, "deltapEff");
         writer.attachCellData(effectivePressure, "effectivePressure");

@@ -168,6 +168,12 @@ public:
         fullElasticTensor2D[1][0] = nu * E / (1 - nu*nu), fullElasticTensor2D[1][1] = E / (1 - nu*nu),               fullElasticTensor2D[1][2] = 0.0;
         fullElasticTensor2D[2][0] = 0.0,                                              fullElasticTensor2D[2][1] = 0.0,                                                fullElasticTensor2D[2][2] = 2 * mu;
 
+        int eIdx = model_.elementMapper().index(eg.entity());
+//         std::cout << "fullElasticTensor2D[" << eIdx << "] =" << std::endl;
+//         std::cout << fullElasticTensor2D[0][0] << fullElasticTensor2D[0][1] << fullElasticTensor2D[0][2] << std::endl;
+//         std::cout << fullElasticTensor2D[1][0] << fullElasticTensor2D[1][1] << fullElasticTensor2D[1][2] << std::endl;
+//         std::cout << fullElasticTensor2D[2][0] << fullElasticTensor2D[2][1] << fullElasticTensor2D[2][2] << std::endl;
+
         // retrieve materialParams for calculate of capillary pressure
         const MaterialLawParams& materialParams =
             model_.problem().spatialParams().materialLawParams(eg.entity(), fvGeometry, 0);
@@ -227,7 +233,11 @@ public:
                 const DisplacementScalarLFS& uLFS = lfsu.child(coordDir);
                 // compute gradient of u
                 for (size_t i = 0; i < dispSize; i++)
+                {
+//                     std::cout << "u[" << eIdx << "][" << i << "][" << coordDir << "] = " << x(uLFS,i) << std::endl;
+
                     uGrad[coordDir].axpy(x(uLFS,i),vGrad[i]);
+                }
              }
              // calculate the strain tensor epsilon
              Dune::FieldMatrix<RF,dim,dim> epsilon;
@@ -245,6 +255,8 @@ public:
             {
                 volumetricStrain += uGrad[coordDir][coordDir];
             }
+
+//             std::cout << "volumetricStrain[" << eIdx << "] = " << volumetricStrain << std::endl;
 
             // calculate the effective stress tensor effStress
             Dune::FieldMatrix<RF,dim,dim> deltaEffStress(0.0);
@@ -289,23 +301,12 @@ public:
             RT_P rhow(0.0);
             RT_P rhon(0.0);
 
-            Scalar porosityEffNew(0.0);
-
-            if(model_.problem().coupled() == true){
-                porosityEffNew = 1 - (1 - porosity)*exp(-volumetricStrain);
-            }
-            else{
-                porosityEffNew = porosity;
-            }
-
-            int numScv = eg.entity().subEntities(dim);
+            int numScv = fvGeometry.numScv;
             const GlobalPosition& globalPos = geometry.global(it->position());
 
             // fill primary variable vector for current quadrature point
             PrimaryVariables primVars;
 
-            primVars[wPhaseIdx] = pw;
-            primVars[nPhaseIdx] = sn;
             primVars[Indices::uxIdx] = ux;
             if (dim > 1)
                 primVars[Indices::uyIdx] = uy;
@@ -320,13 +321,27 @@ public:
 
             // interpolate pw, sn, rhon and rhow at current quadrature point
             // for (size_t i = 0; i < pressLFS.size(); i++)
-            for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
-            {
-                pw += model_.problem().getpw(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
-                sn += model_.problem().getSn(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
 
-                rhon += model_.problem().getRhon(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
-                rhow += model_.problem().getRhow(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+            // if box with rectangular elements, pw, sn etc are interpolated
+            if (numScv == 4)
+            {
+                for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
+                {
+                    pw += model_.problem().getpw(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+                    sn += model_.problem().getSn(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+
+                    rhon += model_.problem().getRhon(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+                    rhow += model_.problem().getRhow(eg.entity(), fvGeometry, scvIdx) * q[scvIdx];
+                }
+            }
+            // if cc pw, sn etc are constant per element
+            else
+            {
+                pw = model_.problem().getpw(eg.entity(), fvGeometry, 0);
+                sn = model_.problem().getSn(eg.entity(), fvGeometry, 0);
+
+                rhon = model_.problem().getRhon(eg.entity(), fvGeometry, 0);
+                rhow = model_.problem().getRhow(eg.entity(), fvGeometry, 0);
             }
 
             RT_P sw = 1.0 - sn;
@@ -341,29 +356,32 @@ public:
             RT_P deltaPeff;
             // calculate change in effective pressure with respect to initial conditions pInit (pInit is negativ)
             deltaPeff = pw*sw + pn*sn + model_.problem().pInit(globalPos, it->position(), eg.entity());
+            std::cout.precision(15);
+//             std::cout << "deltaPeff[" << eIdx << "] = " << deltaPeff << std::endl;
 
-             RF uDiv = traceEpsilon;
+            RF uDiv = traceEpsilon;
 
-             ElementVolumeVariables elemVolVars;
-             elemVolVars.update(model_.problem(), eg.entity(), fvGeometry, false);
+            ElementVolumeVariables elemVolVars;
+            elemVolVars.update(model_.problem(), eg.entity(), fvGeometry, false);
 
-             RF rhoDiff = rhon - rhow;
+            RF rhoDiff = rhon - rhow;
 
-             // geometric weight need for quadrature rule evaluation (numerical integration)
-             RF qWeight = it->weight() * geometry.integrationElement(it->position());
+            // geometric weight need for quadrature rule evaluation (numerical integration)
+            RF qWeight = it->weight() * geometry.integrationElement(it->position());
 
-             // evaluate basis functions
-             std::vector<RT_V> vBasis(dispSize);
-             lfsu.child(0).finiteElement().localBasis().evaluateFunction(it->position(), vBasis);
+            // evaluate basis functions
+            std::vector<RT_V> vBasis(dispSize);
+            lfsu.child(0).finiteElement().localBasis().evaluateFunction(it->position(), vBasis);
 
-             for(int coordDir = 0; coordDir < dim; ++coordDir) {
-                const DisplacementScalarLFS& uLFS = lfsu.child(coordDir);
-                // assemble momentum balance equation
+            for(int coordDir = 0; coordDir < dim; ++coordDir) {
+            const DisplacementScalarLFS& uLFS = lfsu.child(coordDir);
+            // assemble momentum balance equation
                 for (size_t i = 0; i < dispSize; i++){
                     // multiply effective stress with gradient of weighting function and geometric weight of quadrature rule
                     Scalar tmp = (deltaEffStress[coordDir] * vGrad[i]) * qWeight;
                     r.rawAccumulate(uLFS,i,tmp);
-
+//                     std::cout << "tmp1[" << eIdx << "][" << i << "][" << coordDir << "] = " << tmp << std::endl;
+//                     std::cout << "deltaEffStress[" << coordDir << "][" << eIdx << "] = " << deltaEffStress[coordDir] << std::endl;
                     // subtract effective pressure change contribution multiplied with gradient of weighting function
                     // and geometric weight of quadrature rule (soil mechanics sign conventions, compressive stresses are negative)
                     tmp = -(deltaPeff * vGrad[i][coordDir]) * qWeight;
@@ -373,10 +391,16 @@ public:
                     // multiplied with weighting function and geometric weight of quadrature rule.
                     // This assumes that the solid phase density remains constant, that the changes in porosity are very small,
                     // and that the density of the brine phase remains constant
-//                     tmp = sn*model_.problem().getEffPorosity(eg.entity(), fvGeometry, i)*rhoDiff*model_.problem().gravity()[coordDir]*vBasis[i]* qWeight;
-//                     r.rawAccumulate(uLFS,i,tmp);
-                    tmp = sn*porosityEffNew*rhoDiff*model_.problem().gravity()[coordDir]*vBasis[i]* qWeight;
+        //                     tmp = sn*model_.problem().getEffPorosity(eg.entity(), fvGeometry, i)*rhoDiff*model_.problem().gravity()[coordDir]*vBasis[i]* qWeight;
+        //                     r.rawAccumulate(uLFS,i,tmp);
+                    tmp = sn*elemVolVars[i].effPorosity*rhoDiff*model_.problem().gravity()[coordDir]*vBasis[i]* qWeight;
                     r.rawAccumulate(uLFS,i,tmp);
+
+//                                 std::cout << "before setting bc: r = ";
+//                                 for (auto val :  r.container().base())
+//                                     std::cout << val << ", ";
+//                                 std::cout << std::endl;
+//                     std::cout << "tmp2[" << eIdx << "][" << i << "][" << coordDir << "] = " << tmp << std::endl;
                 }
             }
         }
@@ -441,6 +465,11 @@ public:
                         for (size_t i = 0; i < dispSize; i++){
                             Scalar tmp = -traction[Indices::momentum(coordDir)] * vBasis[i] * qWeight;
                             r.rawAccumulate(uLFS,i,tmp);
+
+                            if (std::abs(tmp > 1e-12))
+                            {
+                                std::cout << "tmp[" << fIdx << "] = " << tmp << std::endl;
+                            }
                         }
 
                 }
@@ -496,6 +525,11 @@ public:
                                 Scalar tmp = x(uLFS,i) - dirichletValues[Indices::u(coordDir)] - tmpResVal;
                                 // write result into the residual vector
                                 r.rawAccumulate(uLFS,i,tmp);
+
+//                                 if (std::abs(tmpResVal > 1e-12))
+//                                 {
+//                                     std::cout << "tmpResVal[" << coordDir*dispSize + i << "] = " << tmpResVal << std::endl;
+//                                 }
                             }
                         }
                     }

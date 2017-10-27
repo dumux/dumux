@@ -20,8 +20,8 @@
  *        all fluxes of fluid phases over a face of a finite volume in the
  *        two phase discrete fracture-matrix model.
  */
-#ifndef DUMUX_MODELS_2P_FLUX_VARIABLES_HH
-#define DUMUX_MODELS_2P_FLUX_VARIABLES_HH
+#ifndef DUMUX_DECOUPLED_TWOP_FLUX_VARIABLES_HH
+#define DUMUX_DECOUPLED_TWOP_FLUX_VARIABLES_HH
 
 #include <dune/common/float_cmp.hh>
 
@@ -46,7 +46,7 @@ namespace Dumux
  * the intergration point, etc.
  */
 template <class TypeTag>
-class TwoPFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
+class DecoupledTwoPFluxVariables : public ImplicitDarcyFluxVariables<TypeTag>
 {
     friend class ImplicitDarcyFluxVariables<TypeTag>; // be friends with parent
     typedef ImplicitDarcyFluxVariables<TypeTag> ParentType;
@@ -85,19 +85,35 @@ public:
      * are calculated for interior SCV faces or boundary faces, default=false
      */
     DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    TwoPFluxVariables(const Problem &problem,
+    DecoupledTwoPFluxVariables(const Problem &problem,
                  const Element &element,
                  const FVElementGeometry &fvGeometry,
                  int fIdx,
                  const ElementVolumeVariables &elemVolVars,
                  const bool onBoundary = false)
-        : ImplicitDarcyFluxVariables<TypeTag>(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary) {}
+        : ParentType(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary)
+        {
+            calculateDDt_(problem, element, elemVolVars);
+            calculateNormalVelocity_(problem, element, elemVolVars);
+        }
 
     /*!
      * \brief Default constructor
      * \note This can be removed when the deprecated constructor is removed.
      */
-    TwoPFluxVariables() = default;
+    DecoupledTwoPFluxVariables() = default;
+
+    void update(const Problem &problem,
+                const Element &element,
+                const FVElementGeometry &fvGeometry,
+                const int fIdx,
+                const ElementVolumeVariables &elemVolVars,
+                const bool onBoundary = false)
+    {
+        ParentType::update(problem, element, fvGeometry, fIdx, elemVolVars, onBoundary);
+        calculateDDt_(problem, element, elemVolVars);
+        calculateNormalVelocity_(problem, element, elemVolVars);
+    }
 
         /*!
      * \brief Calculation of the time derivative of solid displacement
@@ -134,16 +150,51 @@ public:
     {
         // calculate the mean intrinsic permeability
         const SpatialParams &spatialParams = problem.spatialParams();
-        DimWorldMatrix K;
+        DimWorldMatrix Keff, Keff_i, Keff_j;
+
+        Scalar factor_i, factor_j;
+
         if (GET_PROP_VALUE(TypeTag, ImplicitIsBox))
         {
-            spatialParams.meanK(K,
-                                problem.getEffPermeability(element,
-                                                                    this->fvGeometry_(),
-                                                                    this->face().i),
-                                problem.getEffPermeability(element,
-                                                                    this->fvGeometry_(),
-                                                                    this->face().j));
+//             Scalar exp_i, exp_j;
+//             exp_i =
+//                     22.2
+//                             * (elemVolVars[this->face().i].effPorosity()
+//                                 / elemVolVars[this->face().i].initialPorosity()
+//                                     - 1);
+//             exp_j =
+//                     22.2
+//                             * (elemVolVars[this->face().j].effPorosity()
+//                                 / elemVolVars[this->face().j].initialPorosity()
+//                                     - 1);
+
+            factor_i = pow( (elemVolVars[this->face().i].effPorosity()
+                                / elemVolVars[this->face().i].initialPorosity()), 15);
+
+            factor_j = pow( (elemVolVars[this->face().j].effPorosity()
+                                / elemVolVars[this->face().j].initialPorosity()), 15);
+
+            Keff_i = spatialParams.intrinsicPermeability(element, this->fvGeometry_(), this->face().i);
+
+            Keff_j = spatialParams.intrinsicPermeability(element, this->fvGeometry_(), this->face().j);
+
+//             Keff_i *= exp(exp_i);
+//             Keff_j *= exp(exp_j);
+
+            Keff_i *= factor_i;
+            Keff_j *= factor_j;
+
+            spatialParams.meanK(Keff,
+                                Keff_i,
+                                Keff_j);
+
+//             spatialParams.meanK(K,
+//                                 problem.getEffPermeability(element,
+//                                                                     this->fvGeometry_(),
+//                                                                     this->face().i),
+//                                 problem.getEffPermeability(element,
+//                                                                     this->fvGeometry_(),
+//                                                                     this->face().j));
         }
         else
         {
@@ -155,9 +206,45 @@ public:
             FVElementGeometry fvGeometryJ;
             fvGeometryJ.subContVol[0].global = elementJ.geometry().center();
 
-            spatialParams.meanK(K,
-                                problem.getEffPermeability(elementI, fvGeometryI, 0),
-                                problem.getEffPermeability(elementJ, fvGeometryJ, 0));
+            factor_i = pow( (elemVolVars[this->face().i].effPorosity()
+                                / elemVolVars[this->face().i].initialPorosity()), 15);
+
+            factor_j = pow( (elemVolVars[this->face().j].effPorosity()
+                                / elemVolVars[this->face().j].initialPorosity()), 15);
+
+            Keff_i = spatialParams.intrinsicPermeability(elementI, fvGeometryI, this->face().i);
+
+            Keff_j = spatialParams.intrinsicPermeability(elementJ, fvGeometryJ, this->face().j);
+
+            Keff_i *= factor_i;
+            Keff_j *= factor_j;
+
+            spatialParams.meanK(Keff,
+                                Keff_i,
+                                Keff_j);
+
+            int eIdx = problem.model().elementMapper().index(element);
+            if (eIdx == 210)
+            {
+//                 std::cout << "phi_init_i = " << elemVolVars[this->face().i].initialPorosity() << std::endl;
+//                 std::cout << "phi_init_j = " << elemVolVars[this->face().j].initialPorosity() << std::endl;
+
+//                 std::cout << "elementI = " << problem.model().elementMapper().index(elementI) << std::endl;
+//                 std::cout << "elementJ = " << problem.model().elementMapper().index(elementJ) << std::endl;
+//
+//                 std::cout << "this->face().i = " << this->face().i << std::endl;
+//                 std::cout << "this->face().j = " << this->face().i << std::endl;
+// //
+//                 std::cout << "effPorosity[" << this->face().i <<"] = " << elemVolVars[this->face().i].effPorosity() << std::endl;
+//                 std::cout << "effPorosity[" << this->face().j <<"]  = " << elemVolVars[this->face().j].effPorosity() << std::endl;
+//
+//                 std::cout << "Keff_i = " << Keff_i << std::endl;
+//                 std::cout << "Keff_j = " << Keff_j << std::endl;
+            }
+
+//             spatialParams.meanK(K,
+//                                 problem.getEffPermeability(elementI, fvGeometryI, 0),
+//                                 problem.getEffPermeability(elementJ, fvGeometryJ, 0));
         }
 
         // loop over all phases
@@ -174,8 +261,18 @@ public:
             //  Q = - (K grad phi) dot n /|n| * A
 
 
-            K.mv(this->potentialGrad_[phaseIdx], this->kGradP_[phaseIdx]);
+            Keff.mv(this->potentialGrad_[phaseIdx], this->kGradP_[phaseIdx]);
             this->kGradPNormal_[phaseIdx] = this->kGradP_[phaseIdx]*this->face().normal;
+
+            int eIdx = problem.model().elementMapper().index(element);
+            if (phaseIdx == 0)
+            {
+                if (eIdx == 210)
+                {
+//                     std::cout << "Keff = " << Keff << std::endl;
+//                     std::cout << "kGradP_[phaseIdx] = " << this->kGradP_[phaseIdx] << std::endl;
+                }
+            }
 
             // determine the upwind direction
             if (this->kGradPNormal_[phaseIdx] < 0)

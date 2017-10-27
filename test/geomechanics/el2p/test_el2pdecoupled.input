@@ -1,20 +1,21 @@
 [TimeManager]
 TInitEnd = 3600       # [s]
-TEnd = 10000         # [s]
+TEnd = 4000         # [s]
 DtInitial = 3600 # [s]
 DtInitialSubProblem1 = 3600
 DtInitialSubProblem2 = 3600
+EpisodeLength = 3600  # [s]
 EpisodeLengthInit = 3600  # [s]
 EpisodeLengthMainSimulation = 100 # [s]
 NumIterationsInit = 3
-NumIterations = 30
+NumIterations = 10
 
 [Grid]
-File = ./grids/fault_finitewidth.msh
+File = ./grids/fault_finitewidthCoarse.msh
 Refine = 0
 
 [Damping]
-DampingFactor = 0.05
+DampingFactor = 0.20
 
 [Problem]
 Name = el2p_2pdecoupled # name passed to the output routines
@@ -43,15 +44,15 @@ DilationAngle = 10
 Rate = 0.0007  # source injection rate [kg / (m^3 s)] consistent with 700 kg / (100 x 100 x 300 m^3)
 DepthBOR = 2500     # Depth at the bottom of the scenario [m]
 InjectionStop = 20000.01  # 26531.38 for UndamagedShearStrength = 1.00, 26800 for UndamagedShearStrength = 0.95 [s]
-XminSource1 = 486.200       # x-Coordinate of the injection 1 (left)
-XmaxSource1 = 486.400       # x-Coordinate of the injection 1 (right)
-YminSource1 = 937.500     # y-Coordinate of the injection 1 (bottom)
-YmaxSource1 = 938.100      # y-Coordinate of the injection 1 (top)
+XminSource1 = 497.500       # x-Coordinate of the injection 1 (left)
+XmaxSource1 = 521.600       # x-Coordinate of the injection 1 (right)
+YminSource1 = 1045.300     # y-Coordinate of the injection 1 (bottom)
+YmaxSource1 = 1050.300      # y-Coordinate of the injection 1 (top)
 
-XminSource2 = 488.500       # x-Coordinate of the injection 2 (left)
-XmaxSource2 = 488.850    # x-Coordinate of the injection 2 (right)
-YminSource2 = 936.900    # y-Coordinate of the injection 2 (bottom)
-YmaxSource2 = 937.900    # y-Coordinate of the injection 2 (top)
+XminSource2 = 497.500      # x-Coordinate of the injection 2 (left)
+XmaxSource2 = 521.600      # x-Coordinate of the injection 2 (right)
+YminSource2 = 1045.300     # y-Coordinate of the injection 2 (bottom)
+YmaxSource2 = 1050.300     # y-Coordinate of the injection 2 (top)
 
 [Fluid]
 BrineDensity = 1000

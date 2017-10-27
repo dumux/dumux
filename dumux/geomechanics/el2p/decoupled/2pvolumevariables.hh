@@ -102,19 +102,23 @@ public:
             MaterialLaw::krn(materialParams, fluidState_.saturation(wPhaseIdx))
             / fluidState_.viscosity(nPhaseIdx);
 
+        initialPorosity_ = problem.spatialParams().porosity(element,
+                                                     fvGeometry,
+                                                     scvIdx);
+
         // porosity
-        if (isOldSol == true)
-        {
-            effPorosity_ = problem.getEffPorosityOldTimestep(element,
-                                                     fvGeometry,
-                                                     scvIdx);
-        }
-        else
-        {
-            effPorosity_ = problem.getEffPorosity(element,
-                                                     fvGeometry,
-                                                     scvIdx);
-        }
+//         if (isOldSol == true)
+//         {
+//             effPorosity_ = problem.getEffPorosityOldTimestep(element,
+//                                                      fvGeometry,
+//                                                      scvIdx);
+//         }
+//         else
+//         {
+//             effPorosity_ = problem.getEffPorosity(element,
+//                                                      fvGeometry,
+//                                                      scvIdx);
+//         }
 
 //         Scalar idx = problem.elementMapper().index(element);
 //         if(idx == 12873)
@@ -258,6 +262,23 @@ public:
     Scalar effPorosity() const
     { return effPorosity_; }
 
+    /*!
+     * \brief Returns the average porosity within the control volume in \f$[-]\f$.
+     */
+    Scalar initialPorosity() const
+    { return initialPorosity_; }
+
+    Scalar deltaVolumetricStrainCurrentIteration() const
+    { return deltaVolumetricStrainCurrentIteration_; }
+
+    Scalar deltaVolumetricStrainOldIteration() const
+    { return deltaVolumetricStrainOldIteration_; }
+
+
+    mutable Scalar effPorosity_;
+    mutable Scalar deltaVolumetricStrainCurrentIteration_;
+    mutable Scalar deltaVolumetricStrainOldIteration_;
+
 protected:
     static Scalar temperature_(const PrimaryVariables &priVars,
                                const Problem& problem,
@@ -288,8 +309,9 @@ protected:
     { }
 
     FluidState fluidState_;
-    Scalar effPorosity_;
+//     Scalar effPorosity_;
     Scalar mobility_[numPhases];
+    Scalar initialPorosity_;
 
 private:
     Implementation &asImp_()

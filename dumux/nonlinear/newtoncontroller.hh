@@ -706,13 +706,13 @@ protected:
            reduction_ = residual_;
            reduction_ /= initialResidual_;
 
-           if (reduction_ < lastReduction_ || lambda <= 0.125) {
+           if (reduction_ < lastReduction_ || lambda <= 0.01) {
                this->endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
                return;
            }
 
            // try with a smaller update
-           lambda /= 2.0;
+           lambda /= 4.0;
        }
     }
 

@@ -128,6 +128,9 @@ public:
         Bmatrix_= Ematrix_/(3.0*(1.0-2.0*nuMatrix_));
         Bfault_= Efault_/(3.0*(1.0-2.0*nuFault_));
 
+        poreCompFault_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.PoreCompFault);
+        poreCompMatrix_ = GET_RUNTIME_PARAM(TypeTag, Scalar,ElasticParameters.PoreCompMatrix);
+
         faultAngle_ = 90 + GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.FaultAngle);
 
         frictionAngleFault_ = GET_RUNTIME_PARAM(TypeTag, Scalar,FailureParameters.FrictionAngleFault) * M_PI / 180;
@@ -173,6 +176,192 @@ public:
         std::cout<< "episode set to: "<< episode_<<std::endl;
     }
 
+    /*!dumux efunktion
+     * \brief Define the porosity \f$[-]\f$ of the soil
+     *
+     * \param element The finite element
+     * \param fvGeometry The finite volume geometry
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the porosity needs to be defined
+     */
+    double porosity(const Element &element,
+                    const FVElementGeometry &fvGeometry,
+                    int scvIdx) const
+    {
+
+            GlobalPosition center = element.geometry().center();
+
+            Scalar xCoord = center[0];
+            Scalar yCoord = center[1];
+
+            Scalar xCenterFault = 500.0;
+            Scalar yCenterFault = 1000.0;
+
+            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
+
+            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+
+            Scalar deltaX = xCenterFault - xCoord;
+    //         std::cout << "deltaX is " << deltaX << std::endl;
+
+            //Different E, but same during initialization
+
+            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
+                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
+                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
+                yCoord > yFaultBottom &&
+                yCoord < yFaultTop)
+            {
+                return phi_;
+            }
+//             else if (xCoord > 487.5 && xCoord < 512.5 &&
+//                      yCoord > 987.5   && yCoord < 1012.5)
+//             {
+//                 return KFault_;
+//             }
+            else
+                return phi_;
+
+    }
+
+    /*!
+     * \brief Define the porosity \f$[-]\f$ of the soil
+     *
+     * \param globalPos The global position of the vertex
+     */
+    double porosity(const GlobalPosition& globalPos) const
+    {
+
+            Scalar xCoord = globalPos[0];
+            Scalar yCoord = globalPos[1];
+
+            Scalar xCenterFault = 500.0;
+            Scalar yCenterFault = 1000.0;
+
+            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
+
+            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+
+            Scalar deltaX = xCenterFault - xCoord;
+    //         std::cout << "deltaX is " << deltaX << std::endl;
+
+            //Different E, but same during initialization
+
+            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
+                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
+                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
+                yCoord > yFaultBottom &&
+                yCoord < yFaultTop)
+            {
+                return phi_;
+            }
+//             else if (xCoord > 487.5 && xCoord < 512.5 &&
+//                      yCoord > 987.5   && yCoord < 1012.5)
+//             {
+//                 return KFault_;
+//             }
+            else
+                return phi_;
+
+    }
+    /*!
+     * \brief Apply the intrinsic permeability tensor \f$[m^2]\f$ to a pressure
+     *        potential gradient.
+     *
+     * \param element The current finite element
+     * \param fvGeometry The current finite volume geometry of the element
+     * \param scvIdx The local index of the sub-control volume where
+     *                    the porosity needs to be defined
+     *
+     * During the initialization period the intrinsic permeability can be set to a larger
+     * value in order to accelerate the calculation of the hydrostatic pressure distribution.
+     */
+    const DimMatrix intrinsicPermeability(const Element &element,
+                                       const FVElementGeometry &fvGeometry,
+                                       int scvIdx) const
+    {
+        if(episode_ <= 0)
+            return Kinit_; // intrinsic permeability applied during initialization
+        else
+        {
+            GlobalPosition center = element.geometry().center();
+
+            Scalar xCoord = center[0];
+            Scalar yCoord = center[1];
+
+            Scalar xCenterFault = 500.0;
+            Scalar yCenterFault = 1000.0;
+
+            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
+
+            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+
+            Scalar deltaX = xCenterFault - xCoord;
+    //         std::cout << "deltaX is " << deltaX << std::endl;
+
+            //Different E, but same during initialization
+
+            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
+                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
+                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
+                yCoord > yFaultBottom &&
+                yCoord < yFaultTop)
+            {
+                return KFault_;
+            }
+//             else if (xCoord > 487.5 && xCoord < 512.5 &&
+//                      yCoord > 987.5   && yCoord < 1012.5)
+//             {
+//                 return KFault_;
+//             }
+            else
+                return KMatrix_;
+        }
+    }
+
+    const DimMatrix intrinsicPermeabilityAtPos(const GlobalPosition& globalPos) const
+    {
+        if(episode_ <= 0)
+            return Kinit_; // intrinsic permeability applied during initialization
+        else
+        {
+            Scalar xCoord = globalPos[0];
+            Scalar yCoord = globalPos[1];
+
+            Scalar xCenterFault = 500.0;
+            Scalar yCenterFault = 1000.0;
+
+            Scalar xFaultDistanceCenterToBothTips = 87.5; // x-distance in m to both tips of the fault
+
+            Scalar yFaultBottom = yCenterFault - tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+            Scalar yFaultTop = yCenterFault + tan(faultAngle_ * M_PI / 180) * xFaultDistanceCenterToBothTips;
+
+            Scalar deltaX = xCenterFault - xCoord;
+    //         std::cout << "deltaX is " << deltaX << std::endl;
+
+            //Different E, but same during initialization
+
+            if (std::abs(deltaX) < xFaultDistanceCenterToBothTips + eps_ &&
+                yCoord < yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX + spatialTolarance_ &&
+                yCoord > yCenterFault - tan(faultAngle_ * M_PI / 180) * deltaX - spatialTolarance_ &&
+                yCoord > yFaultBottom &&
+                yCoord < yFaultTop)
+            {
+                return KFault_;
+            }
+//             else if (xCoord > 487.5 && xCoord < 512.5 &&
+//                      yCoord > 987.5   && yCoord < 1012.5)
+//             {
+//                 return KFault_;
+//             }
+            else
+                return KMatrix_;
+        }
+    }
+
     void setAnyFailure(const bool& anyFailure)
     {
         anyFailure_ = anyFailure;
@@ -209,12 +398,12 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    const Dune::FieldVector<Scalar,3> lameParams(const Element &element,
+    const Dune::FieldVector<Scalar,4> lameParams(const Element &element,
                                            const FVElementGeometry &fvGeometry,
                                            int scvIdx) const
     {
         // Lame parameters
-        Dune::FieldVector<Scalar, 3> param;
+        Dune::FieldVector<Scalar, 4> param;
 
         //Different E, but same during initialization
 //         if(episode_ <= 1)
@@ -251,6 +440,7 @@ public:
                 param[0] = Efault_;
                 param[1] = Bfault_;
                 param[2] = nuFault_;
+                param[3] = poreCompFault_;
             }
 //             else if (xCoord > 487.5 && xCoord < 512.5 &&
 //                      yCoord > 987.5   && yCoord < 1012.5)
@@ -263,6 +453,7 @@ public:
                 param[0] = Ematrix_;
                 param[1] = Bmatrix_;
                 param[2] = nuMatrix_;
+                param[3] = poreCompMatrix_;
             }
 //         }
 
@@ -375,6 +566,7 @@ private:
     Scalar Ematrix_, Efault_;
     Scalar nuMatrix_, nuFault_;
     Scalar Bmatrix_, Bfault_;
+    Scalar poreCompFault_, poreCompMatrix_;
     Scalar faultAngle_;
     Scalar frictionAngleMatrix_, frictionAngleFault_;
     Scalar cohesionMatrix_, cohesionFault_;

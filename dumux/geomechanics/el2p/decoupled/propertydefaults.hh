@@ -111,7 +111,7 @@ SET_PROP(BoxElasticTwoP, Indices)
 };
 
 //! The FluxVariables required by the two-phase linear-elastic model
-SET_TYPE_PROP(BoxElasticTwoP, FluxVariables, ElTwoPFluxVariables<TypeTag>);
+SET_TYPE_PROP(BoxElasticTwoP, FluxVariables, DecoupledElasticFluxVariables<TypeTag>);
 
 //! the default upwind factor. Default 1.0, i.e. fully upwind...
 SET_SCALAR_PROP(BoxElasticTwoP, ImplicitMassUpwindWeight, 1.0);

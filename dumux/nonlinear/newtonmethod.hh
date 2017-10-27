@@ -117,7 +117,7 @@ protected:
     bool execute_(NewtonController &ctl)
     {
         SolutionVector &uCurrentIter = model().curSol();
-        SolutionVector uLastIter(uCurrentIter);
+        SolutionVector &uLastIter = model().lastIter();
         SolutionVector deltaU(uCurrentIter);
 
         JacobianAssembler &jacobianAsm = model().jacobianAssembler();
@@ -137,8 +137,6 @@ protected:
             // a new timestep
             ctl.newtonBeginStep();
 
-            // make the current solution to the old one
-            uLastIter = uCurrentIter;
 
             if (ctl.verbose()) {
                 std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
@@ -153,6 +151,9 @@ protected:
             assembleTimer.start();
             jacobianAsm.assemble();
             assembleTimer.stop();
+
+            // make the current solution to the old one
+            uLastIter = uCurrentIter;
 
             ///////////////
             // linear solve

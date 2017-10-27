@@ -32,6 +32,7 @@
 #include <dumux/geomechanics/el2p/decoupled/2pfluxvariables.hh>
 #include <dumux/geomechanics/el2p/decoupled/2plocalresidual.hh>
 #include <dumux/geomechanics/el2p/decoupled/2pvolumevariables.hh>
+#include <dumux/geomechanics/el2p/decoupled/2pelementvolumevariables.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/implicit/cellcentered/propertydefaults.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
@@ -79,6 +80,25 @@ SET_TYPE_PROP(TwoP_TestProblem, CO2Table, Dumux::ViscoEl2P::CO2Tables);
 // Set the salinity mass fraction of the brine in the reservoir
 SET_SCALAR_PROP(TwoP_TestProblem, ProblemSalinity, 0);
 
+// // Set the wetting phase
+// SET_PROP(TwoP_TestProblem, WettingPhase)
+// {
+// private:
+//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+// public:
+//     typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
+// };
+//
+// // Set the non-wetting phase
+// SET_PROP(TwoP_TestProblem, NonwettingPhase)
+// {
+// private:
+//     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+// public:
+//     typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
+// };
+
+
 // Set the initial pressure and saturation function
 SET_PROP(TwoP_TestProblem, InitialPressSat)
 {
@@ -94,7 +114,11 @@ SET_INT_PROP(TwoP_TestProblem, LinearSolverVerbosity, 0);
 
 SET_SCALAR_PROP(TwoP_TestProblem, NewtonMaxRelativeShift, 1e-5);
 // SET_BOOL_PROP(TwoP_TestProblem, NewtonWriteConvergence, true);
-// SET_BOOL_PROP(TwoP_TestProblem, NewtonUseLineSearch, true);
+SET_BOOL_PROP(TwoP_TestProblem, NewtonUseLineSearch, true);
+// SET_BOOL_PROP(TwoP_TestProblem, NewtonUseDampedUpdate, true);
+SET_INT_PROP(TwoP_TestProblem, NewtonMaxSteps, 2000);
+
+SET_BOOL_PROP(TwoP_TestProblem, EvalGradientsAtSCVCenter, true);
 
 // disable jacobian matrix recycling
 SET_BOOL_PROP(TwoP_TestProblem, ImplicitEnableJacobianRecycling, false);
@@ -108,13 +132,16 @@ SET_BOOL_PROP(TwoP_TestProblem, ProblemEnableGravity, true);
 SET_TYPE_PROP(TwoP_TestProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 // use the TwoPFluxVariables instead of the ImplicitDarcyFluxVariables
-SET_TYPE_PROP(TwoP_TestProblem, FluxVariables, TwoPFluxVariables<TypeTag>);
+SET_TYPE_PROP(TwoP_TestProblem, FluxVariables, DecoupledTwoPFluxVariables<TypeTag>);
 
 // use the decoupled 2p model
 SET_TYPE_PROP(TwoP_TestProblem, Model, DecoupledTwoPModel<TypeTag>);
 
-// use the decoupled 2p model
+// use the decoupled 2p volume variables
 SET_TYPE_PROP(TwoP_TestProblem, VolumeVariables, DecoupledTwoPVolumeVariables<TypeTag>);
+
+// use the decoupled 2p element volume variables
+SET_TYPE_PROP(TwoP_TestProblem, ElementVolumeVariables, DecoupledTwoPElementVolumeVariables<TypeTag>);
 
 // Use the modified decoupled 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(TwoP_TestProblem,
@@ -245,16 +272,19 @@ public:
                           /*pmax=*/1e8,
                           /*np=*/200);
 
-        // resize the pressure field vector with the number of vertices
-        pInit_.resize(gridView.size(dim));
-        // fill the pressure field vector with zeros
-        std::fill( pInit_.begin(), pInit_.end(), 0.0 );
+//         // resize the pressure field vector with the number of vertices
+//         pInit_.resize(gridView.size(dim));
+//         // fill the pressure field vector with zeros
+//         std::fill( pInit_.begin(), pInit_.end(), 0.0 );
 
         // variable which determines if output should be written (initially set to false)
         output_ = false;
         // define if current run is initialization run
         // (initially set to true, will be set to false if initialization is over)
         initializationRun_ = true;
+        // defines if feedback from geomechanics on flow is taken into account or not
+        // (usually the coupling is switched off for the initialization run)
+        coupled_ = false;
 
         // set initial episode length equal to length of initialization period
         tInitEnd_ = GET_RUNTIME_PARAM(TypeTag, Scalar,TimeManager.TInitEnd);
@@ -264,7 +294,6 @@ public:
         this->spatialParams().setEpisode(this->timeManager().episodeIndex());
 
         depthBOR_ = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.DepthBOR);
-        episodeLength_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.EpisodeLengthMainSimulation);
 
 //         eps_ = 3e-6;
 //         brineDensity_ = 1000;
@@ -277,27 +306,44 @@ public:
             // set the initial approximated hydrostatic pressure distribution
             // based on an averaged brine density
             // or based on a pressure polynomial
-            this->initializePressure();
+//             this->initializePressure();
             // output is written
-            this->setOutput(true);
+//             this->setOutput(true);
             std::cout << "I am in the init() function" << std::endl;
         }
 
         ParentType::init();
     }
 
-    void initializePressure()
-    {
-        VertexIterator vIt = gridView_.template begin<dim>();
-        VertexIterator vEndIt = gridView_.template end<dim>();
-        for(; vIt != vEndIt; ++vIt)
-        {
-            int globalIdx = vertexMapper_.index(*vIt);
-            GlobalPosition globalPos = (*vIt).geometry().corner(0);
+//     void initializePressure()
+//     {
+//         VertexIterator vIt = gridView_.template begin<dim>();
+//         VertexIterator vEndIt = gridView_.template end<dim>();
+//         for(; vIt != vEndIt; ++vIt)
+//         {
+//             int globalIdx = vertexMapper_.index(*vIt);
+//             GlobalPosition globalPos = (*vIt).geometry().corner(0);
+//
+//             // initial approximate pressure distribution at start of initialization run
+//             pInit_[globalIdx] = -(1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81);
+//             std::cout.precision(15);
+// //             std::cout << "pInit[" << globalIdx << "] = " << pInit_[globalIdx] << std::endl;
+//         }
+//     }
 
-            // initial approximate pressure distribution at start of initialization run
-            pInit_[globalIdx] = -(1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81);
-        }
+    // allows to change the coupled_ variable which defines if geomechanical feedback on flow is taken
+    // into account
+    void setCoupled(bool coupled)
+    {
+        coupled_ = coupled;
+        std::cout << "coupled_ set to " << coupled_ << std::endl;
+    }
+
+    // returns the coupled_ variable which defines if geomechanical feedback on flow is taken
+    // into account
+    bool coupled() const
+    {
+        return coupled_;
     }
 
     // allows to change the output_ variable which defines if output is written
@@ -305,6 +351,24 @@ public:
     {
         output_ = output;
     }
+
+//         /*!
+//      * \brief Set the old effective porosity vector of the transport problem.
+//      */
+//     std::vector<std::vector<Scalar>> &setPInit()
+//     {
+//         std::cout<<"El2P_TestProblem: initialized pressure field copied to pInit_"<<std::endl;
+//         for(const auto& vertex : vertices(gridView_))
+//         {
+//             int vIdxGlobal = this->vertexMapper().index(vertex);
+//
+// //             std::cout<< "curSol[0] is " << this->model().curSol()[vIdxGlobal][0] << std::endl;
+// //             std::cout<< "curSol[1] is " << this->model().curSol()[vIdxGlobal][1] << std::endl;
+//
+//             pInit_[vIdxGlobal] = -1.0 * this->model().curSol()[vIdxGlobal][0];
+// //             std::cout<< " pInit_[" << vIdxGlobal << "] is " << pInit_[vIdxGlobal] << std::endl;
+//         }
+//     }
 
     // returns the initializationRun_ variable which defines if this is an initialization run
     bool initializationRun()
@@ -386,12 +450,12 @@ public:
         return brineDensity_;
     }
 
-    // note: pInit is < 0
-    // function which returns initial pressure distribution
-    std::vector<Scalar> pInit()
-    {
-        return pInit_;
-    }
+//     // note: pInit is < 0
+//     // function which returns initial pressure distribution
+//     std::vector<Scalar> pInit()
+//     {
+//         return pInit_;
+//     }
 
     // returns true if the current solution should be written to
     // disk (i.e. as a VTK file)
@@ -440,6 +504,12 @@ public:
                 values.setDirichlet(saturationIdx, contiNEqIdx);
             }
 
+            if(globalPos[0] > this->bBoxMax()[0]-eps_)
+            {
+                values.setDirichlet(pressureIdx, contiWEqIdx);
+                values.setDirichlet(saturationIdx, contiNEqIdx);
+            }
+
             // The pressure on top is set to the initial pressure.
             // The solid displacement is fixed in y
             if(globalPos[1] > this->bBoxMax()[1]-eps_)
@@ -459,13 +529,14 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichlet(PrimaryVariables &values, const Vertex &vertex) const
-    {
-        const GlobalPosition globalPos = vertex.geometry().center();
-
-        dirichletAtPos(values, globalPos);
-        values[0] = -pInit_[this->vertexMapper().index(vertex)];
-    }
+//     void dirichlet(PrimaryVariables &values, const Intersection &intersection) const
+//     {
+//         const GlobalPosition globalPos = intersection.geometry().center();
+//
+//         values[pressureIdx] =  1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81;
+//
+//         std::cout << "values[pressureIdx] at" << globalPos << "] = " << values[pressureIdx] << std::endl;
+//     }
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
@@ -479,10 +550,10 @@ public:
      */
     void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) const
     {
-        if(initializationRun_ == true)
-        {
-            values = 0.0;
-        }
+        values[pressureIdx] =  1.0e5 + (depthBOR_ - globalPos[1]) * brineDensity_ * 9.81;
+        values[saturationIdx] = 0.0;
+
+//         std::cout << "values[pressureIdx] at" << globalPos << "] = " << values[pressureIdx] << std::endl;
     }
 
     /*!
@@ -538,6 +609,7 @@ public:
             const FVElementGeometry &fvGeometry,
             int scvIdx) const
     {
+//         const GlobalPosition globalPos = element.geometry().center();
         const GlobalPosition globalPos = element.geometry().corner(scvIdx);
 
         sourceAtPos(values, globalPos);
@@ -563,6 +635,8 @@ public:
                 {
                     values[pressureIdx] = GET_RUNTIME_PARAM(TypeTag, Scalar, Injection.Rate);
                     values[saturationIdx] = 0.0;
+
+//                     std::cout << "Injection: globalPos = " << globalPos[0] << " " << globalPos[1] << std::endl;
                 }
             }
         }
@@ -613,37 +687,46 @@ public:
      */
     void episodeEnd()
     {
-        Scalar oldTimeStep = this->timeManager().timeStepSize();
-        //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
-        //and the failureTimeStepSize for anyFailure = true
-        double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
-        std::cout << "newTimeStepSize is " << newTimeStepSize << "\n";
-        if(this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
-        {
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-            std::cout << "episodeLength_ is " << episodeLength_ << "\n";
-        }
-        else
-        {
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-            std::cout << "episodeLength_ is " << episodeLength_ << "\n";
-        }
-//         if(this->timeManager().time() > 26400.0 - eps_)
+//         Scalar oldTimeStep = this->timeManager().timeStepSize();
+//         //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
+//         //and the failureTimeStepSize for anyFailure = true
+//         double newTimeStepSize = this->newtonController().suggestTimeStepSize(oldTimeStep);
+//         std::cout << "2p: newTimeStepSize is " << newTimeStepSize << "\n";
+//         if( (this->timeManager().time() + this->timeManager().timeStepSize() > tInitEnd_ + eps_)
+//             && ( this->timeManager().episodeIndex() < 2) )
 //         {
-//             episodeLength_ = 3600.0;
-//        }
-//         if(this->timeManager().time() > 10800 - eps_)
-//         {
-//             episodeLength_ = 1200.0;
+//             episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
 //         }
-//         if(this->timeManager().time() > 12000 - eps_)
+// //         if(this->timeManager().time() > 26400.0 - eps_)
+// //         {
+// //             episodeLength_ = 3600.0;
+// //        }
+// //         if(this->timeManager().time() > 10800 - eps_)
+// //         {
+// //             episodeLength_ = 1200.0;
+// //         }
+//         if( this->timeManager().episodeIndex() >= 2)
 //         {
-//             episodeLength_ = 100.0;
+//             episodeLength_ = episodeLength_ * 2.0;
 //         }
-
-        this->timeManager().startNextEpisode(episodeLength_);
-        this->timeManager().setTimeStepSize(newTimeStepSize);
-        std::cout << "TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
+//         if( this->timeManager().episodeIndex() == 10)
+//             episodeLength_ = 389.0;
+//         if( this->timeManager().episodeIndex() == 12)
+//             episodeLength_ = 122.0;
+//         if( this->timeManager().episodeIndex() == 16)
+//             episodeLength_ = 92.0;
+//         if( this->timeManager().episodeIndex() == 21)
+//             episodeLength_ = 840;
+//         if( this->timeManager().episodeIndex() == 23)
+//             episodeLength_ = 1820;
+//         if( this->timeManager().episodeIndex() == 24)
+//             episodeLength_ = 100;
+//
+//         std::cout << "2p: episodeLength_ is " << episodeLength_ << "\n";
+//
+//         this->timeManager().startNextEpisode(episodeLength_);
+//         this->timeManager().setTimeStepSize(episodeLength_);
+//         std::cout << "2p: TimeStepSize_ " << this->timeManager().timeStepSize() << "\n";
     }
 
     /*!
@@ -688,7 +771,7 @@ public:
                 int scvIdx) const
     {
         int eIdx = this->model().elementMapper().index(element);
-        return effPorosityVectorOldIteration_[eIdx][scvIdx];
+        return effPorosityVectorOldIteration_[eIdx];
     }
 
     /*!
@@ -700,20 +783,103 @@ public:
     /*!
        * \brief Get the volumetricStrain of an element for the last iteration.
     */
-    Scalar getVolumetricStrainOldIteration(const Element &element,
+    Scalar getDeltaVolumetricStrainOldIteration(const Element &element,
                 const FVElementGeometry &fvGeometry,
                 int scvIdx) const
     {
         int eIdx = this->model().elementMapper().index(element);
-        return volumetricStrainOldIteration_[eIdx][scvIdx];
+        return deltaVolumetricStrainOldIteration_[eIdx][scvIdx];
     }
 
     /*!
      * \brief Set the volumetricStrain of an element for the last iteration.
      */
-    std::vector<std::vector<Scalar>> &setVolumetricStrainOldIteration()
-    { return volumetricStrainOldIteration_; }
+    std::vector<std::vector<Scalar>> &setDeltaVolumetricStrainOldIteration()
+    { return deltaVolumetricStrainOldIteration_; }
 
+    /*!
+       * \brief Get pInit of a scv for the previous iteration.
+    */
+    Scalar getpInitPerScv_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return pInitPerScv_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set pInit of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setpInitPerScv_()
+    { return pInitPerScv_; }
+
+    /*!
+       * \brief Get pW of a scv for the previous iteration.
+    */
+    Scalar getpWOldIteration_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return pWOldIteration_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set pW of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setpWOldIteration_()
+    { return pWOldIteration_; }
+
+    /*!
+       * \brief Get pN of a scv for the previous iteration.
+    */
+    Scalar getpNOldIteration_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return pNOldIteration_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set pN of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setpNOldIteration_()
+    { return pNOldIteration_; }
+
+    /*!
+       * \brief Get sW of a scv for the previous iteration.
+    */
+    Scalar getsWOldIteration_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return sWOldIteration_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set sW of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setsWOldIteration_()
+    { return sWOldIteration_; }
+    /*!
+       * \brief Get sN of a scv for the previous iteration.
+    */
+    Scalar getsNOldIteration_(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int eIdx = this->model().elementMapper().index(element);
+        return sNOldIteration_[eIdx][scvIdx];
+    }
+
+    /*!
+     * \brief Set sN of a scv for the previous iteration.
+     */
+    std::vector<std::vector<Scalar>> &setsNOldIteration_()
+    { return sNOldIteration_; }
     /*!
        * \brief Get the effective Porosity of an element for the last iteration.
     */
@@ -730,6 +896,23 @@ public:
      */
     std::vector<std::vector<Scalar>> &setEffPermeability()
     { return effPermeabilityVector_; }
+
+   /*!
+    * \brief Get the node average bulk modulus
+    */
+    Scalar getBNodeWiseAveraged(const Element &element,
+                const FVElementGeometry &fvGeometry,
+                int scvIdx) const
+    {
+        int dofIdx = this->model().vertexMapper().subIndex(element, scvIdx, dim);
+        return BNodeWiseAveraged_[dofIdx];
+    }
+
+    /*!
+     * \brief Set the node average bulk modulus
+     */
+    std::vector<Scalar> &setBNodeWiseAveraged()
+    { return BNodeWiseAveraged_; }
 
     DimVector getdU(const Element &element,
                 const FVElementGeometry &fvGeometry,
@@ -754,18 +937,37 @@ public:
     std::vector<std::vector<DimVector>> &setdU()
     { return dUVector_; }
 
+
+   /*!
+    * \brief Get the iteration number
+    */
+    int getIteration() const
+    {
+        return iteration_;
+    }
+
+    /*!
+     * \brief Set the iteration number
+     */
+    int &setIteration()
+    { return iteration_; }
+
 private:
     static constexpr Scalar eps_ = 3e-6;
     Scalar depthBOR_;
     static constexpr Scalar brineDensity_ = 1000;
     Scalar episodeLength_;
 
-    std::vector<Scalar> pInit_;
+//     std::vector<Scalar> pInit_;
+    std::vector<std::vector<Scalar>> pInitPerScv_;
     GridView gridView_;
     VertexMapper vertexMapper_;
-    std::vector<std::vector<Scalar>> effPorosityVector_, effPorosityVectorOldTimestep_, effPorosityVectorOldIteration_, effPermeabilityVector_, volumetricStrainOldIteration_;
+    std::vector<std::vector<Scalar>> effPorosityVector_, effPorosityVectorOldTimestep_, effPorosityVectorOldIteration_, effPermeabilityVector_, deltaVolumetricStrainOldIteration_;
+    std::vector<std::vector<Scalar>> pWOldIteration_, pNOldIteration_, sWOldIteration_,sNOldIteration_;
     std::vector<std::vector<DimVector>> dUVector_;
+        std::vector<Scalar> BNodeWiseAveraged_;
     Scalar tInitEnd_;
+    int iteration_;
 public:
     bool initializationRun_, coupled_, output_;
     InitialStressField initialStressField_;

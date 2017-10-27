@@ -163,6 +163,8 @@ public:
                 const FVElementGeometry &fvGeometry,
                 bool isOldSol)
     {
+        int eIdx = problem.model().elementMapper().index(element);
+
         int numScv = element.subEntities(dim);
 
         // retrieve the current or the previous solution vector and write the values into globalSol
@@ -202,6 +204,7 @@ public:
         for (int scvIdx = 0; scvIdx < numScv; scvIdx++)
         {
             GlobalPosition scvCenter = fvGeometry.subContVol[scvIdx].localCenter;
+            GlobalPosition scvCenterGlobal = element.geometry().global(fvGeometry.subContVol[scvIdx].localCenter);
 
             // evaluate gradient of displacement shape functions at the center of
             // the sub control volume in the reference element
@@ -256,13 +259,21 @@ public:
 //                      (*this)[scvIdx].effPorosity = ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].divU)/(1.0 + (*this)[scvIdx].divU);
 // //                      std::cout << "effPorosity is " << (*this)[scvIdx].effPorosity << std::endl;
 //
-//
+                    (*this)[scvIdx].effPorosity = ((*this)[scvIdx].initialPorosity() + (*this)[scvIdx].volumetricStrain)/*/(1.0 + (*this)[scvIdx].volumetricStrain)*/;
                     // Alternative after Cappa & Rutquist (2011)
-                   (*this)[scvIdx].effPorosity = 1 - (1 - (*this)[scvIdx].initialPorosity() )*exp( -((*this)[scvIdx].volumetricStrain) );
+//                    (*this)[scvIdx].effPorosity = 1 - (1 - (*this)[scvIdx].initialPorosity() )*exp( -((*this)[scvIdx].volumetricStrain) );
 //                    std::cout << "effPorosity[" << scvIdx << "] is " << (*this)[scvIdx].effPorosity << std::endl;
             }
             else
                 (*this)[scvIdx].effPorosity = (*this)[scvIdx].initialPorosity();
+
+            if( ((scvCenterGlobal[0] > 740) && (scvCenterGlobal[0] < 1260)) &&
+            ((scvCenterGlobal[1] > 740) && (scvCenterGlobal[1] < 1260)) )
+            {
+//                 std::cout << "volumetricStrain[" << eIdx << "][" << scvIdx << "] = " << (*this)[scvIdx].volumetricStrain << std::endl;
+//
+//                 std::cout << "effPorosity_ = " << (*this)[scvIdx].effPorosity << std::endl;
+            }
 
         }
     }

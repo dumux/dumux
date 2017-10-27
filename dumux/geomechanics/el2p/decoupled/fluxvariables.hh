@@ -28,8 +28,8 @@
  *
  * This class inherits from the two-phase model FluxVariables
  */
-#ifndef DUMUX_EL2P_FLUX_VARIABLES_HH
-#define DUMUX_EL2P_FLUX_VARIABLES_HH
+#ifndef DUMUX_DECOUPLED_ELASTIC_FLUX_VARIABLES_HH
+#define DUMUX_DECOUPLED_ELASTIC_FLUX_VARIABLES_HH
 
 #include <dune/pdelab/gridfunctionspace/localfunctionspace.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
@@ -56,7 +56,7 @@ NEW_PROP_TAG(SpatialParams);
  *
  */
 template<class TypeTag>
-class ElTwoPFluxVariables
+class DecoupledElasticFluxVariables
 {
     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
     typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
@@ -94,7 +94,7 @@ public:
      * are calculated for interior SCV faces or boundary faces, default=false
      */
     DUNE_DEPRECATED_MSG("FluxVariables now have to be default constructed and updated.")
-    ElTwoPFluxVariables(const Problem &problem,
+    DecoupledElasticFluxVariables(const Problem &problem,
                         const Element &element,
                         const FVElementGeometry &fvGeometry,
                         int fIdx,
@@ -106,7 +106,7 @@ public:
      * \brief Default constructor
      * \note This can be removed when the deprecated constructor is removed.
      */
-    ElTwoPFluxVariables() = default;
+    DecoupledElasticFluxVariables() = default;
 
     /*!
      * \brief Compute / update the flux variables

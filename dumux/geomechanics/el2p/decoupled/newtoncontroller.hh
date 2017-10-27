@@ -26,6 +26,14 @@
 
 namespace Dumux {
 
+namespace Properties
+{
+    NEW_PROP_TAG(NewtonUseDampedUpdate);
+//     NEW_PROP_TAG(NewtonDampingFactor);
+
+    SET_BOOL_PROP(NewtonMethod, NewtonUseDampedUpdate, false);
+//     SET_SCALAR_PROP(NewtonMethod, NewtonDampingFactor, 0.7);
+}
 /*!
 * \brief An el2p specific controller for the newton solver.
 *
@@ -83,22 +91,34 @@ public:
         newtonUpdateRelError(uLastIter, deltaU);
 
         useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
+        useDampedUpdate_ = false;
+//         dampingFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, NewtonDampingFactor);
 
         if (useLineSearch_)
         {
             this->lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
+        }
+        else if (useDampedUpdate_)
+        {
+            uCurrentIter = uLastIter;
+            SolutionVector deltaUDamped(deltaU);
+            deltaUDamped *= 0.8;
+            uCurrentIter -= deltaUDamped;
         }
         else
         {
             uCurrentIter = uLastIter;
             uCurrentIter -= deltaU;
 
-//             if (enableResidualCriterion_)
-//             {
-//                 SolutionVector tmp(uLastIter);
-//                 reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
-//                 reduction_ /= initialResidual_;
-//             }
+            if (this->enableResidualCriterion_)
+            {
+                SolutionVector tmp(uLastIter);
+                this->reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                std::cout << "before: reduction = " << this->reduction_ << std::endl;
+                this->reduction_ /= this->initialResidual_;
+                std::cout << "after: reduction = " << this->reduction_
+                  << ", initialResidual = " << this->initialResidual_ << std::endl;
+            }
         }
 
 //        printvector(std::cout, deltaU, "new solution", "row", 12, 1, 3);
@@ -125,7 +145,7 @@ public:
                 if (this->gridView_().comm().size() > 1)
                     norm2 = this->gridView_().comm().sum(norm2);
 
-                initialResidual_ = std::sqrt(norm2);
+                this->initialResidual_ = std::sqrt(norm2);
             }
 
             int converged = linearSolver_.solve(A.base(), x.base(), b.base());
@@ -179,10 +199,12 @@ public:
 
     // residual criterion variables
 //     Scalar reduction_;
-    Scalar initialResidual_;
+//     Scalar initialResidual_;
 //     Scalar reductionTolerance_;
 
     bool useLineSearch_;
+    bool useDampedUpdate_;
+    Scalar dampingFactor_;
     // the linear solver
     LinearSolver linearSolver_;
 

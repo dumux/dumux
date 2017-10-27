@@ -102,6 +102,7 @@ public:
         int numDofs = asImp_().numDofs();
         uCur_.resize(numDofs);
         uPrev_.resize(numDofs);
+        uLastIter_.resize(numDofs);
         if (isBox)
             boxVolume_.resize(numDofs);
 
@@ -125,6 +126,7 @@ public:
         // also set the solution of the "previous" time step to the
         // initial solution.
         uPrev_ = uCur_;
+        uLastIter_ = uCur_;
     }
 
     void setHints(const Element &element,
@@ -338,6 +340,18 @@ public:
     { return uPrev_; }
 
     /*!
+     * \brief Reference to the solution of the last iteration as a block vector.
+     */
+    const SolutionVector &lastIter() const
+    { return uLastIter_; }
+
+    /*!
+     * \brief Reference to the solution of the last iteration as a block vector.
+     */
+    SolutionVector &lastIter()
+    { return uLastIter_; }
+
+    /*!
      * \brief Returns the operator assembler for the global jacobian of
      *        the problem.
      */
@@ -458,6 +472,7 @@ public:
         if(GET_PROP_VALUE(TypeTag, AdaptiveGrid) && problem_().gridAdapt().wasAdapted())
         {
             uPrev_ = uCur_;
+            uLastIter_ = uCur_;
 
             updateBoundaryIndices_();
 
@@ -501,6 +516,7 @@ public:
         // previous time step so that we can start the next
         // update at a physically meaningful solution.
         uCur_ = uPrev_;
+        uLastIter_ = uPrev_;
         if (isBox)
             curHints_ = prevHints_;
 
@@ -518,6 +534,7 @@ public:
     {
         // make the current solution the previous one.
         uPrev_ = uCur_;
+        uLastIter_ = uCur_;
         if (isBox)
             prevHints_ = curHints_;
 
@@ -1014,6 +1031,7 @@ protected:
     // solution of the previous time step
     SolutionVector uCur_;
     SolutionVector uPrev_;
+    SolutionVector uLastIter_;
 
     Dune::BlockVector<Dune::FieldVector<Scalar, 1> > boxVolume_;
 

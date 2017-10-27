@@ -208,7 +208,7 @@ public:
         // (during intialization episode hydraulic different parameters might be applied)
         MechanicsProblem().spatialParams().setEpisode(ParentType::timeManager_.episodeIndex());
 
-        output_ = false;
+        output_ = true;
     }
 
     /*!
@@ -232,38 +232,74 @@ public:
         unsigned numVert = gridView_.size(dim);
         unsigned numElements = gridView_.size(0);
 
+//         std::cout << "numVert = " << numVert << std::endl;
+//         std::cout << "numElements = " << numElements << std::endl;
+
         ScalarField rank;
         rank.resize(numElements);
+
+        lastSol_.resize(numVert);
 
         std::vector<Scalar> zerosNumVert(numVert, 0.0);
         std::vector<int> zerosNumVertInt(numVert, 0);
         std::vector<Scalar> zerosNumElements(numElements, 0.0);
 
-        pwVector_ = zerosNumVert;
-        pnVector_ = zerosNumVert;
-        pcVector_ = zerosNumVert;
-        SwVector_ = zerosNumVert;
-        SnVector_ = zerosNumVert;
-        rhonVector_ = zerosNumVert;
-        rhowVector_ = zerosNumVert;
+        pwVector_.resize(numElements);
+        pnVector_.resize(numElements);
+        pcVector_.resize(numElements);
+        SwVector_.resize(numElements);
+        SnVector_.resize(numElements);
+        rhonVector_.resize(numElements);
+        rhowVector_.resize(numElements);
 
-        factorP_ = zerosNumVert;
-        localFactorP_ = zerosNumVert;
         numScvOfNode_ = zerosNumVert;
-
-        effPressureVector_ = zerosNumElements;
+        BNodeWiseAveraged_ = zerosNumVert;
 
         effPorosityVector_.resize(numElements);
-        effPorosityVectorOldIteration_.resize(numElements);
-        effPorosityVectorFirstIteration_.resize(numElements);
-        volumetricStrainOldIteration_.resize(numElements);
-        effPorosityVectorOldTimestep_.resize(numElements);
-        lowerLimitEffPorosity_.resize(numElements);
-        upperLimitEffPorosity_.resize(numElements);
         effPermeabilityVector_.resize(numElements);
+        volumetricStrain_.resize(numElements);
+        deltaVolumetricStrainOldIteration_.resize(numElements);
         dUVector_.resize(numElements);
 
-        MechanicsProblem().setEffPressure() = effPressureVector_;
+        FVElementGeometryTranspProblem fvGeometryTranspProblem;
+
+        for (const auto& element : elements(gridView_))
+        {
+            if(element.partitionType() == Dune::InteriorEntity)
+            {
+                for (int eIdx = 0; eIdx < numElements; ++eIdx)
+                {
+                    fvGeometryTranspProblem.update(gridView_, element);
+
+                    int numScv = fvGeometryTranspProblem.numScv;
+//                     std::cout << "numScv = " << numScv << std::endl;
+
+                    effPorosityVector_[eIdx].resize(numScv);
+                    effPermeabilityVector_[eIdx].resize(numScv);
+
+                    volumetricStrain_[eIdx].resize(numScv);
+                    deltaVolumetricStrainOldIteration_[eIdx].resize(numScv);
+                    dUVector_[eIdx].resize(numScv);
+
+                    pwVector_[eIdx].resize(numScv);
+                    pnVector_[eIdx].resize(numScv);
+                    pcVector_[eIdx].resize(numScv);
+                    SwVector_[eIdx].resize(numScv);
+                    SnVector_[eIdx].resize(numScv);
+                    rhonVector_[eIdx].resize(numScv);
+                    rhowVector_[eIdx].resize(numScv);
+
+                    for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
+                    {
+                        volumetricStrain_[eIdx][scvIdx] = 0.0;
+                        deltaVolumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
+                        DimVector zeroes(0.0);
+                        dUVector_[eIdx][scvIdx] = zeroes;
+                    }
+                }
+            }
+        }
+
         MechanicsProblem().setpw() = pwVector_;
         MechanicsProblem().setpn() = pnVector_;
         MechanicsProblem().setpc() = pcVector_;
@@ -272,40 +308,29 @@ public:
         MechanicsProblem().setRhon() = rhonVector_;
         MechanicsProblem().setRhow() = rhowVector_;
 
-        for (const auto& element : elements(gridView_))
-        {
-            if(element.partitionType() == Dune::InteriorEntity)
-            {
-                for (int eIdx = 0; eIdx < numElements; ++eIdx)
-                {
-                    int numScv = element.subEntities(dim);
+        TranspProblem().setpInitPerScv_() = pwVector_;
 
-                    effPorosityVector_[eIdx].resize(numScv);
-                    effPorosityVectorOldIteration_[eIdx].resize(numScv);
-                    effPorosityVectorFirstIteration_[eIdx].resize(numScv);
-                    volumetricStrainOldIteration_[eIdx].resize(numScv);
-                    effPorosityVectorOldTimestep_[eIdx].resize(numScv);
-                    lowerLimitEffPorosity_[eIdx].resize(numScv);
-                    upperLimitEffPorosity_[eIdx].resize(numScv);
-                    effPermeabilityVector_[eIdx].resize(numScv);
-                    dUVector_[eIdx].resize(numScv);
-                }
-            }
-        }
+        TranspProblem().setpWOldIteration_() = pwVector_;
+        TranspProblem().setpNOldIteration_() = pnVector_;
+        TranspProblem().setsWOldIteration_() = SwVector_;
+        TranspProblem().setsNOldIteration_() = SnVector_;
 
         TranspProblem().setEffPorosity() = effPorosityVector_;
-        TranspProblem().setEffPorosityOldTimestep() = effPorosityVectorOldTimestep_;
-        TranspProblem().setEffPorosityOldIteration() = effPorosityVectorOldIteration_;
         TranspProblem().setEffPermeability() = effPermeabilityVector_;
 
+        TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
+        TranspProblem().setdU() = dUVector_;
+
         MechanicsProblem().setEffPorosity() = effPorosityVector_;
-        MechanicsProblem().setEffPorosityOldIteration() = effPorosityVectorOldIteration_;
-        MechanicsProblem().setEffPorosityOldTimestep() = effPorosityVectorOldTimestep_;
         MechanicsProblem().setEffPermeability() = effPermeabilityVector_;
+        TranspProblem().setBNodeWiseAveraged() = BNodeWiseAveraged_;
 
-        MechanicsProblem().setFactorP() = factorP_;
+//         this->setOutput(true);
 
-        this->setOutput(true);
+//         for (int vIdxGlobal = 0; vIdxGlobal < numVert; ++vIdxGlobal)
+//         {
+//             lastSol_[vIdxGlobal] = 0.0;
+//         }
 
         ParentType::init();
     }
@@ -324,7 +349,9 @@ public:
 
                 MechanicsProblem().spatialParams().setEpisode(ParentType::timeManager_.episodeIndex());
 
-                if(ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize() > tInitEnd_ + eps_)
+                Scalar time = ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize();
+
+                if(time > tInitEnd_ + eps_)
                 {
                     numIterations_ = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.NumIterations);
                 }
@@ -332,7 +359,8 @@ public:
                 for (int iterator = 1; iterator < (numIterations_ + 1); iterator++)
                 {
 
-                    if( (ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize() < tInitEnd_ + eps_) && (iterator == 1) )
+
+                    if( (time < tInitEnd_ + eps_) && (iterator == 1) )
                     {
                         initializePoroPerm();
                     }
@@ -343,6 +371,7 @@ public:
 //                         std::cout << "Set MechanicsProblem output to true." << std::endl;
 //                     }
 
+                    TranspProblem().setIteration() = iterator;
                     runTransport();
 
                     std::cout << "Ran transport" << std::endl;
@@ -362,9 +391,60 @@ public:
                     << "Iteration " << iterator << " done \n"
                     << "----------------------------- \n"
                     << std::endl;
-                }
 
-                Scalar time = ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize();
+                    // After last iteration of the initialization
+                    if((time > tInitEnd_ - eps_) && (time < tInitEnd_ + eps_) && (iterator == numIterations_) )
+                    {
+                        TranspProblem().setCoupled(true);
+                        MechanicsProblem().setCoupled(true);
+                        TranspProblem().setInitializationRun(false);
+
+                        TranspProblem().setOutput(true);
+
+//                         TranspProblem().setPInit();
+
+                        // set old iteration values to initial values
+                        TranspProblem().setpWOldIteration_() = pwVector_;
+                        TranspProblem().setpNOldIteration_() = pnVector_;
+                        TranspProblem().setsWOldIteration_() = SwVector_;
+                        TranspProblem().setsNOldIteration_() = SnVector_;
+
+//                         for (int scvIdx = 0; scvIdx < pwVector_[12873].size(); ++scvIdx)
+//                         {
+//                             std::cout << "pwVector_[12873][" << scvIdx << "] is " << pwVector_[12873][scvIdx] << std::endl;
+//                         }
+                    }
+
+                    unsigned numVert = gridView_.size(dim);
+
+                    std::vector<Scalar> relDiffPw;
+                    relDiffPw.resize(numVert);
+
+                    for (int vIdxGlobal = 0; vIdxGlobal < numVert; ++vIdxGlobal)
+                    {
+                        relDiffPw[vIdxGlobal] = std::abs(TranspProblem().model().curSol()[vIdxGlobal][0] - lastSol_[vIdxGlobal][0]) /TranspProblem().model().curSol()[vIdxGlobal][0];
+                    }
+
+                    auto biggest = std::max_element(std::begin(relDiffPw), std::end(relDiffPw));
+
+                    std::cout << "Max relDiffPw is " << *biggest
+                              << " at position " << std::distance(std::begin(relDiffPw), biggest) << std::endl;
+//                     std::cout << "Max relDiffPw is " << relDiffPw[242] << " at position 242" << std::endl;
+//                     std::cout << "pwCurrent     is " << TranspProblem().model().curSol()[242][0] << " at position 242" << std::endl;
+//                     std::cout << "pwLastIter    is " <<  lastSol_[242][0] << " at position 242" << std::endl;
+
+                    // finish timestep if initialization is done and change between iteration sufficiently small
+                    Scalar maxRelDiffPw = GET_RUNTIME_PARAM(TypeTag, Scalar, TimeManager.MaxRelDiffPw);
+                    if((time > tInitEnd_ + eps_) && (*biggest < maxRelDiffPw) || (iterator == numIterations_))
+                        break;
+
+                    lastSol_ = TranspProblem().model().curSol();
+
+                    // If iterations continue, start the Newton with the previous solution, not the new one
+                    TranspProblem().model().curSol() = TranspProblem().model().prevSol();
+                    MechanicsProblem().model().curSol() = MechanicsProblem().model().prevSol();
+//
+                }
 
                 std::cout
                 << "*************************************** \n"
@@ -373,43 +453,57 @@ public:
                 << std::endl;
 
                 // after iterations are finished, update prevSol for the next timestep
-
                 TranspProblem().model().prevSol() = TranspProblem().model().curSol();
                 MechanicsProblem().model().prevSol() = MechanicsProblem().model().curSol();
 
-                effPorosityVectorOldTimestep_ = effPorosityVector_;
-                TranspProblem().setEffPorosityOldTimestep() = effPorosityVectorOldTimestep_;
+                TranspProblem().setEffPorosityOldTimestep() = effPorosityVector_;
+
+                unsigned numElements = gridView_.size(0);
+
+                for (int eIdx = 0; eIdx < numElements; ++eIdx)
+                {
+                    unsigned numScv = deltaVolumetricStrainOldIteration_[eIdx].size();
+                    for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
+                    {
+                        deltaVolumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
+                    }
+
+                }
+
+                TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
 
                 // check of get function
-                FVElementGeometryMechanicsProblem fvGeometryMechanicsProblem;
-
-                for (const auto& element : elements(gridView_))
-                {
-                    if(element.partitionType() == Dune::InteriorEntity)
-                    {
-                        fvGeometryMechanicsProblem.update(gridView_, element);
-
-                        int eIdx = MechanicsProblem().model().elementMapper().index(element);
-                        int numScv = element.subEntities(dim);
-
-                        for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
-                        {
-            //                             Scalar effPorosityVectorOld = TranspProblem().getEffPorosityOld(element, fvGeometryTranspProblem, scvIdx);
-            //                             Scalar effPorosityVector = TranspProblem().getEffPorosity(element, fvGeometryTranspProblem, scvIdx);
-            //
-            //                             if (std::abs(effPorosityVector - effPorosityVectorOld) > 1e-6)
-            //                             {
-            //                                 std::cout << "effPorosityVector_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVector << std::endl;
-            //                                 std::cout << "effPorosityVectorOld_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVectorOld << std::endl;
-            //                             }
-                            if (eIdx == 12873)
-                            {
-                                Scalar effPorosity = MechanicsProblem().getEffPorosity(element, fvGeometryMechanicsProblem, scvIdx);
-                                std::cout << "effPorosity from getFunction[ " << eIdx << "][" << scvIdx << "] is " << effPorosity << std::endl;
-                            }
-                        }
-                    }
-                }
+//                 FVElementGeometryTranspProblem fvGeometryTranspProblem;
+//
+//                 for (const auto& element : elements(gridView_))
+//                 {
+//                     if(element.partitionType() == Dune::InteriorEntity)
+//                     {
+//                         fvGeometryTranspProblem.update(gridView_, element);
+//
+//                         int eIdx = MechanicsProblem().model().elementMapper().index(element);
+//                         int numScv = element.subEntities(dim);
+//
+//                         for (int scvIdx = 0; scvIdx < fvGeometryTranspProblem.numScv; ++scvIdx)
+//                         {
+// //                                         Scalar effPorosityVectorOld = TranspProblem().getEffPorosityOld(element, fvGeometryTranspProblem, scvIdx);
+// //                                         Scalar effPorosityVector = TranspProblem().getEffPorosity(element, fvGeometryTranspProblem, scvIdx);
+// //
+// //                                         if (std::abs(effPorosityVector - effPorosityVectorOld) > 1e-6)
+// //                                         {
+// //                                             std::cout << "effPorosityVector_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVector << std::endl;
+// //                                             std::cout << "effPorosityVectorOld_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVectorOld << std::endl;
+// //                                         }
+// //                             if (eIdx == 12873)
+//                             if (eIdx == 210)
+//                             {
+//                                 Scalar effPorosityVectorOld = TranspProblem().getEffPorosityOldTimestep(element, fvGeometryTranspProblem, scvIdx);
+//
+//                                 std::cout << "effPorosityVectorOld from getFunction[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVectorOld << std::endl;
+//                             }
+//                         }
+//                     }
+//                 }
                 return;
             }
             catch (Dune::MathError &e) {
@@ -447,45 +541,63 @@ public:
     void initializePoroPerm()
     {
         FVElementGeometryTranspProblem fvGeometryTranspProblem;
+        FVElementGeometryMechanicsProblem fvGeometryMechanicsProblem;
+
+        unsigned numVert = gridView_.size(dim);
 
         for (const auto& element : elements(gridView_))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
-                int numScv = element.subEntities(dim);
-                int eIdx = MechanicsProblem().model().elementMapper().index(element);
-
                 fvGeometryTranspProblem.update(gridView_, element);
+                fvGeometryMechanicsProblem.update(gridView_, element);
+
+                int numScv = fvGeometryTranspProblem.numScv;
+                int eIdx = MechanicsProblem().model().elementMapper().index(element);
 
                 for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
                 {
                     LocalPosition cellCenter = element.geometry().center();
 
                     effPorosityVector_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosity(cellCenter);
-                    effPorosityVectorOldTimestep_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosity(cellCenter);
-                    effPorosityVectorOldIteration_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosity(cellCenter);
-                    effPorosityVectorFirstIteration_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosity(cellCenter);
-                    lowerLimitEffPorosity_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosity(cellCenter);
-                    upperLimitEffPorosity_[eIdx][scvIdx] = MechanicsProblem().spatialParams().porosity(cellCenter);
 
                     effPermeabilityVector_[eIdx][scvIdx] = MechanicsProblem().spatialParams().intrinsicPermeabilityAtPos(cellCenter)[0][0];
 
-                    volumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
+                    int dofIdxGlobal = MechanicsProblem().model().vertexMapper().subIndex(element, scvIdx, dim);
+
+//                     if (eIdx == 211)
+//                     {
+//                         std::cout << "B = " << MechanicsProblem().spatialParams().lameParams(element, fvGeometryMechanicsProblem, scvIdx)[1] << std::endl;
+//                         std::cout << "BNode[" << dofIdxGlobal << "] before = " << BNodeWiseAveraged_[dofIdxGlobal] << std::endl;
+//                     }
+
+//                     BNodeWiseAveraged_[dofIdxGlobal] += (1.0/ MechanicsProblem().spatialParams().lameParams(element, fvGeometryMechanicsProblem, scvIdx)[1]);
+                    BNodeWiseAveraged_[dofIdxGlobal] += MechanicsProblem().spatialParams().lameParams(element, fvGeometryMechanicsProblem, scvIdx)[1];
+                    numScvOfNode_[dofIdxGlobal] += 1;
+
+                    if (eIdx == 211)
+                    {
+//                         std::cout << "B[" << dofIdxGlobal << "] after  = " << MechanicsProblem().spatialParams().lameParams(element, fvGeometryMechanicsProblem, scvIdx)[1] << std::endl;
+//                         std::cout << "BNode[" << dofIdxGlobal << "] after  = " << BNodeWiseAveraged_[dofIdxGlobal] << std::endl;
+                    }
                 }
             }
         }
 
+
+        for (int vIdx = 0; vIdx < numVert; ++vIdx)
+        {
+//             BNodeWiseAveraged_[vIdx] = numScvOfNode_[vIdx]*1.0/BNodeWiseAveraged_[vIdx];
+             BNodeWiseAveraged_[vIdx] = BNodeWiseAveraged_[vIdx]/numScvOfNode_[vIdx];
+//             std::cout << "BNode[" << vIdx << "] final  = " << BNodeWiseAveraged_[vIdx] << std::endl;
+        }
+
         TranspProblem().setEffPorosity() = effPorosityVector_;
-        TranspProblem().setEffPorosityOldTimestep() = effPorosityVectorOldTimestep_;
         TranspProblem().setEffPermeability() = effPermeabilityVector_;
+        TranspProblem().setBNodeWiseAveraged() = BNodeWiseAveraged_;
 
         MechanicsProblem().setEffPorosity() = effPorosityVector_;
-        MechanicsProblem().setEffPorosityOldIteration() = effPorosityVectorOldIteration_;
         MechanicsProblem().setEffPermeability() = effPermeabilityVector_;
-
-        TranspProblem().setVolumetricStrainOldIteration() = volumetricStrainOldIteration_;
-
-        MechanicsProblem().setFactorP() = factorP_;
     }
 
     /*
@@ -505,55 +617,76 @@ public:
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
-                int numScv = element.subEntities(dim);
-
                 fvGeometryTranspProblem.update(gridView_, element);
                 elemVolVarsTranspProblem.update(TranspProblem(), element, fvGeometryTranspProblem, false);
 
+                int numScv = fvGeometryTranspProblem.numScv;;
+
+                typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
+                typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
 
                 int eIdx = MechanicsProblem().model().elementMapper().index(element);
-
-                effPressureVector_[eIdx] = 0.0;
 
                 for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
                 {
 
                     rank[eIdx] = gridView_.comm().rank();
 
-
                     int dofIdxGlobal = MechanicsProblem().model().vertexMapper().subIndex(element, scvIdx, dim);
 
-                    Scalar pw = elemVolVarsTranspProblem[scvIdx].pressure(wPhaseIdx);
-                    Scalar pn = elemVolVarsTranspProblem[scvIdx].pressure(nPhaseIdx);
-                    Scalar pc = elemVolVarsTranspProblem[scvIdx].capillaryPressure();
-                    Scalar sw = elemVolVarsTranspProblem[scvIdx].saturation(wPhaseIdx);
-                    Scalar sn = elemVolVarsTranspProblem[scvIdx].saturation(nPhaseIdx);
+//                     Scalar pw = elemVolVarsTranspProblem[scvIdx].pressure(wPhaseIdx);
+//                     Scalar pn = elemVolVarsTranspProblem[scvIdx].pressure(nPhaseIdx);
+//                     Scalar pc = elemVolVarsTranspProblem[scvIdx].capillaryPressure();
+//                     Scalar sw = elemVolVarsTranspProblem[scvIdx].saturation(wPhaseIdx);
+//                     Scalar sn = elemVolVarsTranspProblem[scvIdx].saturation(nPhaseIdx);
 
-                    pwVector_[dofIdxGlobal] = pw;
-                    pnVector_[dofIdxGlobal] = pn;
-                    pcVector_[dofIdxGlobal] = pc;
-                    SwVector_[dofIdxGlobal] = sw;
-                    SnVector_[dofIdxGlobal] = sn;
+                    pwVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].pressure(wPhaseIdx);
+                    pnVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].pressure(nPhaseIdx);
+                    pcVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].capillaryPressure();
+                    SwVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].saturation(wPhaseIdx);
+                    SnVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].saturation(nPhaseIdx);
+                    rhowVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].density(wPhaseIdx);
+                    rhonVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].density(nPhaseIdx);
 
-                    effPressureVector_[eIdx] += (pn * sn
-                                                    + pw * sw)
-                                                    / numScv;
+                    effPorosityVector_[eIdx][scvIdx] = elemVolVarsTranspProblem[scvIdx].effPorosity();
 
-                    rhonVector_[dofIdxGlobal] = elemVolVarsTranspProblem[scvIdx].density(nPhaseIdx);
-                    rhowVector_[dofIdxGlobal] = elemVolVarsTranspProblem[scvIdx].density(wPhaseIdx);
+//                     if (eIdx == 210)
+//                     {
+//                         std::cout << "effPorosityVector_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVector_[eIdx][scvIdx] << std::endl;
+//                     }
                 }
             }
 
         }
 
-        MechanicsProblem().setEffPressure() = effPressureVector_;
         MechanicsProblem().setpw() = pwVector_;
         MechanicsProblem().setpn() = pnVector_;
-        MechanicsProblem().setpn() = pcVector_;
+        MechanicsProblem().setpc() = pcVector_;
         MechanicsProblem().setSw() = SwVector_;
         MechanicsProblem().setSn() = SnVector_;
         MechanicsProblem().setRhon() = rhonVector_;
         MechanicsProblem().setRhow() = rhowVector_;
+
+        TranspProblem().setpWOldIteration_() = pwVector_;
+        TranspProblem().setpNOldIteration_() = pnVector_;
+        TranspProblem().setsWOldIteration_() = SwVector_;
+        TranspProblem().setsNOldIteration_() = SnVector_;
+
+//         // check of get function
+//         for (const auto& element : elements(gridView_))
+//         {
+//             if(element.partitionType() == Dune::InteriorEntity)
+//             {
+//                 std::cout << "Checking the getEffPressureOldIteration_ function" << std::endl;
+//
+//                 int eIdx = TranspProblem().model().elementMapper().index(element);
+//
+//                 Scalar effPressureOld = TranspProblem().getEffPressureOldIteration_(element);
+//
+//                 std::cout << "effPressureOld[ " << eIdx << "] is " << effPressureOld << std::endl;
+//
+//             }
+//         }
     }
 
     /*
@@ -565,11 +698,8 @@ public:
         unsigned numVert = gridView_.size(dim);
         unsigned numElements = gridView_.size(0);
 
-        FVElementGeometryMechanicsProblem fvGeometryMechanicsProblem;
-        ElementVolumeVariablesMechanicsProblem elemVolVarsMechanicsProblem;
-
         FVElementGeometryTranspProblem fvGeometryTranspProblem;
-        ElementVolumeVariablesTranspProblem elemVolVarsTranspProblem;
+        FVElementGeometryMechanicsProblem fvGeometryMechanicsProblem;
 
         ScalarField rank;
         rank.resize(numElements);
@@ -577,19 +707,17 @@ public:
         std::vector<Scalar> zerosNumVert(numVert, 0.0);
         std::vector<int> zerosNumVertInt(numVert, 0);
 
-        factorP_ = zerosNumVert;
-        localFactorP_ = zerosNumVert;
         numScvOfNode_ = zerosNumVert;
 
         for (const auto& element : elements(gridView_))
         {
             if(element.partitionType() == Dune::InteriorEntity)
             {
-                int eIdx = MechanicsProblem().model().elementMapper().index(element);
-                int numScv = element.subEntities(dim);
-
                 fvGeometryMechanicsProblem.update(gridView_, element);
-                elemVolVarsMechanicsProblem.update(MechanicsProblem(), element, fvGeometryMechanicsProblem, false);
+                fvGeometryTranspProblem.update(gridView_, element);
+
+                int eIdx = MechanicsProblem().model().elementMapper().index(element);
+                int numScv = fvGeometryTranspProblem.numScv;
 
                 typedef typename GET_PROP_TYPE(SubTypeTag2, GridFunctionSpace) GridFunctionSpace;
                 typedef Dune::PDELab::LocalFunctionSpace<GridFunctionSpace> LocalFunctionSpace;
@@ -653,60 +781,14 @@ public:
                             gradU[coordDir].axpy(curSolutionValues[uLFS.localIndex(i)],vShapeGradient[i]);
                     }
 
-//                     if (gradU[0][0] > eps_)
-//                     {
-//                         std::cout << "gradU is " << gradU << std::endl;
-//                     }
-
-                    // calculate gradients
-//                     DimVector tmp(0.0);
-//                     for (int idx = 0;
-//                             idx < fvGeometryMechanicsProblem.numScv;
-//                             idx++) // loop over adjacent vertices
-//                     {
-//                         // FE gradient at vertex idx
-//                         const DimVector &centerGrad = fvGeometryMechanicsProblem.subContVol[scvIdx].grad[idx];
-//
-//                         if (centerGrad[0] > eps_)
-//                         {
-//                             std::cout << "centerGrad is " << centerGrad << std::endl;
-//                         }
-//
-//
-//                         // the displacement vector gradient
-//                         for (int coordIdx = 0; coordIdx < dim; ++coordIdx) {
-//                             tmp = centerGrad;
-//                             tmp *= elemVolVarsMechanicsProblem[idx].displacement(coordIdx);
-//                             gradU[coordIdx] += tmp;
-//                         }
-//                     }
-
-                    volumetricStrainOldIteration_[eIdx][scvIdx] = 0.0;
+                    volumetricStrain_[eIdx][scvIdx] = 0.0;
 
                     for(int coordDir = 0; coordDir < dim; ++coordDir)
                     {
-                        volumetricStrainOldIteration_[eIdx][scvIdx] += gradU[coordDir][coordDir];
-//                         volumetricStrain += gradU[coordDir][coordDir];
+                        volumetricStrain_[eIdx][scvIdx] += gradU[coordDir][coordDir];
                     }
 
-
-                    Scalar intrinsicPorosity = MechanicsProblem().spatialParams().porosity(scvCenter);
-
-                    if (eIdx == 12873)
-                    {
-//                         std::cout << "volumetricStrain of " << eIdx << "][" << scvIdx << "] is " << volumetricStrain << std::endl;
-
-                        std::cout << "effPorosityVector_ " << eIdx << "][" << scvIdx << "] before is " << effPorosityVector_[eIdx][scvIdx] << std::endl;
-                        Scalar effPorosityOldTimestep = TranspProblem().getEffPorosityOldTimestep(element, fvGeometryTranspProblem, scvIdx);
-                        std::cout << "effPorosityVectorOldTimestep_ " << eIdx << "][" << scvIdx << "] before is " << effPorosityOldTimestep << std::endl;
-                    }
-
-                    effPorosityVector_[eIdx][scvIdx] = 1 - (1 - intrinsicPorosity)*exp(-volumetricStrainOldIteration_[eIdx][scvIdx]);
-
-                    Scalar factor = pow( (effPorosityVector_[eIdx][scvIdx]/ intrinsicPorosity), 15);
-
-                    //intrinsicPermeability is a DimMatrix, but we assume an isotropic K here and just used one entry to calculate Keff
-                    effPermeabilityVector_[eIdx][scvIdx] = MechanicsProblem().spatialParams().intrinsicPermeability(element, fvGeometryMechanicsProblem, scvIdx)[0][0] * factor;
+                    deltaVolumetricStrainOldIteration_[eIdx][scvIdx] = volumetricStrain_[eIdx][scvIdx];
 
                     //Calculation of the solid displacement gradients.
                     for(int coordDir = 0; coordDir < dim; ++coordDir)
@@ -717,99 +799,20 @@ public:
                         // evaluate shape functions of all element vertices for current integration point and write it into vector vShape
                         scalarDispLFS.finiteElement().localBasis().evaluateFunction(scvCenter, vShape);
 
-                        dUVector_[eIdx][scvIdx] = 0.0;
-
-                        for (size_t i = 0; i < dispSize; i++){
-                            dUVector_[eIdx][scvIdx][coordDir] +=( curSolutionValues[scalarDispLFS.localIndex(i)]*vShape[i]- prevSolutionValues[scalarDispLFS.localIndex(i)])*vShape[i];                       }
-
-                        dUVector_[eIdx][scvIdx][coordDir] = curSolutionValues[coordDir] - prevSolutionValues[coordDir];
+                        for (size_t i = 0; i < dispSize; i++)
+                        {
+                            dUVector_[eIdx][scvIdx][coordDir] +=( curSolutionValues[scalarDispLFS.localIndex(i)]*vShape[i]- prevSolutionValues[scalarDispLFS.localIndex(i)])*vShape[i];
+                        }
                     }
-
-                    if(ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize() > tInitEnd_ + eps_)
-                    {
-
-                        if (eIdx == 12873)
-                        {
-                        std::cout << "LowerLimitEffPorosity[" << eIdx << "][" << scvIdx << "] is "
-                        << lowerLimitEffPorosity_[eIdx][scvIdx] << "\n"
-                        << "UpperLimitEffPorosity[" << eIdx << "][" << scvIdx << "] is "
-                        << upperLimitEffPorosity_[eIdx][scvIdx] << "\n"
-                        << "effPorosityVector_[" << eIdx << "][" << scvIdx << "] is "
-                        << effPorosityVector_[eIdx][scvIdx] << std::endl;
-                        }
-
-                        Scalar effPorosityChange = effPorosityVector_[eIdx][scvIdx] - effPorosityVectorOldIteration_[eIdx][scvIdx];
-
-                        Scalar dampingFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Damping, DampingFactor);
-
-                        // damp porosity update
-                        effPorosityVector_[eIdx][scvIdx] = effPorosityVectorOldIteration_[eIdx][scvIdx] + dampingFactor * effPorosityChange;
-
-                        if (eIdx == 12873)
-                        {
-                        std::cout << "damped change [" << eIdx << "][" << scvIdx << "] is " << dampingFactor * effPorosityChange << "\n"
-                        << "effPorosityVector_[" << eIdx << "][" << scvIdx << "] is "
-                        << effPorosityVector_[eIdx][scvIdx] << std::endl;
-                        }
-
-//                                     std::cout << "effPorosityVector_ damped [" << eIdx << "][" << scvIdx << "] is " << effPorosityVector_[eIdx][scvIdx] << std::endl;
-
-
-                        // if damped porosity is still above/below limits
-                        if ( (effPorosityVector_[eIdx][scvIdx] > upperLimitEffPorosity_[eIdx][scvIdx] + eps_) || (effPorosityVector_[eIdx][scvIdx] < lowerLimitEffPorosity_[eIdx][scvIdx] - eps_) )
-                        {
-                            if (eIdx == 12873)
-                            {
-//                                     DUNE_THROW(Dune::MathError,
-//                                     "Porosity update is diverging! \n"
-//                                     << "LowerLimitEffPorosity[" << eIdx << "][" << scvIdx << "] is "
-//                                     << lowerLimitEffPorosity_[eIdx][scvIdx] << "\n"
-//                                     << "UpperLimitEffPorosity[" << eIdx << "][" << scvIdx << "] is "
-//                                     << upperLimitEffPorosity_[eIdx][scvIdx] << "\n"
-//                                     << "effPorosityVector_[" << eIdx << "][" << scvIdx << "] is "
-//                                     << effPorosityVector_[eIdx][scvIdx]);
-                            std::cout << "Not confined within limits!" << std::endl;
-                            std::cout << "effPorosityVector_[" << eIdx << "][" << scvIdx << "] is " << effPorosityVector_[eIdx][scvIdx] << std::endl;
-                            }
-                        }
-//                             }
-//                         }
-                    }
-
-                    effPorosityVectorOldIteration_[eIdx][scvIdx] = effPorosityVector_[eIdx][scvIdx];
-
-//                     if (eIdx == 12873)
-//                     {
-//                         std::cout << "effPorosityVectorOldIteration_[" << eIdx << "][" << scvIdx << "]:" << std::endl;
-//                         std::cout << effPorosityVectorOldIteration_[eIdx][scvIdx] << std::endl;
-//                     }
-
                 }
-
-//                 if(ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize() > tInitEnd_ - eps_)
-//                 {
-// //                     std::cout << "Updating pressure solution" << std::endl;
-//                     // declare and initialize start and end of vertex iterator
-//                     for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
-//                     {
-//                         int dofIdxGlobal = MechanicsProblem().model().vertexMapper().subIndex(element, scvIdx, dim);
-//
-//                         TranspProblem().model().curSol()[dofIdxGlobal][pressureIdx] *=  factorP_[dofIdxGlobal];
-//                     }
-//                 }
             }
         }
 
-
-        TranspProblem().setEffPorosity() = effPorosityVector_;
-        TranspProblem().setEffPorosityOldTimestep() = effPorosityVectorOldTimestep_;
-        TranspProblem().setEffPermeability() = effPermeabilityVector_;
-        TranspProblem().setdU() = dUVector_;
-        TranspProblem().setEffPorosityOldIteration() = volumetricStrainOldIteration_;
-
-        MechanicsProblem().setEffPorosity() = effPorosityVector_;
-        MechanicsProblem().setEffPorosityOldIteration() = effPorosityVectorOldIteration_;
-        MechanicsProblem().setEffPermeability() = effPermeabilityVector_;
+        if (TranspProblem().coupled() == true)
+        {
+            TranspProblem().setdU() = dUVector_;
+            TranspProblem().setDeltaVolumetricStrainOldIteration() = deltaVolumetricStrainOldIteration_;
+        }
 
 //         // check of get function
 //         for (const auto& element : elements(gridView_))
@@ -821,14 +824,14 @@ public:
 //
 //                 for (int scvIdx = 0; scvIdx < numScv; ++scvIdx)
 //                 {
-// //                     Scalar effPorosityVectorOld = TranspProblem().getEffPorosityOld(element, fvGeometryTranspProblem, scvIdx);
-// //                     Scalar effPorosityVector = TranspProblem().getEffPorosity(element, fvGeometryTranspProblem, scvIdx);
-// //
-// //                     if (std::abs(effPorosityVector - effPorosityVectorOld) > 1e-6)
-// //                     {
-// //                         std::cout << "effPorosityVector_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVector << std::endl;
-// //                         std::cout << "effPorosityVectorOld_[ " << eIdx << "][" << scvIdx << "] is " << effPorosityVectorOld << std::endl;
-// //                     }
+//                     DimVector dUVector = TranspProblem().getdU(element, fvGeometryTranspProblem, scvIdx);
+//                     Scalar volumetricStrainOldIteration = TranspProblem().getDeltaVolumetricStrainOldIteration(element, fvGeometryTranspProblem, scvIdx);
+
+//                     if (std::abs(volumetricStrainOldIteration) > 1e-6)
+//                     {
+//                         std::cout << "dUVector[ " << eIdx << "][" << scvIdx << "] is " << dUVector[0] << " " << dUVector[1] << std::endl;
+//                         std::cout << "volumetricStrainOldIteration[ " << eIdx << "][" << scvIdx << "] is " << volumetricStrainOldIteration << std::endl;
+//                     }
 //                     if (eIdx == 12873)
 //                     {
 //                         Scalar effPorosityVectorOldIteration = MechanicsProblem().getEffPorosityOldIteration(element, fvGeometryMechanicsProblem, scvIdx);
@@ -837,8 +840,6 @@ public:
 //                 }
 //             }
 //         }
-
-        MechanicsProblem().setFactorP() = factorP_;
     }
 
     void runTransport()
@@ -908,28 +909,45 @@ public:
         //calls suggestTimeStepSize function, which returns the new suggested TimeStepSize for no failure
         //and the failureTimeStepSize for anyFailure = true
         double newTimeStepSize = TranspProblem().newtonController().suggestTimeStepSize(oldTimeStep);
-        std::cout << "newTimeStepSize is " << newTimeStepSize << "\n";
-        if(ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize() > tInitEnd_ + eps_)
+        std::cout << "el2p: newTimeStepSize is " << newTimeStepSize << "\n";
+        if( (ParentType::timeManager_.time() + ParentType::timeManager_.timeStepSize() > tInitEnd_ + eps_) &&
+            ( ParentType::timeManager_.episodeIndex() < 2) )
         {
-            MechanicsProblem().setCoupled(true);
-            std::cout << "Coupled set to true \n";
-            TranspProblem().setInitializationRun(false);
+            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
+        }
 
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-            std::cout << "episodeLength_ is " << episodeLength_ << "\n";
-        }
-        else
-        {
-            episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLengthMainSimulation);
-            std::cout << "episodeLength_ is " << episodeLength_ << "\n";
-        }
 //         if(ParentType::timeManager_.time() > 12000 - eps_)
 //         {
 //             episodeLength_ = 100.0;
 //         }
 
+        if( ParentType::timeManager_.episodeIndex() >= 2)
+        {
+            episodeLength_ = episodeLength_ * 2.0;
+        }
+        if( ParentType::timeManager_.episodeIndex() == 10)
+            episodeLength_ = 389.0;
+        if( ParentType::timeManager_.episodeIndex() == 12)
+            episodeLength_ = 122.0;
+        if( ParentType::timeManager_.episodeIndex() == 16)
+            episodeLength_ = 92.0;
+        if( ParentType::timeManager_.episodeIndex() == 21)
+            episodeLength_ = 840;
+        if( ParentType::timeManager_.episodeIndex() == 23)
+            episodeLength_ = 1820;
+        if( ParentType::timeManager_.episodeIndex() == 24)
+            episodeLength_ = 100;
+
+        std::cout << "el2p: episodeLength_ is " << episodeLength_ << "\n";
+
         ParentType::timeManager_.startNextEpisode(episodeLength_);
-        ParentType::timeManager_.setTimeStepSize(newTimeStepSize);
+        ParentType::timeManager_.setTimeStepSize(episodeLength_);
+        std::cout << "el2p: TimeStepSize_ " <<  ParentType::timeManager_.timeStepSize() << "\n";
+
+        TranspProblem().timeManager().startNextEpisode(episodeLength_);
+        TranspProblem().timeManager().setTimeStepSize(episodeLength_);
+        MechanicsProblem().timeManager().startNextEpisode(episodeLength_);
+        MechanicsProblem().timeManager().setTimeStepSize(episodeLength_);
     }
 
     TwoP_TestProblem& TranspProblem()
@@ -963,16 +981,13 @@ private:
 
     GridView gridView_;
 
-    std::vector<Scalar> effPressureVector_;
-    std::vector<Scalar> pwVector_, pnVector_, pcVector_, SwVector_, SnVector_, rhonVector_, rhowVector_;
+    std::vector<std::vector<Scalar>> pwVector_, pnVector_, pcVector_, SwVector_, SnVector_, rhonVector_, rhowVector_;
     std::vector<std::vector<Scalar>> effPorosityVector_, effPermeabilityVector_;
-    std::vector<std::vector<Scalar>> effPorosityVectorOldIteration_;
-    std::vector<std::vector<Scalar>> effPorosityVectorFirstIteration_;
-    std::vector<std::vector<Scalar>> volumetricStrainOldIteration_;
-    std::vector<std::vector<Scalar>> effPorosityVectorOldTimestep_;
-    std::vector<std::vector<Scalar>> lowerLimitEffPorosity_, upperLimitEffPorosity_;
 
     std::vector<std::vector<DimVector>> dUVector_;
+
+    std::vector<std::vector<Scalar>> volumetricStrain_;
+    std::vector<std::vector<Scalar>> deltaVolumetricStrainOldIteration_;
 
     std::vector<Scalar> epiEnd_;
     std::string injectionParameters_;
@@ -980,11 +995,12 @@ private:
     Scalar tInitEnd_;
     int numIterations_;
 
-    std::vector<Scalar> factorP_;
-    std::vector<Scalar> localFactorP_;
+    std::vector<Scalar> BNodeWiseAveraged_;
     std::vector<Scalar> numScvOfNode_;
 
     Scalar previousTimeStepSize_;
+
+    SolutionVectorTranspProblem lastSol_;
 
 };
 
