@@ -49,6 +49,7 @@ class FVProblem
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -250,10 +251,10 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    PrimaryVariables neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolvars,
-                             const SubControlVolumeFace& scvf) const
+    ResidualVector neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolvars,
+                           const SubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
         return asImp_().neumannAtPos(scvf.ipGlobal());
@@ -269,11 +270,11 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    ResidualVector neumannAtPos(const GlobalPosition &globalPos) const
     {
         //! As a default, i.e. if the user's problem does not overload any neumann method
         //! return no-flow Neumann boundary conditions at all Neumann boundaries
-        return PrimaryVariables(0.0);
+        return ResidualVector(0.0);
     }
 
     /*!
@@ -294,10 +295,10 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    PrimaryVariables source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
+    ResidualVector source(const Element &element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolume &scv) const
     {
         // forward to solution independent, fully-implicit specific interface
         return asImp_().sourceAtPos(scv.center());
@@ -316,11 +317,11 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    ResidualVector sourceAtPos(const GlobalPosition &globalPos) const
     {
         //! As a default, i.e. if the user's problem does not overload any source method
         //! return 0.0 (no source terms)
-        return PrimaryVariables(0.0);
+        return ResidualVector(0.0);
     }
 
     /*!
@@ -392,12 +393,12 @@ public:
      *        Caution: Only overload this method in the implementation if you know
      *                 what you are doing.
      */
-    PrimaryVariables scvPointSources(const Element &element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& elemVolVars,
-                                     const SubControlVolume &scv) const
+    ResidualVector scvPointSources(const Element &element,
+                                   const FVElementGeometry& fvGeometry,
+                                   const ElementVolumeVariables& elemVolVars,
+                                   const SubControlVolume &scv) const
     {
-        PrimaryVariables source(0);
+        ResidualVector source(0);
         auto scvIdx = scv.indexInElement();
         auto key = std::make_pair(fvGridGeometry_->gridView().indexSet().index(element), scvIdx);
         if (pointSourceMap_.count(key))
