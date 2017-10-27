@@ -49,7 +49,6 @@ template <class TypeTag>
 class NewtonController
 {
     using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Implementation =  typename GET_PROP_TYPE(TypeTag, NewtonController);
     using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
     using Communicator = typename GridView::CollectiveCommunication;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -137,11 +136,11 @@ public:
      * \param uCurrentIter The solution of the current Newton iteration
      */
     template<class SolutionVector>
-    bool newtonProceed(const SolutionVector &uCurrentIter)
+    bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
     {
         if (numSteps_ < 2)
             return true; // we always do at least two iterations
-        else if (asImp_().newtonConverged()) {
+        else if (converged) {
             return false; // we are below the desired tolerance
         }
         else if (numSteps_ >= maxSteps_) {
@@ -509,15 +508,6 @@ public:
     { return verbose_ && communicator().rank() == 0; }
 
 protected:
-
-    // returns the actual implementation for the controller we do
-    // it this way in order to allow "poor man's virtual methods",
-    // i.e. methods of subclasses which can be called by the base
-    // class.
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 
     void initParams_()
     {

@@ -20,16 +20,16 @@
  * \ingroup Properties
  * \file
  *
- * \brief Collects a list of all used properties
+ * \brief Collects a list of properties used by the core of Dumux.
  */
 
 namespace Dumux
 {
 namespace Properties
 {
-/////////////////////////////////////////////
+///////////////////////////////////////
 // Basic properties of numeric models:
-/////////////////////////////////////////////
+///////////////////////////////////////
 NEW_PROP_TAG(Scalar);                 //! Property to specify the type of scalar values.
 NEW_PROP_TAG(ModelParameterGroup);    //! Property which defines the group that is queried for parameters by default
 NEW_PROP_TAG(ModelDefaultParameters); //! Property which defines the group that is queried for parameters by default
@@ -62,40 +62,40 @@ NEW_PROP_TAG(LocalResidual);
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
 /////////////////////////////////////////////
-NEW_PROP_TAG(ElementBoundaryTypes);             //! Stores the boundary types on an element
-NEW_PROP_TAG(ElementSolutionVector);            //! A vector of primary variables within an element
-NEW_PROP_TAG(AssemblyMap);                      //! Connectivity map (transposed) used for assembling the Jacobian matrix entries
+NEW_PROP_TAG(ElementBoundaryTypes);                //! Stores the boundary types on an element
+NEW_PROP_TAG(ElementSolutionVector);               //! A vector of primary variables within an element
+NEW_PROP_TAG(AssemblyMap);                         //! Connectivity map (transposed) used for assembling the Jacobian matrix entries
 
-NEW_PROP_TAG(SubControlVolume);                 //! The type of the sub control volume
-NEW_PROP_TAG(SubControlVolumeFace);             //! The type of the sub control volume face
-NEW_PROP_TAG(FVElementGeometry);                //! The type of the local finite volume geometry (iterators over scvs, scvfs)
-NEW_PROP_TAG(FVGridGeometry);                   //! The type of the global finite volume geometry
-NEW_PROP_TAG(EnableFVGridGeometryCache);        //! specifies if geometric data is saved (faster, but more memory consuming)
+NEW_PROP_TAG(SubControlVolume);                    //! The type of the sub control volume
+NEW_PROP_TAG(SubControlVolumeFace);                //! The type of the sub control volume face
+NEW_PROP_TAG(FVElementGeometry);                   //! The type of the local finite volume geometry (iterators over scvs, scvfs)
+NEW_PROP_TAG(FVGridGeometry);                      //! The type of the global finite volume geometry
+NEW_PROP_TAG(EnableFVGridGeometryCache);           //! specifies if geometric data is saved (faster, but more memory consuming)
 
-NEW_PROP_TAG(VolumeVariables);                  //! The secondary variables within a sub-control volume
-NEW_PROP_TAG(ElementVolumeVariables);           //! The type for a local (element/stencil) container for the volume variables
-NEW_PROP_TAG(GlobalVolumeVariables);            //! The type for a global container for the volume variables
-NEW_PROP_TAG(EnableGlobalVolumeVariablesCache); //! If disabled, the volume variables are not stored (reduces memory, but is slower)
-NEW_PROP_TAG(FluxVariables);                    //! Container storing the different types of flux variables
-NEW_PROP_TAG(FluxVariablesCache);               //! Stores data associated with flux vars
-NEW_PROP_TAG(ElementFluxVariablesCache);        //! A local vector of flux variable caches per element
-NEW_PROP_TAG(GlobalFluxVariablesCache);         //! The global vector of flux variable containers
-NEW_PROP_TAG(EnableGlobalFluxVariablesCache);   //! specifies if data on flux vars should be saved (faster, but more memory consuming)
-NEW_PROP_TAG(GridVariables);                    //! The grid variables object managing variable data on the grid (volvars/fluxvars cache)
+NEW_PROP_TAG(VolumeVariables);                     //! The secondary variables within a sub-control volume
+NEW_PROP_TAG(ElementVolumeVariables);              //! The type for a local (element/stencil) container for the volume variables
+NEW_PROP_TAG(GlobalVolumeVariables);               //! The type for a global container for the volume variables
+NEW_PROP_TAG(EnableGlobalVolumeVariablesCache);    //! If disabled, the volume variables are not stored (reduces memory, but is slower)
+NEW_PROP_TAG(FluxVariables);                       //! Container storing the different types of flux variables
+NEW_PROP_TAG(FluxVariablesCache);                  //! Stores data associated with flux vars
+NEW_PROP_TAG(ElementFluxVariablesCache);           //! A local vector of flux variable caches per element
+NEW_PROP_TAG(GlobalFluxVariablesCache);            //! The global vector of flux variable containers
+NEW_PROP_TAG(EnableGlobalFluxVariablesCache);      //! specifies if data on flux vars should be saved (faster, but more memory consuming)
+NEW_PROP_TAG(GridVariables);                       //! The grid variables object managing variable data on the grid (volvars/fluxvars cache)
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(MpfaMethod); //! Specifies the mpfa method to be used
-NEW_PROP_TAG(MpfaHelper); //! A Helper class depending on the mpfa method and grid dimension
-NEW_PROP_TAG(PrimaryInteractionVolume); //! The primary interaction volume type
-NEW_PROP_TAG(SecondaryInteractionVolume); //! The secondary interaction volume type used e.g. on the boundaries
+/////////////////////////////////////////////////////////////////
+NEW_PROP_TAG(MpfaMethod);                          //! Specifies the mpfa method to be used
+NEW_PROP_TAG(MpfaHelper);                          //! A Helper class depending on the mpfa method and grid dimension
+NEW_PROP_TAG(PrimaryInteractionVolume);            //! The primary interaction volume type
+NEW_PROP_TAG(SecondaryInteractionVolume);          //! The secondary interaction volume type used e.g. on the boundaries
 
 
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 // Properties used by models involving flow in porous media:
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
 NEW_PROP_TAG(EnergyLocalResidual);                 //! The local residual of the energy equation
 NEW_PROP_TAG(EnableAdvection);                     //! specifies if advection is considered in the model
 NEW_PROP_TAG(AdvectionType);                       //! The type for the calculation the advective fluxes

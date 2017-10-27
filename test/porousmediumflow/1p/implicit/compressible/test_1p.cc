@@ -34,6 +34,8 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
+#include <dumux/discretization/methods.hh>
+
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
@@ -41,8 +43,8 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dumux/assembly/fvassembler.hh>
@@ -94,7 +96,7 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     static constexpr int dofCodim = isBox ? GridView::dimension : 0;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -133,7 +135,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = Dumux::NewtonController<TypeTag>;
+    using NewtonController = NewtonController<TypeTag>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 

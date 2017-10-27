@@ -24,6 +24,7 @@
 #define DUMUX_FV_PROBLEM_HH
 
 #include <dune/common/version.hh>
+#include <dune/grid/common/gridenums.hh>
 
 #include <dumux/parallel/vertexhandles.hh>
 

@@ -26,6 +26,8 @@
 #ifndef DUMUX_POROUSMEDIUM_FLOW_PROPERTIES_HH
 #define DUMUX_POROUSMEDIUM_FLOW_PROPERTIES_HH
 
+#include <dumux/io/vtkoutputmodule.hh>
+
 #include <dumux/porousmediumflow/implicit/fluxvariables.hh>
 #include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/localresidual.hh>

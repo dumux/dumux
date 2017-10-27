@@ -58,7 +58,7 @@ class ImplicitVelocityOutput
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static const bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     static const int dofCodim = isBox ? dim : 0;
 
     using Vertex = typename GridView::template Codim<dim>::Entity;
@@ -111,7 +111,7 @@ public:
      *        Specialization for the box method.
      */
     template<class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), ElementSolutionVector>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, ElementSolutionVector>::type
     elementSolution(const Element& element, const SolutionVector& sol) const
     {
         auto numVert = element.subEntities(dofCodim);
@@ -126,7 +126,7 @@ public:
      *        Specialization for cell-centered methods.
      */
     template<class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), ElementSolutionVector>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, ElementSolutionVector>::type
     elementSolution(const Element& element, const SolutionVector& sol) const
     { return ElementSolutionVector({ sol[fvGridGeometry_.elementMapper().index(element)] }); }
 
@@ -145,13 +145,13 @@ public:
     // following lines, that call will only be compiled if cell-centered
     // actually is used.
     template <class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), BoundaryTypes>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, BoundaryTypes>::type
     problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     { return problem_.boundaryTypes(element, scvf); }
 
     //! we should never call this method for box models
     template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), BoundaryTypes>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, BoundaryTypes>::type
     problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     { return BoundaryTypes(); }
 

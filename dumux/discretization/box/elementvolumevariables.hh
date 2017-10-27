@@ -23,6 +23,8 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 
+#include <dumux/discretization/methods.hh>
+
 namespace Dumux
 {
 
@@ -50,7 +52,7 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
     //! Constructor
