@@ -33,6 +33,7 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/linear/solver.hh>
 
 namespace Dumux
 {
@@ -61,24 +62,17 @@ class IterativePreconditionedSolverImpl
 {
 public:
 
-    template<class Preconditioner, class Solver, class Matrix, class Vector>
-    static bool solve(const Matrix& A, Vector& x, const Vector& b,
+    template<class Preconditioner, class Solver, class SolverInterface, class Matrix, class Vector>
+    static bool solve(const SolverInterface& s, const Matrix& A, Vector& x, const Vector& b,
                       const std::string& modelParamGroup = "")
     {
-        // get some runtime configurable parameters
-        const int verbosity = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
-        const int maxIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
-        const double residReduction = getParamFromGroup<double>(modelParamGroup, "LinearSolver.ResidualReduction");
-        const double relaxation = getParamFromGroup<double>(modelParamGroup, "LinearSolver.PreconditionerRelaxation");
-        const int precondIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.PreconditionerIterations");
-
-        Preconditioner precond(A, precondIter, relaxation);
+        Preconditioner precond(A, s.precondIter(), s.relaxation());
 
         // make a linear operator from a matrix
         using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
         MatrixAdapter linearOperator(A);
 
-        Solver solver(linearOperator, precond, residReduction, maxIter, verbosity);
+        Solver solver(linearOperator, precond, s.residReduction(), s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -88,25 +82,20 @@ public:
         return result.converged;
     }
 
-    template<class Preconditioner, class Solver, class Matrix, class Vector>
-    static bool solveWithGMRes(const Matrix& A, Vector& x, const Vector& b,
+    template<class Preconditioner, class Solver, class SolverInterface, class Matrix, class Vector>
+    static bool solveWithGMRes(const SolverInterface& s, const Matrix& A, Vector& x, const Vector& b,
                                const std::string& modelParamGroup = "")
     {
-        // get some runtime configurable parameters
-        const int verbosity = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
-        const int maxIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
-        const double residReduction = getParamFromGroup<double>(modelParamGroup, "LinearSolver.ResidualReduction");
-        const double relaxation = getParamFromGroup<double>(modelParamGroup, "LinearSolver.PreconditionerRelaxation");
-        const int precondIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.PreconditionerIterations");
+        // get the restart threshold
         const int restartGMRes = getParamFromGroup<double>(modelParamGroup, "LinearSolver.GMResRestart");
 
-        Preconditioner precond(A, precondIter, relaxation);
+        Preconditioner precond(A, s.precondIter(), s.relaxation());
 
         // make a linear operator from a matrix
         using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
         MatrixAdapter linearOperator(A);
 
-        Solver solver(linearOperator, precond, residReduction, restartGMRes, maxIter, verbosity);
+        Solver solver(linearOperator, precond, s.residReduction(), restartGMRes, s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -116,22 +105,16 @@ public:
         return result.converged;
     }
 
-    template<class Preconditioner, class Solver, class Matrix, class Vector>
-    static bool solveWithILU0Prec(const Matrix& A, Vector& x, const Vector& b,
+    template<class Preconditioner, class Solver, class SolverInterface, class Matrix, class Vector>
+    static bool solveWithILU0Prec(const SolverInterface& s, const Matrix& A, Vector& x, const Vector& b,
                                   const std::string& modelParamGroup = "")
     {
-        // get some runtime configurable parameters
-        const int verbosity = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
-        const int maxIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
-        const double residReduction = getParamFromGroup<double>(modelParamGroup, "LinearSolver.ResidualReduction");
-        const double relaxation = getParamFromGroup<double>(modelParamGroup, "LinearSolver.PreconditionerRelaxation");
-
-        Preconditioner precond(A, relaxation);
+        Preconditioner precond(A, s.relaxation());
 
         using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
         MatrixAdapter operatorA(A);
 
-        Solver solver(operatorA, precond, residReduction, maxIter, verbosity);
+        Solver solver(operatorA, precond, s.residReduction(), s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -142,23 +125,19 @@ public:
     }
 
     // solve with RestartedGMRes (needs restartGMRes as additional argument)
-    template<class Preconditioner, class Solver, class Matrix, class Vector>
-    static bool solveWithILU0PrecGMRes(const Matrix& A, Vector& x, const Vector& b,
+    template<class Preconditioner, class Solver, class SolverInterface, class Matrix, class Vector>
+    static bool solveWithILU0PrecGMRes(const SolverInterface& s, const Matrix& A, Vector& x, const Vector& b,
                                        const std::string& modelParamGroup = "")
     {
-        // get some runtime configurable parameters
-        const int verbosity = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
-        const int maxIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
-        const double residReduction = getParamFromGroup<double>(modelParamGroup, "LinearSolver.ResidualReduction");
-        const double relaxation = getParamFromGroup<double>(modelParamGroup, "LinearSolver.PreconditionerRelaxation");
+        // get the restart threshold
         const int restartGMRes = getParamFromGroup<int>(modelParamGroup, "LinearSolver.GMResRestart");
 
-        Preconditioner precond(A, relaxation);
+        Preconditioner precond(A, s.relaxation());
 
         using MatrixAdapter = Dune::MatrixAdapter<Matrix, Vector, Vector>;
         MatrixAdapter operatorA(A);
 
-        Solver solver(operatorA, precond, residReduction, restartGMRes, maxIter, verbosity);
+        Solver solver(operatorA, precond, s.residReduction(), restartGMRes, s.maxIter(), s.verbosity());
 
         Vector bTmp(b);
 
@@ -187,7 +166,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILUnBiCGSTABBackend
+class ILUnBiCGSTABBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -199,7 +178,7 @@ public:
         using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -226,7 +205,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SORBiCGSTABBackend
+class SORBiCGSTABBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -238,7 +217,7 @@ public:
         using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -265,7 +244,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SSORBiCGSTABBackend
+class SSORBiCGSTABBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -277,7 +256,7 @@ public:
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -304,7 +283,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class GSBiCGSTABBackend
+class GSBiCGSTABBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -316,7 +295,7 @@ public:
         using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -342,7 +321,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class JacBiCGSTABBackend
+class JacBiCGSTABBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -354,7 +333,7 @@ public:
         using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -380,7 +359,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILUnCGBackend
+class ILUnCGBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -392,7 +371,7 @@ public:
         using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -418,7 +397,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SORCGBackend
+class SORCGBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -430,7 +409,7 @@ public:
         using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -456,7 +435,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SSORCGBackend
+class SSORCGBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -468,7 +447,7 @@ public:
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -494,7 +473,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class GSCGBackend
+class GSCGBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -506,7 +485,7 @@ public:
         using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -531,7 +510,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class JacCGBackend
+class JacCGBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -543,7 +522,7 @@ public:
         using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -570,7 +549,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class SSORRestartedGMResBackend
+class SSORRestartedGMResBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -582,7 +561,7 @@ public:
         using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -608,7 +587,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILU0BiCGSTABBackend
+class ILU0BiCGSTABBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -620,7 +599,7 @@ public:
         using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -645,7 +624,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILU0CGBackend
+class ILU0CGBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -657,7 +636,7 @@ public:
         using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -683,7 +662,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILU0RestartedGMResBackend
+class ILU0RestartedGMResBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -695,7 +674,7 @@ public:
         using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithILU0PrecGMRes<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithILU0PrecGMRes<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 
     std::string name() const
@@ -722,7 +701,7 @@ public:
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
 template <class TypeTag>
-class ILUnRestartedGMResBackend
+class ILUnRestartedGMResBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -734,7 +713,7 @@ public:
         using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, paramGroup);
     }
 };
 
@@ -748,7 +727,7 @@ public:
  * http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
  */
 template <class TypeTag>
-class SuperLUBackend
+class SuperLUBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -761,8 +740,7 @@ public:
         using ISTLMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
         static_assert(std::is_same<Matrix, ISTLMatrix>::value, "SuperLU only works with BCRS matrices!");
 
-        const int verbosity = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity");
-        Dune::SuperLU<ISTLMatrix> solver(A, verbosity > 0);
+        Dune::SuperLU<ISTLMatrix> solver(A, this->verbosity() > 0);
 
         Vector bTmp(b);
         solver.apply(x, bTmp, result_);
@@ -810,7 +788,7 @@ private:
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
  */
 template <class TypeTag>
-class UMFPackBackend
+class UMFPackBackend : public LinearSolver<TypeTag>
 {
 public:
 
@@ -823,8 +801,7 @@ public:
         using ISTLMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
         static_assert(std::is_same<Matrix, ISTLMatrix>::value, "UMFPack only works with BCRS matrices!");
 
-        const int verbosity = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity");
-        Dune::UMFPack<ISTLMatrix> solver(A, verbosity > 0);
+        Dune::UMFPack<ISTLMatrix> solver(A, this->verbosity() > 0);
 
         Vector bTmp(b);
         solver.apply(x, bTmp, result_);

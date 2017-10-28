@@ -55,6 +55,7 @@ NEW_PROP_TAG(JacobianMatrix);
 template <class TypeTag, class NewtonController, class JacobianAssembler, class LinearSolver>
 class NewtonMethod
 {
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
@@ -70,6 +71,11 @@ public:
     {
         // set the linear system (matrix & residual) in the assembler
         assembler_->setLinearSystem(matrix_, residual_);
+
+        // set a different default for the linear solver residual reduction
+        // within the Newton the linear solver doesn't need to solve too exact
+        static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        linearSolver_->setResidualReduction(getParamFromGroup<Scalar>(modelParamGroup, "LinearSolver.ResidualReduction", 1e-6));
     }
 
     /*!
