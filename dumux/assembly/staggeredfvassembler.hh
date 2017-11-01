@@ -109,9 +109,7 @@ public:
 
         if(!jacobian_)
         {
-            jacobian_ = std::make_shared<JacobianMatrix>();
-            jacobian_->setBuildMode(JacobianMatrix::random);
-            setJacobianPattern();
+            setLinearSystem();
         }
 
         if(!residual_)
@@ -129,12 +127,17 @@ public:
         {
             // let the local assembler add the element contributions
             for (const auto element : elements(gridView()))
-                LocalAssembler::assemble(*this, *jacobian_, *residual_, element, curSol);
+                LocalAssembler::assembleJacobianAndResidual(*this, *jacobian_, *residual_, element, curSol);
 
             // if we get here, everything worked well
             succeeded = true;
             if (gridView().comm().size() > 1)
                 succeeded = gridView().comm().min(succeeded);
+
+            // printmatrix(std::cout, (*jacobian_)[cellCenterIdx][cellCenterIdx], "A11", "");
+            // printmatrix(std::cout, (*jacobian_)[cellCenterIdx][faceIdx], "A12", "");
+            // printmatrix(std::cout, (*jacobian_)[faceIdx][cellCenterIdx], "A21", "");
+            // printmatrix(std::cout, (*jacobian_)[faceIdx][faceIdx], "A22", "");
         }
         // throw exception if a problem ocurred
         catch (NumericalProblem &e)
@@ -220,7 +223,9 @@ public:
     //! computes the residual norm
     Scalar residualNorm(const SolutionVector& curSol) const
     {
-        ResidualType residual(numDofs());
+        ResidualType residual;
+        residual[cellCenterIdx].resize(numCellCenterDofs());
+        residual[faceIdx].resize(numFaceDofs());
         assembleResidual(residual, curSol);
 
         // calculate the square norm of the residual
@@ -240,11 +245,23 @@ public:
     void setLinearSystem(std::shared_ptr<JacobianMatrix> A,
                          std::shared_ptr<SolutionVector> r)
     {
-        DUNE_THROW(Dune::NotImplemented, "Setting linear system with existing matrix not implemented yet.");
-        // jacobian_ = A;
-        // residual_ = r;
+        jacobian_ = A;
+        residual_ = r;
         //
-        // // check and/or set the BCRS matrix's build mode
+        // check and/or set the BCRS matrix's build mode
+        // convenience references
+        CCToCCMatrixBlock& A11 = (*jacobian_)[cellCenterIdx][cellCenterIdx];
+        CCToFaceMatrixBlock& A12 = (*jacobian_)[cellCenterIdx][faceIdx];
+        FaceToFaceMatrixBlock& A21 = (*jacobian_)[faceIdx][cellCenterIdx];
+        FaceToCCMatrixBlock& A22 = (*jacobian_)[faceIdx][faceIdx];
+
+        A11.setBuildMode(CCToCCMatrixBlock::random);
+        A12.setBuildMode(CCToFaceMatrixBlock::random);
+        A21.setBuildMode(FaceToFaceMatrixBlock::random);
+        A22.setBuildMode(FaceToCCMatrixBlock::random);
+
+        setJacobianPattern();
+        setResidualSize();
         // if (jacobian_->buildMode() == JacobianMatrix::BuildMode::unknown)
         //     jacobian_->setBuildMode(JacobianMatrix::random);
         // else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)

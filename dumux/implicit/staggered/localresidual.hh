@@ -68,6 +68,10 @@ class StaggeredLocalResidual
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
+    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using FaceResidualVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -98,41 +102,6 @@ public:
      */
     // \{
 
-    /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero.
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     */
-    // void eval(const Element &element)
-    // {
-    //     // make sure FVElementGeometry and volume variables are bound to the element
-    //     auto fvGeometry = localView(this->problem().model().fvGridGeometry());
-    //     fvGeometry.bind(element);
-    //
-    //     auto curElemVolVars = localView(problem().model().curGlobalVolVars());
-    //     curElemVolVars.bind(element, fvGeometry, problem().model().curSol());
-    //
-    //     auto prevElemVolVars = localView(problem().model().prevGlobalVolVars());
-    //     prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
-    //
-    //     auto elemFluxVarsCache = localView(problem().model().globalFluxVarsCache());
-    //     elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
-    //
-    //     ElementBoundaryTypes bcTypes;
-    //     bcTypes.update(problem(), element, fvGeometry);
-    //
-    //     auto& curGlobalFaceVars = problem().model().curGlobalFaceVars();
-    //     auto& prevGlobalFaceVars = problem().model().prevGlobalFaceVars();
-    //
-    //
-    //     asImp_().eval(element, fvGeometry,
-    //                   prevElemVolVars, curElemVolVars,
-    //                   prevGlobalFaceVars, curGlobalFaceVars,
-    //                   bcTypes, elemFluxVarsCache);
-    // }
-
      /*!
      * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero.
@@ -149,72 +118,26 @@ public:
      * \param bcTypes The types of the boundary conditions for all
      *                vertices of the element
      */
-    void eval(const Problem& problem,
-              const Element &element,
-              const FVElementGeometry& fvGeometry,
-              const ElementVolumeVariables& prevElemVolVars,
-              const ElementVolumeVariables& curElemVolVars,
-              const GlobalFaceVars& prevFaceVars,
-              const GlobalFaceVars& curFaceVars,
-              const ElementBoundaryTypes &bcTypes,
-              const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        // resize and reset all face terms
-        const auto numScvf = fvGeometry.numScvf();
-
-        faceResiduals_.resize(numScvf, false /*copyOldValues*/);
-        faceStorageTerms_.resize(numScvf, false /*copyOldValues*/);
-        faceResiduals_ = 0.0;
-        faceStorageTerms_ = 0.0;
-
-        // evaluate the volume terms (storage + source terms)
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            // treat the cell center dof
-            evalCellCenter(problem, element, fvGeometry, scv, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes, elemFluxVarsCache);
-
-            // now, treat the dofs on the facets:
-            for(auto&& scvf : scvfs(fvGeometry))
-            {
-                evalFace(problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes, elemFluxVarsCache);
-            }
-        }
-    }
-
-     /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero.
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param prevVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the previous
-     *                   time level
-     * \param curVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the current
-     *                   time level
-     * \param bcTypes The types of the boundary conditions for all
-     *                vertices of the element
-     */
-    void evalCellCenter(const Problem& problem,
+    auto evalCellCenter(const Problem& problem,
                         const Element &element,
                         const FVElementGeometry& fvGeometry,
-                        const SubControlVolume& scv,
                         const ElementVolumeVariables& prevElemVolVars,
                         const ElementVolumeVariables& curElemVolVars,
                         const GlobalFaceVars& prevFaceVars,
                         const GlobalFaceVars& curFaceVars,
                         const ElementBoundaryTypes &bcTypes,
-                        const ElementFluxVariablesCache& elemFluxVarsCache)
+                        const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         // reset all terms
-        ccResidual_ = 0.0;
-        ccStorageTerm_ = 0.0;
+        CellCenterResidual residual;
+        residual = 0.0;
+        // ccStorageTerm_ = 0.0;
 
-        asImp_().evalVolumeTermForCellCenter_(problem, element, fvGeometry, scv, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
-        asImp_().evalFluxesForCellCenter_(problem, element, fvGeometry, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
-        asImp_().evalBoundaryForCellCenter_(problem, element, fvGeometry, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
+        asImp_().evalFluxesForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
+
+        return residual;
     }
 
      /*!
@@ -233,7 +156,7 @@ public:
      * \param bcTypes The types of the boundary conditions for all
      *                vertices of the element
      */
-    void evalFace(const Problem& problem,
+    auto evalFace(const Problem& problem,
                   const Element &element,
                   const FVElementGeometry& fvGeometry,
                   const SubControlVolumeFace& scvf,
@@ -243,224 +166,16 @@ public:
                   const GlobalFaceVars& curFaceVars,
                   const ElementBoundaryTypes &bcTypes,
                   const ElementFluxVariablesCache& elemFluxVarsCache,
-                  const bool resizeResidual = false)
+                  const bool resizeResidual = false) const
     {
-        if(resizeResidual)
-        {
-            const auto numScvf = fvGeometry.numScvf();
-            faceResiduals_.resize(numScvf);
-            faceStorageTerms_.resize(numScvf);
-        }
+        FaceResidual residual;
 
-        faceResiduals_[scvf.localFaceIdx()] = 0.0;
-        faceStorageTerms_[scvf.localFaceIdx()] = 0.0;
+        asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
+        asImp_().evalFluxesForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
 
-        asImp_().evalVolumeTermForFace_(problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
-        asImp_().evalFluxesForFace_(problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
-        asImp_().evalBoundaryForFace_(problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
+        return residual;
     }
-
-
-    const auto& ccResidual() const
-    { return ccResidual_; }
-
-    const auto& faceResiduals() const
-    { return faceResiduals_; }
-
-    const auto& faceResidual(const int fIdx) const
-    { return faceResiduals_[fIdx]; }
-
-
-protected:
-
-     /*!
-     * \brief Evaluate the flux terms for cell center dofs
-     */
-    void evalFluxesForCellCenter_(const Problem& problem,
-                                  const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& faceVars,
-                                  const ElementBoundaryTypes& bcTypes,
-                                  const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        for (auto&& scvf : scvfs(fvGeometry))
-        {
-            if(!scvf.boundary())
-                ccResidual_ += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
-        }
-    }
-
-     /*!
-     * \brief Evaluate the flux terms for face dofs
-     */
-    void evalFluxesForFace_(const Problem& problem,
-                            const Element& element,
-                            const FVElementGeometry& fvGeometry,
-                            const SubControlVolumeFace& scvf,
-                            const ElementVolumeVariables& elemVolVars,
-                            const GlobalFaceVars& globalFaceVars,
-                            const ElementBoundaryTypes& bcTypes,
-                            const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        if(!scvf.boundary())
-            faceResiduals_[scvf.localFaceIdx()] += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, globalFaceVars, elemFluxVarsCache);
-    }
-
-     /*!
-     * \brief Evaluate boundary conditions
-     */
-    void evalBoundary_(const Problem& problem,
-                       const Element& element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const GlobalFaceVars& faceVars,
-                       const ElementBoundaryTypes& bcTypes,
-                       const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-        DUNE_THROW(Dune::InvalidStateException,
-           "The localResidual class does not provide "
-           "a evalBoundary_() method.");
-    }
-
-     /*!
-     * \brief Evaluate the volume term for a cell center dof for a stationary problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForCellCenter_(const Problem& problem,
-                                 const Element &element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const SubControlVolume& scv,
-                                 const ElementVolumeVariables& prevElemVolVars,
-                                 const ElementVolumeVariables& curElemVolVars,
-                                 const GlobalFaceVars& prevFaceVars,
-                                 const GlobalFaceVars& curFaceVars,
-                                 const ElementBoundaryTypes &bcTypes)
-    {
-        const auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
-
-        // subtract the source term from the local rate
-        CellCenterPrimaryVariables source = asImp_().computeSourceForCellCenter(problem, element, fvGeometry, curElemVolVars, curFaceVars, scv);
-        source *= scv.volume()*curExtrusionFactor;
-
-        ccResidual_ -= source;
-    }
-
-     /*!
-     * \brief Evaluate the volume term for a face dof for a stationary problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForFace_(const Problem& problem,
-                           const Element &element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf,
-                           const ElementVolumeVariables& prevElemVolVars,
-                           const ElementVolumeVariables& curElemVolVars,
-                           const GlobalFaceVars& prevFaceVars,
-                           const GlobalFaceVars& curFaceVars,
-                           const ElementBoundaryTypes &bcTypes)
-    {
-        // the source term:
-        auto faceSource = asImp_().computeSourceForFace(problem, scvf, curElemVolVars, curFaceVars);
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
-        faceSource *= 0.5*scv.volume()*curExtrusionFactor;
-        faceResiduals_[scvf.localFaceIdx()] -= faceSource;
-    }
-
-     /*!
-     * \brief Evaluate the volume term for a cell center dof for a transient problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForCellCenter_(const Problem& problem,
-                      const Element &element,
-                      const FVElementGeometry& fvGeometry,
-                      const SubControlVolume& scv,
-                      const ElementVolumeVariables& prevElemVolVars,
-                      const ElementVolumeVariables& curElemVolVars,
-                      const GlobalFaceVars& prevFaceVars,
-                      const GlobalFaceVars& curFaceVars,
-                      const ElementBoundaryTypes &bcTypes)
-    {
-        const auto& curVolVars = curElemVolVars[scv];
-        const auto& prevVolVars = prevElemVolVars[scv];
-
-        // mass balance within the element. this is the
-        // \f$\frac{m}{\partial t}\f$ term if using implicit
-        // euler as time discretization.
-        //
-        // We might need a more explicit way for
-        // doing the time discretization...
-        auto prevCCStorage = asImp_().computeStorageForCellCenter(problem, scv, prevVolVars);
-        auto curCCStorage = asImp_().computeStorageForCellCenter(problem, scv, curVolVars);
-
-        prevCCStorage *= prevVolVars.extrusionFactor();
-        curCCStorage *= curVolVars.extrusionFactor();
-
-        ccStorageTerm_ = std::move(curCCStorage);
-        ccStorageTerm_ -= std::move(prevCCStorage);
-        ccStorageTerm_ *= scv.volume();
-        ccStorageTerm_ /= timeLoop_->timeStepSize();
-
-        // add the storage term to the residual
-        ccResidual_ += ccStorageTerm_;
-
-        // subtract the source term from the local rate
-        CellCenterPrimaryVariables source = asImp_().computeSourceForCellCenter(problem, element, fvGeometry, curElemVolVars, curFaceVars, scv);
-        source *= scv.volume()*curVolVars.extrusionFactor();
-
-        ccResidual_ -= source;
-    }
-
-     /*!
-     * \brief Evaluate the volume term for a face dof for a transient problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForFace_(const Problem& problem,
-                          const Element &element,
-                        const FVElementGeometry& fvGeometry,
-                        const SubControlVolumeFace& scvf,
-                        const ElementVolumeVariables& prevElemVolVars,
-                        const ElementVolumeVariables& curElemVolVars,
-                        const GlobalFaceVars& prevFaceVars,
-                        const GlobalFaceVars& curFaceVars,
-                        const ElementBoundaryTypes &bcTypes)
-    {
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& curVolVars = curElemVolVars[scv];
-        const auto& prevVolVars = prevElemVolVars[scv];
-        auto prevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevVolVars, prevFaceVars);
-        auto curFaceStorage = asImp_().computeStorageForFace(problem, scvf, curVolVars, curFaceVars);
-
-        // the storage term
-        faceStorageTerms_[scvf.localFaceIdx()] = std::move(curFaceStorage);
-        faceStorageTerms_[scvf.localFaceIdx()] -= std::move(prevFaceStorage);
-        faceStorageTerms_[scvf.localFaceIdx()] *= (scv.volume()/2.0);
-        faceStorageTerms_[scvf.localFaceIdx()] /= timeLoop_->timeStepSize();
-        faceResiduals_[scvf.localFaceIdx()] += faceStorageTerms_[scvf.localFaceIdx()];
-
-        // the source term:
-        auto faceSource = asImp_().computeSourceForFace(problem, scvf, curElemVolVars, curFaceVars);
-        faceSource *= 0.5*scv.volume()*curVolVars.extrusionFactor();
-        faceResiduals_[scvf.localFaceIdx()] -= faceSource;
-    }
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-
-    CellCenterPrimaryVariables ccResidual_;
-    CellCenterPrimaryVariables ccStorageTerm_;
-    FaceSolutionVector faceResiduals_;
-    FaceSolutionVector faceStorageTerms_;
-
-
 
     /*!
      * \brief Sets the solution from which to start the time integration. Has to be
@@ -484,7 +199,203 @@ protected:
     bool isStationary() const
     { return !prevSol_; }
 
+
 protected:
+
+     /*!
+     * \brief Evaluate the flux terms for cell center dofs
+     */
+    void evalFluxesForCellCenter_(CellCenterResidual& residual,
+                                  const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const GlobalFaceVars& faceVars,
+                                  const ElementBoundaryTypes& bcTypes,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache) const
+    {
+        for (auto&& scvf : scvfs(fvGeometry))
+        {
+            if(!scvf.boundary())
+                residual += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
+        }
+    }
+
+     /*!
+     * \brief Evaluate the flux terms for face dofs
+     */
+    void evalFluxesForFace_(FaceResidual& residual,
+                            const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const SubControlVolumeFace& scvf,
+                            const ElementVolumeVariables& elemVolVars,
+                            const GlobalFaceVars& globalFaceVars,
+                            const ElementBoundaryTypes& bcTypes,
+                            const ElementFluxVariablesCache& elemFluxVarsCache) const
+    {
+        if(!scvf.boundary())
+            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, globalFaceVars, elemFluxVarsCache);
+    }
+
+     /*!
+     * \brief Evaluate boundary conditions
+     */
+    void evalBoundary_(const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const GlobalFaceVars& faceVars,
+                       const ElementBoundaryTypes& bcTypes,
+                       const ElementFluxVariablesCache& elemFluxVarsCache)
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+           "The localResidual class does not provide "
+           "a evalBoundary_() method.");
+    }
+
+     /*!
+     * \brief Evaluate the volume term for a cell center dof for a stationary problem
+     */
+    template<class P = Problem>
+    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
+    evalVolumeTermForCellCenter_(CellCenterResidual& residual,
+                                 const Problem& problem,
+                                 const Element &element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& prevElemVolVars,
+                                 const ElementVolumeVariables& curElemVolVars,
+                                 const GlobalFaceVars& prevFaceVars,
+                                 const GlobalFaceVars& curFaceVars,
+                                 const ElementBoundaryTypes &bcTypes) const
+    {
+        for(auto&& scv : scvs(fvGeometry))
+        {
+            const auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
+
+            // subtract the source term from the local rate
+            CellCenterPrimaryVariables source = asImp_().computeSourceForCellCenter(problem, element, fvGeometry, curElemVolVars, curFaceVars, scv);
+            source *= scv.volume()*curExtrusionFactor;
+            residual -= source;
+        }
+    }
+
+     /*!
+     * \brief Evaluate the volume term for a face dof for a stationary problem
+     */
+    template<class P = Problem>
+    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
+    evalVolumeTermForFace_(FaceResidual& residual,
+                           const Problem& problem,
+                           const Element &element,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvf,
+                           const ElementVolumeVariables& prevElemVolVars,
+                           const ElementVolumeVariables& curElemVolVars,
+                           const GlobalFaceVars& prevFaceVars,
+                           const GlobalFaceVars& curFaceVars,
+                           const ElementBoundaryTypes &bcTypes) const
+    {
+        // the source term:
+        auto faceSource = asImp_().computeSourceForFace(problem, scvf, curElemVolVars, curFaceVars);
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto curExtrusionFactor = curElemVolVars[scv].extrusionFactor();
+        faceSource *= 0.5*scv.volume()*curExtrusionFactor;
+        residual -= faceSource;
+    }
+
+     /*!
+     * \brief Evaluate the volume term for a cell center dof for a transient problem
+     */
+    template<class P = Problem>
+    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
+    evalVolumeTermForCellCenter_(CellCenterResidual& residual,
+                                 const Problem& problem,
+                                 const Element &element,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& prevElemVolVars,
+                                 const ElementVolumeVariables& curElemVolVars,
+                                 const GlobalFaceVars& prevFaceVars,
+                                 const GlobalFaceVars& curFaceVars,
+                                 const ElementBoundaryTypes &bcTypes) const
+    {
+        for(auto&& scv : scvs(fvGeometry))
+        {
+            const auto& curVolVars = curElemVolVars[scv];
+            const auto& prevVolVars = prevElemVolVars[scv];
+
+            // mass balance within the element. this is the
+            // \f$\frac{m}{\partial t}\f$ term if using implicit
+            // euler as time discretization.
+            //
+            // We might need a more explicit way for
+            // doing the time discretization...
+            auto prevCCStorage = asImp_().computeStorageForCellCenter(problem, scv, prevVolVars);
+            auto curCCStorage = asImp_().computeStorageForCellCenter(problem, scv, curVolVars);
+
+            prevCCStorage *= prevVolVars.extrusionFactor();
+            curCCStorage *= curVolVars.extrusionFactor();
+
+            CellCenterResidual storageTerm = 0.0;
+
+            storageTerm = std::move(curCCStorage);
+            storageTerm -= std::move(prevCCStorage);
+            storageTerm *= scv.volume();
+            storageTerm /= timeLoop_->timeStepSize();
+
+            // add the storage term to the residual
+            residual += storageTerm;
+
+            // subtract the source term from the local rate
+            CellCenterPrimaryVariables source = asImp_().computeSourceForCellCenter(problem, element, fvGeometry, curElemVolVars, curFaceVars, scv);
+            source *= scv.volume()*curVolVars.extrusionFactor();
+
+            residual -= source;
+        }
+    }
+
+     /*!
+     * \brief Evaluate the volume term for a face dof for a transient problem
+     */
+    template<class P = Problem>
+    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
+    evalVolumeTermForFace_(FaceResidual& residual,
+                           const Problem& problem,
+                           const Element &element,
+                           const FVElementGeometry& fvGeometry,
+                           const SubControlVolumeFace& scvf,
+                           const ElementVolumeVariables& prevElemVolVars,
+                           const ElementVolumeVariables& curElemVolVars,
+                           const GlobalFaceVars& prevFaceVars,
+                           const GlobalFaceVars& curFaceVars,
+                           const ElementBoundaryTypes &bcTypes) const
+    {
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& curVolVars = curElemVolVars[scv];
+        const auto& prevVolVars = prevElemVolVars[scv];
+        auto prevFaceStorage = asImp_().computeStorageForFace(problem, scvf, prevVolVars, prevFaceVars);
+        auto curFaceStorage = asImp_().computeStorageForFace(problem, scvf, curVolVars, curFaceVars);
+
+        // the storage term
+        residual = std::move(curFaceStorage);
+        residual -= std::move(prevFaceStorage);
+        residual *= (scv.volume()/2.0);
+        residual /= timeLoop_->timeStepSize();
+        // residuals[scvf.localFaceIdx()] += faceStorageTerms_[scvf.localFaceIdx()];
+
+        // the source term:
+        auto faceSource = asImp_().computeSourceForFace(problem, scvf, curElemVolVars, curFaceVars);
+        faceSource *= 0.5*scv.volume()*curVolVars.extrusionFactor();
+        residual -= faceSource;
+    }
+
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+
+
     TimeLoop& timeLoop()
     { return *timeLoop_; }
 

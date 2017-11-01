@@ -124,7 +124,7 @@ int main(int argc, char** argv)
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    // using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -167,5 +167,73 @@ int main(int argc, char** argv)
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
-    assembler->setLinearSystem();
+    // assembler->setLinearSystem();
+
+    // the linear solver
+    using LinearSolver = Dumux::UMFPackBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>();
+
+    // the non-linear solver
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
+    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+
+    // time loop
+    timeLoop->start(); do
+    {
+        // set previous solution for storage evaluations
+        assembler->setPreviousSolution(xOld);
+
+        // try solving the non-linear system
+        for (int i = 0; i < maxDivisions; ++i)
+        {
+            // linearize & solve
+            auto converged = nonLinearSolver.solve(x);
+
+            if (converged)
+                break;
+
+            if (!converged && i == maxDivisions-1)
+                DUNE_THROW(Dune::MathError,
+                           "Newton solver didn't converge after "
+                           << maxDivisions
+                           << " time-step divisions. dt="
+                           << timeLoop->timeStepSize()
+                           << ".\nThe solutions of the current and the previous time steps "
+                           << "have been saved to restart files.");
+        }
+
+        // make the new solution the old solution
+        xOld = x;
+        gridVariables->advanceTimeStep();
+
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
+
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
+
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
+
+        // set new dt as suggested by newton controller
+        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+
+    } while (!timeLoop->finished());
+
+    timeLoop->finalize(leafGridView.comm());
+
+    ////////////////////////////////////////////////////////////
+    // finalize, print dumux message to say goodbye
+    ////////////////////////////////////////////////////////////
+
+    // print dumux end message
+    if (mpiHelper.rank() == 0)
+    {
+        Parameters::print();
+        DumuxMessage::print(/*firstCall=*/false);
+    }
+
+    return 0;
 }

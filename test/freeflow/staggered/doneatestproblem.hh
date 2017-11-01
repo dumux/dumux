@@ -274,8 +274,8 @@ public:
     InitialValues initialAtPos(const GlobalPosition& globalPos) const
     {
         InitialValues values;
-        values[pressureIdx] = 123.0;
-        values[velocityXIdx] = 44.0;
+        values[pressureIdx] = 0.0;
+        values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
 
         return values;
