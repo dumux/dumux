@@ -41,7 +41,7 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
@@ -104,7 +104,7 @@ int main(int argc, char** argv) try
 
     // try to create a grid (from the given grid file or the input file)
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid(Parameters::getTree());
+    GridCreator::makeGrid();
     GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
@@ -162,7 +162,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = Dumux::AMGBackend<TypeTag>;
+    using LinearSolver = AMGBackend<TypeTag>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->vertexMapper());
 
     // the non-linear solver

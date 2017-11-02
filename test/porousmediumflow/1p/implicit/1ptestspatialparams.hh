@@ -82,7 +82,7 @@ public:
           randomPermeability_(problem.fvGridGeometry().gridView().size(dim), 0.0),
           indexSet_(problem.fvGridGeometry().gridView().indexSet())
     {
-        randomField_ = GET_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams, RandomField);
+        randomField_ = getParam<bool>("SpatialParams.RandomField");
         permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         if(!randomField_)
             permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
@@ -130,9 +130,9 @@ public:
      */
     void initRandomField(const GridView& gridView)
     {
-        std::string gStatControlFile = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Gstat, ControlFile);
-        std::string gStatInputFile = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Gstat, InputFile);
-        std::string outputFilePrefix = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Gstat, OutputFilePrefix);
+        const auto gStatControlFile = getParam<std::string>("Gstat.ControlFile");
+        const auto gStatInputFile = getParam<std::string>("Gstat.InputFile");
+        const auto outputFilePrefix = getParam<std::string>("Gstat.OutputFilePrefix");
 
         // create random permeability object
         GstatRandomField<GridView, Scalar> randomPermeabilityField(gridView);

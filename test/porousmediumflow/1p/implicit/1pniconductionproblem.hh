@@ -26,8 +26,9 @@
 
 #include <math.h>
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
@@ -98,10 +99,8 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -136,34 +135,22 @@ public:
 
         name_ = getParam<std::string>("Problem.Name");
         outputInterval_ = getParam<int>("Problem.OutputInterval");
-
         temperatureHigh_ = 300.0;
-    }
-
-
-    bool shouldWriteOutput() const
-    {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
+        time_ = 0.0;
     }
 
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    const std::vector<Scalar>& computeExactTemperatureSolution(Scalar time)
     {
-        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
-
         const auto someElement = *(elements(this->gridView()).begin());
-        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
-        const auto someInitSol = initial_(someElement.geometry().center());
+        const ElementSolution someElemSol(someElement, this->model().curSol(), this->fvGridGeometry());
+        const auto initSol = initial_();
 
-        auto someFvGeometry = localView(this->model().fvGridGeometry());
-        someFvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
+        auto fvGeometry = localView(this->model().fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
@@ -175,22 +162,22 @@ public:
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
-                                                                                                         someElement, someFvGeometry, someScv);
+                                                                                                         someElement, fvGeometry, someScv);
         using std::max;
-        Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        time = max(time, 1e-10);
 
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->fvGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto globalIdx = scv.dofIndex();
+                const auto globalIdx = scv.dofIndex();
                 const auto& globalPos = scv.dofPosition();
 
                 using std::erf; using std::sqrt;
-                temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
+                exactTemperature_[globalIdx] = temperatureHigh_ + (initSol[temperatureIdx] - temperatureHigh_)
                                               *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
             }
         }
@@ -247,23 +234,10 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables priVars(initial_(globalPos));
+        PrimaryVariables priVars(initial_());
         if (globalPos[0] < eps_)
             priVars[temperatureIdx] = temperatureHigh_;
         return priVars;
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -284,17 +258,17 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return initial_(globalPos);
+        return initial_();
     }
 
     // \}
 
 private:
     // the internal method for the initial condition
-    PrimaryVariables initial_(const GlobalPosition &globalPos) const
+    PrimaryVariables initial_() const
     {
         PrimaryVariables priVars(0.0);
-        priVars[pressureIdx] = 1e5; // initial condition for the pressure
+        priVars[pressureIdx] = 1.0e5;
         priVars[temperatureIdx] = 290.0;
         return priVars;
     }
@@ -303,6 +277,7 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     int outputInterval_;
+    std::vector<Scalar> exactTemperature_;
 };
 
 } //end namespace Dumux

@@ -97,7 +97,7 @@ int main(int argc, char** argv) try
 
     // try to create a grid (from the given grid file or the input file)
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid(Parameters::getTree());
+    GridCreator::makeGrid();
     GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
@@ -155,11 +155,11 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = Dumux::AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using NewtonController = Dumux::NewtonController<TypeTag>;
     using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
