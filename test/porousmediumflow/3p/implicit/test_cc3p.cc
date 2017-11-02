@@ -86,7 +86,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(InfiltrationThreePBoxProblem);
+    using TypeTag = TTAG(InfiltrationThreePCCProblem);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
