@@ -228,7 +228,8 @@ protected:
     /*!
      * \brief Makes a grid from a file. We currently support *.dgf (Dune Grid Format) and *.msh (Gmsh mesh format).
      */
-    static void makeGridFromFile(const std::string& fileName)
+    static void makeGridFromFile(const std::string& fileName,
+                                 const std::string& modelParamGroup = "")
     {
         // We found a file in the input file...does it have a supported extension?
         const std::string extension = getFileExtension(fileName);
@@ -244,17 +245,9 @@ protected:
         if(extension == "msh")
         {
             // get some optional parameters
-            bool verbose = false;
-            try { verbose = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Verbosity);}
-            catch (ParameterException &e) { }
-
-            bool boundarySegments = false;
-            try { boundarySegments = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), BoundarySegments);}
-            catch (ParameterException &e) { }
-
-            bool domainMarkers = false;
-            try { domainMarkers = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), DomainMarkers);}
-            catch (ParameterException &e) { }
+            const bool verbose = getParamFromGroup<bool>(modelParamGroup, "Grid.Verbosity", false);
+            const bool boundarySegments = getParamFromGroup<bool>(modelParamGroup, "Grid.BoundarySegments", false);
+            const bool domainMarkers = getParamFromGroup<bool>(modelParamGroup, "Grid.DomainMarkers", false);
 
             if(domainMarkers)
             {
@@ -307,31 +300,29 @@ protected:
      * \brief Makes a structured cube grid using the structured grid factory
      */
     template <int dim, int dimworld>
-    static void makeStructuredGrid(CellType cellType)
+    static void makeStructuredGrid(CellType cellType,
+                                   const std::string& modelParamGroup = "")
     {
-        // The required parameters
-        typedef Dune::FieldVector<typename Grid::ctype, dimworld> GlobalPosition;
-        const GlobalPosition upperRight = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UpperRight);
+        using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
+        const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
+        const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
 
-        // The optional parameters (they have a default)
-        GlobalPosition lowerLeft(0.0);
-        try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
-        catch (ParameterException &e) { }
-
-        typedef std::array<unsigned int, dim> CellArray;
-        CellArray cells;
-        std::fill(cells.begin(), cells.end(), 1);
-        try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-        catch (ParameterException &e) { }
+        using CellArray = std::array<unsigned int, dim>;
+        CellArray cells; cells.fill(1);
+        cells = getParamFromGroup<CellArray>(modelParamGroup, "Grid.Cells", cells);
 
         // make the grid
         if (cellType == CellType::Cube)
         {
             gridPtr() = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cells);
         }
-        if (cellType == CellType::Simplex)
+        else if (cellType == CellType::Simplex)
         {
             gridPtr() = Dune::StructuredGridFactory<Grid>::createSimplexGrid(lowerLeft, upperRight, cells);
+        }
+        else
+        {
+            DUNE_THROW(Dune::GridError, "Unknown cell type for making structured grid! Choose Cube or Simplex.");
         }
     }
 
@@ -1220,20 +1211,19 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    template<class Parameters>
     static void makeGrid(const std::string& modelParamGroup = "")
     {
         // try to create it from file
         if (haveParamInGroup(modelParamGroup, "Grid.File"))
         {
-            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
             return;
         }
 
         // Then look for the necessary keys to construct a structured grid from the input file
         try {
-            ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex);
+            ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex, modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
         }
         catch (ParameterException &e) {
@@ -1274,7 +1264,7 @@ public:
         // try to create it from file
         if (haveParamInGroup(modelParamGroup, "Grid.File"))
         {
-            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            ParentType::makeGridFromFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"), modelParamGroup);
             ParentType::maybeRefineGrid(modelParamGroup);
             return;
         }
