@@ -104,7 +104,7 @@ int main(int argc, char** argv)
 
     // try to create a grid (from the given grid file or the input file)
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid(Parameters::getTree());
+    GridCreator::makeGrid();
     GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
