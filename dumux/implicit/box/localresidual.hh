@@ -64,7 +64,7 @@ class BoxLocalResidual : public ImplicitLocalResidual<TypeTag>
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
 
 public:
     using ParentType::ParentType;

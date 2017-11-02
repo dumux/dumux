@@ -45,7 +45,7 @@ class PriVarSwitchNewtonController : public NewtonController<TypeTag>
     using Communicator = typename GridView::CollectiveCommunication;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using ElementSolutionVector =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
@@ -138,7 +138,7 @@ public:
                         if (priVarSwitch_->wasSwitched(dofIdxGlobal))
                         {
                             const auto eIdx = fvGridGeometry.elementMapper().index(element);
-                            const auto elemSol = this->elementSolution(element, this->curSol());
+                            const ElementSolution elemSol(element, this->curSol(), fvGridGeometry);
                             this->nonConstCurGlobalVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
                                                                                                         problem,
                                                                                                         element,
@@ -162,7 +162,7 @@ public:
                         {
                             const auto insideScvIdx = scvf.insideScvIdx();
                             const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                            const auto elemSol = ElementSolutionVector{problem.dirichlet(element, scvf)};
+                            const ElementSolution elemSol(problem.dirichlet(element, scvf));
 
                             this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, problem, element, insideScv);
                         }
