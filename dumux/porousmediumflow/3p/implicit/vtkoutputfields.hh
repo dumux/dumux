@@ -23,7 +23,7 @@
 #ifndef DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_THREEP_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

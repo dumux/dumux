@@ -26,11 +26,13 @@
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/porousmediumflow/3p/implicit/propertydefaults.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/linear/seqsolverbackend.hh>
+
 #include "infiltration3pspatialparams.hh"
 
 namespace Dumux
@@ -124,7 +126,7 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
 
 public:
     /*!

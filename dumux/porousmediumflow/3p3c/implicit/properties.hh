@@ -30,6 +30,9 @@
 #ifndef DUMUX_3P3C_PROPERTIES_HH
 #define DUMUX_3P3C_PROPERTIES_HH
 
+#include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
@@ -37,42 +40,13 @@ namespace Dumux
 
 namespace Properties
 {
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
-
 //! The type tags for the implicit three-phase three-component problems
-NEW_TYPE_TAG(ThreePThreeC);
-NEW_TYPE_TAG(BoxThreePThreeC, INHERITS_FROM(BoxModel, ThreePThreeC));
-NEW_TYPE_TAG(CCThreePThreeC, INHERITS_FROM(CCModel, ThreePThreeC));
+NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
 
 //! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC, NonIsothermal));
-NEW_TYPE_TAG(BoxThreePThreeCNI, INHERITS_FROM(BoxModel, ThreePThreeCNI));
-NEW_TYPE_TAG(CCThreePThreeCNI, INHERITS_FROM(CCModel, ThreePThreeCNI));
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(NumComponents); //!< Number of fluid components in the system
-NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
-NEW_PROP_TAG(FluidState); //!< Type of the fluid state to be used
-
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extracted from the spatial parameters)
-NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computation of the effective diffusivity
-
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(UseConstraintSolver); //!< Determines whether a constraint solver should be used explicitly
-NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
-NEW_PROP_TAG(TauTortuosity); //!< Tortuosity value (tau) used in macroscopic diffusion
-NEW_PROP_TAG(UseMoles);//!< Defines whether mole (true) or mass (false) fractions are used
-NEW_PROP_TAG(ReplaceCompEqIdx); //!< The index of the total mass balance equation, if one component balance is replaced (ReplaceCompEqIdx < NumComponents)
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

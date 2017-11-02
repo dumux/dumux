@@ -25,10 +25,10 @@
 #ifndef DUMUX_3P_VOLUME_VARIABLES_HH
 #define DUMUX_3P_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/model.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/volumevariables.hh>
+#include <dumux/discretization/methods.hh>
 #include "properties.hh"
 
 namespace Dumux
@@ -75,7 +75,7 @@ class ThreePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     static const Scalar R; // universal gas constant
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
     enum { dofCodim = isBox ? dim : 0 };
 
 public:

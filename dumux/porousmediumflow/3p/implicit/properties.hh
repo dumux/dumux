@@ -27,6 +27,9 @@
 #ifndef DUMUX_3P_PROPERTIES_HH
 #define DUMUX_3P_PROPERTIES_HH
 
+#include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
@@ -38,33 +41,13 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 //! The type tags for the implicit isothermal one-phase two-component problems
-NEW_TYPE_TAG(ThreeP);
-NEW_TYPE_TAG(BoxThreeP, INHERITS_FROM(BoxModel, ThreeP));
-NEW_TYPE_TAG(CCThreeP, INHERITS_FROM(CCTpfaModel, ThreeP));
+NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
 
 //! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
-NEW_TYPE_TAG(BoxThreePNI, INHERITS_FROM(BoxModel, ThreePNI));
-NEW_TYPE_TAG(CCThreePNI, INHERITS_FROM(CCTpfaModel, ThreePNI));
 
+} // end namespace Properties
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(NumComponents);   //!< Number of components in the system
-NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(FluidSystem); //!< Type of the multi-component relations
-NEW_PROP_TAG(FluidState); //!< the phases' state
-
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The parameters of the material law (extracted from the spatial parameters)
-
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
-}
-}
+} // end namespace Dumux
 
 #endif

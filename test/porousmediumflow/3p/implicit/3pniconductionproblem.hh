@@ -27,10 +27,10 @@
 #include <math.h>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/porousmediumflow/3p/implicit/propertydefaults.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
@@ -109,7 +109,6 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -125,7 +124,7 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         dim=GridView::dimension
     };
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
     enum { dofCodim = isBox ? dimWorld : 0 };
 
     enum {
@@ -143,13 +142,13 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 
 public:
     ThreePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
         name_ = getParam<std::string>("Problem.Name");
-        outputInterval_ =getParam<int>("Problem.OutputInterval");
+        outputInterval_ = getParam<int>("Problem.OutputInterval");
         temperatureHigh_ = 300.0;
         time_ = 0.0;
     }
@@ -161,7 +160,7 @@ public:
      /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    std::vector<Scalar> getExactTemperature() const
+    const std::vector<Scalar>& getExactTemperature() const
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
         const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());

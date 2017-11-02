@@ -29,20 +29,15 @@
 #define DUMUX_3P_PROPERTY_DEFAULTS_HH
 
 #include "indices.hh"
-
-#include "indices.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
 #include "vtkoutputfields.hh"
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
-#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
-#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-
 
 namespace Dumux
 {
@@ -56,7 +51,7 @@ namespace Properties {
  * \brief Set the property for the number of fluid phases.
  *
  * We just forward the number from the fluid system and use an static
- * assert to make sure it is 2.
+ * assert to make sure it is 3.
  */
 SET_PROP(ThreeP, NumPhases)
 {
@@ -80,7 +75,7 @@ SET_PROP(ThreeP, NumComponents)
                   "Only fluid systems with 3 components are supported by the 3p model!");
 };
 
-SET_INT_PROP(ThreeP, NumEq, 3); //!< set the number of equations to 2
+SET_INT_PROP(ThreeP, NumEq, 3); //!< set the number of equations to 3
 
 /*!
  * \brief Set the property for the material parameters by extracting
@@ -118,11 +113,6 @@ private:
 public:
     typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
 };
-
-// disable velocity output by default
-
-// enable gravity by default
-SET_BOOL_PROP(ThreeP, ProblemEnableGravity, true);
 
 //! Set the vtk output fields specific to the ThreeP model
 SET_TYPE_PROP(ThreeP, VtkOutputFields, ThreePVtkOutputFields<TypeTag>);
