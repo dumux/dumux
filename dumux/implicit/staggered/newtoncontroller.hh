@@ -238,6 +238,9 @@ public:
                 this->reduction_ /= this->initialResidual_;
             }
         }
+
+        // update the variables class to the new solution
+        assembler.gridVariables().update(uCurrentIter);
     }
 
      /*!
