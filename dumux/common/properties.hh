@@ -23,6 +23,8 @@
  * \brief Collects a list of properties used by the core of Dumux.
  */
 
+#include <dumux/common/propertysystem.hh>
+
 namespace Dumux
 {
 namespace Properties
@@ -61,6 +63,11 @@ NEW_PROP_TAG(LocalResidual);
 //! TODO: Remove this property as soon as the decoupled models are integrated
 NEW_PROP_TAG(LinearSolver);
 
+////////////////////////////////////////////////
+// Basic properties regarding balance equations
+/////////////////////////////////////////////////
+NEW_PROP_TAG(UseMoles);  //! Property whether to use moles or kg as amount unit for balance equations
+NEW_PROP_TAG(ReplaceCompEqIdx);  //! The component balance index that should be replaced by the total mass/mole balance
 
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
