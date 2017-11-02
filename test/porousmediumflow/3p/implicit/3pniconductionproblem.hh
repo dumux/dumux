@@ -71,7 +71,7 @@ SET_TYPE_PROP(ThreePNIConductionProblem,
               SpatialParams,
               ThreePNISpatialParams<TypeTag>);
 
-}
+}// end namespace Properties
 
 
 /*!

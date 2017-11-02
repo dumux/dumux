@@ -18,6 +18,5 @@ vanGenuchtenN = 4.0
 [Output]
 PlotFluidMatrixInteractions = false
 
-[LinearSolver]
-ResidualReduction = 1e-13
-
+[Newton]
+EnableResidualCriterion = true

@@ -158,8 +158,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = Dumux::AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    using LinearSolver = UMFPackBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
@@ -207,6 +207,7 @@ int main(int argc, char** argv) try
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+         problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
 
     } while (!timeLoop->finished());
 

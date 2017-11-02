@@ -55,10 +55,7 @@ SET_TYPE_PROP(InfiltrationThreePProblem,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-
-// Maximum tolerated relative error in the Newton method
-SET_SCALAR_PROP(InfiltrationThreePProblem, NewtonMaxRelativeShift, 1e-4);
-}
+}// end namespace Properties
 
 /*!
  * \ingroup ThreePModel
@@ -204,9 +201,7 @@ public:
     {
         BoundaryTypes values;
 
-        if(globalPos[0] > 500. - eps_)
-            values.setAllDirichlet();
-        else if(globalPos[0] < eps_)
+        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_ || globalPos[0] < this->fvGridGeometry().bBoxMin()[0] +eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -226,30 +221,7 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-
-        Scalar y = globalPos[1];
-        Scalar x = globalPos[0];
-        Scalar sw, swr=0.12, sgr=0.03;
-
-        if(y > (-1.E-3*x+5) - eps_)
-        {
-            Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
-            if (pc < 0.0) pc = 0.0;
-
-            sw = invertPcgw_(pc,
-                             this->spatialParams().materialLawParamsAtPos(globalPos));
-            if (sw < swr) sw = swr;
-            if (sw > 1.-sgr) sw = 1.-sgr;
-
-            values[pressureIdx] = 1e5 ;
-            values[swIdx] = sw;
-            values[snIdx] = 0.;
-        }else {
-            values[pressureIdx] = 1e5 + 9.81 * 1000.0 * ((-5E-4*x+5) - y);
-            values[swIdx] = 1.-sgr;
-            values[snIdx] = 0.;
-        }
-
+        initial_(values, globalPos);
         return values;
     }
  /*!
@@ -265,15 +237,15 @@ public:
      */
     NeumannFluxes neumannAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
 
         // negative values for injection
         if (time_<2592000.)
         {
-            if ((globalPos[0] <= 175.+eps_) && (globalPos[0] >= 155.-eps_) && (globalPos[1] >= 10.-eps_))
+            if ((globalPos[0] < 175.0+eps_) && (globalPos[0] > 155.0-eps_) && (globalPos[1] > this->fvGridGeometry().bBoxMax()[1]-eps_))
             {
                 values[Indices::contiWEqIdx] = -0.0;
-                values[Indices::contiNEqIdx] = -0.001, // /*Molfluss, umr. über M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
+                values[Indices::contiNEqIdx] = -0.001; // /*Molfluss, umr. über M(Mesit.)=0,120 kg/mol --> 1.2e-4  kg/(sm)
                 values[Indices::contiGEqIdx] = -0.0;
             }
         }

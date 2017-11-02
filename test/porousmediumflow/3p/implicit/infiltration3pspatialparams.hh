@@ -74,6 +74,9 @@ class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag,ElementSolutionVector);
     enum {
         dimWorld=GridView::dimensionworld
     };
@@ -102,15 +105,16 @@ public:
 
         // porosities
         porosity_ = getParam<Scalar>("SpatialParams.porosity");
-
+        vGAlpha_ = getParam<Scalar>("SpatialParams.vanGenuchtenAlpha");
+        vGN_ = getParam<Scalar>("SpatialParams.vanGenuchtenN");
         // residual saturations
         materialParams_.setSwr(0.12);
         materialParams_.setSnr(0.07);
         materialParams_.setSgr(0.03);
 
         // parameters for the 3phase van Genuchten law
-        materialParams_.setVgAlpha(getParam<Scalar>("SpatialParams.vanGenuchtenAlpha"));
-        materialParams_.setVgn(getParam<Scalar>("SpatialParams.vanGenuchtenN"));
+        materialParams_.setVgAlpha(vGAlpha_);
+        materialParams_.setVgn(vGN_);
         materialParams_.setKrRegardsSnr(false);
 
         // parameters for adsorption
@@ -135,14 +139,19 @@ public:
         plotMaterialLaw.plotkr(materialParams_);
     }
 
-    /*!
-     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
+      /*!
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
-     * \param globalPos The global position
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
+     * \return the intrinsic permeability
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-        if (isFineMaterial_(globalPos))
+        if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
         return coarseK_;
     }
@@ -177,6 +186,8 @@ private:
     Scalar coarseK_;
 
     Scalar porosity_;
+    Scalar vGN_;
+    Scalar vGAlpha_;
 
     MaterialLawParams materialParams_;
 
