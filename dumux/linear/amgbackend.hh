@@ -31,6 +31,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
+#include <dumux/linear/solver.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/amgproperties.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
@@ -71,7 +72,7 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
  * \brief Provides a linear solver using the ISTL AMG.
  */
 template <class TypeTag>
-class AMGBackend
+class AMGBackend : public LinearSolver<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
@@ -109,11 +110,6 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        static const auto modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        static const int verbosity = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
-        static const int maxIter = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
-        static const double residReduction = getParamFromGroup<double>(modelParamGroup, "LinearSolver.ResidualReduction");
-
         int rank = 0;
         std::shared_ptr<Comm> comm;
         std::shared_ptr<LinearOperator> fop;
@@ -128,15 +124,15 @@ public:
         //! \todo Check whether the default accumulation mode atOnceAccu is needed.
         Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(Grid::dimension);
-        params.setDebugLevel(verbosity);
+        params.setDebugLevel(this->verbosity());
         Criterion criterion(params);
         SmootherArgs smootherArgs;
         smootherArgs.iterations = 1;
         smootherArgs.relaxationFactor = 1;
 
         AMGType amg(*fop, criterion, smootherArgs, *comm);
-        Dune::BiCGSTABSolver<VType> solver(*fop, *sp, amg, residReduction, maxIter,
-                                           rank == 0 ? verbosity : 0);
+        Dune::BiCGSTABSolver<VType> solver(*fop, *sp, amg, this->residReduction(), this->maxIter(),
+                                           rank == 0 ? this->verbosity() : 0);
 
         solver.apply(x, b, result_);
         firstCall_ = false;
