@@ -18,32 +18,39 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup CCTpfaProperties
- * \ingroup CCTpfaModel
  * \file
  *
- * \brief Default properties for cell centered models
+ * \brief Defines a type tag and some properties for models using
+ *        a cell-centered scheme with two-point flux approximation.
  */
-#ifndef DUMUX_CCTPFA_PROPERTY_DEFAULTS_HH
-#define DUMUX_CCTPFA_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/propertydefaults.hh>
-#include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
+#ifndef DUMUX_CC_TPFA_PROPERTIES_HH
+#define DUMUX_CC_TPFA_PROPERTIES_HH
+
+#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fvproperties.hh>
+
+#include <dumux/discretization/cellcentered/globalvolumevariables.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+
+#include <dumux/implicit/cellcentered/elementboundarytypes.hh>
+#include <dumux/implicit/cellcentered/localresidual.hh>
+
+#include <dumux/discretization/cellcentered/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/tpfa/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
-#include <dumux/discretization/methods.hh>
 
-namespace Dumux {
+namespace Dumux
+{
+namespace Properties
+{
+//! Type tag for the cell-centered tpfa scheme.
+NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(FiniteVolumeModel));
 
-// forward declarations
-template<class TypeTag> class CCElementBoundaryTypes;
-
-namespace Properties {
 //! Set the corresponding discretization method property
 SET_PROP(CCTpfaModel, DiscretizationMethod)
 {
@@ -54,17 +61,32 @@ SET_PROP(CCTpfaModel, DiscretizationMethod)
 SET_TYPE_PROP(CCTpfaModel, FVGridGeometry, CCTpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The global flux variables cache vector class
-SET_TYPE_PROP(CCTpfaModel, GlobalFluxVariablesCache, Dumux::CCTpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(CCTpfaModel, GlobalFluxVariablesCache, CCTpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! Set the default for the local finite volume geometry
 SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The global previous volume variables vector class
-SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, Dumux::CCTpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, CCTpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The local flux variables cache vector class
-SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, Dumux::CCTpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, CCTpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
+//! The global current volume variables vector class
+SET_TYPE_PROP(CCTpfaModel, GlobalVolumeVariables, CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+
+//! The sub control volume
+SET_PROP(CCTpfaModel, SubControlVolume)
+{
+private:
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
+    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+public:
+    using type = CCSubControlVolume<ScvGeometry, IndexType>;
+};
+
+//! The sub control volume face
 SET_PROP(CCTpfaModel, SubControlVolumeFace)
 {
 private:
@@ -75,8 +97,16 @@ public:
     typedef Dumux::CCTpfaSubControlVolumeFace<ScvfGeometry, IndexType> type;
 };
 
-} // namespace Properties
+//! Set the default for the ElementBoundaryTypes
+SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 
+//! Set the BaseLocalResidual to CCLocalResidual
+SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
+
+//! Set the AssemblyMap to the SimpleAssemblyMap per default
+SET_TYPE_PROP(CCTpfaModel, AssemblyMap, CCSimpleConnectivityMap<TypeTag>);
+
+} // namespace Properties
 } // namespace Dumux
 
 #endif

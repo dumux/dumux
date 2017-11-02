@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_L_INTERACTIONVOLUMESEED_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_L_INTERACTIONVOLUMESEED_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include "localsubcontrolentityseeds.hh"
 
 namespace Dumux

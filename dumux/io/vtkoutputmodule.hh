@@ -37,16 +37,9 @@
 #include <dune/grid/io/file/vtk/function.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
-#include <dumux/implicit/properties.hh>
-#include <dumux/io/vtknestedfunction.hh>
 
-namespace Properties
-{
-NEW_PROP_TAG(VtkAddVelocity);
-NEW_PROP_TAG(VtkAddProcessRank);
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(NumPhases);
-}
+#include <dumux/discretization/methods.hh>
+#include <dumux/io/vtknestedfunction.hh>
 
 namespace Dumux
 {
@@ -204,7 +197,6 @@ class VtkOutputModule
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -218,7 +210,7 @@ class VtkOutputModule
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     struct VolVarScalarDataInfo { std::function<Scalar(const VolumeVariables&)> get; std::string name; };
@@ -316,7 +308,7 @@ public:
             || addProcessRank)
         {
             const auto numCells = gridGeom_.gridView().size(0);
-            const auto numDofs = asImp_().numDofs_();
+            const auto numDofs = numDofs_();
 
             // get fields for all volume variables
             if (!volVarScalarDataInfo_.empty())
@@ -472,14 +464,6 @@ private:
     {
         return sol_[dofIdxGlobal][pvIdx];
     }
-
-    //! Returns the implementation of the output module (i.e. static polymorphism)
-    Implementation &asImp_()
-    { return *static_cast<Implementation *>(this); }
-
-    //! \copydoc asImp_()
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation *>(this); }
 
     const Problem& problem_;
     const FVGridGeometry& gridGeom_;

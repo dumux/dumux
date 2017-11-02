@@ -27,7 +27,6 @@
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/bvector.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/assembly/diffmethod.hh>
 
 namespace Dumux {

@@ -28,8 +28,6 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/implicit/localresidual.hh>
 
-#include "properties.hh"
-
 namespace Dumux
 {
 /*!

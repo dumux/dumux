@@ -26,8 +26,6 @@
 #ifndef DUMUX_FACET_MIXEDDIMENSION_PROPERTIES_HH
 #define DUMUX_FACET_MIXEDDIMENSION_PROPERTIES_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-
 #include <dumux/mixeddimension/subproblemproperties.hh>
 #include <dumux/mixeddimension/facet/mpfa/interactionvolume.hh>
 #include <dumux/mixeddimension/facet/mpfa/interiorboundarydata.hh>

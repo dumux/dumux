@@ -27,48 +27,87 @@
 #ifndef DUMUX_1P_PROPERTIES_HH
 #define DUMUX_1P_PROPERTIES_HH
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
+
+#include <dumux/material/components/nullcomponent.hh>
+#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1p.hh>
+
+#include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+
+#include "indices.hh"
+#include "volumevariables.hh"
+#include "vtkoutputfields.hh"
 
 namespace Dumux
 {
-// \{
+namespace Properties {
+//! The type tags for the isothermal & non-isothermal single phase model
+NEW_TYPE_TAG(OneP, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP, NonIsothermal));
+
 ///////////////////////////////////////////////////////////////////////////
 // properties for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-namespace Properties {
+SET_INT_PROP(OneP, NumEq, 1);                                         //! set the number of equations to 1
+SET_INT_PROP(OneP, NumPhases, 1);                                     //! The number of phases in the 1p model is 1
+SET_INT_PROP(OneP, NumComponents, 1);                                 //! The number of components in the 1p model is 1
+SET_TYPE_PROP(OneP, LocalResidual, ImmiscibleLocalResidual<TypeTag>); //! The local residual function
+SET_TYPE_PROP(OneP, VolumeVariables, OnePVolumeVariables<TypeTag>);   //! the VolumeVariables property
+SET_BOOL_PROP(OneP, EnableAdvection, true);                           //! The one-phase model considers advection
+SET_BOOL_PROP(OneP, EnableMolecularDiffusion, false);                 //! The one-phase model has no molecular diffusion
+SET_BOOL_PROP(OneP, EnableEnergyBalance, false);                      //! Isothermal model by default
+SET_TYPE_PROP(OneP, Indices, OnePIndices);                            //! The indices required by the isothermal single-phase model
+SET_TYPE_PROP(OneP, VtkOutputFields, OnePVtkOutputFields<TypeTag>);   //! Set the vtk output fields specific to this model
 
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
+//! The single-phase fluid system is used by default
+SET_TYPE_PROP(OneP,
+              FluidSystem,
+              FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
 
-//! The type tags for the implicit single-phase problems
-NEW_TYPE_TAG(OneP);
-NEW_TYPE_TAG(BoxOneP, INHERITS_FROM(BoxModel, OneP));
-NEW_TYPE_TAG(CCOneP, INHERITS_FROM(CCModel, OneP));
+//! We set a fluid that only throws exceptions.
+//! This hopefully makes the user set this property correctly
+SET_PROP(OneP, Fluid)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
+};
 
-//! The type tags for the corresponding non-isothermal problems
-NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP, NonIsothermal));
-NEW_TYPE_TAG(BoxOnePNI, INHERITS_FROM(BoxModel, OnePNI));
-NEW_TYPE_TAG(CCOnePNI, INHERITS_FROM(CCModel, OnePNI));
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(OneP, FluidState)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+public:
+    typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+};
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+// properties for the non-isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+SET_INT_PROP(OnePNI, IsothermalNumEq, 1);                                           //! set number of equations of isothermal model
+SET_BOOL_PROP(OnePNI, EnableEnergyBalance, true);                                   //! we do solve for the energy balance here
+SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);     //! Vol vars of the isothermal model
+SET_TYPE_PROP(OnePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);   //! Local residual of the isothermal model
+SET_TYPE_PROP(OnePNI, IsothermalIndices, OnePIndices);                              //! Indices of the isothermal model
+SET_TYPE_PROP(OnePNI,
+              ThermalConductivityModel,
+              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>); //! Use the average for effective conductivities
 
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(NumComponents);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters object
-NEW_PROP_TAG(FluidSystem); //!< The type of the fluid system to use
-NEW_PROP_TAG(Fluid); //!< The fluid used for the default fluid system
-NEW_PROP_TAG(FluidState); //!< The type of the fluid state to use
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
-// \}
-}
-
-} // end namespace
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

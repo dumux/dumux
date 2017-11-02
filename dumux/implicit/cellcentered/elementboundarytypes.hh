@@ -23,8 +23,6 @@
 #ifndef DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 
-#include "properties.hh"
-
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux

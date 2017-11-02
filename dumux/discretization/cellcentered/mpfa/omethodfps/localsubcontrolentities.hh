@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_FPS_LOCALSUBCONTROLENTITIES_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_FPS_LOCALSUBCONTROLENTITIES_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include "mpfafpsgeometryhelper.hh"
 
 namespace Dumux

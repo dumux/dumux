@@ -28,7 +28,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/common/elementmap.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/mpfageometryhelper.hh>

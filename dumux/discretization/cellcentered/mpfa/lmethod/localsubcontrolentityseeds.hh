@@ -23,8 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_L_LOCALSUBCONTROLENTITYSEEDS_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_L_LOCALSUBCONTROLENTITYSEEDS_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-
 namespace Dumux
 {
 //! The scv seed class for scvs which could be the central scv in the actual interaction region

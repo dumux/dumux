@@ -36,8 +36,9 @@ namespace Properties
 //! Linear solver type tag for all models.
 NEW_TYPE_TAG(LinearSolverTypeTag);
 
-//! The type of the linear solver to be used
-NEW_PROP_TAG(LinearSolver);
+///////////////////////////////////
+// Property tag declarations:
+///////////////////////////////////
 
 //! Block level depth for the preconditioner
 // Set this to more than one if the matrix to solve is nested multiple times
@@ -52,6 +53,10 @@ NEW_PROP_TAG(LinearSolverPreconditionerBlockLevel);
  * (Especially important for the SuperLU solver!)
  */
 NEW_PROP_TAG(LinearSolverBlockSize);
+
+///////////////////////////////////
+// Default values for properties:
+///////////////////////////////////
 
 //! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerBlockLevel, 1);

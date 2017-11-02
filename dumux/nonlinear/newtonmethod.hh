@@ -100,7 +100,7 @@ public:
 
             // execute the method as long as the controller thinks
             // that we should do another iteration
-            while (controller_->newtonProceed(uCurrentIter))
+            while (controller_->newtonProceed(uCurrentIter, controller_->newtonConverged()))
             {
                 // notify the controller that we're about to start
                 // a new timestep

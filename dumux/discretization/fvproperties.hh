@@ -16,38 +16,46 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_CC_TPFA_PROPERTIES_HH
-#define DUMUX_CC_TPFA_PROPERTIES_HH
-
-#include <dumux/implicit/properties.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
-
 /*!
  * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup CCTpfaModel
  * \file
- * \brief Specify the shape functions, operator assemblers, etc
- *        used for the CCTpfaModel.
+ *
+ * \brief Declares properties required for finite-volume models models.
  */
+
+#ifndef DUMUX_FV_PROPERTIES_HH
+#define DUMUX_FV_PROPERTIES_HH
+
+#include <dune/istl/bvector.hh>
+
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
+
+#include <dumux/implicit/gridvariables.hh>
+
 namespace Dumux
 {
-
 namespace Properties
 {
-// \{
+//! Type tag for finite-volume schemes.
+NEW_TYPE_TAG(FiniteVolumeModel);
 
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
+//! The grid variables
+SET_TYPE_PROP(FiniteVolumeModel, GridVariables, GridVariables<TypeTag>);
 
-//! The type tag for models based on the cell-centered two-point flux approximation scheme
-NEW_TYPE_TAG(CCTpfaModel, INHERITS_FROM(CCModel));
-}
-}
+//! The type of a solution for a whole element
+SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
 
-// \}
+//! We do not store the FVGeometry by default
+SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
 
-#include <dumux/implicit/cellcentered/tpfa/propertydefaults.hh>
+//! We do not store the volume variables by default
+SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalVolumeVariablesCache, false);
 
-#endif
+//! disable flux variables data caching by default
+SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalFluxVariablesCache, false);
+
+} // namespace Properties
+} // namespace Dumux
+
+ #endif

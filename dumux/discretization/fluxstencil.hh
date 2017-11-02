@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 #define DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux

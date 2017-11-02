@@ -31,7 +31,6 @@
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
-#include <dumux/implicit/box/properties.hh>
 
 namespace Dumux
 {

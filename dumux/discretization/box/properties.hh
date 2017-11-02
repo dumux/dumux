@@ -18,15 +18,20 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup BoxModel
  * \file
- * \brief Default properties for box models
+ *
+ * \brief Defines a type tag and some properties for models using the box scheme.
  */
-#ifndef DUMUX_BOX_PROPERTY_DEFAULTS_HH
-#define DUMUX_BOX_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/propertydefaults.hh>
+#ifndef DUMUX_BOX_PROPERTIES_HH
+#define DUMUX_BOX_PROPERTIES_HH
+
+#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fvproperties.hh>
+
+#include <dumux/implicit/box/elementboundarytypes.hh>
+#include <dumux/implicit/box/localresidual.hh>
+
 #include <dumux/discretization/box/subcontrolvolume.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/globalfluxvariablescache.hh>
@@ -35,25 +40,14 @@
 #include <dumux/discretization/box/elementvolumevariables.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
-#include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
-#include <dumux/discretization/methods.hh>
 
-#include "elementboundarytypes.hh"
-#include "localresidual.hh"
-#include "localjacobian.hh"
-#include "assembler.hh"
-#include "properties.hh"
+namespace Dumux
+{
+namespace Properties
+{
+//! Type tag for the box scheme.
+NEW_TYPE_TAG(BoxModel, INHERITS_FROM(FiniteVolumeModel));
 
-namespace Dumux {
-
-/*!
- * \brief The box model combines the advantages of the finite-volume (FV) and finite-element (FE) methods on a dual grid
- */
-// forward declarations
-template<class TypeTag> class BoxLocalResidual;
-template<class TypeTag> class BoxElementBoundaryTypes;
-
-namespace Properties {
 //! Set the corresponding discretization method property
 SET_PROP(BoxModel, DiscretizationMethod)
 {
@@ -96,9 +90,6 @@ public:
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);
 
-//! Mapper for the degrees of freedoms.
-SET_TYPE_PROP(BoxModel, DofMapper, typename GET_PROP_TYPE(TypeTag, VertexMapper));
-
 //! The global volume variables vector class
 SET_TYPE_PROP(BoxModel, GlobalVolumeVariables, BoxGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
@@ -113,15 +104,6 @@ SET_TYPE_PROP(BoxModel, ElementFluxVariablesCache, BoxElementFluxVariablesCache<
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);
-
-//! Assembler for the global jacobian matrix
-SET_TYPE_PROP(BoxModel, JacobianAssembler, BoxAssembler<TypeTag>);
-
-//! The local jacobian operator
-SET_TYPE_PROP(BoxModel, LocalJacobian, BoxLocalJacobian<TypeTag>);
-
-//! indicate that this is a box discretization
-SET_BOOL_PROP(BoxModel, ImplicitIsBox, true);
 
 } // namespace Properties
 } // namespace Dumux

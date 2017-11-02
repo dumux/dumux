@@ -23,8 +23,6 @@
 #ifndef DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/implicit/properties.hh>
-
 namespace Dumux
 {
 

@@ -24,7 +24,6 @@
 #ifndef DUMUX_DISCRETIZATION_VOLUME_VARIABLES_HH
 #define DUMUX_DISCRETIZATION_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux

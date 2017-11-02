@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GLOBAL_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_BOX_GLOBAL_VOLUMEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
 
 namespace Dumux

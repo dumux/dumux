@@ -29,21 +29,13 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/math.hh>
 
-#include <dumux/implicit/properties.hh>
-
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux {
-// forward declaration of property tags
-namespace Properties {
-NEW_PROP_TAG(SpatialParams);
-NEW_PROP_TAG(SpatialParamsForchCoeff);
-}
 
 /*!
  * \ingroup SpatialParameters
  */
-
 
 /**
  * \brief The base class for spatial parameters of one-phase problems

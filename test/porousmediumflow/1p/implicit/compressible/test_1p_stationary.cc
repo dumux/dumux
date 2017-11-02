@@ -41,6 +41,7 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
+#include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 
@@ -65,18 +66,8 @@ int main(int argc, char** argv) try
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    ////////////////////////////////////////////////////////////
-    // parse the command line arguments and input file
-    ////////////////////////////////////////////////////////////
-
-    // parse command line arguments
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
-    ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree());
-
-    // parse the input file into the parameter tree
-    // check first if the user provided an input file through the command line, if not use the default
-    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
-    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName);
+    // initialize parameter tree
+    Parameters::init(argc, argv);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
@@ -103,7 +94,7 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     static constexpr int dofCodim = isBox ? GridView::dimension : 0;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -120,10 +111,10 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(*problem);
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using NewtonController = NewtonController<TypeTag>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
     NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 

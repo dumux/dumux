@@ -29,7 +29,7 @@
 
 #include <dumux/common/elementmap.hh>
 #include <dumux/common/boundingboxtree.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>

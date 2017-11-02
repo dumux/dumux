@@ -24,6 +24,7 @@
 #ifndef DUMUX_SCV_AND_SCVF_ITERATORS_HH
 #define DUMUX_SCV_AND_SCVF_ITERATORS_HH
 
+#include <dune/common/iteratorrange.hh>
 #include <dune/common/iteratorfacades.hh>
 
 namespace Dumux

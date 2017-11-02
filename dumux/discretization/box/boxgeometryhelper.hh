@@ -27,7 +27,6 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/implicit/box/properties.hh>
 #include <dumux/common/math.hh>
 
 namespace Dumux

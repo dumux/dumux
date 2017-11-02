@@ -36,87 +36,6 @@
 
 namespace Dumux
 {
-template <class TypeTag>
-class NewtonController;
-
-namespace Properties
-{
-//! Specifies the implementation of the Newton controller
-NEW_PROP_TAG(NewtonController);
-
-//! Specifies whether the Jacobian matrix should only be reassembled
-//! if the current solution deviates too much from the evaluation point
-NEW_PROP_TAG(ImplicitEnablePartialReassemble);
-
-//! Specify whether the jacobian matrix of the last iteration of a
-//! time step should be re-used as the jacobian of the first iteration
-//! of the next time step.
-NEW_PROP_TAG(ImplicitEnableJacobianRecycling);
-
-/*!
- * \brief Specifies whether the update should be done using the line search
- *        method instead of the plain Newton method.
- *
- * Whether this property has any effect depends on whether the line
- * search method is implemented for the actual model's Newton
- * controller's update() method. By default line search is not used.
- */
-NEW_PROP_TAG(NewtonUseLineSearch);
-
-//! indicate whether the absolute residual should be used in the residual criterion
-NEW_PROP_TAG(NewtonEnableAbsoluteResidualCriterion);
-
-//! indicate whether the shift criterion should be used
-NEW_PROP_TAG(NewtonEnableShiftCriterion);
-
-//! the value for the maximum relative shift below which convergence is declared
-NEW_PROP_TAG(NewtonMaxRelativeShift);
-
-//! the value for the maximum absolute residual below which convergence is declared
-NEW_PROP_TAG(NewtonMaxAbsoluteResidual);
-
-//! indicate whether the residual criterion should be used
-NEW_PROP_TAG(NewtonEnableResidualCriterion);
-
-//! the value for the residual reduction below which convergence is declared
-NEW_PROP_TAG(NewtonResidualReduction);
-
-//! indicate whether both of the criteria should be satisfied to declare convergence
-NEW_PROP_TAG(NewtonSatisfyResidualAndShiftCriterion);
-
-//! indicate whether after each newton step the solution is chopped, e.g. to
-//! physically sensible values (if a chopper is implemented for this model)
-NEW_PROP_TAG(NewtonEnableChop);
-
-/*!
- * \brief The number of iterations at which the Newton method
- *        should aim at.
- *
- * This is used to control the time-step size. The heuristic used
- * is to scale the last time-step size by the deviation of the
- * number of iterations used from the target steps.
- */
-NEW_PROP_TAG(NewtonTargetSteps);
-
-//! Number of maximum iterations for the Newton method.
-NEW_PROP_TAG(NewtonMaxSteps);
-
-//! set default values
-SET_TYPE_PROP(NewtonMethod, NewtonController, NewtonController<TypeTag>);
-SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteResidualCriterion, false);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion, false);
-SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion, false);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableChop, false);
-SET_SCALAR_PROP(NewtonMethod, NewtonMaxRelativeShift, 1e-8);
-SET_SCALAR_PROP(NewtonMethod, NewtonMaxAbsoluteResidual, 1e-5);
-SET_SCALAR_PROP(NewtonMethod, NewtonResidualReduction, 1e-5);
-SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
-SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
-
-} // end namespace Properties
-
 /*!
  * \ingroup Newton
  * \brief A reference implementation of a Newton controller specific
@@ -130,7 +49,6 @@ template <class TypeTag>
 class NewtonController
 {
     using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Implementation =  typename GET_PROP_TYPE(TypeTag, NewtonController);
     using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
     using Communicator = typename GridView::CollectiveCommunication;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -218,11 +136,11 @@ public:
      * \param uCurrentIter The solution of the current Newton iteration
      */
     template<class SolutionVector>
-    bool newtonProceed(const SolutionVector &uCurrentIter)
+    bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
     {
         if (numSteps_ < 2)
             return true; // we always do at least two iterations
-        else if (asImp_().newtonConverged()) {
+        else if (converged) {
             return false; // we are below the desired tolerance
         }
         else if (numSteps_ >= maxSteps_) {
@@ -590,15 +508,6 @@ public:
     { return verbose_ && communicator().rank() == 0; }
 
 protected:
-
-    // returns the actual implementation for the controller we do
-    // it this way in order to allow "poor man's virtual methods",
-    // i.e. methods of subclasses which can be called by the base
-    // class.
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 
     void initParams_()
     {

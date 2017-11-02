@@ -29,7 +29,6 @@
 #include <dune/istl/matrixindexset.hh>
 
 #include <dumux/common/timeloop.hh>
-#include <dumux/implicit/properties.hh>
 #include <dumux/implicit/localresidual.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -58,7 +57,7 @@ class FVAssembler
     using TimeLoop = TimeLoopBase<Scalar>;
 
     static constexpr int dim = GridView::dimension;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     static constexpr int dofCodim = isBox ? dim : 0;
 
     using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, diffMethod, isImplicit>,
@@ -358,7 +357,7 @@ private:
 
     //! Implicit jacobian pattern for cell-centered fv schemes
     template<typename T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
     setImplicitJacobianPattern_(Dune::MatrixIndexSet& pattern, std::size_t numDofs)
     {
         for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
@@ -376,7 +375,7 @@ private:
 
     //! Implicit jacobian pattern for vertex-centered fv schemes
     template<typename T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
     setImplicitJacobianPattern_(Dune::MatrixIndexSet& pattern, std::size_t numDofs)
     {
         for (const auto& element : elements(fvGridGeometry().gridView()))

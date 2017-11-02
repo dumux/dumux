@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_MPFA_O_HYBRIDFPS_GLOBALINTERACTIONVOLUMESEEDS_HH
 #define DUMUX_DISCRETIZATION_MPFA_O_HYBRIDFPS_GLOBALINTERACTIONVOLUMESEEDS_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 

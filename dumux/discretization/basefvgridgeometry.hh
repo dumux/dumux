@@ -24,6 +24,8 @@
 #define DUMUX_DISCRETIZATION_BASE_FV_GRID_GEOMETRY_HH
 
 #include <dune/common/version.hh>
+#include <dune/grid/common/mcmgmapper.hh>
+
 #include <dumux/common/boundingboxtree.hh>
 
 namespace Dumux

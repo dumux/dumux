@@ -18,22 +18,26 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup CCMpfaProperties
- * \ingroup CCMpfaModel
  * \file
  *
- * \brief Default properties for cell centered models
+ * \brief Defines a type tag and some properties for models using
+ *        a cell-centered scheme with multi-point flux approximation.
  */
-#ifndef DUMUX_CCMPFA_PROPERTY_DEFAULTS_HH
-#define DUMUX_CCMPFA_PROPERTY_DEFAULTS_HH
 
-#include <dune/geometry/type.hh>
-#include <dune/geometry/multilineargeometry.hh>
+#ifndef DUMUX_CC_MPFA_PROPERTIES_HH
+#define DUMUX_CC_MPFA_PROPERTIES_HH
 
-#include <dumux/implicit/propertydefaults.hh>
-#include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fvproperties.hh>
+
+#include <dumux/implicit/cellcentered/elementboundarytypes.hh>
+#include <dumux/implicit/cellcentered/localresidual.hh>
+
+#include <dumux/discretization/cellcentered/globalvolumevariables.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
@@ -42,11 +46,14 @@
 #include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
 
-namespace Dumux {
+namespace Dumux
+{
+namespace Properties
+{
+//! Type tag for the cell-centered mpfa scheme.
+NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
 
-namespace Properties {
 //! Set the corresponding discretization method property
 SET_PROP(CCMpfaModel, DiscretizationMethod)
 {
@@ -65,23 +72,50 @@ SET_TYPE_PROP(CCMpfaModel, MpfaHelper, CCMpfaHelper<TypeTag>);
 //! The interaction volume class
 SET_TYPE_PROP(CCMpfaModel, PrimaryInteractionVolume, CCMpfaInteractionVolume<TypeTag>);
 
-//! The boundary interaction volume class (for methods other than the omethod)
-SET_TYPE_PROP(CCMpfaModel, SecondaryInteractionVolume, typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume)::Traits::SecondaryInteractionVolume);
+//! The secondary interaction volume class (exported from the traits)
+SET_TYPE_PROP(CCMpfaModel,
+              SecondaryInteractionVolume,
+              typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume)::Traits::SecondaryInteractionVolume);
 
 //! Set the default for the global finite volume geometry
-SET_TYPE_PROP(CCMpfaModel, FVGridGeometry, CCMpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-
-//! The global flux variables cache vector class
-SET_TYPE_PROP(CCMpfaModel, GlobalFluxVariablesCache, CCMpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(CCMpfaModel,
+              FVGridGeometry,
+              CCMpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! Set the default for the local finite volume geometry
-SET_TYPE_PROP(CCMpfaModel, FVElementGeometry, CCMpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+SET_TYPE_PROP(CCMpfaModel,
+              FVElementGeometry,
+              CCMpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
-//! The global previous volume variables vector class
-SET_TYPE_PROP(CCMpfaModel, ElementVolumeVariables, Dumux::CCMpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+//! The global flux variables cache vector class
+SET_TYPE_PROP(CCMpfaModel,
+              GlobalFluxVariablesCache,
+              CCMpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! The local flux variables cache vector class
-SET_TYPE_PROP(CCMpfaModel, ElementFluxVariablesCache, Dumux::CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(CCMpfaModel,
+              ElementFluxVariablesCache,
+              CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+
+
+//! The global previous volume variables vector class
+SET_TYPE_PROP(CCMpfaModel,
+              ElementVolumeVariables,
+              CCMpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+
+//! The global current volume variables vector class
+SET_TYPE_PROP(CCMpfaModel, GlobalVolumeVariables, CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+
+//! The sub control volume
+SET_PROP(CCMpfaModel, SubControlVolume)
+{
+private:
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
+    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+public:
+    using type = CCSubControlVolume<ScvGeometry, IndexType>;
+};
 
 //! The sub-control volume face class
 SET_PROP(CCMpfaModel, SubControlVolumeFace)
@@ -124,17 +158,16 @@ public:
     typedef Dumux::CCMpfaSubControlVolumeFace<method, ScvfGeometry, ScvfGeometryTraits<Scalar>, IndexType> type;
 };
 
-// By default, we set the quadrature point to the mid point of the element facets
-SET_SCALAR_PROP(CCMpfaModel, MpfaQ, 0.0);
+//! Set the default for the ElementBoundaryTypes
+SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 
-// By default, the auxiliary volume size is half of the interaction region
-SET_SCALAR_PROP(CCMpfaModel, MpfaC, 0.5);
+//! Set the BaseLocalResidual to CCLocalResidual
+SET_TYPE_PROP(CCMpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
 
-// By default, we set the quadrature point 1/2 away from the mid point of the auxiliary sub faces
-SET_SCALAR_PROP(CCMpfaModel, MpfaP, 0.75);
+//! Set the AssemblyMap property
+SET_TYPE_PROP(CCMpfaModel, AssemblyMap, Dumux::CCMpfaConnectivityMap<TypeTag>);
 
 } // namespace Properties
-
 } // namespace Dumux
 
 #endif

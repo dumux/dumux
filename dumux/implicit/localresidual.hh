@@ -29,10 +29,11 @@
 #include <dumux/common/capabilities.hh>
 #include <dumux/common/timeloop.hh>
 
-#include "properties.hh"
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
+
 /*!
  * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the residual matrix for models
@@ -421,7 +422,7 @@ public:
     }
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                             const Problem& problem,
                             const Element& element,
@@ -434,7 +435,7 @@ public:
     }
 
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
     addFluxDerivatives(JacobianMatrix& A,
                             const Problem& problem,
                             const Element& element,

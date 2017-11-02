@@ -23,16 +23,10 @@
 #ifndef DUMUX_IMPLICIT_POROUS_MEDIA_PROBLEM_HH
 #define DUMUX_IMPLICIT_POROUS_MEDIA_PROBLEM_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/implicit/problem.hh>
 
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters object
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-}
 
 /*!
  * \ingroup ImplicitBaseProblems
@@ -61,8 +55,6 @@ class ImplicitPorousMediaProblem : public ImplicitProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-
 public:
     /*!
      * \brief The constructor
@@ -79,7 +71,7 @@ public:
     {
         spatialParams_ = std::make_shared<SpatialParams>(asImp_(), gridView);
 
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.AddVelocity"))
             gravity_[dimWorld-1]  = -9.81;
     }
 

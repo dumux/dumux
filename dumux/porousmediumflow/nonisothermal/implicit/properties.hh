@@ -29,8 +29,6 @@
 #ifndef DUMUX_ENERGY_PROPERTIES_HH
 #define DUMUX_ENERGY_PROPERTIES_HH
 
-#include <dumux/implicit/properties.hh>
-
 namespace Dumux
 {
 // \{

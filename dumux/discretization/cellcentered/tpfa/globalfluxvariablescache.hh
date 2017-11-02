@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 
 namespace Dumux

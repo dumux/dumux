@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_FLUXVARSCACHE_FILLER_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_FLUXVARSCACHE_FILLER_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 

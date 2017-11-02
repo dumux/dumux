@@ -24,8 +24,8 @@
 #define DUMUX_FV_PROBLEM_HH
 
 #include <dune/common/version.hh>
+#include <dune/grid/common/gridenums.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
 //#include <dumux/io/restart.hh>
@@ -72,8 +72,7 @@ class FVProblem
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    // TODO get this from the discretization method property
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
     // using GridAdaptModel = ImplicitGridAdapt<TypeTag, adaptiveGrid>;
 

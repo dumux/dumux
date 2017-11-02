@@ -41,7 +41,6 @@ class PriVarSwitchNewtonController : public NewtonController<TypeTag>
 {
     using ParentType = NewtonController<TypeTag>;
     using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Implementation =  typename GET_PROP_TYPE(TypeTag, NewtonController);
     using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
     using Communicator = typename GridView::CollectiveCommunication;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
