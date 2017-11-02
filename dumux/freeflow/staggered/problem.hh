@@ -43,21 +43,18 @@ class NavierStokesProblem : public StaggeredFVProblem<TypeTag>
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Grid = typename GridView::Grid;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
-
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
     enum {
         dim = Grid::dimension,
@@ -69,7 +66,7 @@ class NavierStokesProblem : public StaggeredFVProblem<TypeTag>
         velocityYIdx = Indices::velocityYIdx
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -95,9 +92,30 @@ public:
      *
      * \param scvf The sub control volume face
      */
-    auto dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    BoundaryValues dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         return asImp_().dirichletAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Returns neumann values at a given scv face.
+       This method can be overloaded in the actual problem, e.g. for coupling strategies
+     *
+     * \param scvf The sub control volume face
+     */
+    BoundaryValues neumann(const Element &element, const SubControlVolumeFace &scvf) const
+    {
+        return asImp_().neumannAtPos(scvf.center());
+    }
+
+    /*!
+     * \brief Returns neumann values at a position.
+     *
+     * \param scvf The sub control volume face
+     */
+    BoundaryValues neumannAtPos(const GlobalPosition& globalPos) const
+    {
+        return BoundaryValues(0.0);
     }
 
     /*!

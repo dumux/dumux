@@ -276,7 +276,7 @@ protected:
                         if(bcTypes.isNeumann(eqIdx))
                         {
                             const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
-                            boundaryFlux[eqIdx] = problem.neumannAtPos(scvf.center())[cellCenterIdx][eqIdx]
+                            boundaryFlux[eqIdx] = problem.neumann(element, scvf)[cellCenterIdx][eqIdx]
                                                    * extrusionFactor * scvf.area();
                         }
                 }
