@@ -61,8 +61,8 @@ NEW_PROP_TAG(LinearSolverBlockSize);
 //! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
 SET_INT_PROP(LinearSolverTypeTag, LinearSolverPreconditionerBlockLevel, 1);
 
-//! set the block size to 1 as default
-SET_INT_PROP(LinearSolverTypeTag, LinearSolverBlockSize, 1);
+//! set the block size to number of equations as default
+SET_INT_PROP(LinearSolverTypeTag, LinearSolverBlockSize, GET_PROP_VALUE(TypeTag, NumEq));
 
 } // namespace Properties
 } // namespace Dumux
