@@ -88,7 +88,7 @@ public:
      *
      * \param gridView The simulation's idea about physical space
      */
-    FVProblem(std::shared_ptr<const FVGridGeometry>& fvGridGeometry)
+    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : fvGridGeometry_(fvGridGeometry)
     {
         // set a default name for the problem
