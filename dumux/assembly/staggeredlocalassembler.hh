@@ -130,8 +130,8 @@ public:
                                                                              fvGeometry,
                                                                              prevElemVolVars,
                                                                              curElemVolVars,
-                                                                             curGlobalFaceVars,
                                                                              prevGlobalFaceVars,
+                                                                             curGlobalFaceVars,
                                                                              elemBcTypes,
                                                                              elemFluxVarsCache)[0];
 
@@ -155,8 +155,8 @@ public:
                                                                             scvf,
                                                                             prevElemVolVars,
                                                                             curElemVolVars,
-                                                                            curGlobalFaceVars,
                                                                             prevGlobalFaceVars,
+                                                                            curGlobalFaceVars,
                                                                             elemBcTypes,
                                                                             elemFluxVarsCache)[0];
 
