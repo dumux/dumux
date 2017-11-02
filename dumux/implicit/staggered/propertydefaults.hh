@@ -57,7 +57,6 @@
 #include "properties.hh"
 #include "newtoncontroller.hh"
 #include "newtonconvergencewriter.hh"
-#include "model.hh"
 #include "primaryvariables.hh"
 #include "gridvariables.hh"
 
@@ -72,9 +71,6 @@ SET_PROP(StaggeredModel, DiscretizationMethod)
 {
     static const DiscretizationMethods value = DiscretizationMethods::Staggered;
 };
-
-
-SET_TYPE_PROP(StaggeredModel, BaseModel, StaggeredBaseModel<TypeTag>);
 
 
 //! Set the default for the global finite volume geometry

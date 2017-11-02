@@ -101,9 +101,6 @@ SET_TYPE_PROP(NavierStokes, FaceVariables, StaggeredFaceVariables<TypeTag>);
 //! The local residual function
 SET_TYPE_PROP(NavierStokes, LocalResidual, StaggeredNavierStokesResidual<TypeTag>);
 
-//! the Model property
-SET_TYPE_PROP(NavierStokes, Model, NavierStokesModel<TypeTag>);
-
 //! the VolumeVariables property
 SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
 
@@ -205,9 +202,6 @@ SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<Typ
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
-
-// set isothermal Model
-SET_TYPE_PROP(NavierStokesNI, IsothermalModel, NavierStokesModel<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
