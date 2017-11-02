@@ -23,10 +23,16 @@
 #ifndef DUMUX_FV_PROBLEM_HH
 #define DUMUX_FV_PROBLEM_HH
 
+#include <memory>
+
 #include <dune/common/version.hh>
+#include <dune/common/fvector.hh>
 #include <dune/grid/common/gridenums.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/parallel/vertexhandles.hh>
+#include <dumux/discretization/methods.hh>
 
 //#include <dumux/io/restart.hh>
 //#include <dumux/implicit/adaptive/gridadapt.hh>
@@ -82,7 +88,7 @@ public:
      *
      * \param gridView The simulation's idea about physical space
      */
-    FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    FVProblem(std::shared_ptr<const FVGridGeometry>& fvGridGeometry)
     : fvGridGeometry_(fvGridGeometry)
     {
         // set a default name for the problem
