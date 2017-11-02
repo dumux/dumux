@@ -26,7 +26,6 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FVGEOMETRY_HH
 
 #include <dumux/common/elementmap.hh>
-#include <dumux/implicit/staggered/properties.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/common/boundingboxtree.hh>
 #include <dumux/discretization/staggered/connectivitymap.hh>

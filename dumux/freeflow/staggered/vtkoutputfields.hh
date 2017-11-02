@@ -23,7 +23,7 @@
 #ifndef DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {

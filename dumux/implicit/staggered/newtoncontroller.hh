@@ -27,7 +27,8 @@
 #ifndef DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 #define DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 
-#include "properties.hh"
+#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
@@ -36,16 +37,16 @@
 
 namespace Dumux {
 
-namespace Properties
-{
-    SET_PROP(StaggeredModel, LinearSolverBlockSize)
-    {
-        // LinearSolverAcceptsMultiTypeMatrix<T>::value
-        // TODO: make somehow dependend? or only relevant for direct solvers?
-    public:
-        static constexpr auto value = 1;
-    };
-}
+// namespace Properties
+// {
+//     SET_PROP(StaggeredModel, LinearSolverBlockSize)
+//     {
+//         // LinearSolverAcceptsMultiTypeMatrix<T>::value
+//         // TODO: make somehow dependend? or only relevant for direct solvers?
+//     public:
+//         static constexpr auto value = 1;
+//     };
+// }TODO: why not possible here?
 /*!
  * \ingroup PNMModel
  * \brief A PNM specific controller for the newton solver.

@@ -52,6 +52,7 @@
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
+#include <dumux/implicit/staggered/primaryvariables.hh>
 
 
 
@@ -190,6 +191,8 @@ SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<Type
 SET_TYPE_PROP(NavierStokes, EnergyLocalResidual, FreeFlowEnergyLocalResidual<TypeTag>);
 
 SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<TypeTag>);
+
+SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
 
 //! average is used as default model to compute the effective thermal heat conductivity
 // SET_PROP(NavierStokesNI, ThermalConductivityModel)

@@ -28,8 +28,7 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/capabilities.hh>
 #include <dumux/common/timeloop.hh>
-
-#include "properties.hh"
+#include <dumux/discretization/staggered/properties.hh>
 
 namespace Dumux
 {
@@ -44,7 +43,6 @@ namespace Dumux
 template<class TypeTag>
 class StaggeredLocalResidual
 {
-    friend class ImplicitLocalResidual<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };

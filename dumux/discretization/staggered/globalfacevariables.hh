@@ -23,7 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {

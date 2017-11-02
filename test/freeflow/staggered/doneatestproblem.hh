@@ -27,11 +27,12 @@
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
 #include <dumux/freeflow/staggered/problem.hh>
-#include <dumux/implicit/staggered/properties.hh>
+#include <dumux/discretization/staggered/properties.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
 
+#include <dumux/discretization/staggered/properties.hh>
 #include <dumux/freeflow/staggered/propertydefaults.hh>
 
 
@@ -111,7 +112,6 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     };
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;

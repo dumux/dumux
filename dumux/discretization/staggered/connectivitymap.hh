@@ -26,7 +26,7 @@
 #define DUMUX_STAGGERED_CONNECTIVITY_MAP_HH
 
 #include <vector>
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {

@@ -18,69 +18,63 @@
  *****************************************************************************/
 /*!
  * \ingroup Properties
- * \ingroup CCTpfaProperties
- * \ingroup StaggeredModel
  * \file
  *
- * \brief Default properties for cell centered models
+ * \brief Defines a type tag and some properties for models using the box scheme.
  */
-#ifndef DUMUX_STAGGERED_PROPERTY_DEFAULTS_HH
-#define DUMUX_STAGGERED_PROPERTY_DEFAULTS_HH
 
-#include <dumux/implicit/propertydefaults.hh>
-#include <dumux/discretization/staggered/fvgridgeometry.hh>
-#include <dumux/discretization/staggered/fvelementgeometry.hh>
-// #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
-#include <dumux/implicit/staggered/properties.hh>
+#ifndef DUMUX_STAGGERDs_PROPERTIES_HH
+#define DUMUX_STAGGERDs_PROPERTIES_HH
+
+#include <dumux/common/properties.hh>
+
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fvproperties.hh>
 
+#include <dumux/implicit/cellcentered/elementboundarytypes.hh>
+#include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/implicit/staggered/primaryvariables.hh>
+#include <dumux/implicit/staggered/gridvariables.hh>
+
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/globalfluxvariablescache.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
-
-#include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/globalvolumevariables.hh>
+#include <dumux/discretization/staggered/elementvolumevariables.hh>
+#include <dumux/discretization/staggered/fvgridgeometry.hh>
+#include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/staggered/globalfacevariables.hh>
 
-#include <dune/common/fvector.hh>
-#include <dune/common/fmatrix.hh>
-#include <dune/common/indices.hh>
-#include <dune/istl/bcrsmatrix.hh>
+#include <dumux/common/intersectionmapper.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
-
-#include <dumux/io/staggeredvtkoutputmodule.hh>
-#include <dumux/common/intersectionmapper.hh>
-
-#include "localresidual.hh"
-#include "properties.hh"
-#include "newtoncontroller.hh"
-#include "newtonconvergencewriter.hh"
-#include "primaryvariables.hh"
-#include "gridvariables.hh"
-
-namespace Dumux {
+namespace Dumux
+{
 
 // forward declarations
 template<class TypeTag> class CCElementBoundaryTypes;
 
-namespace Properties {
+namespace Properties
+{
+
+NEW_PROP_TAG(CellCenterSolutionVector);
+NEW_PROP_TAG(FaceSolutionVector);
+
+//! Type tag for the box scheme.
+NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel, NumericModel));
+
 //! Set the corresponding discretization method property
 SET_PROP(StaggeredModel, DiscretizationMethod)
 {
     static const DiscretizationMethods value = DiscretizationMethods::Staggered;
 };
 
-
-//! Set the default for the global finite volume geometry
+//! Set the default for the FVElementGeometry vector
 SET_TYPE_PROP(StaggeredModel, FVGridGeometry, StaggeredFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
-//! Set the default for the local finite volume geometry
+//! Set the default for the FVElementGeometry vector
 SET_TYPE_PROP(StaggeredModel, FVElementGeometry, StaggeredFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-// SET_TYPE_PROP(StaggeredModel, FVElementGeometry, Dumux::CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-//TODO: try to use CC
-SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
 
 //! The sub control volume
 SET_PROP(StaggeredModel, SubControlVolume)
@@ -93,47 +87,46 @@ public:
     typedef Dumux::CCSubControlVolume<ScvGeometry, IndexType> type;
 };
 
+// SET_PROP(StaggeredModel, SubControlVolumeFace)
+// {
+// private:
+//     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+//     using Scalar = typename GridView::ctype;
+//     static const int dim = GridView::dimension;
+//     static const int dimWorld = GridView::dimensionworld;
+//     using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
+//     using IndexType = typename GridView::IndexSet::IndexType;
+// public:
+//     using type = BoxSubControlVolumeFace<ScvfGeometry, IndexType>;
+// };
+
 SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);
 
-//! Mapper for the degrees of freedoms.
-SET_TYPE_PROP(StaggeredModel, DofMapper, typename GET_PROP_TYPE(TypeTag, ElementMapper));
+//! The global volume variables vector class
+SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, StaggeredGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
-//! The global current volume variables vector class
-SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, Dumux::StaggeredGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+//! The element volume variables vector class
+SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, StaggeredElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, Dumux::StaggeredGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(StaggeredModel, GlobalFluxVariablesCache, StaggeredGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! The local flux variables cache vector class
-SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, Dumux::StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
-
-//! The global previous volume variables vector class
-SET_TYPE_PROP(StaggeredModel, ElementVolumeVariables, Dumux::StaggeredElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
 
 //! Set the BaseLocalResidual to StaggeredLocalResidual
-SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, Dumux::StaggeredLocalResidual<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>);
 
-//! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, IntersectionMapper, Dumux::ConformingGridIntersectionMapper<TypeTag>);
 
-//! indicate that this is no box discretization
-SET_BOOL_PROP(StaggeredModel, ImplicitIsBox, false);
-
-SET_TYPE_PROP(StaggeredModel, NewtonController, StaggeredNewtonController<TypeTag>);
-
-SET_INT_PROP(StaggeredModel, NumEqCellCenter, 1);
-SET_INT_PROP(StaggeredModel, NumEqFace, 1);
-
-SET_PROP(StaggeredModel, NumEq)
+//! Definition of the indices for cell center and face dofs in the global solution vector
+SET_PROP(StaggeredModel, DofTypeIndices)
 {
-private:
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-public:
-    static constexpr auto value = numEqCellCenter + numEqFace;
+    using CellCenterIdx = Dune::index_constant<0>;
+    using FaceIdx = Dune::index_constant<1>;
 };
 
 //! A vector of primary variables
@@ -201,19 +194,23 @@ public:
     using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
 };
 
-//! Definition of the indices for cell center and face dofs in the global solution vector
-SET_PROP(StaggeredModel, DofTypeIndices)
+SET_PROP(StaggeredModel, NumEq)
 {
-    using CellCenterIdx = Dune::index_constant<0>;
-    using FaceIdx = Dune::index_constant<1>;
+private:
+    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+public:
+    static constexpr auto value = numEqCellCenter + numEqFace;
 };
 
-//! set default solver
-// SET_TYPE_PROP(StaggeredModel, LinearSolver, Dumux::GSBiCGSTABBackend<TypeTag>);
-SET_TYPE_PROP(StaggeredModel, LinearSolver, Dumux::UMFPackBackend<TypeTag>);
+SET_PROP(StaggeredModel, LinearSolverBlockSize)
+{
+    // LinearSolverAcceptsMultiTypeMatrix<T>::value
+    // TODO: make somehow dependend? or only relevant for direct solvers?
+public:
+    static constexpr auto value = 1;
+};
 
-//! set the block level to 2, suitable for e.g. the Dune::MultiTypeBlockMatrix
-SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredModel, BoundaryTypes)
@@ -236,17 +233,7 @@ public:
     using type = StaggeredPrimaryVariables<TypeTag, CellCenterPrimaryVariables, FacePrimaryVariables>;
 };
 
-//! use the plain newton convergence writer by default
-// SET_TYPE_PROP(StaggeredModel, NewtonConvergenceWriter, StaggeredNewtonConvergenceWriter<TypeTag>);
-
-//! Write separate vtp files for face variables by default
-SET_BOOL_PROP(StaggeredModel, VtkWriteFaceData, true);
-
-//! For compatibility
-SET_BOOL_PROP(StaggeredModel, EnableInteriorBoundaries, false);
-
-//! Set staggered vtk output module
-SET_TYPE_PROP(StaggeredModel, VtkOutputModule, StaggeredVtkOutputModule<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
 
 //! Set one or different base epsilons for the calculations of the localJacobian's derivatives
 SET_PROP(StaggeredModel, BaseEpsilon)
@@ -266,8 +253,9 @@ public:
     }
 };
 
-} // namespace Properties
 
+
+} // namespace Properties
 } // namespace Dumux
 
 #endif

@@ -48,6 +48,7 @@
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/implicit/staggered/newtoncontroller.hh>
 
 #include <dumux/discretization/methods.hh>
 
@@ -174,7 +175,7 @@ int main(int argc, char** argv)
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using NewtonController = StaggeredNewtonController<TypeTag>;
     using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);

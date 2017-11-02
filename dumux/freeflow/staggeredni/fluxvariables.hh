@@ -23,7 +23,7 @@
 #ifndef DUMUX_FREELOW_IMPLICIT_NI_FLUXVARIABLES_HH
 #define DUMUX_FREELOW_IMPLICIT_NI_FLUXVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {
@@ -144,7 +144,7 @@ private:
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
         const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
 
-        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+        static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
         const Scalar upstreamDensity = upstreamVolVars.density();
         const Scalar downstreamDensity = downstreamVolVars.density();
         const Scalar upstreamEnthalpy = upstreamVolVars.enthalpy();

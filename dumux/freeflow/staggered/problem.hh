@@ -23,7 +23,7 @@
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 #include "properties.hh"
 #include <dumux/common/staggeredfvproblem.hh>
 

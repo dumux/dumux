@@ -23,7 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FLUXVARSCACHE_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 
 namespace Dumux

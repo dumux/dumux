@@ -47,13 +47,11 @@ public:
     static constexpr auto value = isothermalNumEqCellCenter + 1;
 };
 
-SET_TYPE_PROP(NavierStokesNonIsothermal, Model, NavierStokesNonIsothermalModel<TypeTag>);
-
 SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
 
 SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
 
-SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
+// SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>); TODO
 
 } // end namespace Properties
 

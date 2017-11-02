@@ -27,7 +27,7 @@
 #ifndef DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {

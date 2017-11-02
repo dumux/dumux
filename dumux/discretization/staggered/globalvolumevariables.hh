@@ -23,7 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_VOLUMEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 
 namespace Dumux
@@ -43,10 +43,6 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
     // The local class needs to access and change volVars
     friend StaggeredElementVolumeVariables<TypeTag, true>;
-
-    // as does the primary variable switch
-    friend class PrimaryVariableSwitch<TypeTag>;
-    friend typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
