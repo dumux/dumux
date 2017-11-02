@@ -117,7 +117,7 @@ public:
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
         const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
 
-        const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
         flux = (upWindWeight * upstreamVolVars.density() +
                (1.0 - upWindWeight) * downstreamVolVars.density()) * velocity;
