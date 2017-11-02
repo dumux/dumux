@@ -1,6 +1,5 @@
 # a compositional two-phase simulation program
-dune_add_test(NAME exercise2
-              SOURCES exercise2.cc)
+add_dumux_test(exercise2 exercise2 exercise2.cc exercise2)
 
 # add tutorial to the common target
 add_dependencies(build_tutorials exercise2)

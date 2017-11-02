@@ -135,7 +135,7 @@ cd build-cmake/tutorial/ex3
 Uncomment the line for the corresponding executable in the `CMakeLists.txt` file:
 
 ```cmake
-dune_add_test(NAME ex3_a SOURCES ex3_a.cc)
+add_dumux_test(ex3_a ex3_a ex3_a.cc ex3_a)
 ```
 
 Now you can compile and execute the program by typing
@@ -211,7 +211,7 @@ $` \rho_{w} = \frac{ \rho_{w, pure} }{ M_{H_2O} }*(M_{H_2O}*x_{H_2O} + M_{MyComp
 Implement this dependency in the _density()_ method in the fluid system. In order to compile and execute the program, uncomment the line for the corresponding executable in the `CMakeLists.txt` file
 
 ```cmake
-dune_add_test(NAME ex3_b SOURCES ex3_b.cc)
+add_dumux_test(ex3_b ex3_b ex3_b.cc ex3_b)
 ```
 
 Then, change to the build-directory

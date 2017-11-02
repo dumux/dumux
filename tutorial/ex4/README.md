@@ -50,12 +50,10 @@ mkdir appl
 
 ```cmake
 # add a new box 1p test
-dune_add_test(NAME test_box1p
-              SOURCES test_box1p.cc)
+add_dumux_test(test_box1p test_box1p test_box1p.cc test_box1p)
 
 # link the input file to the build folder
 dune_symlink_to_source_files(FILES test_box1p.input)
- 
 ```
 
 * Reconfigure your module by running in the topmost directory of your new module
