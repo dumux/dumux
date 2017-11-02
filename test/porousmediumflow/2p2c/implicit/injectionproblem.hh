@@ -139,7 +139,7 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InjectionProblem(std::shared_ptr<FVGridGeometry>& fvGridGeometry)
+    InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
         nTemperature_       = getParam<int>("Problem.NTemperature");
