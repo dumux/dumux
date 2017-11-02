@@ -37,7 +37,6 @@
 #include "fluxvariables.hh"
 #include "fluxvariablescache.hh"
 #include "velocityoutput.hh"
-#include "vtkoutputmodule.hh"
 #include "vtkoutputfields.hh"
 #include "boundarytypes.hh"
 
@@ -188,8 +187,6 @@ public:
 SET_TYPE_PROP(NavierStokes,
               BoundaryTypes,
               StaggeredFreeFlowBoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
-
-SET_TYPE_PROP(NavierStokes, VtkOutputModule, FreeFlowStaggeredVtkOutputModule<TypeTag>);
 
 SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
