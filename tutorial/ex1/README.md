@@ -121,8 +121,7 @@ cp exercise1_2p.cc exercise1_2pni.cc
 * Add a new executable in `CMakeLists.txt` by adding the lines
 
 ```cmake
-dune_add_test(NAME exercise1_2pni
-              SOURCES exercise1_2pni.cc)
+add_dumux_test(exercise1_2pni exercise1_2pni exercise1_2pni.cc ./exercise1_2pni exercise1.input)
 ```
 
 * Test that everything compiles without error
