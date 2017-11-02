@@ -88,7 +88,7 @@ int main(int argc, char** argv) try
     // define the type tag for this problem
     using TypeTag = TTAG(ThreePNIConductionCCProblem);
 
-    // initialize MPI, finalize is done automatically on exit
+// initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
     // print dumux start message

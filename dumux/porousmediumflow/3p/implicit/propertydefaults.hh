@@ -30,7 +30,6 @@
 
 #include "indices.hh"
 
-#include "model.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
@@ -101,9 +100,6 @@ SET_BOOL_PROP(ThreeP, EnableMolecularDiffusion, false);
 //! Isothermal model by default
 SET_BOOL_PROP(ThreeP, EnableEnergyBalance, false);
 
-//! the Model property
-SET_TYPE_PROP(ThreeP, Model, ThreePModel<TypeTag>);
-
 //! the VolumeVariables property
 SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
 
@@ -147,9 +143,6 @@ SET_BOOL_PROP(ThreePNI, NiOutputLevel, 0);
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
-
-// set isothermal Model
-SET_TYPE_PROP(ThreePNI, IsothermalModel, ThreePModel<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag>);

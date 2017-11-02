@@ -42,18 +42,18 @@ public:
     static void init(VtkOutputModule& vtk)
     {
         // register standardized vtk output fields
-        vtk.addSecondaryVariable("sw", [](const VolumeVariables& v){ return v.saturation(Indices::wPhaseIdx); });
-        vtk.addSecondaryVariable("sn", [](const VolumeVariables& v){ return v.saturation(Indices::nPhaseIdx); });
-        vtk.addSecondaryVariable("sg", [](const VolumeVariables& v){ return v.saturation(Indices::gPhaseIdx); });
-        vtk.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(Indices::wPhaseIdx); });
-        vtk.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(Indices::nPhaseIdx); });
-        vtk.addSecondaryVariable("pg", [](const VolumeVariables& v){ return v.pressure(Indices::gPhaseIdx); });
-        vtk.addSecondaryVariable("rhow", [](const VolumeVariables& v){ return v.density(Indices::wPhaseIdx); });
-        vtk.addSecondaryVariable("rhon", [](const VolumeVariables& v){ return v.density(Indices::nPhaseIdx); });
-        vtk.addSecondaryVariable("rhog", [](const VolumeVariables& v){ return v.density(Indices::gPhaseIdx); });
-        vtk.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
-        vtk.addSecondaryVariable("permeability", [](const VolumeVariables& v){ return v.permeability(); });
-        vtk.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.saturation(Indices::wPhaseIdx); }, "sw");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.saturation(Indices::nPhaseIdx); },"sn");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.saturation(Indices::gPhaseIdx); },"sg");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.pressure(Indices::wPhaseIdx); },"pw");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.pressure(Indices::nPhaseIdx); },"pn");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.pressure(Indices::gPhaseIdx); },"pg");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(Indices::wPhaseIdx); },"rhow");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(Indices::nPhaseIdx); },"rhon");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(Indices::gPhaseIdx); },"rhog");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.porosity(); },"porosity");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.permeability(); },"permeability");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); },"temperature");
     }
 };
 

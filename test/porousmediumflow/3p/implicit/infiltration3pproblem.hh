@@ -28,9 +28,9 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/box/properties.hh>
-#include <dumux/porousmediumflow/3p/implicit/model.hh>
+#include <dumux/porousmediumflow/3p/implicit/propertydefaults.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
-
+#include <dumux/linear/seqsolverbackend.hh>
 #include "infiltration3pspatialparams.hh"
 
 namespace Dumux
@@ -145,12 +145,15 @@ public:
         name_ = getParam<std::string>("Problem.Name");
 
         this->spatialParams().plotMaterialLaw();
+        time_ = 0.0;
     }
 
     /*!
      * \name Problem parameters
      */
     // \{
+    void setTime(Scalar time)
+    { time_ = time; }
 
     /*!
      * \brief The problem name.
@@ -265,8 +268,7 @@ public:
         PrimaryVariables values(0.0);
 
         // negative values for injection
-        auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, 60, 3600);
-        if (timeLoop->time()<2592000.)
+        if (time_<2592000.)
         {
             if ((globalPos[0] <= 175.+eps_) && (globalPos[0] >= 155.-eps_) && (globalPos[1] >= 10.-eps_))
             {
@@ -310,6 +312,8 @@ public:
      */
     Scalar temperature() const
     { return temperature_; }
+
+
 
 private:
     // internal method for the initial condition (reused for the
@@ -371,6 +375,7 @@ private:
     Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
+    Scalar time_;
 };
 } //end namespace
 

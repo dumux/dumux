@@ -27,7 +27,7 @@
 #include <math.h>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/3p/implicit/model.hh>
+#include <dumux/porousmediumflow/3p/implicit/propertydefaults.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
