@@ -96,10 +96,7 @@ class CouplingMapperStokesDarcy
         unsigned int darcyDofIdx;
         unsigned int darcyElementIdx;
     };
-    //    using StokesCCToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
-    //    using StokesFaceToDarcyMap = std::map<unsigned int, std::vector<StokesToDarcyMapValue>>; // key: global scv index (eIdx, scvIdx)
 
-    // TODO only one Darcy element mapped to each Stokes element --> no vector needed?! (changes in couplingmanager necessary!)
     using StokesCCToDarcyMap = std::map<unsigned int, StokesToDarcyMapValue>; // key: global scv index (eIdx, scvIdx)
     using StokesFaceToDarcyMap = std::map<unsigned int, StokesToDarcyMapValue>; // key: global scv index (eIdx, scvIdx)
 

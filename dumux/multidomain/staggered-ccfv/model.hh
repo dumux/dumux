@@ -72,8 +72,7 @@ class MultiDomainModelForStaggered
     typedef typename GET_PROP_TYPE(DarcyProblemTypeTag, ElementMapper) DarcyElementMapper;
 
     enum {
-        stokesDim = StokesGridView::dimension,
-        darcyDim = DarcyGridView::dimension, // TODO same dimension
+        dim = StokesGridView::dimension,
         dimWorld = StokesGridView::dimensionworld
     };
 
@@ -93,8 +92,8 @@ class MultiDomainModelForStaggered
     typedef typename StokesGridView::template Codim<0>::Entity StokesElement;
     typedef typename DarcyGridView::template Codim<0>::Entity DarcyElement;
 
-    typedef typename Dune::ReferenceElements<Scalar, stokesDim> StokesReferenceElements;
-    typedef typename Dune::ReferenceElements<Scalar, darcyDim> DarcyReferenceElements;
+    typedef typename Dune::ReferenceElements<Scalar, dim> StokesReferenceElements;
+    typedef typename Dune::ReferenceElements<Scalar, dim> DarcyReferenceElements;
 
 public:
      // copying a model is not a good idea
@@ -178,9 +177,9 @@ public:
 
 //             if (stokesIsBox)
 //             {
-//                 for (int i = 0; i < element.subEntities(stokesDim); ++i)
+//                 for (int i = 0; i < element.subEntities(dim); ++i)
 //                 {
-//                     const unsigned int dofIdxGlobal = problem_().stokesProblem().model().dofMapper().subIndex(element, i, stokesDim);
+//                     const unsigned int dofIdxGlobal = problem_().stokesProblem().model().dofMapper().subIndex(element, i, dim);
 //                     residual[stokesIdx][dofIdxGlobal] += stokesLocalResidual().residual(i);
 //                 }
 //             }
@@ -195,19 +194,8 @@ public:
         {
             darcyLocalResidual().eval(element);
 
-            if (darcyIsBox)
-            {
-                for (int i = 0; i < element.subEntities(darcyDim); ++i)
-                {
-                    const unsigned int dofIdxGlobal = problem_().darcyProblem().model().dofMapper().subIndex(element, i, darcyDim);
-                    residual[darcyIdx][dofIdxGlobal] += darcyLocalResidual().residual(i);
-                }
-            }
-            else
-            {
-                const unsigned int dofIdxGlobal = problem_().darcyProblem().model().dofMapper().index(element);
-                residual[darcyIdx][dofIdxGlobal] = darcyLocalResidual().residual(0);
-            }
+            const unsigned int dofIdxGlobal = problem_().darcyProblem().model().dofMapper().index(element);
+            residual[darcyIdx][dofIdxGlobal] = darcyLocalResidual().residual(0);
         }
 
         // calculate the square norm of the residual
