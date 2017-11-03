@@ -23,12 +23,9 @@
 #ifndef DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
 
-#include <dune/istl/matrix.hh>
-
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/capabilities.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/discretization/staggered/properties.hh>
 
 namespace Dumux
 {

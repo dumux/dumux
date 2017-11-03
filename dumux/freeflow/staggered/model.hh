@@ -50,7 +50,4 @@
  * The model supports compressible as well as incompressible fluids.
  */
 
-
- #include "../staggeredni/model.hh"
- #include "properties.hh"
 #endif

@@ -87,19 +87,6 @@ public:
     typedef Dumux::CCSubControlVolume<ScvGeometry, IndexType> type;
 };
 
-// SET_PROP(StaggeredModel, SubControlVolumeFace)
-// {
-// private:
-//     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-//     using Scalar = typename GridView::ctype;
-//     static const int dim = GridView::dimension;
-//     static const int dimWorld = GridView::dimensionworld;
-//     using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
-//     using IndexType = typename GridView::IndexSet::IndexType;
-// public:
-//     using type = BoxSubControlVolumeFace<ScvfGeometry, IndexType>;
-// };
-
 SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes

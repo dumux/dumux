@@ -27,11 +27,29 @@
 #ifndef DUMUX_NAVIERSTOKES_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_PROPERTIES_HH
 
-
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
-#include <dumux/freeflow/staggeredni/properties.hh>
+#include <dumux/freeflow/properties.hh>
 
+#include <dumux/freeflow/staggeredni/properties.hh>
+#include <dumux/freeflow/staggeredni/localresidual.hh>
+#include <dumux/freeflow/staggeredni/fluxvariables.hh>
+
+#include <dumux/implicit/staggered/localresidual.hh>
+
+#include "localresidual.hh"
+#include "volumevariables.hh"
+#include "fluxvariables.hh"
+#include "fluxvariablescache.hh"
+#include "indices.hh"
+#include "velocityoutput.hh"
+#include "vtkoutputfields.hh"
+#include "boundarytypes.hh"
+
+#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/components/nullcomponent.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 
 
 namespace Dumux
@@ -47,7 +65,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit single-phase problems
-NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(LinearSolverTypeTag));
+NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(FreeFlow, LinearSolverTypeTag));
 
 //! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsothermal));
@@ -56,23 +74,98 @@ NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsotherm
 // Property tags
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(FluidSystem); //!< The type of the fluid system to use
-NEW_PROP_TAG(Fluid); //!< The fluid used for the default fluid system
-NEW_PROP_TAG(FluidState); //!< The type of the fluid state to use
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
-NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
 NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
-NEW_PROP_TAG(BoundaryValues); //!< Type to set values on the boundary
 NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider component transport or not
 NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
-NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport or not
 NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 NEW_PROP_TAG(EnergyLocalResidual); //!<  The energy local residual
 NEW_PROP_TAG(EnergyFluxVariables); //!<  The energy flux variables
+
+///////////////////////////////////////////////////////////////////////////
+// default property values for the isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+SET_INT_PROP(NavierStokes, NumEqCellCenter, 1); //!< set the number of equations to 1
+SET_INT_PROP(NavierStokes, NumPhases, 1); //!< The number of phases in the 1p model is 1
+
+//! The fluid system to use by default
+SET_TYPE_PROP(NavierStokes, FluidSystem, Dumux::FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
+
+SET_PROP(NavierStokes, Fluid)
+{ private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+public:
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::NullComponent<Scalar> > type;
+};
+
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(NavierStokes, FluidState){
+    private:
+        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    public:
+        typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
+};
+
+//! The local residual function
+SET_TYPE_PROP(NavierStokes, LocalResidual, StaggeredNavierStokesResidual<TypeTag>);
+
+//! the VolumeVariables property
+SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+
+//! The class that contains the different flux variables (i.e. darcy, diffusion, energy)
+//! by default, we set the flux variables to ones for porous media
+SET_TYPE_PROP(NavierStokes, FluxVariables, FreeFlowFluxVariables<TypeTag>);
+
+//! The flux variables cache class, by default the one for porous media
+SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
+
+//! Enable advection
+SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
+
+//! The one-phase model has no molecular diffusion
+SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false);
+
+//! The indices required by the isothermal single-phase model
+SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
+
+SET_TYPE_PROP(NavierStokes, EnergyLocalResidual, FreeFlowEnergyLocalResidual<TypeTag>);
+
+SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<TypeTag>);
+
+SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
+
+SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
+
+// disable velocity output by default
+SET_BOOL_PROP(NavierStokes, VtkAddVelocity, true);
+
+SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
+
+SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
+
+SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
+
+SET_BOOL_PROP(NavierStokes, EnableComponentTransport, false);
+
+//! Normalize the pressure term in the momentum balance or not
+SET_BOOL_PROP(NavierStokes, NormalizePressure, true);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+//set isothermal Indices
+SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+
+//set isothermal NumEq
+SET_INT_PROP(NavierStokesNI, IsothermalNumEqCellCenter, 1); //!< set the number of equations to 1
+SET_INT_PROP(NavierStokesNI, IsothermalNumEqFace, 1); //!< set the number of equations to 1
+
 // \}
 }
 

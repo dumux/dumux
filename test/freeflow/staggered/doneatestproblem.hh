@@ -33,7 +33,7 @@
 #include <dumux/material/components/constant.hh>
 
 #include <dumux/discretization/staggered/properties.hh>
-#include <dumux/freeflow/staggered/propertydefaults.hh>
+#include <dumux/freeflow/staggered/properties.hh>
 
 
 namespace Dumux
@@ -70,9 +70,6 @@ SET_BOOL_PROP(DoneaTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(DoneaTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(DoneaTestProblem, EnableGlobalVolumeVariablesCache, true);
-
-// Enable gravity
-SET_BOOL_PROP(DoneaTestProblem, ProblemEnableGravity, true);
 
 #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, true);

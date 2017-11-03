@@ -23,12 +23,6 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
-#include <dune/istl/matrix.hh>
-
-#include <dumux/common/valgrind.hh>
-#include <dumux/implicit/staggered/localresidual.hh>
-
-#include "properties.hh"
 
 namespace Dumux
 {
@@ -39,6 +33,8 @@ namespace Properties
 NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableInertiaTerms);
 NEW_PROP_TAG(ReplaceCompEqIdx);
+NEW_PROP_TAG(EnergyFluxVariables);
+NEW_PROP_TAG(NormalizePressure);
 }
 
 /*!
