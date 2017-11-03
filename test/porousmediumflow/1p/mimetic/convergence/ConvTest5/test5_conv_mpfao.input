@@ -13,7 +13,7 @@ UseCheckerboard = 0
 
 [Problem]
 Name = test5_conv_mpfao
-Alpha = 1.0e-3
+Alpha = 1.0e-2
 
 [Newton]
 EnableShiftCriterion = 0
