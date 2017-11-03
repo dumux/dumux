@@ -19,12 +19,17 @@
 /*!
  * \file
  *
- * \brief Simulation of a windtunnel (coupled free flow and flow in porous medium)
+ * \brief Conservation test case
  *
- * Taken from Fetzer2017c (windtunnelstaggered)
+ * Test for the coupled isothermal single-component Stokes and
+ * isothermal single-phase single-component Darcy model where dry
+ * air enters the porous medium. Because the left and right
+ * boundaries are sealed the inflow and the outflow must be the
+ * same.
  */
+
 #include <config.h>
-#include "windtunnel_coupledproblem.hh"
+#include "conservationproblem.hh"
 #include <dumux/multidomain/start.hh>
 
 /*!
@@ -41,6 +46,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(WindTunnelProblem) ProblemTypeTag;
+    typedef TTAG(ConservationProblem) ProblemTypeTag;
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
