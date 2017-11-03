@@ -86,7 +86,7 @@ void usage(const char *progName, const std::string &errorMsg)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    // using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -159,6 +159,8 @@ int main(int argc, char** argv)
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact", 1);
+    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact", GridView::dimensionworld);
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -168,7 +170,6 @@ int main(int argc, char** argv)
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
-    // assembler->setLinearSystem();
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend<TypeTag>;
@@ -212,6 +213,8 @@ int main(int argc, char** argv)
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        problem->postTimeStep(x);
+
         // write vtk output
         vtkWriter.write(timeLoop->time());
 
@@ -237,4 +240,28 @@ int main(int argc, char** argv)
     }
 
     return 0;
+} // end main
+catch (Dumux::ParameterException &e)
+{
+    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
+    return 1;
+}
+catch (Dune::DGFException & e)
+{
+    std::cerr << "DGF exception thrown (" << e <<
+                 "). Most likely, the DGF file name is wrong "
+                 "or the DGF file is corrupted, "
+                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+                 << " ---> Abort!" << std::endl;
+    return 2;
+}
+catch (Dune::Exception &e)
+{
+    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
+    return 3;
+}
+catch (...)
+{
+    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
+    return 4;
 }
