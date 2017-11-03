@@ -52,8 +52,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    TubesTestSpatialParams(const Problem& problem, const GridView& gridView)
-        : ParentType(problem, gridView)
+    TubesTestSpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
         radius_ = 1.0;
 

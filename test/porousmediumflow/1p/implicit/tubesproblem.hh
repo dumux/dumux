@@ -28,9 +28,9 @@
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dune/geometry/quadraturerules.hh>
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/constant.hh>
 
 #include "tubesspatialparams.hh"
@@ -73,9 +73,9 @@ public:
  *        and a branching point embedded in a three-dimensional world
  */
 template <class TypeTag>
-class TubesTestProblem : public ImplicitPorousMediaProblem<TypeTag>
+class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -103,10 +103,10 @@ class TubesTestProblem : public ImplicitPorousMediaProblem<TypeTag>
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
 public:
-    TubesTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>( "Problem.Name");
 
         //get hMax_ of the grid
         hMax_ = 0.0;
