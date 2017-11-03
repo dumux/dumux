@@ -109,6 +109,8 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using IapwsH2O = H2O<Scalar>;
 
@@ -155,24 +157,37 @@ public:
         pressureHigh_ = 2e5;
         pressureLow_ = 1e5;
 
+        time_ = 0.0;
+        temperatureExact_.resize(this->fvGridGeometry().gridView().size(GridView::dimension));
+
 
     }
 
+    // get time from the mainfile timeloop
+    void setTime(Scalar time)
+    { time_ = time; }
+
+     /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    template <class VtkOutputModule>
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    const std::vector<Scalar>& getExactTemperature()
     {
-        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
+        return temperatureExact_;
+    }
 
-        const auto someElement = *(elements(this->gridView()).begin());
-        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+ void updateExactTemperature(const SolutionVector& curSol)
+    {
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
+
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->model().fvGridGeometry());
-        someFvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
+        auto fvGeometry = localView(this->fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
@@ -187,19 +202,19 @@ public:
         std::cout << "storage: " << storageTotal << '\n';
 
         using std::max;
-        const Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        const Scalar time = max(time_, 1e-10);
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 auto dofPosition = scv.dofPosition();
-                temperatureExact[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
+                temperatureExact_[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
             }
         }
     }
@@ -338,6 +353,8 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     int outputInterval_;
+    std::vector<double> temperatureExact_;
+    Scalar time_;
 };
 
 } //end namespace
