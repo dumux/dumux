@@ -50,7 +50,7 @@ class BoxLocalAssembler<TypeTag,
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -245,11 +245,8 @@ private:
         ElementBoundaryTypes elemBcTypes;
         elemBcTypes.update(problem, element, fvGeometry);
 
-        // get the element solution
-        const auto numVert = element.subEntities(dim);
-        ElementSolutionVector elemSol(numVert);
-        for (const auto& scv : scvs(fvGeometry))
-            elemSol[scv.indexInElement()] = curSol[scv.dofIndex()];
+        // create the element solution
+        ElementSolutionVector elemSol(element, curSol, fvGeometry);
 
         // the actual element's current residual
         ElementResidualVector residual(0.0);
@@ -297,7 +294,7 @@ private:
             // calculate derivatives w.r.t to the privars at the dof at hand
             for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
             {
-                ElementSolutionVector partialDeriv(element.subEntities(dim));
+                ElementResidualVector partialDeriv(element.subEntities(dim));
                 Scalar eps = numericEpsilon(volVars.priVar(pvIdx));
                 Scalar delta = 0;
 
@@ -452,7 +449,7 @@ class BoxLocalAssembler<TypeTag,
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -819,7 +816,7 @@ class BoxLocalAssembler<TypeTag,
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -1131,7 +1128,7 @@ class BoxLocalAssembler<TypeTag,
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

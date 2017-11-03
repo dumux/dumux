@@ -130,7 +130,7 @@ public:
 
         // update the volume variables of the element at hand
         auto&& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(ElementSolution({sol[globalI]}),
+        volumeVariables_[localIdx].update(ElementSolution(sol[globalI]),
                                           problem,
                                           element,
                                           scvI);
@@ -142,7 +142,7 @@ public:
         {
             const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(ElementSolution({sol[dataJ.globalJ]}),
+            volumeVariables_[localIdx].update(ElementSolution(sol[dataJ.globalJ]),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -186,7 +186,7 @@ public:
         //         const auto& elementJ = fvGridGeometry.element(globalJ);
         //         auto&& scvJ = fvGeometry.scv(globalJ);
 
-        //         volumeVariables_[localIdx].update(ElementSolution({sol[globalJ]}),
+        //         volumeVariables_[localIdx].update(ElementSolution(sol[globalJ]),
         //                                           problem,
         //                                           elementJ,
         //                                           scvJ);
@@ -210,7 +210,7 @@ public:
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(ElementSolution({sol[eIdx]}),
+        volumeVariables_[0].update(ElementSolution(sol[eIdx]),
                                    globalVolVars().problem(),
                                    element,
                                    scv);

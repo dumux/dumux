@@ -35,6 +35,7 @@
 
 #include <dumux/discretization/cellcentered/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+#include <dumux/discretization/cellcentered/elementsolution.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
@@ -157,6 +158,9 @@ private:
 public:
     typedef Dumux::CCMpfaSubControlVolumeFace<method, ScvfGeometry, ScvfGeometryTraits<Scalar>, IndexType> type;
 };
+
+//! Set the solution vector type for an element
+SET_TYPE_PROP(CCMpfaModel, ElementSolutionVector, CCElementSolution<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);

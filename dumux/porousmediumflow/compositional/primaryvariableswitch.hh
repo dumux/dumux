@@ -113,7 +113,7 @@ public:
             auto elemVolVars = localView(gridVariables.curGridVolVars());
             elemVolVars.bindElement(element, fvGeometry, curSol);
 
-            const auto curElemSol = elementSolution(fvGridGeometry, element, curSol);
+            const ElementSolution curElemSol(element, curSol, fvGridGeometry);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
@@ -176,31 +176,6 @@ private:
     static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables&>::type
     getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return gridVolVars.volVars(scv); }
-
-    /*!
-     * \brief Obtains the current solution inside a given element.
-     *        Specialization for the box method.
-     */
-    template<class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), ElementSolution>::type
-    elementSolution(const FVGridGeometry& fvGridGeometry, const Element& element, const SolutionVector& sol) const
-    {
-        auto numVert = element.subEntities(dim);
-        ElementSolution elemSol(numVert);
-        for (int v = 0; v < numVert; ++v)
-            elemSol[v] = sol[fvGridGeometry.vertexMapper().subIndex(element, v, dim)];
-        return elemSol;
-    }
-
-    /*!
-     * \brief Obtains the current solution inside a given element.
-     *        Specialization for cell-centered methods.
-     */
-    template<class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), ElementSolution>::type
-    elementSolution(const FVGridGeometry& fvGridGeometry, const Element& element, const SolutionVector& sol) const
-    { return ElementSolution({ sol[fvGridGeometry.elementMapper().index(element)] }); }
-
 };
 
 } // end namespace dumux

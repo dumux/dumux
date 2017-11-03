@@ -128,10 +128,7 @@ public:
                      const SolutionVector& sol)
     {
         // get the solution at the dofs of the element
-        const auto numVert = element.subEntities(dim);
-        ElementSolutionVector elemSol(numVert);
-        for (const auto& scv : scvs(fvGeometry))
-            elemSol[scv.indexInElement()] = sol[scv.dofIndex()];
+        ElementSolutionVector elemSol(element, sol, fvGeometry);
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());

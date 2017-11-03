@@ -129,7 +129,7 @@ public:
 
         // update the volume variables of the element at hand
         const auto& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(ElementSolution({sol[globalI]}),
+        volumeVariables_[localIdx].update(ElementSolution(sol[globalI]),
                                           problem,
                                           element,
                                           scvI);
@@ -141,7 +141,7 @@ public:
         {
             const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(ElementSolution({sol[dataJ.globalJ]}),
+            volumeVariables_[localIdx].update(ElementSolution(sol[dataJ.globalJ]),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -170,7 +170,7 @@ public:
                 {
                     // boundary volume variables
                     VolumeVariables dirichletVolVars;
-                    dirichletVolVars.update(ElementSolution({problem.dirichlet(element, scvf)}),
+                    dirichletVolVars.update(ElementSolution(problem.dirichlet(element, scvf)),
                                             problem,
                                             element,
                                             scvI);
@@ -222,7 +222,7 @@ public:
         //         const auto& scvJ = fvGeometry.scv(globalJ);
 
         //         VolumeVariables additionalVolVars;
-        //         additionalVolVars.update(problem.model().elementSolution(elementJ, sol),
+        //         additionalVolVars.update(ElementSolution(elementJ, sol, fvGridGeometry),
         //                                  problem,
         //                                  elementJ,
         //                                  scvJ);
@@ -244,7 +244,7 @@ public:
 
         // update the volume variables of the element
         const auto& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(ElementSolution({sol[scv.dofIndex()]}),
+        volumeVariables_[0].update(ElementSolution(sol[scv.dofIndex()]),
                                    globalVolVars().problem(),
                                    element,
                                    scv);
@@ -315,7 +315,7 @@ private:
                 // boundary volume variables
                 VolumeVariables dirichletVolVars;
                 const auto& ivScv = fvGeometry.scv(insideScvIdx);
-                dirichletVolVars.update(ElementSolution({problem.dirichlet(insideElement, ivScvf)}),
+                dirichletVolVars.update(ElementSolution(problem.dirichlet(insideElement, ivScvf)),
                                         problem,
                                         insideElement,
                                         ivScv);

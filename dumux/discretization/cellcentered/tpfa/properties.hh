@@ -37,6 +37,7 @@
 #include <dumux/implicit/cellcentered/localresidual.hh>
 
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
+#include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/globalfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
@@ -96,6 +97,9 @@ private:
 public:
     typedef Dumux::CCTpfaSubControlVolumeFace<ScvfGeometry, IndexType> type;
 };
+
+//! Set the solution vector type for an element
+SET_TYPE_PROP(CCTpfaModel, ElementSolutionVector, CCElementSolution<TypeTag>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);

@@ -55,7 +55,7 @@ class CCMpfaGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
 
@@ -95,7 +95,7 @@ public:
                     const auto& insideScv = fvGeometry.scv(insideScvIdx);
                     const auto dirichletPriVars = problem.dirichlet(element, scvf);
 
-                    volumeVariables_[scvf.outsideScvIdx()].update(ElementSolutionVector({dirichletPriVars}), problem, element, insideScv);
+                    volumeVariables_[scvf.outsideScvIdx()].update(ElementSolutionVector(dirichletPriVars), problem, element, insideScv);
                 }
                 else
                 {
