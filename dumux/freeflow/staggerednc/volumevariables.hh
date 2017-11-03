@@ -78,7 +78,8 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(elemSol, problem, element, scv);
+        this->priVars_ = this->extractDofPriVars(elemSol, scv);
+        this->extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
 
         completeFluidState(elemSol, problem, element, scv, this->fluidState_);
 
@@ -112,14 +113,14 @@ public:
     {
         const Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.);
+        fluidState.setSaturation(phaseIdx, 1.);
 
-        fluidState.setPressure(/*phaseIdx=*/0, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
+        fluidState.setSaturation(1-phaseIdx, 0.0);
 
         Scalar fracMinor = 0.0;
         int transportEqIdx = 1;
@@ -184,6 +185,24 @@ public:
     {
         return this->fluidState_.molarDensity(phaseIdx);
     }
+
+    /*!
+    * \brief Returns the molar mass of a given component within the
+    *        control volume.
+    */
+   Scalar molarMassComponent() const
+    {
+        return FluidSystem::molarMass(0); // TODO Idx = 0 necessary, but phaseIdx = mainCompIdx = 1
+    }
+
+   /*!
+    * \brief Returns the total enthalpy of the component in the sub-control
+    *        volume.
+    */
+   Scalar enthalpyComponent() const
+   {
+       return FluidSystem::componentEnthalpy(this->fluidState_, phaseIdx, 0); // TODO Idx = 0 necessary, but phaseIdx = mainCompIdx = 1
+   }
 
      /*!
      * \brief Returns the diffusion coeffiecient

@@ -87,6 +87,14 @@ public:
     };
 
     /*!
+     * \brief Return a component of primary variable vector
+     *
+     * \param pvIdx The index of the primary variable of interest
+     */
+    Scalar priVar(const int pvIdx) const
+    { return priVars_[pvIdx]; } // TODO (method copied from dumux/discretization/volvars)
+
+    /*!
      * \brief Returns the primary variables at the dof associated with a given scv.
      */
     static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
