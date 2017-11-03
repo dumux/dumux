@@ -24,6 +24,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
 
 #include <dumux/common/basicproperties.hh>
+#include <dumux/discretization/staggered/facesolution.hh>
 
 namespace Dumux
 {
@@ -51,15 +52,36 @@ public:
 
         const auto& faceSol = sol[faceIdx];
 
-        const auto numFaceDofs = fvGridGeometry.gridView().size(1);
 
-        faceVariables_.resize(numFaceDofs);
-        assert(faceVariables_.size() == faceSol.size());
 
-        for(int i = 0; i < numFaceDofs; ++i)
+        // const auto numFaceDofs = fvGridGeometry.gridView().size(1);
+
+        // faceVariables_.resize(numFaceDofs);
+        faceVariables_.resize(fvGridGeometry.numScvf());
+
+        for(auto&& element : elements(fvGridGeometry.gridView()))
         {
-            faceVariables_[i].update(faceSol[i]);
+            auto fvGeometry = localView(fvGridGeometry);
+            fvGeometry.bindElement(element);
+
+            for(auto&& scvf : scvfs(fvGeometry))
+            {
+                faceVariables_[scvf.index()].update(scvf, faceSol);
+                auto test = StaggeredFaceSolution<TypeTag>(scvf, faceSol, fvGridGeometry);
+                // std::cout << "test" << test[scvf.dofIndex()] << std::endl;
+            }
         }
+
+        // for(auto& faceVariable : faceVariables_)
+        // {
+        //     faceVariable.update()
+        // }
+        // // assert(faceVariables_.size() == faceSol.size());
+        //
+        // for(int i = 0; i < numFaceDofs; ++i)
+        // {
+        //     faceVariables_[i].update(faceSol[i]);
+        // }
     }
 
     const FaceVariables& faceVars(const IndexType facetIdx) const

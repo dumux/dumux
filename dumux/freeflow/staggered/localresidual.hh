@@ -182,7 +182,7 @@ public:
                                                const GlobalFaceVars& globalFaceVars)
     {
         FacePrimaryVariables storage(0.0);
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
+        const Scalar velocity = globalFaceVars.faceVars(scvf.index()).velocity();
         storage[0] = volVars.density() * velocity;
         return storage;
     }
@@ -327,7 +327,8 @@ protected:
             // set a fixed value for the velocity for Dirichlet boundary conditions
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
-                const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                // const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                const Scalar velocity = faceVars.faceVars(scvf.index()).velocitySelf();
                 const Scalar dirichletValue = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
                 residual = velocity - dirichletValue;
             }
@@ -336,7 +337,8 @@ protected:
             // we therefore treat it like a Dirichlet boundary conditions with zero velocity
             if(bcTypes.isSymmetry())
             {
-                const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                // const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                const Scalar velocity = faceVars.faceVars(scvf.index()).velocitySelf();
                 const Scalar fixedValue = 0.0;
                 residual = velocity - fixedValue;
             }

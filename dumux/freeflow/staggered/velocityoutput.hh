@@ -113,9 +113,9 @@ public:
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                auto& origFaceVars = gridVariables_.curGridFaceVars().faceVars(scvf.dofIndex());
+                auto& origFaceVars = gridVariables_.curGridFaceVars().faceVars(scvf.index());
                 auto dirIdx = scvf.directionIndex();
-                velocity[dofIdxGlobal][dirIdx] += 0.5*origFaceVars.velocity();
+                velocity[dofIdxGlobal][dirIdx] += 0.5*origFaceVars.velocitySelf();
             }
         }
     }

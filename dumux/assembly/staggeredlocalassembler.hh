@@ -31,6 +31,7 @@
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/implicit/staggered/primaryvariables.hh>
+#include <dumux/discretization/staggered/facesolution.hh>
 
 namespace Dumux {
 
@@ -77,9 +78,6 @@ class StaggeredLocalAssembler<TypeTag,
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    // using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    // typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    // typename DofTypeIndices::FaceIdx faceIdx;
 
     static constexpr bool enableGlobalFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache);
 
@@ -144,7 +142,6 @@ public:
 
         for(auto&& scvf : scvfs(fvGeometry))
         {
-            // res[faceIdx][scvf.dofIndex()] = 0.0;
             faceResidualCache[scvf.localFaceIdx()] = localResidual.evalFace(problem,
                                                                             element,
                                                                             fvGeometry,
@@ -371,25 +368,30 @@ static void dCCdFace_(Assembler& assembler,
 
    const auto& problem = assembler.problem();
    auto& localResidual = assembler.localResidual();
-   // auto& gridVariables = assembler.gridVariables();
 
-  // build derivatives with for cell center dofs w.r.t. cell center dofs
-  const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
+   // build derivatives with for cell center dofs w.r.t. cell center dofs
+   const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
 
-  const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
-
-   for(const auto& globalJ : connectivityMap(cellCenterIdx, faceIdx, cellCenterGlobalI))
+   for(const auto& scvfJ : scvfs(fvGeometry))
    {
+        const auto globalJ = scvfJ.dofIndex();
+
        // get the faceVars of the face with respect to which we are going to build the derivative
-       auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
-       auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
+       auto origFaceVars = curGlobalFaceVars.faceVars(scvfJ.index());
+       auto& curFaceVars = curGlobalFaceVars.faceVars(scvfJ.index());
 
        for(auto pvIdx : PriVarIndices(faceIdx))
        {
            PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(curSol[faceIdx][globalJ]));
+
+           auto faceSolution = StaggeredFaceSolution<TypeTag>(scvfJ, curSol[faceIdx], assembler.fvGridGeometry());
+
+
            const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, faceIdx);
            priVars[pvIdx] += eps;
-           curFaceVars.update(priVars[faceIdx]);
+
+           faceSolution[globalJ][pvIdx] += eps;
+           curFaceVars.update(scvfJ, faceSolution);
 
            const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
                                           prevElemVolVars, curElemVolVars,
@@ -507,16 +509,17 @@ static void dFacedFace_(Assembler& assembler,
        for(const auto& globalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
        {
            // get the faceVars of the face with respect to which we are going to build the derivative
-           auto origFaceVars = curGlobalFaceVars.faceVars(globalJ);
-           auto& curFaceVars = curGlobalFaceVars.faceVars(globalJ);
+           auto origFaceVars = curGlobalFaceVars.faceVars(scvf.index());
+           auto& curFaceVars = curGlobalFaceVars.faceVars(scvf.index());
 
            for(auto pvIdx : PriVarIndices(faceIdx))
            {
-               PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(curSol[faceIdx][globalJ]));
+               auto faceSolution = StaggeredFaceSolution<TypeTag>(scvf, curSol[faceIdx], assembler.fvGridGeometry());
 
-               const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, faceIdx);
-               priVars[pvIdx] += eps;
-               curFaceVars.update(priVars[faceIdx]);
+               const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
+
+               faceSolution[globalJ][pvIdx] += eps;
+               curFaceVars.update(scvf, faceSolution);
 
                const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
                                               prevElemVolVars, curElemVolVars,

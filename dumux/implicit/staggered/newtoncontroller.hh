@@ -137,7 +137,7 @@ public:
             BlockVector y;
             y.resize(numRows);
 
-            // printmatrix(std::cout, M, "", "");
+            // printmatrix(std::cout, M, "old", "");
 
             // solve
             const bool converged = ls.solve(M, y, bTmp);

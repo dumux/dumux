@@ -27,25 +27,105 @@
 
 namespace Dumux
 {
+
+namespace Properties
+{
+    NEW_PROP_TAG(StaggeredFaceSolution);
+}
+
 template<class TypeTag>
 class StaggeredFaceVariables
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FaceSolution = typename GET_PROP_TYPE(TypeTag, StaggeredFaceSolution);
+
+    struct SubFaceData
+    {
+        Scalar velocityNormalInside;
+        Scalar velocityNormalOutside;
+        Scalar velocityParallelInside;
+        Scalar velocityParallelOutside;
+    };
+
 public:
     void update(const FacePrimaryVariables &facePrivars)
     {
-        velocity_ = facePrivars[0];
+        velocitySelf_ = facePrivars;
     }
 
-    Scalar velocity() const
+    void update(const SubControlVolumeFace& scvf, const FaceSolutionVector& sol)
     {
-        return velocity_;
+        velocitySelf_ = sol[scvf.dofIndex()];
+        velocityOpposite_ = sol[scvf.dofIndexOpposingFace()];
+
+        subFaceVelocities_.resize(scvf.pairData().size());
+
+
+        for(int i = 0; i < scvf.pairData().size(); ++i)
+        {
+            subFaceVelocities_[i].velocityNormalInside = sol[scvf.pairData(i).normalPair.first];
+
+            if(scvf.pairData(i).normalPair.second >= 0)
+                subFaceVelocities_[i].velocityNormalOutside = sol[scvf.pairData(i).normalPair.second];
+
+            subFaceVelocities_[i].velocityParallelInside = sol[scvf.dofIndex()];
+
+            if(scvf.pairData(i).outerParallelFaceDofIdx >= 0)
+                subFaceVelocities_[i].velocityParallelOutside = sol[scvf.pairData(i).outerParallelFaceDofIdx];
+        }
+
+    }
+
+    void update(const SubControlVolumeFace& scvf, const FaceSolution& faceSol)
+    {
+        velocitySelf_ = faceSol[scvf.dofIndex()];
+        velocityOpposite_ = faceSol[scvf.dofIndexOpposingFace()];
+
+        subFaceVelocities_.resize(scvf.pairData().size());
+
+        for(int i = 0; i < scvf.pairData().size(); ++i)
+        {
+            subFaceVelocities_[i].velocityNormalInside = faceSol[scvf.pairData(i).normalPair.first];
+
+            if(scvf.pairData(i).normalPair.second >= 0)
+                subFaceVelocities_[i].velocityNormalOutside = faceSol[scvf.pairData(i).normalPair.second];
+
+            subFaceVelocities_[i].velocityParallelInside = faceSol[scvf.dofIndex()];
+
+            if(scvf.pairData(i).outerParallelFaceDofIdx >= 0)
+                subFaceVelocities_[i].velocityParallelOutside = faceSol[scvf.pairData(i).outerParallelFaceDofIdx];
+        }
+    }
+
+    Scalar velocitySelf() const
+    {
+        return velocitySelf_;
+    }
+
+    Scalar velocityOpposite() const
+    {
+        return velocityOpposite_;
+    }
+
+    auto& subFaceData() const
+    {
+        return subFaceVelocities_;
+    }
+
+    auto& subFaceData(const int localSubFaceIdx) const
+    {
+        return subFaceVelocities_[localSubFaceIdx];
     }
 
 
 private:
     Scalar velocity_;
+    Scalar velocitySelf_;
+    Scalar velocityOpposite_;
+    std::vector<SubFaceData> subFaceVelocities_;
 };
 
 } // end namespace
