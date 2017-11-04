@@ -37,80 +37,35 @@ template<class TypeTag>
 class StaggeredFaceVariables
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
-    using FaceSolution = typename GET_PROP_TYPE(TypeTag, StaggeredFaceSolution);
 
-    struct SubFaceData
-    {
-        Scalar velocityNormalInside;
-        Scalar velocityNormalOutside;
-        Scalar velocityParallelInside;
-        Scalar velocityParallelOutside;
-    };
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
 
 public:
-    StaggeredFaceVariables() = default;
-
-    StaggeredFaceVariables(const GlobalFaceVars& globalFacesVars) : globalFaceVarsPtr_(&globalFacesVars) {}
-
-    const StaggeredFaceVariables& operator [](const SubControlVolumeFace& scvf) const
-    { return globalFaceVars().faceVars(scvf.index()); }
-
-    // // operator for the access with an index
-    // // needed for cc methods for the access to the boundary volume variables
-    // const StaggeredFaceVariables& operator [](const IndexType scvIdx) const
-    // { return globalVolVars().volVars(scvIdx); }
-
 
     void update(const FacePrimaryVariables &facePrivars)
     {
         velocitySelf_ = facePrivars;
     }
 
-    void update(const SubControlVolumeFace& scvf, const FaceSolutionVector& sol)
-    {
-        velocitySelf_ = sol[scvf.dofIndex()];
-        velocityOpposite_ = sol[scvf.dofIndexOpposingFace()];
-
-        subFaceVelocities_.resize(scvf.pairData().size());
-
-
-        for(int i = 0; i < scvf.pairData().size(); ++i)
-        {
-            subFaceVelocities_[i].velocityNormalInside = sol[scvf.pairData(i).normalPair.first];
-
-            if(scvf.pairData(i).normalPair.second >= 0)
-                subFaceVelocities_[i].velocityNormalOutside = sol[scvf.pairData(i).normalPair.second];
-
-            subFaceVelocities_[i].velocityParallelInside = sol[scvf.dofIndex()];
-
-            if(scvf.pairData(i).outerParallelFaceDofIdx >= 0)
-                subFaceVelocities_[i].velocityParallelOutside = sol[scvf.pairData(i).outerParallelFaceDofIdx];
-        }
-
-    }
-
-    void update(const SubControlVolumeFace& scvf, const FaceSolution& faceSol)
+    template<class SolVector>
+    void update(const SubControlVolumeFace& scvf, const SolVector& faceSol)
     {
         velocitySelf_ = faceSol[scvf.dofIndex()];
         velocityOpposite_ = faceSol[scvf.dofIndexOpposingFace()];
 
-        subFaceVelocities_.resize(scvf.pairData().size());
-
         for(int i = 0; i < scvf.pairData().size(); ++i)
         {
-            subFaceVelocities_[i].velocityNormalInside = faceSol[scvf.pairData(i).normalPair.first];
+            velocityNormalInside_[i] = faceSol[scvf.pairData(i).normalPair.first];
 
             if(scvf.pairData(i).normalPair.second >= 0)
-                subFaceVelocities_[i].velocityNormalOutside = faceSol[scvf.pairData(i).normalPair.second];
-
-            subFaceVelocities_[i].velocityParallelInside = faceSol[scvf.dofIndex()];
+                velocityNormalOutside_[i] = faceSol[scvf.pairData(i).normalPair.second];
 
             if(scvf.pairData(i).outerParallelFaceDofIdx >= 0)
-                subFaceVelocities_[i].velocityParallelOutside = faceSol[scvf.pairData(i).outerParallelFaceDofIdx];
+                velocityParallel_[i] = faceSol[scvf.pairData(i).outerParallelFaceDofIdx];
         }
     }
 
@@ -124,27 +79,27 @@ public:
         return velocityOpposite_;
     }
 
-    auto& subFaceData() const
+    Scalar velocityParallel(const int localSubFaceIdx) const
     {
-        return subFaceVelocities_;
+        return velocityParallel_[localSubFaceIdx];
     }
 
-    auto& subFaceData(const int localSubFaceIdx) const
+    Scalar velocityNormalInside(const int localSubFaceIdx) const
     {
-        return subFaceVelocities_[localSubFaceIdx];
+        return velocityNormalInside_[localSubFaceIdx];
     }
 
-    //! The global volume variables object we are a restriction of
-    const GlobalFaceVars& globalFaceVars() const
-    { return *globalFaceVarsPtr_; }
-
+    Scalar velocityNormalOutside(const int localSubFaceIdx) const
+    {
+        return velocityNormalOutside_[localSubFaceIdx];
+    }
 
 private:
-    const GlobalFaceVars* globalFaceVarsPtr_;
-    Scalar velocity_;
     Scalar velocitySelf_;
     Scalar velocityOpposite_;
-    std::vector<SubFaceData> subFaceVelocities_;
+    std::array<Scalar, numPairs> velocityParallel_;
+    std::array<Scalar, numPairs> velocityNormalInside_;
+    std::array<Scalar, numPairs> velocityNormalOutside_;
 };
 
 } // end namespace
