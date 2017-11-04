@@ -40,6 +40,7 @@ class StaggeredFaceVariables
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using FaceSolution = typename GET_PROP_TYPE(TypeTag, StaggeredFaceSolution);
 
     struct SubFaceData
@@ -51,6 +52,19 @@ class StaggeredFaceVariables
     };
 
 public:
+    StaggeredFaceVariables() = default;
+
+    StaggeredFaceVariables(const GlobalFaceVars& globalFacesVars) : globalFaceVarsPtr_(&globalFacesVars) {}
+
+    const StaggeredFaceVariables& operator [](const SubControlVolumeFace& scvf) const
+    { return globalFaceVars().faceVars(scvf.index()); }
+
+    // // operator for the access with an index
+    // // needed for cc methods for the access to the boundary volume variables
+    // const StaggeredFaceVariables& operator [](const IndexType scvIdx) const
+    // { return globalVolVars().volVars(scvIdx); }
+
+
     void update(const FacePrimaryVariables &facePrivars)
     {
         velocitySelf_ = facePrivars;
@@ -120,8 +134,13 @@ public:
         return subFaceVelocities_[localSubFaceIdx];
     }
 
+    //! The global volume variables object we are a restriction of
+    const GlobalFaceVars& globalFaceVars() const
+    { return *globalFaceVarsPtr_; }
+
 
 private:
+    const GlobalFaceVars* globalFaceVarsPtr_;
     Scalar velocity_;
     Scalar velocitySelf_;
     Scalar velocityOpposite_;

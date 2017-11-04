@@ -29,6 +29,11 @@
 namespace Dumux
 {
 
+namespace Properties
+{
+    NEW_PROP_TAG(ElementFaceVariables);
+}
+
 template<class TypeTag>
 class StaggeredGlobalFaceVariables
 {
@@ -37,6 +42,7 @@ class StaggeredGlobalFaceVariables
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
@@ -49,14 +55,7 @@ public:
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
-
         const auto& faceSol = sol[faceIdx];
-
-
-
-        // const auto numFaceDofs = fvGridGeometry.gridView().size(1);
-
-        // faceVariables_.resize(numFaceDofs);
         faceVariables_.resize(fvGridGeometry.numScvf());
 
         for(auto&& element : elements(fvGridGeometry.gridView()))
@@ -67,21 +66,8 @@ public:
             for(auto&& scvf : scvfs(fvGeometry))
             {
                 faceVariables_[scvf.index()].update(scvf, faceSol);
-                auto test = StaggeredFaceSolution<TypeTag>(scvf, faceSol, fvGridGeometry);
-                // std::cout << "test" << test[scvf.dofIndex()] << std::endl;
             }
         }
-
-        // for(auto& faceVariable : faceVariables_)
-        // {
-        //     faceVariable.update()
-        // }
-        // // assert(faceVariables_.size() == faceSol.size());
-        //
-        // for(int i = 0; i < numFaceDofs; ++i)
-        // {
-        //     faceVariables_[i].update(faceSol[i]);
-        // }
     }
 
     const FaceVariables& faceVars(const IndexType facetIdx) const
@@ -89,6 +75,16 @@ public:
 
     FaceVariables& faceVars(const IndexType facetIdx)
     { return faceVariables_[facetIdx]; }
+
+
+    /*!
+     * \brief Return a local restriction of this global object
+     *        The local object is only functional after calling its bind/bindElement method
+     *        This is a free function that will be found by means of ADL
+     */
+    friend inline ElementFaceVariables localView(const StaggeredGlobalFaceVariables& global)
+    { return ElementFaceVariables(global); }
+
 private:
     const Problem& problem_() const
     { return *problemPtr_; }

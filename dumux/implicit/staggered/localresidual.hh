@@ -29,6 +29,11 @@
 
 namespace Dumux
 {
+
+namespace Properties
+{
+    NEW_PROP_TAG(ElementFaceVariables);
+}
 /*!
  * \ingroup CCModel
  * \ingroup StaggeredLocalResidual
@@ -58,7 +63,6 @@ class StaggeredLocalResidual
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -66,6 +70,7 @@ class StaggeredLocalResidual
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using FaceResidualVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
 
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -118,8 +123,8 @@ public:
                         const FVElementGeometry& fvGeometry,
                         const ElementVolumeVariables& prevElemVolVars,
                         const ElementVolumeVariables& curElemVolVars,
-                        const GlobalFaceVars& prevFaceVars,
-                        const GlobalFaceVars& curFaceVars,
+                        const ElementFaceVariables& prevElemFaceVars,
+                        const ElementFaceVariables& curElemFaceVars,
                         const ElementBoundaryTypes &bcTypes,
                         const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
@@ -128,9 +133,9 @@ public:
         residual = 0.0;
         // ccStorageTerm_ = 0.0;
 
-        asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
-        asImp_().evalFluxesForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
-        asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+        asImp_().evalFluxesForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
 
         return residual;
     }
@@ -157,17 +162,17 @@ public:
                   const SubControlVolumeFace& scvf,
                   const ElementVolumeVariables& prevElemVolVars,
                   const ElementVolumeVariables& curElemVolVars,
-                  const GlobalFaceVars& prevFaceVars,
-                  const GlobalFaceVars& curFaceVars,
+                  const ElementFaceVariables& prevElemFaceVars,
+                  const ElementFaceVariables& curElemFaceVars,
                   const ElementBoundaryTypes &bcTypes,
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const bool resizeResidual = false) const
     {
         FaceResidual residual;
 
-        asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevFaceVars, curFaceVars, bcTypes);
-        asImp_().evalFluxesForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
-        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+        asImp_().evalFluxesForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
+        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
 
         return residual;
     }
@@ -205,14 +210,14 @@ protected:
                                   const Element& element,
                                   const FVElementGeometry& fvGeometry,
                                   const ElementVolumeVariables& elemVolVars,
-                                  const GlobalFaceVars& faceVars,
+                                  const ElementFaceVariables& elemFaceVars,
                                   const ElementBoundaryTypes& bcTypes,
                                   const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if(!scvf.boundary())
-                residual += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
+                residual += asImp_().computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
         }
     }
 
@@ -225,12 +230,12 @@ protected:
                             const FVElementGeometry& fvGeometry,
                             const SubControlVolumeFace& scvf,
                             const ElementVolumeVariables& elemVolVars,
-                            const GlobalFaceVars& globalFaceVars,
+                            const ElementFaceVariables& elemFaceVars,
                             const ElementBoundaryTypes& bcTypes,
                             const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         if(!scvf.boundary())
-            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, globalFaceVars, elemFluxVarsCache);
+            residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
     }
 
      /*!
@@ -240,7 +245,7 @@ protected:
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const GlobalFaceVars& faceVars,
+                       const ElementFaceVariables& elemFaceVars,
                        const ElementBoundaryTypes& bcTypes,
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
@@ -260,8 +265,8 @@ protected:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& prevElemVolVars,
                                  const ElementVolumeVariables& curElemVolVars,
-                                 const GlobalFaceVars& prevFaceVars,
-                                 const GlobalFaceVars& curFaceVars,
+                                 const ElementFaceVariables& prevFaceVars,
+                                 const ElementFaceVariables& curFaceVars,
                                  const ElementBoundaryTypes &bcTypes) const
     {
         for(auto&& scv : scvs(fvGeometry))
@@ -287,8 +292,8 @@ protected:
                            const SubControlVolumeFace& scvf,
                            const ElementVolumeVariables& prevElemVolVars,
                            const ElementVolumeVariables& curElemVolVars,
-                           const GlobalFaceVars& prevFaceVars,
-                           const GlobalFaceVars& curFaceVars,
+                           const ElementFaceVariables& prevFaceVars,
+                           const ElementFaceVariables& curFaceVars,
                            const ElementBoundaryTypes &bcTypes) const
     {
         // the source term:
@@ -310,8 +315,8 @@ protected:
                                  const FVElementGeometry& fvGeometry,
                                  const ElementVolumeVariables& prevElemVolVars,
                                  const ElementVolumeVariables& curElemVolVars,
-                                 const GlobalFaceVars& prevFaceVars,
-                                 const GlobalFaceVars& curFaceVars,
+                                 const ElementFaceVariables& prevFaceVars,
+                                 const ElementFaceVariables& curFaceVars,
                                  const ElementBoundaryTypes &bcTypes) const
     {
         for(auto&& scv : scvs(fvGeometry))
@@ -361,8 +366,8 @@ protected:
                            const SubControlVolumeFace& scvf,
                            const ElementVolumeVariables& prevElemVolVars,
                            const ElementVolumeVariables& curElemVolVars,
-                           const GlobalFaceVars& prevFaceVars,
-                           const GlobalFaceVars& curFaceVars,
+                           const ElementFaceVariables& prevFaceVars,
+                           const ElementFaceVariables& curFaceVars,
                            const ElementBoundaryTypes &bcTypes) const
     {
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());

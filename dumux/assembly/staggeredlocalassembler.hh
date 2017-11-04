@@ -78,6 +78,9 @@ class StaggeredLocalAssembler<TypeTag,
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     static constexpr bool enableGlobalFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache);
 
@@ -111,8 +114,10 @@ public:
         auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
-        auto& curGlobalFaceVars = gridVariables.curGridFaceVars();
-        auto& prevGlobalFaceVars = gridVariables.prevGridFaceVars();
+        auto curElemeFaceVars = localView(gridVariables.curGridFaceVars());
+        auto prevElemeFaceVars = localView(gridVariables.prevGridFaceVars());
+        curElemeFaceVars.bind(element, fvGeometry, curSol);
+        prevElemeFaceVars.bind(element, fvGeometry, curSol); //TODO: stationary
 
         const bool isStationary = localResidual.isStationary();
         auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
@@ -128,8 +133,8 @@ public:
                                                                              fvGeometry,
                                                                              prevElemVolVars,
                                                                              curElemVolVars,
-                                                                             prevGlobalFaceVars,
-                                                                             curGlobalFaceVars,
+                                                                             prevElemeFaceVars,
+                                                                             curElemeFaceVars,
                                                                              elemBcTypes,
                                                                              elemFluxVarsCache)[0];
 
@@ -148,8 +153,8 @@ public:
                                                                             scvf,
                                                                             prevElemVolVars,
                                                                             curElemVolVars,
-                                                                            prevGlobalFaceVars,
-                                                                            curGlobalFaceVars,
+                                                                            prevElemeFaceVars,
+                                                                            curElemeFaceVars,
                                                                             elemBcTypes,
                                                                             elemFluxVarsCache)[0];
 
@@ -163,8 +168,8 @@ public:
                                 curSol,
                                 prevElemVolVars,
                                 curElemVolVars,
-                                prevGlobalFaceVars,
-                                curGlobalFaceVars,
+                                prevElemeFaceVars,
+                                curElemeFaceVars,
                                 elemFluxVarsCache,
                                 elemBcTypes,
                                 jac,
@@ -261,8 +266,8 @@ protected:
                                         const SolutionVector& curSol,
                                         const ElementVolumeVariables& prevElemVolVars,
                                         ElementVolumeVariables& curElemVolVars,
-                                        const GlobalFaceVars& prevGlobalFaceVars,
-                                        GlobalFaceVars& curGlobalFaceVars,
+                                        const ElementFaceVariables& prevElemFaceVars,
+                                        ElementFaceVariables& curElemFaceVars,
                                         ElementFluxVariablesCache& elemFluxVarsCache,
                                         const ElementBoundaryTypes& elemBcTypes,
                                         JacobianMatrix& matrix,
@@ -270,16 +275,16 @@ protected:
                                         const FaceSolutionVector& faceResidualCache)
 {
     // compute the derivatives of the cell center residuals with respect to cell center dofs
-    dCCdCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
+    dCCdCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
     // compute the derivatives of the cell center residuals with respect to face dofs
-    dCCdFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
+    dCCdFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
     // compute the derivatives of the face residuals with respect to cell center dofs
-    dFacedCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
+    dFacedCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
 
     // compute the derivatives of the face residuals with respect to face dofs
-    dFacedFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevGlobalFaceVars, curGlobalFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
+    dFacedFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
 }
 
 /*!
@@ -292,8 +297,8 @@ static void dCCdCC_(Assembler& assembler,
              const SolutionVector& curSol,
              const ElementVolumeVariables& prevElemVolVars,
              ElementVolumeVariables& curElemVolVars,
-             const GlobalFaceVars& prevGlobalFaceVars,
-             const GlobalFaceVars& curGlobalFaceVars,
+             const ElementFaceVariables& prevElemFaceVars,
+             const ElementFaceVariables& curElemFaceVars,
              ElementFluxVariablesCache& elemFluxVarsCache,
              const ElementBoundaryTypes& elemBcTypes,
              JacobianMatrix& matrix,
@@ -330,7 +335,7 @@ static void dCCdCC_(Assembler& assembler,
            curVolVars.update(elemSol, problem, elementJ, scvJ);
 
           const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
-                                         prevGlobalFaceVars, curGlobalFaceVars,
+                                         prevElemFaceVars, curElemFaceVars,
                                          elemBcTypes, elemFluxVarsCache);
 
            const auto partialDeriv = (deflectedResidual - ccResidual) / eps;
@@ -354,8 +359,8 @@ static void dCCdFace_(Assembler& assembler,
                       const SolutionVector& curSol,
                       const ElementVolumeVariables& prevElemVolVars,
                       const ElementVolumeVariables& curElemVolVars,
-                      const GlobalFaceVars& prevGlobalFaceVars,
-                      GlobalFaceVars& curGlobalFaceVars,
+                      const ElementFaceVariables& prevElemFaceVars,
+                      ElementFaceVariables& curElemFaceVars,
                       ElementFluxVariablesCache& elemFluxVarsCache,
                       const ElementBoundaryTypes& elemBcTypes,
                       JacobianMatrix& matrix,
@@ -368,6 +373,7 @@ static void dCCdFace_(Assembler& assembler,
 
    const auto& problem = assembler.problem();
    auto& localResidual = assembler.localResidual();
+   auto& gridVariables = assembler.gridVariables();
 
    // build derivatives with for cell center dofs w.r.t. cell center dofs
    const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
@@ -377,8 +383,8 @@ static void dCCdFace_(Assembler& assembler,
         const auto globalJ = scvfJ.dofIndex();
 
        // get the faceVars of the face with respect to which we are going to build the derivative
-       auto origFaceVars = curGlobalFaceVars.faceVars(scvfJ.index());
-       auto& curFaceVars = curGlobalFaceVars.faceVars(scvfJ.index());
+       auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvfJ);
+       const auto origFaceVars(faceVars);
 
        for(auto pvIdx : PriVarIndices(faceIdx))
        {
@@ -391,11 +397,11 @@ static void dCCdFace_(Assembler& assembler,
            priVars[pvIdx] += eps;
 
            faceSolution[globalJ][pvIdx] += eps;
-           curFaceVars.update(scvfJ, faceSolution);
+           faceVars.update(scvfJ, faceSolution);
 
            const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
                                           prevElemVolVars, curElemVolVars,
-                                          prevGlobalFaceVars, curGlobalFaceVars,
+                                          prevElemFaceVars, curElemFaceVars,
                                           elemBcTypes, elemFluxVarsCache);
 
            const auto partialDeriv = (deflectedResidual - ccResidual) / eps;
@@ -404,7 +410,7 @@ static void dCCdFace_(Assembler& assembler,
            updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
 
            // restore the original faceVars
-           curFaceVars = origFaceVars;
+           faceVars = origFaceVars;
        }
    }
 }
@@ -419,8 +425,8 @@ static void dFacedCC_(Assembler& assembler,
                       const SolutionVector& curSol,
                       const ElementVolumeVariables& prevElemVolVars,
                       ElementVolumeVariables& curElemVolVars,
-                      const GlobalFaceVars& prevGlobalFaceVars,
-                      const GlobalFaceVars& curGlobalFaceVars,
+                      const ElementFaceVariables& prevElemFaceVars,
+                      const ElementFaceVariables& curElemFaceVars,
                       ElementFluxVariablesCache& elemFluxVarsCache,
                       const ElementBoundaryTypes& elemBcTypes,
                       JacobianMatrix& matrix,
@@ -461,7 +467,7 @@ static void dFacedCC_(Assembler& assembler,
 
                const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
                                               prevElemVolVars, curElemVolVars,
-                                              prevGlobalFaceVars, curGlobalFaceVars,
+                                              prevElemFaceVars, curElemFaceVars,
                                               elemBcTypes, elemFluxVarsCache);
 
                const auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]) / eps;
@@ -486,8 +492,8 @@ static void dFacedFace_(Assembler& assembler,
                         const SolutionVector& curSol,
                         const ElementVolumeVariables& prevElemVolVars,
                         const ElementVolumeVariables& curElemVolVars,
-                        const GlobalFaceVars& prevGlobalFaceVars,
-                        GlobalFaceVars& curGlobalFaceVars,
+                        const ElementFaceVariables& prevElemFaceVars,
+                        ElementFaceVariables& curElemFaceVars,
                         ElementFluxVariablesCache& elemFluxVarsCache,
                         const ElementBoundaryTypes& elemBcTypes,
                         JacobianMatrix& matrix,
@@ -499,6 +505,7 @@ static void dFacedFace_(Assembler& assembler,
     const auto& problem = assembler.problem();
     auto& localResidual = assembler.localResidual();
     const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+    auto& gridVariables = assembler.gridVariables();
 
    for(auto&& scvf : scvfs(fvGeometry))
    {
@@ -509,8 +516,8 @@ static void dFacedFace_(Assembler& assembler,
        for(const auto& globalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
        {
            // get the faceVars of the face with respect to which we are going to build the derivative
-           auto origFaceVars = curGlobalFaceVars.faceVars(scvf.index());
-           auto& curFaceVars = curGlobalFaceVars.faceVars(scvf.index());
+        auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvf);
+        const auto origFaceVars(faceVars);
 
            for(auto pvIdx : PriVarIndices(faceIdx))
            {
@@ -519,11 +526,11 @@ static void dFacedFace_(Assembler& assembler,
                const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
 
                faceSolution[globalJ][pvIdx] += eps;
-               curFaceVars.update(scvf, faceSolution);
+               faceVars.update(scvf, faceSolution);
 
                const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
                                               prevElemVolVars, curElemVolVars,
-                                              prevGlobalFaceVars, curGlobalFaceVars,
+                                              prevElemFaceVars, curElemFaceVars,
                                               elemBcTypes, elemFluxVarsCache);
 
                const auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]) / eps;
@@ -532,7 +539,7 @@ static void dFacedFace_(Assembler& assembler,
                updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
 
                // restore the original faceVars
-               curFaceVars = origFaceVars;
+               faceVars = origFaceVars;
            }
        }
    }
@@ -603,6 +610,16 @@ private:
     static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), VolumeVariables&>::type
     getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return gridVolVars.volVars(scv); }
+
+    template<class T = TypeTag>
+    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), FaceVariables&>::type //TODO: introduce correct property
+    getFaceVarAccess(GlobalFaceVars& gridFaceVars, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
+    { return elemFaceVars[scvf]; }
+
+    template<class T = TypeTag>
+    static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), FaceVariables&>::type
+    getFaceVarAccess(GlobalFaceVars& gridFaceVars, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
+    { return gridFaceVars.faceVars(scvf.index()); }
 };
 
 } // end namespace Dumux

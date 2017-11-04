@@ -45,6 +45,7 @@
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 #include <dumux/discretization/staggered/globalfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
+#include <dumux/discretization/staggered/elementfacevariables.hh>
 
 #include <dumux/common/intersectionmapper.hh>
 #include <dune/istl/multitypeblockvector.hh>
@@ -62,6 +63,7 @@ namespace Properties
 NEW_PROP_TAG(CellCenterSolutionVector);
 NEW_PROP_TAG(FaceSolutionVector);
 NEW_PROP_TAG(StaggeredFaceSolution);
+NEW_PROP_TAG(ElementFaceVariables);
 
 //! Type tag for the box scheme.
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel, NumericModel));
@@ -112,6 +114,8 @@ SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>
 SET_TYPE_PROP(StaggeredModel, IntersectionMapper, Dumux::ConformingGridIntersectionMapper<TypeTag>);
 
 SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
+
+SET_TYPE_PROP(StaggeredModel, ElementFaceVariables, StaggeredElementFaceVariables<TypeTag>);
 
 //! Definition of the indices for cell center and face dofs in the global solution vector
 SET_PROP(StaggeredModel, DofTypeIndices)

@@ -28,6 +28,11 @@
 namespace Dumux
 {
 
+namespace Properties
+{
+    NEW_PROP_TAG(ElementFaceVariables);
+}
+
 /*!
  * \ingroup ImplicitModel
  * \brief The flux variables class
@@ -52,7 +57,7 @@ class FreeFlowEnergyFluxVariablesImplementation<TypeTag, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -64,7 +69,7 @@ public:
                            const Element &element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
-                           const GlobalFaceVars& globalFaceVars,
+                           const ElementFaceVariables& elemFaceVars,
                            const SubControlVolumeFace &scvf,
                            const FluxVariablesCache& fluxVarsCache)
     { }
@@ -82,7 +87,7 @@ class FreeFlowEnergyFluxVariablesImplementation<TypeTag, true>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -98,11 +103,11 @@ public:
                            const Element &element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
-                           const GlobalFaceVars& globalFaceVars,
+                           const ElementFaceVariables& elemFaceVars,
                            const SubControlVolumeFace &scvf,
                            const FluxVariablesCache& fluxVarsCache)
     {
-        flux[energyBalanceIdx] += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
+        flux[energyBalanceIdx] += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, elemFaceVars, scvf);
         flux[energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
     }
 
@@ -112,13 +117,13 @@ private:
     * \param problem The problem
     * \param fvGeometry The finite-volume geometry
     * \param elemVolVars All volume variables for the element
-    * \param globalFaceVars The face variables
+    * \param elemFaceVars The face variables
     * \param scvf The sub control volume face
     */
     static Scalar advectiveFluxForCellCenter_(const Problem& problem,
                                               const FVElementGeometry& fvGeometry,
                                               const ElementVolumeVariables& elemVolVars,
-                                              const GlobalFaceVars& globalFaceVars,
+                                              const ElementFaceVariables& elemFaceVars,
                                               const SubControlVolumeFace &scvf)
     {
         Scalar flux(0.0);
@@ -138,7 +143,7 @@ private:
 
         const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
 
         const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;

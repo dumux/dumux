@@ -87,7 +87,6 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
     };
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);

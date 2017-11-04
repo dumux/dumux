@@ -66,13 +66,14 @@ class FreeFlowFluxVariablesImpl<TypeTag, false>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Stencil = std::vector<IndexType>;
+
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
 
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
 
@@ -100,7 +101,7 @@ public:
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
                                                         const ElementVolumeVariables& elemVolVars,
-                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const ElementFaceVariables& elemFaceVars,
                                                         const SubControlVolumeFace &scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
@@ -111,8 +112,7 @@ public:
         const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
 
         CellCenterPrimaryVariables flux(0.0);
-        // const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
-        const Scalar velocity = globalFaceVars.faceVars(scvf.index()).velocitySelf();
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
 
         const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity) ? true : false;
         const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
@@ -191,19 +191,19 @@ public:
     * \param scvf The sub control volume face
     * \param fvGeometry The finite-volume geometry
     * \param elemVolVars All volume variables for the element
-    * \param globalFaceVars The face variables
+    * \param elementFaceVars The face variables
     */
    FacePrimaryVariables computeNormalMomentumFlux(const Problem& problem,
                                                   const Element& element,
                                                   const SubControlVolumeFace& scvf,
                                                   const FVElementGeometry& fvGeometry,
                                                   const ElementVolumeVariables& elemVolVars,
-                                                  const GlobalFaceVars& globalFaceVars)
+                                                  const ElementFaceVariables& elementFaceVars)
    {
        const auto insideScvIdx = scvf.insideScvIdx();
        const auto& insideVolVars = elemVolVars[insideScvIdx];
-       const Scalar velocitySelf = globalFaceVars.faceVars(scvf.index()).velocitySelf() ;
-       const Scalar velocityOpposite = globalFaceVars.faceVars(scvf.index()).velocityOpposite();
+       const Scalar velocitySelf = elementFaceVars[scvf].velocitySelf() ;
+       const Scalar velocityOpposite = elementFaceVars[scvf].velocityOpposite();
        FacePrimaryVariables normalFlux(0.0);
 
        if(navierStokes)
@@ -243,28 +243,20 @@ public:
    * \param scvf The sub control volume face
    * \param fvGeometry The finite-volume geometry
    * \param elemVolVars All volume variables for the element
-   * \param globalFaceVars The face variables
+   * \param elementFaceVars The face variables
    */
   FacePrimaryVariables computeTangetialMomentumFlux(const Problem& problem,
                                                     const Element& element,
                                                     const SubControlVolumeFace& scvf,
                                                     const FVElementGeometry& fvGeometry,
                                                     const ElementVolumeVariables& elemVolVars,
-                                                    const GlobalFaceVars& globalFaceVars)
+                                                    const ElementFaceVariables& elementFaceVars)
   {
       FacePrimaryVariables tangentialFlux(0.0);
-
-    //   // convenience function to get the velocity on a face
-    //   auto velocity = [&globalFaceVars](const int dofIdx)
-    //   {
-    //       return globalFaceVars.faceVars(scvf.dofIdx()).velocity();
-    //   };
-    auto& faceVars = globalFaceVars.faceVars(scvf.index());
-
-    const int numSubFaces = scvf.pairData().size();
+      auto& faceVars = elementFaceVars[scvf];
+      const int numSubFaces = scvf.pairData().size();
 
       // account for all sub-faces
-    //   for(const auto& subFaceData : scvf.pairData())
       for(int localSubFaceIdx = 0; localSubFaceIdx < numSubFaces; ++localSubFaceIdx)
       {
           const auto eIdx = scvf.insideScvIdx();
@@ -305,7 +297,6 @@ private:
                                                                      const FaceVars& faceVars,
                                                                      const int localSubFaceIdx)
   {
-    //   const Scalar transportingVelocity = velocity(subFaceData.normalPair.first);
       const Scalar transportingVelocity = faceVars.subFaceData(localSubFaceIdx).velocityNormalInside;
       const auto insideScvIdx = normalFace.insideScvIdx();
       const auto outsideScvIdx = normalFace.outsideScvIdx();
@@ -324,12 +315,10 @@ private:
 
       if(innerElementIsUpstream)
           transportedVelocity = faceVars.subFaceData(localSubFaceIdx).velocityParallelInside;
-        //   transportedVelocity = velocity(scvf.dofIndex());
       else
       {
           const int outerDofIdx = scvf.pairData(localSubFaceIdx).outerParallelFaceDofIdx;
           if(outerDofIdx >= 0)
-            //   transportedVelocity = velocity(outerDofIdx);
               transportedVelocity = faceVars.subFaceData(localSubFaceIdx).velocityParallelOutside;
           else // this is the case when the outer parallal dof would lie outside the domain TODO: discuss which one is better
             //   transportedVelocity = problem.dirichlet(makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
@@ -370,10 +359,8 @@ private:
       const Scalar muAvg = (insideVolVars.viscosity() + outsideVolVars.viscosity()) * 0.5;
 
       // the normal derivative
-    //   const int innerNormalVelocityIdx = subFaceData.normalPair.first;
       const int outerNormalVelocityIdx = scvf.pairData(localSubFaceIdx).normalPair.second;
 
-    //   const Scalar innerNormalVelocity = velocity(innerNormalVelocityIdx);
       const Scalar innerNormalVelocity = faceVars.subFaceData(localSubFaceIdx).velocityNormalInside;
 
       const Scalar outerNormalVelocity = outerNormalVelocityIdx >= 0 ?
