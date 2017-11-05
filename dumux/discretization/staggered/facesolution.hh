@@ -52,8 +52,8 @@ public:
         const auto& connectivityMap = fvGridGeometry.connectivityMap();
         const auto& stencil = connectivityMap(faceIdx, faceIdx, scvf.index());
 
-        facePriVars_.clear();
-        map_.clear();
+        facePriVars_.reserve(stencil.size());
+        map_.reserve(stencil.size());
 
         for(const auto dofJ : stencil)
         {
@@ -85,7 +85,6 @@ private:
 
     std::vector<FacePrimaryVariables> facePriVars_;
     std::vector<unsigned int> map_;
-
 };
 
 } // end namespace

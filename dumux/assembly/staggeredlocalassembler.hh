@@ -397,7 +397,7 @@ static void dCCdFace_(Assembler& assembler,
            priVars[pvIdx] += eps;
 
            faceSolution[globalJ][pvIdx] += eps;
-           faceVars.update(scvfJ, faceSolution);
+           faceVars.update(faceSolution, problem, element, fvGeometry, scvfJ);
 
            const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
                                           prevElemVolVars, curElemVolVars,
@@ -526,7 +526,7 @@ static void dFacedFace_(Assembler& assembler,
                const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
 
                faceSolution[globalJ][pvIdx] += eps;
-               faceVars.update(scvf, faceSolution);
+               faceVars.update(faceSolution, problem, element, fvGeometry, scvf);
 
                const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
                                               prevElemVolVars, curElemVolVars,

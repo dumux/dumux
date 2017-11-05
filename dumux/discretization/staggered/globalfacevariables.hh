@@ -65,7 +65,7 @@ public:
 
             for(auto&& scvf : scvfs(fvGeometry))
             {
-                faceVariables_[scvf.index()].update(scvf, faceSol);
+                faceVariables_[scvf.index()].update(faceSol, problem_(), element, fvGeometry, scvf);
             }
         }
     }

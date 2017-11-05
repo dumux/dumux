@@ -74,6 +74,7 @@ class FreeFlowFluxVariablesImpl<TypeTag, false>
     using Stencil = std::vector<IndexType>;
 
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
 
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
 
@@ -288,42 +289,25 @@ public:
 
 private:
 
-  template<class FaceVars>
   FacePrimaryVariables computeAdvectivePartOfTangentialMomentumFlux_(const Problem& problem,
                                                                      const Element& element,
                                                                      const SubControlVolumeFace& scvf,
                                                                      const SubControlVolumeFace& normalFace,
                                                                      const ElementVolumeVariables& elemVolVars,
-                                                                     const FaceVars& faceVars,
+                                                                     const FaceVariables& faceVars,
                                                                      const int localSubFaceIdx)
   {
       const Scalar transportingVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
       const auto insideScvIdx = normalFace.insideScvIdx();
       const auto outsideScvIdx = normalFace.outsideScvIdx();
 
-      // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
-    //   auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
-    //   {
-    //       return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
-    //   };
-
       const bool innerElementIsUpstream = ( sign(normalFace.outerNormalScalar()) == sign(transportingVelocity) );
 
       const auto& upVolVars = innerElementIsUpstream ? elemVolVars[insideScvIdx] : elemVolVars[outsideScvIdx];
 
-      Scalar transportedVelocity(0.0);
-
-      if(innerElementIsUpstream)
-          transportedVelocity = faceVars.velocitySelf();
-      else
-      {
-          const int outerDofIdx = scvf.pairData(localSubFaceIdx).outerParallelFaceDofIdx;
-          if(outerDofIdx >= 0)
-              transportedVelocity = faceVars.velocityParallel(localSubFaceIdx);
-          else // this is the case when the outer parallal dof would lie outside the domain TODO: discuss which one is better
-            //   transportedVelocity = problem.dirichlet(makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
-              transportedVelocity = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
-      }
+      const Scalar transportedVelocity = innerElementIsUpstream ?
+                                         faceVars.velocitySelf() :
+                                         faceVars.velocityParallel(localSubFaceIdx);
 
       const Scalar momentum = upVolVars.density() * transportedVelocity;
       const int sgn = sign(normalFace.outerNormalScalar());
@@ -331,41 +315,28 @@ private:
       return transportingVelocity * momentum * sgn * normalFace.area() * 0.5;
   }
 
-  template<class FaceVars>
   FacePrimaryVariables computeDiffusivePartOfTangentialMomentumFlux_(const Problem& problem,
                                                                      const Element& element,
                                                                      const SubControlVolumeFace& scvf,
                                                                      const SubControlVolumeFace& normalFace,
                                                                      const ElementVolumeVariables& elemVolVars,
-                                                                     const FaceVars& faceVars,
+                                                                     const FaceVariables& faceVars,
                                                                      const int localSubFaceIdx)
   {
       FacePrimaryVariables tangentialDiffusiveFlux(0.0);
 
-      const auto normalDirIdx = normalFace.directionIndex();
       const auto insideScvIdx = normalFace.insideScvIdx();
       const auto outsideScvIdx = normalFace.outsideScvIdx();
 
       const auto& insideVolVars = elemVolVars[insideScvIdx];
       const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-      // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
-      auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
-      {
-          return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
-      };
-
       // the averaged viscosity at the face normal to our face of interest (where we assemble the face residual)
       const Scalar muAvg = (insideVolVars.viscosity() + outsideVolVars.viscosity()) * 0.5;
 
       // the normal derivative
-      const int outerNormalVelocityIdx = scvf.pairData(localSubFaceIdx).normalPair.second;
-
       const Scalar innerNormalVelocity = faceVars.velocityNormalInside(localSubFaceIdx);
-
-      const Scalar outerNormalVelocity = outerNormalVelocityIdx >= 0 ?
-                                  faceVars.velocityNormalOutside(localSubFaceIdx) :
-                                  problem.dirichlet(element, makeGhostFace(scvf.pairData(localSubFaceIdx).virtualOuterNormalFaceDofPos))[faceIdx][normalDirIdx];
+      const Scalar outerNormalVelocity = faceVars.velocityNormalOutside(localSubFaceIdx);
 
       const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
                                     (outerNormalVelocity - innerNormalVelocity) :
@@ -377,10 +348,7 @@ private:
       // the parallel derivative
       const Scalar innerParallelVelocity = faceVars.velocitySelf();
 
-      const int outerParallelFaceDofIdx = scvf.pairData(localSubFaceIdx).outerParallelFaceDofIdx;
-      const Scalar outerParallelVelocity = outerParallelFaceDofIdx >= 0 ?
-                                           faceVars.velocityParallel(localSubFaceIdx) :
-                                           problem.dirichlet(element, makeGhostFace(scvf.pairData(localSubFaceIdx).virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
+      const Scalar outerParallelVelocity = faceVars.velocityParallel(localSubFaceIdx);
 
       const Scalar parallelDeltaV = normalFace.normalInPosCoordDir() ?
                                    (outerParallelVelocity - innerParallelVelocity) :
