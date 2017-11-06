@@ -120,9 +120,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(leafGridView.size(0));
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -212,10 +211,9 @@ int main(int argc, char** argv) try
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
 
-         // write vtk output
-        vtkWriter.write(timeLoop->timeStepIndex()==0 ||
-                        timeLoop->timeStepIndex() % outputInterval == 0 ||
-                        timeLoop->willBeFinished());
+        // write vtk output
+        if(timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % outputInterval == 0 || timeLoop->willBeFinished())
+            vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 

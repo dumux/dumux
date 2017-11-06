@@ -213,9 +213,8 @@ int main(int argc, char** argv) try
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
-        vtkWriter.write(timeLoop->timeStepIndex()==0 ||
-                        timeLoop->timeStepIndex() % outputInterval == 0 ||
-                        timeLoop->willBeFinished());
+        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % outputInterval == 0 || timeLoop->willBeFinished())
+            vtkWriter.write(timeLoop->time());
 
 
     } while (!timeLoop->finished());

@@ -135,7 +135,6 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
@@ -158,18 +157,13 @@ public:
         pressureLow_ = 1e5;
 
         time_ = 0.0;
-        temperatureExact_.resize(this->fvGridGeometry().gridView().size(GridView::dimension));
-
-
+        temperatureExact_.resize(fvGridGeometry->gridView().size(dofCodim));
     }
 
     // get time from the mainfile timeloop
     void setTime(Scalar time)
     { time_ = time; }
 
-     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
@@ -178,7 +172,7 @@ public:
         return temperatureExact_;
     }
 
- void updateExactTemperature(const SolutionVector& curSol)
+    void updateExactTemperature(const SolutionVector& curSol)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 

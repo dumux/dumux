@@ -150,10 +150,9 @@ public:
         FluidSystem::init();
 
         name_ = getParam<std::string>("Problem.Name");
-        outputInterval_ = getParam<int>("Problem.OutputInterval");
         temperatureHigh_ = 300.0;
         time_ = 0.0;
-        temperatureExact_.resize(this->fvGridGeometry().gridView().size(GridView::dimension));
+        temperatureExact_.resize(fvGridGeometry->gridView().size(dofCodim));
    }
 
     // get time from the mainfile timeloop
@@ -328,7 +327,6 @@ private:
     Scalar temperatureHigh_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    int outputInterval_;
     std::vector<double> temperatureExact_;
     Scalar time_;
 

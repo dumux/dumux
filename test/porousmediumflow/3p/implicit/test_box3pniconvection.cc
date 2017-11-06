@@ -204,11 +204,8 @@ int main(int argc, char** argv) try
         problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
         problem->updateExactTemperature(x);
 
-        // write vtk output
-        vtkWriter.write(
-            timeLoop->timeStepIndex()==0 ||
-            timeLoop->timeStepIndex() % outputInterval == 0 ||
-            timeLoop->willBeFinished());
+       if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % outputInterval == 0 || timeLoop->willBeFinished())
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
