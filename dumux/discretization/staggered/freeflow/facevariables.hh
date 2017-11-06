@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The face variables class for free flow staggered grid models
+ * \brief The face variables class for free flow staggered grid models.
+ *        Contains all relevant velocities for the assembly of the momentum balance.
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
@@ -55,6 +56,26 @@ class StaggeredFaceVariables
 
 public:
 
+    /*!
+    * \brief Partial update of the face variables. Only the face itself is considered.
+    *
+    * \param priVars The face-specific primary variales
+    */
+    void updateOwnFaceOnly(const FacePrimaryVariables& priVars)
+    {
+        velocitySelf_ = priVars[0];
+    }
+
+    /*!
+    * \brief Complete update of the face variables (i.e. velocities for free flow)
+    *        for a given face
+    *
+    * \param faceSol The face-specific solution vector
+    * \param problem The problem
+    * \param element The element
+    * \param fvGeometry The finite-volume geometry
+    * \param scvf The sub-control volume face of interest
+    */
     template<class SolVector>
     void update(const SolVector& faceSol,
                 const Problem& problem,
@@ -109,26 +130,47 @@ public:
         }
     }
 
+    /*!
+    * \brief Returns the velocity at the face itself
+    */
     Scalar velocitySelf() const
     {
         return velocitySelf_;
     }
 
+    /*!
+    * \brief Returns the velocity at the opposing face
+    */
     Scalar velocityOpposite() const
     {
         return velocityOpposite_;
     }
 
+    /*!
+    * \brief Returns the velocity at the parallel face
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
     Scalar velocityParallel(const int localSubFaceIdx) const
     {
         return velocityParallel_[localSubFaceIdx];
     }
 
+    /*!
+    * \brief Returns the velocity at the inner normal face
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
     Scalar velocityNormalInside(const int localSubFaceIdx) const
     {
         return velocityNormalInside_[localSubFaceIdx];
     }
 
+    /*!
+    * \brief Returns the velocity at the outer normal face
+    *
+    * \param localSubFaceIdx The local index of the subface
+    */
     Scalar velocityNormalOutside(const int localSubFaceIdx) const
     {
         return velocityNormalOutside_[localSubFaceIdx];

@@ -388,16 +388,11 @@ static void dCCdFace_(Assembler& assembler,
 
        for(auto pvIdx : PriVarIndices(faceIdx))
        {
-           PrimaryVariables priVars(CellCenterPrimaryVariables(0.0), FacePrimaryVariables(curSol[faceIdx][globalJ]));
+           FacePrimaryVariables facePriVars(curSol[faceIdx][globalJ]);
+           const Scalar eps = numericEpsilon(facePriVars[pvIdx], cellCenterIdx, faceIdx);
+           facePriVars[pvIdx] += eps;
 
-           auto faceSolution = StaggeredFaceSolution<TypeTag>(scvfJ, curSol[faceIdx], assembler.fvGridGeometry());
-
-
-           const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, faceIdx);
-           priVars[pvIdx] += eps;
-
-           faceSolution[globalJ][pvIdx] += eps;
-           faceVars.update(faceSolution, problem, element, fvGeometry, scvfJ);
+           faceVars.updateOwnFaceOnly(facePriVars);
 
            const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
                                           prevElemVolVars, curElemVolVars,
