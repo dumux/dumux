@@ -102,9 +102,17 @@ public:
         return abs(crossProduct<Scalar>(scvBasis[0], scvBasis[1]));
     }
 
-    // returns the global number of scvfs in the grid
+    /*!
+     * \brief Returns the global number of scvfs in the grid. Assumes the grid to be made up of only
+     *        basic geometry types. Overlad this function if you want to use different geometry types.
+     *
+     * \param gridView The grid view to be checked
+     */
     static std::size_t getGlobalNumScvf(const GridView& gridView)
-    { return gridView.size(Dune::GeometryTypes::triangle)*6 + gridView.size(Dune::GeometryTypes::quadrilateral)*8; }
+    {
+        assert(gridView.size(0) == gridView.size(Dune::GeometryTypes::triangle) + gridView.size(Dune::GeometryTypes::quadrilateral));
+        return gridView.size(Dune::GeometryTypes::triangle)*6 + gridView.size(Dune::GeometryTypes::quadrilateral)*8;
+    }
 
     /*!
      * \brief Checks whether or not a given scv basis forms a right hand system.
@@ -314,31 +322,22 @@ public:
     }
 
     /*!
-     * \brief Returns the total number of scvfs in a given grid view. This number can be used to
-     *        to resize e.g. geometry vectors during initialization. However, if generic element
-     *        geometry types are used by the grid, this method should be overloaded as it currently
-     *        only works for basic geometry types. Furthermore, on locally refined grids the computed
-     *        value will be smaller than the actual number of scvfs, thus the name "estimate"
-     *        TODO: return accurate value also for locally refined grids?
+     * \brief Returns the global number of scvfs in the grid. Assumes the grid to be made up of only
+     *        basic geometry types. Overlad this function if you want to use different geometry types.
      *
      * \param gridView The grid view to be checked
      */
-    static std::size_t estimateNumScvf(const GridView& gridView)
+    static std::size_t getGlobalNumScvf(const GridView& gridView)
     {
-        Dune::GeometryType simplex, pyramid, prism, cube;
-        simplex.makeTetrahedron();
-        pyramid.makePyramid();
-        prism.makePrism();
-        cube.makeHexahedron();
+        assert(gridView.size(Dune::GeometryTypes::tetrahedron)
+               + gridView.size(Dune::GeometryTypes::pyramid)
+               + gridView.size(Dune::GeometryTypes::prism)
+               + gridView.size(Dune::GeometryTypes::cube) == gridView.size(0));
 
-        // This assumes the grid to be entirely made up of triangles and quadrilaterals
-        assert(gridView.size(simplex)
-               + gridView.size(pyramid)
-               + gridView.size(prism)
-               + gridView.size(cube) == gridView.size(0)
-               && "Current implementation of mpfa schemes only supports simplices, pyramids, prisms & cubes in 3d.");
-
-        return gridView.size(simplex)*12 + gridView.size(pyramid)*16 + gridView.size(prism)*18 + gridView.size(cube)*24;
+        return gridView.size(Dune::GeometryTypes::tetrahedron)*12
+               + gridView.size(Dune::GeometryTypes::pyramid)*16
+               + gridView.size(Dune::GeometryTypes::prism)*18
+               + gridView.size(Dune::GeometryTypes::cube)*24;
     }
 
     /*!
