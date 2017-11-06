@@ -40,27 +40,28 @@ class CCMpfaOInteractionVolumeIndexSet
 public:
     CCMpfaOInteractionVolumeIndexSet(const DualGridNodalIndexSet& nodalIndexSet) : nodalIndexSet_(nodalIndexSet)
     {
-        //! determine the number of iv-local faces
+        //! determine the number of iv-local faces for memory reservation
+        //! note that this might be a vast overestimation on surface grids!
         const auto numNodalScvfs = nodalIndexSet.numScvfs();
         const auto numBoundaryScvfs = nodalIndexSet.numBoundaryScvfs();
-        numFaces_ = numBoundaryScvfs + (numNodalScvfs-numBoundaryScvfs)/2;
+        const std::size_t numFaceEstimate = numBoundaryScvfs + (numNodalScvfs-numBoundaryScvfs)/2;
 
         // make sure we found a reasonable number of faces
         assert((numNodalScvfs-numBoundaryScvfs)%2 == 0);
 
         //! index transformation from interaction-volume-local to node-local
-        ivToNodeScvf_.reserve(numFaces_);
+        ivToNodeScvf_.reserve(numFaceEstimate);
         nodeToIvScvf_.resize(numNodalScvfs);
 
         //! the local neighboring scv indices of the faces
-        scvfNeighborScvLocalIndices_.reserve(numFaces_);
+        scvfNeighborScvLocalIndices_.reserve(numFaceEstimate);
 
         //! keeps track of which nodal scvfs have been handled already
         std::vector<bool> isHandled(numNodalScvfs, false);
 
         //! go over faces in nodal index set, check if iv-local face has been
         //! inserted already for this scvf and if not, insert index mapping
-        unsigned int findCounter = 0;
+        numFaces_ = 0;
         for (LocalIndexType i = 0; i < numNodalScvfs; ++i)
         {
             //! check if the nodal scvf still has to be handled
@@ -73,7 +74,8 @@ public:
                 nodeToIvScvf_[i] = ivToNodeScvf_.size();
                 isHandled[i] = true;
                 ivToNodeScvf_.push_back(i);
-                findCounter++; continue;
+                numFaces_++;
+                continue;
             }
 
             //! We insert a new iv-local face and find all "outside" scvfs that map
@@ -119,11 +121,8 @@ public:
                 isHandled[nodeLocalScvfIdx] = true;
             }
             ivToNodeScvf_.push_back(i);
-            findCounter++;
+            numFaces_++;
         }
-
-        //! ensure we found as many faces as anticipated
-        assert(findCounter == numFaces_ && "Couldn't find as many faces as anticipated");
 
         // compute local neighboring scv indices for the iv-local scvfs
         scvfNeighborScvLocalIndices_.resize(numFaces());
