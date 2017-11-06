@@ -369,7 +369,6 @@ public:
         return this->timeManager().timeStepIndex() == 0 ||
                this->timeManager().episodeWillBeFinished() ||
                this->timeManager().willBeFinished();
-        return true;
     }
 
     void episodeEnd()

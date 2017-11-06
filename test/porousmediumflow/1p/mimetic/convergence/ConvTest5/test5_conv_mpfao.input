@@ -3,11 +3,10 @@ DtInitial = 1 # [s]
 TEnd = 1 # [s]
 
 [Grid]
-#File = ../grids/test_nonconvex_cossurf_16.dgf
-#File = ../grids/test_nonconvex_16.dgf
-#File = ./../grids/kershaw32.msh.dgf
+#File = ../grids/nonconvex_cossurf_16.dgf
+#File = ../grids/nonconvex_16.dgf
 #File = ./../grids/test_1p_3d.dgf
-File = ../grids/RandMesh8.msh.dgf
+File = ../grids/random_8.dgf
 Refinement = 0
 UseCheckerboard = 0
 
