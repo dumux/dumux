@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 250 # [s]
 TEnd = 300000 # [s]
 
@@ -6,4 +6,8 @@ TEnd = 300000 # [s]
 File = grids/fracture.msh
 
 [Problem]
-Name = fracturebox # name passed to the output routines
+Name = fracture
+EnableGravity = false
+
+[Implicit]
+UpwindWeight = 1.0

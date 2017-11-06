@@ -1,4 +1,5 @@
 add_subdirectory(pointsources)
+add_subdirectory(fracture)
 add_subdirectory(incompressible)
 add_subdirectory(nonisothermal)
 add_input_file_links()
@@ -33,27 +34,6 @@ add_dumux_test(test_cc2pcornerpoint test_cc2pcornerpoint test_cc2pcornerpoint.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/cc2pcornerpoint-00005.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pcornerpoint")
 endif()
-
-add_dumux_test(test_fracture_box2p test_fracture_box2p test_fracture_box2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/fracturebox2p-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/fracturebox-00023.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_fracture_box2p")
-
-add_dumux_test(test_fracture_cc2p test_fracture_cc2p test_fracture_cc2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/fracturecc2p-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/fracturecc-00029.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_fracture_cc2p")
-
-add_dumux_test(test_fracture_ccmpfa2p test_fracture_ccmpfa2p test_fracture_ccmpfa2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/fractureccmpfa2p-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/fractureccmpfa-00031.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_fracture_ccmpfa2p")
 
 #install sources
 install(FILES
