@@ -41,9 +41,6 @@ cc2pcornerpointproblem.hh
 cc2pcornerpointspatialparams.hh
 generalizeddirichletproblem.hh
 generalizeddirichletspatialparams.hh
-injectionproblem2pni.hh
-lensproblem.hh
-lensspatialparams.hh
 test_boxadaptive2p.cc
 test_cc2pcornerpoint.cc
 test_ccadaptive2p.cc

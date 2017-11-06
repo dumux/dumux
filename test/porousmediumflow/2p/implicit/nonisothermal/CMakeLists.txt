@@ -38,3 +38,11 @@ dune_add_test(SOURCES test_cc2pni.cc
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
+
+#install sources
+install(FILES
+problem.hh
+spatialparams.hh
+test_2pni_box.cc
+test_2pni_cc.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p/nonisothermal)

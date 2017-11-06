@@ -30,3 +30,11 @@ dune_add_test(NAME test_2p_incompressible_mpfa
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_incompressible_mpfa test_2p.input -Problem.Name 2p_mpfa")
 
 set(CMAKE_BUILD_TYPE Release)
+
+#install sources
+install(FILES
+problem.hh
+spatialparams.hh
+test_2p_box.cc
+test_2p_cc.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p/incompressible)

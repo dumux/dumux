@@ -27,3 +27,11 @@ dune_add_test(NAME test_2p_fracture_mpfa
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa test_fracture.input -Problem.Name fracturempfa")
 
 set(CMAKE_BUILD_TYPE Release)
+
+#install sources
+install(FILES
+problem.hh
+spatialparams.hh
+test_2p_fracture_box.cc
+test_2p_fracture_cc.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p/fracture)
