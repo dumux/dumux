@@ -7,6 +7,8 @@ add_dumux_test(test_cc2pff test_cc2pff test_cc2pff.cc
 add_dumux_test(test_constvel test_constvel test_constvel.cc
                ${CMAKE_CURRENT_BINARY_DIR}/test_constvel)
 
+add_dumux_test(test2_constvel test2_constvel test2_constvel.cc
+               ${CMAKE_CURRENT_BINARY_DIR}/test2_constvel)
 #install sources
 install(FILES
 lensproblem.hh
