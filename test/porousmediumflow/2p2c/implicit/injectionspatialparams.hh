@@ -31,8 +31,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
-
 namespace Dumux
 {
 
@@ -93,7 +91,7 @@ public:
     InjectionSpatialParams(const Problem& problem)
     : ParentType(problem)
     {
-        layerBottom_ = 22.0;
+        layerBottom_ = 22.5;
 
         // intrinsic permeabilities
         fineK_ = 1e-13;

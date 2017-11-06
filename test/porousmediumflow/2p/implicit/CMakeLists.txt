@@ -1,5 +1,6 @@
 add_subdirectory(pointsources)
 add_subdirectory(incompressible)
+add_subdirectory(nonisothermal)
 add_input_file_links()
 
 # isothermal tests
@@ -33,39 +34,6 @@ add_dumux_test(test_cc2pcornerpoint test_cc2pcornerpoint test_cc2pcornerpoint.cc
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pcornerpoint")
 endif()
 
-# non-isothermal tests
-if(HAVE_UG)
-add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-simplex-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00007.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pni -Grid.CellType Simplex")
-else()
-add_dumux_test(test_box2pni test_box2pni test_box2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/injection2pnibox-00007.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pni")
-endif()
-
-if(HAVE_UG)
-add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-simplex-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/injection2pnicc-00008.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni -Grid.CellType Simplex")
-else()
-add_dumux_test(test_cc2pni test_cc2pni test_cc2pni.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-cube-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/injection2pnicc-00008.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pni")
-endif()
-
 add_dumux_test(test_fracture_box2p test_fracture_box2p test_fracture_box2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
@@ -96,10 +64,8 @@ generalizeddirichletspatialparams.hh
 injectionproblem2pni.hh
 lensproblem.hh
 lensspatialparams.hh
-test_box2pni.cc
 test_boxadaptive2p.cc
 test_cc2pcornerpoint.cc
-test_cc2pni.cc
 test_ccadaptive2p.cc
 test_generalizeddirichlet.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p)

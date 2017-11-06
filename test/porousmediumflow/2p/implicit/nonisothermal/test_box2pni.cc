@@ -19,11 +19,11 @@
 /*!
  * \file
  *
- * \brief test for the 2pni CC model
+ * \brief test for the 2pni box model
  */
 #include <config.h>
 
-#include "injectionproblem2pni.hh"
+#include "problem.hh"
 
 #include <ctime>
 #include <iostream>
@@ -39,10 +39,10 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
+#include <dumux/nonlinear/newtoncontroller.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
@@ -82,7 +82,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(InjectionCCProblem2PNI);
+    using TypeTag = TTAG(InjectionBoxProblem2PNI);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -96,7 +96,7 @@ int main(int argc, char** argv) try
 
     // try to create a grid (from the given grid file or the input file)
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-    GridCreator::makeGrid(Parameters::getTree());
+    GridCreator::makeGrid();
     GridCreator::loadBalance();
 
     ////////////////////////////////////////////////////////////
@@ -116,8 +116,9 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(0));
+    SolutionVector x(leafGridView.size(GridView::dimension));
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -153,11 +154,12 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->vertexMapper());
+    using LinearSolver = AMGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+
 
     // the non-linear solver
-    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using NewtonController = Dumux::NewtonController<TypeTag>;
     using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
