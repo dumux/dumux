@@ -28,9 +28,17 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup ImplicitModel
+ * \brief Base class for the face variables vector
+ */
+template<class TypeTag, bool enableGlobalFaceVarsCache>
+class StaggeredElementFaceVariables
+{};
+
 
 template<class TypeTag>
-class StaggeredElementFaceVariables
+class StaggeredElementFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -69,6 +77,43 @@ public:
 
 private:
     const GlobalFaceVars* globalFaceVarsPtr_;
+};
+
+template<class TypeTag>
+class StaggeredElementFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
+{
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using IndexType = typename GridView::IndexSet::IndexType;
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
+public:
+    //! For compatibility reasons with the case of not storing the vol vars.
+    //! function to be called before assembling an element, preparing the vol vars within the stencil
+    void bind(const Element& element,
+              const FVElementGeometry& fvGeometry,
+              const SolutionVector& sol)
+    {
+        faceVariables_.resize(fvGeometry.numScvf());
+
+        for(auto&& scvf : scvfs(fvGeometry))
+        {
+            // TODO: do proper update
+            // faceVariables_[scvf.localFaceIdx()].update(sol[faceIdx], problem_(), element, fvGeometry, scvf)
+
+        }
+    }
+private:
+    std::vector<IndexType> faceVarIndices_;
+    std::vector<FaceVariables> faceVariables_;
 };
 
 } // end namespace

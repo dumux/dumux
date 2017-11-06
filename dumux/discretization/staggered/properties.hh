@@ -64,6 +64,7 @@ NEW_PROP_TAG(CellCenterSolutionVector);
 NEW_PROP_TAG(FaceSolutionVector);
 NEW_PROP_TAG(StaggeredFaceSolution);
 NEW_PROP_TAG(ElementFaceVariables);
+NEW_PROP_TAG(EnableGlobalFaceVariablesCache);
 
 //! Type tag for the box scheme.
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel, NumericModel));
@@ -115,7 +116,9 @@ SET_TYPE_PROP(StaggeredModel, IntersectionMapper, Dumux::ConformingGridIntersect
 
 SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
 
-SET_TYPE_PROP(StaggeredModel, ElementFaceVariables, StaggeredElementFaceVariables<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, ElementFaceVariables, StaggeredElementFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);
+
+SET_BOOL_PROP(StaggeredModel, EnableGlobalFaceVariablesCache, true);
 
 //! Definition of the indices for cell center and face dofs in the global solution vector
 SET_PROP(StaggeredModel, DofTypeIndices)

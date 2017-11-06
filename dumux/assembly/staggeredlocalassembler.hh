@@ -70,6 +70,7 @@ class StaggeredLocalAssembler<TypeTag,
     using NumFaceEqVector = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using FaceSolution = typename GET_PROP_TYPE(TypeTag, StaggeredFaceSolution);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
@@ -516,7 +517,7 @@ static void dFacedFace_(Assembler& assembler,
 
            for(auto pvIdx : PriVarIndices(faceIdx))
            {
-               auto faceSolution = StaggeredFaceSolution<TypeTag>(scvf, curSol[faceIdx], assembler.fvGridGeometry());
+               auto faceSolution = FaceSolution(scvf, curSol[faceIdx], assembler.fvGridGeometry());
 
                const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
 
