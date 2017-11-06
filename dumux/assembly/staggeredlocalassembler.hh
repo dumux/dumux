@@ -116,14 +116,16 @@ public:
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
         auto curElemeFaceVars = localView(gridVariables.curGridFaceVars());
-        auto prevElemeFaceVars = localView(gridVariables.prevGridFaceVars());
         curElemeFaceVars.bind(element, fvGeometry, curSol);
-        prevElemeFaceVars.bind(element, fvGeometry, curSol); //TODO: stationary
 
         const bool isStationary = localResidual.isStationary();
         auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
+        auto prevElemeFaceVars = localView(gridVariables.prevGridFaceVars());
         if (!isStationary)
+        {
             prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
+            prevElemeFaceVars.bindElement(element, fvGeometry, localResidual.prevSol());
+        }
 
         // for compatibility with box models
         ElementBoundaryTypes elemBcTypes;
@@ -608,12 +610,12 @@ private:
     { return gridVolVars.volVars(scv); }
 
     template<class T = TypeTag>
-    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), FaceVariables&>::type //TODO: introduce correct property
+    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFaceVariablesCache), FaceVariables&>::type
     getFaceVarAccess(GlobalFaceVars& gridFaceVars, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
     { return elemFaceVars[scvf]; }
 
     template<class T = TypeTag>
-    static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalVolumeVariablesCache), FaceVariables&>::type
+    static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFaceVariablesCache), FaceVariables&>::type
     getFaceVarAccess(GlobalFaceVars& gridFaceVars, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
     { return gridFaceVars.faceVars(scvf.index()); }
 };

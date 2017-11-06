@@ -107,15 +107,16 @@ public:
                            const Element& element,
                            int phaseIdx)
     {
+        auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
+        elemFaceVars.bindElement(element, fvGeometry, sol_);
         for (auto&& scv : scvs(fvGeometry))
         {
             auto dofIdxGlobal = scv.dofIndex();
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                auto& origFaceVars = gridVariables_.curGridFaceVars().faceVars(scvf.index());
                 auto dirIdx = scvf.directionIndex();
-                velocity[dofIdxGlobal][dirIdx] += 0.5*origFaceVars.velocitySelf();
+                velocity[dofIdxGlobal][dirIdx] += 0.5*elemFaceVars[scvf].velocitySelf();
             }
         }
     }

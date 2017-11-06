@@ -92,7 +92,7 @@ public:
     typedef Dumux::CCSubControlVolume<ScvGeometry, IndexType> type;
 };
 
-SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);

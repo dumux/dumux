@@ -62,11 +62,18 @@ public:
     { return globalFaceVars().faceVars(scvfIdx); }
 
 
-    //! For compatibility reasons with the case of not storing the vol vars.
+    //! For compatibility reasons with the case of not storing the face vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
+    {}
+
+    // Binding of an element, prepares only the face variables of the element
+    // specialization for Staggered models
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const SolutionVector& sol)
     {}
 
 
@@ -96,6 +103,23 @@ class StaggeredElementFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
+
+    StaggeredElementFaceVariables(const GlobalFaceVars& globalFacesVars) : globalFaceVarsPtr_(&globalFacesVars) {}
+
+    const FaceVariables& operator [](const SubControlVolumeFace& scvf) const
+    { return faceVariables_[scvf.localFaceIdx()]; }
+
+    // operator for the access with an index
+    const FaceVariables& operator [](const IndexType scvfIdx) const
+    { return faceVariables_[getLocalIdx_(scvfIdx)]; }
+
+    FaceVariables& operator [](const SubControlVolumeFace& scvf)
+    { return faceVariables_[scvf.localFaceIdx()]; }
+
+    // operator for the access with an index
+    FaceVariables& operator [](const IndexType scvfIdx)
+    { return faceVariables_[getLocalIdx_(scvfIdx)]; }
+
     //! For compatibility reasons with the case of not storing the vol vars.
     //! function to be called before assembling an element, preparing the vol vars within the stencil
     void bind(const Element& element,
@@ -103,15 +127,45 @@ public:
               const SolutionVector& sol)
     {
         faceVariables_.resize(fvGeometry.numScvf());
+        faceVarIndices_.resize(fvGeometry.numScvf());
 
         for(auto&& scvf : scvfs(fvGeometry))
         {
-            // TODO: do proper update
-            // faceVariables_[scvf.localFaceIdx()].update(sol[faceIdx], problem_(), element, fvGeometry, scvf)
-
+            faceVariables_[scvf.localFaceIdx()].update(sol[faceIdx], globalFaceVars().problem(), element, fvGeometry, scvf);
+            faceVarIndices_[scvf.localFaceIdx()] = scvf.index();
         }
     }
+
+    // Binding of an element, prepares only the face variables of the element
+    // specialization for Staggered models
+    void bindElement(const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const SolutionVector& sol)
+    {
+        faceVariables_.resize(fvGeometry.numScvf());
+        faceVarIndices_.resize(fvGeometry.numScvf());
+
+        for(auto&& scvf : scvfs(fvGeometry))
+        {
+            faceVariables_[scvf.localFaceIdx()].updateOwnFaceOnly(sol[faceIdx][scvf.dofIndex()]);
+            faceVarIndices_[scvf.localFaceIdx()] = scvf.index();
+        }
+    }
+
+    //! The global volume variables object we are a restriction of
+    const GlobalFaceVars& globalFaceVars() const
+    { return *globalFaceVarsPtr_; }
+
 private:
+
+    const int getLocalIdx_(const int scvfIdx) const
+    {
+        auto it = std::find(faceVarIndices_.begin(), faceVarIndices_.end(), scvfIdx);
+        assert(it != faceVarIndices_.end() && "Could not find the current face variables for scvfIdx!");
+        return std::distance(faceVarIndices_.begin(), it);
+    }
+
+    const GlobalFaceVars* globalFaceVarsPtr_;
     std::vector<IndexType> faceVarIndices_;
     std::vector<FaceVariables> faceVariables_;
 };
