@@ -3,20 +3,6 @@ add_subdirectory(incompressible)
 add_input_file_links()
 
 # isothermal tests
-add_dumux_test(test_box2p test_box2p test_box2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/lensbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/lensbox-00007.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2p")
-
-add_dumux_test(test_cc2p test_cc2p test_cc2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/lenscc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/lenscc-00008.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2p")
-
 add_dumux_test(test_ccadaptive2p test_ccadaptive2p test_ccadaptive2p.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
@@ -110,10 +96,8 @@ generalizeddirichletspatialparams.hh
 injectionproblem2pni.hh
 lensproblem.hh
 lensspatialparams.hh
-test_box2p.cc
 test_box2pni.cc
 test_boxadaptive2p.cc
-test_cc2p.cc
 test_cc2pcornerpoint.cc
 test_cc2pni.cc
 test_ccadaptive2p.cc

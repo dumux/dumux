@@ -154,9 +154,6 @@ public:
     typedef ThermalConductivitySomerton<Scalar, Indices> type;
 };
 
-
-
-
 }
 }
 

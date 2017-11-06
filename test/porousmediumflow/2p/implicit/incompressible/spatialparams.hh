@@ -100,35 +100,23 @@ public:
     }
 
     /*!
-     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
-     * \param element The element
-     * \param scv The sub control volume
-     * \param elemSol The element solution vector
-     * \return the intrinsic permeability
+     * \param globalPos The global position
      */
-    PermeabilityType permeability(const Element& element,
-                                  const SubControlVolume& scv,
-                                  const ElementSolutionVector& elemSol) const
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        if (isInLens_(scv.dofPosition()))
+        if (isInLens_(globalPos))
             return lensK_;
-        else
-            return outerK_;
+        return outerK_;
     }
 
     /*!
-     * \brief Function for defining the porosity.
-     *        That is possibly solution dependent.
+     * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The current element
-     * \param scv The sub-control volume inside the element.
-     * \param elemSol The solution at the dofs connected to the element.
-     * \return the porosity
+     * \param globalPos The global position
      */
-    Scalar porosity(const Element &element,
-                    const SubControlVolume &scv,
-                    const ElementSolutionVector &elemSol) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!
