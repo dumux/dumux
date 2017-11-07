@@ -55,6 +55,5 @@
  */
 
 #include "properties.hh"
-#include "propertydefaults.hh"
 
 #endif

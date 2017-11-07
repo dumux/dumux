@@ -29,8 +29,20 @@
 
 #include <dumux/common/basicproperties.hh>
 #include <dumux/linear/linearsolverproperties.hh>
+
+#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+
 #include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+
+#include "indices.hh"
+#include "volumevariables.hh"
+#include "properties.hh"
+#include "vtkoutputfields.hh"
 
 namespace Dumux
 {
@@ -40,12 +52,115 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-//! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
-
-//! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
 
+//////////////////////////////////////////////////////////////////
+// Properties for the isothermal 3p model
+//////////////////////////////////////////////////////////////////
+/*!
+ * \brief Set the property for the number of fluid phases.
+ *
+ * We just forward the number from the fluid system and use an static
+ * assert to make sure it is 3.
+ */
+SET_PROP(ThreeP, NumPhases)
+{
+ private:
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+
+ public:
+    static const int value = FluidSystem::numPhases;
+    static_assert(value == 3,
+                  "Only fluid systems with 3 phases are supported by the 3p model!");
+};
+
+SET_PROP(ThreeP, NumComponents)
+{
+ private:
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+
+ public:
+    static const int value = FluidSystem::numComponents;
+    static_assert(value == 3,
+                  "Only fluid systems with 3 components are supported by the 3p model!");
+};
+
+SET_INT_PROP(ThreeP, NumEq, 3); //!< set the number of equations to 3
+
+/*!
+ * \brief Set the property for the material parameters by extracting
+ *        it from the material law.
+ */
+SET_TYPE_PROP(ThreeP, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
+
+//! The local residual function of the conservation equations
+SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
+
+//! Enable advection
+SET_BOOL_PROP(ThreeP, EnableAdvection, true);
+
+//! disable molecular diffusion for the 3p model
+SET_BOOL_PROP(ThreeP, EnableMolecularDiffusion, false);
+
+//! Isothermal model by default
+SET_BOOL_PROP(ThreeP, EnableEnergyBalance, false);
+
+//! the VolumeVariables property
+SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
+
+//! The indices required by the isothermal 3p model
+SET_TYPE_PROP(ThreeP, Indices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
+
+//! The spatial parameters to be employed.
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(ThreeP, SpatialParams, ImplicitSpatialParams<TypeTag>);
+
+SET_PROP(ThreeP, FluidState)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+public:
+    typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+};
+
+//! Set the vtk output fields specific to the ThreeP model
+SET_TYPE_PROP(ThreeP, VtkOutputFields, ThreePVtkOutputFields<TypeTag>);
+
+
+/////////////////////////////////////////////////
+// Properties for the non-isothermal 3p model
+/////////////////////////////////////////////////
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(ThreePNI, ThermalConductivityModel)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+public:
+    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+};
+
+//! temperature is already written by the isothermal model
+SET_BOOL_PROP(ThreePNI, NiOutputLevel, 0);
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+
+//set isothermal VolumeVariables
+SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(ThreePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_TYPE_PROP(ThreePNI, IsothermalIndices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
+
+//set isothermal NumEq
+SET_INT_PROP(ThreePNI, IsothermalNumEq, 3);
 } // end namespace Properties
 
 } // end namespace Dumux
