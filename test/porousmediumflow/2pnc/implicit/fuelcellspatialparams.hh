@@ -100,8 +100,8 @@ public:
      *
      * \param gridView The grid view
      */
-    FuelCellSpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView), K_(0)
+    FuelCellSpatialParams(const Problem& problem)
+    : ParentType(problem), K_(0)
     {
         // intrinsic permeabilities
         K_[0][0] = 5e-11;
