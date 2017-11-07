@@ -19,4 +19,4 @@ vanGenuchtenN = 4.0
 PlotFluidMatrixInteractions = false
 
 [Newton]
-EnableResidualCriterion = true
+MaxRelativeShift = 1e-4
