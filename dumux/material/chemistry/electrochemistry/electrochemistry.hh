@@ -97,7 +97,7 @@ class ElectroChemistry
         energyEqIdx = FluidSystem::numComponents //energy equation
     };
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     enum { dofCodim = isBox ? GridView::dimension : 0 };
 
     using GlobalPosition = typename Dune::FieldVector<Scalar, GridView::dimensionworld>;
@@ -118,8 +118,8 @@ public:
         //correction to account for actually relevant reaction area
         //current density has to be devided by the half length of the box
         //\todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
-        static Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, Grid.UpperRight)[1];
-        static Scalar nCellsY = GET_RUNTIME_PARAM(TypeTag, CellVector, Grid.Cells)[1];
+        static Scalar gridYMax =getParam<GlobalPosition>("Grid.UpperRight")[1];
+        static Scalar nCellsY = getParam<GlobalPosition>("Grid.Cells")[1];
 
         // Warning: This assumes the reaction layer is always just one cell (cell-centered) or half a box (box) thick
         const auto lengthBox = gridYMax/nCellsY;
@@ -128,7 +128,7 @@ public:
         else
             currentDensity *= 1.0/lengthBox;
 
-        static Scalar transportNumberH2O = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.TransportNumberH20);
+        static Scalar transportNumberH2O = getParam<Scalar>("ElectroChemistry.TransportNumberH20");
 
         //calculation of flux terms with faraday equation
         values[contiH2OEqIdx] = currentDensity/(2*Constant::F);                  //reaction term in reaction layer
@@ -142,10 +142,11 @@ public:
     */
     static Scalar calculateCurrentDensity(const VolumeVariables &volVars)
     {
-        static Scalar maxIter = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.MaxIterations);
-        static Scalar specificResistance = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.SpecificResistance);
-        static Scalar reversibleVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.ReversibleVoltage);
-        static Scalar cellVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.CellVoltage);
+        static Scalar maxIter = getParam<Scalar>("ElectroChemistry.MaxIterations");
+
+        static Scalar specificResistance = getParam<Scalar>("ElectroChemistry.SpecificResistance");
+        static Scalar reversibleVoltage = getParam<Scalar>("ElectroChemistry.ReversibleVoltage");
+        static Scalar cellVoltage = getParam<Scalar>("ElectroChemistry.CellVoltage");
 
         //initial guess for the current density and initial newton solver parameters
         Scalar currentDensity = reversibleVoltage - cellVoltage - 0.5;
@@ -210,9 +211,9 @@ private:
     */
     static Scalar calculateActivationLosses_(const VolumeVariables &volVars, const Scalar currentDensity)
     {
-        static Scalar refO2PartialPressure = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.RefO2PartialPressure);
-        static Scalar numElectrons = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.NumElectrons);
-        static Scalar transferCoefficient = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.TransferCoefficient);
+        static Scalar refO2PartialPressure = getParam<Scalar>("ElectroChemistry.RefO2PartialPressure");
+        static Scalar numElectrons = getParam<Scalar>("ElectroChemistry.NumElectrons");
+        static Scalar transferCoefficient = getParam<Scalar>("ElectroChemistry.TransferCoefficient");
 
         //Saturation sw for Acosta calculation
         Scalar sw = volVars.saturation(wPhaseIdx);
@@ -249,9 +250,9 @@ private:
     */
     static Scalar calculateConcentrationLosses_(const VolumeVariables &volVars)
     {
-        static Scalar pO2Inlet = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.pO2Inlet);
-        static Scalar numElectrons = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.NumElectrons);
-        static Scalar transferCoefficient = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.TransferCoefficient);
+        static Scalar pO2Inlet = getParam<Scalar>("ElectroChemistry.pO2Inlet");
+        static Scalar numElectrons = getParam<Scalar>("ElectroChemistry.NumElectrons");
+        static Scalar transferCoefficient =getParam<Scalar>("ElectroChemistry.TransferCoefficient");
 
         //Calculate preFactor
         Scalar preFactor = Constant::R*volVars.temperature()/transferCoefficient/Constant::F/numElectrons;
@@ -280,10 +281,10 @@ private:
     static Scalar exchangeCurrentDensity_(const VolumeVariables &volVars)
     {
         using std::exp;
-        static Scalar activationBarrier = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.ActivationBarrier);
-        static Scalar surfaceIncreasingFactor = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.SurfaceIncreasingFactor);
-        static Scalar refTemperature = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.RefTemperature);
-        static Scalar refCurrentDensity = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.RefCurrentDensity);
+        static Scalar activationBarrier =getParam<Scalar>("ElectroChemistry.ActivationBarrier");
+        static Scalar surfaceIncreasingFactor = getParam<Scalar>("ElectroChemistry.SurfaceIncreasingFactor");
+        static Scalar refTemperature = getParam<Scalar>("ElectroChemistry.RefTemperature");
+        static Scalar refCurrentDensity = getParam<Scalar>("ElectroChemistry.RefCurrentDensity");
 
         Scalar T = volVars.fluidState().temperature();
         Scalar refExchangeCurrentDensity = -1.0
