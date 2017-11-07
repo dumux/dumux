@@ -54,7 +54,6 @@ NEW_PROP_TAG(BoundaryTypes);          //! Stores the boundary types of a single 
 NEW_PROP_TAG(DiscretizationMethod);   //! Property for the used discretization method
 NEW_PROP_TAG(VertexMapper);           //! mapper for vertices
 NEW_PROP_TAG(ElementMapper);          //! mapper for elements
-NEW_PROP_TAG(BalanceEqOpts);          //! A class that collects options for the evaluation of the balance equations
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.
@@ -63,11 +62,14 @@ NEW_PROP_TAG(LocalResidual);
 //! TODO: Remove this property as soon as the decoupled models are integrated
 NEW_PROP_TAG(LinearSolver);
 
+
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
 /////////////////////////////////////////////////
-NEW_PROP_TAG(UseMoles);  //! Property whether to use moles or kg as amount unit for balance equations
-NEW_PROP_TAG(ReplaceCompEqIdx);  //! The component balance index that should be replaced by the total mass/mole balance
+NEW_PROP_TAG(UseMoles);               //! Property whether to use moles or kg as amount unit for balance equations
+NEW_PROP_TAG(ReplaceCompEqIdx);       //! The component balance index that should be replaced by the total mass/mole balance
+NEW_PROP_TAG(BalanceEqOpts);          //! A class that collects options for the evaluation of the balance equations
+
 
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
