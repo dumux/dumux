@@ -60,7 +60,7 @@ namespace Vtk
         struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
         {
             const F& field_;
-            const std::string& name_;
+            const std::string name_;
             int nComps_;
             Dune::MultipleCodimMultipleGeomTypeMapper<GridView> mapper_;
 
@@ -97,7 +97,7 @@ namespace Vtk
         struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
         {
             const F& field_;
-            const std::string& name_;
+            const std::string name_;
             int nComps_;
             Dune::MultipleCodimMultipleGeomTypeMapper<GridView> mapper_;
 
