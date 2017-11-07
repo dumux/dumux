@@ -28,6 +28,5 @@
 #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 #include "properties.hh"
-#include "propertydefaults.hh"
 
 #endif

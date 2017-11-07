@@ -126,6 +126,7 @@ NEW_PROP_TAG(FluidSystem);                         //! The type of the fluid sys
 NEW_PROP_TAG(Fluid);                               //! The fluid used for the default fluid system
 NEW_PROP_TAG(FluidState);                          //! The type of the fluid state to use
 NEW_PROP_TAG(PrimaryVariableSwitch);               //! The primary variable switch needed for compositional models
+NEW_PROP_TAG(EffectiveDiffusivityModel);           //! The employed model for the computation of the effective diffusivity
 NEW_PROP_TAG(ThermalConductivityModel);            //! Model to be used for the calculation of the effective conductivity
 NEW_PROP_TAG(VelocityOutput);                      //! specifies the velocity calculation module to be used
 
@@ -138,5 +139,13 @@ NEW_PROP_TAG(Formulation);                         //! The formulation of the mo
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
+
+
+//////////////////////////////////////////////////////////////
+// Additional properties used by the 2pnc and 2pncmin models:
+//////////////////////////////////////////////////////////////
+NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with which solves equlibrium reactions
+NEW_PROP_TAG(NumMajorComponents);                  //!< Number of major fluid components which are considered in the calculation of the phase density
+NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in the wetting or non-wetting phase
 }
 }
