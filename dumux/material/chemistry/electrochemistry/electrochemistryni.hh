@@ -32,14 +32,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(Indices);
-NEW_PROP_TAG(VolumeVariables);
-NEW_PROP_TAG(NumEqVector);
-}
-
 /*!
 * \brief
 * Class calculating source terms and current densities for fuel cells
