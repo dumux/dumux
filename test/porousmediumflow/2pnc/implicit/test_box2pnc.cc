@@ -196,6 +196,7 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
+        // update the output fields before write
         problem->updateVtkOutput(xOld);
 
         // write vtk output
