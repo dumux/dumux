@@ -60,7 +60,7 @@ namespace Vtk
         struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
         {
             const F& field_;
-            const std::string& name_;
+            const std::string name_;
             int nComps_;
             Dune::MultipleCodimMultipleGeomTypeMapper<GridView> mapper_;
 
@@ -97,7 +97,7 @@ namespace Vtk
         struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
         {
             const F& field_;
-            const std::string& name_;
+            const std::string name_;
             int nComps_;
             Dune::MultipleCodimMultipleGeomTypeMapper<GridView> mapper_;
 
@@ -140,14 +140,13 @@ namespace Vtk
             { return field_[i]; }
         };
 
-        std::string name_;
         int codim_;
         // can point to anything fulfilling the VTKFunction interface
         std::shared_ptr<Dune::VTKFunction<GridView>> field_;
 
     public:
         virtual std::string name () const
-        { return name_; }
+        { return field_->name(); }
 
         virtual int ncomps() const
         { return field_->ncomps(); }
@@ -160,7 +159,7 @@ namespace Vtk
         // template constructor selects the right VTKFunction implementation
         template <typename F>
         Field(const GridView& gridView, F const& f, const std::string& name, int numComp = 1, int codim = 0)
-        : name_(name), codim_(codim)
+        : codim_(codim)
         {
             if (codim == GridView::dimension)
                 field_ = std::make_shared<VectorP1VTKFunction<F>>(gridView, f, name, numComp);
