@@ -25,10 +25,10 @@
 #ifndef DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 #define DUMUX_INFILTRATION_THREEP_PROBLEM_HH
 
-#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/linear/seqsolverbackend.hh>
