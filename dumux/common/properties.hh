@@ -54,7 +54,6 @@ NEW_PROP_TAG(BoundaryTypes);          //! Stores the boundary types of a single 
 NEW_PROP_TAG(DiscretizationMethod);   //! Property for the used discretization method
 NEW_PROP_TAG(VertexMapper);           //! mapper for vertices
 NEW_PROP_TAG(ElementMapper);          //! mapper for elements
-NEW_PROP_TAG(BalanceEqOpts);          //! A class that collects options for the evaluation of the balance equations
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.
@@ -63,11 +62,14 @@ NEW_PROP_TAG(LocalResidual);
 //! TODO: Remove this property as soon as the decoupled models are integrated
 NEW_PROP_TAG(LinearSolver);
 
+
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
 /////////////////////////////////////////////////
-NEW_PROP_TAG(UseMoles);  //! Property whether to use moles or kg as amount unit for balance equations
-NEW_PROP_TAG(ReplaceCompEqIdx);  //! The component balance index that should be replaced by the total mass/mole balance
+NEW_PROP_TAG(UseMoles);               //! Property whether to use moles or kg as amount unit for balance equations
+NEW_PROP_TAG(ReplaceCompEqIdx);       //! The component balance index that should be replaced by the total mass/mole balance
+NEW_PROP_TAG(BalanceEqOpts);          //! A class that collects options for the evaluation of the balance equations
+
 
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
@@ -124,6 +126,7 @@ NEW_PROP_TAG(FluidSystem);                         //! The type of the fluid sys
 NEW_PROP_TAG(Fluid);                               //! The fluid used for the default fluid system
 NEW_PROP_TAG(FluidState);                          //! The type of the fluid state to use
 NEW_PROP_TAG(PrimaryVariableSwitch);               //! The primary variable switch needed for compositional models
+NEW_PROP_TAG(EffectiveDiffusivityModel);           //! The employed model for the computation of the effective diffusivity
 NEW_PROP_TAG(ThermalConductivityModel);            //! Model to be used for the calculation of the effective conductivity
 NEW_PROP_TAG(VelocityOutput);                      //! specifies the velocity calculation module to be used
 
@@ -136,5 +139,13 @@ NEW_PROP_TAG(Formulation);                         //! The formulation of the mo
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
+
+
+//////////////////////////////////////////////////////////////
+// Additional properties used by the 2pnc and 2pncmin models:
+//////////////////////////////////////////////////////////////
+NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with which solves equlibrium reactions
+NEW_PROP_TAG(NumMajorComponents);                  //!< Number of major fluid components which are considered in the calculation of the phase density
+NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in the wetting or non-wetting phase
 }
 }

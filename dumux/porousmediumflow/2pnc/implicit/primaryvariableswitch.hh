@@ -72,6 +72,9 @@ class TwoPNCPrimaryVariableSwitch : public Dumux::PrimaryVariableSwitch<TypeTag>
             formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
+public:
+    using ParentType::ParentType;
+
 protected:
 
     // perform variable switch at a degree of freedom location

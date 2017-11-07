@@ -2,7 +2,7 @@
 # Everything behind a '#' is a comment.
 # Type "./test_2pnc --help" for more information.
 
-[TimeManager]
+[TimeLoop]
 DtInitial = 5e-1                 # [s] initial time step size
 MaxTimeStepSize = 1000           # [s] maximum time step size
 TEnd= 1e3                        # [s] duration of the simulation
@@ -14,8 +14,6 @@ Cells = 21 6                # [-] number of cells in x,y-direction
 [Problem]
 Name = fuelcell
 EnableGravity = 0
-
-[FluidSystem]
 NTemperature = 3                # [-] number of temperature table entries
 NPressure = 200                 # [-] number of pressure table entries
 PressureLow = 1e5               # [Pa] lower pressure limit for tabularization

@@ -28,14 +28,15 @@
 #include <iostream>
 #include <vector>
 
-#include <dumux/implicit/model.hh>
-#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/common/math.hh>
+
+#include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/discretization/volumevariables.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
+#include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 
 #include "properties.hh"
 #include "indices.hh"
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 
 namespace Dumux
 {
@@ -104,7 +105,7 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static_assert(useMoles, "use moles has to be set true in the 2pnc model");
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
