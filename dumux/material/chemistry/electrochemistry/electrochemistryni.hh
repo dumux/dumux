@@ -94,8 +94,8 @@ public:
         //correction to account for actually relevant reaction area
         //current density has to be devided by the half length of the box
         //\todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
-        static Scalar gridYMax = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, Grid.UpperRight)[1];
-        static Scalar nCellsY = GET_RUNTIME_PARAM(TypeTag, CellVector, Grid.Cells)[1];
+        static Scalar gridYMax =getParamFromGroup<GlobalPosition>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Grid.UpperRight")[1];
+        static Scalar nCellsY = getParamFromGroup<GlobalPosition>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Grid.Cells")[1];
 
         // Warning: This assumes the reaction layer is always just one cell (cell-centered) or half a box (box) thick
         const auto lengthBox = gridYMax/nCellsY;
@@ -104,9 +104,9 @@ public:
         else
             currentDensity *= 1.0/lengthBox;
 
-        static Scalar transportNumberH2O = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.TransportNumberH20);
-        static Scalar thermoneutralVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.ThermoneutralVoltage);
-        static Scalar cellVoltage = GET_RUNTIME_PARAM(TypeTag, Scalar, ElectroChemistry.CellVoltage);
+        static Scalar transportNumberH2O = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.TransportNumberH20");
+        static Scalar thermoneutralVoltage = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.ThermoneutralVoltage");
+        static Scalar cellVoltage = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.CellVoltage");
 
         //calculation of flux terms with faraday equation
         values[contiH2OEqIdx] = currentDensity/(2*Constant::F);                  //reaction term in reaction layer

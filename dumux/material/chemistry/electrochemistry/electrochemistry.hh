@@ -35,15 +35,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(FVElementGeometry);
-NEW_PROP_TAG(Indices);
-NEW_PROP_TAG(NumEqVector);
-NEW_PROP_TAG(VolumeVariables);
-}
-
 /*!
  * \brief
  * The type of electrochemistry models implemented here (Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006 )
@@ -118,8 +109,8 @@ public:
         //correction to account for actually relevant reaction area
         //current density has to be devided by the half length of the box
         //\todo Do we have multiply with the electrochemically active surface area (ECSA) here instead?
-        static Scalar gridYMax =getParam<GlobalPosition>("Grid.UpperRight")[1];
-        static Scalar nCellsY = getParam<GlobalPosition>("Grid.Cells")[1];
+        static Scalar gridYMax =getParamFromGroup<GlobalPosition>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Grid.UpperRight")[1];
+        static Scalar nCellsY = getParamFromGroup<GlobalPosition>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Grid.Cells")[1];
 
         // Warning: This assumes the reaction layer is always just one cell (cell-centered) or half a box (box) thick
         const auto lengthBox = gridYMax/nCellsY;
@@ -128,7 +119,7 @@ public:
         else
             currentDensity *= 1.0/lengthBox;
 
-        static Scalar transportNumberH2O = getParam<Scalar>("ElectroChemistry.TransportNumberH20");
+        static Scalar transportNumberH2O = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.TransportNumberH20");
 
         //calculation of flux terms with faraday equation
         values[contiH2OEqIdx] = currentDensity/(2*Constant::F);                  //reaction term in reaction layer
@@ -142,11 +133,11 @@ public:
     */
     static Scalar calculateCurrentDensity(const VolumeVariables &volVars)
     {
-        static Scalar maxIter = getParam<Scalar>("ElectroChemistry.MaxIterations");
+        static Scalar maxIter = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.MaxIterations");
 
-        static Scalar specificResistance = getParam<Scalar>("ElectroChemistry.SpecificResistance");
-        static Scalar reversibleVoltage = getParam<Scalar>("ElectroChemistry.ReversibleVoltage");
-        static Scalar cellVoltage = getParam<Scalar>("ElectroChemistry.CellVoltage");
+        static Scalar specificResistance = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.SpecificResistance");
+        static Scalar reversibleVoltage = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.ReversibleVoltage");
+        static Scalar cellVoltage = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.CellVoltage");
 
         //initial guess for the current density and initial newton solver parameters
         Scalar currentDensity = reversibleVoltage - cellVoltage - 0.5;
@@ -211,9 +202,9 @@ private:
     */
     static Scalar calculateActivationLosses_(const VolumeVariables &volVars, const Scalar currentDensity)
     {
-        static Scalar refO2PartialPressure = getParam<Scalar>("ElectroChemistry.RefO2PartialPressure");
-        static Scalar numElectrons = getParam<Scalar>("ElectroChemistry.NumElectrons");
-        static Scalar transferCoefficient = getParam<Scalar>("ElectroChemistry.TransferCoefficient");
+        static Scalar refO2PartialPressure = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.RefO2PartialPressure");
+        static Scalar numElectrons = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.NumElectrons");
+        static Scalar transferCoefficient = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.TransferCoefficient");
 
         //Saturation sw for Acosta calculation
         Scalar sw = volVars.saturation(wPhaseIdx);
@@ -250,9 +241,9 @@ private:
     */
     static Scalar calculateConcentrationLosses_(const VolumeVariables &volVars)
     {
-        static Scalar pO2Inlet = getParam<Scalar>("ElectroChemistry.pO2Inlet");
-        static Scalar numElectrons = getParam<Scalar>("ElectroChemistry.NumElectrons");
-        static Scalar transferCoefficient =getParam<Scalar>("ElectroChemistry.TransferCoefficient");
+        static Scalar pO2Inlet = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.pO2Inlet");
+        static Scalar numElectrons = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.NumElectrons");
+        static Scalar transferCoefficient =getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.TransferCoefficient");
 
         //Calculate preFactor
         Scalar preFactor = Constant::R*volVars.temperature()/transferCoefficient/Constant::F/numElectrons;
@@ -281,10 +272,10 @@ private:
     static Scalar exchangeCurrentDensity_(const VolumeVariables &volVars)
     {
         using std::exp;
-        static Scalar activationBarrier =getParam<Scalar>("ElectroChemistry.ActivationBarrier");
-        static Scalar surfaceIncreasingFactor = getParam<Scalar>("ElectroChemistry.SurfaceIncreasingFactor");
-        static Scalar refTemperature = getParam<Scalar>("ElectroChemistry.RefTemperature");
-        static Scalar refCurrentDensity = getParam<Scalar>("ElectroChemistry.RefCurrentDensity");
+        static Scalar activationBarrier =getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.ActivationBarrier");
+        static Scalar surfaceIncreasingFactor = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.SurfaceIncreasingFactor");
+        static Scalar refTemperature = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.RefTemperature");
+        static Scalar refCurrentDensity = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.RefCurrentDensity");
 
         Scalar T = volVars.fluidState().temperature();
         Scalar refExchangeCurrentDensity = -1.0
