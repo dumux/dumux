@@ -76,7 +76,7 @@ class PrimaryVariableSwitch
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     enum { dim = GridView::dimension };
 
 public:

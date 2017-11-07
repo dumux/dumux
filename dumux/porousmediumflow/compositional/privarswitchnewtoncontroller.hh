@@ -49,7 +49,7 @@ class PriVarSwitchNewtonController : public NewtonController<TypeTag>
 
     static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
     /*!
