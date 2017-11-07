@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the twop model
+ * \brief Adds vtk output fields specific to the twop-nc model
  */
-#ifndef DUMUX_TWOP_TWOC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TWOP_TWOC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_TWOP_NC_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_TWOP_NC_VTK_OUTPUT_FIELDS_HH
 
 #include <dumux/porousmediumflow/2p/implicit/vtkoutputfields.hh>
 
