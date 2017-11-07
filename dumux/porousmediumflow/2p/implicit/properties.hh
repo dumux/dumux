@@ -90,7 +90,8 @@ SET_TYPE_PROP(TwoP,
 
 //! By default, we set a null component as wetting phase
 SET_PROP(TwoP, WettingPhase)
-{ private:
+{ 
+private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
@@ -98,7 +99,8 @@ public:
 
 //! By default, we set a null component as non-wetting phase
 SET_PROP(TwoP, NonwettingPhase)
-{ private:
+{ 
+private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
     typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
@@ -106,7 +108,8 @@ public:
 
 //! The two-phase model uses the immiscible fluid system
 SET_PROP(TwoP, FluidSystem)
-{ private:
+{ 
+private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
     typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
