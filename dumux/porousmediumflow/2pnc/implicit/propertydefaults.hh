@@ -29,17 +29,15 @@
 #define DUMUX_2PNC_PROPERTY_DEFAULTS_HH
 
 #include "indices.hh"
-#include "model.hh"
 #include "volumevariables.hh"
 #include "properties.hh"
-#include "newtoncontroller.hh"
 #include "primaryvariableswitch.hh"
+#include "vtkoutputfields.hh"
 
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 
@@ -158,12 +156,6 @@ SET_BOOL_PROP(TwoPNC, EnableMolecularDiffusion, true);
 //! Isothermal model by default
 SET_BOOL_PROP(TwoPNC, EnableEnergyBalance, false);
 
-//! Use the 2pnc newton controller
-SET_TYPE_PROP(TwoPNC, NewtonController, TwoPNCNewtonController<TypeTag>);
-
-//! the Model property
-SET_TYPE_PROP(TwoPNC, Model, TwoPNCModel<TypeTag>);
-
 //! The primary variable switch for the 2pnc model
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);
 
@@ -188,6 +180,8 @@ SET_BOOL_PROP(TwoPNC, ProblemEnableGravity, true);
 //! Use mole fractions in the balance equations by default
 SET_BOOL_PROP(TwoPNC, UseMoles, true);
 
+//! Set the vtk output fields specific to the TwoPTwoC model
+SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);
 //! Disable velocity output by default
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
@@ -206,9 +200,6 @@ SET_BOOL_PROP(TwoPNCNI, NiOutputLevel, 0);
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
-
-// set isothermal Model
-SET_TYPE_PROP(TwoPNCNI, IsothermalModel, TwoPNCModel<TypeTag>);
 
 //set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);

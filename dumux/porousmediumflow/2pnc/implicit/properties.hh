@@ -29,8 +29,10 @@
 #ifndef DUMUX_2PNC_PROPERTIES_HH
 #define DUMUX_2PNC_PROPERTIES_HH
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
+
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 namespace Dumux
@@ -42,15 +44,8 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tag for the implicit isothermal two phase n component problems
-NEW_TYPE_TAG(TwoPNC);
-NEW_TYPE_TAG(BoxTwoPNC, INHERITS_FROM(BoxModel, TwoPNC));
-NEW_TYPE_TAG(CCTwoPNC, INHERITS_FROM(CCModel, TwoPNC));
-
-//! The type tag for the implicit non-isothermal two phase n component problems
+NEW_TYPE_TAG(TwoPNC, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
 NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC, NonIsothermal));
-NEW_TYPE_TAG(BoxTwoPNCNI, INHERITS_FROM(BoxModel, TwoPNCNI));
-NEW_TYPE_TAG(CCTwoPNCNI, INHERITS_FROM(CCModel, TwoPNCNI));
 
 //////////////////////////////////////////////////////////////////
 // Property tags
