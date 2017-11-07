@@ -131,7 +131,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////
-// properties for the non-isothermal single phase model
+// properties for the non-isothermal two-phase model
 ////////////////////////////////////////////////////////
 SET_BOOL_PROP(TwoPNI, NiOutputLevel, 0);                                          //! temperature is already written by the isothermal model
 SET_INT_PROP(TwoPNI, IsothermalNumEq, 2);                                         //! set isothermal NumEq
