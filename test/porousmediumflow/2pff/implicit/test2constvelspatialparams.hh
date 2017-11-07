@@ -110,7 +110,7 @@ public:
 
         // parameters for the Brooks-Corey law
         // alpha and n
-        materialParams_.setPe(5171.068);
+        materialParams_.setPe(34473.8);
         materialParams_.setLambda(4.0);
 
         // residual saturations
@@ -125,8 +125,8 @@ public:
         // regularization
         //materialParams_.setThresholdSw(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, RegularizationSw));
 
-        K_ = 9.86923* 1.0e-13; // 1 Darcy = 1000 milliDarcy
-        Koben_ = 4.93462* 1.0e-13; // permeability for oben
+        K_ = 9.86923* 1.0e-14; // 1 Darcy = 1000 milliDarcy
+        Koben_ = 4.93462* 1.0e-14; // permeability for oben
 
         if (GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, PlotMaterialLaw))
         {
@@ -191,7 +191,7 @@ public:
      * \param globalPos The global position
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
-    { return 0.2; }
+    { return 0.25; }
 
     /*!
      * \brief Returns the parameter object for the Brooks-Corey material law
