@@ -78,7 +78,8 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::update(elemSol, problem, element, scv);
+        this->priVars_ = this->extractDofPriVars(elemSol, scv);
+        this->extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
 
         completeFluidState(elemSol, problem, element, scv, this->fluidState_);
 
