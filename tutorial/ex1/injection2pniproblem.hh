@@ -203,6 +203,7 @@ public:
             values.setAllNeumann();
 
          /*!
+          * TODO:dumux-course-task:
           * dumux-course-task:
           * set dirichlet conditions for the temperature index everywhere
           */
