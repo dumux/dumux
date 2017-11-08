@@ -361,6 +361,9 @@ public:
 
             fluidState.setDensity(phaseIdx, rho);
             fluidState.setViscosity(phaseIdx, mu);
+
+            Scalar h = Implementation::enthalpy_(fluidState, paramCache, phaseIdx);
+            fluidState.setEnthalpy(phaseIdx, h);
         }
     }
 
