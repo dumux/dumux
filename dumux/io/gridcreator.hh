@@ -550,69 +550,68 @@ public:
     /*!
      * \brief Make the grid. This is implemented by specializations of this method.
      */
-    static void makeGrid()
+    static void makeGrid(const std::string& modelParamGroup = "")
     {
-        // Only construction from the input file is possible
-        // Look for the necessary keys to construct from the input file
-        try {
-            // The required parameters
-            typedef Dune::FieldVector<ct, dim> GlobalPosition;
-            const GlobalPosition upperRight = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), UpperRight);
-
-            // The optional parameters (they have a default)
-            GlobalPosition lowerLeft(0.0);
-            try { lowerLeft = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, GlobalPosition, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), LowerLeft); }
-            catch (ParameterException &e) { }
-
-            typedef std::array<int, dim> CellArray;
-            CellArray cells;
-            std::fill(cells.begin(), cells.end(), 1);
-            try { cells = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Cells); }
-            catch (ParameterException &e) { }
-
-            typedef std::bitset<dim> BitSet;
-            BitSet periodic;
-            try { periodic = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, BitSet, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Periodic);}
-            catch (ParameterException &e) { }
-
-            // the default is dependent on the discretization
-            int overlap = YaspOverlapHelper<TypeTag>::getOverlap();
-
-            bool default_lb = false;
-            CellArray partitioning;
-            try { partitioning = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, CellArray, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), Partitioning);}
-            catch (ParameterException &e) { default_lb = true; }
-
-            //make the grid
-            if (default_lb)
-                ParentType::gridPtr() = std::make_shared<Grid>(lowerLeft, upperRight, cells, periodic, overlap);
-            else
-            {
-                typename Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
-                ParentType::gridPtr() = std::make_shared<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
-            }
-            postProcessing_();
+        // First try to create it from a DGF file in GridParameterGroup.File
+        if (haveParamInGroup(modelParamGroup, "Grid.File"))
+        {
+            ParentType::makeGridFromDgfFile(getParamFromGroup<std::string>(modelParamGroup, "Grid.File"));
+            postProcessing_(modelParamGroup);
+            return;
         }
-        catch (ParameterException &e) {
-                DUNE_THROW(ParameterException, "Please supply the mandatory parameters "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".UpperRight or a grid file in "
-                                              << GET_PROP_VALUE(TypeTag, GridParameterGroup) << ".File.");
+
+        // Then look for the necessary keys to construct from the input file
+        if (!haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
+            DUNE_THROW(ParameterException, "Please supply the mandatory parameter "
+                                          << modelParamGroup <<  ".UpperRight or a grid file in "
+                                          << modelParamGroup << ".File.");
+
+        using GlobalPosition = Dune::FieldVector<ct, dim>;
+
+        // get the upper right corner coordinates
+        const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
+
+        // get the lowerLeft corner coordinates (have a default value)
+        const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
+
+        // number of cells in each direction
+        std::array<int, dim> cells; cells.fill(1);
+        cells = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Cells", cells);
+
+        // periodic boundaries
+        const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
+
+        // get the overlap dependent on some template parameters
+        const int overlap = YaspOverlapHelper<TypeTag>::getOverlap(modelParamGroup);
+
+        bool default_lb = !haveParamInGroup(modelParamGroup, "Grid.Partitioning");
+
+        // make the grid
+        if (default_lb)
+        {
+            // construct using default load balancing
+            ParentType::gridPtr() = std::make_shared<Grid>(lowerLeft, upperRight, cells, periodic, overlap);
         }
-        catch (...) { throw; }
+        else
+        {
+            // construct using user defined partitioning
+            const auto partitioning = getParamFromGroup<std::array<int, dim>>(modelParamGroup, "Grid.Partitioning");
+            Dune::YaspFixedSizePartitioner<dim> lb(partitioning);
+            ParentType::gridPtr() = std::make_shared<Grid>(lowerLeft, upperRight, cells, periodic, overlap, typename Grid::CollectiveCommunicationType(), &lb);
+        }
+        postProcessing_(modelParamGroup);
     }
 
 private:
     /*!
      * \brief Postprocessing for YaspGrid
      */
-    static void postProcessing_()
+    static void postProcessing_(const std::string& modelParamGroup)
     {
         // Check if should refine the grid
-        bool keepPhysicalOverlap = true;
-        try { keepPhysicalOverlap = GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, bool, GET_PROP_VALUE(TypeTag, GridParameterGroup).c_str(), KeepPhysicalOverlap);}
-        catch (ParameterException &e) { }
+        const bool keepPhysicalOverlap = getParamFromGroup<bool>(modelParamGroup, "Grid.KeepPhysicalOverlap", true);
         ParentType::grid().refineOptions(keepPhysicalOverlap);
-        ParentType::maybeRefineGrid();
+        ParentType::maybeRefineGrid(modelParamGroup);
     }
 };
 
