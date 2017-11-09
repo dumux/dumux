@@ -204,6 +204,9 @@ public:
         if (!stationary_ && localResidual_.isStationary())
             DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
 
+        // update the grid variables for the case of active caching
+        gridVariables_->update(curSol);
+
         // let the local assembler add the element contributions
         for (const auto element : elements(gridView()))
             LocalAssembler::assemble(*this, r, element, curSol);

@@ -392,10 +392,14 @@ public:
                 reduction_ = residualNorm_;
                 reduction_ /= initialResidual_;
             }
+            else
+            {
+                // If we get here, the convergence criterion does not require
+                // additional residual evalutions. Thus, the grid variables have
+                // not yet been updated to the new uCurrentIter.
+                assembler.gridVariables().update(uCurrentIter);
+            }
         }
-
-        // update the variables class to the new solution
-        assembler.gridVariables().update(uCurrentIter);
     }
 
     /*!
