@@ -137,7 +137,7 @@ public:
             for (int i = 0; i < dimWorld; i++)
                 permeability_[idxGrid][i][i] = oneMDarcyInM2*(SPE10Permeability<Scalar>::data[i*num3DElements + idx]);
 
-            porosity_[idxGrid] = std::max(SPE10Porosity<Scalar>::data[idx],1.0e-12);
+            porosity_[idxGrid] = std::max(SPE10Porosity<Scalar>::data[idx],1.0e-8);
 
             Scalar volume = element.geometry().volume();
             totalVolume += volume;

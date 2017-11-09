@@ -1,38 +1,33 @@
-############################################################
-# Parameter file for spe10
-############################################################
-
-############################################################
-# Mandatory arguments
-############################################################
 [TimeManager]
-DtInitial = 1e4# [s]
-TEnd = 1.5e8# [s]
+DtInitial = 1e3# [s]
+TEnd = 4e8# [s]
 MaxTimeStepSize = 5e7
 
 [Grid]
-UpperRight = 365.76 670.56
-LowerLeft = 0 0
-#File = ../../implicit/grids/2dRandCubic_SPE.dgf
-
-Cells = 60 220  #  [-] resolution in x-direction
-Refinement = 0 #
+File = ../grids/2dRandCubic_SPE.dgf
+#UpperRight = 365.76 670.56
+#LowerLeft = 0 0
+#Cells = 60 220  #  [-] resolution in x-direction
+#Refinement = 0 #
 
 [Problem]
-Name = spe10_layer52_tpfa_superlu
-EpisodeLength = 1e7
+Name = spe10_tpfa_layer15
+EpisodeLength = 5e7
 PressureIn = 3e7
 PressureOut = 1e7
 
 [SpatialParams]
 ReferenceEntryPressure = 0.0
 
+[Newton]
+UseLineSearch = 1
+
 ############################################################
 # 2D arguments
 ############################################################
 [SpatialParams]
-LayerIdx = 52
+LayerIdx = 15
 OmittedCoordinate = 2
 
 [LinearSolver]
-Verbosity=0
+Verbosity = 0

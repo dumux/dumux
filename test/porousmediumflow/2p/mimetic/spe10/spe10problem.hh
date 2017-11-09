@@ -90,7 +90,7 @@ SET_TYPE_PROP(TwoPSpe10Problem, SpatialParams, Spe10SpatialParams<TypeTag> );
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(TwoPSpe10Problem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
-SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 // Enable gravity
 SET_BOOL_PROP(TwoPSpe10Problem, ProblemEnableGravity, false);
