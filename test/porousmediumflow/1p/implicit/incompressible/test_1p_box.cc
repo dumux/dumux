@@ -87,7 +87,7 @@ int main(int argc, char** argv) try
     // the solution vector
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);

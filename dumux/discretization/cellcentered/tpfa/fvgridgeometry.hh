@@ -95,6 +95,10 @@ public:
         return numBoundaryScvf_;
     }
 
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
@@ -116,7 +120,7 @@ public:
         elementMap_.clear();
 
         // determine size of containers
-        IndexType numScvs = this->gridView().size(0);
+        IndexType numScvs = numDofs();
         IndexType numScvf = 0;
         for (const auto& element : elements(this->gridView()))
             numScvf += element.subEntities(1);
@@ -343,6 +347,10 @@ public:
         return numBoundaryScvf_;
     }
 
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
@@ -362,7 +370,7 @@ public:
         neighborVolVarIndices_.clear();
 
         // reserve memory or resize the containers
-        numScvs_ = this->gridView().size(0);
+        numScvs_ = numDofs();
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
         elementMap_.resize(numScvs_);

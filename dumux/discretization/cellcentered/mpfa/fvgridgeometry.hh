@@ -102,6 +102,13 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
+
+    /*!
+     * \brief Returns the total number of degrees of freedom.
+     */
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
+
     /*!
      * \brief Gets an element from a sub control volume contained in it.
      */
@@ -164,7 +171,7 @@ public:
 
         // determine the number of geometric entities
         const auto numVert = this->gridView().size(dim);
-        const auto numScvs = this->gridView().size(0);
+        const auto numScvs = numDofs();
         std::size_t numScvf = MpfaHelper::estimateNumScvf(this->gridView());
 
         // resize containers
@@ -476,6 +483,12 @@ public:
     { return numBoundaryScvf_; }
 
     /*!
+     * \brief Returns the total number of degrees of freedom.
+     */
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
+
+    /*!
      * \brief Gets an element from a sub control volume contained in it.
      */
     Element element(const SubControlVolume& scv) const
@@ -548,7 +561,7 @@ public:
         elementMap_.clear();
 
         // resize containers
-        numScvs_ = this->gridView().size(0);
+        numScvs_ = numDofs();
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
         elementMap_.resize(numScvs_);
