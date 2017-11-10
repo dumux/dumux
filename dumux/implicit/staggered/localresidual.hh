@@ -336,7 +336,7 @@ protected:
             prevCCStorage *= prevVolVars.extrusionFactor();
             curCCStorage *= curVolVars.extrusionFactor();
 
-            CellCenterResidual storageTerm = 0.0;
+            CellCenterResidual storageTerm(0.0);
 
             storageTerm = std::move(curCCStorage);
             storageTerm -= std::move(prevCCStorage);

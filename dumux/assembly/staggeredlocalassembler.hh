@@ -337,11 +337,12 @@ static void dCCdCC_(Assembler& assembler,
            ElementSolutionVector elemSol{std::move(priVars)};
            curVolVars.update(elemSol, problem, elementJ, scvJ);
 
-          const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
-                                         prevElemFaceVars, curElemFaceVars,
-                                         elemBcTypes, elemFluxVarsCache);
+           const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
+                                          prevElemFaceVars, curElemFaceVars,
+                                          elemBcTypes, elemFluxVarsCache);
 
-           const auto partialDeriv = (deflectedResidual - ccResidual) / eps;
+           auto partialDeriv = (deflectedResidual - ccResidual);
+           partialDeriv /= eps;
 
            // update the global jacobian matrix with the current partial derivatives
            updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
@@ -402,7 +403,8 @@ static void dCCdFace_(Assembler& assembler,
                                           prevElemFaceVars, curElemFaceVars,
                                           elemBcTypes, elemFluxVarsCache);
 
-           const auto partialDeriv = (deflectedResidual - ccResidual) / eps;
+           auto partialDeriv = (deflectedResidual - ccResidual);
+           partialDeriv /= eps;
 
            // update the global jacobian matrix with the current partial derivatives
            updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
@@ -468,7 +470,8 @@ static void dFacedCC_(Assembler& assembler,
                                               prevElemFaceVars, curElemFaceVars,
                                               elemBcTypes, elemFluxVarsCache);
 
-               const auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]) / eps;
+               auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
+               partialDeriv /= eps;
 
                // update the global jacobian matrix with the current partial derivatives
                updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
@@ -531,7 +534,8 @@ static void dFacedFace_(Assembler& assembler,
                                               prevElemFaceVars, curElemFaceVars,
                                               elemBcTypes, elemFluxVarsCache);
 
-               const auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]) / eps;
+               auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
+               partialDeriv /= eps;
 
                // update the global jacobian matrix with the current partial derivatives
                updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
