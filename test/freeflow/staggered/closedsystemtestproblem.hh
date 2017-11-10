@@ -126,7 +126,7 @@ public:
     ClosedSystemTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
-        lidVelocity_ = getParam<bool>("Problem.LidVelocity");
+        lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
 
         using CellArray = std::array<unsigned int, dimWorld>;
         const CellArray numCells = getParam<CellArray>("Grid.Cells");
