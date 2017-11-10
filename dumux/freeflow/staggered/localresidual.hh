@@ -159,8 +159,9 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars)
+    CellCenterPrimaryVariables computeStorageForCellCenter(const Problem& problem,
+                                                           const SubControlVolume& scv,
+                                                           const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
         storage[0] = volVars.density();
@@ -178,12 +179,13 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    FacePrimaryVariables computeStorageForFace(const SubControlVolumeFace& scvf,
+    FacePrimaryVariables computeStorageForFace(const Problem& problem,
+                                               const SubControlVolumeFace& scvf,
                                                const VolumeVariables& volVars,
-                                               const ElementFaceVariables& elementFaceVars)
+                                               const ElementFaceVariables& elementFaceVars) const
     {
         FacePrimaryVariables storage(0.0);
-        const Scalar velocity = elementFaceVars[scvf].velocity();
+        const Scalar velocity = elementFaceVars[scvf].velocitySelf();
         storage[0] = volVars.density() * velocity;
         return storage;
     }
