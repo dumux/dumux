@@ -5,7 +5,7 @@ make test_spe10_mpfao
 #outputName="test_spe10_mpfao_superlu"
 
 inputArgs="-Newton.UseLineSearch 1 -LinearSolver.Verbosity 1 -LinearSolver.MaxIterations 2000"
-outputName="test_spe10_mpfao_ilu0bicgstab"
+outputName="test_spe10_mpfao"
 
 echo $outputName
 

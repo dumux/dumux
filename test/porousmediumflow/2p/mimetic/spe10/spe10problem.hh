@@ -30,12 +30,15 @@
 #include <dumux/material/components/dnapl.hh>
 #if PROBLEM==1
 #include <dumux/porousmediumflow/2p/mimetic/model.hh>
+#include <dumux/porousmediumflow/2p/mimetic/chopnewtoncontroller.hh>
 #elif PROBLEM==2
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/porousmediumflow/2p/implicit/chopnewtoncontroller.hh>
 #elif PROBLEM==3
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/2p/implicit/chopnewtoncontroller.hh>
 #endif
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
@@ -90,7 +93,8 @@ SET_TYPE_PROP(TwoPSpe10Problem, SpatialParams, Spe10SpatialParams<TypeTag> );
 NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(TwoPSpe10Problem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
-SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, SuperLUBackend<TypeTag> );
+//SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 
 // Enable gravity
 SET_BOOL_PROP(TwoPSpe10Problem, ProblemEnableGravity, false);
@@ -101,7 +105,10 @@ SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalVolumeVariablesCache, true);
 
 #if PROBLEM==1
+SET_TYPE_PROP(TwoPSpe10Problem, NewtonController, TwoPChopStaggeredNewtonController<TypeTag> );
 SET_BOOL_PROP(TwoPSpe10Problem, VtkWriteFaceData, false);
+#else
+SET_TYPE_PROP(TwoPSpe10Problem, NewtonController, TwoPChopNewtonController<TypeTag> );
 #endif
 }
 
