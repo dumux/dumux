@@ -251,13 +251,13 @@ public:
         // convenience references
         CCToCCMatrixBlock& A11 = (*jacobian_)[cellCenterIdx][cellCenterIdx];
         CCToFaceMatrixBlock& A12 = (*jacobian_)[cellCenterIdx][faceIdx];
-        FaceToFaceMatrixBlock& A21 = (*jacobian_)[faceIdx][cellCenterIdx];
-        FaceToCCMatrixBlock& A22 = (*jacobian_)[faceIdx][faceIdx];
+        FaceToCCMatrixBlock& A21 = (*jacobian_)[faceIdx][cellCenterIdx];
+        FaceToFaceMatrixBlock& A22 = (*jacobian_)[faceIdx][faceIdx];
 
         A11.setBuildMode(CCToCCMatrixBlock::random);
         A12.setBuildMode(CCToFaceMatrixBlock::random);
-        A21.setBuildMode(FaceToFaceMatrixBlock::random);
-        A22.setBuildMode(FaceToCCMatrixBlock::random);
+        A21.setBuildMode(FaceToCCMatrixBlock::random);
+        A22.setBuildMode(FaceToFaceMatrixBlock::random);
 
         setJacobianPattern();
         setResidualSize();
@@ -281,13 +281,13 @@ public:
         // convenience references
         CCToCCMatrixBlock& A11 = (*jacobian_)[cellCenterIdx][cellCenterIdx];
         CCToFaceMatrixBlock& A12 = (*jacobian_)[cellCenterIdx][faceIdx];
-        FaceToFaceMatrixBlock& A21 = (*jacobian_)[faceIdx][cellCenterIdx];
-        FaceToCCMatrixBlock& A22 = (*jacobian_)[faceIdx][faceIdx];
+        FaceToCCMatrixBlock& A21 = (*jacobian_)[faceIdx][cellCenterIdx];
+        FaceToFaceMatrixBlock& A22 = (*jacobian_)[faceIdx][faceIdx];
 
         A11.setBuildMode(CCToCCMatrixBlock::random);
         A12.setBuildMode(CCToFaceMatrixBlock::random);
-        A21.setBuildMode(FaceToFaceMatrixBlock::random);
-        A22.setBuildMode(FaceToCCMatrixBlock::random);
+        A21.setBuildMode(FaceToCCMatrixBlock::random);
+        A22.setBuildMode(FaceToFaceMatrixBlock::random);
 
         residual_ = std::make_shared<SolutionVector>();
 
@@ -321,8 +321,8 @@ public:
         // convenience references
         CCToCCMatrixBlock& A11 = (*jacobian_)[cellCenterIdx][cellCenterIdx];
         CCToFaceMatrixBlock& A12 = (*jacobian_)[cellCenterIdx][faceIdx];
-        FaceToFaceMatrixBlock& A21 = (*jacobian_)[faceIdx][cellCenterIdx];
-        FaceToCCMatrixBlock& A22 = (*jacobian_)[faceIdx][faceIdx];
+        FaceToCCMatrixBlock& A21 = (*jacobian_)[faceIdx][cellCenterIdx];
+        FaceToFaceMatrixBlock& A22 = (*jacobian_)[faceIdx][faceIdx];
 
         // set the size of the sub-matrizes
         A11.setSize(numDofsCC, numDofsCC);
