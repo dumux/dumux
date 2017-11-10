@@ -88,6 +88,10 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
+    //! The total number of degrees of freedom
+    std::size_t numDofs()
+    { return this->gridView().size(dim); }
+
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
     {
@@ -100,7 +104,7 @@ public:
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
 
-        boundaryDofIndices_.resize(this->gridView().size(dim), false);
+        boundaryDofIndices_.resize(numDofs(), false);
 
         numScv_ = 0;
         numScvf_ = 0;
@@ -268,12 +272,16 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const
+    { return this->gridView().size(dim); }
+
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
     {
         ParentType::update();
 
-        boundaryDofIndices_.resize(this->gridView().size(dim), false);
+        boundaryDofIndices_.resize(numDofs(), false);
 
         // save global data on the grid's scvs and scvfs
         // TODO do we need those information?

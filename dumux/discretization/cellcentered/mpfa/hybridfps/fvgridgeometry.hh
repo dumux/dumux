@@ -93,6 +93,10 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
@@ -120,7 +124,7 @@ public:
 
         scvfs_.clear();
         // reserve memory
-        IndexType numScvs = gridView_.size(0);
+        IndexType numScvs = numDofs();
         scvs_.resize(numScvs);
         scvfs_.reserve(getNumScvf_());
         scvfIndicesOfScv_.resize(numScvs);
