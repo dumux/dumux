@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 60 # [s]
 TEnd = 3600 # [s]
 
@@ -9,7 +9,7 @@ Cells = 50 10
 [Problem]
 Name = infiltration3pbox
 
-[]
+[SpatialParams]
 permeability = 1.e-11 # m^2
 porosity = 0.40
 vanGenuchtenAlpha = 0.0005
@@ -18,3 +18,5 @@ vanGenuchtenN = 4.0
 [Output]
 PlotFluidMatrixInteractions = false
 
+[Newton]
+MaxRelativeShift = 1e-4

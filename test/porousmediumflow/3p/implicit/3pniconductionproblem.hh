@@ -26,14 +26,15 @@
 
 #include <math.h>
 
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
-
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+
 #include "3pnispatialparams.hh"
 
 
@@ -45,10 +46,13 @@ class ThreePNIConductionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ThreePNIConductionProblem, INHERITS_FROM(ThreePNI, ThreePNISpatialParams));
-NEW_TYPE_TAG(ThreePNIConductionBoxProblem, INHERITS_FROM(BoxModel, ThreePNIConductionProblem));
-NEW_TYPE_TAG(ThreePNIConductionCCProblem, INHERITS_FROM(CCTpfaModel, ThreePNIConductionProblem));
-NEW_TYPE_TAG(ThreePNIConductionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, ThreePNIConductionProblem));
+
+NEW_PROP_TAG(FVGridGeometry);
+
+NEW_TYPE_TAG(ThreePNIConductionProblem, INHERITS_FROM(ThreePNI));
+NEW_TYPE_TAG(ThreePNIConductionBoxProblem, INHERITS_FROM(BoxModel, ThreePNIConductionProblem, ThreePNISpatialParams));
+NEW_TYPE_TAG(ThreePNIConductionCCProblem, INHERITS_FROM(CCTpfaModel, ThreePNIConductionProblem, ThreePNISpatialParams));
+NEW_TYPE_TAG(ThreePNIConductionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, ThreePNIConductionProblem, ThreePNISpatialParams));
 
 // Set the grid type
 SET_TYPE_PROP(ThreePNIConductionProblem, Grid, Dune::YaspGrid<2>);
@@ -67,7 +71,7 @@ SET_TYPE_PROP(ThreePNIConductionProblem,
               SpatialParams,
               ThreePNISpatialParams<TypeTag>);
 
-}
+}// end namespace Properties
 
 
 /*!
@@ -94,33 +98,33 @@ SET_TYPE_PROP(ThreePNIConductionProblem,
  * <tt>./test_cc3pniconduction -ParameterFile ./test_cc3pniconduction.input</tt>
  */
 template <class TypeTag>
-class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using IapwsH2O = H2O<Scalar>;
-    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // world dimension
-        dimWorld = GridView::dimensionworld
+        dimWorld = GridView::dimensionworld,
+        dim=GridView::dimension
     };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dimWorld : 0 };
 
     enum {
         // index of the primary variables
@@ -136,48 +140,34 @@ class ThreePNIConductionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    ThreePNIConductionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ThreePNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
-        outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                  int, Problem, OutputInterval);
-
+        name_ = getParam<std::string>("Problem.Name");
         temperatureHigh_ = 300.0;
+        temperatureExact_.resize(fvGridGeometry->numDofs());
+   }
 
+    //! get the analytical temperature
+    const std::vector<Scalar>& getExactTemperature()
+    {
+        return temperatureExact_;
     }
 
-
-    bool shouldWriteOutput() const
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
-    }
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-
-     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
-    {
-        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
-
-        const auto someElement = *(elements(this->gridView()).begin());
-        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->model().fvGridGeometry());
-        someFvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
+        auto fvGeometry = localView(this->fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
@@ -189,26 +179,27 @@ public:
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
-                                                                                                         someElement, someFvGeometry, someScv);
+                                                                                                         someElement, fvGeometry, someScv);
         using std::max;
-        Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
-
-        for (const auto& element : elements(this->gridView()))
+        time = max(time, 1e-10);
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto globalIdx = scv.dofIndex();
-                const auto& globalPos = scv.dofPosition();
-                using std::erf;
-                using std::sqrt;
-                temperatureExact[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
+               auto globalIdx = scv.dofIndex();
+               const auto& globalPos = scv.dofPosition();
+               using std::erf;
+               using std::sqrt;
+               temperatureExact_[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
                                               *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
+
             }
         }
     }
+
     /*!
      * \name Problem parameters
      */
@@ -239,7 +230,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
+        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }
@@ -265,22 +256,20 @@ public:
         return values;
     }
 
-    /*!
+  /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param elemVolVars The element volume variables
-     * \param scvf The subcontrolvolume face
-     *  Negative values mean influx.
+     * \param values Stores the Neumann values for the conservation equations in
+     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
+     * \param globalPos The position of the integration point of the boundary segment.
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumann(const Element &element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+    NeumannFluxes neumannAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return NeumannFluxes(0.0);
     }
 
     // \}
@@ -317,20 +306,19 @@ public:
     {
         PrimaryVariables values;
         values[pressureIdx] = 1e5; // initial condition for the pressure
-        values[swIdx] = 1.;  // initial condition for the wetting phase saturation
+        values[swIdx] = 1.0;  // initial condition for the wetting phase saturation
         values[snIdx] = 1e-5;  // initial condition for the non-wetting phase saturation
-        values[temperatureIdx] = 290.;
+        values[temperatureIdx] = 290;
         return values;
     }
 
     // \}
 
 private:
-
     Scalar temperatureHigh_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    int outputInterval_;
+    std::vector<Scalar> temperatureExact_;
 };
 
 } //end namespace

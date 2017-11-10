@@ -27,12 +27,8 @@
 #ifndef DUMUX_3P_MODEL_HH
 #define DUMUX_3P_MODEL_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
-#include "properties.hh"
-
-namespace Dumux
-{
 /*!
+ * \file
  * \ingroup ThreePModel
  * \brief Adaption of the fully implicit scheme to the three-phase flow model.
  *
@@ -57,56 +53,7 @@ namespace Dumux
  * The used primary variables are gas phase pressure \f$p_g\f$,
  * water saturation \f$S_w\f$ and NAPL saturation \f$S_n\f$.
  */
-template<class TypeTag>
-class ThreePModel: public GET_PROP_TYPE(TypeTag, BaseModel)
-{
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);;
 
-    enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-    };
-
-public:
-
-    /*!
-     * \brief Apply the initial conditions to the model.
-     *
-     * \param problem The object representing the problem which needs to
-     *             be simulated.
-     */
-    void init(Problem& problem)
-    {
-        ParentType::init(problem);
-
-        // register standardized vtk output fields
-        auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addSecondaryVariable("sw", [](const VolumeVariables& v){ return v.saturation(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("sn", [](const VolumeVariables& v){ return v.saturation(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("sg", [](const VolumeVariables& v){ return v.saturation(gPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("pg", [](const VolumeVariables& v){ return v.pressure(gPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rhow", [](const VolumeVariables& v){ return v.density(wPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rhon", [](const VolumeVariables& v){ return v.density(nPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rhog", [](const VolumeVariables& v){ return v.density(gPhaseIdx); });
-        vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
-        vtkOutputModule.addSecondaryVariable("permeability", [](const VolumeVariables& v){ return v.permeability(); });
-        vtkOutputModule.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
-//         vtkOutputModule.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(wPhaseIdx); });
-//         vtkOutputModule.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(nPhaseIdx); });
-//         vtkOutputModule.addSecondaryVariable("mobG", [](const VolumeVariables& v){ return v.mobility(gPhaseIdx); });
-        // TODO: these lines are commented-out in order to comply with the "old" reference solution;
-        // can be changed some time, as well as the parameter names
-    }
-};
-
-}
-
-#include "propertydefaults.hh"
+#include "properties.hh"
 
 #endif

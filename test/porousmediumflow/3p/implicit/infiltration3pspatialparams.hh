@@ -52,11 +52,11 @@ SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)
  private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedParkerVanGen3P<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
  public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<EffectiveLaw>;
 };
 }
 
@@ -69,64 +69,59 @@ SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)
 template<class TypeTag>
 class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag,ElementSolutionVector);
     enum {
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GridView::template Codim<0>::Entity Element;
-
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
 
 public:
     // export permeability type
     using PermeabilityType = Scalar;
 
     //get the material law from the property system
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    InfiltrationThreePSpatialParams(const Problem& problem, const GridView &gridView)
-        : ParentType(problem, gridView)
+    InfiltrationThreePSpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
         // intrinsic permeabilities
-        fineK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, permeability);
-        coarseK_ = GET_RUNTIME_PARAM(TypeTag, Scalar, permeability);
+        fineK_ = getParam<Scalar>("SpatialParams.permeability");
+        coarseK_ = getParam<Scalar>("SpatialParams.permeability");
 
         // porosities
-        porosity_ = GET_RUNTIME_PARAM(TypeTag, Scalar, porosity);
-
+        porosity_ = getParam<Scalar>("SpatialParams.porosity");
+        vGAlpha_ = getParam<Scalar>("SpatialParams.vanGenuchtenAlpha");
+        vGN_ = getParam<Scalar>("SpatialParams.vanGenuchtenN");
         // residual saturations
         materialParams_.setSwr(0.12);
         materialParams_.setSnr(0.07);
         materialParams_.setSgr(0.03);
 
         // parameters for the 3phase van Genuchten law
-        materialParams_.setVgAlpha(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenAlpha));
-        materialParams_.setVgn(GET_RUNTIME_PARAM(TypeTag, Scalar, vanGenuchtenN));
+        materialParams_.setVgAlpha(vGAlpha_);
+        materialParams_.setVgn(vGN_);
         materialParams_.setKrRegardsSnr(false);
 
         // parameters for adsorption
         materialParams_.setKdNAPL(0.);
         materialParams_.setRhoBulk(1500.);
 
-        plotFluidMatrixInteractions_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output,
-                                                                    PlotFluidMatrixInteractions);
+        plotFluidMatrixInteractions_ =  getParam<bool>("Output.PlotFluidMatrixInteractions");
     }
 
     ~InfiltrationThreePSpatialParams()
@@ -144,14 +139,19 @@ public:
         plotMaterialLaw.plotkr(materialParams_);
     }
 
-    /*!
-     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
+      /*!
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
      *
-     * \param globalPos The global position
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
+     * \return the intrinsic permeability
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-        if (isFineMaterial_(globalPos))
+        if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
         return coarseK_;
     }
@@ -186,6 +186,8 @@ private:
     Scalar coarseK_;
 
     Scalar porosity_;
+    Scalar vGN_;
+    Scalar vGAlpha_;
 
     MaterialLawParams materialParams_;
 

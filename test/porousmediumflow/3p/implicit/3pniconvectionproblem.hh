@@ -26,16 +26,16 @@
 
 #include <math.h>
 
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p/implicit/model.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
-
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-#include "3pnispatialparams.hh"
 
+#include "3pnispatialparams.hh"
 
 namespace Dumux
 {
@@ -94,33 +94,31 @@ SET_TYPE_PROP(ThreePNIConvectionProblem,
  * <tt>./test_cc3pcniconvection -ParameterFile ./test_cc3pniconvection.input</tt>
  */
 template <class TypeTag>
-class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using IapwsH2O = H2O<Scalar>;
-    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // world dimension
         dimWorld = GridView::dimensionworld
     };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dimWorld : 0 };
 
     enum {
         // index of the primary variables
@@ -133,61 +131,46 @@ class ThreePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    ThreePNIConvectionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ThreePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem, Name);
-        outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                int, Problem, OutputInterval);
-        darcyVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                Scalar, Problem, DarcyVelocity);
+        name_ = getParam<std::string>("Problem.Name");
+        outputInterval_ = getParam<int>("Problem.OutputInterval");
+        darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
 
         temperatureHigh_ = 291.;
         temperatureLow_ = 290.;
         pressureHigh_ = 2e5;
         pressureLow_ = 1e5;
 
-
+        temperatureExact_.resize(this->fvGridGeometry().numDofs());
     }
 
-
-    bool shouldWriteOutput() const
+    //! Get exact temperature vector for output
+    const std::vector<Scalar>& getExactTemperature()
     {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
+        return temperatureExact_;
     }
 
-
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
-        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        const auto someElement = *(elements(this->gridView()).begin());
-        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
         const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->model().fvGridGeometry());
-        someFvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
+        auto fvGeometry = localView(this->fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
@@ -202,23 +185,22 @@ public:
         std::cout << "storage: " << storageTotal << '\n';
 
         using std::max;
-        const Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        time = max(time, 1e-10);
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 auto dofPosition = scv.dofPosition();
-                temperatureExact[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
+                temperatureExact_[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
             }
         }
     }
-
 
     /*!
      * \name Problem parameters
@@ -251,7 +233,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] > this->bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }
@@ -310,23 +292,6 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * \param globalPos The position for which the source should be evaluated
-     *
-     * Returns the rate mass of a component is generated or annihilate
-     * per volume unit. Positive values mean that mass is created,
-     * negative ones mean that it vanishes.
-     *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
-    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
@@ -353,7 +318,9 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     int outputInterval_;
+    std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace
+} //end namespace Dumux
+
 #endif
