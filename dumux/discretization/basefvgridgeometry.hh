@@ -82,6 +82,10 @@ public:
      */
     void update()
     {
+        //! Update the mappers
+        vertexMapper_.update();
+        elementMapper_.update();
+
         //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
         computeGlobalBoundingBox_();
 

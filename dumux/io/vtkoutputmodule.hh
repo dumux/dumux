@@ -30,7 +30,6 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/geometry/type.hh>
-#include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dune/grid/common/mcmgmapper.hh>
@@ -53,17 +52,12 @@ namespace Vtk
         enum { dim = GridView::dimension };
         using ctype = typename GridView::ctype;
         using Element = typename GridView::template Codim<0>::Entity;
-        using ReferenceElements = typename Dune::ReferenceElements<ctype, dim>;
 
         // a VTK function that supports both scalar and vector values for each element
         template <typename F>
         struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
         {
-            const F& field_;
-            const std::string name_;
-            int nComps_;
-            Dune::MultipleCodimMultipleGeomTypeMapper<GridView> mapper_;
-
+            using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
         public:
             //! return number of components
             virtual int ncomps () const
@@ -78,10 +72,10 @@ namespace Vtk
             virtual std::string name () const
             { return name_; }
 
-            VectorP0VTKFunction(const GridView &gridView, const F& field, const std::string& name, int nComps)
-            : field_(field), name_(name), nComps_(nComps), mapper_(gridView, Dune::mcmgElementLayout())
+            VectorP0VTKFunction(const GridView &gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
+            : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
             {
-                if (field.size()!=(unsigned int)(mapper_.size()))
+                if (field.size()!=(unsigned int)(gridView.size(0)))
                     DUNE_THROW(Dune::IOError, "NestedP0VTKFunction: size mismatch");
             }
         private:
@@ -90,17 +84,18 @@ namespace Vtk
 
             double accessChooser_(int mycomp, int i, std::false_type) const
             { return field_[i]; }
+
+            const F& field_;
+            const std::string name_;
+            int nComps_;
+            const Mapper& mapper_;
         };
 
         // a VTK function that supports both scalar and vector values for each vertex
         template <typename F>
         struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
         {
-            const F& field_;
-            const std::string name_;
-            int nComps_;
-            Dune::MultipleCodimMultipleGeomTypeMapper<GridView> mapper_;
-
+            using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
         public:
             //! return number of components
             virtual int ncomps () const
@@ -118,7 +113,7 @@ namespace Vtk
                     cornerValues[i] = accessChooser_(mycomp, mapper_.subIndex(e, i, dim), Dune::is_indexable<decltype(field_[0])>());
 
                 // (Ab)use the MultiLinearGeometry class to do multi-linear interpolation between scalars
-                const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), cornerValues);
+                const Dune::MultiLinearGeometry<ctype, dim, 1> interpolation(e.type(), std::move(cornerValues));
                 return interpolation.global(xi);
             }
 
@@ -126,10 +121,10 @@ namespace Vtk
             virtual std::string name () const
             { return name_; }
 
-            VectorP1VTKFunction(const GridView &gridView, const F& field, const std::string& name, int nComps)
-            : field_(field), name_(name), nComps_(nComps), mapper_(gridView, Dune::mcmgVertexLayout())
+            VectorP1VTKFunction(const GridView &gridView, const Mapper& mapper, const F& field, const std::string& name, int nComps)
+            : field_(field), name_(name), nComps_(nComps), mapper_(mapper)
             {
-                if (field.size()!=(unsigned int)(mapper_.size()))
+                if (field.size()!=(unsigned int)(gridView.size(GridView::dimension)))
                     DUNE_THROW(Dune::IOError, "NestedP1VTKFunction: size mismatch");
             }
         private:
@@ -138,13 +133,28 @@ namespace Vtk
 
             double accessChooser_(int mycomp, int i, std::false_type) const
             { return field_[i]; }
+
+            const F& field_;
+            const std::string name_;
+            int nComps_;
+            const Mapper& mapper_;
         };
 
-        int codim_;
-        // can point to anything fulfilling the VTKFunction interface
-        std::shared_ptr<Dune::VTKFunction<GridView>> field_;
-
     public:
+        // template constructor selects the right VTKFunction implementation
+        template <typename F, class Mapper>
+        Field(const GridView& gridView, const Mapper& mapper, F const& f,
+              const std::string& name, int numComp = 1, int codim = 0)
+        : codim_(codim)
+        {
+            if (codim == GridView::dimension)
+                field_ = std::make_shared<VectorP1VTKFunction<F>>(gridView, mapper, f, name, numComp);
+            else if (codim == 0)
+                field_ = std::make_shared<VectorP0VTKFunction<F>>(gridView, mapper, f, name, numComp);
+            else
+                DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
+        }
+
         virtual std::string name () const
         { return field_->name(); }
 
@@ -156,24 +166,16 @@ namespace Vtk
                                 const Dune::FieldVector< ctype, dim > &xi) const
         { return field_->evaluate(mycomp, element, xi); }
 
-        // template constructor selects the right VTKFunction implementation
-        template <typename F>
-        Field(const GridView& gridView, F const& f, const std::string& name, int numComp = 1, int codim = 0)
-        : codim_(codim)
-        {
-            if (codim == GridView::dimension)
-                field_ = std::make_shared<VectorP1VTKFunction<F>>(gridView, f, name, numComp);
-            else if (codim == 0)
-                field_ = std::make_shared<VectorP0VTKFunction<F>>(gridView, f, name, numComp);
-            else
-                DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
-        }
-
         int codim() const
         { return codim_; }
 
         const std::shared_ptr<Dune::VTKFunction<GridView>>& get() const
         { return field_; }
+
+    private:
+        int codim_;
+        // can point to anything fulfilling the VTKFunction interface
+        std::shared_ptr<Dune::VTKFunction<GridView>> field_;
     };
 }
 
@@ -264,9 +266,9 @@ public:
     void addField(const Vector& v, const std::string& name, int nComp = 1)
     {
         if (v.size() == gridGeom_.gridView().size(0))
-            fields_.emplace_back(gridGeom_.gridView(), v, name, nComp, 0);
+            fields_.emplace_back(gridGeom_.gridView(), gridGeom_.elementMapper(), v, name, nComp, 0);
         else if (v.size() == gridGeom_.gridView().size(dim))
-            fields_.emplace_back(gridGeom_.gridView(), v, name, nComp, dim);
+            fields_.emplace_back(gridGeom_.gridView(), gridGeom_.vertexMapper(), v, name, nComp, dim);
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
     }
@@ -384,7 +386,7 @@ public:
                 if (isBox && dim > 1)
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        sequenceWriter_.addVertexData(Field(gridGeom_.gridView(), velocity[phaseIdx],
+                        sequenceWriter_.addVertexData(Field(gridGeom_.gridView(), gridGeom_.vertexMapper(), velocity[phaseIdx],
                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
                                                             dimWorld, dim).get());
                 }
@@ -392,7 +394,7 @@ public:
                 else
                 {
                     for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
-                        sequenceWriter_.addCellData(Field(gridGeom_.gridView(), velocity[phaseIdx],
+                        sequenceWriter_.addCellData(Field(gridGeom_.gridView(), gridGeom_.elementMapper(), velocity[phaseIdx],
                                                             "velocity_" + std::string(FluidSystem::phaseName(phaseIdx)) + " (m/s)",
                                                             dimWorld, 0).get());
                 }
@@ -400,9 +402,7 @@ public:
 
             // the process rank
             if (addProcessRank)
-                sequenceWriter_.addCellData(Field(gridGeom_.gridView(), rank, "process rank", 1, 0).get());
-
-                // sequenceWriter_.addCellData(rank, "process rank");
+                sequenceWriter_.addCellData(Field(gridGeom_.gridView(), gridGeom_.elementMapper(), rank, "process rank", 1, 0).get());
 
             // also register additional (non-standardized) user fields if any
             for (auto&& field : fields_)
