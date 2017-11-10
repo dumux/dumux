@@ -116,7 +116,7 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonController = NewtonController<TypeTag>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
-    NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+    NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
     // linearize & solve
     Dune::Timer timer;

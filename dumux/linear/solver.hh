@@ -38,8 +38,10 @@ namespace Dumux
 template <class TypeTag>
 class LinearSolver
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
+    //! export scalar type (might be needed to set parameters from output)
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
     //! default constructor sets some parameters
     LinearSolver()
     {

@@ -76,7 +76,6 @@ class AMGBackend : public LinearSolver<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
     enum { numEq = AmgTraits::numEq };
     using LinearOperator = typename AmgTraits::LinearOperator;

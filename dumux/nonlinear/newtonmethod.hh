@@ -21,7 +21,7 @@
  *
  * \brief The algorithmic part of the multi dimensional newton method.
  *
- * In order to use the method you need a Newtoncontroller_->
+ * In order to use the method you need a Newtoncontroller
  */
 #ifndef DUMUX_NEWTONMETHOD_HH
 #define DUMUX_NEWTONMETHOD_HH
@@ -50,31 +50,26 @@ NEW_PROP_TAG(JacobianMatrix);
  * \ingroup Newton
  * \brief The algorithmic part of the multi dimensional newton method.
  *
- * In order to use the method you need a Newtoncontroller_->
+ * In order to use the method you need a Newtoncontroller
  */
-template <class TypeTag, class NewtonController, class JacobianAssembler, class LinearSolver>
+template <class NewtonController, class JacobianAssembler, class LinearSolver>
 class NewtonMethod
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-
 public:
     NewtonMethod(std::shared_ptr<NewtonController> controller,
                  std::shared_ptr<JacobianAssembler> assembler,
-                 std::shared_ptr<LinearSolver> linearSolver)
+                 std::shared_ptr<LinearSolver> linearSolver,
+                 const std::string& modelParamGroup = "")
     : controller_(controller)
     , assembler_(assembler)
     , linearSolver_(linearSolver)
-    , matrix_(std::make_shared<JacobianMatrix>())
-    , residual_(std::make_shared<SolutionVector>())
     {
         // set the linear system (matrix & residual) in the assembler
-        assembler_->setLinearSystem(matrix_, residual_);
+        assembler_->setLinearSystem();
 
         // set a different default for the linear solver residual reduction
         // within the Newton the linear solver doesn't need to solve too exact
-        static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        using Scalar = typename LinearSolver::Scalar;
         linearSolver_->setResidualReduction(getParamFromGroup<Scalar>(modelParamGroup, "LinearSolver.ResidualReduction", 1e-6));
     }
 
@@ -82,6 +77,7 @@ public:
      * \brief Run the newton method to solve a non-linear system.
      *        The controller is responsible for all the strategic decisions.
      */
+    template<class SolutionVector>
     bool solve(SolutionVector& u)
     {
         try
@@ -146,9 +142,9 @@ public:
                 deltaU = 0;
                 // ask the controller to solve the linearized system
                 controller_->solveLinearSystem(*linearSolver_,
-                                               matrix(),
+                                               assembler_->jacobian(),
                                                deltaU,
-                                               residual());
+                                               assembler_->residual());
                 solveTimer.stop();
 
                 ///////////////
@@ -203,20 +199,10 @@ public:
         }
     }
 
-    //! The jacobian for the Newton method
-    JacobianMatrix& matrix()
-    { return *matrix_; }
-
-    //! The residual for the Newton method
-    SolutionVector& residual()
-    { return *residual_; }
-
 private:
     std::shared_ptr<NewtonController> controller_;
     std::shared_ptr<JacobianAssembler> assembler_;
     std::shared_ptr<LinearSolver> linearSolver_;
-    std::shared_ptr<JacobianMatrix> matrix_; //! The jacobian for the Newton method
-    std::shared_ptr<SolutionVector> residual_; //! The residual for the Newton method
 };
 
 } // end namespace Dumux
