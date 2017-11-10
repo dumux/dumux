@@ -51,6 +51,8 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
+#include <dumux/linear/linearsolverproperties.hh>
+
 namespace Dumux
 {
 
@@ -67,7 +69,7 @@ NEW_PROP_TAG(ElementFaceVariables);
 NEW_PROP_TAG(EnableGlobalFaceVariablesCache);
 
 //! Type tag for the box scheme.
-NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel, NumericModel));
+NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel, NumericModel, LinearSolverTypeTag));
 
 //! Set the corresponding discretization method property
 SET_PROP(StaggeredModel, DiscretizationMethod)

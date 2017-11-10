@@ -28,7 +28,6 @@
 #define DUMUX_NAVIERSTOKES_PROPERTIES_HH
 
 #include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/freeflow/properties.hh>
 
 #include <dumux/freeflow/staggeredni/properties.hh>
@@ -65,7 +64,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit single-phase problems
-NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(FreeFlow, LinearSolverTypeTag));
+NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(FreeFlow));
 
 //! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsothermal));
