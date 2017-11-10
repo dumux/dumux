@@ -147,10 +147,9 @@ int main(int argc, char** argv) try
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
-     //! Add model specific output fields
     vtkWriter.write(0.0);
-    //add specific output
-    const auto outputInterval = getParam<int>("Problem.OutputInterval");
+    // output every vtkOutputInterval time step
+    const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -195,15 +194,15 @@ int main(int argc, char** argv) try
                            << "have been saved to restart files.");
         }
 
+        // compute the new analytical temperature field for the output
+        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
+
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
-        problem->updateExactTemperature(x);
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -212,7 +211,7 @@ int main(int argc, char** argv) try
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
-        if(timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % outputInterval == 0 || timeLoop->willBeFinished())
+        if(timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
             vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());

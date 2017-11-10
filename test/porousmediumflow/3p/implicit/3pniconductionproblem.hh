@@ -126,9 +126,6 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         dim=GridView::dimension
     };
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
-    enum { dofCodim = isBox ? dimWorld : 0 };
-
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -151,26 +148,17 @@ public:
 
         name_ = getParam<std::string>("Problem.Name");
         temperatureHigh_ = 300.0;
-        time_ = 0.0;
-        temperatureExact_.resize(fvGridGeometry->gridView().size(dofCodim));
+        temperatureExact_.resize(fvGridGeometry->numDofs());
    }
 
-    // get time from the mainfile timeloop
-    void setTime(Scalar time)
-    { time_ = time; }
-
-     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
+    //! get the analytical temperature
     const std::vector<Scalar>& getExactTemperature()
     {
         return temperatureExact_;
     }
 
-    void updateExactTemperature(const SolutionVector& curSol)
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
@@ -192,6 +180,8 @@ public:
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
         const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
                                                                                                          someElement, fvGeometry, someScv);
+        using std::max;
+        time = max(time, 1e-10);
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
@@ -204,11 +194,12 @@ public:
                using std::erf;
                using std::sqrt;
                temperatureExact_[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
-                                              *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time_/effectiveThermalConductivity));
+                                              *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
 
             }
         }
     }
+
     /*!
      * \name Problem parameters
      */
@@ -327,9 +318,7 @@ private:
     Scalar temperatureHigh_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    std::vector<double> temperatureExact_;
-    Scalar time_;
-
+    std::vector<Scalar> temperatureExact_;
 };
 
 } //end namespace

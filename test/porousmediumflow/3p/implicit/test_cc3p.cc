@@ -172,6 +172,10 @@ int main(int argc, char** argv) try
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
+        // set the end of the next time step as time in the problem to control
+        // the boundary conditions for the implicit Euler scheme
+        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
+
         // try solving the non-linear system
         for (int i = 0; i < maxDivisions; ++i)
         {
@@ -198,15 +202,14 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
-
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
-         problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
+
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 

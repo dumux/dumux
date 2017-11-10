@@ -195,15 +195,15 @@ int main(int argc, char** argv) try
                            << "have been saved to restart files.");
         }
 
+        // update the exact time temperature
+        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
+
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
-
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
-        problem->updateExactTemperature(x);
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

@@ -120,9 +120,6 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
-    enum { dofCodim = isBox ? dimWorld : 0 };
-
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -137,7 +134,6 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
 
 public:
     ThreePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -155,23 +151,17 @@ public:
         pressureHigh_ = 2e5;
         pressureLow_ = 1e5;
 
-        time_ = 0.0;
-        temperatureExact_.resize(fvGridGeometry->gridView().size(dofCodim));
+        temperatureExact_.resize(this->fvGridGeometry().numDofs());
     }
 
-    // get time from the mainfile timeloop
-    void setTime(Scalar time)
-    { time_ = time; }
-
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
+    //! Get exact temperature vector for output
     const std::vector<Scalar>& getExactTemperature()
     {
         return temperatureExact_;
     }
 
-    void updateExactTemperature(const SolutionVector& curSol)
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
         const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
@@ -195,7 +185,7 @@ public:
         std::cout << "storage: " << storageTotal << '\n';
 
         using std::max;
-        const Scalar time = max(time_, 1e-10);
+        time = max(time, 1e-10);
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
@@ -211,7 +201,6 @@ public:
             }
         }
     }
-
 
     /*!
      * \name Problem parameters
@@ -303,23 +292,6 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * \param globalPos The position for which the source should be evaluated
-     *
-     * Returns the rate mass of a component is generated or annihilate
-     * per volume unit. Positive values mean that mass is created,
-     * negative ones mean that it vanishes.
-     *
-     * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
-    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param globalPos The position for which the initial condition should be evaluated
@@ -346,9 +318,9 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     int outputInterval_;
-    std::vector<double> temperatureExact_;
-    Scalar time_;
+    std::vector<Scalar> temperatureExact_;
 };
 
-} //end namespace
+} //end namespace Dumux
+
 #endif
