@@ -146,12 +146,10 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
-    //add specific output
-     vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
-     //! Add model specific output fields
+    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
-     //add specific output
-    const auto outputInterval = getParam<int>("Problem.OutputInterval");
+    // output every vtkOutputInterval time step
+    const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -213,7 +211,7 @@ int main(int argc, char** argv) try
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
-        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % outputInterval == 0 || timeLoop->willBeFinished())
+        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
             vtkWriter.write(timeLoop->time());
 
 
