@@ -152,7 +152,7 @@ struct InstationaryNonLinearSimulationImpl<TypeTag, DiscretizationMethods::CCTpf
 
         // the non-linear solver
         using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
-        using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
+        using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
         auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
         NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
@@ -297,7 +297,7 @@ struct InstationaryNonLinearSimulationImpl<TypeTag, DiscretizationMethods::Box, 
 
         // the non-linear solver
         using NewtonController = Dumux::NewtonController<TypeTag>;
-        using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
+        using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
         auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
         NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 

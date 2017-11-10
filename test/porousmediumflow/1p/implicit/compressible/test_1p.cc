@@ -137,7 +137,7 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonController = NewtonController<TypeTag>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
-    NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+    NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
     // set some check points for the time loop
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
