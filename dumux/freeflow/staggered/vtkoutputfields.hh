@@ -41,19 +41,10 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        // vtk.addSecondaryVariable("Sw", [](const VolumeVariables& v){ return v.saturation(Indices::wPhaseIdx); });
-        // vtk.addSecondaryVariable("Sn", [](const VolumeVariables& v){ return v.saturation(Indices::nPhaseIdx); });
-        // vtk.addSecondaryVariable("pw", [](const VolumeVariables& v){ return v.pressure(Indices::wPhaseIdx); });
-        // vtk.addSecondaryVariable("pn", [](const VolumeVariables& v){ return v.pressure(Indices::nPhaseIdx); });
-        // vtk.addSecondaryVariable("p", [](const VolumeVariables& v){ return v.pressure(); });
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
-        // vtk.addSecondaryVariable("pc", [](const VolumeVariables& v){ return v.capillaryPressure(); });
-        // vtk.addSecondaryVariable("rhoW", [](const VolumeVariables& v){ return v.density(Indices::wPhaseIdx); });
-        // vtk.addSecondaryVariable("rhoN", [](const VolumeVariables& v){ return v.density(Indices::nPhaseIdx); });
-        // vtk.addSecondaryVariable("mobW", [](const VolumeVariables& v){ return v.mobility(Indices::wPhaseIdx); });
-        // vtk.addSecondaryVariable("mobN", [](const VolumeVariables& v){ return v.mobility(Indices::nPhaseIdx); });
-        // vtk.addSecondaryVariable("temperature", [](const VolumeVariables& v){ return v.temperature(); });
-        // vtk.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
+
+        if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
+            vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); },"temperature");
     }
 };
 

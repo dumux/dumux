@@ -30,11 +30,12 @@
 #include <dumux/common/basicproperties.hh>
 #include <dumux/freeflow/properties.hh>
 
-#include <dumux/freeflow/staggeredni/properties.hh>
 #include <dumux/freeflow/staggeredni/localresidual.hh>
 #include <dumux/freeflow/staggeredni/fluxvariables.hh>
 
 #include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/freeflow/staggeredni/properties.hh>
+#include <dumux/freeflow/staggeredni/propertydefaults.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"

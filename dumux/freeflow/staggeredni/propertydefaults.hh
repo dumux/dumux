@@ -28,6 +28,7 @@
 #define DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
 
 #include "indices.hh"
+#include <dumux/discretization/fourierslaw.hh>
 
 namespace Dumux
 {
@@ -51,7 +52,7 @@ SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndic
 
 SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
 
-// SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>); TODO
+SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
 
 } // end namespace Properties
 
