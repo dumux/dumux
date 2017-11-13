@@ -135,16 +135,13 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
+    using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
+
 public:
     ChannelTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry), eps_(1e-6)
     {
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
-
-#if NONISOTHERMAL
-    if(inletVelocity_ > eps_)
-        this->timeManager().startNextEpisode(200.0);
-#endif
     }
 
     /*!
@@ -152,16 +149,6 @@ public:
      */
     // \{
 
-#if NONISOTHERMAL
-    void episodeEnd()
-    {
-        if(inletVelocity_ > eps_)
-        {
-            this->timeManager().startNextEpisode(50.0);
-            this->timeManager().setTimeStepSize(10.0);
-        }
-    }
-#endif
 
     bool shouldWriteRestartFile() const
     {
@@ -237,10 +224,8 @@ public:
         {
             values[velocityXIdx] = inletVelocity_;
 #if NONISOTHERMAL
-        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-
         // give the system some time so that the pressure can equilibrate, then start the injection of the hot liquid
-        if(time > 200.0)
+        if(time() >= 200.0)
             values[temperatureIdx] = 293.15;
 #endif
         }
@@ -275,6 +260,17 @@ public:
     }
 
     // \}
+    void setTimeLoop(TimeLoopPtr timeLoop)
+    {
+        timeLoop_ = timeLoop;
+        if(inletVelocity_ > eps_)
+            timeLoop_->setCheckPoint({200.0, 210.0});
+    }
+
+    Scalar time() const
+    {
+        return timeLoop_->time();
+    }
 
 private:
 
@@ -295,6 +291,7 @@ private:
 
     Scalar eps_;
     Scalar inletVelocity_;
+    TimeLoopPtr timeLoop_;
 };
 } //end namespace
 

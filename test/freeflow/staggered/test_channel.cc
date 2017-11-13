@@ -122,6 +122,23 @@ int main(int argc, char** argv) try
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = 0;
+    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
+        restartTime = getParam<Scalar>("TimeLoop.Restart");
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+    problem->setTimeLoop(timeLoop);
+
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -140,17 +157,17 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    // // get some time loop parameters
+    // using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    // const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    // const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
+    // const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    // auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
+    // // check if we are about to restart a previously interrupted simulation
+    // Scalar restartTime = 0;
+    // if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
+    //     restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
@@ -158,9 +175,10 @@ int main(int argc, char** argv) try
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
 
-    // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
+    // // instantiate time loop
+    // auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    // timeLoop->setMaxTimeStepSize(maxDt);
+    // problem->setTimeLoop(timeLoop);
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
