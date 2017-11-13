@@ -372,8 +372,8 @@ private:
      */
     void createAnalyticalSolution_()
     {
-        analyticalPressure_.resize(this->fvGridGeometry().gridView().size(0));
-        analyticalVelocity_.resize(this->fvGridGeometry().gridView().size(0));
+        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
+        analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
 
 
         for (const auto& element : elements(this->fvGridGeometry().gridView()))

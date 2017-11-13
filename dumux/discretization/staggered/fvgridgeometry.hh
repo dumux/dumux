@@ -97,6 +97,16 @@ public:
         return intersectionMapper_.numIntersections();
     }
 
+    //! the total number of dofs
+    std::size_t numDofs() const
+    { return numCellCenterDofs() + numFaceDofs(); }
+
+    std::size_t numCellCenterDofs() const
+    { return this->gridView().size(0); }
+
+    std::size_t numFaceDofs() const
+    { return this->gridView().size(1); }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }

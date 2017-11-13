@@ -223,8 +223,8 @@ public:
     Scalar residualNorm(const SolutionVector& curSol) const
     {
         ResidualType residual;
-        residual[cellCenterIdx].resize(numCellCenterDofs());
-        residual[faceIdx].resize(numFaceDofs());
+        residual[cellCenterIdx].resize(fvGridGeometry().numCellCenterDofs());
+        residual[faceIdx].resize(fvGridGeometry().numFaceDofs());
         assembleResidual(residual, curSol);
 
         // calculate the square norm of the residual
@@ -315,8 +315,8 @@ public:
     void setJacobianPattern()
     {
         // resize the jacobian and the residual
-        const auto numDofsCC = numCellCenterDofs();
-        const auto numDofsFace = numFaceDofs();
+        const auto numDofsCC = fvGridGeometry().numCellCenterDofs();
+        const auto numDofsFace = fvGridGeometry().numFaceDofs();
 
         // convenience references
         CCToCCMatrixBlock& A11 = (*jacobian_)[cellCenterIdx][cellCenterIdx];
@@ -379,19 +379,9 @@ public:
      */
     void setResidualSize()
     {
-        (*residual_)[cellCenterIdx].resize(numCellCenterDofs());
-        (*residual_)[faceIdx].resize(numFaceDofs());
+        (*residual_)[cellCenterIdx].resize(fvGridGeometry().numCellCenterDofs());
+        (*residual_)[faceIdx].resize(fvGridGeometry().numFaceDofs());
     }
-
-    //! cell-centered schemes have one dof per cell
-    std::size_t numDofs() const
-    { return numCellCenterDofs() + numFaceDofs(); }
-
-    std::size_t numCellCenterDofs() const
-    { return gridView().size(0); }
-
-    std::size_t numFaceDofs() const
-    { return gridView().size(1); }
 
     const Problem& problem() const
     { return *problem_; }
