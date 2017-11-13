@@ -23,7 +23,7 @@
 #ifndef DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
 #define DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include "../staggered/fluxvariables.hh"
 
@@ -96,6 +96,7 @@ class FreeFlowFluxVariablesImpl<TypeTag, true> : public FreeFlowFluxVariablesImp
     };
 
 public:
+
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
@@ -127,7 +128,7 @@ private:
         const Scalar velocity = elemFaceVars[scvf].velocitySelf();
 
         const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
-        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+        const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {

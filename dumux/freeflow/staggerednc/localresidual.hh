@@ -23,7 +23,6 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 
-#include <dune/istl/matrix.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/implicit/staggered/localresidual.hh>
@@ -65,17 +64,17 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
     friend ParentType;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
+    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
 
     enum {
         conti0EqIdx = Indices::conti0EqIdx,
@@ -92,6 +91,8 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
+public:
+    using ParentType::ParentType;
 
      /*!
      * \brief Evaluate the rate of change of all conservation
@@ -103,7 +104,8 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
+    CellCenterPrimaryVariables computeStorageForCellCenter(const Problem& problem,
+                                                           const SubControlVolume& scv,
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage(0.0);
@@ -140,11 +142,13 @@ protected:
      * \param elemVolVars The current or previous element volVars
      * \param bcTypes The boundary types
      */
-    void setFixedCell_(const SubControlVolume& insideScv,
+    void setFixedCell_(CellCenterResidual& residual,
+                       const Problem& problem,
+                       const SubControlVolume& insideScv,
                        const ElementVolumeVariables& elemVolVars,
-                       const BoundaryTypes& bcTypes)
+                       const BoundaryTypes& bcTypes) const
     {
-        ParentType::setFixedCell_(insideScv, elemVolVars, bcTypes);
+        ParentType::setFixedCell_(residual, problem, insideScv, elemVolVars, bcTypes);
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
@@ -156,7 +160,7 @@ protected:
             {
                 const auto& insideVolVars = elemVolVars[insideScv];
                 const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(phaseIdx, compIdx) : insideVolVars.massFraction(phaseIdx, compIdx);
-                this->ccResidual_[eqIdx] = massOrMoleFraction - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][eqIdx];
+                residual[eqIdx] = massOrMoleFraction - problem.dirichletAtPos(insideScv.center())[cellCenterIdx][eqIdx];
             }
         }
 

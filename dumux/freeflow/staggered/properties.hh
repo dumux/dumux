@@ -141,9 +141,6 @@ SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
 
 SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
-// disable velocity output by default
-SET_BOOL_PROP(NavierStokes, VtkAddVelocity, true);
-
 SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
 
 SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
