@@ -376,7 +376,7 @@ private:
      */
     void createAnalyticalSolution_()
     {
-        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs()));
+        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
         analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
 
 
