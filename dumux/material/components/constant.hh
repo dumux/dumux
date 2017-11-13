@@ -19,18 +19,17 @@
 /*!
  * \file
  * \ingroup Components
- * \brief Setting constant fluid properties via the input file for testing purposes.
+ * \brief Setting constant fluid properties via the input file.
  */
-#ifndef DUMUX_CONSTANT_HH
-#define DUMUX_CONSTANT_HH
+#ifndef DUMUX_COMPONENTS_CONSTANT_HH
+#define DUMUX_COMPONENTS_CONSTANT_HH
 
+#include <dune/common/deprecated.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/basicproperties.hh>
-
 #include "component.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Components {
 
 /*!
  * \ingroup Components
@@ -38,21 +37,57 @@ namespace Dumux
  * \brief A component which returns run time specified values
  *        for all fluid properties.
  *
+ * \tparam id  The id used to read from the input file / parametertree
  * \tparam Scalar  The type used for scalar values
+ *
+ * \note For the constant component with id=1 you would specify the parameters in the input file as follows
+ *       \code{.ini}
+ *       [1.Component]
+ *       MolarMass = 0.018 # kg/mol
+ *       \endcode
+ * \note If you only have one component you can also leaf out the "1.".
  */
-template<class TypeTag, class Scalar>
-class Constant : public Component<Scalar, Constant<TypeTag, Scalar> >
+template<int id, class Scalar>
+class Constant : public Component<Scalar, Constant<id, Scalar> >
 {
 
 public:
+    /*!
+     * \brief Returns true if the gas phase is assumed to be compressible
+     */
+    static constexpr bool gasIsCompressible()
+    { return false; }
+
+    /*!
+     * \brief Returns true if the gas phase viscostiy is constant
+     */
+    static constexpr bool gasViscosityIsConstant()
+    { return true; }
+
+    /*!
+     * \brief Returns true if the gas phase is assumed to be ideal
+     */
+    static constexpr bool gasIsIdeal()
+    { return true; }
+
+    /*!
+     * \brief Returns true if the liquid phase is assumed to be compressible
+     */
+    static constexpr bool liquidIsCompressible()
+    { return false; }
+
+    /*!
+     * \brief Returns true if the liquid phase viscostiy is constant
+     */
+    static constexpr bool liquidViscosityIsConstant()
+    { return true; }
+
     /*!
      * \brief A human readable name for the component.
      */
     static const std::string& name()
     {
-        static const std::string name
-         = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.Name", "c");
-
+        static const std::string name = getParamFromGroup<std::string>(std::to_string(id), "Component.Name", "component");
         return name;
     }
 
@@ -61,16 +96,9 @@ public:
      */
     static Scalar molarMass()
     {
-        static const Scalar molarMass
-        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.MolarMass", 1.0);
+        static const Scalar molarMass = getParamFromGroup<Scalar>(std::to_string(id), "Component.MolarMass", 1.0);
         return molarMass;
     }
-
-    /*!
-     * \brief Returns true if the liquid phase is assumed to be compressible
-     */
-    static constexpr bool liquidIsCompressible()
-    { return false; }
 
     /*!
      * \brief Sets the liquid density in \f$\mathrm{[kg/m^3]}\f$.
@@ -80,8 +108,7 @@ public:
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar density
-        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.LiquidDensity", 1.0);
+        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidDensity", 1.0);
         return density;
     }
 
@@ -96,17 +123,9 @@ public:
      */
     static Scalar liquidViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar kinematicViscosity
-        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.LiquidKinematicViscosity", 1.0);
+        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidKinematicViscosity", 1.0);
         return kinematicViscosity * liquidDensity(temperature, pressure);
     }
-
-
-    /*!
-     * \brief Returns true if the gas phase is assumed to be compressible
-     */
-    static bool gasIsCompressible()
-    { return false; }
 
     /*!
      * \brief Sets the gas density in \f$\mathrm{[kg/m^3]}\f$.
@@ -116,8 +135,7 @@ public:
      */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar density
-        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.GasDensity", 1.0);
+        static const Scalar density = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasDensity", 1.0);
         return density;
     }
 
@@ -132,12 +150,16 @@ public:
      */
     static Scalar gasViscosity(Scalar temperature, Scalar pressure)
     {
-        static const Scalar kinematicViscosity
-        = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Component.GasKinematicViscosity", 1.0);
+        static const Scalar kinematicViscosity = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasKinematicViscosity", 1.0);
         return kinematicViscosity * gasDensity(temperature, pressure);
     }
 };
 
-} // end namespace
+} // end namespace Components
 
-#endif // DUMUX_CONSTANT_HH
+template<class TypeTag, class Scalar>
+using Constant DUNE_DEPRECATED_MSG("Use Components::Constant<id, Scalar> instead") = Dumux::Components::Constant<1, Scalar>;
+
+} // end namespace Dumux
+
+#endif // DUMUX_COMPONENTS_CONSTANT_HH
