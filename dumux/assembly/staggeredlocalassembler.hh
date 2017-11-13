@@ -139,11 +139,10 @@ public:
                                                                              prevElemeFaceVars,
                                                                              curElemeFaceVars,
                                                                              elemBcTypes,
-                                                                             elemFluxVarsCache)[0];
+                                                                             elemFluxVarsCache);
 
         // treat the local residua of the face dofs:
         // create a cache to reuse some results for the calculation of the derivatives
-
         FaceSolutionVector faceResidualCache;
         faceResidualCache.resize(fvGeometry.numScvf());
         faceResidualCache = 0.0;
@@ -159,7 +158,7 @@ public:
                                                                             prevElemeFaceVars,
                                                                             curElemeFaceVars,
                                                                             elemBcTypes,
-                                                                            elemFluxVarsCache)[0];
+                                                                            elemFluxVarsCache);
 
             res[faceIdx][scvf.dofIndex()] += faceResidualCache[scvf.localFaceIdx()] ;
         }
@@ -178,9 +177,6 @@ public:
                                 jac,
                                 res[cellCenterIdx][cellCenterGlobalI],
                                 faceResidualCache);
-
-
-
 
     }
 
