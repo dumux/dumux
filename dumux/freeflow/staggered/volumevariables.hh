@@ -104,7 +104,6 @@ public:
     {
         Scalar t = problem.temperatureAtPos(scv.dofPosition());
         fluidState.setTemperature(t);
-        fluidState.setSaturation(phaseIdx, 1.);
 
         fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
 
