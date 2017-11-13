@@ -242,12 +242,15 @@ public:
         BoundaryValues values = initialAtPos(globalPos);
 
         // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
-        if(isInlet(globalPos) && time() >= 20.0)
+        if(isInlet(globalPos))
         {
-            values[transportCompIdx] = 1e-3;
+            if(time() >= 10.0 || inletVelocity_  < eps_)
+            {
+                values[transportCompIdx] = 1e-3;
 #if NONISOTHERMAL
             values[temperatureIdx] = 293.15;
 #endif
+            }
         }
 
         return values;
@@ -312,8 +315,6 @@ public:
     void setTimeLoop(TimeLoopPtr timeLoop)
     {
         timeLoop_ = timeLoop;
-        // if(inletVelocity_ > eps_)
-            timeLoop_->setCheckPoint({20.0});
     }
 
     Scalar time() const
