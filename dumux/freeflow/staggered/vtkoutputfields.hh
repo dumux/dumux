@@ -23,7 +23,8 @@
 #ifndef DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dune/common/fvector.hh>
 
 namespace Dumux
 {
@@ -36,12 +37,34 @@ template<class TypeTag>
 class NavierStokesVtkOutputFields
 {
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
+
+        const bool writeFaceVars_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
+        if(writeFaceVars_)
+        {
+            vtk.addFaceVariable([](const FaceVariables& f){ return f.velocitySelf(); }, "scalarFaceVelocity");
+
+            auto faceVelocityVector = [](const SubControlVolumeFace& scvf, const FaceVariables& f)
+                                      {
+                                          GlobalPosition velocity(0.0);
+                                          velocity[scvf.directionIndex()] = f.velocitySelf();
+                                          return velocity;
+                                      };
+
+            vtk.addFaceVariable(faceVelocityVector, "vectorFaceVelocity");
+        }
 
         if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
             vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); },"temperature");
