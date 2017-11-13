@@ -115,16 +115,16 @@ public:
         auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
-        auto curElemeFaceVars = localView(gridVariables.curGridFaceVars());
-        curElemeFaceVars.bind(element, fvGeometry, curSol);
+        auto curElemFaceVars = localView(gridVariables.curGridFaceVars());
+        curElemFaceVars.bind(element, fvGeometry, curSol);
 
         const bool isStationary = localResidual.isStationary();
         auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        auto prevElemeFaceVars = localView(gridVariables.prevGridFaceVars());
+        auto prevElemFaceVars = localView(gridVariables.prevGridFaceVars());
         if (!isStationary)
         {
             prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-            prevElemeFaceVars.bindElement(element, fvGeometry, localResidual.prevSol());
+            prevElemFaceVars.bindElement(element, fvGeometry, localResidual.prevSol());
         }
 
         // for compatibility with box models
@@ -136,8 +136,8 @@ public:
                                                                              fvGeometry,
                                                                              prevElemVolVars,
                                                                              curElemVolVars,
-                                                                             prevElemeFaceVars,
-                                                                             curElemeFaceVars,
+                                                                             prevElemFaceVars,
+                                                                             curElemFaceVars,
                                                                              elemBcTypes,
                                                                              elemFluxVarsCache);
 
@@ -155,8 +155,8 @@ public:
                                                                             scvf,
                                                                             prevElemVolVars,
                                                                             curElemVolVars,
-                                                                            prevElemeFaceVars,
-                                                                            curElemeFaceVars,
+                                                                            prevElemFaceVars,
+                                                                            curElemFaceVars,
                                                                             elemBcTypes,
                                                                             elemFluxVarsCache);
 
@@ -170,8 +170,8 @@ public:
                                 curSol,
                                 prevElemVolVars,
                                 curElemVolVars,
-                                prevElemeFaceVars,
-                                curElemeFaceVars,
+                                prevElemFaceVars,
+                                curElemFaceVars,
                                 elemFluxVarsCache,
                                 elemBcTypes,
                                 jac,
