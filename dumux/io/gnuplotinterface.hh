@@ -38,6 +38,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -112,9 +113,9 @@ public:
         plot += "set xlabel \"" + xLabel_ + "\"\n";
         plot += "set ylabel \"" + yLabel_ + "\"\n";
         if (xRangeIsSet_)
-            plot += "set xrange [" + std::to_string(xRangeMin_) + ":" + std::to_string(xRangeMax_) + "]" + "\n";
+            plot += "set xrange [" + toStringWithPrecision(xRangeMin_) + ":" + toStringWithPrecision(xRangeMax_) + "]" + "\n";
         if (yRangeIsSet_)
-            plot += "set yrange [" + std::to_string(yRangeMin_) + ":" + std::to_string(yRangeMax_) + "]" + "\n";
+            plot += "set yrange [" + toStringWithPrecision(yRangeMin_) + ":" + toStringWithPrecision(yRangeMax_) + "]" + "\n";
 
         // set user defined options
         plot += plotOptions_ + "\n";
@@ -408,9 +409,19 @@ private:
             Dune::dwarn << "warning: " << text << " is infinity, adjust your data range" << std::endl;
     }
 
+    // Convert string with higher precision
+    template <typename T>
+    std::string toStringWithPrecision(const T value, const int n = 8)
+    {
+        std::ostringstream out;
+        out << std::setprecision(n) << value;
+        return out.str();
+    }
+
     std::FILE * pipe_;
     bool openPlotWindow_;
     bool persist_;
+    bool createImage_;
     std::string terminalType_;
     std::string outputDirectory_;
     char datafileSeparator_;
