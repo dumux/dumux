@@ -24,6 +24,7 @@
 #ifndef DUMUX_UNIT_HH
 #define DUMUX_UNIT_HH
 
+#include <dune/common/deprecated.hh>
 #include "component.hh"
 
 namespace Dumux
@@ -36,7 +37,8 @@ namespace Dumux
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
-class Unit : public Component<Scalar, Unit<Scalar> >
+class DUNE_DEPRECATED_MSG("Use Components::Constant<id, Scalar> instead. The default is a unit fluid system.")
+Unit : public Component<Scalar, Unit<Scalar> >
 {
 
 public:
