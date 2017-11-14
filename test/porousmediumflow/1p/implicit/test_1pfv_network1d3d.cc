@@ -186,6 +186,9 @@ int main(int argc, char** argv) try
                            << "have been saved to restart files.");
         }
 
+        // output l2 norm for convergence analysis
+        problem->outputL2Norm(x);
+
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();

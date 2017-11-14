@@ -29,6 +29,8 @@
 #include <dune/geometry/quadraturerules.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/constant.hh>
@@ -94,23 +96,24 @@ class TubesTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
 
 public:
     TubesTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        name_ = getParam<std::string>( "Problem.Name");
+        name_ = getParam<std::string>("Problem.Name");
 
         //get hMax_ of the grid
         hMax_ = 0.0;
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(fvGridGeometry->gridView()))
            hMax_ = std::max(element.geometry().volume(), hMax_);
     }
 
@@ -185,19 +188,6 @@ public:
         return PrimaryVariables(0.0);
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
     // \}
 
     /*!
@@ -232,8 +222,7 @@ public:
 
         const auto& globalPos = scv.center();
         const auto& volVars = elemVolVars[scv];
-        const auto K = this->spatialParams().permeability(element, scv,
-                                    this->model().elementSolution(element, this->model().curSol()));
+        const auto K = this->spatialParams().permeability(element, scv, ElementSolutionVector());
 
         using std::sin;
         if (globalPos[2] > 0.5 - eps_)
@@ -260,19 +249,18 @@ public:
 
     // \}
 
-    void postTimeStep()
+    void outputL2Norm(const SolutionVector solution) const
     {
-        const auto& solution = this->model().curSol();
-
         // calculate the discrete L2-Norm
-        Scalar LTwoNorm = 0.0;
+        Scalar lTwoNorm = 0.0;
 
         // get the Gaussian quadrature rule for intervals
         const auto& quad = Dune::QuadratureRules<Scalar, dim>::rule(Dune::GeometryType(1), 1);
 
-        for (const auto& element : elements(this->gridView()))
+        const auto& gg = this->fvGridGeometry();
+        for (const auto& element : elements(gg.gridView()))
         {
-            const unsigned int eIdx = this->elementMapper().index(element);
+            const auto eIdx = gg.elementMapper().index(element);
             const auto geometry = element.geometry();
             for(auto&& qp : quad)
             {
@@ -289,22 +277,23 @@ public:
                     const auto& localFiniteElement = feCache_.get(geometry.type());
                     localFiniteElement.localBasis().evaluateFunction(qp.position(), shapeValues);
                     for (unsigned int i = 0; i < shapeValues.size(); ++i)
-                        p += shapeValues[i]*solution[this->model().dofMapper().subIndex(element, i, dim)][pressureIdx];
+                        p += shapeValues[i]*solution[gg.dofMapper().subIndex(element, i, dim)][pressureIdx];
                 }
-                LTwoNorm += (p - pe)*(p - pe)*qp.weight()*integrationElement;
+                lTwoNorm += (p - pe)*(p - pe)*qp.weight()*integrationElement;
             }
         }
-        LTwoNorm = std::sqrt(LTwoNorm);
+        lTwoNorm = std::sqrt(lTwoNorm);
 
         // write the norm into a log file
-        logFile_.open(this->name() + ".log", std::ios::app);
-        logFile_ << "[ConvergenceTest] L2-norm(pressure) = " << LTwoNorm  << " hMax = " << hMax_ << std::endl;
-        logFile_.close();
+        std::ofstream logFile;
+        logFile.open(this->name() + ".log", std::ios::app);
+        logFile << "[ConvergenceTest] L2-norm(pressure) = " << lTwoNorm  << " hMax = " << hMax_ << std::endl;
+        logFile.close();
     }
 
 private:
 
-    Scalar exactPressure_(const GlobalPosition& globalPos)
+    Scalar exactPressure_(const GlobalPosition& globalPos) const
     {
         using std::sin;
         return sin(4.0*M_PI*globalPos[2]);
@@ -315,7 +304,6 @@ private:
 
     Scalar hMax_;
 
-    std::ofstream logFile_;
     typename Dune::PQkLocalFiniteElementCache<Scalar, Scalar, dim, 1> feCache_;
 };
 
