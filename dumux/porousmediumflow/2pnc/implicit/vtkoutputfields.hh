@@ -61,12 +61,6 @@ public:
             vtk.addVolumeVariable([j](const VolumeVariables& v){ return v.molarity(Indices::wPhaseIdx,j); },"m_"+ FluidSystem::phaseName(Indices::wPhaseIdx) + "^" + FluidSystem::componentName(j));
 
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.priVars().state(); }, "phasePresence");
-
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.permeability()[0][0];},"Kxx");
-        if (dim >= 2)
-            vtk.addVolumeVariable([](const VolumeVariables& v){ return v.permeability()[1][1]; },"Kyy");
-        if (dim >= 3)
-            vtk.addVolumeVariable([](const VolumeVariables& v){ return v.permeability()[2][2]; },"Kzz");
     }
 };
 
