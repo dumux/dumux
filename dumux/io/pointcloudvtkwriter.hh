@@ -178,10 +178,10 @@ public:
      * \param name The name of the data set
      * \param ncomps The number of components of the data set
      */
-    void addPointData(const std::vector<Scalar>& v, const std::string &name, int ncomps = 1)
+    void addPointData(const std::vector<Scalar>& v, const std::string &name)
     {
-        assert(v.size() == ncomps * coordinates_.size());
-        scalarPointData_.push_back(ScalarFunction(v, name, ncomps));
+        assert(v.size() == coordinates_.size());
+        scalarPointData_.push_back(ScalarFunction(v, name, 1));
     }
 
      /*!
@@ -191,10 +191,10 @@ public:
      * \param name The name of the data set
      * \param ncomps The number of components of the data set
      */
-    void addPointData(const std::vector<GlobalPosition>& v, const std::string &name, int ncomps = 1)
+    void addPointData(const std::vector<GlobalPosition>& v, const std::string &name)
     {
         assert(v.size() == coordinates_.size());
-        vectorPointData_.push_back(VectorFunction(v, name, ncomps));
+        vectorPointData_.push_back(VectorFunction(v, name, 3));
     }
 
      /*!

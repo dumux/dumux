@@ -33,6 +33,7 @@
 namespace Dumux
 {
 
+
 /*!
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
@@ -61,9 +62,6 @@ class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag>
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
-
-    struct PriVarScalarDataInfo { unsigned int pvIdx; std::string name; };
-    struct PriVarVectorDataInfo { std::vector<unsigned int> pvIdx; std::string name; };
 
     struct FaceVarScalarDataInfo { std::function<Scalar(const FaceVariables&)> get; std::string name; };
     struct FaceVarVectorDataInfo { std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)> get; std::string name; };
@@ -101,11 +99,19 @@ public:
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     template<typename Vector>
-    void addFaceField(const Vector& v, const std::string& name, int nComp = 1)
+    void addFaceField(const Vector& v, const std::string& name)
     {
+        static_assert(std::is_same<Vector, std::vector<Scalar>>::value ||
+                      std::is_same<Vector, std::vector<GlobalPosition>>::value,
+                      "Only vectors of Scalar or GlobalPosition are supported");
+
         if (v.size() == this->gridGeom_.gridView().size(1))
-            int x;
-            // fields_.emplace_back(gridGeom_.gridView(), gridGeom_.elementMapper(), v, name, nComp, 0);
+        {
+            if(!coordinatesInitialized_)
+                updateCoordinates_();
+
+            faceWriter_->addPointData(v, name);
+        }
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
     }
@@ -200,11 +206,12 @@ private:
 
         if(!faceVarVectorDataInfo_.empty())
             for (std::size_t i = 0; i < faceVarVectorDataInfo_.size(); ++i)
-                faceWriter_->addPointData(faceVarVectorData[i], faceVarVectorDataInfo_[i].name, 3);
+                faceWriter_->addPointData(faceVarVectorData[i], faceVarVectorDataInfo_[i].name);
 
         sequenceWriter_.write(time);
-        // faceScalarFields_.clear();
-        // faceVectorFields_.clear();
+        coordinates_.clear();
+        coordinates_.shrink_to_fit();
+        coordinatesInitialized_ = false;
     }
 
 
