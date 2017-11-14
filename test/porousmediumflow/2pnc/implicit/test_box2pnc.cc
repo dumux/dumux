@@ -144,6 +144,8 @@ int main(int argc, char** argv) try
     vtkWriter.addField(problem->getCurrentDensity(), "currentDensity [A/cm^2]");
     vtkWriter.addField(problem->getReactionSourceH2O(), "reactionSourceH2O [mol/(sm^2)]");
     vtkWriter.addField(problem->getReactionSourceO2(), "reactionSourceO2 [mol/(sm^2)]");
+    vtkWriter.addField(problem->getKxx(), "Kxx");
+    vtkWriter.addField(problem->getKyy(), "Kyy");
     vtkWriter.write(0.0);
 
     // instantiate time loop

@@ -166,6 +166,8 @@ public:
         currentDensity_.resize(fvGridGeometry->gridView().size(dofCodim));
         reactionSourceH2O_.resize(fvGridGeometry->gridView().size(dofCodim));
         reactionSourceO2_.resize(fvGridGeometry->gridView().size(dofCodim));
+        Kxx_.resize(fvGridGeometry->gridView().size(dofCodim));
+        Kyy_.resize(fvGridGeometry->gridView().size(dofCodim));
     }
 
     /*!
@@ -284,6 +286,15 @@ public:
         return reactionSourceO2_;
     }
 
+    const std::vector<Scalar>& getKxx()
+    {
+        return Kxx_;
+    }
+
+    const std::vector<Scalar>& getKyy()
+    {
+        return Kyy_;
+    }
 
     void updateVtkOutput(const SolutionVector& curSol)
     {
@@ -320,6 +331,8 @@ public:
                     reactionSourceO2_[dofIdxGlobal] = 0.0;
                     currentDensity_[dofIdxGlobal] = 0.0;
                 }
+                Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
+                Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
             }
         }
     }
@@ -367,6 +380,8 @@ private:
     std::vector<double> currentDensity_;
     std::vector<double> reactionSourceH2O_;
     std::vector<double> reactionSourceO2_;
+    std::vector<double> Kxx_;
+    std::vector<double> Kyy_;
 };
 
 } //end namespace Dumux
