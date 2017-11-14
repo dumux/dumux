@@ -582,7 +582,10 @@ protected:
         Scalar result = 0.0;
         using std::abs;
         using std::max;
-        for (int j = 0; j < numEq; ++j) {
+        // iterate over all primary variables
+        // note: we use PrimaryVariables::dimension (== numEq)
+        //       for compatibility with the staggered grid implementation
+        for (int j = 0; j < PrimaryVariables::dimension; ++j) {
             Scalar eqErr = abs(priVars1[j] - priVars2[j]);
             eqErr /= max<Scalar>(1.0,abs(priVars1[j] + priVars2[j])/2);
 
