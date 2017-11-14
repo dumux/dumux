@@ -56,6 +56,7 @@ class BoxFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using Element = typename GridView::template Codim<0>::Entity;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -74,6 +75,11 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView) {}
+
+    //! the vertex mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const VertexMapper& dofMapper() const
+    { return this->vertexMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -240,6 +246,7 @@ class BoxFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -258,6 +265,11 @@ public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView) {}
+
+    //! the vertex mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const VertexMapper& dofMapper() const
+    { return this->vertexMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const

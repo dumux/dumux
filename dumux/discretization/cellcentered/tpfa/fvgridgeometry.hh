@@ -58,6 +58,7 @@ class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using Element = typename GridView::template Codim<0>::Entity;
     using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
 
@@ -76,6 +77,11 @@ public:
     : ParentType(gridView)
     , elementMap_(gridView)
     {}
+
+    //! the element mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const ElementMapper& dofMapper() const
+    { return this->elementMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -313,6 +319,7 @@ class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using Element = typename GridView::template Codim<0>::Entity;
     using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
 
@@ -328,6 +335,11 @@ public:
     : ParentType(gridView)
     , elementMap_(gridView)
     {}
+
+    //! the element mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const ElementMapper& dofMapper() const
+    { return this->elementMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
