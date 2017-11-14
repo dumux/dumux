@@ -114,7 +114,7 @@ private:
                   const SubControlVolumeFace& scvf)
     {
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-        using AdvectionFiller = typename AdvectionType::CacheFiller;
+        using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
         // forward to the filler for the advective quantities
         AdvectionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
@@ -140,7 +140,7 @@ private:
                   const SubControlVolumeFace& scvf)
     {
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-        using DiffusionFiller = typename DiffusionType::CacheFiller;
+        using DiffusionFiller = typename DiffusionType::Cache::Filler;
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
@@ -173,7 +173,7 @@ private:
                        const SubControlVolumeFace& scvf)
     {
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-        using HeatConductionFiller = typename HeatConductionType::CacheFiller;
+        using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
         // forward to the filler of the diffusive quantities
         HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);

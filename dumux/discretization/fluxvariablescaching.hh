@@ -26,19 +26,7 @@
 namespace Dumux
 {
 
-namespace FluxVariablesCaching
-{
-
-class _EmptyCache {};
-
-/*!
- * \ingroup ImplicitModel
- * \brief Empty caches to use in a law/process, e.g. Darcy's law
- * \note Never use the _EmptyCache directly as it lead to ambiguous definitions
- */
-class EmptyAdvectionCache : public _EmptyCache {};
-class EmptyDiffusionCache : public _EmptyCache {};
-class EmptyHeatConductionCache : public _EmptyCache {};
+namespace FluxVariablesCaching {
 
 //! The empty filler class corresponding to EmptyCache
 template<class TypeTag>
@@ -75,6 +63,19 @@ public:
                      const FluxVariablesCacheFiller& fluxVarsCacheFiller)
     {}
 };
+
+// an empty cache filler
+template<class TypeTag> struct _EmptyCache
+{ using Filler = EmptyCacheFiller<TypeTag>; };
+
+/*!
+ * \ingroup ImplicitModel
+ * \brief Empty caches to use in a law/process, e.g. Darcy's law
+ * \note Never use the _EmptyCache directly as it lead to ambiguous definitions
+ */
+template<class TypeTag> class EmptyAdvectionCache : public _EmptyCache<TypeTag> {};
+template<class TypeTag> class EmptyDiffusionCache : public _EmptyCache<TypeTag> {};
+template<class TypeTag> class EmptyHeatConductionCache : public _EmptyCache<TypeTag> {};
 
 } // end namespace FluxVariablesCaching
 

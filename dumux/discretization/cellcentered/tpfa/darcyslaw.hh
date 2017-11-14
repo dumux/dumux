@@ -65,25 +65,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    class TpfaDarcysLawCache
-    {
-    public:
-        void updateAdvection(const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace &scvf)
-        {
-            tij_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
-        }
-
-        const Scalar& advectionTij() const
-        { return tij_; }
-
-    private:
-        Scalar tij_;
-    };
-
     //! Class that fills the cache corresponding to tpfa Darcy's Law
     class TpfaDarcysLawCacheFiller
     {
@@ -103,13 +84,33 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
         }
     };
 
+    class TpfaDarcysLawCache
+    {
+    public:
+        using Filler = TpfaDarcysLawCacheFiller;
+
+        void updateAdvection(const Problem& problem,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace &scvf)
+        {
+            tij_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
+        }
+
+        const Scalar& advectionTij() const
+        { return tij_; }
+
+    private:
+        Scalar tij_;
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    // state the type for the corresponding cache and its filler
+    // state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache;
-    using CacheFiller = TpfaDarcysLawCacheFiller;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
