@@ -33,7 +33,6 @@
 namespace Dumux
 {
 
-
 /*!
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
@@ -66,8 +65,19 @@ class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag>
     struct FaceVarScalarDataInfo { std::function<Scalar(const FaceVariables&)> get; std::string name; };
     struct FaceVarVectorDataInfo { std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)> get; std::string name; };
 
-    using Positions = std::vector<Scalar>;
-    using Data = std::vector<std::vector<Scalar>>;
+    struct FaceFieldScalarDataInfo
+    {
+        FaceFieldScalarDataInfo(const std::vector<Scalar>& f, const std::string& n) : data(f), name(n) {}
+        const std::vector<Scalar>& data;
+        const std::string name;
+    };
+
+    struct FaceFieldVectorDataInfo
+    {
+        FaceFieldVectorDataInfo(const std::vector<GlobalPosition>& f, const std::string& n) : data(f), name(n) {}
+        const std::vector<GlobalPosition>& data;
+        const std::string name;
+    };
 
 public:
 
@@ -94,39 +104,51 @@ public:
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
-    //! Methods to conveniently add primary and secondary variables upon problem initialization
+    //! Methods to conveniently add face variables
     //! Do not call these methods after initialization
     //////////////////////////////////////////////////////////////////////////////////////////////
 
-    template<typename Vector>
-    void addFaceField(const Vector& v, const std::string& name)
+    //! Add a scalar valued field
+    //! \param v The field to be added
+    //! \param name The name of the vtk field
+    void addFaceField(const std::vector<Scalar>& v, const std::string& name)
     {
-        static_assert(std::is_same<Vector, std::vector<Scalar>>::value ||
-                      std::is_same<Vector, std::vector<GlobalPosition>>::value,
-                      "Only vectors of Scalar or GlobalPosition are supported");
-
         if (v.size() == this->gridGeom_.gridView().size(1))
-        {
-            if(!coordinatesInitialized_)
-                updateCoordinates_();
-
-            faceWriter_->addPointData(v, name);
-        }
+            faceFieldScalarDataInfo_.emplace_back(v, name);
         else
             DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
     }
 
+    //! Add a vector valued field
+    //! \param v The field to be added
+    //! \param name The name of the vtk field
+    void addFaceField(const std::vector<GlobalPosition>& v, const std::string& name)
+    {
+        if (v.size() == this->gridGeom_.gridView().size(1))
+                faceFieldVectorDataInfo_.emplace_back(v, name);
+        else
+            DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
+    }
+
+    //! Add a scalar-valued faceVarible
+    //! \param f A function taking a FaceVariables object and returning the desired scalar
+    //! \param name The name of the vtk field
     void addFaceVariable(std::function<Scalar(const FaceVariables&)>&& f, const std::string& name)
     {
         faceVarScalarDataInfo_.push_back(FaceVarScalarDataInfo{f, name});
     }
 
+    //! Add a vector-valued faceVarible
+    //! \param f A function taking a SubControlVolumeFace and FaceVariables object and returning the desired vector
+    //! \param name The name of the vtk field
     void addFaceVariable(std::function<GlobalPosition(const SubControlVolumeFace& scvf, const FaceVariables&)>&& f, const std::string& name)
     {
         faceVarVectorDataInfo_.push_back(FaceVarVectorDataInfo{f, name});
     }
 
-
+    //! Write the values to vtp files
+    //! \param time The current time
+    //! \param type The output type
     void write(double time, Dune::VTK::OutputType type = Dune::VTK::ascii)
     {
         ParentType::write(time, type);
@@ -137,6 +159,7 @@ public:
 
 private:
 
+    //! Update the coordinates (the face centers)
     void updateCoordinates_()
     {
         coordinates_.resize(gridGeom_.numFaceDofs());
@@ -148,9 +171,8 @@ private:
         coordinatesInitialized_ = true;
     }
 
-     /*!
-     * \brief Gathers all face-related data and invokes the face vtk-writer using these data.
-     */
+     //! Gathers all face-related data and invokes the face vtk-writer using these data.
+     //! \param time The current time
     void getFaceDataAndWrite_(const Scalar time)
     {
         const auto numPoints = gridGeom_.numFaceDofs();
@@ -162,6 +184,7 @@ private:
         if(!coordinatesInitialized_)
             updateCoordinates_();
 
+        // prepare some containers to store the relevant data
         std::vector<std::vector<Scalar>> faceVarScalarData;
         std::vector<std::vector<GlobalPosition>> faceVarVectorData;
 
@@ -191,15 +214,18 @@ private:
 
                     const auto& faceVars = elemFaceVars[scvf];
 
+                    // get the scalar-valued data
                     for (std::size_t i = 0; i < faceVarScalarDataInfo_.size(); ++i)
                         faceVarScalarData[i][dofIdxGlobal] = faceVarScalarDataInfo_[i].get(faceVars);
 
+                    // get the vector-valued data
                     for (std::size_t i = 0; i < faceVarVectorDataInfo_.size(); ++i)
                             faceVarVectorData[i][dofIdxGlobal] = faceVarVectorDataInfo_[i].get(scvf, faceVars);
                 }
             }
         }
 
+        // transfer the data to the point writer
         if(!faceVarScalarDataInfo_.empty())
             for (std::size_t i = 0; i < faceVarScalarDataInfo_.size(); ++i)
                 faceWriter_->addPointData(faceVarScalarData[i], faceVarScalarDataInfo_[i].name);
@@ -208,7 +234,17 @@ private:
             for (std::size_t i = 0; i < faceVarVectorDataInfo_.size(); ++i)
                 faceWriter_->addPointData(faceVarVectorData[i], faceVarVectorDataInfo_[i].name);
 
+        // account for the custom fields
+        for(const auto& field: faceFieldScalarDataInfo_)
+            faceWriter_->addPointData(field.data, field.name);
+
+        for(const auto& field: faceFieldVectorDataInfo_)
+            faceWriter_->addPointData(field.data, field.name);
+
+        // write for the current time step
         sequenceWriter_.write(time);
+
+        // clear coordinates to save some memory
         coordinates_.clear();
         coordinates_.shrink_to_fit();
         coordinatesInitialized_ = false;
@@ -231,6 +267,9 @@ private:
 
     std::vector<FaceVarScalarDataInfo> faceVarScalarDataInfo_;
     std::vector<FaceVarVectorDataInfo> faceVarVectorDataInfo_;
+
+    std::vector<FaceFieldScalarDataInfo> faceFieldScalarDataInfo_;
+    std::vector<FaceFieldVectorDataInfo> faceFieldVectorDataInfo_;
 
 };
 
