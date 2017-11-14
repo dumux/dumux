@@ -44,7 +44,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP, OnePTestSpatialParams));
 NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
-NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
+NEW_TYPE_TAG(OnePTestCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
 NEW_TYPE_TAG(OnePTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTestProblem));
 
 SET_PROP(OnePTestProblem, Fluid)
@@ -65,15 +65,6 @@ SET_TYPE_PROP(OnePTestProblem, Problem, OnePTestProblem<TypeTag> );
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag> );
-
-// Linear solver settings
-// SET_TYPE_PROP(OnePTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
-
-NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
-NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
-// Solver settings for the tests using AMG
-// SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, AMGBackend<TypeTag> );
-// SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, AMGBackend<TypeTag> );
 }
 
 /*!

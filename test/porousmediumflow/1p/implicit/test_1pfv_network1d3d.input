@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 1 # [s]
 
@@ -6,6 +6,6 @@ TEnd = 1 # [s]
 File = ./grids/network1d3d.msh
 
 [Problem]
-Name = 1pccnetwork1d3d
+Name = 1pfvnetwork1d3d
 LiquidDensity = 1050 # blood density
 LiquidKinematicViscosity = 4.0e-3 # blood viscosity

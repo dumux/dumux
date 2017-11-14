@@ -21,8 +21,6 @@
  *
  * \brief test for the one-phase CC model
  */
-
-
 #include <config.h>
 
 #include <ctime>
@@ -34,7 +32,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "fractureproblem.hh"
+#include "1ptestproblem.hh"
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -42,7 +40,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
@@ -71,7 +69,13 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
                                         "\t-TimeManager.TEnd               End of the simulation [s] \n"
                                         "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.File                      The grid file\n";
+                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
+                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
+                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
+                                        "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
+                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
 
         std::cout << errorMessageOut
                   << "\n";
@@ -81,9 +85,9 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
-#if HAVE_DUNE_FOAMGRID
+
     // define the type tag for this problem
-    using TypeTag = TTAG(FractureBoxProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -117,9 +121,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -155,12 +158,12 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = AMGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonController = Dumux::NewtonController<TypeTag>;
-    using NewtonMethod = Dumux::NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
@@ -221,13 +224,7 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-
-#else
-#warning External grid module dune-foamgrid needed to run this example.
-    std::cerr << "Test skipped, it needs dune-foamgrid!" << std::endl;
-    return 77;
-#endif
-}// end main
+} // end main
 catch (Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;
