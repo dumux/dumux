@@ -49,10 +49,9 @@ public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::None;
 
-    //! state the type for the corresponding cache and its filler
+    //! state the type for the corresponding cache
     //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyAdvectionCache;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyAdvectionCache<TypeTag>;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

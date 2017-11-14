@@ -74,14 +74,41 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
+    //! Class that fills the cache corresponding to mpfa Darcy's Law
+    class MpfaFicksLawCacheFiller
+    {
+    public:
+        //! Function to fill an MpfaFicksLawCache of a given scvf
+        //! This interface has to be met by any diffusion-related cache filler class
+        template<class FluxVariablesCacheFiller>
+        static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                         unsigned int phaseIdx, unsigned int compIdx,
+                         const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace& scvf,
+                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+        {
+            // get interaction volume from the flux vars cache filler & upate the cache
+            if (problem.model().fvGridGeometry().isInBoundaryInteractionVolume(scvf))
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf, phaseIdx, compIdx);
+            else
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.interactionVolume(), scvf, phaseIdx, compIdx);
+        }
+    };
+
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-         // We always use the dynamic types here to be compatible on the boundary
+        // We always use the dynamic types here to be compatible on the boundary
         using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
         using PositionVector = typename BoundaryInteractionVolume::PositionVector;
 
     public:
+        // export filler type
+        using Filler = MpfaFicksLawCacheFiller;
+
         //! The constructor. Initializes the Neumann flux to zero
         MpfaFicksLawCache() { componentNeumannFluxes_.fill(0.0); }
 
@@ -133,37 +160,12 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         std::array<Scalar, numComponents> componentNeumannFluxes_;
     };
 
-    //! Class that fills the cache corresponding to mpfa Darcy's Law
-    class MpfaFicksLawCacheFiller
-    {
-    public:
-        //! Function to fill an MpfaFicksLawCache of a given scvf
-        //! This interface has to be met by any diffusion-related cache filler class
-        template<class FluxVariablesCacheFiller>
-        static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         unsigned int phaseIdx, unsigned int compIdx,
-                         const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace& scvf,
-                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-        {
-            // get interaction volume from the flux vars cache filler & upate the cache
-            if (problem.model().fvGridGeometry().isInBoundaryInteractionVolume(scvf))
-                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf, phaseIdx, compIdx);
-            else
-                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.interactionVolume(), scvf, phaseIdx, compIdx);
-        }
-    };
-
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
 
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;
-    using CacheFiller = MpfaFicksLawCacheFiller;
 
     static ComponentFluxVector flux (const Problem& problem,
                                      const Element& element,

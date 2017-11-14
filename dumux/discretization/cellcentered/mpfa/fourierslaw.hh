@@ -66,11 +66,37 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     static constexpr int energyEqIdx = GET_PROP_TYPE(TypeTag, Indices)::energyEqIdx;
 
+    //! Class that fills the cache corresponding to mpfa Darcy's Law
+    class MpfaFouriersLawCacheFiller
+    {
+    public:
+        //! Function to fill an MpfaDarcysLawCache of a given scvf
+        //! This interface has to be met by any cache filler class for heat conduction quantities
+        template<class FluxVariablesCacheFiller>
+        static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                         const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace& scvf,
+                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+        {
+            // get interaction volume from the flux vars cache filler & upate the cache
+            if (problem.model().fvGridGeometry().isInBoundaryInteractionVolume(scvf))
+                scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf);
+            else
+                scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.interactionVolume(), scvf);
+        }
+    };
+
     //! The cache used in conjunction with the mpfa Fourier's Law
     class MpfaFouriersLawCache
     {
         using Stencil = typename BoundaryInteractionVolume::GlobalIndexSet;
     public:
+        // export filler type
+        using Filler = MpfaFouriersLawCacheFiller;
+
         // update cached objects for heat conduction
         template<typename InteractionVolume>
         void updateHeatConduction(const InteractionVolume& iv, const SubControlVolumeFace &scvf)
@@ -104,36 +130,12 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         Scalar heatNeumannFlux_;
     };
 
-    //! Class that fills the cache corresponding to mpfa Darcy's Law
-    class MpfaFouriersLawCacheFiller
-    {
-    public:
-        //! Function to fill an MpfaDarcysLawCache of a given scvf
-        //! This interface has to be met by any cache filler class for heat conduction quantities
-        template<class FluxVariablesCacheFiller>
-        static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace& scvf,
-                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-        {
-            // get interaction volume from the flux vars cache filler & upate the cache
-            if (problem.model().fvGridGeometry().isInBoundaryInteractionVolume(scvf))
-                scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.boundaryInteractionVolume(), scvf);
-            else
-                scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.interactionVolume(), scvf);
-        }
-    };
-
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
 
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFouriersLawCache;
-    using CacheFiller = MpfaFouriersLawCacheFiller;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,

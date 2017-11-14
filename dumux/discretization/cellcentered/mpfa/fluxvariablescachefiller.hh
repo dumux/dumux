@@ -254,7 +254,7 @@ private:
                   const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-        using AdvectionFiller = typename AdvectionType::CacheFiller;
+        using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
         static constexpr auto AdvectionMethod = AdvectionType::myDiscretizationMethod;
         using LambdaFactory = TensorLambdaFactory<TypeTag, AdvectionMethod>;
@@ -296,7 +296,7 @@ private:
                   const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-        using DiffusionFiller = typename DiffusionType::CacheFiller;
+        using DiffusionFiller = typename DiffusionType::Cache::Filler;
 
         static constexpr auto DiffusionMethod = DiffusionType::myDiscretizationMethod;
         using LambdaFactory = TensorLambdaFactory<TypeTag, DiffusionMethod>;
@@ -352,7 +352,7 @@ private:
                        const std::vector<FluxVariablesCache*>& ivFluxVarCaches)
     {
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-        using HeatConductionFiller = typename HeatConductionType::CacheFiller;
+        using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
         static constexpr auto HeatConductionMethod = HeatConductionType::myDiscretizationMethod;
         using LambdaFactory = TensorLambdaFactory<TypeTag, HeatConductionMethod>;

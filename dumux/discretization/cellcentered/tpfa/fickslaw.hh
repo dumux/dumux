@@ -74,27 +74,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
-    class TpfaFicksLawCache
-    {
-    public:
-        void updateDiffusion(const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace &scvf,
-                             const unsigned int phaseIdx,
-                             const unsigned int compIdx)
-        {
-            tij_[phaseIdx][compIdx] = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
-        }
-
-        const Scalar& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
-        { return tij_[phaseIdx][compIdx]; }
-
-    private:
-        std::array< std::array<Scalar, numComponents>, numPhases> tij_;
-    };
-
     //! Class that fills the cache corresponding to tpfa Fick's Law
     class TpfaFicksLawCacheFiller
     {
@@ -115,13 +94,36 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
         }
     };
 
+    //! Class that caches the transmissibility
+    class TpfaFicksLawCache
+    {
+    public:
+        using Filler = TpfaFicksLawCacheFiller;
+
+        void updateDiffusion(const Problem& problem,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace &scvf,
+                             const unsigned int phaseIdx,
+                             const unsigned int compIdx)
+        {
+            tij_[phaseIdx][compIdx] = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+        }
+
+        const Scalar& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return tij_[phaseIdx][compIdx]; }
+
+    private:
+        std::array< std::array<Scalar, numComponents>, numPhases> tij_;
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
-    using CacheFiller = TpfaFicksLawCacheFiller;
 
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,

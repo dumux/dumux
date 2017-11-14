@@ -66,6 +66,33 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
+    //! Class that fills the cache corresponding to mpfa Darcy's Law
+    class MpfaDarcysLawCacheFiller
+    {
+    public:
+        //! Function to fill an MpfaDarcysLawCache of a given scvf
+        //! This interface has to be met by any advection-related cache filler class
+        template<class FluxVariablesCacheFiller>
+        static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                         const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace& scvf,
+                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+        {
+            // get interaction volume from the flux vars cache filler & upate the cache
+            if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.secondaryInteractionVolume(),
+                                                  fluxVarsCacheFiller.dataHandle(),
+                                                  scvf);
+            else
+                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.primaryInteractionVolume(),
+                                                  fluxVarsCacheFiller.dataHandle(),
+                                                  scvf);
+        }
+    };
+
     //! The cache used in conjunction with the mpfa Darcy's Law
     class MpfaDarcysLawCache
     {
@@ -74,6 +101,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using DirichletDataContainer = typename PrimaryInteractionVolume::DirichletDataContainer;
 
     public:
+        // export the filler type
+        using Filler = MpfaDarcysLawCacheFiller;
+
         //! update cached objects
         template<class InteractionVolume>
         void updateAdvection(const InteractionVolume& iv, const DataHandle& dataHandle, const SubControlVolumeFace &scvf)
@@ -120,40 +150,12 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const DirichletDataContainer* advectionDirichletData_;
     };
 
-    //! Class that fills the cache corresponding to mpfa Darcy's Law
-    class MpfaDarcysLawCacheFiller
-    {
-    public:
-        //! Function to fill an MpfaDarcysLawCache of a given scvf
-        //! This interface has to be met by any advection-related cache filler class
-        template<class FluxVariablesCacheFiller>
-        static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace& scvf,
-                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-        {
-            // get interaction volume from the flux vars cache filler & upate the cache
-            if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.secondaryInteractionVolume(),
-                                                  fluxVarsCacheFiller.dataHandle(),
-                                                  scvf);
-            else
-                scvfFluxVarsCache.updateAdvection(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                  fluxVarsCacheFiller.dataHandle(),
-                                                  scvf);
-        }
-    };
-
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCMpfa;
 
-    // state the type for the corresponding cache and its filler
+    // export the type for the corresponding cache
     using Cache = MpfaDarcysLawCache;
-    using CacheFiller = MpfaDarcysLawCacheFiller;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
