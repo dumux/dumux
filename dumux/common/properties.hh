@@ -120,6 +120,7 @@ NEW_PROP_TAG(HeatConductionType);                  //! The type for the calculat
 NEW_PROP_TAG(SolutionDependentHeatConduction);     //! specifies if the parameters for the heat conduction fluxes depend on the solution
 
 NEW_PROP_TAG(NumPhases);                           //! Number of fluid phases in the system
+NEW_PROP_TAG(PhaseIdx);                            //! A phase index to allow using a two-phase fluidsystem for one-phase models
 NEW_PROP_TAG(NumComponents);                       //! Number of fluid phases in the system
 NEW_PROP_TAG(SpatialParams);                       //! The type of the spatial parameters object
 NEW_PROP_TAG(FluidSystem);                         //! The type of the fluid system to use
