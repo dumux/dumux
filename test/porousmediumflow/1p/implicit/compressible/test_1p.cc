@@ -96,11 +96,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(dofCodim));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -135,7 +132,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = NewtonController<TypeTag>;
+    using NewtonController = Dumux::NewtonController<TypeTag>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 

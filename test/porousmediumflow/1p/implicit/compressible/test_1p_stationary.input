@@ -1,7 +1,7 @@
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 100 100
+Cells = 10 10
 
 [Problem]
 Name = 1p

@@ -48,7 +48,7 @@ int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
-    using TypeTag = TTAG(OnePIncompressibleBox);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -85,7 +85,6 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     SolutionVector x(fvGridGeometry->numDofs());
 
@@ -93,6 +92,12 @@ int main(int argc, char** argv) try
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
+
+    // intialize the vtk output module
+    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    vtkWriter.write(0.0);
 
     // make assemble and attach linear system
     using Assembler = FVAssembler<TypeTag, DiffMethod::analytic>;
@@ -124,13 +129,7 @@ int main(int argc, char** argv) try
     if (mpiHelper.rank() == 0) std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
 
     // output result to vtk
-    Dune::Timer outputTimer;
-    if (mpiHelper.rank() == 0) std::cout << "Writing result to file "<< problem->name() <<" ..." << std::flush;
-    Dune::VTKWriter<GridView> vtkwriter(leafGridView);
-    vtkwriter.addVertexData(x, "p");
-    vtkwriter.write(problem->name());
-    outputTimer.stop();
-    if (mpiHelper.rank() == 0) std::cout << " took " << outputTimer.elapsed() << " seconds." << std::endl;
+    vtkWriter.write(1.0);
 
     timer.stop();
 
