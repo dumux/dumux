@@ -50,7 +50,7 @@ class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ScvfCornerVector = typename SubControlVolumeFace::CornerVector;
+    using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
 
@@ -260,7 +260,7 @@ class MpfaDimensionHelper<TypeTag, /*dim*/3, /*dimWorld*/3>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ScvfCornerVector = typename SubControlVolumeFace::CornerVector;
+    using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
 
@@ -517,7 +517,7 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ScvfCornerVector = typename SubControlVolumeFace::CornerVector;
+    using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
     using ScvBasis = typename InteractionVolume::Traits::ScvBasis;

@@ -25,6 +25,7 @@
 
 #include <utility>
 #include <dune/common/fvector.hh>
+#include <dune/geometry/type.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 
 namespace Dumux
@@ -35,22 +36,19 @@ namespace Dumux
  * \brief Base class for a sub-control volume face in mpfa methods.
  *        All mpfa method-specific implementations should inherit from this class
  */
-template<class G, class GT, typename I>
-class CCMpfaSubControlVolumeFaceBase : public SubControlVolumeFaceBase<CCMpfaSubControlVolumeFaceBase<G, GT, I>, G, I>
+template<class ScvfGeometryTraits>
+class CCMpfaSubControlVolumeFaceBase : public SubControlVolumeFaceBase<CCMpfaSubControlVolumeFaceBase<ScvfGeometryTraits>, ScvfGeometryTraits>
 {
-    using ParentType = SubControlVolumeFaceBase<CCMpfaSubControlVolumeFaceBase<G, GT, I>, G, I>;
-    using IndexType = I;
-    using Geometry = G;
-
-    using Scalar = typename Geometry::ctype;
-    static const int dim = Geometry::mydimension;
-    static const int dimWorld = Geometry::coorddimension;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using Corners = typename GT::template CornerStorage<dim, dimWorld>::Type;
-    using Corner = typename Corners::value_type;
+    using ParentType = SubControlVolumeFaceBase<CCMpfaSubControlVolumeFaceBase<ScvfGeometryTraits>, ScvfGeometryTraits>;
+    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
+    using Scalar = typename ScvfGeometryTraits::Scalar;
+    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
+    using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
+    using Geometry = typename ScvfGeometryTraits::Geometry;
 
 public:
+    //! state the traits public and thus export all types
+    using Traits = ScvfGeometryTraits;
 
     /*!
      * \brief Constructor
@@ -67,12 +65,12 @@ public:
      */
     template<class MpfaHelper>
     CCMpfaSubControlVolumeFaceBase(const MpfaHelper& helper,
-                                   Corners&& corners,
+                                   CornerStorage&& corners,
                                    GlobalPosition&& unitOuterNormal,
-                                   IndexType vIdxGlobal,
-                                   IndexType scvfIndex,
-                                   IndexType insideScvIdx,
-                                   const std::vector<IndexType>& outsideScvIndices,
+                                   GridIndexType vIdxGlobal,
+                                   GridIndexType scvfIndex,
+                                   GridIndexType insideScvIdx,
+                                   const std::vector<GridIndexType>& outsideScvIndices,
                                    Scalar q,
                                    bool boundary)
     : ParentType(),
@@ -104,15 +102,15 @@ public:
     { return boundary_; }
 
     //! The global index of this sub control volume face
-    IndexType index() const
+    GridIndexType index() const
     { return scvfIndex_; }
 
     //! Returns the index of the vertex the scvf is connected to
-    IndexType vertexIndex() const
+    GridIndexType vertexIndex() const
     { return vertexIndex_; }
 
     //! index of the inside sub control volume
-    IndexType insideScvIdx() const
+    GridIndexType insideScvIdx() const
     { return insideScvIdx_; }
 
     //! The number of outside scvs connection via this scv face
@@ -121,11 +119,11 @@ public:
 
     //! index of the outside sub control volume or boundary scv index
     //! returns undefined behaviour if index exceeds numOutsideScvs
-    IndexType outsideScvIdx(int i = 0) const
+    GridIndexType outsideScvIdx(int i = 0) const
     { return outsideScvIndices_[i]; }
 
     //! returns the outside scv indices (can be more than one index for dim < dimWorld)
-    const std::vector<IndexType>& outsideScvIndices() const
+    const std::vector<GridIndexType>& outsideScvIndices() const
     { return outsideScvIndices_; }
 
     //! Returns the number of corners
@@ -133,7 +131,7 @@ public:
     { return corners_.size(); }
 
     //! Returns the corner for a given local index
-    const Corner& corner(unsigned int localIdx) const
+    const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
         return corners_[localIdx];
@@ -161,16 +159,16 @@ public:
 
     //! The geometry of the sub control volume face
     Geometry geometry() const
-    { return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_); }
+    { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
 
 private:
     bool boundary_;
-    IndexType vertexIndex_;
-    IndexType scvfIndex_;
-    IndexType insideScvIdx_;
-    std::vector<IndexType> outsideScvIndices_;
+    GridIndexType vertexIndex_;
+    GridIndexType scvfIndex_;
+    GridIndexType insideScvIdx_;
+    std::vector<GridIndexType> outsideScvIndices_;
 
-    Corners corners_;
+    CornerStorage corners_;
     GlobalPosition center_;
     GlobalPosition ipGlobal_;
     GlobalPosition unitOuterNormal_;

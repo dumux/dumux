@@ -23,8 +23,6 @@
 #ifndef DUMUX_SUBCONTROLVOLUME_HH
 #define DUMUX_SUBCONTROLVOLUME_HH
 
-#include <dune/common/fvector.hh>
-
 namespace Dumux
 {
 /*!
@@ -32,18 +30,18 @@ namespace Dumux
  * \brief Base class for a sub control volume, i.e a part of the control
  *        volume we are making the balance for. Defines the general interface.
  */
-template<class Imp, class G, typename I>
+template<class Imp, class ScvGeometryTraits>
 class SubControlVolumeBase
 {
     using Implementation = Imp;
-    using IndexType = I;
-    using Geometry = typename std::decay<G>::type;
-
-    using Scalar = typename Geometry::ctype;
-    enum { dimworld = Geometry::coorddimension };
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GridIndexType = typename ScvGeometryTraits::GridIndexType;
+    using LocalIndexType = typename ScvGeometryTraits::LocalIndexType;
+    using Scalar = typename ScvGeometryTraits::Scalar;
+    using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
 
 public:
+    //! state the traits public and thus export all types
+    using Traits = ScvGeometryTraits;
 
     //! The center of the sub control volume
     GlobalPosition center() const
@@ -58,13 +56,13 @@ public:
     }
 
     //! The index of the dof this scv is embedded in (ccfv)
-    IndexType dofIndex() const
+    GridIndexType dofIndex() const
     {
         return asImp_().dofIndex();
     }
 
         //! The index of the dof this scv is embedded in (box)
-    IndexType indexInElement() const
+    LocalIndexType indexInElement() const
     {
         return asImp_().indexInElement();
     }
@@ -76,7 +74,7 @@ public:
     }
 
     //! The global index of the element this scv is embedded in
-    IndexType elementIndex() const
+    GridIndexType elementIndex() const
     {
         return asImp_().elementIndex();
     }

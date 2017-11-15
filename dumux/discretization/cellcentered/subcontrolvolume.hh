@@ -23,30 +23,31 @@
 #ifndef DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
-#include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/common/optional.hh>
 
 namespace Dumux
 {
-template<class G, typename I>
-class CCSubControlVolume : public SubControlVolumeBase<CCSubControlVolume<G, I>, G, I>
+template<class ScvGeometryTraits>
+class CCSubControlVolume : public SubControlVolumeBase<CCSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>
 {
-    using ParentType = SubControlVolumeBase<CCSubControlVolume<G, I>, G, I>;
-    using Geometry = G;
-    using IndexType = I;
-
-    using Scalar = typename Geometry::ctype;
-    enum { dimworld = Geometry::coorddimension };
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using ParentType = SubControlVolumeBase<CCSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>;
+    using Geometry = typename ScvGeometryTraits::Geometry;
+    using GridIndexType = typename ScvGeometryTraits::GridIndexType;
+    using LocalIndexType = typename ScvGeometryTraits::LocalIndexType;
+    using Scalar = typename ScvGeometryTraits::Scalar;
+    using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
 
 public:
+    //! state the traits public and thus export all types
+    using Traits = ScvGeometryTraits;
+
     // the default constructor
     CCSubControlVolume() = default;
 
     // the contructor in the cc case
     CCSubControlVolume(Geometry&& geometry,
-                       IndexType elementIndex)
+                       GridIndexType elementIndex)
     : ParentType(), geometry_(std::forward<Geometry>(geometry)), elementIndex_(elementIndex) {}
 
     //! The copy constrcutor
@@ -100,13 +101,13 @@ public:
     }
 
     //! The index of the dof this scv is embedded in (the global index of this scv)
-    IndexType dofIndex() const
+    GridIndexType dofIndex() const
     {
         return elementIndex();
     }
 
     //! The global index of this scv
-    IndexType indexInElement() const
+    LocalIndexType indexInElement() const
     {
         return 0;
     }
@@ -118,13 +119,13 @@ public:
     }
 
     //! The global index of the element this scv is embedded in
-    IndexType elementIndex() const
+    GridIndexType elementIndex() const
     {
         return elementIndex_;
     }
 
     //! Return the corner for the given local index
-    GlobalPosition corner(unsigned int localIdx) const
+    GlobalPosition corner(LocalIndexType localIdx) const
     {
         assert(localIdx < geometry().corners() && "provided index exceeds the number of corners");
         return geometry().corner(localIdx);
@@ -133,8 +134,9 @@ public:
 private:
     // Work around the fact that geometry is not default constructible
     Optional<Geometry> geometry_;
-    IndexType elementIndex_;
+    GridIndexType elementIndex_;
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif

@@ -68,7 +68,7 @@ class BoxFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    using GeometryHelper = BoxGeometryHelper<GridView, dim>;
+    using GeometryHelper = BoxGeometryHelper<GridView, dim, SubControlVolume, SubControlVolumeFace>;
 
 public:
     //! Constructor

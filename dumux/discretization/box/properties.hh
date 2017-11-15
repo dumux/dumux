@@ -67,27 +67,83 @@ SET_TYPE_PROP(BoxModel, FVElementGeometry, BoxFVElementGeometry<TypeTag,
 SET_PROP(BoxModel, SubControlVolume)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GridView::ctype;
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    using ScvGeometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld>;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    static const int dim = Grid::dimension;
+    static const int dimWorld = Grid::dimensionworld;
+
+    // we use geometry traits that use static corner vectors to and a fixed geometry type
+    template <class ct>
+    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2^(dim) corners (1<<(dim))
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim)) >;
+        };
+
+        // we know all scvfs will have the same geometry type
+        template< int mydim >
+        struct hasSingleGeometryType
+        {
+            static const bool v = true;
+            static const unsigned int topologyId = Dune::Impl::CubeTopology< mydim >::type::id;
+        };
+    };
+
+    struct ScvGeometryTraits
+    {
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using Geometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld, ScvfMLGTraits<Scalar>>;
+        using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim, dimWorld>::Type;
+        using GlobalPosition = typename CornerStorage::value_type;
+    };
 public:
-    using type = BoxSubControlVolume<ScvGeometry, IndexType>;
+    using type = BoxSubControlVolume<ScvGeometryTraits>;
 };
 
 SET_PROP(BoxModel, SubControlVolumeFace)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GridView::ctype;
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    using ScvfGeometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld>;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    static const int dim = Grid::dimension;
+    static const int dimWorld = Grid::dimensionworld;
+
+    // we use geometry traits that use static corner vectors to and a fixed geometry type
+    template <class ct>
+    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
+        };
+
+        // we know all scvfs will have the same geometry type
+        template< int mydim >
+        struct hasSingleGeometryType
+        {
+            static const bool v = true;
+            static const unsigned int topologyId = Dune::Impl::CubeTopology< mydim >::type::id;
+        };
+    };
+
+    struct ScvfGeometryTraits
+    {
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar>>;
+        using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
+        using GlobalPosition = typename CornerStorage::value_type;
+    };
 public:
-    using type = BoxSubControlVolumeFace<ScvfGeometry, IndexType>;
+    using type = BoxSubControlVolumeFace<ScvfGeometryTraits>;
 };
 
 //! Set the solution vector type for an element

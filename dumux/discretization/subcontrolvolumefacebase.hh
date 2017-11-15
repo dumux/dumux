@@ -34,20 +34,18 @@ namespace Dumux
  * \brief Base class for a sub control volume face, i.e a part of the boundary
  *        of a sub control volume we computing a flux on.
  */
-template<class Imp, class G, typename I>
+template<class Imp, class ScvfGeometryTraits>
 class SubControlVolumeFaceBase
 {
     using Implementation = Imp;
-    using Geometry = G;
-    using IndexType = I;
-
-    using Scalar = typename G::ctype;
-    static const int dim = G::mydimension;
-    static const int dimworld = G::coorddimension;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
+    using Scalar = typename ScvfGeometryTraits::Scalar;
+    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
 
 public:
+    //! state the traits public and thus export all types
+    using Traits = ScvfGeometryTraits;
+
     //! The center of the sub control volume face
     GlobalPosition center() const
     {
@@ -79,7 +77,7 @@ public:
     }
 
     //! index of the inside sub control volume for spatial param evaluation
-    IndexType insideScvIdx() const
+    GridIndexType insideScvIdx() const
     {
         return asImp_().insideScvIdx();
     }
@@ -87,13 +85,13 @@ public:
     //! index of the outside sub control volume for spatial param evaluation
     //! This results in undefined behaviour if boundary is true
     //! In case of multiple outside scv indices (network grids) an index can be supplied
-    IndexType outsideScvIdx(int i = 0) const
+    GridIndexType outsideScvIdx(int i = 0) const
     {
         return asImp_().outsideScvIdx(i);
     }
 
     //! The global index of this sub control volume face
-    IndexType index() const
+    GridIndexType index() const
     {
         return asImp_().index();
     }
