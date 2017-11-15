@@ -54,8 +54,6 @@ public:
         const bool writeFaceVars_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
         if(writeFaceVars_)
         {
-            vtk.addFaceVariable([](const FaceVariables& f){ return f.velocitySelf(); }, "scalarFaceVelocity");
-
             auto faceVelocityVector = [](const SubControlVolumeFace& scvf, const FaceVariables& f)
                                       {
                                           GlobalPosition velocity(0.0);
@@ -63,7 +61,7 @@ public:
                                           return velocity;
                                       };
 
-            vtk.addFaceVariable(faceVelocityVector, "vectorFaceVelocity");
+            vtk.addFaceVariable(faceVelocityVector, "faceVelocity");
         }
 
         if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))

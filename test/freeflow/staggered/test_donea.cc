@@ -52,7 +52,6 @@
 
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/io/vtkoutputmodule.hh>
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 
 /*!
@@ -162,6 +161,7 @@ int main(int argc, char** argv) try
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact", 1);
     vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact", GridView::dimensionworld);
+    vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
 
     // instantiate time loop

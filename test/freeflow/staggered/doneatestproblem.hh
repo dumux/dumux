@@ -369,6 +369,14 @@ public:
         return analyticalVelocity_;
     }
 
+    /*!
+     * \brief Returns the analytical solution for the velocity at the faces
+     */
+    auto& getAnalyticalVelocitySolutionOnFace() const
+    {
+        return analyticalVelocityOnFace_;
+    }
+
 private:
 
     /*!
@@ -378,6 +386,7 @@ private:
     {
         analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
         analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
+        analyticalVelocityOnFace_.resize(this->fvGridGeometry().numFaceDofs());
 
 
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
@@ -390,20 +399,16 @@ private:
                 auto ccDofPosition = scv.dofPosition();
                 auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
 
-                // TODO: velocities on faces
-                // GlobalPosition velocityVector(0.0);
-                // for (auto&& scvf : scvfs(fvGeometry))
-                // {
-                //     auto faceDofIdx = scvf.dofIndex();
-                //     auto faceDofPosition = scvf.center();
-                //     auto dirIdx = scvf.directionIndex();
-                //     auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                //     // scalarFaceVelocityExact[faceDofIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
-                //
-                //     GlobalPosition tmp(0.0);
-                //     tmp[dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
-                //     vectorFaceVelocityExact[faceDofIdx] = std::move(tmp);
-                // }
+                // velocities on faces
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    const auto faceDofIdx = scvf.dofIndex();
+                    const auto faceDofPosition = scvf.center();
+                    const auto dirIdx = scvf.directionIndex();
+                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
+                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
+                }
+
                 analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
                 analyticalVelocity_[ccDofIdx] = analyticalSolutionAtCc[faceIdx];
             }
@@ -420,6 +425,7 @@ private:
     bool printL2Error_;
     std::vector<Scalar> analyticalPressure_;
     std::vector<GlobalPosition> analyticalVelocity_;
+    std::vector<GlobalPosition> analyticalVelocityOnFace_;
 
 };
 } //end namespace
