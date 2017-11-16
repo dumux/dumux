@@ -23,9 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_VOLUMEVARIABLES_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/discretization/staggered/elementvolumevariables.hh>
-
 namespace Dumux
 {
 
@@ -41,9 +38,6 @@ class StaggeredGlobalVolumeVariables
 template<class TypeTag>
 class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
-    // The local class needs to access and change volVars
-    friend StaggeredElementVolumeVariables<TypeTag, true>;
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -154,15 +148,15 @@ private:
 template<class TypeTag>
 class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
 {
-    // local class needs access to the problem
-    friend StaggeredElementVolumeVariables<TypeTag, false>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
-    void update(Problem& problem, const SolutionVector& sol)
-    { problemPtr_ = &problem; }
+    StaggeredGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     /*!
      * \brief Return a local restriction of this global object
@@ -172,11 +166,12 @@ public:
     friend inline ElementVolumeVariables localView(const StaggeredGlobalVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
-private:
-    Problem& problem_() const
+    const Problem& problem() const
     { return *problemPtr_;}
 
-    Problem* problemPtr_;
+private:
+
+    const Problem* problemPtr_;
 };
 
 } // end namespace
