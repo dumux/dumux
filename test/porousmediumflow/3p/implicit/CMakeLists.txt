@@ -3,16 +3,16 @@ add_input_file_links()
 # isothermal tests
 dune_add_test(NAME test_box3p
               SOURCES test_box3p.cc
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                            --script fuzzy
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pbox-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pbox-00008.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p")
 
 dune_add_test(NAME test_cc3p
               SOURCES test_cc3p.cc
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                            --script fuzzy
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/infiltration3pcc-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/infiltration3pcc-00008.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p")
@@ -20,8 +20,8 @@ dune_add_test(NAME test_cc3p
 # non-isothermal tests
 dune_add_test(NAME test_box3pniconvection
               SOURCES test_box3pniconvection.cc
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                            --script fuzzy
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
                             --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectionbox-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconvection-00010.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconvection"
@@ -29,30 +29,30 @@ dune_add_test(NAME test_box3pniconvection
 
 dune_add_test(NAME test_cc3pniconvection
               SOURCES test_cc3pniconvection.cc
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                                --script fuzzy
-                                --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectioncc-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconvection-00010.vtu
-                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconvection"
-                                --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
+                            --files ${CMAKE_SOURCE_DIR}/test/references/3pniconvectioncc-reference.vtu
+                            ${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconvection-00010.vtu
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconvection"
+                            --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
 
 dune_add_test(NAME test_box3pniconduction
               SOURCES test_box3pniconduction.cc
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                                --script fuzzy
-                                --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductionbox-reference.vtu
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
+                            --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductionbox-reference.vtu
                             ${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconduction-00006.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pniconduction"
                             --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
 
 dune_add_test(NAME test_cc3pniconduction
               SOURCES test_cc3pniconduction.cc
-              COMMAND python  ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                                --script fuzzy
-                                --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductioncc-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction-00006.vtu
-                                --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction"
-                                --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
+                            --files ${CMAKE_SOURCE_DIR}/test/references/3pniconductioncc-reference.vtu
+                            ${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction-00006.vtu
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3pniconduction"
+                            --zeroThreshold {"velocity_w \(m/s\)_1":1e-8})
 
 #install sources
 install(FILES
