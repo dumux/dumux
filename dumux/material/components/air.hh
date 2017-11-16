@@ -311,7 +311,7 @@ public:
                 +0.133981E+01 * pow(phi,-4)
                 -0.233758E+00 * pow(phi,-5)
                 +0.125718E-01 * pow(phi,-6);
-        c_p *= IdealGas::R / (molarMass() * 1000); // in J/mol/K * mol / kg / 1000 = kJ/kg/K
+        c_p *= IdealGas::R / molarMass(); // in J/(mol*K) / (kg/mol)
 
         return  c_p;
     }
