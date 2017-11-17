@@ -26,17 +26,6 @@
 #ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
 #define DUMUX_FREE_FLOW_PROPERTIES_HH
 
-#include <dumux/io/vtkoutputmodule.hh>
-
-// #include <dumux/FreeFlow/implicit/fluxvariables.hh>
-// #include <dumux/FreeFlow/implicit/fluxvariablescache.hh>
-// #include <dumux/FreeFlow/nonisothermal/implicit/localresidual.hh>
-// #include <dumux/FreeFlow/compositional/primaryvariableswitch.hh>
-// #include <dumux/FreeFlow/implicit/velocityoutput.hh>
-
-// #include <dumux/discretization/darcyslaw.hh>
-// #include <dumux/discretization/fickslaw.hh>
-// #include <dumux/discretization/fourierslaw.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
 #include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
@@ -52,8 +41,6 @@ namespace Properties
 NEW_TYPE_TAG(FreeFlow);
 
 SET_INT_PROP(FreeFlow, NumEqFace, 1); //!< set the number of equations to 1
-
-
 
 //! The sub-controlvolume face
 SET_PROP(FreeFlow, SubControlVolumeFace)
@@ -78,7 +65,7 @@ public:
 //! The variables living on the faces
 SET_TYPE_PROP(FreeFlow, FaceVariables, StaggeredFaceVariables<TypeTag>);
 
-
+//! A container class used to specify values for boundary conditions
 SET_PROP(FreeFlow, BoundaryValues)
 {
 private:
@@ -94,43 +81,6 @@ public:
 SET_TYPE_PROP(FreeFlow,
               BoundaryTypes,
               StaggeredFreeFlowBoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
-
-
-
-
-
-
-// //! The flux variables for models involving flow in porous media
-// SET_TYPE_PROP(FreeFlow, FluxVariables, PorousMediumFluxVariables<TypeTag>);
-//
-// //! The flux variables cache class for models involving flow in porous media
-// SET_TYPE_PROP(FreeFlow, FluxVariablesCache, PorousMediumFluxVariablesCache<TypeTag>);
-//
-// //! By default, we use darcy's law for the advective fluxes
-// SET_TYPE_PROP(FreeFlow, AdvectionType, DarcysLaw<TypeTag>);
-//
-// //! By default, we use fick's law for the diffusive fluxes
-// SET_TYPE_PROP(FreeFlow, MolecularDiffusionType, FicksLaw<TypeTag>);
-//
-// //! By default, we use fourier's law as the default for heat conduction fluxes
-// SET_TYPE_PROP(FreeFlow, HeatConductionType, FouriersLaw<TypeTag>);
-//
-// //! By default, parameters are solution-dependent
-// SET_BOOL_PROP(FreeFlow, SolutionDependentAdvection, true);
-// SET_BOOL_PROP(FreeFlow, SolutionDependentMolecularDiffusion, true);
-// SET_BOOL_PROP(FreeFlow, SolutionDependentHeatConduction, true);
-//
-// //! By default, we evaluate the permeability in the volume
-// SET_BOOL_PROP(FreeFlow, EvaluatePermeabilityAtScvfIP, false);
-//
-// //! The default implementation of the energy balance equation for flow problems in porous media.
-// SET_TYPE_PROP(FreeFlow, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
-
-//! Velocity output
-// SET_TYPE_PROP(FreeFlow, VelocityOutput, ImplicitVelocityOutput<TypeTag>);
-
-//! By default, we set an empty primary variables switch
-// SET_TYPE_PROP(FreeFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux
