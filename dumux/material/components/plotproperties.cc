@@ -177,6 +177,7 @@ int main(int argc, char *argv[])
 
             Dumux::GnuplotInterface<double> gnuplot(true);
             gnuplot.setOpenPlotWindow(openPlotWindow);
+            gnuplot.setCreateImage(true);
             gnuplot.setXRange(TMin, TMax);
             gnuplot.setYRange(propertyMinMax[phaseIdx][propertyIdx][0]*0.999, propertyMinMax[phaseIdx][propertyIdx][1]*1.001);
             gnuplot.setXlabel("temperature [K]");

@@ -63,7 +63,7 @@ public:
 
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
-        pipe_(0), openPlotWindow_(true), persist_(persist),
+        pipe_(0), openPlotWindow_(true), persist_(persist), createImage_(true),
         terminalType_("x11"), outputDirectory_("./"),
         datafileSeparator_(' '), linetype_("solid"),
         xRangeIsSet_(false), yRangeIsSet_(false),
@@ -102,12 +102,7 @@ public:
     void plot(const std::string &filename = "")
     {
         // set correct terminal and general options
-        std::string plot = "reset\n";
-        plot += "set datafile separator \'" + std::string(1, datafileSeparator_) + "\'\n";
-
-        // set the terminal if the defaults were overwritten
-        if (terminalType_.compare("x11") != 0 || linetype_.compare("solid") != 0)
-          plot += "set term " + terminalType_ + " " + linetype_ + " " + " \n";
+        std::string plot = "set datafile separator \'" + std::string(1, datafileSeparator_) + "\'\n";
 
         // set the labels and axes ranges
         plot += "set xlabel \"" + xLabel_ + "\"\n";
@@ -147,22 +142,35 @@ public:
 
         // live plot of the results if gnuplot is installed
 #ifdef HAVE_GNUPLOT
+        std::string interactivePlot = "reset\n";
+
+        // set the terminal if the defaults were overwritten
+        if (terminalType_.compare("x11") != 0 || linetype_.compare("solid") != 0)
+            interactivePlot += "set term " + terminalType_ + " " + linetype_ + " " + " \n";
+
+        interactivePlot += plot;
         if (openPlotWindow_)
-            executeGnuplot(plot.c_str());
+            executeGnuplot(interactivePlot.c_str());
 #endif
 
         // create a gnuplot file if a filename is specified
         if (filename.compare("") != 0)
         {
-            plotCommandForFile += "\n";
-            plotCommandForFile += "set term pngcairo size 800,600 " + linetype_ + " \n";
-            plotCommandForFile += "set output \"" + filename + ".png\"\n";
-            plotCommandForFile += "replot\n";
+            std::string filePlot = "reset\n";
+            filePlot += "set term pngcairo size 800,600 " + linetype_ + " \n";
+            filePlot += "set output \"" + filename + ".png\"\n";
+            filePlot += plot;
             std::string gnuplotFileName = outputDirectory_ + filename + ".gp";
             std::ofstream file;
             file.open(gnuplotFileName);
-            file << plotCommandForFile;
+            file << filePlot;
             file.close();
+
+          // live plot of the results if gnuplot is installed
+#ifdef HAVE_GNUPLOT
+          if (createImage_)
+              executeGnuplot(filePlot.c_str());
+#endif
         }
     }
 
@@ -348,6 +356,16 @@ public:
     void setOpenPlotWindow(bool openPlotWindow)
     {
         openPlotWindow_ = openPlotWindow;
+    }
+
+    /*!
+     * \brief Define whether gnuplot should create .png files
+     *
+     * \param createImage Create an image or not
+     */
+    void setCreateImage(bool createImage)
+    {
+        createImage_ = createImage;
     }
 
     /*!
