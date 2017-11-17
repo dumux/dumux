@@ -186,21 +186,21 @@ public:
         // set the saturations
         /////////////
 
-        Scalar Sg;
+        Scalar Sn;
         if (phasePresence == nPhaseOnly)
         {
-            Sg = 1.0;
+            Sn = 1.0;
         }
         else if (phasePresence == wPhaseOnly)
         {
-            Sg = 0.0;
+            Sn = 0.0;
         }
         else if (phasePresence == bothPhases)
         {
             if (formulation == pwsn)
-                Sg = priVars[switchIdx];
+                Sn = priVars[switchIdx];
             else if (formulation == pnsw)
-                Sg = 1.0 - priVars[switchIdx];
+                Sn = 1.0 - priVars[switchIdx];
             else
                 DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
@@ -209,8 +209,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         }
 
-        fluidState.setSaturation(nPhaseIdx, Sg);
-        fluidState.setSaturation(wPhaseIdx, 1.0 - Sg);
+        fluidState.setSaturation(nPhaseIdx, Sn);
+        fluidState.setSaturation(wPhaseIdx, 1.0 - Sn);
 
         /////////////
         // set the pressures of the fluid phases
@@ -218,7 +218,7 @@ public:
 
         // calculate capillary pressure
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        auto pc = MaterialLaw::pc(materialParams, 1 - Sg);
+        auto pc = MaterialLaw::pc(materialParams, 1 - Sn);
 
         // extract the pressures
         if (formulation == pwsn)
@@ -234,7 +234,7 @@ public:
             // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
             if (priVars[pressureIdx] - pc < 0.0)
             {
-                std::cout<< "p_g: "<< priVars[pressureIdx]<<" Cap_press: "<< pc << std::endl;
+                std::cout<< "p_n: "<< priVars[pressureIdx]<<" Cap_press: "<< pc << std::endl;
                 DUNE_THROW(NumericalProblem,"Capillary pressure is too high");
             }
             fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
@@ -313,19 +313,20 @@ public:
         {
         // only the wetting phase is present, i.e. wetting phase
         // composition is stored explicitly.
-        // extract _mass_ fractions in the nonwetting phase
+        // extract _mass_ fractions in the non-wetting phase
             Dune::FieldVector<Scalar, numComponents> moleFrac;
+
+            moleFrac[nCompIdx] = priVars[switchIdx];
 
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
                 moleFrac[compIdx] = priVars[compIdx];
 
-            moleFrac[nCompIdx] = priVars[switchIdx];
-            Scalar sumMoleFracNotWater = 0;
+            Scalar sumMoleFracOtherComponents = 0;
             for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
-                sumMoleFracNotWater+=moleFrac[compIdx];
+                sumMoleFracOtherComponents += moleFrac[compIdx];
 
-            sumMoleFracNotWater += moleFrac[nCompIdx];
-            moleFrac[wCompIdx] = 1 -sumMoleFracNotWater;
+            sumMoleFracOtherComponents += moleFrac[nCompIdx];
+            moleFrac[wCompIdx] = 1 - sumMoleFracOtherComponents;
 
             // convert mass to mole fractions and set the fluid state
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
