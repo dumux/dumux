@@ -36,7 +36,6 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
 #include "indices.hh"

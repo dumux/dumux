@@ -18,49 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief TODO doc
+ * \brief Adds vtk output fields specific to non-isothermal models
  */
+#ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
+#define DUMUX_ENERGY_OUTPUT_FIELDS_HH
 
-#ifndef DUMUX_POROUSMEDIUMFLOW_NONISOTHERMAL_MODEL_HH
-#define DUMUX_POROUSMEDIUMFLOW_NONISOTHERMAL_MODEL_HH
-
-#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
-//! declaration of the implementation
-template<class TypeTag, bool EnableEnergy>
-class NonIsothermalModelImplementation;
 
+/*!
+ * \ingroup NonIsothermal, InputOutput
+ * \brief Adds vtk output fields specific to non-isothermal models
+ */
 template<class TypeTag>
-using NonIsothermalModel = NonIsothermalModelImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
-
-template<class TypeTag>
-class NonIsothermalModelImplementation<TypeTag, false>
+class EnergyVtkOutputFields
 {
+    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 public:
-    template<class VtkOutputModule>
-    static void maybeAddTemperature(VtkOutputModule& vtkOutputModule)
-    {}
-};
-
-template<class TypeTag>
-class NonIsothermalModelImplementation<TypeTag, true>
-{
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-public:
-    template<class VtkOutputModule>
-    static void maybeAddTemperature(VtkOutputModule& vtkOutputModule)
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
     {
-        // register vtk output field for temperature
-        vtkOutputModule.addVolumeVariable([](const auto& volVars){ return volVars.temperature(); }, "temperature");
+        IsothermalVtkOutputFields::init(vtk);
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); }, "temperature");
     }
 };
 
 } // end namespace Dumux
-
-#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 
 #endif
