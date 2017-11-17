@@ -46,7 +46,7 @@ namespace Properties
 
 NEW_TYPE_TAG(OnePNIConvectionProblem, INHERITS_FROM(OnePNI));
 NEW_TYPE_TAG(OnePNIConvectionBoxProblem, INHERITS_FROM(BoxModel, OnePNIConvectionProblem));
-NEW_TYPE_TAG(OnePNIConvectionCCProblem, INHERITS_FROM(CCTpfaModel, OnePNIConvectionProblem));
+NEW_TYPE_TAG(OnePNIConvectionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePNIConvectionProblem));
 NEW_TYPE_TAG(OnePNIConvectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePNIConvectionProblem));
 
 // Set the grid type
@@ -102,11 +102,11 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
@@ -115,9 +115,6 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         // world dimension
         dimWorld = GridView::dimensionworld
     };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dimWorld : 0 };
 
     enum {
         // indices of the primary variables
@@ -143,46 +140,41 @@ public:
         //initialize fluid system
         FluidSystem::init();
 
-        std::string name = getParam<std::string>("Problem.Name");
-        outputInterval_ = getParam<int>("Problem.OutputInterval");
+        name_ = getParam<std::string>("Problem.Name");
         darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
 
         temperatureHigh_ = 291.0;
         temperatureLow_ = 290.0;
         pressureHigh_ = 2e5;
         pressureLow_ = 1e5;
+
+        temperatureExact_.resize(this->fvGridGeometry().numDofs());
     }
 
-
-    bool shouldWriteOutput() const
+    //! Get exact temperature vector for output
+    const std::vector<Scalar>& getExactTemperature()
     {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
+        return temperatureExact_;
     }
 
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
-        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        const auto someElement = *(elements(this->gridView()).begin());
-        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->model().fvGridGeometry());
-        someFvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
+        auto fvGeometry = localView(this->fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
-        const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
+        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto storageW =  densityW*heatCapacityW*porosity;
         const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
@@ -190,19 +182,19 @@ public:
         std::cout << "storage: " << storageTotal << '\n';
 
         using std::max;
-        const Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        time = max(time, 1e-10);
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 auto dofPosition = scv.dofPosition();
-                temperatureExact[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
+                temperatureExact_[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
             }
         }
     }
@@ -305,17 +297,6 @@ public:
     // \{
 
     /*!
-     * \brief Return the sources within the domain.
-     *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0);
-    }
-
-    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param values The initial values for the primary variables
@@ -348,7 +329,7 @@ private:
     Scalar darcyVelocity_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    int outputInterval_;
+    std::vector<Scalar> temperatureExact_;
 };
 
 } //end namespace Dumux

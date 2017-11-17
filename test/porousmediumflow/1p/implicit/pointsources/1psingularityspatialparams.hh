@@ -52,11 +52,11 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePSingularitySpatialParams(const Problem& problem, const GridView& gridView)
-        : ParentType(problem, gridView)
+    OnePSingularitySpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
-        permeability_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Permeability);
-        porosity_= GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Porosity);
+        permeability_ = getParam<Scalar>("SpatialParams.Permeability");
+        porosity_= getParam<Scalar>("SpatialParams.Porosity");
     }
 
     /*!

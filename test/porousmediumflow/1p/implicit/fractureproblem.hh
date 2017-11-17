@@ -45,13 +45,13 @@ namespace Properties
 {
 NEW_TYPE_TAG(FractureProblem, INHERITS_FROM(OneP, FractureSpatialParams));
 NEW_TYPE_TAG(FractureBoxProblem, INHERITS_FROM(BoxModel, FractureProblem));
-NEW_TYPE_TAG(FractureCCProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
+NEW_TYPE_TAG(FractureCCTpfaProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
 NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem));
 
 //! Enable caching (more memory, but faster runtime)
-SET_BOOL_PROP(FractureCCProblem, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(FractureProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGlobalFluxVariablesCache, true);
 
 #if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);

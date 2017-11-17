@@ -36,87 +36,116 @@ dune_add_test(NAME test_1pbox
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pbox test_1pfv.input -Problem.Name 1ptestbox")
 
 # a gstat test (becaue it's a random permeability field we can't test against a reference solution)
-dune_add_test(SOURCES test_1pwithgstat.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaProblem)
+dune_add_test(NAME test_1pwithgstat
+              SOURCES test_1pfv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaProblem
+              CMAKE_GUARD HAVE_GSTAT)
+
+# non-isothermal tests
+dune_add_test(NAME test_1pnibox_conduction
+              SOURCES test_1pnifv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionBoxProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconduction-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_conduction-00006.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_conduction test_1pnifv_conduction.input -Problem.Name 1pnibox_conduction"
+                       --zeroThreshold {"velocity_H2O":1e-8})
+
+dune_add_test(NAME test_1pnibox_convection
+              SOURCES test_1pnifv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionBoxProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnibox_convection-00010.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnibox_convection test_1pnifv_convection.input -Problem.Name 1pnibox_convection"
+                       --zeroThreshold {"velocity":1e-15})
+
+dune_add_test(NAME test_1pnicctpfa_conduction
+              SOURCES test_1pnifv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCTpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconduction-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnicctpfa_conduction-00006.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnicctpfa_conduction test_1pnifv_conduction.input -Problem.Name 1pnicctpfa_conduction"
+                       --zeroThreshold {"velocity":1e-8})
+
+dune_add_test(NAME test_1pnicctpfa_convection
+              SOURCES test_1pnifv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCTpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconvection-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pnicctpfa_convection-00010.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnicctpfa_convection test_1pnifv_convection.input -Problem.Name 1pnicctpfa_convection")
+
+# TODO: Implement interaction volume handle?
+# dune_add_test(NAME test_1pniccmpfa_conduction
+#               SOURCES test_1pnifv.cc
+#               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfaProblem
+#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+#               CMD_ARGS --script fuzzy
+#                        --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconduction-reference.vtu
+#                                ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_conduction-00006.vtu
+#                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_conduction test_1pnifv_conduction.input -Problem.Name 1pniccmpfa_conduction")
 #
-# # non-isothermal tests
-# add_dumux_test(test_box1pniconduction test_box1pniconduction test_box1pniconduction.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconduction-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/box1pniconduction-00006.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pniconduction"
-#                  --zeroThreshold {"velocity_H2O":1e-8})
-#
-# add_dumux_test(test_box1pniconvection test_box1pniconvection test_box1pniconvection.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/box1pniconvection-00010.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pniconvection"
-#                  --zeroThreshold {"velocity":1e-15})
-#
-# add_dumux_test(test_cc1pniconduction test_cc1pniconduction test_cc1pniconduction.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconduction-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/cc1pniconduction-00006.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pniconduction"
-#                  --zeroThreshold {"velocity":1e-8})
-#
-# add_dumux_test(test_cc1pniconvection test_cc1pniconvection test_cc1pniconvection.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconvection-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/cc1pniconvection-00010.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pniconvection")
-#
-# add_dumux_test(test_ccmpfa1pniconduction test_ccmpfa1pniconduction test_ccmpfa1pniconduction.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconduction-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/ccmpfa1pniconduction-00006.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfa1pniconduction")
-#
-# add_dumux_test(test_ccmpfa1pniconvection test_ccmpfa1pniconvection test_ccmpfa1pniconvection.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconvection-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/ccmpfa1pniconvection-00010.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccmpfa1pniconvection")
-#
-# dim < dimWorld tests with foamgrid
+# dune_add_test(NAME test_1pniccmpfa_convection
+#               SOURCES test_1pnifv.cc
+#               COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCMpfaProblem
+#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+#               CMD_ARGS --script fuzzy
+#                        --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconvection-reference.vtu
+#                                ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_convection-00010.vtu
+#                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_convection test_1pnifv_convection.input -Problem.Name 1pniccmpfa_convection")
+
+# dim < dimWorld tests with Dune::Foamgrid<1,3>
 dune_add_test(NAME test_1pcctpfa_network1d3d
               SOURCES test_1pfv_network1d3d.cc
               COMPILE_DEFINITIONS TYPETAG=TubesTestCCTpfaProblem
-              COMMAND ./tubesconvergencetest.py test_1pcctpfa_network1d3d test_1pfv_network1d3d.input -Problem.Name test_1pcctpfa_network1d3d)
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMMAND ./tubesconvergencetest.py
+              CMD_ARGS test_1pcctpfa_network1d3d test_1pfv_network1d3d.input -Problem.Name test_1pcctpfa_network1d3d)
 
 dune_add_test(NAME test_1pbox_network1d3d
               SOURCES test_1pfv_network1d3d.cc
               COMPILE_DEFINITIONS TYPETAG=TubesTestBoxProblem
-              COMMAND ./tubesconvergencetest.py test_1pbox_network1d3d test_1pfv_network1d3d.input -Problem.Name test_1pbox_network1d3d)
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMMAND ./tubesconvergencetest.py
+              CMD_ARGS test_1pbox_network1d3d test_1pfv_network1d3d.input -Problem.Name test_1pbox_network1d3d)
 
-# dune_add_test(SOURCES test_box1pnetwork1d3d.cc
-#               NAME test_box1pnetwork1d3d
-#               COMMAND ./tubesconvergencetest.py test_box1pnetwork1d3d)
-#
-# add_dumux_test(test_box1pfracture2d3d test_box1pfracture2d3d test_box1pfracture2d3d.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/1pboxfracture2d3d-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/1pboxfracture2d3d-00001.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pfracture2d3d")
-#
-# dune_add_test(SOURCES test_cc1pnetwork1d3d.cc
-#               NAME test_cc1pnetwork1d3d
-#               COMMAND ./tubesconvergencetest.py test_cc1pnetwork1d3d)
-#
-# add_dumux_test(test_cc1pfracture2d3d test_cc1pfracture2d3d test_cc1pfracture2d3d.cc
-#                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#                  --script fuzzy
-#                  --files ${CMAKE_SOURCE_DIR}/test/references/1pccfracture2d3d-reference.vtu
-#                          ${CMAKE_CURRENT_BINARY_DIR}/1pccfracture2d3d-00001.vtu
-#                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pfracture2d3d")
+# dim < dimWorld tests with Dune::Foamgrid<2,3>
+dune_add_test(NAME test_1pbox_fracture2d3d
+              SOURCES test_1pfv_fracture2d3d.cc
+              COMPILE_DEFINITIONS TYPETAG=FractureBoxProblem
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pboxfracture2d3d-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pbox_fracture2d3d-00001.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pbox_fracture2d3d test_1pfv_fracture2d3d.input -Problem.Name 1pbox_fracture2d3d")
+
+dune_add_test(NAME test_1pcctpfa_fracture2d3d
+              SOURCES test_1pfv_fracture2d3d.cc
+              COMPILE_DEFINITIONS TYPETAG=FractureCCTpfaProblem
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/1pccfracture2d3d-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pcctpfa_fracture2d3d-00001.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pcctpfa_fracture2d3d test_1pfv_fracture2d3d.input -Problem.Name 1pcctpfa_fracture2d3d")
+
+# TODO: Fix this test mpfa 2d3d!
+# dune_add_test(NAME test_1pccmpfa_fracture2d3d
+#               SOURCES test_1pfv_fracture2d3d.cc
+#               COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaProblem
+#               CMAKE_GUARD dune-foamgrid_FOUND
+#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+#               CMD_ARGS --script fuzzy
+#                       --files ${CMAKE_SOURCE_DIR}/test/references/1pccfracture2d3d-reference.vtu
+#                               ${CMAKE_CURRENT_BINARY_DIR}/1pccmpfa_fracture2d3d-00001.vtu
+#                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pccmpfa_fracture2d3d test_1pfv_fracture2d3d.input -Problem.Name 1pccmpfa_fracture2d3d")
 
 #install sources
 install(FILES
@@ -129,18 +158,8 @@ fractureproblem.hh
 fracturespatialparams.hh
 tubesproblem.hh
 tubesspatialparams.hh
-test_box1pfracture2d3d.cc
-test_box1pnetwork1d3d.cc
-test_box1p.cc
-test_box1pniconduction.cc
-test_box1pniconvection.cc
-test_box1pwithamg.cc
-test_cc1pfracture2d3d.cc
-test_cc1pnetwork1d3d.cc
-test_cc1p.cc
-test_cc1pniconduction.cc
-test_cc1pniconvection.cc
-test_cc1pwithamg.cc
-test_ccmpfa1pniconduction.cc
-test_ccmpfa1pniconvection.cc
+test_1pfv.cc
+test_1pnifv.cc
+test_1pfv_fracture2d3d.cc
+test_1pfv_network1d3d.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1p)

@@ -33,6 +33,7 @@
 #include <dune/istl/io.hh>
 
 #include "1pniconductionproblem.hh"
+#include "1pniconvectionproblem.hh"
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -116,9 +117,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -143,7 +143,11 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
+
+    // output every vtkOutputInterval time step
+    const int vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -155,11 +159,11 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = NewtonController<TypeTag>;
-    using NewtonMethod = NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
+    using NewtonController = Dumux::NewtonController<TypeTag>;
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
@@ -188,6 +192,9 @@ int main(int argc, char** argv) try
                            << "have been saved to restart files.");
         }
 
+        // compute the new analytical temperature field for the output
+        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
+
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
@@ -195,14 +202,14 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
-
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
+            vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 

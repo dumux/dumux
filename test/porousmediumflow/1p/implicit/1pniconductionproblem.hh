@@ -46,7 +46,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(OnePNIConductionProblem, INHERITS_FROM(OnePNI));
 NEW_TYPE_TAG(OnePNIConductionBoxProblem, INHERITS_FROM(BoxModel, OnePNIConductionProblem));
-NEW_TYPE_TAG(OnePNIConductionCCProblem, INHERITS_FROM(CCTpfaModel, OnePNIConductionProblem));
+NEW_TYPE_TAG(OnePNIConductionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePNIConductionProblem));
 NEW_TYPE_TAG(OnePNIConductionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePNIConductionProblem));
 
 // Set the grid type
@@ -101,6 +101,9 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -108,9 +111,6 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         // world dimension
         dimWorld = GridView::dimensionworld
     };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dimWorld : 0 };
 
     enum {
         // indices of the primary variables
@@ -134,21 +134,25 @@ public:
         FluidSystem::init();
 
         name_ = getParam<std::string>("Problem.Name");
-        outputInterval_ = getParam<int>("Problem.OutputInterval");
         temperatureHigh_ = 300.0;
-        time_ = 0.0;
+        temperatureExact_.resize(fvGridGeometry->numDofs());
     }
 
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    const std::vector<Scalar>& computeExactTemperatureSolution(Scalar time)
+    //! get the analytical temperature
+    const std::vector<Scalar>& getExactTemperature()
     {
-        const auto someElement = *(elements(this->gridView()).begin());
-        const ElementSolution someElemSol(someElement, this->model().curSol(), this->fvGridGeometry());
-        const auto initSol = initial_();
+        return temperatureExact_;
+    }
 
-        auto fvGeometry = localView(this->model().fvGridGeometry());
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
+    {
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
+
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        const auto someInitSol = initialAtPos(someElement.geometry().center());
+
+        auto fvGeometry = localView(this->fvGridGeometry());
         fvGeometry.bindElement(someElement);
         const auto someScv = *(scvs(fvGeometry).begin());
 
@@ -157,7 +161,7 @@ public:
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
-        const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
+        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
         const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
@@ -165,20 +169,20 @@ public:
                                                                                                          someElement, fvGeometry, someScv);
         using std::max;
         time = max(time, 1e-10);
-
-        for (const auto& element : elements(this->fvGeometry().gridView()))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                const auto globalIdx = scv.dofIndex();
-                const auto& globalPos = scv.dofPosition();
-
-                using std::erf; using std::sqrt;
-                exactTemperature_[globalIdx] = temperatureHigh_ + (initSol[temperatureIdx] - temperatureHigh_)
+               auto globalIdx = scv.dofIndex();
+               const auto& globalPos = scv.dofPosition();
+               using std::erf;
+               using std::sqrt;
+               temperatureExact_[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
                                               *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
+
             }
         }
     }
@@ -276,8 +280,7 @@ private:
     Scalar temperatureHigh_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    int outputInterval_;
-    std::vector<Scalar> exactTemperature_;
+    std::vector<Scalar> temperatureExact_;
 };
 
 } //end namespace Dumux

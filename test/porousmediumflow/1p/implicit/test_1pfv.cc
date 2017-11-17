@@ -147,6 +147,11 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+
+    // if we are using a random permeability field with gstat
+    bool isRandomField = getParam<bool>("SpatialParams.RandomField", false);
+    if(isRandomField) vtkWriter.addField(problem->spatialParams().getPermField(), "K");
+
     vtkWriter.write(0.0);
 
     // instantiate time loop

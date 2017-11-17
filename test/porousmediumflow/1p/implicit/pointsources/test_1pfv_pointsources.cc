@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the 1pni CC model
+ * \brief test for the one-phase model with point sources
  */
 #include <config.h>
 
@@ -32,7 +32,7 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include "1pniconvectionproblem.hh"
+#include "1psingularityproblem.hh"
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -51,32 +51,6 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
-                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
-                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n";
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
-
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -92,7 +66,7 @@ int main(int argc, char** argv) try
         DumuxMessage::print(/*firstCall=*/true);
 
     // parse command line arguments and input file
-    Parameters::init(argc, argv, usage);
+    Parameters::init(argc, argv);
 
     // try to create a grid (from the given grid file or the input file)
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
@@ -116,9 +90,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -155,11 +128,11 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = NewtonController<TypeTag>;
-    using NewtonMethod = NewtonMethod<TypeTag, NewtonController, Assembler, LinearSolver>;
+    using NewtonController = Dumux::NewtonController<TypeTag>;
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
