@@ -279,7 +279,7 @@ public:
                     }
 
                     // the quadrature point to be used on the scvfs
-                    static const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+                    static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     const auto& outsideScvIndices = [&] ()
