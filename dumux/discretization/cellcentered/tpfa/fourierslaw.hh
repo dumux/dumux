@@ -75,7 +75,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
         //! This interface has to be met by any diffusion-related cache filler class
         template<class FluxVariablesCacheFiller>
         static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         unsigned int phaseIdx, unsigned int compIdx,
                          const Problem& problem,
                          const Element& element,
                          const FVElementGeometry& fvGeometry,
@@ -83,7 +82,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
                          const SubControlVolumeFace& scvf,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-            scvfFluxVarsCache.updateHeadConduction(problem, element, fvGeometry, elemVolVars, scvf);
+            scvfFluxVarsCache.updateHeatConduction(problem, element, fvGeometry, elemVolVars, scvf);
         }
     };
 
@@ -93,13 +92,11 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     public:
         using Filler = TpfaFouriersLawCacheFiller;
 
-        void updateDiffusion(const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace &scvf,
-                             const unsigned int phaseIdx,
-                             const unsigned int compIdx)
+        void updateHeatConduction(const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const SubControlVolumeFace &scvf)
         {
             tij_ = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
         }
@@ -205,7 +202,6 @@ private:
         {
             const auto outsideScvIdx = scvf.outsideScvIdx(i);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
             const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
             const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
 
