@@ -39,10 +39,6 @@ namespace Properties
 {
 // The spatial parameters TypeTag
 NEW_TYPE_TAG(OnePTestSpatialParams);
-
-// Set properties of the porous medium
-NEW_PROP_TAG(SpatialParamsRandomField);
-SET_BOOL_PROP(OnePTestSpatialParams, SpatialParamsRandomField, false);
 }
 
 /*!
@@ -62,7 +58,7 @@ class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexSet = typename GridView::IndexSet;
-    using ScalarVector = std::vector<Scalar>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     enum {
         dim=GridView::dimension,
@@ -76,20 +72,20 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePTestSpatialParams(const Problem& problem, const GridView& gridView)
-        : ParentType(problem, gridView),
-          randomPermeability_(gridView.size(dim), 0.0),
-          indexSet_(gridView.indexSet())
+    OnePTestSpatialParams(const Problem& problem)
+        : ParentType(problem),
+          randomPermeability_(problem.fvGridGeometry().gridView().size(dim), 0.0),
+          indexSet_(problem.fvGridGeometry().gridView().indexSet())
     {
-        randomField_ = GET_PARAM_FROM_GROUP(TypeTag, bool, SpatialParams, RandomField);
-        permeability_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.Permeability);
+        randomField_ = getParam<bool>("SpatialParams.RandomField", false);
+        permeability_ = getParam<Scalar>("SpatialParams.Permeability");
         if(!randomField_)
-            permeabilityLens_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PermeabilityLens);
+            permeabilityLens_ = getParam<Scalar>("SpatialParams.PermeabilityLens");
         else
-            initRandomField(gridView);
+            initRandomField(problem.fvGridGeometry());
 
-        lensLowerLeft_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensLowerLeft);
-        lensUpperRight_ = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, SpatialParams.LensUpperRight);
+        lensLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensLowerLeft");
+        lensUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensUpperRight");
     }
 
     /*!
@@ -127,31 +123,31 @@ public:
      *
      * \param gridView The GridView used by the problem
      */
-    void initRandomField(const GridView& gridView)
+    void initRandomField(const FVGridGeometry& gg)
     {
-        std::string gStatControlFile = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Gstat, ControlFile);
-        std::string gStatInputFile = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Gstat, InputFile);
-        std::string outputFilePrefix = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Gstat, OutputFilePrefix);
+        const auto& gridView = gg.gridView();
+        const auto& elementMapper = gg.elementMapper();
+        const auto gStatControlFile = getParam<std::string>("Gstat.ControlFile");
+        const auto gStatInputFile = getParam<std::string>("Gstat.InputFile");
+        const auto outputFilePrefix = getParam<std::string>("Gstat.OutputFilePrefix");
 
         // create random permeability object
-        GstatRandomField<GridView, Scalar> randomPermeabilityField(gridView);
+        using RandomField = GstatRandomField<GridView, Scalar>;
+        RandomField randomPermeabilityField(gridView, elementMapper);
         randomPermeabilityField.create(gStatControlFile,
                                        gStatInputFile,
                                        outputFilePrefix + ".dat",
-                                       GstatRandomField<GridView, Scalar>::FieldType::log10,
+                                       RandomField::FieldType::log10,
                                        true);
         randomPermeability_.resize(gridView.size(dim), 0.0);
 
         // copy vector from the temporary gstat object
-        for (const auto& element : elements(gridView))
-        {
-            auto index = indexSet_.index(element.template subEntity<dim> (/*scvIdx=*/0));
-            randomPermeability_[index] = randomPermeabilityField.data(element);
-        }
-
-        // output the random field to vtk
-        randomPermeabilityField.writeVtk(outputFilePrefix, "absolute permeability");
+        randomPermeability_ = randomPermeabilityField.data();
     }
+
+    //! get the permeability field for output
+    const std::vector<Scalar>& getPermField() const
+    { return randomPermeability_; }
 
 private:
     bool isInLens_(const GlobalPosition &globalPos) const
@@ -168,7 +164,7 @@ private:
     GlobalPosition lensUpperRight_;
 
     Scalar permeability_, permeabilityLens_;
-    ScalarVector randomPermeability_;
+    std::vector<Scalar> randomPermeability_;
 
     const IndexSet& indexSet_;
     static constexpr Scalar eps_ = 1.5e-7;

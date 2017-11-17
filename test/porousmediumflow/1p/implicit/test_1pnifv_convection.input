@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 3e4 # [s]
 MaxTimeStepSize = 1e3
@@ -9,10 +9,10 @@ UpperRight = 20 1
 Cells = 80 1
 
 [Problem]
-Name = box1pniconvection # name passed to the output routines
+Name = 1pnifv_conduction # name passed to the output routines
 OutputInterval = 5 # every 5th timestep an output file is written
 DarcyVelocity = 1e-4 # [m/s] inflow at the left boundary
-EnableGravity = 0 # Disable gravity
+EnableGravity = false # Disable gravity
 
 [Vtk]
-AddVelocity = 1 # enable velocity output
+AddVelocity = true # enable velocity output

@@ -27,30 +27,14 @@
 
 #include <functional>
 
-#include <dumux/common/boundingboxtree.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/boundingboxtree.hh>
 
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// Property forward declarations
-NEW_PROP_TAG(ElementVolumeVariables);
-NEW_PROP_TAG(FVGridGeometry);
-NEW_PROP_TAG(FVElementGeometry);
-NEW_PROP_TAG(GridView);
-NEW_PROP_TAG(ImplicitIsBox);
-NEW_PROP_TAG(PointSource);
-NEW_PROP_TAG(PrimaryVariables);
-NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(TimeManager);
-NEW_PROP_TAG(SubControlVolume);
-} // end namespace Properties
 
 // forward declarations
 template<class TypeTag>
@@ -222,66 +206,6 @@ private:
  * \brief A point source class for time dependent point sources
  */
 template<class TypeTag>
-class TimeDependentPointSource : public PointSource<TypeTag>
-{
-    typedef PointSource<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GridView::template Codim<0>::Entity Element;
-
-    static const int dimworld = GridView::dimensionworld;
-    typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
-    // a function that takes a TimeManager and a GlobalPosition
-    // and returns the PointSource values as PrimaryVariables
-    typedef typename std::function<PrimaryVariables(const TimeManager&, const GlobalPosition&)> ValueFunction;
-
-public:
-    //! Constructor for sol dependent point sources, when there is no
-    // value known at the time of initialization
-    DUNE_DEPRECATED_MSG("Will be removed after release of Dumux 3.0. Use the more general SolDependentPointSource class.")
-    TimeDependentPointSource(GlobalPosition pos,
-                             ValueFunction valueFunction)
-      : ParentType(pos, PrimaryVariables(0)), valueFunction_(valueFunction) {}
-
-    //! an update function called before adding the value
-    // to the local residual in the problem in scvPointSources
-    // to be overloaded by derived classes
-    void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const ElementVolumeVariables &elemVolVars,
-                const SubControlVolume &scv)
-    { this->values_ = valueFunction_(problem.timeManager(), this->position()); }
-
-    //! Convenience = operator overload modifying only the values
-    TimeDependentPointSource& operator= (const PrimaryVariables& values)
-    {
-        ParentType::operator=(values);
-        return *this;
-    }
-
-    //! Convenience = operator overload modifying only the values
-    TimeDependentPointSource& operator= (Scalar s)
-    {
-        ParentType::operator=(s);
-        return *this;
-    }
-
-private:
-    ValueFunction valueFunction_;
-};
-
-/*!
- * \ingroup Common
- * \brief A point source class for time dependent point sources
- */
-template<class TypeTag>
 class SolDependentPointSource : public PointSource<TypeTag>
 {
     using ParentType = PointSource<TypeTag>;
@@ -289,7 +213,6 @@ class SolDependentPointSource : public PointSource<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -297,8 +220,7 @@ class SolDependentPointSource : public PointSource<TypeTag>
 
     static const int dimworld = GridView::dimensionworld;
     using GlobalPosition = typename Dune::FieldVector<Scalar, dimworld>;
-    // a function that takes a TimeManager and a GlobalPosition
-    // and returns the PointSource values as PrimaryVariables
+    // returns the PointSource values as PrimaryVariables
     using ValueFunction = typename std::function<PrimaryVariables(const Problem &problem,
                                                                   const Element &element,
                                                                   const FVElementGeometry &fvGeometry,

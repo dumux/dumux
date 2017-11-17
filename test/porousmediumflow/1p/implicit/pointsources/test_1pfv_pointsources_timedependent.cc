@@ -19,11 +19,9 @@
 /*!
  * \file
  *
- * \brief test for the one-phase CC model
+ * \brief test for the one-phase model with point sources
  */
 #include <config.h>
-
-#include "problem.hh"
 
 #include <ctime>
 #include <iostream>
@@ -34,20 +32,22 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include <dumux/discretization/methods.hh>
+#include "1psingularityproblemtimedependent.hh"
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
 
-#include <dumux/nonlinear/newtoncontroller.hh>
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
+#include <dumux/nonlinear/newtoncontroller.hh>
 
 #include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
+
+#include <dumux/discretization/methods.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
 
@@ -58,9 +58,6 @@ int main(int argc, char** argv) try
     // define the type tag for this problem
     using TypeTag = TTAG(TYPETAG);
 
-    ////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////
-
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
@@ -68,13 +65,10 @@ int main(int argc, char** argv) try
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    // initialize parameter tree
+    // parse command line arguments and input file
     Parameters::init(argc, argv);
 
-    //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
-    /////////////////////////////////////////////////////////////////////
-
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     GridCreator::makeGrid();
     GridCreator::loadBalance();
@@ -108,19 +102,24 @@ int main(int argc, char** argv) try
 
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-    auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
-    auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = 0;
+    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
+        restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     // intialize the vtk output module
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
@@ -128,22 +127,23 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = AMGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonController = Dumux::NewtonController<TypeTag>;
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
-    NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
-
-    // set some check points for the time loop
-    timeLoop->setPeriodicCheckPoint(tEnd/10.0);
+    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
+
+        // set the time in the problem for implicit Euler scheme
+        problem->setTime(timeLoop->time() + timeLoop->timeStepSize());
 
         // try solving the non-linear system
         for (int i = 0; i < maxDivisions; ++i)
@@ -172,8 +172,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        if (timeLoop->isCheckPoint())
-            vtkWriter.write(timeLoop->time());
+        vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
@@ -191,11 +190,13 @@ int main(int argc, char** argv) try
 
     // print dumux end message
     if (mpiHelper.rank() == 0)
+    {
+        Parameters::print();
         DumuxMessage::print(/*firstCall=*/false);
+    }
 
     return 0;
-
-}
+} // end main
 catch (Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;

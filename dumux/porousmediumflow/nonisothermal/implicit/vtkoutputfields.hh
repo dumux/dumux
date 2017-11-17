@@ -18,21 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief test for the one-phase CC model
+ * \brief Adds vtk output fields specific to non-isothermal models
  */
-#include <config.h>
-#include "tubesproblem.hh"
-#include <dumux/common/start.hh>
+#ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
+#define DUMUX_ENERGY_OUTPUT_FIELDS_HH
 
-int main(int argc, char** argv)
+#include <dumux/common/properties.hh>
+
+namespace Dumux
 {
-#if HAVE_DUNE_FOAMGRID
-    typedef TTAG(TubesTestBoxProblem) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, [](const char *, const std::string &){});
-#else
-#warning External grid module dune-foamgrid needed to run this example.
-    std::cerr << "Test skipped, it needs dune-foamgrid!" << std::endl;
-    return 77;
+
+/*!
+ * \ingroup NonIsothermal, InputOutput
+ * \brief Adds vtk output fields specific to non-isothermal models
+ */
+template<class TypeTag>
+class EnergyVtkOutputFields
+{
+    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+public:
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        IsothermalVtkOutputFields::init(vtk);
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); }, "temperature");
+    }
+};
+
+} // end namespace Dumux
+
 #endif
-}

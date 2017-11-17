@@ -137,6 +137,15 @@ NEW_PROP_TAG(WettingPhase);                        //! The wetting phase for two
 NEW_PROP_TAG(NonwettingPhase);                     //! The non-wetting phase for two-phase models
 NEW_PROP_TAG(Formulation);                         //! The formulation of the model
 
+/////////////////////////////////////////////////////////////
+// non-isothermal porous medium flow models
+/////////////////////////////////////////////////////////////
+NEW_PROP_TAG(IsothermalVtkOutputFields);
+NEW_PROP_TAG(IsothermalVolumeVariables);
+NEW_PROP_TAG(IsothermalLocalResidual);
+NEW_PROP_TAG(IsothermalIndices);
+NEW_PROP_TAG(IsothermalNumEq);
+
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);

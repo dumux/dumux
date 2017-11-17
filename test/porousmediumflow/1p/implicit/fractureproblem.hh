@@ -28,11 +28,10 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/implicit/cellcentered/propertydefaults.hh>
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
 
 #include "fracturespatialparams.hh"
 
@@ -46,12 +45,13 @@ namespace Properties
 {
 NEW_TYPE_TAG(FractureProblem, INHERITS_FROM(OneP, FractureSpatialParams));
 NEW_TYPE_TAG(FractureBoxProblem, INHERITS_FROM(BoxModel, FractureProblem));
-NEW_TYPE_TAG(FractureCCProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
+NEW_TYPE_TAG(FractureCCTpfaProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
 NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem));
 
-SET_BOOL_PROP(FractureCCProblem, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalVolumeVariablesCache, true);
-SET_BOOL_PROP(FractureCCProblem, EnableGlobalFluxVariablesCache, true);
+//! Enable caching (more memory, but faster runtime)
+SET_BOOL_PROP(FractureProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGlobalFluxVariablesCache, true);
 
 #if HAVE_DUNE_FOAMGRID
 SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
@@ -71,11 +71,7 @@ public:
     using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
 };
 
-// Linear solver settings
-SET_TYPE_PROP(FractureProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
-
-SET_BOOL_PROP(FractureProblem, ProblemEnableGravity, false);
-}
+} // end namespace Properties
 
 /*!
  * \ingroup OnePModel
@@ -86,9 +82,9 @@ SET_BOOL_PROP(FractureProblem, ProblemEnableGravity, false);
  * This problem uses the \ref OnePModel.
  */
 template <class TypeTag>
-class FractureProblem : public ImplicitPorousMediaProblem<TypeTag>
+class FractureProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -105,21 +101,20 @@ class FractureProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
-    FractureProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    FractureProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -142,17 +137,17 @@ public:
      *
      * Will be called diretly after the time integration.
      */
-    void postTimeStep()
-    {
-        // Calculate storage terms
-        PrimaryVariables storage;
-        this->model().globalStorage(storage);
-
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0) {
-            std::cout<<"Storage: " << storage << std::endl;
-        }
-    }
+    // void postTimeStep()
+    // {
+    //     // Calculate storage terms
+    //     PrimaryVariables storage;
+    //     this->model().globalStorage(storage);
+    //
+    //     // Write mass balance information for rank 0
+    //     if (this->gridView().comm().rank() == 0) {
+    //         std::cout<<"Storage: " << storage << std::endl;
+    //     }
+    // }
 
     /*!
      * \brief Returns the temperature \f$ K \f$
@@ -161,18 +156,6 @@ public:
      */
     Scalar temperature() const
     { return 273.15 + 20; }
-
-    /*!
-     * \brief Returns the source term
-     *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param globalPos The global position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
 
     // \}
 
@@ -193,7 +176,8 @@ public:
         BoundaryTypes values;
 
         values.setAllNeumann();
-        if (globalPos[0] > this->bBoxMax()[0] - eps_ || globalPos[0] < this->bBoxMin()[0] + eps_)
+        const auto& gg = this->fvGridGeometry();
+        if (globalPos[0] > gg.bBoxMax()[0] - eps_ || globalPos[0] < gg.bBoxMin()[0] + eps_)
             values.setAllDirichlet();
 
         return values;
@@ -210,22 +194,6 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         return initialAtPos(globalPos);
-    }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * \param globalPos The position of the integration point of the boundary segment.
-     *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each phase. Negative values mean influx.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -246,7 +214,8 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5*(globalPos[0] - this->bBoxMin()[0])/(this->bBoxMax()[0] - this->bBoxMin()[0]) + 1.0e5;
+        const auto& gg = this->fvGridGeometry();
+        values[pressureIdx] = 1.0e5*(globalPos[0] - gg.bBoxMin()[0])/(gg.bBoxMax()[0] - gg.bBoxMin()[0]) + 1.0e5;
         return values;
     }
     // \}

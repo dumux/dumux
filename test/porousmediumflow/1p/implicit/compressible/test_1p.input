@@ -1,12 +1,11 @@
 [TimeLoop]
-TEnd = 0.02
+TEnd = 0.1
 DtInitial = 0.002
-#MaxTimeStepSize = 1.1e-6 #for explicit scheme
 
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-Cells = 100 100
+Cells = 10 10
 
 [Problem]
 Name = 1p

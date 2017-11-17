@@ -94,16 +94,19 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(dofCodim));
+    SolutionVector x(fvGridGeometry->numDofs());
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x);
+
+    // intialize the vtk output module
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    vtkWriter.write(0.0);
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -114,7 +117,7 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = NewtonController<TypeTag>;
+    using NewtonController = Dumux::NewtonController<TypeTag>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
     NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
@@ -123,10 +126,7 @@ int main(int argc, char** argv) try
     nonLinearSolver.solve(x);
 
     // write vtk output
-    Dune::VTKWriter<GridView> vtkwriter(leafGridView);
-    if (isBox) vtkwriter.addVertexData(x, "p");
-    else vtkwriter.addCellData(x, "p");
-    vtkwriter.write(problem->name());
+    vtkWriter.write(1.0);
 
     timer.stop();
 

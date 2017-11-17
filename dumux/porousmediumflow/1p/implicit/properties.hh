@@ -100,6 +100,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////
 SET_INT_PROP(OnePNI, IsothermalNumEq, 1);                                           //! set number of equations of isothermal model
 SET_BOOL_PROP(OnePNI, EnableEnergyBalance, true);                                   //! we do solve for the energy balance here
+SET_TYPE_PROP(OnePNI, IsothermalVtkOutputFields, OnePVtkOutputFields<TypeTag>);     //! the isothermal vtk output fields
 SET_TYPE_PROP(OnePNI, IsothermalVolumeVariables, OnePVolumeVariables<TypeTag>);     //! Vol vars of the isothermal model
 SET_TYPE_PROP(OnePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);   //! Local residual of the isothermal model
 SET_TYPE_PROP(OnePNI, IsothermalIndices, OnePIndices);                              //! Indices of the isothermal model

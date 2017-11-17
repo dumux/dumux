@@ -55,6 +55,7 @@ class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
     using ParentType = BaseFVGridGeometry<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -83,6 +84,11 @@ public:
     CCMpfaFVGridGeometry(const GridView gridView)
     : ParentType(gridView), elementMap_(gridView)
     {}
+
+    //! the element mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const ElementMapper& dofMapper() const
+    { return this->elementMapper(); }
 
     /*!
      * \brief Returns the total number of sub control volumes.
@@ -273,7 +279,7 @@ public:
                     }
 
                     // the quadrature point to be used on the scvfs
-                    static const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+                    static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     const auto& outsideScvIndices = [&] ()
@@ -444,6 +450,7 @@ class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -463,6 +470,11 @@ public:
     CCMpfaFVGridGeometry(const GridView gridView)
     : ParentType(gridView), elementMap_(gridView)
     {}
+
+    //! the element mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const ElementMapper& dofMapper() const
+    { return this->elementMapper(); }
 
     /*!
      * \brief Returns the total number of sub control volumes.
