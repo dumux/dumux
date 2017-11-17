@@ -71,14 +71,11 @@ public:
      *
      * \param gridView the used gridView
      */
-    GstatRandomField(const GridView& gridView)
-    : gridView_(gridView),
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-      elementMapper_(gridView, Dune::mcmgElementLayout()),
-#else
-      elementMapper_(gridView),
-#endif
-      data_(gridView.size(0)) {}
+    GstatRandomField(const GridView& gridView, const ElementMapper& elementMapper)
+    : gridView_(gridView)
+    , elementMapper_(elementMapper)
+    , data_(gridView.size(0))
+    {}
 
       /*!
        * \brief Creates a new field with random variables, if desired.
@@ -171,9 +168,15 @@ public:
     }
 
     //! \brief Return an entry of the data vector
-    Scalar data(const Element& e)
+    Scalar data(const Element& e) const
     {
         return data_[elementMapper_.index(e)];
+    }
+
+    //! \brief Return the data vector for analysis or external vtk output
+    const DataVector& data() const
+    {
+        return data_;
     }
 
     //! \brief Write the data to a vtk file
@@ -195,12 +198,12 @@ public:
     }
 
 private:
-    GridView gridView_;
-    ElementMapper elementMapper_;
+    const GridView gridView_;
+    const ElementMapper& elementMapper_;
     DataVector data_;
     FieldType fieldType_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
