@@ -61,7 +61,7 @@ public:
 #if NONISOTHERMAL
     using type = FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > ;
 #else
-    using type = FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > ;
+    using type = FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<1, Scalar> > ;
 #endif
 };
 

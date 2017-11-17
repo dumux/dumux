@@ -57,7 +57,7 @@ SET_PROP(DoneaTestProblem, Fluid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<1, Scalar> > type;
 };
 
 // Set the grid type
