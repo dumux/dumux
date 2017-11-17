@@ -50,7 +50,7 @@
 
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/staggeredvtkoutputmodule.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -159,7 +159,7 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    StaggeredVtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.addField(problem->getDeltaP(), "deltaP");
     vtkWriter.write(0.0);
