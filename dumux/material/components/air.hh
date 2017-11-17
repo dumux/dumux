@@ -244,7 +244,7 @@ public:
 
     /*!
      * \brief Specific enthalpy of Air \f$\mathrm{[J/kg]}\f$
-     *        with 273.15 \f$ K \f$ as basis.
+     *        with 273.15 \f$ K \f$ as basis. <BR>
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -253,7 +253,7 @@ public:
      */
     static Scalar gasEnthalpy(Scalar temperature, Scalar pressure)
     {
-        return gasHeatCapacity(temperature, pressure) * (temperature-273.15);
+        return 1005*(temperature-273.15);
     }
 
     /*!
