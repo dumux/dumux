@@ -11,32 +11,33 @@ dune_symlink_to_source_files(FILES "tubesconvergencetest.py")
 dune_add_test(NAME test_1pcctpfa
               SOURCES test_1pfv.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaProblem
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                      --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/1ptestcctpfa-00001.vtu
-                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pcctpfa test_1pfv.input -Problem.Name 1ptestcctpfa")
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1ptestcctpfa-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pcctpfa test_1pfv.input -Problem.Name 1ptestcctpfa")
 
 dune_add_test(NAME test_1pccmpfa
               SOURCES test_1pfv.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfaProblem
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                      --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/1ptestccmpfa-00001.vtu
-                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pccmpfa test_1pfv.input -Problem.Name 1ptestccmpfa")
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1ptestccmpfa-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pccmpfa test_1pfv.input -Problem.Name 1ptestccmpfa")
 
 dune_add_test(NAME test_1pbox
               SOURCES test_1pfv.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTestBoxProblem
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                      --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox-00001.vtu
-                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pbox test_1pfv.input -Problem.Name 1ptestbox")
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1ptestbox-00001.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pbox test_1pfv.input -Problem.Name 1ptestbox")
 
-# add_dumux_test(test_cc1pwithgstat test_cc1pwithgstat test_cc1pwithgstat.cc
-#                ./test_cc1pwithgstat)
+# a gstat test (becaue it's a random permeability field we can't test against a reference solution)
+dune_add_test(SOURCES test_1pwithgstat.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaProblem)
 #
 # # non-isothermal tests
 # add_dumux_test(test_box1pniconduction test_box1pniconduction test_box1pniconduction.cc
