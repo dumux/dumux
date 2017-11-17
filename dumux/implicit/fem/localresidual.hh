@@ -133,7 +133,7 @@ public:
      *                ought to be calculated
      */
     PrimaryVariables evalStorage(const Element &element)
-    {
+    {   std::cout<<"evalStorage wird aufgerufen"<<std::endl;
         // prepare the element solutions etc...
         const auto& curSol = model().curSol();
 

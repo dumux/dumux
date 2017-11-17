@@ -19,8 +19,6 @@
 /*!
  * \file
  *
- * ersetzt secondaryvariables aus elastic
- *
  * \brief Contains the quantities which are constant within a
  *        finite volume in the Stokes box model.
  */

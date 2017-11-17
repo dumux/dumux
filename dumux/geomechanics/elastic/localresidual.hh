@@ -70,12 +70,15 @@ public:
      *        \param secVars Secondary variables object evaluated at integration point
      *        \param elemSol The current primary variables at the dofs of the element
      */
+
+
     PrimaryVariables computeStorage(const Element& element,
                                     const IpData& ipData,
                                     const SecondaryVariables& secVars,
                                     const ElementSolution& elemSol) const
     {
         // quasistationary conditions assumed
+    // std::cout<<"Wird aufgerufen."<<std::endl;
         return PrimaryVariables(0.0);
     }
 
