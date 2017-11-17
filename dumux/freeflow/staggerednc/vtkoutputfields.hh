@@ -23,7 +23,8 @@
 #ifndef DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/freeflow/staggered/vtkoutputfields.hh>
 
 namespace Dumux
 {
@@ -33,8 +34,9 @@ namespace Dumux
  * \brief Adds vtk output fields specific to the NavierStokesNC model
  */
 template<class TypeTag>
-class NavierStokesNCVtkOutputFields
+class NavierStokesNCVtkOutputFields : NavierStokesVtkOutputFields<TypeTag>
 {
+    using ParentType = NavierStokesVtkOutputFields<TypeTag>;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -46,7 +48,8 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
+        ParentType::init(vtk);
+
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.molarDensity(); }, "rhoMolar");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(); }, "rho");
 
@@ -55,9 +58,6 @@ public:
             vtk.addVolumeVariable([j](const VolumeVariables& v){ return v.massFraction(phaseIdx,j); }, "X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
             vtk.addVolumeVariable([j](const VolumeVariables& v){ return v.moleFraction(phaseIdx,j); }, "x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx));
         }
-
-        if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
-            vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); },"temperature");
     }
 };
 
