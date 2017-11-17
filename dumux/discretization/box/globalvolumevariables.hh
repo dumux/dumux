@@ -68,8 +68,7 @@ public:
             fvGeometry.bindElement(element);
 
             // get the element solution
-            const auto numVert = element.subEntities(dim);
-            ElementSolutionVector elemSol(numVert);
+            ElementSolutionVector elemSol(element, sol, fvGridGeometry);
             for (const auto& scv : scvs(fvGeometry))
                 elemSol[scv.indexInElement()] = sol[scv.dofIndex()];
 
