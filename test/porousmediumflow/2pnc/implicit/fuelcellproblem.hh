@@ -245,9 +245,9 @@ public:
 
         if(onUpperBoundary_(globalPos))
         {
-            Scalar pg = 1.0e5;
-            priVars[pressureIdx] = pg;
-            priVars[switchIdx] = 0.3;//Sl for bothPhases
+            Scalar pn = 1.0e5;
+            priVars[pressureIdx] = pn;
+            priVars[switchIdx] = 0.3;//Sw for bothPhases
             priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
         }
 
@@ -346,9 +346,9 @@ private:
         PrimaryVariables priVars(0.0);
         priVars.setState(Indices::bothPhases);
 
-        Scalar pg = 1.0e5;
-        priVars[pressureIdx] = pg;
-        priVars[switchIdx] = 0.3;//Sl for bothPhases
+        Scalar pn = 1.0e5;
+        priVars[pressureIdx] = pn;
+        priVars[switchIdx] = 0.3;//Sw for bothPhases
         priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
 
         return priVars;
