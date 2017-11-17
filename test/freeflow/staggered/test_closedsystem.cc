@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the one-phase CC model
+ * \brief Test for the staggered grid Stokes model in a closed domain
  */
  #include <config.h>
 
@@ -31,7 +31,6 @@
  #include <dune/grid/io/file/dgfparser/dgfexception.hh>
  #include <dune/grid/io/file/vtk.hh>
  #include <dune/istl/io.hh>
-
 
 #include "closedsystemtestproblem.hh"
 
@@ -51,7 +50,7 @@
 
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/staggeredvtkoutputmodule.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -155,7 +154,7 @@ int main(int argc, char** argv) try
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    StaggeredVtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
 

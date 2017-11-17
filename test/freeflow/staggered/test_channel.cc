@@ -50,7 +50,7 @@
 
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/io/vtkoutputmodule.hh>
+#include <dumux/io/staggeredvtkoutputmodule.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -157,28 +157,11 @@ int main(int argc, char** argv) try
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
 
-    // // get some time loop parameters
-    // using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    // const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    // const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
-    // const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    // auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // // check if we are about to restart a previously interrupted simulation
-    // Scalar restartTime = 0;
-    // if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-    //     restartTime = getParam<Scalar>("TimeLoop.Restart");
-
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    StaggeredVtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     vtkWriter.write(0.0);
-
-    // // instantiate time loop
-    // auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
-    // timeLoop->setMaxTimeStepSize(maxDt);
-    // problem->setTimeLoop(timeLoop);
 
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
