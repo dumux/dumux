@@ -6,6 +6,7 @@ dune_symlink_to_source_files(FILES runTestsTPFA.sh)
 
 dune_symlink_to_source_files(FILES runTestsMimeticConstDt.sh)
 dune_symlink_to_source_files(FILES runTestsMPFAOConstDt.sh)
+dune_symlink_to_source_files(FILES runTestsTPFAConstDt.sh)
 
 add_dumux_test(test_spe10 test_spe10 test_spe10.cc
   ${CMAKE_CURRENT_BINARY_DIR}/test_spe10)

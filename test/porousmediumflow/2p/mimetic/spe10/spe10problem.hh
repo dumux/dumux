@@ -39,6 +39,7 @@
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/2p/implicit/chopnewtoncontroller.hh>
+#include <dumux/linear/amgbackend.hh>
 #endif
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
@@ -94,7 +95,7 @@ NEW_PROP_TAG(BaseProblem);
 SET_TYPE_PROP(TwoPSpe10Problem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>);
 
 SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, SuperLUBackend<TypeTag> );
-//SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+//SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, AMGBackend<TypeTag> );
 
 // Enable gravity
 SET_BOOL_PROP(TwoPSpe10Problem, ProblemEnableGravity, false);
@@ -102,7 +103,7 @@ SET_BOOL_PROP(TwoPSpe10Problem, ProblemEnableGravity, false);
 SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalFVGeometryCache, true);
 
 SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalVolumeVariablesCache, false);
 
 #if PROBLEM==1
 SET_TYPE_PROP(TwoPSpe10Problem, NewtonController, TwoPChopStaggeredNewtonController<TypeTag> );

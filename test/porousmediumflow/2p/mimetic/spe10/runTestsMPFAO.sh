@@ -4,8 +4,12 @@ make test_spe10_mpfao
 #inputArgs="-Newton.UseLineSearch 1"
 #outputName="test_spe10_mpfao_superlu"
 
-inputArgs="-Newton.UseLineSearch 1 -LinearSolver.Verbosity 1 -LinearSolver.MaxIterations 2000"
-outputName="test_spe10_mpfao"
+#inputArgs="-Newton.UseLineSearch 1 -LinearSolver.Verbosity 1 -LinearSolver.MaxIterations 2000"
+#outputName="test_spe10_mpfao"
+
+inputArgs="-Newton.UseLineSearch 0 -Newton.EnableChop 1 -LinearSolver.Verbosity 1 -LinearSolver.MaxIterations 2000"
+#outputName="test_spe10_mpfao_ilu0bicgstab_chop"
+outputName="test_spe10_mpfao_AMGBackend_chop"
 
 echo $outputName
 
