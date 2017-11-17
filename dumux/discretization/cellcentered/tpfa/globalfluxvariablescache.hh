@@ -106,7 +106,7 @@ public:
                 filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf);
 
             // update the caches in the neighbors
-            for (const auto& dataJ : fvGeometry.connectivityMap()[globalI])
+            for (const auto& dataJ : fvGeometry.fvGridGeometry().connectivityMap()[globalI])
             {
                 const auto elementJ = fvGeometry.fvGridGeometry().element(dataJ.globalJ);
                 for (const auto scvfIdxJ : dataJ.scvfsJ)
