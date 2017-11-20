@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 2p1cni specific controller for the newton solver.
+ * \brief A StaggeredModel specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -38,8 +38,8 @@
 namespace Dumux {
 
 /*!
- * \ingroup PNMModel
- * \brief A PNM specific controller for the newton solver.
+ * \ingroup StaggeredModel
+ * \brief A StaggeredModel specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -49,12 +49,11 @@ namespace Dumux {
 template <class TypeTag>
 class StaggeredNewtonController : public NewtonController<TypeTag>
 {
-    typedef NewtonController<TypeTag> ParentType;
-    // typedef NewtonConvergenceWriter<TypeTag> StaggeredNewtonConvergenceWriter;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using ParentType = NewtonController<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
     using Communicator = typename GridView::CollectiveCommunication;
@@ -92,9 +91,6 @@ public:
      */
     // template<typename T = TypeTag>
     // typename std::enable_if<!LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
-    // newtonSolveLinear(JacobianMatrix &A,
-    //                   SolutionVector &x,
-    //                   SolutionVector &b)
     template<class LinearSolver, class JacobianMatrix, class SolutionVector>
     void solveLinearSystem(LinearSolver& ls,
                            JacobianMatrix& A,

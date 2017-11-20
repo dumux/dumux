@@ -20,7 +20,7 @@
  * \ingroup Properties
  * \file
  *
- * \brief Defines a type tag and some properties for models using the box scheme.
+ * \brief Defines a type tag and some properties for models using the staggered scheme.
  */
 
 #ifndef DUMUX_STAGGERDs_PROPERTIES_HH
