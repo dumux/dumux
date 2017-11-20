@@ -41,7 +41,7 @@ class TwoPNCMinVtkOutputFields
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
+    static constexpr int numSPhases = GET_PROP_VALE(TypteTag, NumSPhases);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
     static constexpr int dim = GridView::dimension;
 
@@ -52,11 +52,14 @@ public:
         // use default fields from the 2pnc model
         TwoPNCVtkOutputFields<TypeTag>::init(vtk);
 
-        //output additional to TwoPNCMin output:
+        //output additional to TwoPNC output:
         for (int i = 0; i < numSPhases; ++i)
-        {
             vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipVolFrac_"+ FluidSystem::phaseName(numPhases + i));
-        }
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return this->perm_(v.permeability())[0][0]; }, "Kxx"); //TODO: get correct permeability from where? add perm_ function in private?
+        if (dim >= 2)
+            vtk.addVolumeVariable([](const VolumeVariables& v){ return this->perm_(v.permeability())[1][1]; }, "Kyy"); //TODO: get correct permeability from where? add perm_ function in private?
+        if (dim >= 3)
+            vtk.addVolumeVariable([](const VolumeVariables& v){ return this->perm_(v.permeability())[2][2]; }, "Kzz"); //TODO: get correct permeability from where? add perm_ function in private?
     }
 };
 
