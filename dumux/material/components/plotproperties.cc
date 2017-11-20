@@ -108,17 +108,24 @@ int main(int argc, char *argv[])
     phaseNames[liquidPhaseIdx] = "liquid";
     phaseNames[gasPhaseIdx] = "gas";
 
-    const unsigned int numProperties = 4;
+    const unsigned int numProperties = 5;
     array<string, numProperties> propertyNames;
     array<string, numProperties> propertyUnits;
-    propertyNames[0] = "density";
-    propertyUnits[0] = "[kg/m^3]";
-    propertyNames[1] = "heatCapacity";
-    propertyUnits[1] = "[J/(kg*K)]";
-    propertyNames[2] = "viscosity";
-    propertyUnits[2] = "[Pa*s]";
-    propertyNames[3] = "thermalConductivity";
-    propertyUnits[3] = "[W/(m*K)]";
+    unsigned int densityIdx = 0;
+    propertyNames[densityIdx] = "density";
+    propertyUnits[densityIdx] = "[kg/m^3]";
+    unsigned int enthalpyIdx = 1;
+    propertyNames[enthalpyIdx] = "enthalpy";
+    propertyUnits[enthalpyIdx] = "[J/(kg)]";
+    unsigned int heatCapacityIdx = 2;
+    propertyNames[heatCapacityIdx] = "heatCapacity";
+    propertyUnits[heatCapacityIdx] = "[J/(kg*K)]";
+    unsigned int viscosityIdx = 3;
+    propertyNames[viscosityIdx] = "viscosity";
+    propertyUnits[viscosityIdx] = "[Pa*s]";
+    unsigned int thermalConductivityIdx = 4;
+    propertyNames[thermalConductivityIdx] = "thermalConductivity";
+    propertyUnits[thermalConductivityIdx] = "[W/(m*K)]";
     array<array<vector<double>, numProperties>, numPhases> property;
     array<array<bool, numProperties>, numPhases> propertyAvailable;
     array<array<array<double, 2>, numProperties>, numPhases> propertyMinMax;
@@ -138,25 +145,29 @@ int main(int argc, char *argv[])
         {
             if (phaseIdx == liquidPhaseIdx)
             {
-                try { property[phaseIdx][0][i] = Component::liquidDensity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][0] = false; }
-                try { property[phaseIdx][1][i] = Component::liquidHeatCapacity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][1] = false; }
-                try { property[phaseIdx][2][i] = Component::liquidViscosity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][2] = false; }
-                try { property[phaseIdx][3][i] = Component::liquidThermalConductivity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][3] = false; }
+                try { property[phaseIdx][densityIdx][i] = Component::liquidDensity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][densityIdx] = false; }
+                try { property[phaseIdx][enthalpyIdx][i] = Component::liquidEnthalpy(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][enthalpyIdx] = false; }
+                try { property[phaseIdx][heatCapacityIdx][i] = Component::liquidHeatCapacity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][heatCapacityIdx] = false; }
+                try { property[phaseIdx][viscosityIdx][i] = Component::liquidViscosity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][viscosityIdx] = false; }
+                try { property[phaseIdx][thermalConductivityIdx][i] = Component::liquidThermalConductivity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][thermalConductivityIdx] = false; }
             }
             if (phaseIdx == gasPhaseIdx)
             {
-                try { property[phaseIdx][0][i] = Component::gasDensity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][0] = false; }
-                try { property[phaseIdx][1][i] = Component::gasHeatCapacity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][1] = false; }
-                try { property[phaseIdx][2][i] = Component::gasViscosity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][2] = false; }
-                try { property[phaseIdx][3][i] = Component::gasThermalConductivity(T[i], pressure); }
-                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][3] = false; }
+                try { property[phaseIdx][densityIdx][i] = Component::gasDensity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][densityIdx] = false; }
+                try { property[phaseIdx][enthalpyIdx][i] = Component::gasEnthalpy(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][enthalpyIdx] = false; }
+                try { property[phaseIdx][heatCapacityIdx][i] = Component::gasHeatCapacity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][heatCapacityIdx] = false; }
+                try { property[phaseIdx][viscosityIdx][i] = Component::gasViscosity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][viscosityIdx] = false; }
+                try { property[phaseIdx][thermalConductivityIdx][i] = Component::gasThermalConductivity(T[i], pressure); }
+                catch (Dune::NotImplemented &e) { propertyAvailable[phaseIdx][thermalConductivityIdx] = false; }
             }
 
             for (unsigned int propertyIdx = 0; propertyIdx < numProperties; ++propertyIdx)
