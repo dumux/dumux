@@ -90,7 +90,7 @@ public:
                 case ParentType::H2OIdx:
                     return ParentType::H2O::liquidEnthalpy(T, p);
                 case ParentType::N2Idx:
-                    return ParentType::N2::gasEnthalpy(T, p);
+                    return ParentType::N2::gasEnthalpy(T, p); // TODO: should be liquid enthalpy
                 default:
                     DUNE_THROW(Dune::NotImplemented,
                                "wrong index");

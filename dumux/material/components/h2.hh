@@ -146,13 +146,26 @@ public:
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure hydrogen gas.
      *
-     * \param T temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
+     */
+    static const Scalar gasEnthalpy(Scalar temperature,
+                                    Scalar pressure)
+    {
+        return gasHeatCapacity(temperature, pressure) * temperature;
+    }
+
+    /*!
+     * \brief Specific isobaric heat capacity \f$\mathrm{[J/(kg*K)]}\f$ of pure
+     *        hydrogen gas.
+     *
+     * This is equivalent to the partial derivative of the specific
+     * enthalpy to the temperature.
      *
      * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
-    static const Scalar gasEnthalpy(Scalar T,
-                                    Scalar pressure)
+    static const Scalar gasHeatCapacity(Scalar T,
+                                        Scalar pressure)
     {
         // method of Joback
         const Scalar cpVapA = 27.14;
@@ -160,14 +173,10 @@ public:
         const Scalar cpVapC = -1.381e-5;
         const Scalar cpVapD = 7.645e-9;
 
-        //Scalar cp =
-        //    cpVapA + T*(cpVapB + T*(cpVapC + T*cpVapD));
-
-        // calculate: \int_0^T c_p dT
         return
-            1/molarMass()* // conversion from [J/mol] to [J/kg]
-            T*(cpVapA + T*
-               (cpVapB/2 + T*
+            1/molarMass()* // conversion from [J/(mol*K)] to [J/(kg*K)]
+            (cpVapA + T*
+              (cpVapB/2 + T*
                 (cpVapC/3 + T*
                  (cpVapD/4))));
     }
