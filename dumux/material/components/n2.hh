@@ -160,36 +160,13 @@ public:
     /*!
      * \brief Specific enthalpy \f$\mathrm{[J/kg]}\f$ of pure nitrogen gas.
      *
-     * \param T temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-     *
-     * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
-    static const Scalar gasEnthalpy(Scalar T,
+    static const Scalar gasEnthalpy(Scalar temperature,
                                     Scalar pressure)
     {
-        // method of Joback
-        const Scalar cpVapA = 31.15;
-        const Scalar cpVapB = -0.01357;
-        const Scalar cpVapC = 2.680e-5;
-        const Scalar cpVapD = -1.168e-8;
-
-        // calculate: \int_0^T c_p dT
-        return
-            1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
-
-            T*(cpVapA + T*
-               (cpVapB/2 + T*
-                (cpVapC/3 + T*
-                 (cpVapD/4))));
-
-//#warning NIST DATA STUPID INTERPOLATION
-//        Scalar T2 = 300.;
-//        Scalar T1 = 285.;
-//        Scalar h2 = 311200.;
-//        Scalar h1 = 295580.;
-//        Scalar h = h1+ (h2-h1) / (T2-T1) * (T-T1);
-//        return h ;
+        return gasHeatCapacity(temperature, pressure) * temperature;
     }
 
     /*!
@@ -220,6 +197,8 @@ public:
      *
      * This is equivalent to the partial derivative of the specific
      * enthalpy to the temperature.
+     *
+     * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
     static const Scalar gasHeatCapacity(Scalar T,
                                         Scalar pressure)
@@ -232,11 +211,10 @@ public:
 
         return
             1/molarMass()* // conversion from [J/(mol K)] to [J/(kg K)]
-
-            cpVapA + T*
-            (cpVapB + T*
-             (cpVapC + T*
-              (cpVapD)));
+            (cpVapA + T*
+              (cpVapB/2 + T*
+                (cpVapC/3 + T*
+                  (cpVapD/4))));
     }
 
     /*!
