@@ -19,11 +19,37 @@
 /*!
  * \file
  *
- * \brief Test for the two-phase n-component isothermal box model.
+ * \brief Test for the two-phase n-component box model used to model e.g. salt dissolution.
  */
 #include <config.h>
+
+#include <ctime>
+#include <iostream>
+
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/timer.hh>
+#include <dune/grid/io/file/dgfparser/dgfexception.hh>
+#include <dune/grid/io/file/vtk.hh>
+#include <dune/istl/io.hh>
+
 #include "dissolutionproblem.hh"
-#include <dumux/common/start.hh>
+
+#include <dumux/common/propertysystem.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/valgrind.hh>
+#include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/defaultusagemessage.hh>
+
+#include <dumux/linear/amgbackend.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
+#include <dumux/porousmediumflow/compositional/privarswitchnewtoncontroller.hh>
+
+#include <dumux/assembly/fvassembler.hh>
+#include <dumux/assembly/diffmethod.hh>
+
+#include <dumux/discretization/methods.hh>
+
+#include <dumux/io/vtkoutputmodule.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -50,6 +76,178 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(DissolutionBoxProblem) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+    using namespace Dumux;
+
+    // define the type tag for this problem
+    using TypeTag = TTAG(DissolutionBoxProblem);
+
+    // initialize MPI, finalize is done automatically on exit
+    const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
+
+    // print dumux start message
+    if (mpiHelper.rank() == 0)
+        DumuxMessage::print(/*firstCall=*/true);
+
+    // parse command line arguments and input file
+    Parameters::init(argc, argv, usage);
+
+    // try to create a grid (from the given grid file or the input file)
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
+    GridCreator::makeGrid();
+    GridCreator::loadBalance();
+
+    ////////////////////////////////////////////////////////////
+    // run instationary non-linear problem on this grid
+    ////////////////////////////////////////////////////////////
+
+    // we compute on the leaf grid view
+    const auto& leafGridView = GridCreator::grid().leafGridView();
+
+    // create the finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    fvGridGeometry->update();
+
+    // the problem (initial and boundary conditions)
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    auto problem = std::make_shared<Problem>(fvGridGeometry);
+
+    // the solution vector
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    SolutionVector x(leafGridView.size(GridView::dimension));
+    problem->applyInitialSolution(x);
+    auto xOld = x;
+
+    // the grid variables
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
+    gridVariables->init(x, xOld);
+
+    // get some time loop parameters
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+
+    // check if we are about to restart a previously interrupted simulation
+    Scalar restartTime = 0;
+    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
+        restartTime = getParam<Scalar>("TimeLoop.Restart");
+
+    // intialize the vtk output module
+    using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
+    VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
+    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    //add specific output
+    vtkWriter.addField(problem->getCurrentDensity(), "currentDensity [A/cm^2]");
+    vtkWriter.addField(problem->getReactionSourceH2O(), "reactionSourceH2O [mol/(sm^2)]");
+    vtkWriter.addField(problem->getReactionSourceO2(), "reactionSourceO2 [mol/(sm^2)]");
+    vtkWriter.addField(problem->getKxx(), "Kxx");
+    vtkWriter.addField(problem->getKyy(), "Kyy");
+    vtkWriter.write(0.0);
+
+    // instantiate time loop
+    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    timeLoop->setMaxTimeStepSize(maxDt);
+
+    // the assembler with time loop for instationary problem
+    using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+
+    // the linear solver
+    using LinearSolver = AMGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+
+    // the non-linear solver
+    using NewtonController = PriVarSwitchNewtonController<TypeTag>;
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
+    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+
+    // time loop
+    timeLoop->start(); do
+    {
+        // set previous solution for storage evaluations
+        assembler->setPreviousSolution(xOld);
+
+        // try solving the non-linear system
+        for (int i = 0; i < maxDivisions; ++i)
+        {
+            // linearize & solve
+            auto converged = nonLinearSolver.solve(x);
+
+            if (converged)
+                break;
+
+            if (!converged && i == maxDivisions-1)
+                DUNE_THROW(Dune::MathError,
+                           "Newton solver didn't converge after "
+                           << maxDivisions
+                           << " time-step divisions. dt="
+                           << timeLoop->timeStepSize()
+                           << ".\nThe solutions of the current and the previous time steps "
+                           << "have been saved to restart files.");
+        }
+
+        // make the new solution the old solution
+        xOld = x;
+        gridVariables->advanceTimeStep();
+
+        // advance to the time loop to the next step
+        timeLoop->advanceTimeStep();
+
+        // update the output fields before write
+        problem->updateVtkOutput(xOld);
+
+        // write vtk output
+        vtkWriter.write(timeLoop->time());
+
+        // report statistics of this time step
+        timeLoop->reportTimeStep();
+
+        // set new dt as suggested by newton controller
+        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+
+    } while (!timeLoop->finished());
+
+    timeLoop->finalize(leafGridView.comm());
+
+    ////////////////////////////////////////////////////////////
+    // finalize, print dumux message to say goodbye
+    ////////////////////////////////////////////////////////////
+
+    // print dumux end message
+    if (mpiHelper.rank() == 0)
+    {
+        Parameters::print();
+        DumuxMessage::print(/*firstCall=*/false);
+    }
+
+    return 0;
+} // end main
+catch (Dumux::ParameterException &e)
+{
+    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
+    return 1;
+}
+catch (Dune::DGFException & e)
+{
+    std::cerr << "DGF exception thrown (" << e <<
+                 "). Most likely, the DGF file name is wrong "
+                 "or the DGF file is corrupted, "
+                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+                 << " ---> Abort!" << std::endl;
+    return 2;
+}
+catch (Dune::Exception &e)
+{
+    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
+    return 3;
+}
+catch (...)
+{
+    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
+    return 4;
 }

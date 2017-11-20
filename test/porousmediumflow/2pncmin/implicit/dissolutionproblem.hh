@@ -24,9 +24,10 @@
 #ifndef DUMUX_DISSOLUTION_PROBLEM_HH
 #define DUMUX_DISSOLUTION_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/2pncmin/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
 
 #include "dissolutionspatialparams.hh"
@@ -86,9 +87,9 @@ SET_INT_PROP(DissolutionProblem, Formulation, TwoPNCFormulation::pnsw);
  * <tt>./test_box2pncmin</tt>
  */
 template <class TypeTag>
-class DissolutionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
