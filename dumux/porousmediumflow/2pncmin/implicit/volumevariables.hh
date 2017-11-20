@@ -133,8 +133,221 @@ public:
            precipitateVolumeFraction_[sPhaseIdx] = priVars[numComponents + sPhaseIdx];
            sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
         }
+
+        salinity_= 0.0;
+        moleFractionSalinity_ = 0.0;
+        for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
+        {
+            if(this->fluidState_.moleFraction(wPhaseIdx, compIdx) > 0)
+            {
+                salinity_+= this->fluidState_.massFraction(wPhaseIdx, compIdx);
+                //TODO: we should be consistent. Assumin all salinity to be NaCl isn't consistent with
+                // the calculation of moleFractionSalinity_ here!
+                moleFractionSalinity_ += this->fluidState_.moleFraction(wPhaseIdx, compIdx);
+            }
+        }
     }
 
+    /*!
+     * \copydoc ImplicitModel::completeFluidState
+     * \param isOldSol Specifies whether this is the previous solution or the current one
+     */
+    static void completeFluidState(const ElementSolutionVector& elemSol,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const SubControlVolume& scv,
+                                   FluidState& fluidState)
+
+    {
+        Scalar t = BaseType::temperature(elemSol, problem, element, scv);
+        fluidState.setTemperature(t);
+
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
+
+        /////////////
+        // set the saturations
+        /////////////
+
+        Scalar Sn;
+        if (phasePresence == nPhaseOnly)
+        {
+            Sn = 1.0;
+        }
+        else if (phasePresence == wPhaseOnly)
+        {
+            Sn = 0.0;
+        }
+        else if (phasePresence == bothPhases)
+        {
+            if (formulation == pwsn)
+                Sn = priVars[switchIdx];
+            else if (formulation == pnsw)
+                Sn = 1.0 - priVars[switchIdx];
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+        }
+        else
+        {
+            DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        }
+
+        fluidState.setSaturation(nPhaseIdx, Sn);
+        fluidState.setSaturation(wPhaseIdx, 1.0 - Sn);
+
+        /////////////
+        // set the pressures of the fluid phases
+        /////////////
+
+        // calculate capillary pressure
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        auto pc = MaterialLaw::pc(materialParams, 1 - Sn);
+
+        // extract the pressures
+        if (formulation == pwsn)
+        {
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
+            if (priVars[pressureIdx] + pc < 0.0)
+                 DUNE_THROW(Dumux::NumericalProblem, "Capillary pressure is too low");
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
+        }
+        else if (formulation == pnsw)
+        {
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
+            // Here we check for (p_g - pc) in order to ensure that (p_l > 0)
+            if (priVars[pressureIdx] - pc < 0.0)
+            {
+                std::cout<< " The gas pressure is p_g = "<< priVars[pressureIdx]<<", the capillary pressure p_c = "<< pc << std::endl;
+                DUNE_THROW(Dumux::NumericalProblem, "Capillary pressure is too high");
+            }
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
+        }
+        else
+        {
+            DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+        }
+
+        /////////////
+        // calculate the phase compositions
+        /////////////
+
+        typename FluidSystem::ParameterCache paramCache;
+
+        // now comes the tricky part: calculate phase composition
+        if (phasePresence == bothPhases)
+        {
+            // both phases are present, phase composition results from
+            // the nonwetting <-> wetting equilibrium. This is
+            // the job of the "MiscibleMultiPhaseComposition"
+            // constraint solver
+
+            // set the known mole fractions in the fluidState so that they
+            // can be used by the Miscible2pNcComposition constraint solver
+            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
+            {
+                fluidState.setMoleFraction(wPhaseIdx, compIdx, priVars[compIdx]);
+            }
+
+            Miscible2pNCComposition::solve(fluidState,
+                                           paramCache,
+                                           wPhaseIdx,  //known phaseIdx
+                                           /*setViscosity=*/true,
+                                           /*setInternalEnergy=*/false);
+        }
+        else if (phasePresence == nPhaseOnly)
+        {
+            Dune::FieldVector<Scalar, numComponents> moleFrac;
+            Dune::FieldVector<Scalar, numComponents> fugCoeffL;
+            Dune::FieldVector<Scalar, numComponents> fugCoeffG;
+
+            for (int compIdx=0; compIdx<numComponents; ++compIdx)
+            {
+                fugCoeffL[compIdx] = FluidSystem::fugacityCoefficient(fluidState,
+                                                                      paramCache,
+                                                                      wPhaseIdx,
+                                                                      compIdx);
+                fugCoeffG[compIdx] = FluidSystem::fugacityCoefficient(fluidState,
+                                                                      paramCache,
+                                                                      nPhaseIdx,
+                                                                      compIdx);
+            }
+            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
+                moleFrac[compIdx] = (priVars[compIdx]*fugCoeffL[compIdx]*fluidState.pressure(wPhaseIdx))
+                                    /(fugCoeffG[compIdx]*fluidState.pressure(nPhaseIdx));
+
+            moleFrac[wCompIdx] =  priVars[switchIdx];
+            Scalar sumMoleFracOtherComponents = 0;
+            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
+                sumMoleFracOtherComponents+=moleFrac[compIdx];
+
+            sumMoleFracOtherComponents += moleFrac[wCompIdx];
+            moleFrac[nCompIdx] = 1 - sumMoleFracOtherComponents;
+
+            // Set fluid state mole fractions
+            for (int compIdx=0; compIdx<numComponents; ++compIdx)
+            {
+                fluidState.setMoleFraction(nPhaseIdx, compIdx, moleFrac[compIdx]);
+            }
+
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState,
+                                                    paramCache,
+                                                    nPhaseIdx,
+//                                                     nPhaseOnly,
+                                                    /*setViscosity=*/true,
+                                                    /*setEnthalpy=*/false);
+
+        }
+        else if (phasePresence == wPhaseOnly)
+        {
+            // only the wetting phase is present, i.e. wetting
+            // composition is stored explicitly.
+            // extract _mass_ fractions in the nonwetting phase
+            Dune::FieldVector<Scalar, numComponents> moleFrac;
+
+            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
+            {
+                moleFrac[compIdx] = priVars[compIdx];
+            }
+            moleFrac[nCompIdx] = priVars[switchIdx];
+            Scalar sumMoleFracOtherComponents = 0;
+            for (int compIdx=numMajorComponents; compIdx<numComponents; ++compIdx)
+            {
+                    sumMoleFracOtherComponents+=moleFrac[compIdx];
+            }
+            sumMoleFracOtherComponents += moleFrac[nCompIdx];
+            moleFrac[wCompIdx] = 1 -sumMoleFracOtherComponents;
+
+            // convert mass to mole fractions and set the fluid state
+            for (int compIdx=0; compIdx<numComponents; ++compIdx)
+            {
+                fluidState.setMoleFraction(wPhaseIdx, compIdx, moleFrac[compIdx]);
+            }
+
+            // calculate the composition of the remaining phases (as
+            // well as the densities of all phases). this is the job
+            // of the "ComputeFromReferencePhase" constraint solver
+            ComputeFromReferencePhase::solve(fluidState,
+                                                    paramCache,
+                                                    wPhaseIdx,
+//                                                     wPhaseOnly,
+                                                    /*setViscosity=*/true,
+                                                    /*setEnthalpy=*/false);
+        }
+        paramCache.updateAll(fluidState);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            Scalar h = BaseType::enthalpy(fluidState, paramCache, phaseIdx);
+
+            fluidState.setDensity(phaseIdx, rho);
+            fluidState.setViscosity(phaseIdx, mu);
+            fluidState.setEnthalpy(phaseIdx, h);
+        }
+    }
     /*!
      * \brief Returns the volume fraction of the precipitate (solid phase)
      * for the given phaseIdx
