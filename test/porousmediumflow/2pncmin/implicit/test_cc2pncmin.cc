@@ -113,9 +113,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(leafGridView.size(0));
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -141,6 +140,9 @@ int main(int argc, char** argv) try
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     //add specific output
+    vtkWriter.addField(problem->getCurrentDensity(), "currentDensity [A/cm^2]");
+    vtkWriter.addField(problem->getReactionSourceH2O(), "reactionSourceH2O [mol/(sm^2)]");
+    vtkWriter.addField(problem->getReactionSourceO2(), "reactionSourceO2 [mol/(sm^2)]");
     vtkWriter.addField(problem->getKxx(), "Kxx");
     vtkWriter.addField(problem->getKyy(), "Kyy");
     vtkWriter.write(0.0);
@@ -166,10 +168,6 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // set time for problem for implicit Euler scheme
-        problem->setTime( timeLoop->time() + timeLoop->timeStepSize() );
-        problem->setTimeStepSize( timeLoop->timeStepSize() );
-
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 
