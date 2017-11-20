@@ -26,8 +26,9 @@
 #define DUMUX_2PNCMIN_VOLUME_VARIABLES_HH
 
 #include <dumux/common/math.hh>
-#include <dumux/implicit/model.hh>
+
 #include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/discretization/volumevariables.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 #include <dumux/porousmediumflow/2pnc/implicit/volumevariables.hh>
@@ -135,17 +136,6 @@ public:
            sumPrecipitates_+= precipitateVolumeFraction_[sPhaseIdx];
         }
 
-        // for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
-        // {
-        //     Chemistry chemistry; // the non static functions can not be called without abject
-        //     saturationIdx_[sPhaseIdx] = chemistry.omega(sPhaseIdx);
-        // }
-        // TODO/FIXME: The salt crust porosity is not clearly defined. However form literature review it is
-        // found that the salt crust have porosity of approx. 10 %. Thus we restrict the decrease in porosity
-        // to this limit. Moreover in the Problem files the precipitation should also be made dependent on local
-        // porosity value, as the porous media media properties change related to salt precipitation will not be
-        // accounted otherwise.
-
         salinity_= 0.0;
         moleFractionSalinity_ = 0.0;
         for (int compIdx = numMajorComponents; compIdx< numComponents; compIdx++)    //sum of the mass fraction of the components
@@ -153,6 +143,8 @@ public:
             if(this->fluidState_.moleFraction(wPhaseIdx, compIdx) > 0)
             {
                 salinity_+= this->fluidState_.massFraction(wPhaseIdx, compIdx);
+                //TODO: we should be consistent. Assumin all salinity to be NaCl isn't consistent with
+                // the calculation of moleFractionSalinity_ here!
                 moleFractionSalinity_ += this->fluidState_.moleFraction(wPhaseIdx, compIdx);
             }
         }
@@ -179,21 +171,21 @@ public:
         // set the saturations
         /////////////
 
-        Scalar Sg;
+        Scalar Sn;
         if (phasePresence == nPhaseOnly)
         {
-            Sg = 1.0;
+            Sn = 1.0;
         }
         else if (phasePresence == wPhaseOnly)
         {
-            Sg = 0.0;
+            Sn = 0.0;
         }
         else if (phasePresence == bothPhases)
         {
             if (formulation == pwsn)
-                Sg = priVars[switchIdx];
+                Sn = priVars[switchIdx];
             else if (formulation == pnsw)
-                Sg = 1.0 - priVars[switchIdx];
+                Sn = 1.0 - priVars[switchIdx];
             else
                 DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
         }
@@ -202,8 +194,8 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         }
 
-        fluidState.setSaturation(nPhaseIdx, Sg);
-        fluidState.setSaturation(wPhaseIdx, 1.0 - Sg);
+        fluidState.setSaturation(nPhaseIdx, Sn);
+        fluidState.setSaturation(wPhaseIdx, 1.0 - Sn);
 
         /////////////
         // set the pressures of the fluid phases
@@ -211,7 +203,7 @@ public:
 
         // calculate capillary pressure
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
-        auto pc = MaterialLaw::pc(materialParams, 1 - Sg);
+        auto pc = MaterialLaw::pc(materialParams, 1 - Sn);
 
         // extract the pressures
         if (formulation == pwsn)
