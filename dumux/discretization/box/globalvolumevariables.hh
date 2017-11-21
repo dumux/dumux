@@ -68,9 +68,7 @@ public:
             fvGeometry.bindElement(element);
 
             // get the element solution
-            ElementSolutionVector elemSol(element, sol, fvGridGeometry);
-            for (const auto& scv : scvs(fvGeometry))
-                elemSol[scv.indexInElement()] = sol[scv.dofIndex()];
+            ElementSolutionVector elemSol(element, sol, fvGeometry);
 
             // update the volvars of the element
             volumeVariables_[eIdx].resize(fvGeometry.numScv());

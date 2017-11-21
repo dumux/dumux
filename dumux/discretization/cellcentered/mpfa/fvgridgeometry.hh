@@ -178,7 +178,7 @@ public:
         // determine the number of geometric entities
         const auto numVert = this->gridView().size(dim);
         const auto numScvs = numDofs();
-        std::size_t numScvf = MpfaHelper::estimateNumScvf(this->gridView());
+        std::size_t numScvf = MpfaHelper::getGlobalNumScvf(this->gridView());
 
         // resize containers
         scvs_.resize(numScvs);

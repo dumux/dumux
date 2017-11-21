@@ -91,13 +91,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    /*!
-     * \brief The constructor
-     *
-     * \param gridView The grid view
-     */
-    FractureSpatialParams(const Problem& problem, const GridView& gridView)
-    : ParentType(problem, gridView)
+     FractureSpatialParams(const Problem& problem)
+     : ParentType(problem)
     {
         // residual saturations
         materialParams_.setSwr(0.05);

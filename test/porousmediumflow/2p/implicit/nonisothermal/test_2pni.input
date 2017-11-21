@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
@@ -8,7 +8,7 @@ UpperRight = 60 40
 Cells = 24 16
 
 [Problem]
-Name = injection2pnibox
+Name = injection2pni
 
 [Newton]
 WriteConvergence = 1 # write convergence behaviour to disk?

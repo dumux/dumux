@@ -48,7 +48,6 @@ public:
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.density(Indices::nPhaseIdx); }, "rhoN");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(Indices::wPhaseIdx); }, "mobW");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.mobility(Indices::nPhaseIdx); }, "mobN");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.temperature(); }, "temperature");
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.porosity(); }, "porosity");
     }
 };

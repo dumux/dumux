@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief test for the two-phase porousmedium flow model
+ * \brief Fracture 2d in 3d test for the two-phase box model
  */
 #include <config.h>
 
@@ -60,29 +60,11 @@
  *                  Comprises the thing that went wrong and a general help message.
  */
 void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
-                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
-                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
-                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
-                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
-                                        "\t                                definition in DGF format\n"
-                                        "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
-                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
-                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
-                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
+{}
 
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
-
+////////////////////////
+// the main function
+////////////////////////
 int main(int argc, char** argv) try
 {
     using namespace Dumux;
@@ -122,9 +104,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -161,11 +142,11 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = NewtonController<TypeTag>;
-    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
+    using NewtonController = Dumux::NewtonController<TypeTag>;
+    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
