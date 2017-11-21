@@ -19,13 +19,6 @@ add_dumux_test(test_boxadaptive2p test_boxadaptive2p test_boxadaptive2p.cc
                          ${CMAKE_CURRENT_BINARY_DIR}/lensboxadaptive-00014.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxadaptive2p")
 
-add_dumux_test(test_generalizeddirichlet test_generalizeddirichlet test_generalizeddirichlet.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/generalizeddirichlet-reference.vtp
-                         ${CMAKE_CURRENT_BINARY_DIR}/generalizeddirichlet-00034.vtp
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_generalizeddirichlet")
-
 if(HAVE_OPM_GRID)
 add_dumux_test(test_cc2pcornerpoint test_cc2pcornerpoint test_cc2pcornerpoint.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
