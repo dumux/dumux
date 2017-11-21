@@ -1,41 +1,47 @@
 dune_symlink_to_source_files(FILES "test_2pni.input")
 
-# non-isothermal tests
-if(HAVE_UG)
-  dune_add_test(SOURCES test_2pni_box.cc
-                NAME test_2pni_box
-                COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                               --script fuzzy
-                               --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-simplex-reference.vtu
-                                       ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box-00007.vtu
-                               --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box test_2pni.input -Problem.Name test_2pni_box -Grid.CellType Simplex")
-else()
-dune_add_test(SOURCES test_2pni_box.cc
-              NAME test_2pni_box
+dune_add_test(SOURCES test_2pni_fv.cc
+              NAME test_2pni_box_simplex
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=InjectionBoxProblem2PNI
+              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                             --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-simplex-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_simplex-00007.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_simplex test_2pni.input -Problem.Name test_2pni_box_simplex -Grid.CellType Simplex")
+
+dune_add_test(SOURCES test_2pni_fv.cc
+              NAME test_2pni_box_cube
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=InjectionBoxProblem2PNI
               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                              --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box-00007.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box test_2pni.input -Problem.Name test_2pni_box")
-endif()
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube-00007.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_box_cube test_2pni.input -Problem.Name test_2pni_box_cube")
 
-if(HAVE_UG)
-dune_add_test(SOURCES test_2pni_cc.cc
-              NAME test_2pni_tpfa
+dune_add_test(SOURCES test_2pni_fv.cc
+              NAME test_2pni_tpfa_simplex
+              CMAKE_GUARD dune-uggrid_FOUND
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=InjectionCCProblem2PNI
               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                              --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-simplex-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/2pni_tpfa-00008.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa test_2pni.input -Problem.Name 2pni_tpfa -Grid.CellType Simplex")
-else()
-dune_add_test(SOURCES test_2pni_cc.cc
-              NAME test_2pni_tpfa
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_simplex-00008.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_simplex test_2pni.input -Problem.Name test_2pni_tpfa_simplex -Grid.CellType Simplex")
+
+dune_add_test(SOURCES test_2pni_fv.cc
+              NAME test_2pni_tpfa_cube
+              COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
+              COMPILE_DEFINITIONS TYPETAG=InjectionCCProblem2PNI
               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                              --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-cube-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/2pni_tpfa-00008.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa test_2pni.input -Problem.Name 2pni_tpfa")
-endif()
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_cube-00008.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pni_tpfa_cube test_2pni.input -Problem.Name test_2pni_tpfa_cube")
+
 
 set(CMAKE_BUILD_TYPE Release)
 

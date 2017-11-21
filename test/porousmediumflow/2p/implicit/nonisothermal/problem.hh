@@ -49,12 +49,8 @@ NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(TwoPNI, InjectionSpatialParams)
 NEW_TYPE_TAG(InjectionBoxProblem2PNI, INHERITS_FROM(BoxModel, InjectionProblem2PNI));
 NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCTpfaModel, InjectionProblem2PNI));
 
-// Set the grid type
-#if HAVE_UG
-SET_TYPE_PROP(InjectionProblem2PNI, Grid, Dune::UGGrid<2>);
-#else
-SET_TYPE_PROP(InjectionProblem2PNI, Grid, Dune::YaspGrid<2>);
-#endif
+// Obtain grid type from COMPILE_DEFINITIONS
+SET_TYPE_PROP(InjectionProblem2PNI, Grid, GRIDTYPE);
 
 // Set the problem property
 SET_TYPE_PROP(InjectionProblem2PNI, Problem, InjectionProblem2PNI<TypeTag>);
