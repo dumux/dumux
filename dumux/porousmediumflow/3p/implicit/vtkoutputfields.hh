@@ -53,7 +53,6 @@ public:
         vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(Indices::gPhaseIdx); },"rhog");
         vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.porosity(); },"porosity");
         vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.permeability(); },"permeability");
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); },"temperature");
     }
 };
 

@@ -142,9 +142,6 @@ public:
     typedef ThermalConductivitySomerton<Scalar, Indices> type;
 };
 
-//! temperature is already written by the isothermal model
-SET_BOOL_PROP(ThreePNI, NiOutputLevel, 0);
-
 //////////////////////////////////////////////////////////////////
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
@@ -154,6 +151,9 @@ SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag
 
 //set isothermal LocalResidual
 SET_TYPE_PROP(ThreePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
+
+//set isothermal output fields
+SET_TYPE_PROP(ThreePNI, IsothermalVtkOutputFields, ThreePVtkOutputFields<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(ThreePNI, IsothermalIndices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
