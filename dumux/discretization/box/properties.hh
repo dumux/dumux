@@ -26,6 +26,9 @@
 #ifndef DUMUX_BOX_PROPERTIES_HH
 #define DUMUX_BOX_PROPERTIES_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/geometry/multilineargeometry.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 

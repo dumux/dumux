@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 
-#include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/common/math.hh>

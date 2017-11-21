@@ -24,9 +24,7 @@
 #define DUMUX_DISCRETIZATION_CC_TPFA_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
-#include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
-#include <dumux/common/optional.hh>
 
 namespace Dumux
 {

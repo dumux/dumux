@@ -24,7 +24,6 @@
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
-#include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>

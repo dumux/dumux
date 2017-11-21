@@ -27,6 +27,9 @@
 #ifndef DUMUX_CC_MPFA_PROPERTIES_HH
 #define DUMUX_CC_MPFA_PROPERTIES_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/geometry/multilineargeometry.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
