@@ -140,6 +140,10 @@ public:
         useWholeLength_ = getParam<bool>("Problem.UseWholeLength");
         FluidSystem::init();
         deltaRho_.resize(this->fvGridGeometry().numCellCenterDofs());
+
+        using CellArray = std::array<unsigned int, dimWorld>;
+        const CellArray numCells = getParam<CellArray>("Grid.Cells");
+        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
     }
 
     /*!
@@ -190,7 +194,7 @@ public:
         values.setOutflow(transportEqIdx);
         values.setOutflow(massBalanceIdx);
 
-        if(globalPos[1] <  eps_)
+        if(isLowerLeftCell_(globalPos))
             values.setDirichletCell(massBalanceIdx);
 
         if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
@@ -270,12 +274,19 @@ public:
     auto& getDeltaRho() const
     { return deltaRho_; }
 
+
+    bool isLowerLeftCell_(const GlobalPosition& globalPos) const
+    {
+        return globalPos[0] < (0.5*cellSizeX_ + eps_) && globalPos[1] < eps_;
+    }
+
     // \}
 
 private:
     const Scalar eps_;
     bool useWholeLength_;
     std::vector<Scalar> deltaRho_;
+    Scalar cellSizeX_;
 };
 } //end namespace
 

@@ -5,7 +5,7 @@ dune_add_test(NAME test_densitydrivenflow
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-densitydriven-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00025.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00029.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow")
 
 add_executable(test_stokes2c test_channel.cc)
