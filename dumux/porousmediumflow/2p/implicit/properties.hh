@@ -90,7 +90,7 @@ SET_TYPE_PROP(TwoP,
 
 //! By default, we set a null component as wetting phase
 SET_PROP(TwoP, WettingPhase)
-{ 
+{
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
@@ -99,7 +99,7 @@ public:
 
 //! By default, we set a null component as non-wetting phase
 SET_PROP(TwoP, NonwettingPhase)
-{ 
+{
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
@@ -108,7 +108,7 @@ public:
 
 //! The two-phase model uses the immiscible fluid system
 SET_PROP(TwoP, FluidSystem)
-{ 
+{
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
@@ -133,10 +133,10 @@ public:
 ////////////////////////////////////////////////////////
 // properties for the non-isothermal two-phase model
 ////////////////////////////////////////////////////////
-SET_BOOL_PROP(TwoPNI, NiOutputLevel, 0);                                          //! temperature is already written by the isothermal model
 SET_INT_PROP(TwoPNI, IsothermalNumEq, 2);                                         //! set isothermal NumEq
 SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>);   //! set isothermal VolumeVariables
 SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>); //! set isothermal LocalResidual
+SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<TypeTag>);   //! set isothermal output fields
 
 //! set isothermal Indices
 SET_PROP(TwoPNI, IsothermalIndices)
