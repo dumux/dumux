@@ -46,16 +46,12 @@ class FractureProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(FractureProblem, INHERITS_FROM(TwoP, FractureSpatialParams));
-NEW_TYPE_TAG(FractureBoxProblem, INHERITS_FROM(BoxModel, FractureProblem));
-NEW_TYPE_TAG(FractureCCTpfaProblem, INHERITS_FROM(CCTpfaModel, FractureProblem));
-NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem));
+NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureProblem));
+NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureProblem));
+NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureProblem));
 
-#if HAVE_DUNE_FOAMGRID
+// set the grid property
 SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
-#else
-#warning "FoamGrid is required for this test!"
-SET_TYPE_PROP(FractureProblem, Grid, Dune::YaspGrid<3>);
-#endif
 
 // Set the problem property
 SET_TYPE_PROP(FractureProblem, Problem, Dumux::FractureProblem<TypeTag>);
