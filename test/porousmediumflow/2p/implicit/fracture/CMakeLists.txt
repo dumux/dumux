@@ -33,6 +33,5 @@ set(CMAKE_BUILD_TYPE Release)
 install(FILES
 problem.hh
 spatialparams.hh
-test_2p_fracture_box.cc
-test_2p_fracture_cc.cc
+test_2p_fracture_fv.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2p/fracture)
