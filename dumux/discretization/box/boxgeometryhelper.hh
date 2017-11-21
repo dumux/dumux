@@ -102,7 +102,7 @@ public:
     }
 
     //! get scvf area
-    Scalar scvfArea(const ScvCornerStorage& scvfCorners) const
+    Scalar scvfArea(const ScvfCornerStorage& scvfCorners) const
     {
         return 1.0;
     }
