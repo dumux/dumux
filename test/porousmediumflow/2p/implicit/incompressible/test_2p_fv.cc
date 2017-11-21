@@ -123,7 +123,7 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(0));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -160,11 +160,11 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = NewtonController<TypeTag>;
-    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
+    using NewtonController = Dumux::NewtonController<TypeTag>;
+    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 

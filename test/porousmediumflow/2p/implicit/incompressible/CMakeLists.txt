@@ -2,7 +2,7 @@ dune_symlink_to_source_files(FILES "test_2p.input")
 
 # using tpfa
 dune_add_test(NAME test_2p_incompressible_tpfa
-              SOURCES test_2p_cc.cc
+              SOURCES test_2p_fv.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleTpfa
               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                              --script fuzzy
@@ -12,7 +12,8 @@ dune_add_test(NAME test_2p_incompressible_tpfa
 
 # using box
 dune_add_test(NAME test_2p_incompressible_box
-              SOURCES test_2p_box.cc
+              SOURCES test_2p_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleBox
               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                              --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/lensbox-reference.vtu
@@ -21,7 +22,7 @@ dune_add_test(NAME test_2p_incompressible_box
 
 # using mpfa
 dune_add_test(NAME test_2p_incompressible_mpfa
-              SOURCES test_2p_cc.cc
+              SOURCES test_2p_fv.cc
               COMPILE_DEFINITIONS TYPETAG=TwoPIncompressibleMpfa
               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                              --script fuzzy
