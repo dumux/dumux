@@ -29,7 +29,7 @@ namespace Dumux
 {
 //! Forward declaration of the method specific implementations
 //! Available implementations have to be included at the end of this file.
-template<MpfaMethods M, class G, class GT, typename I>
+template<MpfaMethods M, class ScvfGeometryTraits>
 class CCMpfaSubControlVolumeFaceImplementation;
 
 /*!
@@ -43,24 +43,20 @@ class CCMpfaSubControlVolumeFaceImplementation;
  * \param GT the traits class for the geometry type
  * \param I the type used for indices
  */
-template<MpfaMethods M, class G, class GT, typename I>
-class CCMpfaSubControlVolumeFace : public CCMpfaSubControlVolumeFaceImplementation<M, G, GT, I>
+template<MpfaMethods M, class ScvfGeometryTraits>
+class CCMpfaSubControlVolumeFace : public CCMpfaSubControlVolumeFaceImplementation<M, ScvfGeometryTraits>
 {
-    using ParentType = CCMpfaSubControlVolumeFaceImplementation<M, G, GT, I>;
-    using Geometry = G;
-    using IndexType = I;
-
-    using Scalar = typename Geometry::ctype;
-    static const int dim = Geometry::mydimension;
-    static const int dimWorld = Geometry::coorddimension;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using ParentType = CCMpfaSubControlVolumeFaceImplementation<M, ScvfGeometryTraits>;
+    using Geometry = typename ScvfGeometryTraits::Geometry;
+    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
+    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
+    using LocalIndexType = typename ScvfGeometryTraits::LocalIndexType;
+    using Scalar = typename ScvfGeometryTraits::Scalar;
+    using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
 
 public:
     //! state the traits class puclicly
-    using Traits = GT;
-
-    //! For convenience, state the corner storage vector from the traits
-    using CornerVector = typename Traits::template CornerStorage<dim, dimWorld>::Type;
+    using Traits = ScvfGeometryTraits;
 
     /*!
      * \brief Constructor
@@ -78,17 +74,17 @@ public:
      */
     template<class MpfaHelper>
     CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
-                               CornerVector&& corners,
+                               CornerStorage&& corners,
                                GlobalPosition&& unitOuterNormal,
-                               IndexType vIdxGlobal,
-                               unsigned int localIndex,
-                               IndexType scvfIndex,
-                               IndexType insideScvIdx,
-                               const std::vector<IndexType>& outsideScvIndices,
+                               GridIndexType vIdxGlobal,
+                               LocalIndexType localIndex,
+                               GridIndexType scvfIndex,
+                               GridIndexType insideScvIdx,
+                               const std::vector<GridIndexType>& outsideScvIndices,
                                Scalar q,
                                bool boundary)
     : ParentType(helper,
-                 std::forward<CornerVector>(corners),
+                 std::forward<CornerStorage>(corners),
                  std::forward<GlobalPosition>(unitOuterNormal),
                  vIdxGlobal,
                  localIndex,
@@ -99,7 +95,8 @@ public:
                  boundary)
     {}
 };
-} // end namespace
+
+} // end namespace Dumux
 
 //! The available implementations should be included here
 // #include <dumux/discretization/cellcentered/mpfa/lmethod/subcontrolvolumeface.hh>

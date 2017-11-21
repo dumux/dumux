@@ -30,29 +30,31 @@
 
 namespace Dumux
 {
-template<class G, typename I>
-class BoxSubControlVolume : public SubControlVolumeBase<BoxSubControlVolume<G, I>, G, I>
+template<class ScvGeometryTraits>
+class BoxSubControlVolume : public SubControlVolumeBase<BoxSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>
 {
-    using ParentType = SubControlVolumeBase<BoxSubControlVolume<G, I>, G, I>;
-    using Geometry = G;
-    using IndexType = I;
-
-    using Scalar = typename Geometry::ctype;
+    using ParentType = SubControlVolumeBase<BoxSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>;
+    using Geometry = typename ScvGeometryTraits::Geometry;
+    using GridIndexType = typename ScvGeometryTraits::GridIndexType;
+    using LocalIndexType = typename ScvGeometryTraits::LocalIndexType;
+    using Scalar = typename ScvGeometryTraits::Scalar;
+    using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
+    using CornerStorage = typename ScvGeometryTraits::CornerStorage;
     enum { dim = Geometry::mydimension };
-    enum { dimworld = Geometry::coorddimension };
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
-
 
 public:
+    //! state the traits public and thus export all types
+    using Traits = ScvGeometryTraits;
+
     //! The default constructor
     BoxSubControlVolume() = default;
 
     // the contructor in the box case
     template<class GeometryHelper>
     BoxSubControlVolume(const GeometryHelper& geometryHelper,
-                        IndexType scvIdx,
-                        IndexType elementIndex,
-                        IndexType dofIndex)
+                        LocalIndexType scvIdx,
+                        GridIndexType elementIndex,
+                        GridIndexType dofIndex)
     : corners_(geometryHelper.getScvCorners(scvIdx)),
       center_(0.0),
       volume_(geometryHelper.scvVolume(corners_)),
@@ -86,13 +88,13 @@ public:
     }
 
     //! The global index of this scv
-    IndexType indexInElement() const
+    LocalIndexType indexInElement() const
     {
         return scvIdx_;
     }
 
     //! The index of the dof this scv is embedded in
-    IndexType dofIndex() const
+    GridIndexType dofIndex() const
     {
         return dofIndex_;
     }
@@ -105,25 +107,25 @@ public:
     }
 
     //! The global index of the element this scv is embedded in
-    IndexType elementIndex() const
+    GridIndexType elementIndex() const
     {
         return elementIndex_;
     }
 
     //! Return the corner for the given local index
-    GlobalPosition corner(unsigned int localIdx) const
+    GlobalPosition corner(LocalIndexType localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
         return corners_[localIdx];
     }
 
 private:
-    std::vector<GlobalPosition> corners_;
+    CornerStorage corners_;
     GlobalPosition center_;
     Scalar volume_;
-    IndexType elementIndex_;
-    IndexType scvIdx_;
-    IndexType dofIndex_;
+    GridIndexType elementIndex_;
+    LocalIndexType scvIdx_;
+    GridIndexType dofIndex_;
 };
 
 } // end namespace

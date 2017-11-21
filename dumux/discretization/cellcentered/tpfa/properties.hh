@@ -27,6 +27,8 @@
 #ifndef DUMUX_CC_TPFA_PROPERTIES_HH
 #define DUMUX_CC_TPFA_PROPERTIES_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
@@ -81,10 +83,16 @@ SET_PROP(CCTpfaModel, SubControlVolume)
 {
 private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+    struct ScvGeometryTraits
+    {
+        using Geometry = typename Grid::template Codim<0>::Geometry;
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimensionworld>;
+    };
 public:
-    using type = CCSubControlVolume<ScvGeometry, IndexType>;
+    using type = CCSubControlVolume<ScvGeometryTraits>;
 };
 
 //! The sub control volume face
@@ -92,10 +100,41 @@ SET_PROP(CCTpfaModel, SubControlVolumeFace)
 {
 private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvfGeometry = typename Grid::template Codim<1>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+    static constexpr int dim = Grid::dimension;
+    static constexpr int dimWorld = Grid::dimensionworld;
+
+    // we use geometry traits that use static corner vectors to and a fixed geometry type
+    template <class ct>
+    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
+        };
+
+        // we know all scvfs will have the same geometry type
+        template< int dim >
+        struct hasSingleGeometryType
+        {
+            static const bool v = true;
+            static const unsigned int topologyId = Dune::Impl::CubeTopology< dim >::type::id;
+        };
+    };
+
+    struct ScvfGeometryTraits
+    {
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
+        using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
+        using GlobalPosition = typename CornerStorage::value_type;
+    };
 public:
-    typedef Dumux::CCTpfaSubControlVolumeFace<ScvfGeometry, IndexType> type;
+    typedef Dumux::CCTpfaSubControlVolumeFace<ScvfGeometryTraits> type;
 };
 
 //! Set the solution vector type for an element
