@@ -22,7 +22,7 @@
  * \brief Test for the two-phase CC model
  */
 
-#define PROBLEM 2
+#define PROBLEM 1
 
 #include <config.h>
 #include "wellproblem.hh"

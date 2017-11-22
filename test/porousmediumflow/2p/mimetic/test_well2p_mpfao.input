@@ -1,0 +1,13 @@
+[TimeManager]
+DtInitial = 50 # [s]
+TEnd = 2.0e5 # [s]
+
+[Grid]
+File = ./grids/WellMesh_2.msh.dgf
+
+[Problem]
+Name = wellinjection_mpfao
+
+[Newton]
+EnableChop = false
+
