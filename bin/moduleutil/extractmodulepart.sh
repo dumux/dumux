@@ -389,7 +389,12 @@ for MOD in $DEPENDING_MODULE_NAMES
 do
   if [ $MOD != $MODULE_NAME ]; then
     MODULE_DIR=${MOD%*/}
-    getVersionGit $MODULE_DIR $(pwd)/$MODULE_NAME/install$MODULE_NAME.sh >>$MODULE_NAME/$README_FILE
+    getVersionGit $MODULE_DIR $(pwd)/$MODULE_NAME/install$MODULE_NAME.sh | tee -a $MODULE_NAME/$README_FILE
+    grep "Error:" $MODULE_NAME/$README_FILE > /dev/null
+    EXIT_CODE=$?
+    if [[ $EXIT_CODE == 0 ]]; then
+      exit
+    fi
   fi
 done
 
