@@ -474,8 +474,8 @@ public:
         // Then look for the necessary keys to construct from the input file
         if (!haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
             DUNE_THROW(ParameterException, "Please supply the mandatory parameter "
-                                          << modelParamGroup <<  ".UpperRight or a grid file in "
-                                          << modelParamGroup << ".File.");
+                                          << modelParamGroup <<  ".Grid.UpperRight or a grid file in "
+                                          << modelParamGroup << ".Grid.File.");
 
         // get the upper right corner coordinates
         const auto upperRight = getParamFromGroup<Dune::FieldVector<ct, dim>>(modelParamGroup, "Grid.UpperRight");
@@ -562,8 +562,8 @@ public:
         // Then look for the necessary keys to construct from the input file
         if (!haveParamInGroup(modelParamGroup, "Grid.UpperRight"))
             DUNE_THROW(ParameterException, "Please supply the mandatory parameter "
-                                          << modelParamGroup <<  ".UpperRight or a grid file in "
-                                          << modelParamGroup << ".File.");
+                                          << modelParamGroup <<  ".Grid.UpperRight or a grid file in "
+                                          << modelParamGroup << ".Grid.File.");
 
         using GlobalPosition = Dune::FieldVector<ct, dim>;
 
