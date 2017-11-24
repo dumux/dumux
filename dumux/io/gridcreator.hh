@@ -391,8 +391,7 @@ public:
  *        supported grid managers. It inherits the functionality of the base class.
  */
 template <class TypeTag>
-class GridCreator : public GridCreatorImpl<TypeTag, typename GET_PROP_TYPE(TypeTag, Grid)>
-{};
+using GridCreator = GridCreatorImpl<TypeTag, typename GET_PROP_TYPE(TypeTag, Grid)>;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Specializations //////////////////////////////////////////////////////////////////////////////////////////////
