@@ -16,3 +16,6 @@ EnableGravity = false # disable gravity
 
 [Vtk]
 AddVelocity = true # enable velocity output
+
+[MpfaTest.Vtk]
+AddVelocity = false # enable velocity output

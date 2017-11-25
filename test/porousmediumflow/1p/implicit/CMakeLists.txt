@@ -81,24 +81,23 @@ dune_add_test(NAME test_1pnicctpfa_convection
                                ${CMAKE_CURRENT_BINARY_DIR}/1pnicctpfa_convection-00010.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnicctpfa_convection test_1pnifv_convection.input -Problem.Name 1pnicctpfa_convection")
 
-# TODO: Implement interaction volume handle?
-# dune_add_test(NAME test_1pniccmpfa_conduction
-#               SOURCES test_1pnifv.cc
-#               COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfaProblem
-#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#               CMD_ARGS --script fuzzy
-#                        --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconduction-reference.vtu
-#                                ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_conduction-00006.vtu
-#                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_conduction test_1pnifv_conduction.input -Problem.Name 1pniccmpfa_conduction")
-#
-# dune_add_test(NAME test_1pniccmpfa_convection
-#               SOURCES test_1pnifv.cc
-#               COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCMpfaProblem
-#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#               CMD_ARGS --script fuzzy
-#                        --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconvection-reference.vtu
-#                                ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_convection-00010.vtu
-#                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_convection test_1pnifv_convection.input -Problem.Name 1pniccmpfa_convection")
+dune_add_test(NAME test_1pniccmpfa_conduction
+              SOURCES test_1pnifv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconduction-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_conduction-00006.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_conduction test_1pnifv_conduction.input -Problem.Name 1pniccmpfa_conduction")
+
+dune_add_test(NAME test_1pniccmpfa_convection
+              SOURCES test_1pnifv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCMpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconvection-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1pniccmpfa_convection-00010.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pniccmpfa_convection test_1pnifv_convection.input -Problem.Name 1pniccmpfa_convection")
 
 # dim < dimWorld tests with Dune::Foamgrid<1,3>
 dune_add_test(NAME test_1pcctpfa_network1d3d

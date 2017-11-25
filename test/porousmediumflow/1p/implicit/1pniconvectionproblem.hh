@@ -63,6 +63,8 @@ SET_TYPE_PROP(OnePNIConvectionProblem, Fluid,
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConvectionProblem, SpatialParams, OnePNISpatialParams<TypeTag>);
 
+// Set the model parameter group for the mpfa case (velocity disabled in input file)
+SET_STRING_PROP(OnePNIConvectionCCMpfaProblem, ModelParameterGroup, "MpfaTest");
 } // end namespace Properties
 
 

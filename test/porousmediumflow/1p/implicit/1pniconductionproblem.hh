@@ -65,6 +65,8 @@ SET_TYPE_PROP(OnePNIConductionProblem,
               SpatialParams,
               OnePNISpatialParams<TypeTag>);
 
+// Set the model parameter group for the mpfa case (velocity disabled in input file)
+SET_STRING_PROP(OnePNIConductionCCMpfaProblem, ModelParameterGroup, "MpfaTest");
 }
 
 
