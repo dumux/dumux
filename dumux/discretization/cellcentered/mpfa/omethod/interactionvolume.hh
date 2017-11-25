@@ -70,9 +70,8 @@ class CCMpfaOInteractionVolume;
  *        traits class.
  */
 template<class TypeTag>
-class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>
-          : public CCMpfaOInteractionVolume<TypeTag,
-                                            CCMpfaOInteractionVolumeTraits<TypeTag>>
+class CCMpfaInteractionVolumeImplementation< TypeTag, MpfaMethods::oMethod>
+          : public CCMpfaOInteractionVolume< TypeTag, CCMpfaOInteractionVolumeTraits<TypeTag> >
 {
     using TraitsType = CCMpfaOInteractionVolumeTraits<TypeTag>;
 public:
@@ -111,6 +110,9 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase<TypeTag, Tra
     using GlobalIndexContainer = typename Traits::DynamicGlobalIndexContainer;
     using DataHandle = typename Traits::DataHandle;
 public:
+
+    //! publicly state the mpfa-scheme this interaction volume is associated with
+    static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
 
     using typename ParentType::LocalFaceData;
     using typename ParentType::DirichletDataContainer;
@@ -189,7 +191,7 @@ public:
                 scvfs_.emplace_back(scvf, neighborScvIndicesLocal, /*isDirichlet*/false, numUnknowns_++);
 
                 // add local face data object for the outside faces
-                for (unsigned int i = 1; i < neighborScvIndicesLocal.size(); ++i)
+                for (LocalIndexType i = 1; i < neighborScvIndicesLocal.size(); ++i)
                 {
                     const auto outsideLocalScvIdx = neighborScvIndicesLocal[i];
 
@@ -225,8 +227,10 @@ public:
       dataHandle.resizeT(numFaces_, numPotentials_);
 
       // resize possible additional containers in the data handle
-      if (requireABMatrix_()) dataHandle.resizeAB(numUnknowns_, numPotentials_);
-      if (dim < dimWorld) dataHandle.resizeOutsideTij(numOutsideFaces_, numPotentials_);
+      if (requireABMatrix_())
+          dataHandle.resizeAB(numUnknowns_, numPotentials_);
+      if (dim < dimWorld)
+          dataHandle.resizeOutsideTij(numOutsideFaces_, numPotentials_);
     }
 
     //! solves for the transmissibilities subject to a given tensor
@@ -239,7 +243,7 @@ public:
     {
         // if only dirichlet faces are present, assemble T_ directly
         if (numUnknowns_ == 0)
-            assemblePureDirichletSystem_(getTensor, problem, fvGeometry, elemVolVars, dataHandle.T());
+            assemblePureDirichletT_(getTensor, problem, fvGeometry, elemVolVars, dataHandle.T());
         else
         {
             // assemble
@@ -279,33 +283,26 @@ public:
     }
 
     //! returns the grid element corresponding to a given iv-local scv idx
-    const Element& element(const LocalIndexType ivLocalScvIdx) const
-    { return elements_[ivLocalScvIdx]; }
+    const Element& element(const LocalIndexType ivLocalScvIdx) const { return elements_[ivLocalScvIdx]; }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
-    const LocalScvfType& localScvf(const LocalIndexType ivLocalScvfIdx) const
-    { return scvfs_[ivLocalScvfIdx]; }
+    const LocalScvfType& localScvf(const LocalIndexType ivLocalScvfIdx) const { return scvfs_[ivLocalScvfIdx]; }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
-    const LocalScvType& localScv(const LocalIndexType ivLocalScvfIdx) const
-    { return scvs_[ivLocalScvfIdx]; }
+    const LocalScvType& localScv(const LocalIndexType ivLocalScvfIdx) const { return scvs_[ivLocalScvfIdx]; }
 
     //! returns a reference to the container with the data on Dirichlet boundaries
-    const DirichletDataContainer& dirichletData() const
-    { return dirichletData_; }
+    const DirichletDataContainer& dirichletData() const { return dirichletData_; }
 
     //! returns a reference to the container with the local face data
-    const std::vector<LocalFaceData>& localFaceData() const
-    { return localFaceData_; }
+    const std::vector<LocalFaceData>& localFaceData() const { return localFaceData_; }
 
     //! returns a reference to the index set of this iv
-    const IndexSet& indexSet() const
-    { return *indexSetPtr_; }
+    const IndexSet& indexSet() const { return *indexSetPtr_; }
 
     //! returns the number of interaction volumes living around a vertex
     //! the mpfa-o scheme always constructs one iv per vertex
-    static std::size_t numInteractionVolumesAtVertex(const DualGridNodalIndexSet& nodalIndexSet)
-    { return 1; }
+    static std::size_t numInteractionVolumesAtVertex(const DualGridNodalIndexSet& nodalIndexSet) { return 1; }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
@@ -327,7 +324,7 @@ public:
 
 private:
     //! returns a boolean whether or not the AB matrix has to be passed to the handles
-    bool requireABMatrix_() const
+    static bool requireABMatrix_()
     {
         static const bool requireAB = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.AddVelocity") || dim < dimWorld;
         return requireAB;
@@ -360,7 +357,7 @@ private:
         wijk_.resize(scvfs_.size());
 
         // loop over the local faces
-        for (unsigned int faceIdx = 0; faceIdx < numFaces_; ++faceIdx)
+        for (LocalIndexType faceIdx = 0; faceIdx < numFaces_; ++faceIdx)
         {
             const auto& curLocalScvf = localScvf(faceIdx);
             const auto& curGlobalScvf = fvGeometry.scvf(curLocalScvf.globalScvfIndex());
@@ -470,11 +467,11 @@ private:
     //! for interaction volumes that have only dirichlet scvfs,
     //! the transmissibility matrix can be assembled directly
     template<typename GetTensorFunction>
-    void assemblePureDirichletSystem_(const GetTensorFunction& getTensor,
-                                      const Problem& problem,
-                                      const FVElementGeometry& fvGeometry,
-                                      const ElementVolumeVariables& elemVolVars,
-                                      Matrix& T)
+    void assemblePureDirichletT_(const GetTensorFunction& getTensor,
+                                 const Problem& problem,
+                                 const FVElementGeometry& fvGeometry,
+                                 const ElementVolumeVariables& elemVolVars,
+                                 Matrix& T)
     {
         // reset the transmissibility matrix beforehand
         T = 0.0;
@@ -499,7 +496,7 @@ private:
             posWijk *= posVolVars.extrusionFactor();
 
             const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
-            for (int localDir = 0; localDir < dim; localDir++)
+            for (LocalIndexType localDir = 0; localDir < dim; localDir++)
             {
                 const auto otherLocalScvfIdx = posLocalScv.scvfIdxLocal(localDir);
                 const auto& otherLocalScvf = localScvf(otherLocalScvfIdx);
@@ -532,7 +529,7 @@ private:
             tij = 0.0;
 
             //! add contributions from all local directions
-            for (int localDir = 0; localDir < dim; localDir++)
+            for (LocalIndexType localDir = 0; localDir < dim; localDir++)
             {
                 //! the scvf corresponding to this local direction in the scv
                 const auto& curLocalScvf = localScvf(posLocalScv.scvfIdxLocal(localDir));
@@ -555,7 +552,7 @@ private:
 
     // calculates n_i^T*K_j*nu_k
     DimVector calculateOmegas_(const LocalScvType& localScv,
-                               const GlobalPosition normal,
+                               const GlobalPosition& normal,
                                const Scalar area,
                                const Tensor& T) const
     {
@@ -564,7 +561,7 @@ private:
 
         DimVector wijk;
         GlobalPosition tmp;
-        for (int dir = 0; dir < dim; ++dir)
+        for (LocalIndexType dir = 0; dir < dim; ++dir)
         {
             T.mv(localScv.innerNormal(dir), tmp);
             wijk[dir] = tmp*normal;
@@ -577,7 +574,7 @@ private:
 
     // calculates n_i^T*K_j*nu_k
     DimVector calculateOmegas_(const LocalScvType& localScv,
-                               const GlobalPosition normal,
+                               const GlobalPosition& normal,
                                const Scalar area,
                                const Scalar t) const
     {
@@ -588,7 +585,7 @@ private:
         GlobalPosition tmp(normal);
         tmp *= t;
 
-        for (int dir = 0; dir < dim; ++dir)
+        for (LocalIndexType dir = 0; dir < dim; ++dir)
             wijk[dir] = tmp*localScv.innerNormal(dir);
         wijk *= area;
         wijk /= localScv.detX();

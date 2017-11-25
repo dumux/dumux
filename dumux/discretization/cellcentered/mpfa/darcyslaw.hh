@@ -18,44 +18,35 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
+ * \brief This file contains the class which is required to calculate
  *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation. Specializations are provided for the different discretization methods.
+ *        of the Darcy approximation. This specializations is for cell-centered schemes
+ *        using multi-point flux approximation.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(MpfaHelper);
-}
-
 /*!
- * \ingroup DarcysLaw
+ * \ingroup Mpfa
  * \brief Specialization of Darcy's Law for the CCMpfa method.
  */
 template <class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // Always use the dynamic type for vectors (compatibility with the boundary)
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
@@ -125,23 +116,19 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         }
 
         //! Returns the stencil for advective scvf flux computation
-        const Stencil& advectionVolVarsStencil() const
-        { return *advectionVolVarsStencil_; }
+        const Stencil& advectionVolVarsStencil() const { return *advectionVolVarsStencil_; }
 
         //! Returns the transmissibilities associated with the volume variables
         //! All phases flow through the same rock, thus, tij are equal for all phases
-        const CoefficientVector& advectionTij() const
-        { return *advectionTij_; }
+        const CoefficientVector& advectionTij() const { return *advectionTij_; }
 
         //! On faces that are "outside" w.r.t. a face in the interaction volume,
         //! we have to take the negative value of the fluxes, i.e. multiply by -1.0
-        bool advectionSwitchFluxSign() const
-        { return advectionSwitchFluxSign_; }
+        bool advectionSwitchFluxSign() const { return advectionSwitchFluxSign_; }
 
         //! Returns the data on dirichlet boundary conditions affecting
         //! the flux computation on this face
-        const DirichletDataContainer& advectionDirichletData() const
-        { return *advectionDirichletData_; }
+        const DirichletDataContainer& advectionDirichletData() const { return *advectionDirichletData_; }
 
     private:
         bool advectionSwitchFluxSign_;
@@ -167,17 +154,14 @@ public:
     {
         static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
 
+        // Calculate the interface density for gravity evaluation
+        const auto rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
+
+        // prepare computations
+        unsigned int i = 0;
+        Scalar scvfFlux(0.0);
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& tij = fluxVarsCache.advectionTij();
-
-        // Calculate the interface density for gravity evaluation
-        const auto rho = interpolateDensity(fvGeometry, elemVolVars, scvf, fluxVarsCache, phaseIdx);
-
-        // Variable for the flux to be computed
-        Scalar scvfFlux(0.0);
-
-        // index counter to get corresponding transmissibilities
-        unsigned int i = 0;
 
         // add contributions from cell-centered unknowns
         for (const auto volVarIdx : fluxVarsCache.advectionVolVarsStencil())
@@ -219,10 +203,8 @@ public:
     }
 
 private:
-    static Scalar interpolateDensity(const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables& elemVolVars,
+    static Scalar interpolateDensity(const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
-                                     const FluxVariablesCache& fluxVarsCache,
                                      const unsigned int phaseIdx)
     {
         static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
@@ -235,7 +217,7 @@ private:
             if (!scvf.boundary())
             {
                 Scalar rho = elemVolVars[scvf.insideScvIdx()].density(phaseIdx);
-                for (auto outsideIdx : scvf.outsideScvIndices())
+                for (const auto outsideIdx : scvf.outsideScvIndices())
                     rho += elemVolVars[outsideIdx].density(phaseIdx);
                 return rho/(scvf.outsideScvIndices().size()+1);
             }

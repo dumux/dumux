@@ -98,11 +98,8 @@ public:
     const SecondaryIVIndexSet& secondaryIndexSet(const IndexType scvfIdx) const
     { return secondaryIVIndexSets_[scvfIndexMap_[scvfIdx]]; }
 
-    std::size_t numPrimaryInteractionVolumes() const
-    { return numPrimaryIV_; }
-
-    std::size_t numSecondaryInteractionVolumes() const
-    { return numSecondaryIV_; }
+    std::size_t numPrimaryInteractionVolumes() const { return numPrimaryIV_; }
+    std::size_t numSecondaryInteractionVolumes() const { return numSecondaryIV_; }
 
 private:
     std::vector<PrimaryIVIndexSet> primaryIVIndexSets_;

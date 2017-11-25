@@ -45,13 +45,13 @@ class CCMpfaOInteractionVolumeLocalScv
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    CCMpfaOInteractionVolumeLocalScv(const FVElementGeometry& fvGeometry,
-                                     const SubControlVolume& scv,
-                                     const LocalIndexType localIndex,
-                                     const IvIndexSet& indexSet)
-    : indexSet_(indexSet)
-    , globalScvIndex_(scv.dofIndex())
-    , localDofIndex_(localIndex)
+    explicit CCMpfaOInteractionVolumeLocalScv(const FVElementGeometry& fvGeometry,
+                                              const SubControlVolume& scv,
+                                              const LocalIndexType localIndex,
+                                              const IvIndexSet& indexSet)
+             : indexSet_(indexSet)
+             , globalScvIndex_(scv.dofIndex())
+             , localDofIndex_(localIndex)
     {
         // center of the global scv
         const auto center = scv.center();
@@ -70,28 +70,28 @@ public:
         detX_ = Helper::calculateDetX(localBasis);
     }
 
-    GlobalIndexType globalScvIndex() const
-    { return globalScvIndex_; }
+    //! detX is needed for setting up the omegas in the interaction volumes
+    Scalar detX() const { return detX_; }
 
-    LocalIndexType scvfIdxLocal(const unsigned int coordDir) const
-    {
-        assert(coordDir < dim);
-        return indexSet_.scvfIdxLocal(localDofIndex_, coordDir);
-    }
-
-    //! returns the index in the set of cell unknowns of the iv
-    //! this index is equivalent to the local scv index
-    LocalIndexType localDofIndex() const
-    { return localDofIndex_; }
-
-    GlobalPosition innerNormal(const LocalIndexType coordDir) const
+    //! the inner normals are needed for setting up the omegas in the interaction volumes
+    const GlobalPosition& innerNormal(const LocalIndexType coordDir) const
     {
         assert(coordDir < dim);
         return innerNormals_[coordDir];
     }
 
-    Scalar detX() const
-    { return detX_; }
+    //! grid view-global index related to this scv
+    GlobalIndexType globalScvIndex() const { return globalScvIndex_; }
+
+    //! returns the index in the set of cell unknowns of the iv
+    LocalIndexType localDofIndex() const { return localDofIndex_; }
+
+    //! iv-local index of the coordir's scvf in this scv
+    LocalIndexType scvfIdxLocal(const unsigned int coordDir) const
+    {
+        assert(coordDir < dim);
+        return indexSet_.scvfIdxLocal(localDofIndex_, coordDir);
+    }
 
 private:
     const IvIndexSet& indexSet_;
@@ -125,17 +125,18 @@ public:
     , localDofIndex_(localDofIdx)
     {}
 
-    GlobalIndexType globalScvfIndex() const
-    { return scvfIdxGlobal_; }
+    //! returns the grid view-global index of this scvf
+    GlobalIndexType globalScvfIndex() const { return scvfIdxGlobal_; }
 
-    const LocalIndexContainer& neighboringLocalScvIndices() const
-    { return neighborScvIndicesLocal_; }
+    //! Returns the local indices of the scvs neighboring this scvf
+    const LocalIndexContainer& neighboringLocalScvIndices() const { return neighborScvIndicesLocal_; }
 
-    bool isDirichlet() const
-    { return isDirichlet_; }
+    //! states if this is scvf is on a Dirichlet boundary
+    bool isDirichlet() const { return isDirichlet_; }
 
-    LocalIndexType localDofIndex() const
-    { return localDofIndex_; }
+    //! This is either the iv-local index of the intermediate unknown (interior/Neumann face)
+    //! or the index of the Dirichlet boundary within the vol vars (Dirichlet faces)
+    LocalIndexType localDofIndex() const { return localDofIndex_; }
 
 private:
     GlobalIndexType scvfIdxGlobal_;

@@ -29,13 +29,6 @@
 namespace Dumux
 {
 
-//! forward declaration of properties
-namespace Properties
-{
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(NumComponents);
-};
-
 /*!
  * \ingroup ImplicitModel
  * \brief Helper class to fill the flux var caches

@@ -23,6 +23,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 
+#include <dune/geometry/type.hh>
+
 #include "methods.hh"
 
 namespace Dumux
@@ -110,8 +112,11 @@ public:
      */
     static std::size_t getGlobalNumScvf(const GridView& gridView)
     {
-        assert(gridView.size(0) == gridView.size(Dune::GeometryTypes::triangle) + gridView.size(Dune::GeometryTypes::quadrilateral));
-        return gridView.size(Dune::GeometryTypes::triangle)*6 + gridView.size(Dune::GeometryTypes::quadrilateral)*8;
+        assert(gridView.size(Dune::GeometryTypes::triangle)
+               + gridView.size(Dune::GeometryTypes::quadrilateral) == gridView.size(0));
+
+        return gridView.size(Dune::GeometryTypes::triangle)*6
+               + gridView.size(Dune::GeometryTypes::quadrilateral)*8;
     }
 
     /*!
@@ -323,7 +328,7 @@ public:
 
     /*!
      * \brief Returns the global number of scvfs in the grid. Assumes the grid to be made up of only
-     *        basic geometry types. Overlad this function if you want to use different geometry types.
+     *        basic geometry types. Overload this function if you want to use different geometry types.
      *
      * \param gridView The grid view to be checked
      */
@@ -355,7 +360,7 @@ public:
      *
      * \param eg Geometry of the element the facet is embedded in
      * \param refElement Reference element of the element the facet is embedded in
-     * \param indexInInside The local index of the facet in the element
+     * \param indexInElement The local index of the facet in the element
      * \param numCorners The number of corners on the facet
      */
     template<class ElementGeometry, class ReferenceElement>
@@ -364,7 +369,10 @@ public:
                                                                         unsigned int indexInElement,
                                                                         unsigned int numCorners)
     {
+        // The size of ScvfPositionsOnIntersection doesn't allow for faces with more than four corners!
         ScvfPositionsOnIntersection p;
+        if (numCorners > 4)
+            DUNE_THROW(Dune::InvalidStateException, "Mpfa implementation cannot handle faces with more than 4 corners");
 
         // compute facet center and corners
         p[0] = 0.0;
@@ -537,7 +545,8 @@ public:
     {
         // scvfs in 3d are always quadrilaterals
         // ordering -> first corner: facet center, last corner: vertex
-        if (q == 0.0) return scvfCorners[0];
+        if (q == 0.0)
+            return scvfCorners[0];
         const auto d = [&] () { auto tmp = scvfCorners.back() - scvfCorners.front(); tmp *= q; return tmp; } ();
         return scvfCorners[0] + d;
     }
@@ -571,7 +580,6 @@ public:
                     {
                         const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);
                         const auto vIdxGlobal = vertexMapper.subIndex(element, vIdxLocal, dim);
-
                         ghostVertices[vIdxGlobal] = true;
                     }
                 }
@@ -612,11 +620,9 @@ using CCMpfaHelper = CCMpfaHelperImplementation<TypeTag,
                                                 GET_PROP_TYPE(TypeTag, GridView)::dimension,
                                                 GET_PROP_TYPE(TypeTag, GridView)::dimensionworld>;
 
-} // end namespace
+} // end namespace Dumux
 
 // The implemented helper classes need to be included here
-// #include <dumux/discretization/cellcentered/mpfa/lmethod/helper.hh>
 #include <dumux/discretization/cellcentered/mpfa/omethod/helper.hh>
-// #include <dumux/discretization/cellcentered/mpfa/omethodfps/helper.hh>
 
 #endif

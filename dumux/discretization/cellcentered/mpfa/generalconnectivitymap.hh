@@ -107,7 +107,7 @@ public:
                         // that are already in the list of scvfsJ later...
                         const auto scvfVectorAtVertex = MpfaHelper::getScvFacesAtVertex(scvf.vertexIndex(), element, fvGeometry);
                         std::vector<IndexType> scvfIndicesAtVertex(scvfVectorAtVertex.size());
-                        for (unsigned int i = 0; i < scvfVectorAtVertex.size(); ++i)
+                        for (std::size_t i = 0; i < scvfVectorAtVertex.size(); ++i)
                             scvfIndicesAtVertex[i] = scvfVectorAtVertex[i]->index();
                         globalJDataJ.additionalScvfs.insert(globalJDataJ.additionalScvfs.end(),
                                                             scvfIndicesAtVertex.begin(),

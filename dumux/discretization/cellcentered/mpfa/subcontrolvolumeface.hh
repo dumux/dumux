@@ -27,35 +27,22 @@
 
 namespace Dumux
 {
-//! Forward declaration of the method specific implementations
-//! Available implementations have to be included at the end of this file.
-template<MpfaMethods M, class ScvfGeometryTraits>
-class CCMpfaSubControlVolumeFaceImplementation;
 
 /*!
  * \ingroup Mpfa
- * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
- *        of a control volume we compute fluxes on. This class inherits from the actual implementations
- *        and defines the constructor interface.
- *
- * \param M the mpfa method used
- * \param G the geometry type for the scvf geometries
- * \param GT the traits class for the geometry type
- * \param I the type used for indices
+ * \brief Default implementation of the class for a sub-control volume face in mpfa methods.
  */
-template<MpfaMethods M, class ScvfGeometryTraits>
-class CCMpfaSubControlVolumeFace : public CCMpfaSubControlVolumeFaceImplementation<M, ScvfGeometryTraits>
+template<class ScvfGeometryTraits>
+class CCMpfaDefaultSubControlVolumeFace
 {
-    using ParentType = CCMpfaSubControlVolumeFaceImplementation<M, ScvfGeometryTraits>;
-    using Geometry = typename ScvfGeometryTraits::Geometry;
-    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
     using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
-    using LocalIndexType = typename ScvfGeometryTraits::LocalIndexType;
     using Scalar = typename ScvfGeometryTraits::Scalar;
+    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
     using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
+    using Geometry = typename ScvfGeometryTraits::Geometry;
 
 public:
-    //! state the traits class puclicly
+    //! state the traits public and thus export all types
     using Traits = ScvfGeometryTraits;
 
     /*!
@@ -65,7 +52,7 @@ public:
      * \param corners The corners of the scv face
      * \param unitOuterNormal The unit outer normal vector of the scvf
      * \param vIdxGlobal The global vertex index the scvf is connected to
-     * \param localIndex Some element local index (e.g. the local vertex index in mpfa-o-fps scheme)
+     * \param vIdxLocal The element-local vertex index the scvf is connected to
      * \param scvfIndex The global index of this scv face
      * \param insideScvIdx The inside scv index connected to this face
      * \param outsideScvIndices The outside scv indices connected to this face
@@ -73,34 +60,120 @@ public:
      * \param boundary Boolean to specify whether or not the scvf is on a boundary
      */
     template<class MpfaHelper>
-    CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
-                               CornerStorage&& corners,
-                               GlobalPosition&& unitOuterNormal,
-                               GridIndexType vIdxGlobal,
-                               LocalIndexType localIndex,
-                               GridIndexType scvfIndex,
-                               GridIndexType insideScvIdx,
-                               const std::vector<GridIndexType>& outsideScvIndices,
-                               Scalar q,
-                               bool boundary)
-    : ParentType(helper,
-                 std::forward<CornerStorage>(corners),
-                 std::forward<GlobalPosition>(unitOuterNormal),
-                 vIdxGlobal,
-                 localIndex,
-                 scvfIndex,
-                 insideScvIdx,
-                 outsideScvIndices,
-                 q,
-                 boundary)
-    {}
+    explicit CCMpfaDefaultSubControlVolumeFace(const MpfaHelper& helper,
+                                               CornerStorage&& corners,
+                                               GlobalPosition&& unitOuterNormal,
+                                               GridIndexType vIdxGlobal,
+                                               unsigned int vIdxLocal,
+                                               GridIndexType scvfIndex,
+                                               GridIndexType insideScvIdx,
+                                               const std::vector<GridIndexType>& outsideScvIndices,
+                                               Scalar q,
+                                               bool boundary)
+             : boundary_(boundary),
+               vertexIndex_(vIdxGlobal),
+               scvfIndex_(scvfIndex),
+               insideScvIdx_(insideScvIdx),
+               outsideScvIndices_(outsideScvIndices),
+               vIdxInElement_(vIdxLocal),
+               corners_(std::move(corners)),
+               center_(0.0),
+               unitOuterNormal_(std::move(unitOuterNormal))
+               {
+                     // compute the center of the scvf
+                     for (const auto& corner : corners_)
+                         center_ += corner;
+                     center_ /= corners_.size();
+
+                     // use helper class to obtain area & integration point
+                     ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
+                     area_ = helper.getScvfArea(corners_);
+               }
+
+    //! The area of the sub control volume face
+    Scalar area() const { return area_; }
+
+    //! returns bolean if the sub control volume face is on the domain boundary
+    bool boundary() const { return boundary_; }
+
+    //! The global index of this sub control volume face
+    GridIndexType index() const { return scvfIndex_; }
+
+    //! Returns the index of the vertex the scvf is connected to
+    GridIndexType vertexIndex() const { return vertexIndex_; }
+
+    //! Returns the element-local vertex index the scvf is connected to
+    unsigned int vertexIndexInElement() const { return vIdxInElement_; }
+
+    //! index of the inside sub control volume
+    GridIndexType insideScvIdx() const { return insideScvIdx_; }
+
+    //! The number of outside scvs connection via this scv face
+    std::size_t numOutsideScvs() const { return outsideScvIndices_.size(); }
+
+    //! index of the outside sub control volume or boundary scv index
+    //! returns undefined behaviour if index exceeds numOutsideScvs
+    GridIndexType outsideScvIdx(int i = 0) const { return outsideScvIndices_[i]; }
+
+    //! returns the outside scv indices (can be more than one index for dim < dimWorld)
+    const std::vector<GridIndexType>& outsideScvIndices() const { return outsideScvIndices_; }
+
+    //! Returns the number of corners
+    std::size_t corners() const { return corners_.size(); }
+
+    //! Returns the corner for a given local index
+    const GlobalPosition& corner(unsigned int localIdx) const
+    {
+        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[localIdx];
+    }
+
+    //! Returns the global position of the vertex the scvf is connected to
+    const GlobalPosition& vertexCorner() const { return corners_.back(); }
+
+    //! Returns the global position of the center of the element facet this scvf is embedded in
+    const GlobalPosition& facetCorner() const { return corner(0); }
+
+    //! The center of the sub control volume face
+    const GlobalPosition& center() const { return center_; }
+
+    //! The integration point for flux evaluations in global coordinates
+    const GlobalPosition& ipGlobal() const { return ipGlobal_; }
+
+    //! returns the unit outer normal vector (assumes non-curved geometries)
+    const GlobalPosition& unitOuterNormal() const { return unitOuterNormal_; }
+
+    //! The geometry of the sub control volume face
+    Geometry geometry() const { return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_); }
+
+private:
+    bool boundary_;
+    GridIndexType vertexIndex_;
+    GridIndexType scvfIndex_;
+    GridIndexType insideScvIdx_;
+    std::vector<GridIndexType> outsideScvIndices_;
+    unsigned int vIdxInElement_;
+
+    CornerStorage corners_;
+    GlobalPosition center_;
+    GlobalPosition ipGlobal_;
+    GlobalPosition unitOuterNormal_;
+    Scalar area_;
 };
 
-} // end namespace Dumux
+/*!
+ * \ingroup Mpfa
+ * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
+ *        of a control volume we compute fluxes on. Per default, we use the default
+ *        implementation of the mpfa scvf class. If a scheme requires a different implementation,
+ *        provide a specialization for it.
+ *
+ * \param M the mpfa method used
+ * \param GT the traits class for the geometry type
+ */
+template<MpfaMethods M, class GT>
+using CCMpfaSubControlVolumeFace = CCMpfaDefaultSubControlVolumeFace< GT >;
 
-//! The available implementations should be included here
-// #include <dumux/discretization/cellcentered/mpfa/lmethod/subcontrolvolumeface.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethod/subcontrolvolumeface.hh>
-// #include <dumux/discretization/cellcentered/mpfa/omethodfps/subcontrolvolumeface.hh>
+} // end namespace Dumux
 
 #endif

@@ -38,7 +38,7 @@ class CCMpfaOInteractionVolumeIndexSet
     using GlobalIndexType = typename GlobalIndexContainer::value_type;
 
 public:
-    CCMpfaOInteractionVolumeIndexSet(const DualGridNodalIndexSet& nodalIndexSet) : nodalIndexSet_(nodalIndexSet)
+    explicit CCMpfaOInteractionVolumeIndexSet(const DualGridNodalIndexSet& nodalIndexSet) : nodalIndexSet_(nodalIndexSet)
     {
         //! determine the number of iv-local faces for memory reservation
         //! note that this might be a vast overestimation on surface grids!
@@ -138,8 +138,7 @@ public:
     }
 
     //! returns the corresponding nodal index set
-    const DualGridNodalIndexSet& nodalIndexSet() const
-    { return nodalIndexSet_; }
+    const DualGridNodalIndexSet& nodalIndexSet() const { return nodalIndexSet_; }
 
     //! returns a global scvf idx for a given iv_local scvf index
     GlobalIndexType scvfIdxGlobal(LocalIndexType ivLocalScvfIdx) const
@@ -158,20 +157,16 @@ public:
     { return scvfNeighborScvLocalIndices_[ivLocalScvfIdx]; }
 
     //! returns the number of faces in the interaction volume
-    std::size_t numFaces() const
-    { return numFaces_; }
+    std::size_t numFaces() const { return numFaces_; }
 
     //! returns the number of scvs in the interaction volume
-    std::size_t numScvs() const
-    { return nodalIndexSet_.numScvs(); }
+    std::size_t numScvs() const { return nodalIndexSet_.numScvs(); }
 
     //! returns the global scv indices connected to this dual grid node
-    const GlobalIndexContainer& globalScvIndices() const
-    { return nodalIndexSet_.globalScvIndices(); }
+    const GlobalIndexContainer& globalScvIndices() const { return nodalIndexSet_.globalScvIndices(); }
 
     //! returns the global scvf indices connected to this dual grid node
-    const GlobalIndexContainer& globalScvfIndices() const
-    { return nodalIndexSet_.globalScvfIndices(); }
+    const GlobalIndexContainer& globalScvfIndices() const { return nodalIndexSet_.globalScvfIndices(); }
 
 private:
     //! returns the local scv index to a given global scv index

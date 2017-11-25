@@ -29,7 +29,6 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/elementmap.hh>
-#include <dumux/common/boundingboxtree.hh>
 
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
@@ -40,7 +39,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup ImplicitModel
+ * \ingroup Mpfa
  * \brief Base class for the finite volume geometry vector for mpfa models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
@@ -75,15 +74,24 @@ class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    //! The local class needs access to the scv, scvfs and the fv element geometry
-    //! as they are globally cached
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-
 public:
-    //! Constructor
-    CCMpfaFVGridGeometry(const GridView gridView)
-    : ParentType(gridView), elementMap_(gridView)
-    {}
+    using SecondaryIvIndicator = std::function<bool(const Element&, const Intersection&, bool)>;
+
+    //! Constructor without indicator function for secondary interaction volumes
+    //! Per default, we use the secondary IVs at branching points & boundaries
+    explicit CCMpfaFVGridGeometry(const GridView& gridView)
+             : ParentType(gridView)
+             , elementMap_(gridView)
+             , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
+                                        { return is.boundary() || isBranching; } )
+             {}
+
+     //! Constructor with user-defined indicator function for secondary interaction volumes
+     explicit CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
+              : ParentType(gridView)
+              , elementMap_(gridView)
+              , secondaryIvIndicator_(indicator)
+              {}
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -108,7 +116,6 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
-
     /*!
      * \brief Returns the total number of degrees of freedom.
      */
@@ -116,16 +123,16 @@ public:
     { return this->gridView().size(0); }
 
     /*!
-     * \brief Gets an element from a sub control volume contained in it.
-     */
-    Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.elementIndex()); }
-
-    /*!
      * \brief Gets an element from a global element index.
      */
     Element element(IndexType eIdx) const
     { return elementMap_.element(eIdx); }
+
+    /*!
+     * \brief Gets an element from a sub control volume contained in it.
+     */
+    Element element(const SubControlVolume& scv) const
+    { return elementMap_.element(scv.elementIndex()); }
 
     /*!
      * \brief Returns true if primary interaction volumes are used around a given vertex,
@@ -155,16 +162,9 @@ public:
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
 
     /*!
-     * \brief Updates all finite volume geometries of the grid. This has to be called again
-     *        after grid adaption. A function can be passed to this method specifying where the secondary
-     *        interaction volume type should be used. Per default we use it on boundaries
-     *        and branching points.
-     *
-     * \param useSecondaryIV Indicator function at which vertices to apply the secondary interaction volume
+     * \brief Updates all finite volume geometries of the grid. Hhas to be called again after grid adaptation.
      */
-    void update( std::function<bool(const Element&, const Intersection&, bool)> useSecondaryIV
-                              = [] (const Element& e, const Intersection& is, bool isBranching)
-                                   { return is.boundary() || isBranching; } )
+    void update()
     {
         // stop the time required for the update
         Dune::Timer timer;
@@ -258,10 +258,10 @@ public:
 
                 // evaluate if vertices on this intersection use primary/secondary IVs
                 const bool isBranchingPoint = dim < dimWorld ? outsideIndices[indexInInside].size() > 1 : false;
-                const bool usesSecondaryIV = useSecondaryIV(element, is, isBranchingPoint);
+                const bool usesSecondaryIV = secondaryIvIndicator_(element, is, isBranchingPoint);
 
                 // make the scv faces belonging to each corner of the intersection
-                for (int c = 0; c < numCorners; ++c)
+                for (std::size_t c = 0; c < numCorners; ++c)
                 {
                     // get the global vertex index the scv face is connected to
                     const auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
@@ -319,7 +319,8 @@ public:
                 }
 
                 // for network grids, clear outside indices to not make a second scvf on that facet
-                if (dim < dimWorld) outsideIndices[indexInInside].clear();
+                if (dim < dimWorld)
+                    outsideIndices[indexInInside].clear();
             }
 
             // create sub control volume for this element
@@ -333,7 +334,7 @@ public:
         if (dim < dimWorld)
         {
             flipScvfIndices_.resize(scvfs_.size());
-            for (auto&& scvf : scvfs_)
+            for (const auto& scvf : scvfs_)
             {
                 if (scvf.boundary())
                     continue;
@@ -343,7 +344,7 @@ public:
                 const auto insideScvIdx = scvf.insideScvIdx();
 
                 flipScvfIndices_[scvf.index()].resize(numOutsideScvs);
-                for (unsigned int i = 0; i < numOutsideScvs; ++i)
+                for (std::size_t i = 0; i < numOutsideScvs; ++i)
                 {
                     const auto outsideScvIdx = scvf.outsideScvIdx(i);
                     for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
@@ -370,7 +371,7 @@ public:
         ivIndexSets_.update(*this, std::move(dualIdSet));
         std::cout << "Initializing of the grid interaction volume index sets took " << timer.elapsed() << " seconds." << std::endl;
 
-        // build the connectivity map for an effecient assembly
+        // build the connectivity map for an efficient assembly
         timer.reset();
         connectivityMap_.update(*this);
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;
@@ -434,6 +435,9 @@ private:
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;
+
+    // Indicator function on where to use the secondary IVs
+    SecondaryIvIndicator secondaryIvIndicator_;
 };
 
 // specialization in case the FVElementGeometries are not stored
@@ -462,14 +466,24 @@ class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    //! Todo is this necessary?
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-
 public:
-    //! Constructor
-    CCMpfaFVGridGeometry(const GridView gridView)
-    : ParentType(gridView), elementMap_(gridView)
-    {}
+    using SecondaryIvIndicator = std::function<bool(const Element&, const Intersection&, bool)>;
+
+    //! Constructor without indicator function for secondary interaction volumes
+    //! Per default, we use the secondary IVs at branching points & boundaries
+    explicit CCMpfaFVGridGeometry(const GridView& gridView)
+             : ParentType(gridView)
+             , elementMap_(gridView)
+             , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
+                                        { return is.boundary() || isBranching; } )
+             {}
+
+     //! Constructor with user-defined indicator function for secondary interaction volumes
+     explicit CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
+              : ParentType(gridView)
+              , elementMap_(gridView)
+              , secondaryIvIndicator_(indicator)
+              {}
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
@@ -501,16 +515,16 @@ public:
     { return this->gridView().size(0); }
 
     /*!
-     * \brief Gets an element from a sub control volume contained in it.
-     */
-    Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.elementIndex()); }
-
-    /*!
      * \brief Gets an element from a global element index.
      */
     Element element(IndexType eIdx) const
     { return elementMap_.element(eIdx); }
+
+    /*!
+     * \brief Gets an element from a sub control volume contained in it.
+     */
+    Element element(const SubControlVolume& scv) const
+    { return elementMap_.element(scv.elementIndex()); }
 
     /*!
      * \brief Returns true if primary interaction volumes are used around a given vertex,
@@ -553,16 +567,9 @@ public:
     { return isGhostVertex_[vIdxGlobal]; }
 
     /*!
-     * \brief Updates all finite volume geometries of the grid. This has to be called again
-     *        after grid adaption. A function can be passed to this method specifying where the secondary
-     *        interaction volume type should be used. Per default we use it on boundaries
-     *        and branching points.
-     *
-     * \param useSecondaryIV Indicator function at which vertices to apply the secondary interaction volume
+     * \brief Updates all finite volume geometries of the grid. Has to be called again after grid adaption.
      */
-    void update( std::function<bool(const Element&, const Intersection&, bool)> useSecondaryIV
-                              = [] (const Element& e, const Intersection& is, bool isBranching)
-                                   { return is.boundary() || isBranching; } )
+    void update()
     {
         // stop the time required for the update
         Dune::Timer timer;
@@ -627,7 +634,6 @@ public:
                 }
             }
 
-            unsigned int localFaceIdx = 0;
             // construct the sub control volume faces
             for (const auto& is : intersections(this->gridView(), element))
             {
@@ -648,10 +654,10 @@ public:
 
                 // evaluate if vertices on this intersection use primary/secondary IVs
                 const bool isBranchingPoint = dim < dimWorld ? outsideIndices[indexInInside].size() > 1 : false;
-                const bool usesSecondaryIV = useSecondaryIV(element, is, isBranchingPoint);
+                const bool usesSecondaryIV = secondaryIvIndicator_(element, is, isBranchingPoint);
 
                 // make the scv faces belonging to each corner of the intersection
-                for (int c = 0; c < is.geometry().corners(); ++c)
+                for (std::size_t c = 0; c < is.geometry().corners(); ++c)
                 {
                     // get the global vertex index the scv face is connected to
                     const auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
@@ -692,13 +698,11 @@ public:
                     // store information on the scv face
                     scvfsIndexSet.push_back(numScvf_++);
                     neighborVolVarIndexSet.emplace_back(std::move(outsideScvIndices));
-
-                    // increment counter
-                    localFaceIdx++;
                 }
 
                 // for network grids, clear outside indices to not make a second scvf on that facet
-                if (dim < dimWorld) outsideIndices[indexInInside].clear();
+                if (dim < dimWorld)
+                    outsideIndices[indexInInside].clear();
             }
 
             // store the sets of indices in the data container
@@ -762,6 +766,9 @@ private:
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;
+
+    // Indicator function on where to use the secondary IVs
+    SecondaryIvIndicator secondaryIvIndicator_;
 };
 
 } // end namespace

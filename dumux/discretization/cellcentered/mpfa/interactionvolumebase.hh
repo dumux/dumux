@@ -25,7 +25,9 @@
 
 #include <dune/common/dynmatrix.hh>
 
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux
 {
@@ -90,6 +92,7 @@ class CCMpfaInteractionVolumeBase
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using DualGridNodalIndexSet = typename CCMpfaDualGridIndexSet<TypeTag>::NodalIndexSet;
 
     using DataHandle = typename T::DataHandle;
     using IndexSet = typename T::IndexSet;
@@ -117,26 +120,26 @@ public:
 
       public:
         //! Constructor for "inside" faces
-        LocalFaceData(LocalIndexType faceIndex,
-                      LocalIndexType scvIndex,
-                      GlobalIndexType globalScvfIndex)
-        : ivLocalScvfIndex_(faceIndex),
-          ivLocalInsideScvIndex_(scvIndex),
-          globalScvfIndex_(globalScvfIndex),
-          isOutside_(false) {}
+        explicit LocalFaceData(LocalIndexType faceIndex,
+                               LocalIndexType scvIndex,
+                               GlobalIndexType globalScvfIndex)
+                 : ivLocalScvfIndex_(faceIndex),
+                   ivLocalInsideScvIndex_(scvIndex),
+                   globalScvfIndex_(globalScvfIndex),
+                   isOutside_(false) {}
 
         //! Constructor for "outside" faces
-        LocalFaceData(LocalIndexType faceIndex,
-                      LocalIndexType scvIndex,
-                      LocalIndexType indexInIvOutsideFaces,
-                      LocalIndexType indexInScvfOutsideFaces,
-                      GlobalIndexType globalScvfIndex)
-        : ivLocalScvfIndex_(faceIndex),
-          ivLocalInsideScvIndex_(scvIndex),
-          ivLocalOutsideScvfIndex_(indexInIvOutsideFaces),
-          scvfLocalOutsideScvfIndex_(indexInScvfOutsideFaces),
-          globalScvfIndex_(globalScvfIndex),
-          isOutside_(true) {}
+        explicit LocalFaceData(LocalIndexType faceIndex,
+                               LocalIndexType scvIndex,
+                               LocalIndexType indexInIvOutsideFaces,
+                               LocalIndexType indexInScvfOutsideFaces,
+                               GlobalIndexType globalScvfIndex)
+                 : ivLocalScvfIndex_(faceIndex),
+                   ivLocalInsideScvIndex_(scvIndex),
+                   ivLocalOutsideScvfIndex_(indexInIvOutsideFaces),
+                   scvfLocalOutsideScvfIndex_(indexInScvfOutsideFaces),
+                   globalScvfIndex_(globalScvfIndex),
+                   isOutside_(true) {}
 
         //! The index of the scvf within the inside faces
         LocalIndexType ivLocalScvfIndex() const { return ivLocalScvfIndex_; }
@@ -153,10 +156,10 @@ public:
         GlobalPosition ipGlobal_;
 
       public:
-        DirichletData(const GlobalIndexType index, const GlobalPosition& ip)
-        : volVarIndex_(index)
-        , ipGlobal_(ip)
-        {}
+        explicit DirichletData(const GlobalIndexType index, const GlobalPosition& ip)
+                 : volVarIndex_(index)
+                 , ipGlobal_(ip)
+                 {}
 
         const GlobalPosition& ipGlobal() const { return ipGlobal_; }
         GlobalIndexType volVarIndex() const { return volVarIndex_; }
@@ -200,14 +203,17 @@ public:
     const GlobalIndexContainer& volVarsStencil() const
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a volVarsStencil() method."); }
 
-    //! returns the local index in a vector for a given global index
-    template<typename IdxType1, typename IdxType2>
-    LocalIndexType findIndexInVector(const std::vector<IdxType1>& vector, const IdxType2 globalIdx) const
-    {
-        auto it = std::find(vector.begin(), vector.end(), globalIdx);
-        assert(it != vector.end() && "could not find local index in the vector for the given global index!");
-        return std::distance(vector.begin(), it);
-    }
+    //! returns the number of interaction volumes living around a vertex
+    static std::size_t numInteractionVolumesAtVertex(const DualGridNodalIndexSet& nodalIndexSet)
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a numInteractionVolumesAtVertex() method."); }
+
+    //! adds the iv index sets living around a vertex to a given container
+    //! and stores the the corresponding index in a map for each scvf
+    template<class IvIndexSetContainer, class ScvfIndexMap>
+    static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
+                                              ScvfIndexMap& scvfIndexMap,
+                                              const DualGridNodalIndexSet& nodalIndexSet)
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a numInteractionVolumesAtVertex() method."); }
 };
 
 } // end namespace

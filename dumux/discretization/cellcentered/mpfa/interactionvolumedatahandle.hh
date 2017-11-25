@@ -26,25 +26,10 @@
 
 namespace Dumux
 {
-    //! forward declaration of the implementation class
-    //! Struct to store the transmissibilities and other data separate from the interaction volume
-    template<class TypeTag, bool Advection, bool Diffusion, bool Energy>
-    struct InteractionVolumeDataHandleImplementation;
-
+    //! Empty data handle class
     template<class TypeTag>
-    using InteractionVolumeDataHandle = InteractionVolumeDataHandleImplementation<TypeTag,
-                                                                                  GET_PROP_VALUE(TypeTag, EnableAdvection),
-                                                                                  GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
-                                                                                  GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
-
-    //! Specialization for purely advective problems
-    template<class TypeTag>
-    struct InteractionVolumeDataHandleImplementation<TypeTag, true, false, false>
+    class EmptyDataHandle
     {
-    private:
-        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-        using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
         //! we use the dynamic types here to be compatible on the boundary
         using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using DirichletDataContainer = typename InteractionVolume::DirichletDataContainer;
@@ -53,59 +38,83 @@ namespace Dumux
         using Vector = typename InteractionVolume::Traits::DynamicVector;
 
     public:
-        enum class Contexts : unsigned int
-        {
-            advection
-        };
-
-        //! The constructor
-        InteractionVolumeDataHandleImplementation() {}
-
-        //! The context is always advection in this specialization
-        void setAdvectionContext() {}
-
-        //! returns the current context
-        Contexts getContext() const { return Contexts::advection; }
+        //! diffusion caches need to set phase and component index
+        void setDiffusionContext(unsigned int phaseIdx, unsigned int compIdx) {}
 
         //! functions to set the size of the matrices
-        void resizeT(unsigned int n, unsigned int m) { T_.resize(n, m); }
-        void resizeAB(unsigned int n, unsigned int m) { AB_.resize(n, m); }
-        void resizeOutsideTij(unsigned int n, unsigned int m) { tijOut_.resize(n, m); }
+        void resizeT(unsigned int n, unsigned int m) {}
+        void resizeAB(unsigned int n, unsigned int m) {}
+        void resizeOutsideTij(unsigned int n, unsigned int m) {}
 
         //! functions to set the pointers to stencil and Dirichlet data
-        void setVolVarsStencilPointer(const GlobalIndexContainer& stencil) { volVarsStencil_ = &stencil; }
-        void setDirichletDataPointer(const DirichletDataContainer& data) { dirichletData_ = &data; }
+        void setVolVarsStencilPointer(const GlobalIndexContainer& stencil) {}
+        void setDirichletDataPointer(const DirichletDataContainer& data) {}
 
         //! return functions for the stored data
-        const GlobalIndexContainer& volVarsStencil() const { return *volVarsStencil_; }
-        const DirichletDataContainer& dirichletData() const { return *dirichletData_; }
+        const GlobalIndexContainer& volVarsStencil() const { return throw_<const GlobalIndexContainer&>(); }
+        const DirichletDataContainer& dirichletData() const { return throw_<DirichletDataContainer&>(); }
 
-        const Matrix& T() const { return T_; }
-        Matrix& T() { return T_; }
+        const Matrix& T() const { return throw_<const Matrix&>(); }
+        Matrix& T() { return throw_<Matrix&>(); }
 
-        const Matrix& AB() const { return AB_; }
-        Matrix& AB() { return AB_; }
+        const Matrix& AB() const { return throw_<const Matrix&>(); }
+        Matrix& AB() { return throw_<Matrix&>(); }
 
-        const Matrix& outsideTij() const { return tijOut_; }
-        Matrix& outsideTij() { return tijOut_; }
+        const Matrix& outsideTij() const { return throw_<const Matrix&>(); }
+        Matrix& outsideTij() { return throw_<Matrix&>(); }
 
     private:
-        const GlobalIndexContainer* volVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
-        const DirichletDataContainer* dirichletData_; //! Container with dirichlet data of the iv
-
-        Matrix T_;                                    //! The transmissibilities
-        Matrix AB_;                                   //! Coefficients for gradient reconstruction
-        Matrix tijOut_;                               //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+        template<class ReturnType>
+        ReturnType throw_() const { DUNE_THROW(Dune::InvalidStateException, "Trying to access data for a deactivated physical process"); }
     };
 
-    //! Specialization for advective-diffusive problems
-    template<class TypeTag>
-    struct InteractionVolumeDataHandleImplementation<TypeTag, true, true, false>
+    //! Data handle for quantities related to advection
+    template<class TypeTag, bool EnableAdvection>
+    class AdvectionDataHandle
     {
-    private:
-        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-        using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+        //! we use the dynamic types here to be compatible on the boundary
+        using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using DirichletDataContainer = typename InteractionVolume::DirichletDataContainer;
+        using GlobalIndexContainer = typename InteractionVolume::Traits::DynamicGlobalIndexContainer;
+        using Matrix = typename InteractionVolume::Traits::DynamicMatrix;
+        using Vector = typename InteractionVolume::Traits::DynamicVector;
 
+    public:
+        //! functions to set the size of the matrices
+        void resizeT(unsigned int n, unsigned int m) { advectionT_.resize(n, m); }
+        void resizeAB(unsigned int n, unsigned int m) { advectionAB_.resize(n, m); }
+        void resizeOutsideTij(unsigned int n, unsigned int m) { advectionTout_.resize(n, m); }
+
+        //! functions to set the pointers to stencil and Dirichlet data
+        void setVolVarsStencilPointer(const GlobalIndexContainer& stencil) { advectionVolVarsStencil_ = &stencil; }
+        void setDirichletDataPointer(const DirichletDataContainer& data) { advectionDirichletData_ = &data; }
+
+        //! return functions for the stored data
+        const GlobalIndexContainer& volVarsStencil() const { return *advectionVolVarsStencil_; }
+        const DirichletDataContainer& dirichletData() const { return *advectionDirichletData_; }
+
+        const Matrix& T() const { return advectionT_; }
+        Matrix& T() { return advectionT_; }
+
+        const Matrix& AB() const { return advectionAB_; }
+        Matrix& AB() { return advectionAB_; }
+
+        const Matrix& outsideTij() const { return advectionTout_; }
+        Matrix& outsideTij() { return advectionTout_; }
+
+    private:
+        // advection-related variables
+        const GlobalIndexContainer* advectionVolVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
+        const DirichletDataContainer* advectionDirichletData_; //! Pointer to the container with dirichlet data of the iv
+        Matrix advectionT_;                                    //! The transmissibilities
+        Matrix advectionAB_;                                   //! Coefficients for gradient reconstruction
+        Matrix advectionTout_;                                 //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+    };
+
+    //! Data handle for quantities related to diffusion
+    template<class TypeTag, bool EnableDiffusion>
+    class DiffusionDataHandle
+    {
         //! we use the dynamic types here to be compatible on the boundary
         using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using DirichletDataContainer = typename InteractionVolume::DirichletDataContainer;
@@ -117,45 +126,23 @@ namespace Dumux
         static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
     public:
-        enum class Contexts : unsigned int
-        {
-            undefined,
-            advection,
-            diffusion
-        };
-
-        //! The constructor
-        InteractionVolumeDataHandleImplementation() : context_(Contexts::undefined) {}
-
-        //! sets the context of the cache to advection
-        void setAdvectionContext()
-        { context_ = Contexts::advection; }
-
-        //! sets the context of the cache to diffusion
+        //! diffusion caches need to set phase and component index
         void setDiffusionContext(unsigned int phaseIdx, unsigned int compIdx)
         {
-            context_ = Contexts::diffusion;
             contextPhaseIdx_ = phaseIdx;
             contextCompIdx_ = compIdx;
         }
 
-        //! returns the current context
-        Contexts getContext() const
-        { return context_; }
-
         //! functions to set the size of the matrices
         void resizeT(unsigned int n, unsigned int m)
         {
-            advectionT_.resize(n, m);
             for (auto& array : diffusionT_)
                 for (auto& matrix : array)
                     matrix.resize(n, m);
-
         }
 
         void resizeAB(unsigned int n, unsigned int m)
         {
-            advectionAB_.resize(n, m);
             for (auto& array : diffusionAB_)
                 for (auto& matrix : array)
                     matrix.resize(n, m);
@@ -163,7 +150,6 @@ namespace Dumux
 
         void resizeOutsideTij(unsigned int n, unsigned int m)
         {
-            advectionTout_.resize(n, m);
             for (auto& array : diffusionTout_)
                 for (auto& matrix : array)
                     matrix.resize(n, m);
@@ -172,78 +158,32 @@ namespace Dumux
         //! functions to set the pointers to stencil and Dirichlet data
         void setVolVarsStencilPointer(const GlobalIndexContainer& stencil)
         {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            if (context_ == Contexts::advection) advectionVolVarsStencil_ = &stencil;
-            else diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_] = &stencil;
+            diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_] = &stencil;
         }
 
         void setDirichletDataPointer(const DirichletDataContainer& data)
         {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            if (context_ == Contexts::advection) advectionDirichletData_ = &data;
-            else diffusionDirichletData_[contextPhaseIdx_][contextCompIdx_] = &data;
+            diffusionDirichletData_[contextPhaseIdx_][contextCompIdx_] = &data;
         }
 
         //! return functions for the stored data
         const GlobalIndexContainer& volVarsStencil() const
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? *advectionVolVarsStencil_ : *(diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_]);
-        }
+        { return *diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_]; }
 
         const DirichletDataContainer& dirichletData() const
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? *advectionDirichletData_ : *(diffusionDirichletData_[contextPhaseIdx_][contextCompIdx_]);
-        }
+        { return *diffusionDirichletData_[contextPhaseIdx_][contextCompIdx_]; }
 
-        const Matrix& T() const
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? advectionT_ : diffusionT_[contextPhaseIdx_][contextCompIdx_];
-        }
+        const Matrix& T() const { return diffusionT_[contextPhaseIdx_][contextCompIdx_]; }
+        Matrix& T() { return diffusionT_[contextPhaseIdx_][contextCompIdx_]; }
 
-        Matrix& T()
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? advectionT_ : diffusionT_[contextPhaseIdx_][contextCompIdx_];
-        }
+        const Matrix& AB() const { return diffusionAB_[contextPhaseIdx_][contextCompIdx_]; }
+        Matrix& AB() { return diffusionAB_[contextPhaseIdx_][contextCompIdx_]; }
 
-        const Matrix& AB() const
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? advectionAB_ : diffusionAB_[contextPhaseIdx_][contextCompIdx_];
-        }
-
-        Matrix& AB()
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? advectionAB_ : diffusionAB_[contextPhaseIdx_][contextCompIdx_];
-        }
-
-        const Matrix& outsideTij() const
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? advectionTout_ : diffusionTout_[contextPhaseIdx_][contextCompIdx_];
-        }
-
-        Matrix& outsideTij()
-        {
-            assert(context_ != Contexts::undefined && "No valid context set!");
-            return context_ == Contexts::advection ? advectionTout_ : diffusionTout_[contextPhaseIdx_][contextCompIdx_];
-        }
+        const Matrix& outsideTij() const { return diffusionTout_[contextPhaseIdx_][contextCompIdx_]; }
+        Matrix& outsideTij() { return diffusionTout_[contextPhaseIdx_][contextCompIdx_]; }
 
     private:
-        Contexts context_;                                     //! The context variable
-
-        // advection-related variables
-        const GlobalIndexContainer* advectionVolVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
-        const DirichletDataContainer* advectionDirichletData_; //! Pointer to the container with dirichlet data of the iv
-        Matrix advectionT_;                                    //! The transmissibilities
-        Matrix advectionAB_;                                   //! Coefficients for gradient reconstruction
-        Matrix advectionTout_;                                 //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
-
-        // diffusion-related variables (see comments above)
+        // diffusion-related variables (see comments in AdvectionDataHandle)
         unsigned int contextPhaseIdx_;                         //! The phase index set for the context
         unsigned int contextCompIdx_;                          //! The component index set for the context
         std::array<std::array<const GlobalIndexContainer*, numComponents>, numPhases> diffusionVolVarsStencil_;
@@ -253,460 +193,243 @@ namespace Dumux
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionTout_;
     };
 
-    // //! Specialization for problems involving advection, diffusion and heat conduction
-    // template<class TypeTag>
-    // struct InteractionVolumeDataHandleImplementation<TypeTag, true, true, true>
-    // {
-    // private:
-    //     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    //     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    //! Data handle for quantities related to advection
+    template<class TypeTag, bool EnableHeatConduction>
+    class HeatConductionDataHandle
+    {
+        //! we use the dynamic types here to be compatible on the boundary
+        using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using DirichletDataContainer = typename InteractionVolume::DirichletDataContainer;
+        using GlobalIndexContainer = typename InteractionVolume::Traits::DynamicGlobalIndexContainer;
+        using Matrix = typename InteractionVolume::Traits::DynamicMatrix;
+        using Vector = typename InteractionVolume::Traits::DynamicVector;
 
-    //     //! we use the types from the boundary interaction volume traits to be compatible on the boundary
-    //     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    //     using GlobalIndexSet = typename BoundaryInteractionVolume::Traits::GlobalIndexSet;
-    //     using PositionVector = typename BoundaryInteractionVolume::Traits::PositionVector;
-    //     using Matrix = typename BoundaryInteractionVolume::Traits::Matrix;
-    //     using Vector = typename BoundaryInteractionVolume::Traits::Vector;
+    public:
+        //! functions to set the size of the matrices
+        void resizeT(unsigned int n, unsigned int m) { heatConductionT_.resize(n, m); }
+        void resizeAB(unsigned int n, unsigned int m) { heatConductionAB_.resize(n, m); }
+        void resizeOutsideTij(unsigned int n, unsigned int m) { heatConductionTout_.resize(n, m); }
 
-    //     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    //     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+        //! functions to set the pointers to stencil and Dirichlet data
+        void setVolVarsStencilPointer(const GlobalIndexContainer& stencil) { heatConductionVolVarsStencil_ = &stencil; }
+        void setDirichletDataPointer(const DirichletDataContainer& data) { heatConductionDirichletData_ = &data; }
 
-    // public:
-    //     enum class Contexts : unsigned int
-    //     {
-    //         undefined,
-    //         advection,
-    //         diffusion,
-    //         heatConduction
-    //     };
+        //! return functions for the stored data
+        const GlobalIndexContainer& volVarsStencil() const { return *heatConductionVolVarsStencil_; }
+        const DirichletDataContainer& dirichletData() const { return *heatConductionDirichletData_; }
 
-    //     //! The constructor
-    //     InteractionVolumeDataHandleImplementation() : context_(Contexts::undefined) {}
+        const Matrix& T() const { return heatConductionT_; }
+        Matrix& T() { return heatConductionT_; }
 
-    //     //! sets the context of the cache to advection
-    //     void setAdvectionContext()
-    //     {
-    //         context_ = Contexts::advection;
-    //     }
+        const Matrix& AB() const { return heatConductionAB_; }
+        Matrix& AB() { return heatConductionAB_; }
 
-    //     //! sets the context of the cache to diffusion
-    //     void setDiffusionContext(unsigned int phaseIdx, unsigned int compIdx)
-    //     {
-    //         context_ = Contexts::diffusion;
-    //         contextPhaseIdx_ = phaseIdx;
-    //         contextCompIdx_ = compIdx;
-    //     }
+        const Matrix& outsideTij() const { return heatConductionTout_; }
+        Matrix& outsideTij() { return heatConductionTout_; }
 
-    //     //! sets the context of the cache to advection
-    //     void setHeatConductionContext()
-    //     {
-    //         context_ = Contexts::heatConduction;
-    //     }
+    private:
+        // heat conduction-related variables
+        const GlobalIndexContainer* heatConductionVolVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
+        const DirichletDataContainer* heatConductionDirichletData_; //! Pointer to the container with dirichlet data of the iv
+        Matrix heatConductionT_;                                    //! The transmissibilities
+        Matrix heatConductionAB_;                                   //! Coefficients for gradient reconstruction
+        Matrix heatConductionTout_;                                 //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+    };
 
-    //     //! returns the current context
-    //     Contexts getContext() const
-    //     { return context_; }
+    //! Process-dependet data handle when related process is disabled
+    template<class TypeTag> class AdvectionDataHandle<TypeTag, false> : public EmptyDataHandle<TypeTag> {};
+    template<class TypeTag> class DiffusionDataHandle<TypeTag, false> : public EmptyDataHandle<TypeTag> {};
+    template<class TypeTag> class HeatConductionDataHandle<TypeTag, false> : public EmptyDataHandle<TypeTag> {};
 
-    //     //! functions to set the size of the matrices
-    //     void resizeT(unsigned int n, unsigned int m)
-    //     {
-    //         advectionT_.resize(n, m);
-    //         heatConductionT_.resize(n, m);
-    //         for (auto& array : diffusionT_)
-    //             for (auto& matrix : array)
-    //                 matrix.resize(n, m);
+    //! Interaction volume data handle class
+    template<class TypeTag>
+    class InteractionVolumeDataHandle : public AdvectionDataHandle<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>,
+                                        public DiffusionDataHandle<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>,
+                                        public HeatConductionDataHandle<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+    {
+        using AdvectionHandle = AdvectionDataHandle<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>;
+        using DiffusionHandle = DiffusionDataHandle<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>;
+        using HeatConductionHandle = HeatConductionDataHandle<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
-    //     }
+        //! we use the dynamic types here to be compatible on the boundary
+        using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using DirichletDataContainer = typename InteractionVolume::DirichletDataContainer;
+        using GlobalIndexContainer = typename InteractionVolume::Traits::DynamicGlobalIndexContainer;
+        using Matrix = typename InteractionVolume::Traits::DynamicMatrix;
+        using Vector = typename InteractionVolume::Traits::DynamicVector;
 
-    //     void resizeCA(unsigned int n, unsigned int m)
-    //     {
-    //         advectionCA_.resize(n, m);
-    //         heatConductionCA_.resize(n, m);
-    //         for (auto& array : diffusionCA_)
-    //             for (auto& matrix : array)
-    //                 matrix.resize(n, m);
-    //     }
+    public:
+        enum class Contexts : unsigned int
+        {
+            undefined,
+            advection,
+            diffusion,
+            heatConduction
+        };
 
-    //     void resizeAB(unsigned int n, unsigned int m)
-    //     {
-    //         advectionAB_.resize(n, m);
-    //         heatConductionAB_.resize(n, m);
-    //         for (auto& array : diffusionAB_)
-    //             for (auto& matrix : array)
-    //                 matrix.resize(n, m);
-    //     }
+        //! The constructor
+        InteractionVolumeDataHandle() : context_(Contexts::undefined) {}
 
-    //     void resizeOutsideTij(unsigned int n, unsigned int m)
-    //     {
-    //         advectionTout_.resize(n, m);
-    //         heatConductionTout_.resize(n, m);
-    //         for (auto& array : diffusionTout_)
-    //             for (auto& matrix : array)
-    //                 matrix.resize(n, m);
-    //     }
+        //! set the context of the cache
+        void setAdvectionContext() { context_ = Contexts::advection; }
+        void setHeatConductionContext() { context_ = Contexts::heatConduction; }
+        void setDiffusionContext(unsigned int phaseIdx, unsigned int compIdx)
+        {
+            context_ = Contexts::diffusion;
+            DiffusionHandle::setDiffusionContext(phaseIdx, compIdx);
+        }
 
-    //     //! functions to set the pointers to stencil and positions
-    //     void setVolVarsStencilPointer(const GlobalIndexSet& stencil)
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_] = &stencil;
-    //         else if (context_ == Contexts::advection)
-    //             advectionVolVarsStencil_ = &stencil;
-    //         else
-    //             heatConductionVolVarsStencil_ = &stencil;
-    //     }
+        //! returns the current context
+        Contexts getContext() const { return context_; }
 
-    //     void setVolVarsPositionsPointer(const PositionVector& pos)
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             diffusionVolVarsPositions_[contextPhaseIdx_][contextCompIdx_] = &pos;
-    //         else if (context_ == Contexts::advection)
-    //             advectionVolVarsPositions_ = &pos;
-    //         else
-    //             heatConductionVolVarsPositions_ = &pos;
-    //     }
+        //! functions to set the size of the matrices
+        void resizeT(unsigned int n, unsigned int m)
+        {
+            AdvectionHandle::resizeT(n, m);
+            DiffusionHandle::resizeT(n, m);
+            HeatConductionHandle::resizeT(n, m);
+        }
 
-    //     //! return functions for the stored data
-    //     const GlobalIndexSet& volVarsStencil() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return *(diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_]);
-    //         else if (context_ == Contexts::advection)
-    //             return *advectionVolVarsStencil_;
-    //         else
-    //             return *heatConductionVolVarsStencil_;
-    //     }
+        void resizeAB(unsigned int n, unsigned int m)
+        {
+            AdvectionHandle::resizeAB(n, m);
+            DiffusionHandle::resizeAB(n, m);
+            HeatConductionHandle::resizeAB(n, m);
+        }
 
-    //     const PositionVector& volVarsPositions() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return *(diffusionVolVarsPositions_[contextPhaseIdx_][contextCompIdx_]);
-    //         else if (context_ == Contexts::advection)
-    //             return *advectionVolVarsPositions_;
-    //         else
-    //             return *heatConductionVolVarsPositions_;
-    //     }
+        void resizeOutsideTij(unsigned int n, unsigned int m)
+        {
+            AdvectionHandle::resizeOutsideTij(n, m);
+            DiffusionHandle::resizeOutsideTij(n, m);
+            HeatConductionHandle::resizeOutsideTij(n, m);
+        }
 
-    //     //! return functions for the stored matrices
-    //     const Matrix& T() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionT_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionT_;
-    //         else
-    //             return heatConductionT_;
-    //     }
+        //! functions to set the pointers to stencil and Dirichlet data
+        void setVolVarsStencilPointer(const GlobalIndexContainer& stencil)
+        {
+            if (context_ == Contexts::advection)
+                AdvectionHandle::setVolVarsStencilPointer(stencil);
+            else if (context_ == Contexts::diffusion)
+                DiffusionHandle::setVolVarsStencilPointer(stencil);
+            else if (context_ == Contexts::heatConduction)
+                HeatConductionHandle::setVolVarsStencilPointer(stencil);
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     Matrix& T()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionT_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionT_;
-    //         else
-    //             return heatConductionT_;
-    //     }
+        void setDirichletDataPointer(const DirichletDataContainer& data)
+        {
+            if (context_ == Contexts::advection)
+                AdvectionHandle::setDirichletDataPointer(data);
+            else if (context_ == Contexts::diffusion)
+                DiffusionHandle::setDirichletDataPointer(data);
+            else if (context_ == Contexts::heatConduction)
+                HeatConductionHandle::setDirichletDataPointer(data);
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     const Matrix& CA() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionCA_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionCA_;
-    //         else
-    //             return heatConductionCA_;
-    //     }
+        //! return functions for the stored data
+        const GlobalIndexContainer& volVarsStencil() const
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::volVarsStencil();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::volVarsStencil();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::volVarsStencil();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     Matrix& CA()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionCA_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionCA_;
-    //         else
-    //             return heatConductionCA_;
-    //     }
+        const DirichletDataContainer& dirichletData() const
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::dirichletData();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::dirichletData();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::dirichletData();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     const Matrix& AB() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionAB_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionAB_;
-    //         else
-    //             return heatConductionAB_;
-    //     }
+        const Matrix& T() const
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::T();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::T();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::T();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     Matrix& AB()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionAB_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionAB_;
-    //         else
-    //             return heatConductionAB_;
-    //     }
+        Matrix& T()
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::T();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::T();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::T();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     const Matrix& outsideTij() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionTout_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionTout_;
-    //         else
-    //             return heatConductionTout_;
-    //     }
+        const Matrix& AB() const
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::AB();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::AB();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::AB();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     Matrix& outsideTij()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::diffusion)
-    //             return diffusionTout_[contextPhaseIdx_][contextCompIdx_];
-    //         else if (context_ == Contexts::advection)
-    //             return advectionTout_;
-    //         else
-    //             return heatConductionTout_;
-    //     }
+        Matrix& AB()
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::AB();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::AB();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::AB();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    // private:
-    //     Contexts context_;                                   //! The context variable
+        const Matrix& outsideTij() const
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::outsideTij();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::outsideTij();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::outsideTij();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     // advection-related variables
-    //     const GlobalIndexSet* advectionVolVarsStencil_;      //! Pointer to the global volvar indices (stored in the interaction volume)
-    //     const PositionVector* advectionVolVarsPositions_;    //! Pointer to the positions of the vol vars (stored in the interaction volume)
-    //     Matrix advectionT_;                                  //! The transmissibilities
-    //     Matrix advectionCA_;                                 //! The coefficients for the neumann flux transformations
-    //     Matrix advectionAB_;                                 //! Coefficients for gradient reconstruction
-    //     Matrix advectionTout_;                  //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+        Matrix& outsideTij()
+        {
+            if (context_ == Contexts::advection)
+                return AdvectionHandle::outsideTij();
+            else if (context_ == Contexts::diffusion)
+                return DiffusionHandle::outsideTij();
+            else if (context_ == Contexts::heatConduction)
+                return HeatConductionHandle::outsideTij();
+            else
+                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+        }
 
-    //     // diffusion-related variables (see comments above)
-    //     unsigned int contextPhaseIdx_;                       //! The phase index set for the context
-    //     unsigned int contextCompIdx_;                        //! The component index set for the context
-    //     std::array<std::array<const GlobalIndexSet*, numComponents>, numPhases> diffusionVolVarsStencil_;
-    //     std::array<std::array<const PositionVector*, numComponents>, numPhases> diffusionVolVarsPositions_;
-    //     std::array<std::array<Matrix, numComponents>, numPhases> diffusionT_;
-    //     std::array<std::array<Matrix, numComponents>, numPhases> diffusionCA_;
-    //     std::array<std::array<Matrix, numComponents>, numPhases> diffusionAB_;
-    //     std::array<std::array<Matrix, numComponents>, numPhases> diffusionTout_;
+    private:
+        Contexts context_; //! The context variable
+    };
 
-    //     // heat conduction-related variables (see comments above)
-    //     const GlobalIndexSet* heatConductionVolVarsStencil_;
-    //     const PositionVector* heatConductionVolVarsPositions_;
-    //     Matrix heatConductionT_;
-    //     Matrix heatConductionCA_;
-    //     Matrix heatConductionAB_;
-    //     Matrix heatConductionTout_;
-    // };
-
-    // //! Specialization for problems involving advection, diffusion and heat conduction
-    // template<class TypeTag>
-    // struct InteractionVolumeDataHandleImplementation<TypeTag, true, false, true>
-    // {
-    // private:
-    //     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    //     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    //     //! we use the types from the boundary interaction volume traits to be compatible on the boundary
-    //     using BoundaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    //     using GlobalIndexSet = typename BoundaryInteractionVolume::Traits::GlobalIndexSet;
-    //     using PositionVector = typename BoundaryInteractionVolume::Traits::PositionVector;
-    //     using Matrix = typename BoundaryInteractionVolume::Traits::Matrix;
-    //     using Vector = typename BoundaryInteractionVolume::Traits::Vector;
-
-    // public:
-    //     enum class Contexts : unsigned int
-    //     {
-    //         undefined,
-    //         advection,
-    //         heatConduction
-    //     };
-
-    //     //! The constructor
-    //     InteractionVolumeDataHandleImplementation() : context_(Contexts::undefined) {}
-
-    //     //! sets the context of the cache to advection
-    //     void setAdvectionContext()
-    //     {
-    //         context_ = Contexts::advection;
-    //     }
-
-    //     //! sets the context of the cache to advection
-    //     void setHeatConductionContext()
-    //     {
-    //         context_ = Contexts::heatConduction;
-    //     }
-
-    //     //! returns the current context
-    //     Contexts getContext() const
-    //     { return context_; }
-
-    //     //! functions to set the size of the matrices
-    //     void resizeT(unsigned int n, unsigned int m)
-    //     {
-    //         advectionT_.resize(n, m);
-    //         heatConductionT_.resize(n, m);
-    //     }
-
-    //     void resizeCA(unsigned int n, unsigned int m)
-    //     {
-    //         advectionCA_.resize(n, m);
-    //         heatConductionCA_.resize(n, m);
-    //     }
-
-    //     void resizeAB(unsigned int n, unsigned int m)
-    //     {
-    //         advectionAB_.resize(n, m);
-    //         heatConductionAB_.resize(n, m);
-    //     }
-
-    //     void resizeOutsideTij(unsigned int n, unsigned int m)
-    //     {
-    //         advectionTout_.resize(n, m);
-    //         heatConductionTout_.resize(n, m);
-    //     }
-
-    //     //! functions to set the pointers to stencil and positions
-    //     void setVolVarsStencilPointer(const GlobalIndexSet& stencil)
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             advectionVolVarsStencil_ = &stencil;
-    //         else
-    //             heatConductionVolVarsStencil_ = &stencil;
-    //     }
-
-    //     void setVolVarsPositionsPointer(const PositionVector& pos)
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             advectionVolVarsPositions_ = &pos;
-    //         else
-    //             heatConductionVolVarsPositions_ = &pos;
-    //     }
-
-    //     //! return functions for the stored data
-    //     const GlobalIndexSet& volVarsStencil() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return *advectionVolVarsStencil_;
-    //         else
-    //             return *heatConductionVolVarsStencil_;
-    //     }
-
-    //     const PositionVector& volVarsPositions() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return *advectionVolVarsPositions_;
-    //         else
-    //             return *heatConductionVolVarsPositions_;
-    //     }
-
-    //     //! return functions for the stored matrices
-    //     const Matrix& T() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionT_;
-    //         else
-    //             return heatConductionT_;
-    //     }
-
-    //     Matrix& T()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionT_;
-    //         else
-    //             return heatConductionT_;
-    //     }
-
-    //     const Matrix& CA() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionCA_;
-    //         else
-    //             return heatConductionCA_;
-    //     }
-
-    //     Matrix& CA()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionCA_;
-    //         else
-    //             return heatConductionCA_;
-    //     }
-
-    //     const Matrix& AB() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionAB_;
-    //         else
-    //             return heatConductionAB_;
-    //     }
-
-    //     Matrix& AB()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionAB_;
-    //         else
-    //             return heatConductionAB_;
-    //     }
-
-    //     const Matrix& outsideTij() const
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionTout_;
-    //         else
-    //             return heatConductionTout_;
-    //     }
-
-    //     Matrix& outsideTij()
-    //     {
-    //         assert(context_ != Contexts::undefined && "No valid context set!");
-    //         if (context_ == Contexts::advection)
-    //             return advectionTout_;
-    //         else
-    //             return heatConductionTout_;
-    //     }
-
-    // private:
-    //     Contexts context_;                                   //! The context variable
-
-    //     // advection-related variables
-    //     const GlobalIndexSet* advectionVolVarsStencil_;      //! Pointer to the global volvar indices (stored in the interaction volume)
-    //     const PositionVector* advectionVolVarsPositions_;    //! Pointer to the positions of the vol vars (stored in the interaction volume)
-    //     Matrix advectionT_;                                  //! The transmissibilities
-    //     Matrix advectionCA_;                                 //! The coefficients for the neumann flux transformations
-    //     Matrix advectionAB_;                                 //! Coefficients for gradient reconstruction
-    //     Matrix advectionTout_;                  //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
-
-    //     // heat conduction-related variables (see comments above)
-    //     const GlobalIndexSet* heatConductionVolVarsStencil_;
-    //     const PositionVector* heatConductionVolVarsPositions_;
-    //     Matrix heatConductionT_;
-    //     Matrix heatConductionCA_;
-    //     Matrix heatConductionAB_;
-    //     Matrix heatConductionTout_;
-    // };
-} // end namespace
+} // end namespace Dumux
 
 #endif
