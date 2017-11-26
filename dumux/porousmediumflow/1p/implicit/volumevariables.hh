@@ -55,8 +55,6 @@ class OnePVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-
 public:
 
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
