@@ -75,6 +75,7 @@ public:
     , scvIndices_(scvIndices)
     , boundary_(isBoundary)
     {
+        corners_.resize(isGeometry.corners());
         for (int i = 0; i < isGeometry.corners(); ++i)
             corners_[i] = isGeometry.corner(i);
     }

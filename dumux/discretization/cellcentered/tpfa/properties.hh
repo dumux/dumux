@@ -28,6 +28,7 @@
 #define DUMUX_CC_TPFA_PROPERTIES_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/discretization/methods.hh>
@@ -113,7 +114,7 @@ private:
         template< int mydim, int cdim >
         struct CornerStorage
         {
-            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
+            using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
         };
     };
 
