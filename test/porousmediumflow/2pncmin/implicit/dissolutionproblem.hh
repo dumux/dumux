@@ -60,9 +60,6 @@ SET_PROP(DissolutionProblem, FluidSystem)
 // Set the spatial parameters
 SET_TYPE_PROP(DissolutionProblem, SpatialParams, DissolutionSpatialparams<TypeTag>);
 
-// Enable gravity
-SET_BOOL_PROP(DissolutionProblem, ProblemEnableGravity, true);
-
 //Set properties here to override the default property settings in the model.
 SET_INT_PROP(DissolutionProblem, ReplaceCompEqIdx, 1); //! Replace gas balance by total mass balance
 SET_INT_PROP(DissolutionProblem, Formulation, TwoPNCFormulation::pnsw);
@@ -133,9 +130,11 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Intersection = typename GridView::Intersection;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -143,31 +142,34 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    DissolutionProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    DissolutionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
 
-        outerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterSalinity);
-        temperature_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Temperature);
-        reservoirPressure_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ReservoirPressure);
-        initLiqSaturation_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, LiquidSaturation);
-        initPrecipitatedSalt1_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt1);
-        initPrecipitatedSalt2_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InitPrecipitatedSalt2);
+        outerSalinity_          = getParam<Scalar>("Problem.OuterSalinity");
+        temperature_            = getParam<Scalar>("Problem.Temperature");
+        reservoirPressure_      = getParam<Scalar>("Problem.ReservoirPressure");
+        initLiqSaturation_      = getParam<Scalar>("Problem.LiquidSaturation");
+        initPrecipitatedSalt1_  = getParam<Scalar>("Problem.InitPrecipitatedSalt1");
+        initPrecipitatedSalt2_  = getParam<Scalar>("Problem.InitPrecipitatedSalt2");
 
-        outerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterLiqSaturation);
-        innerLiqSaturation_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerLiqSaturation);
-        innerSalinity_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerSalinity);
-        innerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InnerPressure);
-        outerPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OuterPressure);
-        reservoirSaturation_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, reservoirSaturation);
+        outerLiqSaturation_     = getParam<Scalar>("Problem.OuterLiqSaturation");
+        innerLiqSaturation_     = getParam<Scalar>("Problem.InnerLiqSaturation");
+        innerSalinity_          = getParam<Scalar>("Problem.InnerSalinity");
+        innerPressure_          = getParam<Scalar>("Problem.InnerPressure");
+        outerPressure_          = getParam<Scalar>("Problem.OuterPressure");
+        reservoirSaturation_    = getParam<Scalar>("Problem.reservoirSaturation");
 
-        nTemperature_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NTemperature);
-        nPressure_              = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, FluidSystem, NPressure);
-        pressureLow_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureLow);
-        pressureHigh_           = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureHigh);
-        temperatureLow_         = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
-        temperatureHigh_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
-        name_                   = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        nTemperature_           = getParam<int>("FluidSystem.NTemperature");
+        nPressure_              = getParam<int>("FluidSystem.NPressure");
+        pressureLow_            = getParam<Scalar>("FluidSystem.PressureLow");
+        pressureHigh_           = getParam<Scalar>("FluidSystem.PressureHigh");
+        temperatureLow_         = getParam<Scalar>("FluidSystem.TemperatureLow");
+        temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
+        name_                   = getParam<std::string>("Problem.Name");
+
+        Kxx_.resize(fvGridGeometry->gridView().size(0));
+        Kyy_.resize(fvGridGeometry->gridView().size(0));
 
         outfile.open("evaporation.out");
         outfile << "time; evaporationRate" << std::endl;
@@ -185,12 +187,21 @@ public:
         outfile.close();
     }
 
-    bool shouldWriteOutput() const
+    void setTime( Scalar time )
     {
-        return this->timeManager().timeStepIndex() % 1 == 0 ||
-               this->timeManager().episodeWillBeFinished() ||
-               this->timeManager().willBeFinished();
+        time_ = time;
     }
+
+    void setTimeStepSize( Scalar timeStepSize )
+     {
+         timeStepSize_ = timeStepSize;
+     }
+//    bool shouldWriteOutput() const
+//    {
+//        return this->timeManager().timeStepIndex() % 1 == 0 ||
+//               this->timeManager().episodeWillBeFinished() ||
+//               this->timeManager().willBeFinished();
+//    }
 
 
     /*!
@@ -227,8 +238,8 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        const Scalar rmax = this->bBoxMax()[0];
-        const Scalar rmin = this->bBoxMin()[0];
+        const Scalar rmax = this->fvGridGeometry().bBoxMax()[0];
+        const Scalar rmin = this->fvGridGeometry().bBoxMin()[0];
 
         // default to Neumann
         bcTypes.setAllNeumann();
@@ -253,8 +264,8 @@ public:
         PrimaryVariables priVars(0.0);
         priVars.setState(bothPhases);
 
-        const Scalar rmax = this->bBoxMax()[0];
-        const Scalar rmin = this->bBoxMin()[0];
+        const Scalar rmax = this->fvGridGeometry().bBoxMax()[0];
+        const Scalar rmin = this->fvGridGeometry().bBoxMin()[0];
 
         if(globalPos[0] > rmax - eps_)
         {
@@ -279,23 +290,20 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param values The initial values for the primary variables
-     * \param element The finite element
-     * \param fvGeometry The finite-volume geometry
-     * \param scvIdx The local subcontrolvolume index
+     * \param Vertex The finite element
      *
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const Element &element) const
+    PrimaryVariables initial(const Vertex &vertex) const
     {
         PrimaryVariables priVars(0.0);
         priVars.setState(bothPhases);
 
-        const auto& globalPos = element.geometry().center();
+        const auto& globalPos = vertex.geometry().corner(0);
 
         priVars[pressureIdx] = reservoirPressure_;
-        priVars[switchIdx]   = initLiqSaturation_;                 // Sl primary variable
+        priVars[switchIdx]   = initLiqSaturation_;                 // Sw primary variable
         priVars[xlNaClIdx]   = massToMoleFrac_(outerSalinity_);     // mole fraction
         if(globalPos[0] > 5.0 - eps_ && globalPos[0] < 19.0 + eps_)
             priVars[precipNaClIdx] = initPrecipitatedSalt2_; // [kg/m^3]
@@ -357,12 +365,11 @@ public:
                                          * volVars.saturation(nPhaseIdx)
                                          * (moleFracNaCl_gPhase - moleFracNaCl_Max_gPhase);
 
-        // make sure we don't disolve more salt than previously precipitated
-        if (precipSalt*this->timeManager().timeStepSize() + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
-            precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/this->timeManager().timeStepSize();
+        // make sure we don't dissolve more salt than previously precipitated
+        if (precipSalt*time_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
+            precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/timeStepSize_;
 
-        auto curElemSol = this->model().elementSolution(element, this->model().curSol());
-        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().porosity(element, scv, curElemSol) - saltPorosity  && precipSalt > 0)
+        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= volVars.porosity() - saltPorosity  && precipSalt > 0)
             precipSalt = 0;
 
         source[conti0EqIdx + NaClIdx] += -precipSalt;
@@ -370,6 +377,40 @@ public:
 
         return source;
     }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+
+    const std::vector<Scalar>& getKxx()
+    {
+        return Kxx_;
+    }
+
+    const std::vector<Scalar>& getKyy()
+    {
+        return Kyy_;
+    }
+
+    void updateVtkOutput(const SolutionVector& curSol)
+        {
+            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            {
+                ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+
+                auto fvGeometry = localView(this->fvGridGeometry());
+                fvGeometry.bindElement(element);
+
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    VolumeVariables volVars;
+                    volVars.update(elemSol, *this, element, scv);
+                    const auto dofIdxGlobal = scv.dofIndex();
+                    Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
+                    Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
+                }
+            }
+        }
 
 private:
 
@@ -406,9 +447,13 @@ private:
     Scalar initPrecipitatedSalt1_;
     Scalar initPrecipitatedSalt2_;
     Scalar innerSalinity_;
+    Scalar time_ = 0.0;
+    Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
     Scalar reservoirSaturation_;
     std::ofstream outfile;
+    std::vector<double> Kxx_;
+    std::vector<double> Kyy_;
 
 };
 
