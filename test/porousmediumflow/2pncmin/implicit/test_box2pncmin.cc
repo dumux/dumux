@@ -74,7 +74,7 @@ void usage(const char *progName, const std::string &errorMsg)
     }
 }
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
@@ -141,9 +141,6 @@ int main(int argc, char** argv)
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     //add specific output
-    vtkWriter.addField(problem->getCurrentDensity(), "currentDensity [A/cm^2]");
-    vtkWriter.addField(problem->getReactionSourceH2O(), "reactionSourceH2O [mol/(sm^2)]");
-    vtkWriter.addField(problem->getReactionSourceO2(), "reactionSourceO2 [mol/(sm^2)]");
     vtkWriter.addField(problem->getKxx(), "Kxx");
     vtkWriter.addField(problem->getKyy(), "Kyy");
     vtkWriter.write(0.0);
@@ -169,6 +166,10 @@ int main(int argc, char** argv)
     // time loop
     timeLoop->start(); do
     {
+        // set time for problem for implicit Euler scheme
+        problem->setTime( timeLoop->time() + timeLoop->timeStepSize() );
+        problem->setTimeStepSize( timeLoop->timeStepSize() );
+
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
 

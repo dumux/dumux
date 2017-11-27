@@ -745,10 +745,10 @@ private:
      */
     void applyInitialSolutionImpl_(SolutionVector& sol, /*isBox=*/std::false_type) const
     {
-        for (const auto& element : elements(fvGridGeometry_->gridView()))
+        for (const auto& vertex : vertices(fvGridGeometry_->gridView()))
         {
-            const auto dofIdxGlobal = fvGridGeometry_->elementMapper().index(element);
-            sol[dofIdxGlobal] = asImp_().initial(element);
+            const auto dofIdxGlobal = fvGridGeometry_->vertexMapper().index(vertex);
+            sol[dofIdxGlobal] = asImp_().initial(vertex);
         }
     }
 

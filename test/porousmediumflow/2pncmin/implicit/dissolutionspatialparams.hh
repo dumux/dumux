@@ -92,10 +92,10 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
-    using PermeabilityType = Scalar;
+    using PermeabilityType = Tensor;
 
-    DissolutionSpatialparams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView)
+    DissolutionSpatialparams(const Problem& problem)
+    : ParentType(problem)
     {
         // residual saturations
         materialParams_.setSwr(0.2);
@@ -124,7 +124,7 @@ public:
      *
      *  Solution dependent permeability function
      */
-    Scalar permeability(const Element& element,
+    PermeabilityType permeability(const Element& element,
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     { return permLaw_.evaluatePermeability(element, scv, elemSol); }

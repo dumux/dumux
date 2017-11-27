@@ -34,7 +34,7 @@ namespace Dumux
  */
 
 /**
- * \brief Calculates the porosity depeding on the volume fractions of precipitated minerals.
+ * \brief Calculates the porosity depending on the volume fractions of precipitated minerals.
  */
 template<class TypeTag>
 class PorosityPrecipitation
