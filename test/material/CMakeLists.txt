@@ -1,3 +1,4 @@
+add_subdirectory("components")
 add_subdirectory("fluidsystems")
 add_subdirectory("fluidmatrixinteractions")
 add_subdirectory("immiscibleflash")

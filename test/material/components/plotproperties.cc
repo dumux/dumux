@@ -69,39 +69,7 @@ int main(int argc, char *argv[])
     // components
     const unsigned int liquidPhaseIdx = 0;
     const unsigned int gasPhaseIdx = 1;
-#if AIR
-    typedef Dumux::Air<double> Component;
-#elif BENZENE
-    typedef Dumux::Benzene<double> Component;
-#elif BRINE
-    typedef Dumux::Brine<double> Component;
-#elif METHANE
-    typedef Dumux::CH4<double> Component;
-#elif CARBONDIOXIDE
-    typedef Dumux::CO2<double> Component;
-#elif DNAPL_TCE
-    typedef Dumux::DNAPL<double> Component;
-#elif HYDROGEN
-    typedef Dumux::H2<double> Component;
-#elif WATER
-    typedef Dumux::H2O<double> Component;
-#elif HEAVYOIL
-    typedef Dumux::HeavyOil<double> Component;
-#elif LNAPL_OIL
-    typedef Dumux::LNAPL<double> Component;
-#elif MESITYLENE
-    typedef Dumux::Mesitylene<double> Component;
-#elif NITROGEN
-    typedef Dumux::N2<double> Component;
-#elif OXYGEN
-    typedef Dumux::O2<double> Component;
-#elif SIMPLE_CARBONDIOXIDE
-    typedef Dumux::SimpleCO2<double> Component;
-#elif SIMPLE_WATER
-    typedef Dumux::SimpleH2O<double> Component;
-#elif XYLENE
-    typedef Dumux::Xylene<double> Component;
-#endif
+    using Component = COMPONENT;
 
     const unsigned int numPhases = 2;
     array<string, numPhases> phaseNames;
