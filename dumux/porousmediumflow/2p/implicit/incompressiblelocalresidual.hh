@@ -25,6 +25,7 @@
 #ifndef DUMUX_2P_INCOMPRESSIBLE_TEST_LOCAL_RESIDUAL_HH
 #define DUMUX_2P_INCOMPRESSIBLE_TEST_LOCAL_RESIDUAL_HH
 
+#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 
 namespace Dumux
@@ -105,7 +106,7 @@ public:
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -208,7 +209,7 @@ public:
     }
 
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
