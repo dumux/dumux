@@ -103,7 +103,7 @@ SET_BOOL_PROP(TwoPSpe10Problem, ProblemEnableGravity, false);
 SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalFVGeometryCache, true);
 
 SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalVolumeVariablesCache, true);
 
 #if PROBLEM==1
 SET_TYPE_PROP(TwoPSpe10Problem, NewtonController, TwoPChopStaggeredNewtonController<TypeTag> );
