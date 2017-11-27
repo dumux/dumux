@@ -124,7 +124,7 @@ SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<Typ
 SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqCellCenter, GET_PROP_VALUE(TypeTag, NumComponents)); //!< set the number of equations on the cell centers
 SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqFace, 1); //!< set the number of equations on the faces
 SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>); //! the isothermal indices
-SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>); //! the isothermal vtk output fields
+SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the isothermal vtk output fields
 
 
 // \}
