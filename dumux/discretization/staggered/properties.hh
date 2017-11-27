@@ -88,10 +88,16 @@ SET_PROP(StaggeredModel, SubControlVolume)
 {
 private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvGeometry = typename Grid::template Codim<0>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+    struct ScvGeometryTraits
+    {
+        using Geometry = typename Grid::template Codim<0>::Geometry;
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimensionworld>;
+    };
 public:
-    typedef Dumux::CCSubControlVolume<ScvGeometry, IndexType> type;
+        using type = CCSubControlVolume<ScvGeometryTraits>;
 };
 
 SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);

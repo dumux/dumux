@@ -47,10 +47,20 @@ SET_PROP(FreeFlow, SubControlVolumeFace)
 {
 private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using ScvfGeometry = typename Grid::template Codim<1>::Geometry;
-    using IndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+    static constexpr int dim = Grid::dimension;
+    static constexpr int dimWorld = Grid::dimensionworld;
+
+    struct ScvfGeometryTraits
+    {
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using Geometry = typename Grid::template Codim<1>::Geometry;
+        using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+    };
+
 public:
-    typedef Dumux::StaggeredSubControlVolumeFace<ScvfGeometry, IndexType> type;
+    using type = Dumux::StaggeredSubControlVolumeFace<ScvfGeometryTraits>;
 };
 
 //! The geometry helper required for the stencils, etc.
