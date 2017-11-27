@@ -1,11 +1,14 @@
-add_dumux_test(test_gridcreator_gmsh test_gridcreator_gmsh test_gridcreator_gmsh.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh"
-                 --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/bifurcation-00000.vtu
-                         ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference-refined.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/bifurcation-00001.vtu)
+dune_symlink_to_source_files(FILES grids test_gridcreator_gmsh.input test_gridcreator_cake.input)
+
+dune_add_test(NAME test_gridcreator_gmsh
+              SOURCES test_gridcreator_gmsh.cc
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/bifurcation-00000.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference-refined.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/bifurcation-00001.vtu)
 
 add_dumux_test(test_gridcreator_cake test_gridcreator_cake test_gridcreator_cake.cc
                python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
