@@ -115,14 +115,6 @@ private:
         {
             using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
         };
-
-        // we know all scvfs will have the same geometry type
-        template< int dim >
-        struct hasSingleGeometryType
-        {
-            static const bool v = true;
-            static const unsigned int topologyId = Dune::Impl::CubeTopology< dim >::type::id;
-        };
     };
 
     struct ScvfGeometryTraits
