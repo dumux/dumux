@@ -19,47 +19,55 @@
 /*!
  * \ingroup Properties
  * \ingroup ImplicitProperties
- * \ingroup NavierStokesModel
+ * \ingroup OnePModel
  * \file
  *
  * \brief Defines the properties required for the one-phase fully implicit model.
  */
-#ifndef DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
-#define DUMUX_NAVIERSTOKES_NI_PROPERTIES_HH
+#ifndef DUMUX_NAVIER_STOKES_NI_PROPERTIES_HH
+#define DUMUX_NAVIER_STOKES_NI_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
+#include "fluxvariables.hh"
+#include "indices.hh"
+#include "localresidual.hh"
+#include "vtkoutputfields.hh"
+#include <dumux/discretization/fourierslaw.hh>
 
 namespace Dumux
 {
-// \{
-///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal Navier-Stokes model
-///////////////////////////////////////////////////////////////////////////
-namespace Properties {
 
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
+// \{
+
+namespace Properties {
 
 //! The type tags for the non-isothermal Navier Stokes problems
 NEW_TYPE_TAG(NavierStokesNonIsothermal);
 
-//////////////////////////////////////////////////////////////////
-// Property tags required for the non-isothermal models
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG(IsothermalModel);
-NEW_PROP_TAG(IsothermalFluxVariables);
-NEW_PROP_TAG(IsothermalIndices);
 NEW_PROP_TAG(IsothermalNumEqCellCenter);
 NEW_PROP_TAG(IsothermalNumEqFace);
-NEW_PROP_TAG(HaveVariableFormulation);
-NEW_PROP_TAG(ThermalConductivityModel);
-NEW_PROP_TAG(NiOutputLevel);
 
-// \}
-}
+///////////////////////////////////////////////////////////////////////////
+// default property values for the non-isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
 
-} // end namespace
+SET_PROP(NavierStokesNonIsothermal, NumEqCellCenter)
+{
+private:
+    static constexpr auto isothermalNumEqCellCenter = GET_PROP_VALUE(TypeTag, IsothermalNumEqCellCenter);
+public:
+    static constexpr auto value = isothermalNumEqCellCenter + 1;
+};
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, FreeFlowEnergyVtkOutputFields<TypeTag>);
+
+SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
+
+} // end namespace Properties
+
+} // end namespace Dumux
 
 #endif

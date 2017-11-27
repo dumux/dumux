@@ -63,9 +63,6 @@ public:
 
             vtk.addFaceVariable(faceVelocityVector, "faceVelocity");
         }
-
-        if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
-            vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); },"temperature");
     }
 };
 

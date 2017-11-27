@@ -118,14 +118,13 @@ SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true
 
 SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 
-SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>);
+SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the vtk output fields
 
-//set isothermal Indices
-SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>);
-
-//set isothermal NumEq
-SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqCellCenter, GET_PROP_VALUE(TypeTag, NumComponents)); //!< set the number of equations to 1
-SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqFace, 1); //!< set the number of equations
+// non-isothermal properties
+SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqCellCenter, GET_PROP_VALUE(TypeTag, NumComponents)); //!< set the number of equations on the cell centers
+SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqFace, 1); //!< set the number of equations on the faces
+SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>); //! the isothermal indices
+SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>); //! the isothermal vtk output fields
 
 
 // \}

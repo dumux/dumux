@@ -17,44 +17,34 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup OnePModel
  * \file
- *
- * \brief Defines the properties required for the one-phase fully implicit model.
+ * \brief Adds vtk output fields specific to non-isothermal models
  */
-#ifndef DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
-#define DUMUX_NAVIER_STOKES_NI_PROPERTY_DEFAULTS_HH
+#ifndef DUMUX_FF_ENERGY_OUTPUT_FIELDS_HH
+#define DUMUX_FF_ENERGY_OUTPUT_FIELDS_HH
 
-#include "indices.hh"
-#include <dumux/discretization/fourierslaw.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
 
-// \{
-
-///////////////////////////////////////////////////////////////////////////
-// default property values for the non-isothermal single phase model
-///////////////////////////////////////////////////////////////////////////
-namespace Properties {
-
-SET_PROP(NavierStokesNonIsothermal, NumEqCellCenter)
+/*!
+ * \ingroup NonIsothermal, InputOutput
+ * \brief Adds vtk output fields specific to non-isothermal models
+ */
+template<class TypeTag>
+class FreeFlowEnergyVtkOutputFields
 {
-private:
-    static constexpr auto isothermalNumEqCellCenter = GET_PROP_VALUE(TypeTag, IsothermalNumEqCellCenter);
+    using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 public:
-    static constexpr auto value = isothermalNumEqCellCenter + 1;
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        IsothermalVtkOutputFields::init(vtk);
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.temperature(); }, "temperature");
+    }
 };
-
-SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
-
-SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
-
-SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
-
-} // end namespace Properties
 
 } // end namespace Dumux
 

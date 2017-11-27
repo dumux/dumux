@@ -30,12 +30,8 @@
 #include <dumux/common/basicproperties.hh>
 #include <dumux/freeflow/properties.hh>
 
-#include <dumux/freeflow/staggeredni/localresidual.hh>
-#include <dumux/freeflow/staggeredni/fluxvariables.hh>
-
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/freeflow/staggeredni/properties.hh>
-#include <dumux/freeflow/staggeredni/propertydefaults.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -158,6 +154,7 @@ SET_BOOL_PROP(NavierStokes, NormalizePressure, true);
 
 //set isothermal Indices
 SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+SET_TYPE_PROP(NavierStokesNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
 
 //set isothermal NumEq
 SET_INT_PROP(NavierStokesNI, IsothermalNumEqCellCenter, 1); //!< set the number of equations to 1
