@@ -3,6 +3,7 @@ add_subdirectory(fracture)
 add_subdirectory(incompressible)
 add_subdirectory(nonisothermal)
 add_input_file_links()
+dune_symlink_to_source_files(FILES grids)
 
 # # isothermal tests
 # add_dumux_test(test_ccadaptive2p test_ccadaptive2p test_ccadaptive2p.cc
