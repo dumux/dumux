@@ -56,8 +56,6 @@ class StaggeredFVAssembler
     using TimeLoop = TimeLoopBase<Scalar>;
 
     static constexpr int dim = GridView::dimension;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-    static constexpr int dofCodim = isBox ? dim : 0;
 
     using LocalAssembler =StaggeredLocalAssembler<TypeTag, diffMethod, isImplicit>;
 

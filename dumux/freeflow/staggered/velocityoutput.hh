@@ -61,7 +61,6 @@ class StaggeredFreeFlowVelocityOutput
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
