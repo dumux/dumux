@@ -29,6 +29,19 @@
 
 #include <dumux/freeflow/staggered/properties.hh>
 #include <dumux/freeflow/staggeredni/properties.hh>
+#include <dumux/discretization/fickslaw.hh>
+
+#include "volumevariables.hh"
+#include "indices.hh"
+#include "localresidual.hh"
+#include "fluxvariables.hh"
+#include "vtkoutputfields.hh"
+
+#include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/material/fluidsystems/gasphase.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+
+#include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux
 {
@@ -46,27 +59,74 @@ namespace Properties {
 NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(NavierStokes));
 NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC, NavierStokesNonIsothermal));
 
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+// default property values for the isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+SET_PROP(NavierStokesNC, NumEqCellCenter)
+{
+private:
+    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+public:
+    static constexpr int value = numComponents;
+};
 
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(Indices); //!< Enumerations for the model
-NEW_PROP_TAG(FluidSystem); //!< The type of the fluid system to use
-NEW_PROP_TAG(Fluid); //!< The fluid used for the default fluid system
-NEW_PROP_TAG(FluidState); //!< The type of the fluid state to use
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< Returns weight of the upwind cell when calculating fluxes
-NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
-NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
-NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
-NEW_PROP_TAG(BoundaryValues); //!< Type to set values on the boundary
-NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider component transport or not
-NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
-NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport or not
-NEW_PROP_TAG(ReplaceCompEqIdx); //!<  Returns whether to consider energy transport or not
-NEW_PROP_TAG(UseMoles); //!< Defines whether molar (true) or mass (false) density is used
-NEW_PROP_TAG(PhaseIdx); //!< Defines the phaseIdx
+SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0);
+
+/*!
+* \brief Set the property for the number of components.
+*
+* We just forward the number from the fluid system
+*
+*/
+SET_PROP(NavierStokesNC, NumComponents)
+{
+private:
+   typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+
+public:
+   static constexpr int value = FluidSystem::numComponents;
+
+};
+
+//! the VolumeVariables property
+SET_TYPE_PROP(NavierStokesNC, VolumeVariables, NavierStokesNCVolumeVariables<TypeTag>);
+SET_TYPE_PROP(NavierStokesNC, Indices, NavierStokesNCIndices<TypeTag>);
+
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(NavierStokesNC, FluidState)
+{
+    private:
+        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    public:
+        using type = CompositionalFluidState<Scalar, FluidSystem>;
+};
+
+SET_BOOL_PROP(NavierStokesNC, EnableComponentTransport, true);
+
+//! The one-phase model has no molecular diffusion
+SET_BOOL_PROP(NavierStokesNC, EnableMolecularDiffusion, true);
+
+SET_TYPE_PROP(NavierStokesNC, MolecularDiffusionType, FicksLaw<TypeTag>);
+
+SET_BOOL_PROP(NavierStokesNC, UseMoles, false); //!< Defines whether molar (true) or mass (false) density is used
+
+SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
+
+SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the vtk output fields
+
+// non-isothermal properties
+SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqCellCenter, GET_PROP_VALUE(TypeTag, NumComponents)); //!< set the number of equations on the cell centers
+SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqFace, 1); //!< set the number of equations on the faces
+SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>); //! the isothermal indices
+SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the isothermal vtk output fields
+
+
 // \}
 }
 

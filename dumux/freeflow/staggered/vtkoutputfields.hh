@@ -18,54 +18,54 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the flux variables
+ * \brief Adds vtk output fields specific to the twop model
  */
-#ifndef DUMUX_FREEFLOW_IMPLICIT_FLUXVARIABLESCACHE_HH
-#define DUMUX_FREEFLOW_IMPLICIT_FLUXVARIABLESCACHE_HH
+#ifndef DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-#include <dumux/discretization/methods.hh>
+#include <dumux/common/properties.hh>
+#include <dune/common/fvector.hh>
 
 namespace Dumux
 {
-// forward declaration
-template<class TypeTag, DiscretizationMethods Method>
-class FreeFlowFluxVariablesCacheImplementation
-{};
 
 /*!
- * \ingroup ImplicitModel
- * \brief The flux variables cache classes for porous media.
- *        Store flux stencils and data required for flux calculation
+ * \ingroup TwoP, InputOutput
+ * \brief Adds vtk output fields specific to the twop model
  */
 template<class TypeTag>
-using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
-
-// specialization for the cell centered tpfa method
-template<class TypeTag>
-class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Staggered>
+class NavierStokesVtkOutputFields
 {
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
 public:
-    void update(const Problem& problem,
-                const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace &scvf)
-    {}
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
+
+        const bool writeFaceVars_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
+        if(writeFaceVars_)
+        {
+            auto faceVelocityVector = [](const SubControlVolumeFace& scvf, const FaceVariables& f)
+                                      {
+                                          GlobalPosition velocity(0.0);
+                                          velocity[scvf.directionIndex()] = f.velocitySelf();
+                                          return velocity;
+                                      };
+
+            vtk.addFaceVariable(faceVelocityVector, "faceVelocity");
+        }
+    }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

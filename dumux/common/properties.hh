@@ -157,5 +157,23 @@ NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
 NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with which solves equlibrium reactions
 NEW_PROP_TAG(NumMajorComponents);                  //!< Number of major fluid components which are considered in the calculation of the phase density
 NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in the wetting or non-wetting phase
+
+/////////////////////////////////////////////////////////////
+// Properties used by the staggered-grid discretization method
+/////////////////////////////////////////////////////////////
+NEW_PROP_TAG(NumEqCellCenter);                     //! The number of equations for cell-centered dofs
+NEW_PROP_TAG(NumEqFace);                           //! The number of equations for face dofs
+NEW_PROP_TAG(CellCenterSolutionVector);            //! The solution vector type for cell-centered dofs
+NEW_PROP_TAG(FaceSolutionVector);                  //! The solution vector type for face dofs
+NEW_PROP_TAG(GlobalFaceVars);                      //! Class containing face-related data
+NEW_PROP_TAG(CellCenterPrimaryVariables);          //! The primary variables container type for cell-centered dofs
+NEW_PROP_TAG(FacePrimaryVariables);                //! The primary variables container type for face dofs
+NEW_PROP_TAG(IntersectionMapper);                  //! Specifies the intersection mapper
+NEW_PROP_TAG(DofTypeIndices);                      //! Specifies index types for accessing the multi type block vectors/matrices
+NEW_PROP_TAG(StaggeredGeometryHelper);             //! Specifies a helper class for the staggered grid geometry
+NEW_PROP_TAG(StaggeredPrimaryVariables);           //! The hybrid primary variables container type
+NEW_PROP_TAG(BaseEpsilon);                         //! A base epsilon for numerical differentiation, can contain multiple values
+NEW_PROP_TAG(FaceVariables);                       //! Class containing local face-related data
+NEW_PROP_TAG(BoundaryValues);                      //! Class containing local boundary data
 }
 }

@@ -1,7 +1,7 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1e-2 # [s]
 # MaxTimeStepSize = 1e1
-TEnd = 1.5e3 # [s]
+TEnd = 5e3 # [s]
 
 [Grid]
 UpperRight = 1 1
@@ -17,4 +17,5 @@ MaxSteps = 10
 MaxRelativeShift = 1e-8
 
 [Vtk]
+AddVelocity = true
 WriteFaceData = false

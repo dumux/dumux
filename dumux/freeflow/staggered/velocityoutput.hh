@@ -28,7 +28,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
@@ -57,6 +57,10 @@ class StaggeredFreeFlowVelocityOutput
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
     static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -75,11 +79,17 @@ public:
      *
      * \param problem The problem to be solved
      */
-    StaggeredFreeFlowVelocityOutput(const Problem& problem)
+    StaggeredFreeFlowVelocityOutput(const Problem& problem,
+                           const FVGridGeometry& fvGridGeometry,
+                           const GridVariables& gridVariables,
+                           const SolutionVector& sol)
     : problem_(problem)
+    , fvGridGeometry_(fvGridGeometry)
+    , gridVariables_(gridVariables)
+    , sol_(sol)
     {
         // check, if velocity output can be used (works only for cubes so far)
-        velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
+        velocityOutput_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.AddVelocity");
     }
 
     bool enableOutput()
@@ -97,15 +107,16 @@ public:
                            const Element& element,
                            int phaseIdx)
     {
+        auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
+        elemFaceVars.bindElement(element, fvGeometry, sol_);
         for (auto&& scv : scvs(fvGeometry))
         {
             auto dofIdxGlobal = scv.dofIndex();
 
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                auto& origFaceVars = problem_.model().curGlobalFaceVars().faceVars(scvf.dofIndex());
                 auto dirIdx = scvf.directionIndex();
-                velocity[dofIdxGlobal][dirIdx] += 0.5*origFaceVars.velocity();
+                velocity[dofIdxGlobal][dirIdx] += 0.5*elemFaceVars[scvf].velocitySelf();
             }
         }
     }
@@ -113,6 +124,9 @@ public:
 
 private:
     const Problem& problem_;
+    const FVGridGeometry& fvGridGeometry_;
+    const GridVariables& gridVariables_;
+    const SolutionVector& sol_;
     bool velocityOutput_;
 };
 

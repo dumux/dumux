@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
@@ -9,12 +9,15 @@ Cells = 64 64
 [Problem]
 Name = test_hydrostaticpressure # name passed to the output routines
 LidVelocity = 0
-LiquidDensity = 1000
 EnableGravity = true
+
+[Component]
+LiquidDensity = 1000
 
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
 
 [Vtk]
+AddVelocity = true
 WriteFaceData = false

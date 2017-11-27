@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 2 # [s]
 
@@ -8,10 +8,15 @@ Cells = 40 40
 
 [Problem]
 Name = test_donea # name passed to the output routines
-LiquidDensity = 1
 EnableGravity = false
 PrintL2Error = false
+LiquidKinematicViscosity = 1
+LiquidDensity = 1
 
 [ Newton ]
 MaxSteps = 10
 MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+AddVelocity = true

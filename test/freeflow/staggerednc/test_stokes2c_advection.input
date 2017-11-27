@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 5 # [s]
 TEnd = 400 # [s]
 
@@ -16,4 +16,5 @@ MaxSteps = 10
 MaxRelativeShift = 1e-8
 
 [Vtk]
+AddVelocity = true
 WriteFaceData = false

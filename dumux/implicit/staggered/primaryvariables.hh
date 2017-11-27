@@ -23,7 +23,6 @@
 #ifndef DUMUX_STAGGERED_PRIMARYVARIABLES_HH
 #define DUMUX_STAGGERED_PRIMARYVARIABLES_HH
 
-#include "properties.hh"
 #include <dune/istl/multitypeblockvector.hh>
 #include <dumux/common/intrange.hh>
 

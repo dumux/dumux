@@ -23,12 +23,6 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
-#include <dune/istl/matrix.hh>
-
-#include <dumux/common/valgrind.hh>
-#include <dumux/implicit/staggered/localresidual.hh>
-
-#include "properties.hh"
 
 namespace Dumux
 {
@@ -39,6 +33,9 @@ namespace Properties
 NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableInertiaTerms);
 NEW_PROP_TAG(ReplaceCompEqIdx);
+NEW_PROP_TAG(EnergyFluxVariables);
+NEW_PROP_TAG(NormalizePressure);
+NEW_PROP_TAG(ElementFaceVariables);
 }
 
 /*!
@@ -90,11 +87,16 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::Staggere
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
 
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
+
+    using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using FaceResidualVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
 
     enum {
          // grid and world dimension
@@ -109,41 +111,41 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::Staggere
     };
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
 
     static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
 
 public:
-    // copying the local residual class is not a good idea
-    StaggeredNavierStokesResidualImpl(const StaggeredNavierStokesResidualImpl &) = delete;
 
-    StaggeredNavierStokesResidualImpl() = default;
+    using ParentType::ParentType;
 
 
-    CellCenterPrimaryVariables computeFluxForCellCenter(const Element &element,
+    CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
+                                                        const Element &element,
                                                         const FVElementGeometry& fvGeometry,
                                                         const ElementVolumeVariables& elemVolVars,
-                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const ElementFaceVariables& elemFaceVars,
                                                         const SubControlVolumeFace &scvf,
-                                                        const ElementFluxVariablesCache& elemFluxVarsCache)
+                                                        const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(this->problem(), element, fvGeometry, elemVolVars,
-                                                 globalFaceVars, scvf, elemFluxVarsCache[scvf]);
+        CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
+                                                 elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
-        EnergyFluxVariables::energyFlux(flux, this->problem(), element, fvGeometry, elemVolVars, globalFaceVars, scvf, elemFluxVarsCache[scvf]);
+        EnergyFluxVariables::energyFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
         return flux;
     }
 
-    CellCenterPrimaryVariables computeSourceForCellCenter(const Element &element,
+    CellCenterPrimaryVariables computeSourceForCellCenter(const Problem& problem,
+                                                          const Element &element,
                                                           const FVElementGeometry& fvGeometry,
                                                           const ElementVolumeVariables& elemVolVars,
-                                                          const GlobalFaceVars& globalFaceVars,
-                                                          const SubControlVolume &scv)
+                                                          const ElementFaceVariables& elemFaceVars,
+                                                          const SubControlVolume &scv) const
     {
         return CellCenterPrimaryVariables(0.0);
+        // TODO sources
     }
 
 
@@ -157,8 +159,9 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    CellCenterPrimaryVariables computeStorageForCellCenter(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars)
+    CellCenterPrimaryVariables computeStorageForCellCenter(const Problem& problem,
+                                                           const SubControlVolume& scv,
+                                                           const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
         storage[0] = volVars.density();
@@ -176,26 +179,28 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    FacePrimaryVariables computeStorageForFace(const SubControlVolumeFace& scvf,
+    FacePrimaryVariables computeStorageForFace(const Problem& problem,
+                                               const SubControlVolumeFace& scvf,
                                                const VolumeVariables& volVars,
-                                               const GlobalFaceVars& globalFaceVars)
+                                               const ElementFaceVariables& elementFaceVars) const
     {
         FacePrimaryVariables storage(0.0);
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
+        const Scalar velocity = elementFaceVars[scvf].velocitySelf();
         storage[0] = volVars.density() * velocity;
         return storage;
     }
 
-    FacePrimaryVariables computeSourceForFace(const SubControlVolumeFace& scvf,
+    FacePrimaryVariables computeSourceForFace(const Problem& problem,
+                                              const SubControlVolumeFace& scvf,
                                               const ElementVolumeVariables& elemVolVars,
-                                              const GlobalFaceVars& globalFaceVars)
+                                              const ElementFaceVariables& elementFaceVars) const
     {
         FacePrimaryVariables source(0.0);
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        source += this->problem().gravity()[scvf.directionIndex()] * insideVolVars.density();
+        source += problem.gravity()[scvf.directionIndex()] * insideVolVars.density();
 
-        source += this->problem().sourceAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
+        source += problem.sourceAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
 
         return source;
     }
@@ -205,20 +210,21 @@ public:
      * \param scvf The sub control volume face
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param globalFaceVars The face variables
+     * \param elementFaceVars The face variables
      */
-    FacePrimaryVariables computeFluxForFace(const Element& element,
+    FacePrimaryVariables computeFluxForFace(const Problem& problem,
+                                            const Element& element,
                                             const SubControlVolumeFace& scvf,
                                             const FVElementGeometry& fvGeometry,
                                             const ElementVolumeVariables& elemVolVars,
-                                            const GlobalFaceVars& globalFaceVars,
-                                            const ElementFluxVariablesCache& elemFluxVarsCache)
+                                            const ElementFaceVariables& elementFaceVars,
+                                            const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FacePrimaryVariables flux(0.0);
         FluxVariables fluxVars;
-        flux += fluxVars.computeNormalMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
-        flux += fluxVars.computeTangetialMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
-        flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+        flux += fluxVars.computeNormalMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
+        flux += fluxVars.computeTangetialMomentumFlux(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
+        flux += computePressureTerm_(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars);
         return flux;
     }
 
@@ -230,35 +236,37 @@ protected:
     void evalBoundary_(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars,
-                       const GlobalFaceVars& faceVars,
+                       const ElementFaceVariables& elemFaceVars,
                        const ElementBoundaryTypes& elemBcTypes,
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
-        evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, faceVars, elemBcTypes, elemFluxVarsCache);
+        evalBoundaryForCellCenter_(element, fvGeometry, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, faceVars, elemBcTypes, elemFluxVarsCache);
+            evalBoundaryForFace_(element, fvGeometry, scvf, elemVolVars, elemFaceVars, elemBcTypes, elemFluxVarsCache);
         }
     }
 
      /*!
      * \brief Evaluate boundary conditions for a cell center dof
      */
-    void evalBoundaryForCellCenter_(const Element& element,
+    void evalBoundaryForCellCenter_(CellCenterResidual& residual,
+                                    const Problem& problem,
+                                    const Element& element,
                                     const FVElementGeometry& fvGeometry,
                                     const ElementVolumeVariables& elemVolVars,
-                                    const GlobalFaceVars& faceVars,
+                                    const ElementFaceVariables& elemFaceVars,
                                     const ElementBoundaryTypes& elemBcTypes,
-                                    const ElementFluxVariablesCache& elemFluxVarsCache)
+                                    const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         for (auto&& scvf : scvfs(fvGeometry))
         {
             if (scvf.boundary())
             {
-                auto boundaryFlux = computeFluxForCellCenter(element, fvGeometry, elemVolVars, faceVars, scvf, elemFluxVarsCache);
+                auto boundaryFlux = computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
 
                 // handle the actual boundary conditions:
-                const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+                const auto bcTypes = problem.boundaryTypes(element, scvf);
 
                 if(bcTypes.hasNeumann())
                 {
@@ -267,14 +275,14 @@ protected:
                         if(bcTypes.isNeumann(eqIdx))
                         {
                             const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
-                            boundaryFlux[eqIdx] = this->problem().neumannAtPos(scvf.center())[cellCenterIdx][eqIdx]
+                            boundaryFlux[eqIdx] = problem.neumann(element, scvf)[cellCenterIdx][eqIdx]
                                                    * extrusionFactor * scvf.area();
                         }
                 }
 
-                this->ccResidual_ += boundaryFlux;
+                residual += boundaryFlux;
 
-                asImp_().setFixedCell_(fvGeometry.scv(scvf.insideScvIdx()), elemVolVars, bcTypes);
+                asImp_().setFixedCell_(residual, problem, fvGeometry.scv(scvf.insideScvIdx()), elemVolVars, bcTypes);
             }
         }
     }
@@ -287,56 +295,62 @@ protected:
      * \param elemVolVars The current or previous element volVars
      * \param bcTypes The boundary types
      */
-    void setFixedCell_(const SubControlVolume& insideScv,
+    void setFixedCell_(CellCenterResidual& residual,
+                       const Problem& problem,
+                       const SubControlVolume& insideScv,
                        const ElementVolumeVariables& elemVolVars,
-                       const BoundaryTypes& bcTypes)
+                       const BoundaryTypes& bcTypes) const
     {
         // set a fixed pressure for cells adjacent to a wall
         if(bcTypes.isDirichletCell(massBalanceIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
-            this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
+            residual[pressureIdx] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
         }
     }
 
      /*!
      * \brief Evaluate boundary conditions for a face dof
      */
-    void evalBoundaryForFace_(const Element& element,
+    void evalBoundaryForFace_(FaceResidual& residual,
+                              const Problem& problem,
+                              const Element& element,
                               const FVElementGeometry& fvGeometry,
                               const SubControlVolumeFace& scvf,
                               const ElementVolumeVariables& elemVolVars,
-                              const GlobalFaceVars& faceVars,
+                              const ElementFaceVariables& elementFaceVars,
                               const ElementBoundaryTypes& elemBcTypes,
-                              const ElementFluxVariablesCache& elemFluxVarsCache)
+                              const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         if (scvf.boundary())
         {
             // handle the actual boundary conditions:
-            const auto bcTypes = this->problem().boundaryTypes(element, scvf);
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
 
             // set a fixed value for the velocity for Dirichlet boundary conditions
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
-                const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
-                const Scalar dirichletValue = this->problem().dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
-                this->faceResiduals_[scvf.localFaceIdx()] = velocity - dirichletValue;
+                // const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                const Scalar velocity = elementFaceVars[scvf].velocitySelf();
+                const Scalar dirichletValue = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
+                residual = velocity - dirichletValue;
             }
 
             // For symmetry boundary conditions, there is no flow accross the boundary and
             // we therefore treat it like a Dirichlet boundary conditions with zero velocity
             if(bcTypes.isSymmetry())
             {
-                const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                // const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
+                const Scalar velocity = elementFaceVars[scvf].velocitySelf();
                 const Scalar fixedValue = 0.0;
-                this->faceResiduals_[scvf.localFaceIdx()] = velocity - fixedValue;
+                residual = velocity - fixedValue;
             }
 
             // outflow condition for the momentum balance equation
             if(bcTypes.isOutflow(momentumBalanceIdx))
             {
                 if(bcTypes.isDirichlet(massBalanceIdx))
-                    this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(element, scvf, fvGeometry, elemVolVars, faceVars, elemFluxVarsCache);
+                    residual += computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elementFaceVars, elemFluxVarsCache);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
             }
@@ -353,25 +367,26 @@ private:
      * \param scvf The sub control volume face
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
-     * \param globalFaceVars The face variables
+     * \param elementFaceVars The face variables
      */
-    FacePrimaryVariables computePressureTerm_(const Element& element,
+    FacePrimaryVariables computePressureTerm_(const Problem& problem,
+                                              const Element& element,
                                               const SubControlVolumeFace& scvf,
                                               const FVElementGeometry& fvGeometry,
                                               const ElementVolumeVariables& elemVolVars,
-                                              const GlobalFaceVars& globalFaceVars)
+                                              const ElementFaceVariables& elementFaceVars) const
     {
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const Scalar deltaP = normalizePressure ? this->problem().initialAtPos(scvf.center())[cellCenterIdx][pressureIdx] : 0.0;
+        const Scalar deltaP = normalizePressure ? problem.initialAtPos(scvf.center())[cellCenterIdx][pressureIdx] : 0.0;
 
         Scalar result = (insideVolVars.pressure() - deltaP) * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
 
         // treat outflow BCs
         if(scvf.boundary())
         {
-            const Scalar pressure = this->problem().dirichlet(element, scvf)[cellCenterIdx][pressureIdx] - deltaP;
+            const Scalar pressure = problem.dirichlet(element, scvf)[cellCenterIdx][pressureIdx] - deltaP;
             result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
         }
         return result;
