@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES grids test_gridcreator_gmsh.input test_gridcr
 
 dune_add_test(NAME test_gridcreator_gmsh
               SOURCES test_gridcreator_gmsh.cc
+              CMAKE_GUARD dune-uggrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_gmsh"
