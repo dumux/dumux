@@ -1,0 +1,18 @@
+[TimeLoop]
+TEnd = 0.1
+DtInitial = 0.002
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 10 10
+
+[Problem]
+Name = 1p
+
+[SpatialParams]
+LensLowerLeft = 0.2 0.2
+LensUpperRight = 0.8 0.8
+
+Permeability = 1e-10 # [m^2]
+PermeabilityLens = 1e-12 # [m^2]

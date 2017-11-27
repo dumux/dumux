@@ -29,7 +29,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
@@ -52,7 +51,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -64,6 +62,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static const int dim = GridView::dimension;
@@ -74,27 +73,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
-
-    class TpfaFicksLawCache
-    {
-    public:
-        void updateDiffusion(const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace &scvf,
-                             const unsigned int phaseIdx,
-                             const unsigned int compIdx)
-        {
-            tij_[phaseIdx][compIdx] = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
-        }
-
-        const Scalar& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
-        { return tij_[phaseIdx][compIdx]; }
-
-    private:
-        std::array< std::array<Scalar, numComponents>, numPhases> tij_;
-    };
 
     //! Class that fills the cache corresponding to tpfa Fick's Law
     class TpfaFicksLawCacheFiller
@@ -116,13 +94,36 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
         }
     };
 
+    //! Class that caches the transmissibility
+    class TpfaFicksLawCache
+    {
+    public:
+        using Filler = TpfaFicksLawCacheFiller;
+
+        void updateDiffusion(const Problem& problem,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace &scvf,
+                             const unsigned int phaseIdx,
+                             const unsigned int compIdx)
+        {
+            tij_[phaseIdx][compIdx] = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+        }
+
+        const Scalar& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return tij_[phaseIdx][compIdx]; }
+
+    private:
+        std::array< std::array<Scalar, numComponents>, numPhases> tij_;
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
-    using CacheFiller = TpfaFicksLawCacheFiller;
 
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
@@ -156,7 +157,7 @@ public:
                                                         : branchingFacetDensity(elemVolVars, scvf, phaseIdx, rhoInside);
 
             componentFlux[compIdx] = rho*tij*(xInside - xOutside);
-            if (Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[FluidSystem::getMainComponent(phaseIdx)] -= componentFlux[compIdx];
         }
 

@@ -1,0 +1,22 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 10 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 10 10
+
+[Problem]
+Name = 1ptestccwithgstat # name passed to the output routines
+
+[SpatialParams]
+RandomField = true
+LensLowerLeft = 0.2 0.2
+LensUpperRight = 0.8 0.8
+Permeability = 1e-10 # [m^2]
+
+[Gstat]
+ControlFile = control.gstat
+InputFile = gstatInput.txt
+OutputFilePrefix = permeability

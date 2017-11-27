@@ -25,8 +25,6 @@
 #ifndef DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 #define DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 
-#include <dumux/implicit/properties.hh>
-
 namespace Dumux
 {
 
@@ -52,33 +50,33 @@ template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, false>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using RedidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
 public:
     //! The energy storage in the fluid phase with index phaseIdx
-    static void fluidPhaseStorage(RedidualVector& storage,
+    static void fluidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {}
 
     //! The energy storage in the solid matrix
-    static void solidPhaseStorage(RedidualVector& storage,
+    static void solidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {}
 
     //! The advective phase energy fluxes
-    static void heatConvectionFlux(RedidualVector& flux,
+    static void heatConvectionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {}
 
     //! The diffusive energy fluxes
-    static void heatConductionFlux(RedidualVector& flux,
+    static void heatConductionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars)
     {}
 };
@@ -87,7 +85,7 @@ template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, true>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using RedidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
@@ -98,7 +96,7 @@ class EnergyLocalResidualImplementation<TypeTag, true>
 public:
 
     //! The energy storage in the fluid phase with index phaseIdx
-    static void fluidPhaseStorage(RedidualVector& storage,
+    static void fluidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
@@ -110,7 +108,7 @@ public:
     }
 
     //! The energy storage in the solid matrix
-    static void solidPhaseStorage(RedidualVector& storage,
+    static void solidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {
@@ -121,7 +119,7 @@ public:
     }
 
     //! The advective phase energy fluxes
-    static void heatConvectionFlux(RedidualVector& flux,
+    static void heatConvectionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {
@@ -132,7 +130,7 @@ public:
     }
 
     //! The diffusive energy fluxes
-    static void heatConductionFlux(RedidualVector& flux,
+    static void heatConductionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars)
     {
         flux[energyEqIdx] += fluxVars.heatConductionFlux();

@@ -21,13 +21,16 @@
  */
 #include <config.h>
 #include <iostream>
-#include <dune/common/parametertreeparser.hh>
+
 #include <dune/geometry/referenceelements.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/common/parallel/mpihelper.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/io/gridcreator.hh>
-#include <dumux/common/basicproperties.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux {
 
@@ -36,33 +39,31 @@ class GridCreatorGmshTest;
 
 namespace Properties
 {
-    NEW_TYPE_TAG(GridCreatorGmshTest, INHERITS_FROM(NumericModel));
-#if HAVE_UG
+    NEW_TYPE_TAG(GridCreatorGmshTest);
     SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::UGGrid<3>);
-#else
-    SET_TYPE_PROP(GridCreatorGmshTest, Grid, Dune::YaspGrid<3>);
-#endif
-    // Change the default "Grid" to customized "BifurcationGrid", merely for demonstration purposes.
-    SET_STRING_PROP(GridCreatorGmshTest, GridParameterGroup, "BifurcationGrid");
+    SET_TYPE_PROP(GridCreatorGmshTest, Scalar, double);
+    SET_STRING_PROP(GridCreatorGmshTest, ModelParameterGroup, "Bifurcation");
+    SET_PROP(GridCreatorGmshTest, DiscretizationMethod) {
+        static constexpr DiscretizationMethods value = DiscretizationMethods::CCTpfa;
+    };
 }
 
 template<class TypeTag>
 class GridCreatorGmshTest
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     static const int dim = Grid::dimension;
-    typedef typename Dumux::GridCreator<TypeTag> GridCreator;
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
-    typedef typename Dune::LeafMultipleCodimMultipleGeomTypeMapper<Grid, Dune::MCMGVertexLayout> VertexMapper;
+    using GridCreator = typename Dumux::GridCreator<TypeTag>;
+    using ReferenceElements = typename Dune::ReferenceElements<Scalar, dim>;
+    using VertexMapper = typename Dune::LeafMultipleCodimMultipleGeomTypeMapper<Grid>;
 
 public:
 
     static void getBoundaryDomainMarkers(std::vector<int>& boundaryMarker)
     {
         const auto& gridView = GridCreator::grid().leafGridView();
-        VertexMapper vertexMapper(GridCreator::grid());
+        VertexMapper vertexMapper(GridCreator::grid(), Dune::mcmgVertexLayout());
         boundaryMarker.clear();
         boundaryMarker.resize(gridView.size(dim));
         for(auto eIt = gridView.template begin<0>(); eIt != gridView.template end<0>(); ++eIt)
@@ -72,7 +73,7 @@ public:
                 if(!isIt->boundary())
                     continue;
 
-                const ReferenceElement &refElement = ReferenceElements::general(eIt->geometry().type());
+                const auto refElement = ReferenceElements::general(eIt->geometry().type());
                 // loop over vertices of the intersection facet
                 for(int vIdx = 0; vIdx < refElement.size(isIt->indexInInside(), 1, dim); vIdx++)
                 {
@@ -96,24 +97,23 @@ public:
 
 }
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) try
 {
-#if HAVE_UG
-try {
+
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
 
     // Some typedefs
-    typedef typename TTAG(GridCreatorGmshTest) TypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename Dumux::GridCreator<TypeTag> GridCreator;
+    using TypeTag = TTAG(GridCreatorGmshTest);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridCreator = typename Dumux::GridCreator<TypeTag>;
 
     // Read the parameters from the input file
-    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-    Dune::ParameterTreeParser::readINITree("test_gridcreator_gmsh.input", ParameterTree::tree());
+    Dumux::Parameters::init(argc, argv, "test_gridcreator_gmsh.input");
 
     // Make the grid
-    GridCreator::makeGrid();
+    const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+    GridCreator::makeGrid(modelParamGroup);
 
     // Read the boundary markers and convert them to vertex flags (e.g. for use in a box method)
     // Write a map from vertex position to boundaryMarker
@@ -131,8 +131,6 @@ try {
     vtkWriter.write(1);
 }
 catch (Dumux::ParameterException &e) {
-    typedef typename TTAG(GridCreatorGmshTest) TypeTag;
-    Dumux::Parameters::print<TypeTag>();
     std::cerr << e << ". Abort!\n";
     return 1;
 }
@@ -143,10 +141,4 @@ catch (Dune::Exception &e) {
 catch (...) {
     std::cerr << "Unknown exception thrown!\n";
     return 4;
-}
-#else
-#warning "You need to have UGGrid installed to run this test."
-    std::cerr << "You need to have UGGrid installed to run this test\n";
-    return 77;
-#endif
 }

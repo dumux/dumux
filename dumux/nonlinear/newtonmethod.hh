@@ -21,7 +21,7 @@
  *
  * \brief The algorithmic part of the multi dimensional newton method.
  *
- * In order to use the method you need a NewtonController.
+ * In order to use the method you need a Newtoncontroller
  */
 #ifndef DUMUX_NEWTONMETHOD_HH
 #define DUMUX_NEWTONMETHOD_HH
@@ -42,188 +42,169 @@ namespace Properties
 // create a new type tag for models which apply the newton method
 NEW_TYPE_TAG(NewtonMethod);
 
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(Model);
-NEW_PROP_TAG(NewtonController);
 NEW_PROP_TAG(SolutionVector);
-NEW_PROP_TAG(JacobianAssembler);
+NEW_PROP_TAG(JacobianMatrix);
 }
 
 /*!
  * \ingroup Newton
  * \brief The algorithmic part of the multi dimensional newton method.
  *
- * In order to use the method you need a NewtonController.
+ * In order to use the method you need a Newtoncontroller
  */
-template <class TypeTag>
+template <class NewtonController, class JacobianAssembler, class LinearSolver>
 class NewtonMethod
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
-
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 public:
-    NewtonMethod(Problem &problem)
-        : problem_(problem)
-    { }
-
-    /*!
-     * \brief Returns a reference to the current numeric problem.
-     */
-    Problem &problem()
-    { return problem_; }
-
-    /*!
-     * \brief Returns a reference to the current numeric problem.
-     */
-    const Problem &problem() const
-    { return problem_; }
-
-    /*!
-     * \brief Returns a reference to the numeric model.
-     */
-    Model &model()
-    { return problem().model(); }
-
-    /*!
-     * \brief Returns a reference to the numeric model.
-     */
-    const Model &model() const
-    { return problem().model(); }
-
-
-    /*!
-     * \brief Run the newton method. The controller is responsible
-     *        for all the strategic decisions.
-     */
-    bool execute(NewtonController &ctl)
+    NewtonMethod(std::shared_ptr<NewtonController> controller,
+                 std::shared_ptr<JacobianAssembler> assembler,
+                 std::shared_ptr<LinearSolver> linearSolver,
+                 const std::string& modelParamGroup = "")
+    : controller_(controller)
+    , assembler_(assembler)
+    , linearSolver_(linearSolver)
     {
-        try {
-            return execute_(ctl);
-        }
-        catch (const NumericalProblem &e) {
-            if (ctl.verbose())
-                std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
-            ctl.newtonFail();
-            return false;
-        }
+        // set the linear system (matrix & residual) in the assembler
+        assembler_->setLinearSystem();
+
+        // set a different default for the linear solver residual reduction
+        // within the Newton the linear solver doesn't need to solve too exact
+        using Scalar = typename LinearSolver::Scalar;
+        linearSolver_->setResidualReduction(getParamFromGroup<Scalar>(modelParamGroup, "LinearSolver.ResidualReduction", 1e-6));
     }
 
-protected:
-    bool execute_(NewtonController &ctl)
+    /*!
+     * \brief Run the newton method to solve a non-linear system.
+     *        The controller is responsible for all the strategic decisions.
+     */
+    template<class SolutionVector>
+    bool solve(SolutionVector& u)
     {
-        SolutionVector &uCurrentIter = model().curSol();
-        SolutionVector uLastIter(uCurrentIter);
-        SolutionVector deltaU(uCurrentIter);
-
-        JacobianAssembler &jacobianAsm = model().jacobianAssembler();
-
-        Dune::Timer assembleTimer(false);
-        Dune::Timer solveTimer(false);
-        Dune::Timer updateTimer(false);
-
-        // tell the controller that we begin solving
-        ctl.newtonBegin(*this, uCurrentIter);
-
-        // execute the method as long as the controller thinks
-        // that we should do another iteration
-        while (ctl.newtonProceed(uCurrentIter))
+        try
         {
-            // notify the controller that we're about to start
-            // a new timestep
-            ctl.newtonBeginStep();
+            // the given solution is the initial guess
+            SolutionVector& uCurrentIter = u;
+            SolutionVector uLastIter(uCurrentIter);
+            SolutionVector deltaU(uCurrentIter);
 
-            // make the current solution to the old one
-            uLastIter = uCurrentIter;
+            Dune::Timer assembleTimer(false);
+            Dune::Timer solveTimer(false);
+            Dune::Timer updateTimer(false);
 
-            if (ctl.verbose()) {
-                std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
-                std::cout.flush();
+            // tell the controller that we begin solving
+            controller_->newtonBegin(uCurrentIter);
+
+            // execute the method as long as the controller thinks
+            // that we should do another iteration
+            while (controller_->newtonProceed(uCurrentIter, controller_->newtonConverged()))
+            {
+                // notify the controller that we're about to start
+                // a new timestep
+                controller_->newtonBeginStep();
+
+                // make the current solution to the old one
+                if (controller_->newtonNumSteps() > 0)
+                    uLastIter = uCurrentIter;
+
+                if (controller_->verbose()) {
+                    std::cout << "Assemble: r(x^k) = dS/dt + div F - q;   M = grad r";
+                    std::cout.flush();
+                }
+
+                ///////////////
+                // assemble
+                ///////////////
+
+                // linearize the problem at the current solution
+                assembleTimer.start();
+                controller_->assembleLinearSystem(*assembler_, u);
+                assembleTimer.stop();
+
+                ///////////////
+                // linear solve
+                ///////////////
+
+                // Clear the current line using an ansi escape
+                // sequence.  for an explanation see
+                // http://en.wikipedia.org/wiki/ANSI_escape_code
+                const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
+
+                if (controller_->verbose()) {
+                    std::cout << "\rSolve: M deltax^k = r";
+                    std::cout << clearRemainingLine;
+                    std::cout.flush();
+                }
+
+                // solve the resulting linear equation system
+                solveTimer.start();
+
+                // set the delta vector to zero before solving the linear system!
+                deltaU = 0;
+                // ask the controller to solve the linearized system
+                controller_->solveLinearSystem(*linearSolver_,
+                                               assembler_->jacobian(),
+                                               deltaU,
+                                               assembler_->residual());
+                solveTimer.stop();
+
+                ///////////////
+                // update
+                ///////////////
+                if (controller_->verbose()) {
+                    std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
+                    std::cout << clearRemainingLine;
+                    std::cout.flush();
+                }
+
+                updateTimer.start();
+                // update the current solution (i.e. uOld) with the delta
+                // (i.e. u). The result is stored in u
+                controller_->newtonUpdate(*assembler_, uCurrentIter, uLastIter, deltaU);
+                updateTimer.stop();
+
+                // tell the controller that we're done with this iteration
+                controller_->newtonEndStep(*assembler_, uCurrentIter, uLastIter);
             }
 
-            ///////////////
-            // assemble
-            ///////////////
+            // tell controller we are done
+            controller_->newtonEnd();
 
-            // linearize the problem at the current solution
-            assembleTimer.start();
-            jacobianAsm.assemble();
-            assembleTimer.stop();
-
-            ///////////////
-            // linear solve
-            ///////////////
-
-            // Clear the current line using an ansi escape
-            // sequence.  for an explanation see
-            // http://en.wikipedia.org/wiki/ANSI_escape_code
-            const char clearRemainingLine[] = { 0x1b, '[', 'K', 0 };
-
-            if (ctl.verbose()) {
-                std::cout << "\rSolve: M deltax^k = r";
-                std::cout << clearRemainingLine;
-                std::cout.flush();
+            // reset state if newton failed
+            if (!controller_->newtonConverged())
+            {
+                controller_->newtonFail(*assembler_, u);
+                return false;
             }
 
-            // solve the resulting linear equation system
-            solveTimer.start();
+            // tell controller we converged successfully
+            controller_->newtonSucceed();
 
-            // set the delta vector to zero before solving the linear system!
-            deltaU = 0;
-            // ask the controller to solve the linearized system
-            ctl.newtonSolveLinear(jacobianAsm.matrix(),
-                                  deltaU,
-                                  jacobianAsm.residual());
-            solveTimer.stop();
-
-            ///////////////
-            // update
-            ///////////////
-            if (ctl.verbose()) {
-                std::cout << "\rUpdate: x^(k+1) = x^k - deltax^k";
-                std::cout << clearRemainingLine;
-                std::cout.flush();
+            if (controller_->verbose()) {
+                const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
+                std::cout << "Assemble/solve/update time: "
+                          <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+                          <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+                          <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+                          << "\n";
             }
+            return true;
 
-            updateTimer.start();
-            // update the current solution (i.e. uOld) with the delta
-            // (i.e. u). The result is stored in u
-            ctl.newtonUpdate(uCurrentIter, uLastIter, deltaU);
-            updateTimer.stop();
-
-            // tell the controller that we're done with this iteration
-            ctl.newtonEndStep(uCurrentIter, uLastIter);
         }
-
-        // tell the controller that we're done
-        ctl.newtonEnd();
-
-        if (ctl.verbose()) {
-            Scalar elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-            std::cout << "Assemble/solve/update time: "
-                      <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                      <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                      <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                      << "\n";
-        }
-
-        if (!ctl.newtonConverged()) {
-            ctl.newtonFail();
+        catch (const NumericalProblem &e)
+        {
+            if (controller_->verbose())
+                std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
+            controller_->newtonFail(*assembler_, u);
             return false;
         }
-
-        ctl.newtonSucceed();
-        return true;
     }
 
 private:
-    Problem &problem_;
+    std::shared_ptr<NewtonController> controller_;
+    std::shared_ptr<JacobianAssembler> assembler_;
+    std::shared_ptr<LinearSolver> linearSolver_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

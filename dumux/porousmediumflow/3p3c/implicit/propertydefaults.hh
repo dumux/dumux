@@ -158,9 +158,6 @@ SET_PROP(ThreePThreeC, EffectiveDiffusivityModel)
 
 // disable velocity output by default
 
-// enable gravity by default
-SET_BOOL_PROP(ThreePThreeC, ProblemEnableGravity, true);
-
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the

@@ -1,0 +1,10 @@
+[TimeLoop]
+DtInitial = 10 # [s]
+MaxTimeStepSize = 10
+TEnd = 5000 # [s]
+
+[Problem]
+Name = tracer # name passed to the output routines
+
+[Vtk]
+AddVelocity = true

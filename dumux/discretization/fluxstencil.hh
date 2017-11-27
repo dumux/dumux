@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 #define DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
@@ -59,8 +58,7 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::Box>
 
 public:
     // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
+    static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {
@@ -81,8 +79,7 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using Stencil = std::vector<IndexType>;
 
 public:
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
+    static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {
@@ -113,18 +110,17 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Stencil = std::vector<IndexType>;
 
 public:
-    static Stencil stencil(const Problem& problem,
-                           const Element& element,
+    static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
     {
-        const auto& fvGridGeometry = problem.model().fvGridGeometry();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
 
         // return the scv (element) indices in the interaction region
-        if (fvGridGeometry.isInBoundaryInteractionVolume(scvf))
-            return fvGridGeometry.boundaryInteractionVolumeSeed(scvf).globalScvIndices();
+        if (fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+            return fvGridGeometry.gridInteractionVolumeIndexSets().secondaryIndexSet(scvf).globalScvIndices();
         else
-            return fvGridGeometry.interactionVolumeSeed(scvf).globalScvIndices();
+            return fvGridGeometry.gridInteractionVolumeIndexSets().primaryIndexSet(scvf).globalScvIndices();
     }
 };
 

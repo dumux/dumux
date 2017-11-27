@@ -17,23 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file
+ * \file OnePModel
  *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase flow model.
- */
-
-#ifndef DUMUX_1P_MODEL_HH
-#define DUMUX_1P_MODEL_HH
-
-#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
-
-#include "properties.hh"
-
-namespace Dumux
-{
-/*!
  * \ingroup OnePModel
  * \brief A single-phase, isothermal flow model using the fully implicit scheme.
  *
@@ -54,41 +39,10 @@ namespace Dumux
  * and the implicit Euler method as time discretization.
  * The model supports compressible as well as incompressible fluids.
  */
-template<class TypeTag >
-class OnePModel : public GET_PROP_TYPE(TypeTag, BaseModel)
-{
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
+#ifndef DUMUX_1P_MODEL_HH
+#define DUMUX_1P_MODEL_HH
 
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
-public:
-    void init(Problem& problem)
-    {
-        ParentType::init(problem);
-
-        // register standardized vtk output fields
-        auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addPrimaryVariable("pressure", Indices::pressureIdx);
-
-        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
-    }
-};
-
-} // end namespace Dumux
-
-#include "propertydefaults.hh"
+#include "properties.hh"
 
 #endif

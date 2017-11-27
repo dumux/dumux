@@ -26,12 +26,14 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
-#include <dumux/implicit/staggered/properties.hh>
-#include <dumux/freeflow/staggered/model.hh>
-#include <dumux/implicit/problem.hh>
+#include <dumux/freeflow/staggered/problem.hh>
+#include <dumux/discretization/staggered/properties.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
+
+#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/freeflow/staggered/properties.hh>
 
 
 namespace Dumux
@@ -55,7 +57,7 @@ SET_PROP(DoneaTestProblem, Fluid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<1, Scalar> > type;
 };
 
 // Set the grid type
@@ -68,9 +70,6 @@ SET_BOOL_PROP(DoneaTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(DoneaTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(DoneaTestProblem, EnableGlobalVolumeVariablesCache, true);
-
-// Enable gravity
-SET_BOOL_PROP(DoneaTestProblem, ProblemEnableGravity, true);
 
 #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, true);
@@ -87,13 +86,13 @@ SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, false);
 template <class TypeTag>
 class DoneaTestProblem : public NavierStokesProblem<TypeTag>
 {
-    typedef NavierStokesProblem<TypeTag> ParentType;
+    using ParentType = NavierStokesProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
@@ -109,16 +108,16 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
         velocityYIdx = Indices::velocityYIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -126,24 +125,21 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
-    DoneaTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView), eps_(1e-6)
+    DoneaTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), eps_(1e-6)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
+        name_ = getParam<std::string>("Problem.Name");
 
-        printL2Error_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                                     bool,
-                                                     Problem,
-                                                     PrintL2Error);
+        printL2Error_ = getParam<bool>("Problem.PrintL2Error");
+
+        createAnalyticalSolution_();
     }
 
     /*!
@@ -166,13 +162,13 @@ public:
         return false;
     }
 
-    void postTimeStep() const
+    void postTimeStep(const SolutionVector& curSol) const
     {
         if(printL2Error_)
         {
-            const auto l2error = calculateL2Error();
-            const int numCellCenterDofs = this->model().numCellCenterDofs();
-            const int numFaceDofs = this->model().numFaceDofs();
+            const auto l2error = calculateL2Error(curSol);
+            const int numCellCenterDofs = this->fvGridGeometry().gridView().size(0);
+            const int numFaceDofs = this->fvGridGeometry().gridView().size(1);
             std::cout << std::setprecision(8) << "** L2 error (abs/rel) for "
                     << std::setw(6) << numCellCenterDofs << " cc dofs and " << numFaceDofs << " face dofs (total: " << numCellCenterDofs + numFaceDofs << "): "
                     << std::scientific
@@ -286,55 +282,14 @@ public:
     }
 
     /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    template<class VtkOutputModule>
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
-    {
-        auto& pressureExact = outputModule.createScalarField("pressureExact", 0);
-        auto& velocityExact = outputModule.createVectorField("velocityExact", 0);
-
-        auto& scalarFaceVelocityExact = outputModule.createFaceScalarField("scalarFaceVelocityExact");
-        auto& vectorFaceVelocityExact = outputModule.createFaceVectorField("vectorFaceVelocityExact");
-
-        for (const auto& element : elements(this->gridView()))
-        {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
-            fvGeometry.bindElement(element);
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto ccDofIdx = scv.dofIndex();
-                auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
-
-                GlobalPosition velocityVector(0.0);
-                for (auto&& scvf : scvfs(fvGeometry))
-                {
-                    auto faceDofIdx = scvf.dofIndex();
-                    auto faceDofPosition = scvf.center();
-                    auto dirIdx = scvf.directionIndex();
-                    auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    scalarFaceVelocityExact[faceDofIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
-
-                    GlobalPosition tmp(0.0);
-                    tmp[dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
-                    vectorFaceVelocityExact[faceDofIdx] = std::move(tmp);
-                }
-                pressureExact[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
-                velocityExact[ccDofIdx] = analyticalSolutionAtCc[faceIdx];
-            }
-        }
-    }
-
-    /*!
      * \brief Calculate the L2 error between the analytical solution and the numerical approximation.
      *
      */
-    auto calculateL2Error() const
+    auto calculateL2Error(const SolutionVector& curSol) const
     {
         BoundaryValues sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
 
-        const int numFaceDofs = this->model().numFaceDofs();
+        const int numFaceDofs = this->fvGridGeometry().gridView().size(1);
 
         std::vector<Scalar> staggeredVolume(numFaceDofs);
         std::vector<Scalar> errorVelocity(numFaceDofs);
@@ -343,9 +298,9 @@ public:
 
         Scalar totalVolume = 0.0;
 
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
@@ -354,7 +309,7 @@ public:
                 const auto dofIdxCellCenter = scv.dofIndex();
                 const auto& posCellCenter = scv.dofPosition();
                 const auto analyticalSolutionCellCenter = analyticalSolution(posCellCenter)[cellCenterIdx];
-                const auto numericalSolutionCellCenter = this->model().curSol()[cellCenterIdx][dofIdxCellCenter];
+                const auto numericalSolutionCellCenter = curSol[cellCenterIdx][dofIdxCellCenter];
                 sumError[cellCenterIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
                 sumReference[cellCenterIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
                 totalVolume += scv.volume();
@@ -365,7 +320,7 @@ public:
                     const int dofIdxFace = scvf.dofIndex();
                     const int dirIdx = scvf.directionIndex();
                     const auto analyticalSolutionFace = analyticalSolution(scvf.center())[faceIdx][dirIdx];
-                    const auto numericalSolutionFace = this->model().curSol()[faceIdx][dofIdxFace][momentumBalanceIdx];
+                    const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
                     directionIndex[dofIdxFace] = dirIdx;
                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
                     velocityReference[dofIdxFace] = squaredDiff_(analyticalSolutionFace, 0.0);
@@ -398,8 +353,67 @@ public:
         return std::make_pair(l2NormAbs, l2NormRel);
     }
 
+    /*!
+     * \brief Returns the analytical solution for the pressure
+     */
+    auto& getAnalyticalPressureSolution() const
+    {
+        return analyticalPressure_;
+    }
+
+    /*!
+     * \brief Returns the analytical solution for the velocity
+     */
+    auto& getAnalyticalVelocitySolution() const
+    {
+        return analyticalVelocity_;
+    }
+
+    /*!
+     * \brief Returns the analytical solution for the velocity at the faces
+     */
+    auto& getAnalyticalVelocitySolutionOnFace() const
+    {
+        return analyticalVelocityOnFace_;
+    }
 
 private:
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    void createAnalyticalSolution_()
+    {
+        analyticalPressure_.resize(this->fvGridGeometry().numCellCenterDofs());
+        analyticalVelocity_.resize(this->fvGridGeometry().numCellCenterDofs());
+        analyticalVelocityOnFace_.resize(this->fvGridGeometry().numFaceDofs());
+
+
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto ccDofIdx = scv.dofIndex();
+                auto ccDofPosition = scv.dofPosition();
+                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
+
+                // velocities on faces
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    const auto faceDofIdx = scvf.dofIndex();
+                    const auto faceDofPosition = scvf.center();
+                    const auto dirIdx = scvf.directionIndex();
+                    const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
+                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
+                }
+
+                analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
+                analyticalVelocity_[ccDofIdx] = analyticalSolutionAtCc[faceIdx];
+            }
+        }
+    }
     template<class T>
     T squaredDiff_(const T& a, const T& b) const
     {
@@ -409,6 +423,9 @@ private:
     Scalar eps_;
     std::string name_;
     bool printL2Error_;
+    std::vector<Scalar> analyticalPressure_;
+    std::vector<GlobalPosition> analyticalVelocity_;
+    std::vector<GlobalPosition> analyticalVelocityOnFace_;
 
 };
 } //end namespace

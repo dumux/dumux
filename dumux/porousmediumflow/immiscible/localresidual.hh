@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the Jacobian matrix for problems
+ * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
 #ifndef DUMUX_IMMISCIBLE_LOCAL_RESIDUAL_HH
@@ -30,17 +30,17 @@ namespace Dumux
 /*!
  * \ingroup OnePModel
  * \ingroup ImplicitLocalResidual
- * \brief Element-wise calculation of the Jacobian matrix for problems
+ * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
 template<class TypeTag>
 class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
@@ -58,6 +58,7 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
 public:
+    using ParentType::ParentType;
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -69,11 +70,12 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    PrimaryVariables computeStorage(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars) const
+    ResidualVector computeStorage(const Problem& problem,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars) const
     {
         // partial time derivative of the phase mass
-        PrimaryVariables storage;
+        ResidualVector storage;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             auto eqIdx = conti0EqIdx + phaseIdx;
@@ -96,16 +98,17 @@ public:
      * \brief Evaluate the mass flux over a face of a sub control volume
      * \param scvf The sub control volume face to compute the flux on
      */
-    PrimaryVariables computeFlux(const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache) const
+    ResidualVector computeFlux(const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVolumeVariables& elemVolVars,
+                               const SubControlVolumeFace& scvf,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        PrimaryVariables flux;
+        ResidualVector flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // the physical quantities for which we perform upwinding
@@ -124,15 +127,8 @@ public:
 
         return flux;
     }
-
-private:
-    Implementation *asImp_()
-    { return static_cast<Implementation *> (this); }
-
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *> (this); }
 };
 
-}
+} // end namespace Dumux
 
 #endif

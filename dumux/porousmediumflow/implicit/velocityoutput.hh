@@ -28,16 +28,10 @@
 #include <dune/istl/bvector.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-    NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
-}
 
 /*!
  * \brief Velocity output for implicit (porous media) models
@@ -51,15 +45,21 @@ class ImplicitVelocityOutput
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    static const bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
+
+    static const bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    static const int dofCodim = isBox ? dim : 0;
 
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -75,22 +75,29 @@ public:
      *
      * \param problem The problem to be solved
      */
-    ImplicitVelocityOutput(const Problem& problem)
+    ImplicitVelocityOutput(const Problem& problem,
+                           const FVGridGeometry& fvGridGeometry,
+                           const GridVariables& gridVariables,
+                           const SolutionVector& sol)
     : problem_(problem)
+    , fvGridGeometry_(fvGridGeometry)
+    , gridVariables_(gridVariables)
+    , sol_(sol)
     {
         // check, if velocity output can be used (works only for cubes so far)
-        velocityOutput_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Vtk, AddVelocity);
+        const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        velocityOutput_ = getParamFromGroup<bool>(modelParamGroup, "Vtk.AddVelocity");
         if (velocityOutput_)
         {
             // set the number of scvs the vertices are connected to
             if (isBox && dim > 1)
             {
                 // resize to the number of vertices of the grid
-                cellNum_.assign(problem.gridView().size(dim), 0);
+                cellNum_.assign(fvGridGeometry.gridView().size(dim), 0);
 
-                for (const auto& element : elements(problem.gridView()))
+                for (const auto& element : elements(fvGridGeometry.gridView()))
                     for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-                        ++cellNum_[problem.vertexMapper().subIndex(element, vIdx, dim)];
+                        ++cellNum_[fvGridGeometry.vertexMapper().subIndex(element, vIdx, dim)];
             }
         }
     }
@@ -113,13 +120,13 @@ public:
     // following lines, that call will only be compiled if cell-centered
     // actually is used.
     template <class T = TypeTag>
-    typename std::enable_if<!GET_PROP_VALUE(T, ImplicitIsBox), BoundaryTypes>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, BoundaryTypes>::type
     problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     { return problem_.boundaryTypes(element, scvf); }
 
     //! we should never call this method for box models
     template <class T = TypeTag>
-    typename std::enable_if<GET_PROP_VALUE(T, ImplicitIsBox), BoundaryTypes>::type
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, BoundaryTypes>::type
     problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     { return BoundaryTypes(); }
 
@@ -138,7 +145,7 @@ public:
         const Dune::GeometryType geomType = geometry.type();
 
         // bind the element flux variables cache
-        auto elemFluxVarsCache = localView(problem_.model().globalFluxVarsCache());
+        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
 
         // the upwind term to be used for the volume flux evaluation
@@ -165,10 +172,10 @@ public:
                 Scalar flux = fluxVars.advectiveFlux(phaseIdx, upwindTerm) / localArea;
                 flux /= problem_.extrusionFactor(element,
                                                  fvGeometry.scv(scvf.insideScvIdx()),
-                                                 problem_.model().elementSolution(element, problem_.model().curSol()));
+                                                 ElementSolution(element, sol_, fvGridGeometry_));
                 tmpVelocity *= flux;
 
-                const int eIdxGlobal = problem_.elementMapper().index(element);
+                const int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
                 velocity[eIdxGlobal] = tmpVelocity;
             }
             return;
@@ -250,7 +257,7 @@ public:
             // find the local face indices of the scvfs (for conforming meshes)
             std::vector<unsigned int> scvfIndexInInside(element.subEntities(1));
             int localScvfIdx = 0;
-            for (const auto& intersection : intersections(problem_.gridView(), element))
+            for (const auto& intersection : intersections(fvGridGeometry_.gridView(), element))
             {
                 if (dim < dimWorld) if (handledScvf[intersection.indexInInside()]) continue;
 
@@ -273,7 +280,7 @@ public:
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                     scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                             fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                            problem_.model().elementSolution(element, problem_.model().curSol()));
+                                                                                            ElementSolution(element, sol_, fvGridGeometry_));
                 }
                 else
                 {
@@ -285,7 +292,7 @@ public:
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] = fluxVars.advectiveFlux(phaseIdx, upwindTerm);
                         scvfFluxes[scvfIndexInInside[localScvfIdx]] /= problem_.extrusionFactor(element,
                                                                                                 fvGeometry.scv(scvf.insideScvIdx()),
-                                                                                                problem_.model().elementSolution(element, problem_.model().curSol()));
+                                                                                                ElementSolution(element, sol_, fvGridGeometry_));
                     }
                 }
 
@@ -351,7 +358,7 @@ public:
 
             scvVelocity /= geometry.integrationElement(localPos);
 
-            int eIdxGlobal = problem_.elementMapper().index(element);
+            int eIdxGlobal = fvGridGeometry_.elementMapper().index(element);
 
             velocity[eIdxGlobal] = scvVelocity;
 
@@ -417,6 +424,10 @@ private:
 
 private:
     const Problem& problem_;
+    const FVGridGeometry& fvGridGeometry_;
+    const GridVariables& gridVariables_;
+    const SolutionVector& sol_;
+
     bool velocityOutput_;
     std::vector<int> cellNum_;
 };

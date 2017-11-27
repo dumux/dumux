@@ -25,14 +25,13 @@
 #ifndef DUMUX_1PTEST_PROBLEM_HH
 #define DUMUX_1PTEST_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
-
-#include <dumux/linear/amgbackend.hh>
 
 #include "1ptestspatialparams.hh"
 
@@ -41,18 +40,11 @@ namespace Dumux
 template <class TypeTag>
 class OnePTestProblem;
 
-namespace Capabilities
-{
-    template<class TypeTag>
-    struct isStationary<OnePTestProblem<TypeTag>>
-    { static const bool value = true; };
-}
-
 namespace Properties
 {
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP, OnePTestSpatialParams));
 NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
-NEW_TYPE_TAG(OnePTestCCProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
+NEW_TYPE_TAG(OnePTestCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
 NEW_TYPE_TAG(OnePTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTestProblem));
 
 SET_PROP(OnePTestProblem, Fluid)
@@ -73,18 +65,6 @@ SET_TYPE_PROP(OnePTestProblem, Problem, OnePTestProblem<TypeTag> );
 
 // Set the spatial parameters
 SET_TYPE_PROP(OnePTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag> );
-
-// Linear solver settings
-SET_TYPE_PROP(OnePTestProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
-
-NEW_TYPE_TAG(OnePTestBoxProblemWithAMG, INHERITS_FROM(OnePTestBoxProblem));
-NEW_TYPE_TAG(OnePTestCCProblemWithAMG, INHERITS_FROM(OnePTestCCProblem));
-// Solver settings for the tests using AMG
-SET_TYPE_PROP(OnePTestBoxProblemWithAMG, LinearSolver, AMGBackend<TypeTag> );
-SET_TYPE_PROP(OnePTestCCProblemWithAMG, LinearSolver, AMGBackend<TypeTag> );
-
-// Enable gravity
-SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -110,46 +90,43 @@ SET_BOOL_PROP(OnePTestProblem, ProblemEnableGravity, true);
  * and use <tt>test_1p_3d.dgf</tt> in the parameter file.
  */
 template <class TypeTag>
-class OnePTestProblem : public ImplicitPorousMediaProblem<TypeTag>
+class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+//     enum {
+//         // Grid and world dimension
+//         dim = GridView::dimension,
+//         dimWorld = GridView::dimensionworld
+//     };
     enum {
         // indices of the primary variables
         conti0EqIdx = Indices::conti0EqIdx,
         pressureIdx = Indices::pressureIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    OnePTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    OnePTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -175,16 +152,6 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-    /*!
-     * \brief Return the sources within the domain.
-     *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0);
-    }
     // \}
     /*!
      * \name Boundary conditions
@@ -202,8 +169,7 @@ public:
     {
         BoundaryTypes values;
 
-        Scalar eps = 1.0e-6;
-        if (globalPos[dimWorld-1] < eps || globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps)
+        if (globalPos[dimWorld-1] < eps_ || globalPos[dimWorld-1] > this->fvGridGeometry().bBoxMax()[dimWorld-1] - eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -227,19 +193,6 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return PrimaryVariables(0);
-    }
-
     // \}
 
     /*!
@@ -255,7 +208,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables priVars(0);
+        PrimaryVariables priVars(0.0);
         priVars[pressureIdx] = 1.0e+5;
         return priVars;
     }
@@ -264,7 +217,9 @@ public:
 
 private:
     std::string name_;
+    static constexpr Scalar eps_ = 1.0e-6;
 };
-} //end namespace
+
+} //end namespace Dumux
 
 #endif

@@ -22,16 +22,15 @@
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element of the grid partition.
  */
-#ifndef DUMUX_DISCRETIZATION_BOX_GLOBAL_FVGEOMETRY_HH
-#define DUMUX_DISCRETIZATION_BOX_GLOBAL_FVGEOMETRY_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_GRID_FVGEOMETRY_HH
+#define DUMUX_DISCRETIZATION_BOX_GRID_FVGEOMETRY_HH
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/common/elementmap.hh>
 
 namespace Dumux
 {
@@ -48,18 +47,17 @@ class BoxFVGridGeometry
 
 // specialization in case the FVElementGeometries are stored
 template<class TypeTag>
-class BoxFVGridGeometry<TypeTag, true>
+class BoxFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
+    using ParentType = BaseFVGridGeometry<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using Element = typename GridView::template Codim<0>::Entity;
-    //! The local class needs access to the scv, scvfs
-    //! as they are globally cached
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
@@ -71,12 +69,17 @@ class BoxFVGridGeometry<TypeTag, true>
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    using GeometryHelper = BoxGeometryHelper<GridView, dim>;
+    using GeometryHelper = BoxGeometryHelper<GridView, dim, SubControlVolume, SubControlVolumeFace>;
 
 public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
-    : gridView_(gridView) {}
+    : ParentType(gridView) {}
+
+    //! the vertex mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const VertexMapper& dofMapper() const
+    { return this->vertexMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -91,30 +94,32 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
-    //! Return the gridView this global object lives on
-    const GridView& gridView() const
-    { return gridView_; }
+    //! The total number of degrees of freedom
+    std::size_t numDofs()
+    { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
-    void update(const Problem& problem)
+    void update()
     {
-        problemPtr_ = &problem;
+        ParentType::update();
 
         scvs_.clear();
         scvfs_.clear();
 
-        auto numElements = gridView_.size(0);
+        auto numElements = this->gridView().size(0);
         scvs_.resize(numElements);
         scvfs_.resize(numElements);
+
+        boundaryDofIndices_.resize(numDofs(), false);
 
         numScv_ = 0;
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
         // Build the SCV and SCV faces
-        for (const auto& element : elements(gridView_))
+        for (const auto& element : elements(this->gridView()))
         {
             // fill the element map with seeds
-            auto eIdx = problem.elementMapper().index(element);
+            auto eIdx = this->elementMapper().index(element);
 
             // count
             numScv_ += element.subEntities(dim);
@@ -131,7 +136,7 @@ public:
             scvs_[eIdx].resize(elementGeometry.corners());
             for (unsigned int scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
-                auto dofIdxGlobal = problem.vertexMapper().subIndex(element, scvLocalIdx, dim);
+                auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
 
                 scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper,
                                                             scvLocalIdx,
@@ -157,7 +162,7 @@ public:
             }
 
             // construct the sub control volume faces on the domain boundary
-            for (const auto& intersection : intersections(gridView_, element))
+            for (const auto& intersection : intersections(this->gridView(), element))
             {
                 if (intersection.boundary())
                 {
@@ -183,19 +188,20 @@ public:
                         // increment local counter
                         scvfLocalIdx++;
                     }
+
+                    // add all vertices on the intersection to the set of
+                    // boundary vertices
+                    const auto fIdx = intersection.indexInInside();
+                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
+                    {
+                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
+                        boundaryDofIndices_[vIdxGlobal] = true;
+                    }
                 }
             }
         }
-    }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend FVElementGeometry localView(const BoxFVGridGeometry& global)
-    {
-        return FVElementGeometry(global);
     }
 
     //! The finite element cache for creating local FE bases
@@ -210,35 +216,37 @@ public:
     const std::vector<SubControlVolumeFace>& scvfs(IndexType eIdx) const
     { return scvfs_[eIdx]; }
 
-private:
-    const Problem& problem_() const
-    { return *problemPtr_; }
+    //! If a vertex / d.o.f. is on the boundary
+    bool dofOnBoundary(unsigned int dofIdx) const
+    { return boundaryDofIndices_[dofIdx]; }
 
-    const Problem* problemPtr_;
+private:
+
     const FeCache feCache_;
 
-    GridView gridView_;
     std::vector<std::vector<SubControlVolume>> scvs_;
     std::vector<std::vector<SubControlVolumeFace>> scvfs_;
     // TODO do we need those?
     std::size_t numScv_;
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
+
+    // vertices on the boudary
+    std::vector<bool> boundaryDofIndices_;
 };
 
 // specialization in case the FVElementGeometries are not stored
 template<class TypeTag>
-class BoxFVGridGeometry<TypeTag, false>
+class BoxFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
 {
+    using ParentType = BaseFVGridGeometry<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-
-    //! The local class needs access to the problem
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -256,8 +264,12 @@ class BoxFVGridGeometry<TypeTag, false>
 public:
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
-    : gridView_(gridView)
-    {}
+    : ParentType(gridView) {}
+
+    //! the vertex mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const VertexMapper& dofMapper() const
+    { return this->vertexMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -272,59 +284,64 @@ public:
     std::size_t numBoundaryScvf() const
     { return numBoundaryScvf_; }
 
-    //! Return the gridView this global object lives on
-    const GridView& gridView() const
-    { return gridView_; }
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const
+    { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
-    void update(const Problem& problem)
+    void update()
     {
-        problemPtr_ = &problem;
+        ParentType::update();
+
+        boundaryDofIndices_.resize(numDofs(), false);
 
         // save global data on the grid's scvs and scvfs
         // TODO do we need those information?
         numScv_ = 0;
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
-        for (const auto& element : elements(gridView_))
+        for (const auto& element : elements(this->gridView()))
         {
             numScv_ += element.subEntities(dim);
             numScvf_ += element.subEntities(dim-1);
 
+            const auto elementGeometry = element.geometry();
+            const auto& referenceElement = ReferenceElements::general(elementGeometry.type());
+
             // store the sub control volume face indices on the domain boundary
-            for (const auto& intersection : intersections(gridView_, element))
+            for (const auto& intersection : intersections(this->gridView(), element))
             {
                 if (intersection.boundary())
                 {
-                    auto isGeometry = intersection.geometry();
+                    const auto isGeometry = intersection.geometry();
                     numScvf_ += isGeometry.corners();
                     numBoundaryScvf_ += isGeometry.corners();
+
+                    // add all vertices on the intersection to the set of
+                    // boundary vertices
+                    const auto fIdx = intersection.indexInInside();
+                    const auto numFaceVerts = referenceElement.size(fIdx, 1, dim);
+                    for (int localVIdx = 0; localVIdx < numFaceVerts; ++localVIdx)
+                    {
+                        const auto vIdx = referenceElement.subEntity(fIdx, 1, localVIdx, dim);
+                        const auto vIdxGlobal = this->vertexMapper().subIndex(element, vIdx, dim);
+                        boundaryDofIndices_[vIdxGlobal] = true;
+                    }
                 }
             }
         }
-    }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend FVElementGeometry localView(const BoxFVGridGeometry& global)
-    {
-        return FVElementGeometry(global);
     }
 
     //! The finite element cache for creating local FE bases
     const FeCache& feCache() const
     { return feCache_; }
 
+    //! If a vertex / d.o.f. is on the boundary
+    bool dofOnBoundary(unsigned int dofIdx) const
+    { return boundaryDofIndices_[dofIdx]; }
+
 private:
 
-    const Problem& problem_() const
-    { return *problemPtr_; }
-
-    GridView gridView_;
-    const Problem* problemPtr_;
     const FeCache feCache_;
 
     // Information on the global number of geometries
@@ -332,8 +349,11 @@ private:
     std::size_t numScv_;
     std::size_t numScvf_;
     std::size_t numBoundaryScvf_;
+
+    // vertices on the boudary
+    std::vector<bool> boundaryDofIndices_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

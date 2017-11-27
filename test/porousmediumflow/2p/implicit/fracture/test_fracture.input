@@ -1,0 +1,13 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 300000 # [s]
+
+[Grid]
+File = grids/fracture.msh
+
+[Problem]
+Name = fracture
+EnableGravity = false
+
+[Implicit]
+UpwindWeight = 1.0

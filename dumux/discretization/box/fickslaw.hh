@@ -29,7 +29,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
@@ -52,7 +51,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -61,6 +59,8 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Box>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVarCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -95,23 +95,12 @@ public:
 
         // evaluate gradX at integration point and interpolate density
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& jacInvT = fluxVarsCache.jacInvT();
-        const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
         const auto& shapeValues = fluxVarsCache.shapeValues();
 
+        // density interpolation
         Scalar rho(0.0);
-        std::vector<GlobalPosition> gradN(fvGeometry.numScv());
-
         for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[scv];
-
-            // density interpolation
-            rho +=  volVars.molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
-
-            // the ansatz function gradient
-            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradN[scv.indexInElement()]);
-        }
+            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
 
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
@@ -121,11 +110,11 @@ public:
             // effective diffusion tensors
             using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
             auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
-                                                            insideVolVars.saturation(phaseIdx),
-                                                            insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+                                                              insideVolVars.saturation(phaseIdx),
+                                                              insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
             auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
-                                                            outsideVolVars.saturation(phaseIdx),
-                                                            outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+                                                               outsideVolVars.saturation(phaseIdx),
+                                                               outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
 
             // scale by extrusion factor
             insideD *= insideVolVars.extrusionFactor();
@@ -140,16 +129,66 @@ public:
                 const auto& volVars = elemVolVars[scv];
 
                 // the mole/mass fraction gradient
-                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), gradN[scv.indexInElement()]);
+                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
             }
 
             // apply the diffusion tensor and return the flux
             auto DGradX = applyDiffusionTensor_(D, gradX);
             componentFlux[compIdx] = -1.0*rho*(DGradX*scvf.unitOuterNormal())*scvf.area();
-            if (Model::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
+            if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
         return componentFlux;
+    }
+
+    // compute transmissibilities ti for analytical jacobians
+    static std::array<std::vector<Scalar>, numComponents>
+    calculateTransmissibilities(const Problem& problem,
+                                const Element& element,
+                                const FVElementGeometry& fvGeometry,
+                                const ElementVolumeVariables& elemVolVars,
+                                const SubControlVolumeFace& scvf,
+                                const FluxVarCache& fluxVarCache,
+                                const int phaseIdx)
+    {
+        Scalar rho(0.0);
+        const auto& shapeValues = fluxVarCache.shapeValues();
+        for (auto&& scv : scvs(fvGeometry))
+            rho += elemVolVars[scv].molarDensity(phaseIdx)*shapeValues[scv.indexInElement()][0];
+
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        std::array<std::vector<Scalar>, numComponents> ti;
+        for (int compIdx = 0; compIdx < numComponents; compIdx++)
+        {
+            if(FluidSystem::isMainComponent(compIdx, phaseIdx))
+                continue;
+
+            // effective diffusion tensors
+            using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+            auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
+                                                              insideVolVars.saturation(phaseIdx),
+                                                              insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+            auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
+                                                               outsideVolVars.saturation(phaseIdx),
+                                                               outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+
+            // scale by extrusion factor
+            insideD *= insideVolVars.extrusionFactor();
+            outsideD *= outsideVolVars.extrusionFactor();
+
+            // the resulting averaged diffusion tensor
+            const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
+
+            ti[compIdx].resize(fvGeometry.numScv());
+            for (auto&& scv : scvs(fvGeometry))
+                ti[compIdx][scv.indexInElement()] =
+                    -rho*(applyDiffusionTensor_(D, fluxVarCache.gradN(scv.indexInElement()))
+                            *scvf.unitOuterNormal())*scvf.area();
+        }
+
+        return ti;
     }
 
 private:

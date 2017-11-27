@@ -1,0 +1,10 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+
+[Grid]
+File = grids/fracture2d3d.msh
+
+[Problem]
+Name = 1pfv_fracture2d3d # name passed to the output routines
+EnableGravity = false

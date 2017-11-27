@@ -24,12 +24,14 @@
 #ifndef DUMUX_CLOSEDSYSTEM_TEST_PROBLEM_HH
 #define DUMUX_CLOSEDSYSTEM_TEST_PROBLEM_HH
 
-#include <dumux/implicit/staggered/properties.hh>
-#include <dumux/freeflow/staggered/model.hh>
-#include <dumux/implicit/problem.hh>
+#include <dumux/freeflow/staggered/problem.hh>
+#include <dumux/discretization/staggered/properties.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
+
+#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/freeflow/staggered/properties.hh>
 
 namespace Dumux
 {
@@ -52,7 +54,7 @@ SET_PROP(ClosedSystemTestProblem, Fluid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Constant<TypeTag, Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<1, Scalar> > type;
 };
 
 // Set the grid type
@@ -66,9 +68,6 @@ SET_BOOL_PROP(ClosedSystemTestProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalVolumeVariablesCache, true);
 
-
-// Enable gravity
-SET_BOOL_PROP(ClosedSystemTestProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -78,13 +77,13 @@ SET_BOOL_PROP(ClosedSystemTestProblem, ProblemEnableGravity, true);
 template <class TypeTag>
 class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 {
-    typedef NavierStokesProblem<TypeTag> ParentType;
+    using ParentType = NavierStokesProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // Grid and world dimension
         dim = GridView::dimension,
@@ -100,17 +99,16 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
         velocityYIdx = Indices::velocityYIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -118,27 +116,21 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
-    ClosedSystemTestProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView), eps_(1e-6)
+    ClosedSystemTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), eps_(1e-6)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
-
-        lidVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             Scalar,
-                                             Problem,
-                                             LidVelocity);
+        lidVelocity_ = getParam<Scalar>("Problem.LidVelocity");
 
         using CellArray = std::array<unsigned int, dimWorld>;
-        const CellArray numCells = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                                      CellArray,
-                                                      Grid,
-                                                      Cells);
-        cellSizeX_ = this->bBoxMax()[0] / numCells[0];
+        const CellArray numCells = getParam<CellArray>("Grid.Cells");
+        cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
     }
 
     /*!
@@ -146,15 +138,6 @@ public:
      */
     // \{
 
-    /*!
-     * \brief The problem name.
-     *
-     * This is used as a prefix for files generated by the simulation.
-     */
-    std::string name() const
-    {
-        return name_;
-    }
 
     bool shouldWriteRestartFile() const
     {
@@ -220,7 +203,7 @@ public:
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
 
-        if(globalPos[1] > this->bBoxMax()[1] - eps_)
+        if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
             values[velocityXIdx] = lidVelocity_;
 
         return values;
@@ -253,7 +236,6 @@ private:
 
     Scalar eps_;
     Scalar lidVelocity_;
-    std::string name_;
     Scalar cellSizeX_;
 };
 } //end namespace

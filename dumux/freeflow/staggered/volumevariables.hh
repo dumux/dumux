@@ -65,7 +65,6 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     static const int phaseIdx = Indices::phaseIdx;
 
 public:

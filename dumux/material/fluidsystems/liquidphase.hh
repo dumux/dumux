@@ -115,6 +115,12 @@ public:
     { return Component::liquidIsCompressible(); }
 
     /*!
+     * \brief Returns true if the fluid viscosity is constant
+     */
+    static constexpr bool viscosityIsConstant(int phaseIdx = 0)
+    { return Component::liquidViscosityIsConstant(); }
+
+    /*!
      * \brief Returns true if the fluid is assumed to be an ideal gas
      */
     static bool isIdealGas(int phaseIdx = 0)

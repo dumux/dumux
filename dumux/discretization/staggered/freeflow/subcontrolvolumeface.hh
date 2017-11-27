@@ -34,46 +34,30 @@
 namespace Dumux
 {
 
-template<class G, typename I>
-class StaggeredSubFace
-{
-    using Geometry = G;
-    using IndexType = I;
-    using Scalar = typename Geometry::ctype;
-
-private:
-    std::vector<std::pair<int,int>> velocityDofIdxPair_;
-    std::vector<Scalar> distance_;
-    std::pair<int,int> elementPair_;
-    int commonVertexIdx_;
-};
-
-
 /*!
  * \ingroup Discretization
  * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. We simply use the base class here.
  */
-template<class G, typename I>
-class StaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<G, I>, G, I>
+template<class ScvfGeometryTraits>
+class StaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
 {
-    using ParentType = SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<G, I>, G, I>;
-    using Geometry = G;
-    using IndexType = I;
+    using ParentType = SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>;
+    using Geometry = typename ScvfGeometryTraits::Geometry;
+    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
 
-    using Scalar = typename Geometry::ctype;
+    using Scalar = typename ScvfGeometryTraits::Scalar;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
-
-    using StaggeredSubFace = Dumux::StaggeredSubFace<G,I>;
+    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
 
     static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
 
-
 public:
+    //! state the traits public and thus export all types
+    using Traits = ScvfGeometryTraits;
+
     // the default constructor
     StaggeredSubControlVolumeFace() = default;
 
@@ -81,8 +65,8 @@ public:
     template <class Intersection, class GeometryHelper>
     StaggeredSubControlVolumeFace(const Intersection& is,
                                const typename Intersection::Geometry& isGeometry,
-                               IndexType scvfIndex,
-                               const std::vector<IndexType>& scvIndices,
+                               GridIndexType scvfIndex,
+                               const std::vector<GridIndexType>& scvIndices,
                                const GeometryHelper& geometryHelper
                            )
     : ParentType(),
@@ -112,7 +96,7 @@ public:
 
       //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
       StaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
-                                    const std::vector<IndexType>& scvIndices)
+                                    const std::vector<GridIndexType>& scvIndices)
       {
           isGhostFace_ = true;
           center_ = dofPosition;
@@ -181,20 +165,20 @@ public:
     }
 
     //! index of the inside sub control volume for spatial param evaluation
-    IndexType insideScvIdx() const
+    GridIndexType insideScvIdx() const
     {
         return scvIndices_[0];
     }
 
     //! index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
-    IndexType outsideScvIdx() const
+    GridIndexType outsideScvIdx() const
     {
         return scvIndices_[1];
     }
 
     //! The global index of this sub control volume face
-    IndexType index() const
+    GridIndexType index() const
     {
         return scvfIndex_;
     }
@@ -212,19 +196,19 @@ public:
     }
 
     //! The global index of the dof living on this face
-    IndexType dofIndex() const
+    GridIndexType dofIndex() const
     {
         return dofIdx_;
     }
 
     //! The global index of the dof living on the opposing face
-    IndexType dofIndexOpposingFace() const
+    GridIndexType dofIndexOpposingFace() const
     {
         return oppositeIdx_;
     }
 
     //! The local index of this sub control volume face
-    IndexType localFaceIdx() const
+    GridIndexType localFaceIdx() const
     {
         return localFaceIdx_;
     }
@@ -269,14 +253,13 @@ private:
     Scalar area_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
-    IndexType scvfIndex_;
-    std::vector<IndexType> scvIndices_;
+    GridIndexType scvfIndex_;
+    std::vector<GridIndexType> scvIndices_;
     bool boundary_;
 
     int dofIdx_;
     int oppositeIdx_;
     Scalar selfToOppositeDistance_;
-    std::vector<StaggeredSubFace> subfaces_;
     std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
     int dirIdx_;

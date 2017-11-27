@@ -25,12 +25,6 @@
 #ifndef DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_TIME_DEP_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/fluidsystems/liquidphase.hh>
-
 #include "1psingularityproblem.hh"
 
 namespace Dumux
@@ -40,13 +34,13 @@ class OnePSingularityProblemTimeDependent;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePSingularityProblemTimeDependent, INHERITS_FROM(OnePSingularityCCProblem));
+NEW_TYPE_TAG(OnePSingularityTimeDependentCCTpfaTypeTag, INHERITS_FROM(OnePSingularityCCTpfaTypeTag));
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityProblemTimeDependent, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
+SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfaTypeTag, Problem, OnePSingularityProblemTimeDependent<TypeTag>);
 
 // point source
-SET_TYPE_PROP(OnePSingularityProblemTimeDependent, PointSource, SolDependentPointSource<TypeTag>);
+SET_TYPE_PROP(OnePSingularityTimeDependentCCTpfaTypeTag, PointSource, SolDependentPointSource<TypeTag>);
 }
 
 /*!
@@ -71,7 +65,6 @@ class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTa
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -79,13 +72,14 @@ class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTa
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    OnePSingularityProblemTimeDependent(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    OnePSingularityProblemTimeDependent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {}
 
     /*!
@@ -108,18 +102,28 @@ public:
     void addPointSources(std::vector<PointSource>& pointSources) const
     {
         // inject <time> kg/s water at position (0, 0), where <time> is the current simulation time
-        // we use t+1 because this is an implicit Euler scheme
         auto function = [](const Problem& problem,
                            const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolume& scv)
-        { return PrimaryVariables(problem.timeManager().time() + problem.timeManager().timeStepSize()); };
+        { return PrimaryVariables(problem.getTime()); };
 
         pointSources.push_back(PointSource({0.0, 0.0}, function));
     }
+
+    //! Set the current time at which we evaluate the source
+    void setTime(Scalar time)
+    { time_ = time; }
+
+    //! Set the current time at which we evaluate the source
+    Scalar getTime() const
+    { return time_; }
+
+private:
+    Scalar time_ = 0.0;
 };
 
-} //end namespace
+} //end namespace Dumux
 
 #endif

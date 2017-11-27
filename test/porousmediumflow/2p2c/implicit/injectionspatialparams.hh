@@ -31,8 +31,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/porousmediumflow/2p2c/implicit/properties.hh>
-
 namespace Dumux
 {
 
@@ -90,10 +88,10 @@ public:
      *
      * \param gridView The grid view
      */
-    InjectionSpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView)
+    InjectionSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
-        layerBottom_ = 22.0;
+        layerBottom_ = 22.5;
 
         // intrinsic permeabilities
         fineK_ = 1e-13;

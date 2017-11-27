@@ -23,173 +23,127 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
 
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
-
 namespace Dumux
 {
-template<class TypeTag>
-class CCMpfaOLocalScv
+template<class TypeTag, class IvIndexSet>
+class CCMpfaOInteractionVolumeLocalScv
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GlobalIndexType = typename GridView::IndexSet::IndexType;
     using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    // we use the seed types of the boundary interaction volume to be compatible with other mpfa
-    // methods that use o-type interaction volumes on the boundary but differing ones inside the domain.
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using LocalScvSeed = typename InteractionVolume::Seed::LocalScvSeed;
-    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
+    //! The mpfa-o method always uses the dynamic types
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
+    using LocalBasis = typename InteractionVolume::Traits::ScvBasis;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using LocalBasis = std::array<GlobalPosition, dim>;
 
 public:
-    // constructor has the same signature as the LocalScv entity
-    CCMpfaOLocalScv(const Problem& problem,
-                    const Element& element,
-                    const FVElementGeometry& fvGeometry,
-                    const LocalScvSeed& scvSeed)
-    : seed_(scvSeed)
+    explicit CCMpfaOInteractionVolumeLocalScv(const FVElementGeometry& fvGeometry,
+                                              const SubControlVolume& scv,
+                                              const LocalIndexType localIndex,
+                                              const IvIndexSet& indexSet)
+             : indexSet_(indexSet)
+             , globalScvIndex_(scv.dofIndex())
+             , localDofIndex_(localIndex)
     {
-        // set up local basis
-        center_ = element.geometry().center();
-        LocalBasis localBasis;
+        // center of the global scv
+        const auto center = scv.center();
 
-        LocalIndexType coordIdx = 0;
-        for (auto globalScvfIdx : scvSeed.globalScvfIndices())
+        // set up local basis
+        LocalBasis localBasis;
+        for (unsigned int coordIdx = 0; coordIdx < dim; ++coordIdx)
         {
-            const auto& scvf = fvGeometry.scvf(globalScvfIdx);
+            const auto scvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(localDofIndex_, coordIdx);
+            const auto& scvf = fvGeometry.scvf(scvfIdx);
             localBasis[coordIdx] = scvf.ipGlobal();
-            localBasis[coordIdx] -= center_;
-            coordIdx++;
+            localBasis[coordIdx] -= center;
         }
 
         innerNormals_ = Helper::calculateInnerNormals(localBasis);
         detX_ = Helper::calculateDetX(localBasis);
     }
 
-    GlobalIndexType globalIndex() const
-    { return scvSeed_().globalIndex(); }
+    //! detX is needed for setting up the omegas in the interaction volumes
+    Scalar detX() const { return detX_; }
 
-    GlobalIndexType localScvfIndex(const LocalIndexType coordDir) const
-    {
-        assert(coordDir < dim);
-        return scvSeed_().localScvfIndices()[coordDir];
-    }
-
-    GlobalPosition center() const
-    { return center_; }
-
-    GlobalPosition innerNormal(const LocalIndexType coordDir) const
+    //! the inner normals are needed for setting up the omegas in the interaction volumes
+    const GlobalPosition& innerNormal(const LocalIndexType coordDir) const
     {
         assert(coordDir < dim);
         return innerNormals_[coordDir];
     }
 
-    Scalar detX() const
-    { return detX_; }
+    //! grid view-global index related to this scv
+    GlobalIndexType globalScvIndex() const { return globalScvIndex_; }
+
+    //! returns the index in the set of cell unknowns of the iv
+    LocalIndexType localDofIndex() const { return localDofIndex_; }
+
+    //! iv-local index of the coordir's scvf in this scv
+    LocalIndexType scvfIdxLocal(const unsigned int coordDir) const
+    {
+        assert(coordDir < dim);
+        return indexSet_.scvfIdxLocal(localDofIndex_, coordDir);
+    }
 
 private:
-    const LocalScvSeed& scvSeed_() const
-    { return seed_; }
-
-    const LocalScvSeed& seed_;
-    GlobalPosition center_;
+    const IvIndexSet& indexSet_;
+    GlobalIndexType globalScvIndex_;
+    LocalIndexType localDofIndex_;
     LocalBasis innerNormals_;
     Scalar detX_;
 };
 
 
 template<class TypeTag>
-struct CCMpfaOLocalScvf
+struct CCMpfaOInteractionVolumeLocalScvf
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    // we use the seed types of the boundary interaction volume to be compatible with other mpfa
-    // methods that use o-type interaction volumes on the boundary but differing ones inside the domain.
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, BoundaryInteractionVolume);
-    using LocalScvfSeed = typename InteractionVolume::Seed::LocalScvfSeed;
-    using GlobalIndexType = typename InteractionVolume::GlobalIndexType;
-    using GlobalIndexSet = typename InteractionVolume::GlobalIndexSet;
-    using LocalIndexType = typename InteractionVolume::LocalIndexType;
-    using LocalIndexSet = typename InteractionVolume::LocalIndexSet;
-
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    //! The mpfa-o method always uses the dynamic types
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GlobalIndexType = typename GridView::IndexSet::IndexType;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using LocalIndexContainer = typename InteractionVolume::Traits::DynamicLocalIndexContainer;
+    using LocalIndexType = typename LocalIndexContainer::value_type;
 
 public:
-    CCMpfaOLocalScvf(const LocalScvfSeed& scvfSeed,
-                     const SubControlVolumeFace& scvf)
-    : seedPtr_(&scvfSeed),
-      scvfPtr_(&scvf)
+    CCMpfaOInteractionVolumeLocalScvf(const SubControlVolumeFace& scvf,
+                                      const LocalIndexContainer& localScvIndices,
+                                      const bool isDirichlet,
+                                      const LocalIndexType localDofIdx)
+    : scvfIdxGlobal_(scvf.index())
+    , neighborScvIndicesLocal_(localScvIndices)
+    , isDirichlet_(isDirichlet)
+    , localDofIndex_(localDofIdx)
     {}
 
-    GlobalIndexType insideGlobalScvfIndex() const
-    { return scvfSeed_().insideGlobalScvfIndex(); }
+    //! returns the grid view-global index of this scvf
+    GlobalIndexType globalScvfIndex() const { return scvfIdxGlobal_; }
 
-    GlobalIndexType insideGlobalScvIndex() const
-    { return scvfSeed_().insideGlobalScvIndex(); }
+    //! Returns the local indices of the scvs neighboring this scvf
+    const LocalIndexContainer& neighboringLocalScvIndices() const { return neighborScvIndicesLocal_; }
 
-    LocalIndexType insideLocalScvIndex() const
-    { return scvfSeed_().insideLocalScvIndex(); }
+    //! states if this is scvf is on a Dirichlet boundary
+    bool isDirichlet() const { return isDirichlet_; }
 
-    const GlobalIndexSet& outsideGlobalScvfIndices() const
-    { return scvfSeed_().outsideGlobalScvfIndices(); }
-
-    const GlobalIndexSet& outsideGlobalScvIndices() const
-    { return scvfSeed_().outsideGlobalScvIndices(); }
-
-    const LocalIndexSet& outsideLocalScvIndices() const
-    { return scvfSeed_().outsideLocalScvIndices(); }
-
-    GlobalIndexType outsideGlobalScvfIndex(unsigned int outsideIdx = 0) const
-    { return scvfSeed_().outsideGlobalScvfIndex(outsideIdx); }
-
-    GlobalIndexType outsideGlobalScvIndex(unsigned int outsideIdx = 0) const
-    { return scvfSeed_().outsideGlobalScvIndex(outsideIdx); }
-
-    LocalIndexType outsideLocalScvIndex(unsigned int outsideIdx = 0) const
-    { return scvfSeed_().outsideLocalScvIndex(outsideIdx); }
-
-    MpfaFaceTypes faceType() const
-    { return scvfSeed_().faceType(); }
-
-    GlobalPosition ip() const
-    { return globalScvf().ipGlobal(); }
-
-    GlobalPosition unitOuterNormal() const
-    { return globalScvf().unitOuterNormal(); }
-
-    Scalar area() const
-    { return globalScvf().area(); }
-
-    bool boundary() const
-    { return scvfSeed_().boundary(); }
-
-    const SubControlVolumeFace& globalScvf() const
-    { return *scvfPtr_; }
+    //! This is either the iv-local index of the intermediate unknown (interior/Neumann face)
+    //! or the index of the Dirichlet boundary within the vol vars (Dirichlet faces)
+    LocalIndexType localDofIndex() const { return localDofIndex_; }
 
 private:
-    const LocalScvfSeed& scvfSeed_() const
-    { return *seedPtr_; }
+    GlobalIndexType scvfIdxGlobal_;
+    const LocalIndexContainer& neighborScvIndicesLocal_;
 
-    const LocalScvfSeed* seedPtr_;
-    const SubControlVolumeFace* scvfPtr_;
+    bool isDirichlet_;
+    LocalIndexType localDofIndex_;
 };
 } // end namespace
 

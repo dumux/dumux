@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FLUXVARSCACHE_FILLER_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FLUXVARSCACHE_FILLER_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
@@ -55,6 +54,10 @@ class CCTpfaFluxVariablesCacheFiller
     static constexpr bool soldependentHeatConduction = GET_PROP_VALUE(TypeTag, SolutionDependentHeatConduction);
 
 public:
+    static constexpr bool isSolDependent = (doAdvection && soldependentAdvection) ||
+                                           (doDiffusion && soldependentDiffusion) ||
+                                           (doHeatConduction && soldependentHeatConduction);
+
     //! The constructor. Sets the problem pointer
     CCTpfaFluxVariablesCacheFiller(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -67,7 +70,7 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param elemVolVars The element volume variables
      * \param scvf The corresponding sub-control volume face
-     * \param doSubCaches Array of bools indicating which sub caches have to be updated
+     * \param forceUpdateAll if true, forces all caches to be updated (even the solution-independent ones)
      */
     template<class FluxVariablesCacheContainer>
     void fill(FluxVariablesCacheContainer& fluxVarsCacheContainer,
@@ -76,10 +79,10 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars,
               const SubControlVolumeFace& scvf,
-              bool isUpdate = false)
+              bool forceUpdateAll = false)
     {
         // fill the physics-related quantities of the caches
-        if (!isUpdate)
+        if (forceUpdateAll)
         {
             fillAdvection(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
             fillDiffusion(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
@@ -94,31 +97,6 @@ public:
             if (doHeatConduction && soldependentHeatConduction)
                 fillHeatConduction(scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf);
         }
-    }
-
-    /*!
-     * \brief function to update the flux variables caches during derivative calculation
-     *
-     * \copydoc fill
-     */
-    template<class FluxVariablesCacheContainer>
-    void update(FluxVariablesCacheContainer& fluxVarsCacheContainer,
-                FluxVariablesCache& scvfFluxVarsCache,
-                const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars,
-                const SubControlVolumeFace& scvf)
-    {
-        // forward to fill routine
-        fill(fluxVarsCacheContainer, scvfFluxVarsCache, element, fvGeometry, elemVolVars, scvf, true);
-    }
-
-    static bool isSolutionIndependent()
-    {
-        static const bool isSolDependent = (doAdvection && soldependentAdvection) ||
-                                           (doDiffusion && soldependentDiffusion) ||
-                                           (doHeatConduction && soldependentHeatConduction);
-        return !isSolDependent;
     }
 
 private:
@@ -136,7 +114,7 @@ private:
                   const SubControlVolumeFace& scvf)
     {
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
-        using AdvectionFiller = typename AdvectionType::CacheFiller;
+        using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
         // forward to the filler for the advective quantities
         AdvectionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);
@@ -162,7 +140,7 @@ private:
                   const SubControlVolumeFace& scvf)
     {
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
-        using DiffusionFiller = typename DiffusionType::CacheFiller;
+        using DiffusionFiller = typename DiffusionType::Cache::Filler;
         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
@@ -195,7 +173,7 @@ private:
                        const SubControlVolumeFace& scvf)
     {
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-        using HeatConductionFiller = typename HeatConductionType::CacheFiller;
+        using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
         // forward to the filler of the diffusive quantities
         HeatConductionFiller::fill(scvfFluxVarsCache, problem(), element, fvGeometry, elemVolVars, scvf, *this);

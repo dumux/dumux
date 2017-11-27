@@ -29,120 +29,13 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/timeloop.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include "newtonconvergencewriter.hh"
 #include "newtonmethod.hh"
 
 namespace Dumux
 {
-template <class TypeTag>
-class NewtonController;
-
-template <class TypeTag>
-class NewtonConvergenceWriter;
-
-namespace Properties
-{
-//! Specifies the implementation of the Newton controller
-NEW_PROP_TAG(NewtonController);
-
-//! Specifies the type of the actual Newton method
-NEW_PROP_TAG(NewtonMethod);
-
-//! Specifies the type of a solution
-NEW_PROP_TAG(SolutionVector);
-
-//! Specifies the type of a global Jacobian matrix
-NEW_PROP_TAG(JacobianMatrix);
-
-//! Specifies the type of the Vertex mapper
-NEW_PROP_TAG(VertexMapper);
-
-//! specifies the type of the time manager
-NEW_PROP_TAG(TimeManager);
-
-//! specifies whether the convergence rate and the global residual
-//! gets written out to disk for every Newton iteration (default is false)
-NEW_PROP_TAG(NewtonWriteConvergence);
-
-//! Specifies whether the Jacobian matrix should only be reassembled
-//! if the current solution deviates too much from the evaluation point
-NEW_PROP_TAG(ImplicitEnablePartialReassemble);
-
-//! Specify whether the jacobian matrix of the last iteration of a
-//! time step should be re-used as the jacobian of the first iteration
-//! of the next time step.
-NEW_PROP_TAG(ImplicitEnableJacobianRecycling);
-
-/*!
- * \brief Specifies whether the update should be done using the line search
- *        method instead of the plain Newton method.
- *
- * Whether this property has any effect depends on whether the line
- * search method is implemented for the actual model's Newton
- * controller's update() method. By default line search is not used.
- */
-NEW_PROP_TAG(NewtonUseLineSearch);
-
-//! indicate whether the absolute residual should be used in the residual criterion
-NEW_PROP_TAG(NewtonEnableAbsoluteResidualCriterion);
-
-//! indicate whether the shift criterion should be used
-NEW_PROP_TAG(NewtonEnableShiftCriterion);
-
-//! the value for the maximum relative shift below which convergence is declared
-NEW_PROP_TAG(NewtonMaxRelativeShift);
-
-//! the value for the maximum absolute residual below which convergence is declared
-NEW_PROP_TAG(NewtonMaxAbsoluteResidual);
-
-//! indicate whether the residual criterion should be used
-NEW_PROP_TAG(NewtonEnableResidualCriterion);
-
-//! the value for the residual reduction below which convergence is declared
-NEW_PROP_TAG(NewtonResidualReduction);
-
-//! indicate whether both of the criteria should be satisfied to declare convergence
-NEW_PROP_TAG(NewtonSatisfyResidualAndShiftCriterion);
-
-//! indicate whether after each newton step the solution is chopped, e.g. to
-//! physically sensible values (if a chopper is implemented for this model)
-NEW_PROP_TAG(NewtonEnableChop);
-
-/*!
- * \brief The number of iterations at which the Newton method
- *        should aim at.
- *
- * This is used to control the time-step size. The heuristic used
- * is to scale the last time-step size by the deviation of the
- * number of iterations used from the target steps.
- */
-NEW_PROP_TAG(NewtonTargetSteps);
-
-//! Number of maximum iterations for the Newton method.
-NEW_PROP_TAG(NewtonMaxSteps);
-
-//! The assembler for the Jacobian matrix
-NEW_PROP_TAG(JacobianAssembler);
-
-// set default values
-SET_TYPE_PROP(NewtonMethod, NewtonController, NewtonController<TypeTag>);
-SET_BOOL_PROP(NewtonMethod, NewtonWriteConvergence, false);
-SET_BOOL_PROP(NewtonMethod, NewtonUseLineSearch, false);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableAbsoluteResidualCriterion, false);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableShiftCriterion, true);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableResidualCriterion, false);
-SET_BOOL_PROP(NewtonMethod, NewtonSatisfyResidualAndShiftCriterion, false);
-SET_BOOL_PROP(NewtonMethod, NewtonEnableChop, false);
-SET_SCALAR_PROP(NewtonMethod, NewtonMaxRelativeShift, 1e-8);
-SET_SCALAR_PROP(NewtonMethod, NewtonMaxAbsoluteResidual, 1e-5);
-SET_SCALAR_PROP(NewtonMethod, NewtonResidualReduction, 1e-5);
-SET_INT_PROP(NewtonMethod, NewtonTargetSteps, 10);
-SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
-
-} // end namespace Properties
-
 /*!
  * \ingroup Newton
  * \brief A reference implementation of a Newton controller specific
@@ -155,61 +48,37 @@ SET_INT_PROP(NewtonMethod, NewtonMaxSteps, 18);
 template <class TypeTag>
 class NewtonController
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, VertexMapper) VertexMapper;
-
+    using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
+    using Communicator = typename GridView::CollectiveCommunication;
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonConvergenceWriter) ConvergenceWriter;
-
-    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) LinearSolver;
 
     static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
 public:
     /*!
-     * \brief Constructor
+     * \brief Constructor for stationary problems
      */
-    NewtonController(const Problem &problem)
-    : endIterMsgStream_(std::ostringstream::out),
-      linearSolver_(problem)
+    NewtonController(const Communicator& comm)
+    : comm_(comm)
+    , endIterMsgStream_(std::ostringstream::out)
     {
-        enablePartialReassemble_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnablePartialReassemble);
-        enableJacobianRecycling_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Implicit, EnableJacobianRecycling);
-
-        useLineSearch_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch);
-        enableAbsoluteResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableAbsoluteResidualCriterion);
-        enableShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableShiftCriterion);
-        enableResidualCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableResidualCriterion)
-                                   || enableAbsoluteResidualCriterion_;
-        satisfyResidualAndShiftCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, SatisfyResidualAndShiftCriterion);
-        if (!enableShiftCriterion_ && !enableResidualCriterion_)
-        {
-            DUNE_THROW(Dune::NotImplemented,
-                       "at least one of NewtonEnableShiftCriterion or "
-                       << "NewtonEnableResidualCriterion has to be set to true");
-        }
-
-        setMaxRelativeShift(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxRelativeShift));
-        setMaxAbsoluteResidual(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, MaxAbsoluteResidual));
-        setResidualReduction(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Newton, ResidualReduction));
-        setTargetSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, TargetSteps));
-        setMaxSteps(GET_PARAM_FROM_GROUP(TypeTag, int, Newton, MaxSteps));
-
-        verbose_ = true;
-        numSteps_ = 0;
+        initParams_();
     }
+
+    /*!
+     * \brief Constructor for stationary problems
+     */
+    NewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+    : comm_(comm)
+    , timeLoop_(timeLoop)
+    , endIterMsgStream_(std::ostringstream::out)
+    {
+        initParams_();
+    }
+
+    const Communicator& communicator() const
+    { return comm_; }
 
     /*!
      * \brief Set the maximum acceptable difference of any primary variable
@@ -266,11 +135,12 @@ public:
      *
      * \param uCurrentIter The solution of the current Newton iteration
      */
-    bool newtonProceed(const SolutionVector &uCurrentIter)
+    template<class SolutionVector>
+    bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
     {
         if (numSteps_ < 2)
             return true; // we always do at least two iterations
-        else if (asImp_().newtonConverged()) {
+        else if (converged) {
             return false; // we are below the desired tolerance
         }
         else if (numSteps_ >= maxSteps_) {
@@ -299,7 +169,7 @@ public:
         else if (!enableShiftCriterion_ && enableResidualCriterion_)
         {
             if(enableAbsoluteResidualCriterion_)
-                return residual_ <= residualTolerance_;
+                return residualNorm_ <= residualTolerance_;
             else
                 return reduction_ <= reductionTolerance_;
         }
@@ -307,7 +177,7 @@ public:
         {
             if(enableAbsoluteResidualCriterion_)
                 return shift_ <= shiftTolerance_
-                        && residual_ <= residualTolerance_;
+                        && residualNorm_ <= residualTolerance_;
             else
                 return shift_ <= shiftTolerance_
                         && reduction_ <= reductionTolerance_;
@@ -316,7 +186,7 @@ public:
         {
             return shift_ <= shiftTolerance_
                     || reduction_ <= reductionTolerance_
-                    || residual_ <= residualTolerance_;
+                    || residualNorm_ <= residualTolerance_;
         }
 
         return false;
@@ -326,20 +196,12 @@ public:
      * \brief Called before the Newton method is applied to an
      *        non-linear system of equations.
      *
-     * \param method The object where the NewtonMethod is executed
      * \param u The initial solution
      */
-    void newtonBegin(NewtonMethod &method, const SolutionVector &u)
+    template<class SolutionVector>
+    void newtonBegin(const SolutionVector &u)
     {
-        method_ = &method;
         numSteps_ = 0;
-
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
-        {
-            if (!convergenceWriter_)
-                convergenceWriter_ = std::make_unique<ConvergenceWriter>(asImp_(), problem_().gridView());
-            convergenceWriter_->advanceTimeStep();
-        }
     }
 
     /*!
@@ -372,6 +234,7 @@ public:
      * \param uLastIter The current iterative solution
      * \param deltaU The difference between the current and the next solution
      */
+    template<class SolutionVector>
     void newtonUpdateShift(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
@@ -381,14 +244,25 @@ public:
             typename SolutionVector::block_type uNewI = uLastIter[i];
             uNewI -= deltaU[i];
 
-            Scalar shiftAtDof = model_().relativeShiftAtDof(uLastIter[i],
-                                                            uNewI);
+            Scalar shiftAtDof = relativeShiftAtDof_(uLastIter[i], uNewI);
             using std::max;
             shift_ = max(shift_, shiftAtDof);
         }
 
-        if (gridView_().comm().size() > 1)
-            shift_ = gridView_().comm().max(shift_);
+        if (communicator().size() > 1)
+            shift_ = communicator().max(shift_);
+    }
+
+    /*!
+     * \brief Assemble the linear system of equations \f$\mathbf{A}x - b = 0\f$.
+     *
+     * \param assembler The jacobian assembler
+     */
+    template<class JacobianAssembler, class SolutionVector>
+    void assembleLinearSystem(JacobianAssembler& assembler,
+                              const SolutionVector& uCurrentIter)
+    {
+        assembler.assembleJacobianAndResidual(uCurrentIter);
     }
 
     /*!
@@ -397,20 +271,23 @@ public:
      * Throws NumericalProblem if the linear solver didn't
      * converge.
      *
+     * \param ls The linear solver to be used
      * \param A The matrix of the linear system of equations
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    void newtonSolveLinear(JacobianMatrix &A,
-                           SolutionVector &x,
-                           SolutionVector &b)
+    template<class LinearSolver, class JacobianMatrix, class SolutionVector>
+    void solveLinearSystem(LinearSolver& ls,
+                           JacobianMatrix& A,
+                           SolutionVector& x,
+                           SolutionVector& b)
     {
         try {
             if (numSteps_ == 0)
             {
                 Scalar norm2 = b.two_norm2();
-                if (gridView_().comm().size() > 1)
-                    norm2 = gridView_().comm().sum(norm2);
+                if (communicator().size() > 1)
+                    norm2 = communicator().sum(norm2);
 
                 using std::sqrt;
                 initialResidual_ = sqrt(norm2);
@@ -423,20 +300,20 @@ public:
             //! but it shouldn't impact performance too much
             Dune::BlockVector<NumEqVector> xTmp; xTmp.resize(b.size());
             Dune::BlockVector<NumEqVector> bTmp(xTmp);
-            for (int i = 0; i < b.size(); ++i)
-                for (int j = 0; j < numEq; ++j)
+            for (unsigned int i = 0; i < b.size(); ++i)
+                for (unsigned int j = 0; j < numEq; ++j)
                     bTmp[i][j] = b[i][j];
 
-            int converged = linearSolver_.solve(A, xTmp, bTmp);
+            int converged = ls.solve(A, xTmp, bTmp);
 
-            for (int i = 0; i < x.size(); ++i)
-                for (int j = 0; j < numEq; ++j)
+            for (unsigned int i = 0; i < x.size(); ++i)
+                for (unsigned int j = 0; j < numEq; ++j)
                     x[i][j] = xTmp[i][j];
 
             // make sure all processes converged
             int convergedRemote = converged;
-            if (gridView_().comm().size() > 1)
-                convergedRemote = gridView_().comm().min(converged);
+            if (communicator().size() > 1)
+                convergedRemote = communicator().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
@@ -450,8 +327,8 @@ public:
         catch (Dune::MatrixBlockError e) {
             // make sure all processes converged
             int converged = 0;
-            if (gridView_().comm().size() > 1)
-                converged = gridView_().comm().min(converged);
+            if (communicator().size() > 1)
+                converged = communicator().min(converged);
 
             NumericalProblem p;
             std::string msg;
@@ -463,8 +340,8 @@ public:
         catch (const Dune::Exception &e) {
             // make sure all processes converged
             int converged = 0;
-            if (gridView_().comm().size() > 1)
-                converged = gridView_().comm().min(converged);
+            if (communicator().size() > 1)
+                converged = communicator().min(converged);
 
             NumericalProblem p;
             p.message(e.what());
@@ -483,24 +360,25 @@ public:
      * subtract deltaU from uLastIter, i.e.
      * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
+     * \param assembler The assembler (needed for global residual evaluation)
      * \param uCurrentIter The solution vector after the current iteration
      * \param uLastIter The solution vector after the last iteration
      * \param deltaU The delta as calculated from solving the linear
      *               system of equations. This parameter also stores
      *               the updated solution.
      */
-    void newtonUpdate(SolutionVector &uCurrentIter,
+    template<class JacobianAssembler, class SolutionVector>
+    void newtonUpdate(JacobianAssembler& assembler,
+                      SolutionVector &uCurrentIter,
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
         if (enableShiftCriterion_)
             newtonUpdateShift(uLastIter, deltaU);
 
-        writeConvergence_(uLastIter, deltaU);
-
         if (useLineSearch_)
         {
-            lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
+            lineSearchUpdate_(assembler, uCurrentIter, uLastIter, deltaU);
         }
         else {
             for (unsigned int i = 0; i < uLastIter.size(); ++i) {
@@ -510,10 +388,16 @@ public:
 
             if (enableResidualCriterion_)
             {
-                SolutionVector tmp(uLastIter);
-                residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
-                reduction_ = residual_;
+                residualNorm_ = assembler.residualNorm(uCurrentIter);
+                reduction_ = residualNorm_;
                 reduction_ /= initialResidual_;
+            }
+            else
+            {
+                // If we get here, the convergence criterion does not require
+                // additional residual evalutions. Thus, the grid variables have
+                // not yet been updated to the new uCurrentIter.
+                assembler.gridVariables().update(uCurrentIter);
             }
         }
     }
@@ -521,15 +405,15 @@ public:
     /*!
      * \brief Indicates that one Newton iteration was finished.
      *
+     * \param assembler The jacobian assembler
      * \param uCurrentIter The solution after the current Newton iteration
      * \param uLastIter The solution at the beginning of the current Newton iteration
      */
-    void newtonEndStep(SolutionVector &uCurrentIter,
+    template<class JacobianAssembler, class SolutionVector>
+    void newtonEndStep(JacobianAssembler& assembler,
+                       SolutionVector &uCurrentIter,
                        const SolutionVector &uLastIter)
     {
-        // Update the volume variables
-        this->model_().newtonEndStep();
-
         ++numSteps_;
 
         if (verbose())
@@ -538,7 +422,7 @@ public:
             if (enableShiftCriterion_)
                 std::cout << ", maximum relative shift = " << shift_;
             if (enableResidualCriterion_ && enableAbsoluteResidualCriterion_)
-                std::cout << ", residual = " << residual_;
+                std::cout << ", residual = " << residualNorm_;
             else if (enableResidualCriterion_)
                 std::cout << ", residual reduction = " << reduction_;
             std::cout << endIterMsg().str() << "\n";
@@ -546,33 +430,47 @@ public:
         endIterMsgStream_.str("");
 
         // When the Newton iterations are done: ask the model to check whether it makes sense
-        model_().checkPlausibility();
+        // TODO: how do we realize this? -> do this here in the newton controller
+        // model_().checkPlausibility();
     }
 
     /*!
-     * \brief Indicates that we're done solving the non-linear system
-     *        of equations.
+     * \brief Called if the Newton method ended
+     *        (not known yet if we failed or succeeded)
      */
-    void newtonEnd()
-    {}
+    void newtonEnd() {}
+
+    /*!
+     * \brief Called if the Newton method ended succcessfully
+     * This method is called _after_ newtonEnd()
+     */
+    void newtonSucceed() {}
 
     /*!
      * \brief Called if the Newton method broke down.
-     *
      * This method is called _after_ newtonEnd()
      */
-    void newtonFail()
+    template<class Assembler, class SolutionVector>
+    void newtonFail(Assembler& assembler, SolutionVector& u)
     {
-        numSteps_ = targetSteps_*2;
-    }
+        if (!assembler.localResidual().isStationary())
+        {
+            // set solution to previous solution
+            u = assembler.prevSol();
 
-    /*!
-     * \brief Called when the Newton method was successful.
-     *
-     * This method is called _after_ newtonEnd()
-     */
-    void newtonSucceed()
-    {}
+            // reset the grid variables to the previous solution
+            assembler.gridVariables().resetTimeStep(u);
+
+            std::cout << "Newton solver did not converge with dt = "
+                      << timeLoop_->timeStepSize() << " seconds. Retrying with time step of "
+                      << timeLoop_->timeStepSize()/2 << " seconds\n";
+
+            // try again with dt = dt/2
+            timeLoop_->setTimeStepSize(timeLoop_->timeStepSize()/2);
+        }
+        else
+            DUNE_THROW(Dune::MathError, "Newton solver did not converge");
+    }
 
     /*!
      * \brief Suggest a new time-step size based on the old time-step
@@ -598,20 +496,6 @@ public:
         return oldTimeStep*(1.0 + percent/1.2);
     }
 
-    /*!
-     * \brief Returns a reference to the current Newton method
-     *        which is controlled by this controller.
-     */
-    NewtonMethod &method()
-    { return *method_; }
-
-    /*!
-     * \brief Returns a reference to the current Newton method
-     *        which is controlled by this controller.
-     */
-    const NewtonMethod &method() const
-    { return *method_; }
-
     std::ostringstream &endIterMsg()
     { return endIterMsgStream_; }
 
@@ -625,109 +509,101 @@ public:
      * \brief Returns true if the Newton method ought to be chatty.
      */
     bool verbose() const
-    { return verbose_ && gridView_().comm().rank() == 0; }
+    { return verbose_ && communicator().rank() == 0; }
 
 protected:
-    /*!
-     * \brief Returns a reference to the grid view.
-     */
-    const GridView &gridView_() const
-    { return problem_().gridView(); }
 
-    /*!
-     * \brief Returns a reference to the vertex mapper.
-     */
-    const VertexMapper &vertexMapper_() const
-    { return model_().vertexMapper(); }
-
-    /*!
-     * \brief Returns a reference to the problem.
-     */
-    Problem &problem_()
-    { return method_->problem(); }
-
-    /*!
-     * \brief Returns a reference to the problem.
-     */
-    const Problem &problem_() const
-    { return method_->problem(); }
-
-    /*!
-     * \brief Returns a reference to the time manager.
-     */
-    TimeManager &timeManager_()
-    { return problem_().timeManager(); }
-
-    /*!
-     * \brief Returns a reference to the time manager.
-     */
-    const TimeManager &timeManager_() const
-    { return problem_().timeManager(); }
-
-    /*!
-     * \brief Returns a reference to the problem.
-     */
-    Model &model_()
-    { return problem_().model(); }
-
-    /*!
-     * \brief Returns a reference to the problem.
-     */
-    const Model &model_() const
-    { return problem_().model(); }
-
-    // returns the actual implementation for the controller we do
-    // it this way in order to allow "poor man's virtual methods",
-    // i.e. methods of subclasses which can be called by the base
-    // class.
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-
-    void writeConvergence_(const SolutionVector &uLastIter,
-                           const SolutionVector &deltaU)
+    void initParams_()
     {
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, WriteConvergence))
+        const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+
+        useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch");
+        enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion");
+        enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
+        enableResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableResidualCriterion") || enableAbsoluteResidualCriterion_;
+        satisfyResidualAndShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.SatisfyResidualAndShiftCriterion");
+        if (!enableShiftCriterion_ && !enableResidualCriterion_)
         {
-            convergenceWriter_->advanceIteration();
-            convergenceWriter_->write(uLastIter, deltaU);
+            DUNE_THROW(Dune::NotImplemented,
+                       "at least one of NewtonEnableShiftCriterion or "
+                       << "NewtonEnableResidualCriterion has to be set to true");
         }
+
+        setMaxRelativeShift(getParamFromGroup<Scalar>(group, "Newton.MaxRelativeShift"));
+        setMaxAbsoluteResidual(getParamFromGroup<Scalar>(group, "Newton.MaxAbsoluteResidual"));
+        setResidualReduction(getParamFromGroup<Scalar>(group, "Newton.ResidualReduction"));
+        setTargetSteps(getParamFromGroup<int>(group, "Newton.TargetSteps"));
+        setMaxSteps(getParamFromGroup<int>(group, "Newton.MaxSteps"));
+
+        verbose_ = true;
+        numSteps_ = 0;
     }
 
-    void lineSearchUpdate_(SolutionVector &uCurrentIter,
+    template<class JacobianAssembler, class SolutionVector>
+    void lineSearchUpdate_(const JacobianAssembler& assembler,
+                           SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
-       Scalar lambda = 1.0;
-       SolutionVector tmp(uLastIter);
+        Scalar lambda = 1.0;
+        SolutionVector tmp(uLastIter);
 
-       while (true) {
-           uCurrentIter = deltaU;
-           uCurrentIter *= -lambda;
-           uCurrentIter += uLastIter;
+        while (true)
+        {
+            uCurrentIter = deltaU;
+            uCurrentIter *= -lambda;
+            uCurrentIter += uLastIter;
 
-           // calculate the residual of the current solution
-           residual_ = this->method().model().globalResidual(tmp, uCurrentIter);
-           reduction_ = residual_;
-           reduction_ /= initialResidual_;
+            residualNorm_ = assembler.residualNorm(uCurrentIter);
+            reduction_ = residualNorm_;
+            reduction_ /= initialResidual_;
 
-           if (reduction_ < lastReduction_ || lambda <= 0.125) {
-               this->endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
-               return;
-           }
+            if (reduction_ < lastReduction_ || lambda <= 0.125) {
+                endIterMsg() << ", residual reduction " << lastReduction_ << "->"  << reduction_ << "@lambda=" << lambda;
+                return;
+            }
 
-           // try with a smaller update
-           lambda /= 2.0;
-       }
+            // try with a smaller update
+            lambda /= 2.0;
+        }
     }
 
+    /*!
+     * \brief Returns the maximum relative shift between two vectors of
+     *        primary variables.
+     *
+     * \param priVars1 The first vector of primary variables
+     * \param priVars2 The second vector of primary variables
+     */
+    template<class PrimaryVariables>
+    Scalar relativeShiftAtDof_(const PrimaryVariables &priVars1,
+                               const PrimaryVariables &priVars2)
+    {
+        Scalar result = 0.0;
+        using std::abs;
+        using std::max;
+        // iterate over all primary variables
+        // note: we use PrimaryVariables::dimension (== numEq)
+        //       for compatibility with the staggered grid implementation
+        for (int j = 0; j < PrimaryVariables::dimension; ++j) {
+            Scalar eqErr = abs(priVars1[j] - priVars2[j]);
+            eqErr /= max<Scalar>(1.0,abs(priVars1[j] + priVars2[j])/2);
+
+            result = max(result, eqErr);
+        }
+        return result;
+    }
+
+    // The grid view's communicator
+    const Communicator& comm_;
+
+    std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
+
+    // message stream to be displayed at the end of iterations
     std::ostringstream endIterMsgStream_;
 
-    NewtonMethod *method_;
+    // switches on/off verbosity
     bool verbose_;
-
-    std::unique_ptr<ConvergenceWriter> convergenceWriter_;
 
     // shift criterion variables
     Scalar shift_;
@@ -736,7 +612,7 @@ protected:
 
     // residual criterion variables
     Scalar reduction_;
-    Scalar residual_;
+    Scalar residualNorm_;
     Scalar lastReduction_;
     Scalar initialResidual_;
     Scalar reductionTolerance_;
@@ -749,17 +625,15 @@ protected:
     // actual number of steps done so far
     int numSteps_;
 
-    // the linear solver
-    LinearSolver linearSolver_;
-
+    // further parameters
     bool enablePartialReassemble_;
-    bool enableJacobianRecycling_;
     bool useLineSearch_;
     bool enableAbsoluteResidualCriterion_;
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
 };
+
 } // namespace Dumux
 
 #endif

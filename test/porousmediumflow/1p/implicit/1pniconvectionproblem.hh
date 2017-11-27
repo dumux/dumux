@@ -27,10 +27,10 @@
 
 #include <math.h>
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 #include "1pnispatialparams.hh"
@@ -46,7 +46,7 @@ namespace Properties
 
 NEW_TYPE_TAG(OnePNIConvectionProblem, INHERITS_FROM(OnePNI));
 NEW_TYPE_TAG(OnePNIConvectionBoxProblem, INHERITS_FROM(BoxModel, OnePNIConvectionProblem));
-NEW_TYPE_TAG(OnePNIConvectionCCProblem, INHERITS_FROM(CCTpfaModel, OnePNIConvectionProblem));
+NEW_TYPE_TAG(OnePNIConvectionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePNIConvectionProblem));
 NEW_TYPE_TAG(OnePNIConvectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePNIConvectionProblem));
 
 // Set the grid type
@@ -63,6 +63,8 @@ SET_TYPE_PROP(OnePNIConvectionProblem, Fluid,
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConvectionProblem, SpatialParams, OnePNISpatialParams<TypeTag>);
 
+// Set the model parameter group for the mpfa case (velocity disabled in input file)
+SET_STRING_PROP(OnePNIConvectionCCMpfaProblem, ModelParameterGroup, "MpfaTest");
 } // end namespace Properties
 
 
@@ -91,9 +93,9 @@ SET_TYPE_PROP(OnePNIConvectionProblem, SpatialParams, OnePNISpatialParams<TypeTa
  * <tt>./test_cc1pniconvection -ParameterFile ./test_cc1pniconvection.input</tt>
  */
 template <class TypeTag>
-class OnePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -102,11 +104,11 @@ class OnePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
@@ -115,9 +117,6 @@ class OnePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         // world dimension
         dimWorld = GridView::dimensionworld
     };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dimWorld : 0 };
 
     enum {
         // indices of the primary variables
@@ -130,58 +129,54 @@ class OnePNIConvectionProblem : public ImplicitPorousMediaProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    OnePNIConvectionProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    OnePNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-        outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
-        darcyVelocity_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, DarcyVelocity);
+        name_ = getParam<std::string>("Problem.Name");
+        darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
 
         temperatureHigh_ = 291.0;
         temperatureLow_ = 290.0;
         pressureHigh_ = 2e5;
         pressureLow_ = 1e5;
+
+        temperatureExact_.resize(this->fvGridGeometry().numDofs());
     }
 
-
-    bool shouldWriteOutput() const
+    //! Get exact temperature vector for output
+    const std::vector<Scalar>& getExactTemperature()
     {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
+        return temperatureExact_;
     }
 
-    /*!
-     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
-     */
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
     {
-        auto& temperatureExact = outputModule.createScalarField("temperatureExact", dofCodim);
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        const auto someElement = *(elements(this->gridView()).begin());
-        const auto someElemSol = this->model().elementSolution(someElement, this->model().curSol());
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        const auto someInitSol = initialAtPos(someElement.geometry().center());
 
-        auto someFvGeometry = localView(this->model().fvGridGeometry());
-        someFvGeometry.bindElement(someElement);
-        const auto someScv = *(scvs(someFvGeometry).begin());
+        auto fvGeometry = localView(this->fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
 
         VolumeVariables volVars;
         volVars.update(someElemSol, *this, someElement, someScv);
 
         const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
         const auto densityW = volVars.density();
-        const auto heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
+        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
         const auto storageW =  densityW*heatCapacityW*porosity;
         const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
         const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
@@ -189,19 +184,19 @@ public:
         std::cout << "storage: " << storageTotal << '\n';
 
         using std::max;
-        const Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
+        time = max(time, 1e-10);
         const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
         std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
 
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
                 auto dofIdxGlobal = scv.dofIndex();
                 auto dofPosition = scv.dofPosition();
-                temperatureExact[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
+                temperatureExact_[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
             }
         }
     }
@@ -239,7 +234,7 @@ public:
     {
         BoundaryTypes bcTypes;
 
-        if(globalPos[0] > this->bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
@@ -279,12 +274,12 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    PrimaryVariables neumann(const Element& element,
+    NeumannFluxes neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolvars,
                              const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
         const auto globalPos = scvf.ipGlobal();
         const auto& volVars = elemVolvars[scvf.insideScvIdx()];
 
@@ -302,17 +297,6 @@ public:
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Return the sources within the domain.
-     *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0);
-    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
@@ -347,7 +331,7 @@ private:
     Scalar darcyVelocity_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    int outputInterval_;
+    std::vector<Scalar> temperatureExact_;
 };
 
 } //end namespace Dumux

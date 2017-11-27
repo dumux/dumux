@@ -28,7 +28,6 @@
 #include <dune/common/iteratorrange.hh>
 
 #include <dumux/discretization/scvandscvfiterators.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
 
 namespace Dumux
 {
@@ -137,7 +136,7 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        scvIndices_ = std::vector<IndexType>({fvGridGeometry().problem_().elementMapper().index(*elementPtr_)});
+        scvIndices_ = std::vector<IndexType>({fvGridGeometry().elementMapper().index(*elementPtr_)});
     }
 
     //! The global finite volume geometry we are a restriction of
@@ -156,7 +155,6 @@ template<class TypeTag>
 class CCTpfaFVElementGeometry<TypeTag, false>
 {
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -299,21 +297,20 @@ public:
             }
         }
 
-        //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
+        //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
         //! on additional DOFs not included in the discretization schemes' occupation pattern
-        const auto& problem = fvGridGeometry().problem_();
-        const auto globalI = problem.elementMapper().index(element);
-        const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
-        if (!additionalDofDependencies.empty())
-        {
-            neighborScvs_.reserve(neighborScvs_.size() + additionalDofDependencies.size());
-            neighborScvIndices_.reserve(neighborScvIndices_.size() + additionalDofDependencies.size());
-            for (auto globalJ : additionalDofDependencies)
-            {
-                neighborScvs_.emplace_back(fvGridGeometry().element(globalJ).geometry(), globalJ);
-                neighborScvIndices_.emplace_back(globalJ);
-            }
-        }
+        // const auto globalI = fvGridGeometry().elementMapper().index(element);
+        // const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
+        // if (!additionalDofDependencies.empty())
+        // {
+        //     neighborScvs_.reserve(neighborScvs_.size() + additionalDofDependencies.size());
+        //     neighborScvIndices_.reserve(neighborScvIndices_.size() + additionalDofDependencies.size());
+        //     for (auto globalJ : additionalDofDependencies)
+        //     {
+        //         neighborScvs_.emplace_back(fvGridGeometry().element(globalJ).geometry(), globalJ);
+        //         neighborScvIndices_.emplace_back(globalJ);
+        //     }
+        // }
     }
 
     //! Binding of an element preparing the geometries only inside the element
@@ -361,7 +358,7 @@ private:
     //! create scvs and scvfs of the bound element
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = fvGridGeometry().problem_().elementMapper().index(element);
+        const auto eIdx = fvGridGeometry().elementMapper().index(element);
         scvs_.emplace_back(element.geometry(), eIdx);
         scvIndices_.emplace_back(eIdx);
 
@@ -378,8 +375,8 @@ private:
         int scvfCounter = 0;
         for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
         {
-            // check if intersection is on interior boundary
-            const auto isInteriorBoundary = fvGridGeometry().problem_().isInteriorBoundary(element, intersection);
+            // TODO check if intersection is on interior boundary
+            const auto isInteriorBoundary = false;
 
             if (dim < dimWorld)
                 if (handledScvf[intersection.indexInInside()])
@@ -408,7 +405,7 @@ private:
     void makeNeighborGeometries(const Element& element)
     {
         // create the neighbor scv
-        auto eIdx = fvGridGeometry().problem_().elementMapper().index(element);
+        const auto eIdx = fvGridGeometry().elementMapper().index(element);
         neighborScvs_.emplace_back(element.geometry(), eIdx);
         neighborScvIndices_.push_back(eIdx);
 
@@ -425,8 +422,8 @@ private:
         int scvfCounter = 0;
         for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
         {
-            // check if intersection is on interior boundary
-            const auto isInteriorBoundary = fvGridGeometry().problem_().isInteriorBoundary(element, intersection);
+            // TODO check if intersection is on interior boundary
+            const auto isInteriorBoundary = false;
 
             if (dim < dimWorld)
                 if (handledScvf[intersection.indexInInside()])
@@ -458,7 +455,7 @@ private:
                 {
                     for (unsigned outsideScvIdx = 0; outsideScvIdx < neighborVolVarIndices[scvfCounter].size(); ++outsideScvIdx)
                     {
-                        if (neighborVolVarIndices[scvfCounter][outsideScvIdx] == fvGridGeometry().problem_().elementMapper().index(*elementPtr_))
+                        if (neighborVolVarIndices[scvfCounter][outsideScvIdx] == fvGridGeometry().elementMapper().index(*elementPtr_))
                         {
                             std::vector<IndexType> scvIndices({eIdx});
                             scvIndices.insert(scvIndices.end(), neighborVolVarIndices[scvfCounter].begin(), neighborVolVarIndices[scvfCounter].end());

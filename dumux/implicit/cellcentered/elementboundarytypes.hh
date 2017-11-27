@@ -23,8 +23,6 @@
 #ifndef DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 
-#include "properties.hh"
-
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
@@ -36,37 +34,14 @@ namespace Dumux
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class TypeTag>
-class CCElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag, BoundaryTypes)>
+class CCElementBoundaryTypes
 {
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef std::vector<BoundaryTypes> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    /*!
-     * \brief Copy constructor.
-     *
-     * Copying a the boundary types of an element should be explicitly
-     * requested
-     */
-    explicit CCElementBoundaryTypes(const CCElementBoundaryTypes &v)
-        : ParentType(v)
-    {}
-
-    /*!
-     * \brief Default constructor.
-     */
-    CCElementBoundaryTypes()
-    {
-        hasDirichlet_ = false;
-        hasNeumann_ = false;
-        hasOutflow_ = false;
-    }
 
     /*!
      * \brief Update the boundary types for all vertices of an element.
@@ -78,59 +53,7 @@ public:
     void update(const Problem &problem,
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
-    {
-        this->resize(1);
-
-        hasDirichlet_ = false;
-        hasNeumann_ = false;
-        hasOutflow_ = false;
-
-        (*this)[0].reset();
-
-        for (auto&& scv : scvs(fvGeometry))
-        {
-            if (!problem.model().onBoundary(scv))
-                return;
-
-            for (auto&& scvFace : scvfs(fvGeometry))
-            {
-                if (!scvFace.boundary())
-                    continue;
-
-                (*this)[0] = problem.boundaryTypes(element, scvFace);
-
-                hasDirichlet_ = hasDirichlet_ || (*this)[0].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || (*this)[0].hasNeumann();
-                hasOutflow_ = hasOutflow_ || (*this)[0].hasOutflow();
-            }
-        }
-    }
-
-    /*!
-     * \brief Returns whether the element has a vertex which contains
-     *        a Dirichlet value.
-     */
-    bool hasDirichlet() const
-    { return hasDirichlet_; }
-
-    /*!
-     * \brief Returns whether the element potentially features a
-     *        Neumann boundary segment.
-     */
-    bool hasNeumann() const
-    { return hasNeumann_; }
-
-    /*!
-     * \brief Returns whether the element potentially features an
-     *        outflow boundary segment.
-     */
-    bool hasOutflow() const
-    { return hasOutflow_; }
-
-protected:
-    bool hasDirichlet_;
-    bool hasNeumann_;
-    bool hasOutflow_;
+    {}
 };
 
 } // namespace Dumux

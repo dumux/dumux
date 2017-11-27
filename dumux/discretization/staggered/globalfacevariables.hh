@@ -23,32 +23,54 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/discretization/staggered/facesolution.hh>
 
 namespace Dumux
 {
 
-template<class TypeTag>
+namespace Properties
+{
+    NEW_PROP_TAG(ElementFaceVariables);
+}
+
+template<class TypeTag, bool enableGlobalFaceVarsCache>
 class StaggeredGlobalFaceVariables
+{};
+
+template<class TypeTag>
+class StaggeredGlobalFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
 public:
-    void update(Problem& problem, const FaceSolutionVector& sol)
+    StaggeredGlobalFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
+
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
-        problemPtr_ = &problem;
+        const auto& faceSol = sol[faceIdx];
+        faceVariables_.resize(fvGridGeometry.numScvf());
 
-        faceVariables_.resize(problem.model().numFaceDofs());
-        assert(faceVariables_.size() == sol.size());
-
-        for(int i = 0; i < problem.model().numFaceDofs(); ++i)
+        for(auto&& element : elements(fvGridGeometry.gridView()))
         {
-            faceVariables_[i].update(sol[i]);
+            auto fvGeometry = localView(fvGridGeometry);
+            fvGeometry.bindElement(element);
+
+            for(auto&& scvf : scvfs(fvGeometry))
+            {
+                faceVariables_[scvf.index()].update(faceSol, problem(), element, fvGeometry, scvf);
+            }
         }
     }
 
@@ -57,13 +79,63 @@ public:
 
     FaceVariables& faceVars(const IndexType facetIdx)
     { return faceVariables_[facetIdx]; }
-private:
-    const Problem& problem_() const
+
+
+    /*!
+     * \brief Return a local restriction of this global object
+     *        The local object is only functional after calling its bind/bindElement method
+     *        This is a free function that will be found by means of ADL
+     */
+    friend inline ElementFaceVariables localView(const StaggeredGlobalFaceVariables& global)
+    { return ElementFaceVariables(global); }
+
+    const Problem& problem() const
     { return *problemPtr_; }
+
+private:
 
     const Problem* problemPtr_;
 
     std::vector<FaceVariables> faceVariables_;
+};
+
+template<class TypeTag>
+class StaggeredGlobalFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using IndexType = typename GridView::IndexSet::IndexType;
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
+public:
+    StaggeredGlobalFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
+
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
+    {  }
+
+    /*!
+     * \brief Return a local restriction of this global object
+     *        The local object is only functional after calling its bind/bindElement method
+     *        This is a free function that will be found by means of ADL
+     */
+    friend inline ElementFaceVariables localView(const StaggeredGlobalFaceVariables& global)
+    { return ElementFaceVariables(global); }
+
+    const Problem& problem() const
+    { return *problemPtr_; }
+
+
+private:
+
+    const Problem* problemPtr_;
 };
 
 

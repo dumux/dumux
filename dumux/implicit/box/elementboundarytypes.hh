@@ -23,8 +23,6 @@
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 
-#include "properties.hh"
-
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
@@ -94,7 +92,7 @@ public:
             int scvIdxLocal = scv.indexInElement();
             (*this)[scvIdxLocal].reset();
 
-            if (problem.model().onBoundary(scv))
+            if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
             {
                 (*this)[scvIdxLocal] = problem.boundaryTypes(element, scv);
 

@@ -31,6 +31,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
+#include <dumux/linear/solver.hh>
 #include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/amgproperties.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
@@ -71,32 +72,32 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
  * \brief Provides a linear solver using the ISTL AMG.
  */
 template <class TypeTag>
-class AMGBackend
+class AMGBackend : public LinearSolver<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP(TypeTag, AmgTraits) AmgTraits;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
     enum { numEq = AmgTraits::numEq };
-    typedef typename AmgTraits::LinearOperator LinearOperator;
-    typedef typename AmgTraits::VType VType;
-    typedef typename AmgTraits::Comm Comm;
-    typedef typename AmgTraits::Smoother Smoother;
-    typedef Dune::Amg::AMG<typename AmgTraits::LinearOperator, VType,
-                           Smoother,Comm> AMGType;
-    typedef typename AmgTraits::LinearOperator::matrix_type BCRSMat;
-
+    using LinearOperator = typename AmgTraits::LinearOperator;
+    using ScalarProduct = typename AmgTraits::ScalarProduct;
+    using VType = typename AmgTraits::VType;
+    using Comm = typename AmgTraits::Comm;
+    using Smoother = typename AmgTraits::Smoother;
+    using AMGType = Dune::Amg::AMG<typename AmgTraits::LinearOperator, VType, Smoother,Comm>;
+    using BCRSMat = typename AmgTraits::LinearOperator::matrix_type;
+    using DofMapper = typename AmgTraits::DofMapper;
 public:
     /*!
      * \brief Construct the backend.
      *
      * \param problem the problem at hand
      */
-    AMGBackend(const Problem& problem)
-    : problem_(problem), phelper_(problem_), firstCall_(true)
-    {
-    }
+    AMGBackend(const GridView& gridView, const DofMapper& dofMapper)
+    : gridView_(gridView)
+    , dofMapper_(dofMapper)
+    , phelper_(gridView, dofMapper)
+    , firstCall_(true)
+    {}
 
     /*!
      * \brief Solve a linear system.
@@ -108,39 +109,38 @@ public:
     template<class Matrix, class Vector>
     bool solve(Matrix& A, Vector& x, Vector& b)
     {
-        int maxIt = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, MaxIterations);
-        int verbosity = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
-        static const double residReduction = GET_PARAM_FROM_GROUP(TypeTag, double, LinearSolver, ResidualReduction);
-
         int rank = 0;
-        std::shared_ptr<typename AmgTraits::Comm> comm;
-        std::shared_ptr<typename AmgTraits::LinearOperator> fop;
-        std::shared_ptr<typename AmgTraits::ScalarProduct> sp;
+        std::shared_ptr<Comm> comm;
+        std::shared_ptr<LinearOperator> fop;
+        std::shared_ptr<ScalarProduct> sp;
         static const int dofCodim = AmgTraits::dofCodim;
         static const bool isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v;
         prepareLinearAlgebra_<Matrix, Vector, isParallel>(A, b, rank, comm, fop, sp);
 
-        typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments
-            SmootherArgs;
-        typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat,
-                                                                          Dune::Amg::FirstDiagonal> >
-            Criterion;
+        using SmootherArgs = typename Dune::Amg::SmootherTraits<Smoother>::Arguments;
+        using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat, Dune::Amg::FirstDiagonal>>;
+
         //! \todo Check whether the default accumulation mode atOnceAccu is needed.
         Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
-        params.setDefaultValuesIsotropic(GET_PROP_TYPE(TypeTag, GridView)::Traits::Grid::dimension);
-        params.setDebugLevel(verbosity);
+        params.setDefaultValuesIsotropic(Grid::dimension);
+        params.setDebugLevel(this->verbosity());
         Criterion criterion(params);
         SmootherArgs smootherArgs;
         smootherArgs.iterations = 1;
         smootherArgs.relaxationFactor = 1;
 
         AMGType amg(*fop, criterion, smootherArgs, *comm);
-        Dune::BiCGSTABSolver<typename AmgTraits::VType> solver(*fop, *sp, amg, residReduction, maxIt,
-                                                               rank == 0 ? verbosity : 0);
+        Dune::BiCGSTABSolver<VType> solver(*fop, *sp, amg, this->residReduction(), this->maxIter(),
+                                           rank == 0 ? this->verbosity() : 0);
 
         solver.apply(x, b, result_);
         firstCall_ = false;
         return result_.converged;
+    }
+
+    std::string name() const
+    {
+        return "AMG preconditioned BiCGSTAB solver";
     }
 
     /*!
@@ -149,11 +149,6 @@ public:
     const Dune::InverseOperatorResult& result() const
     {
         return result_;
-    }
-
-    const Problem& problem() const
-    {
-        return problem_;
     }
 
 private:
@@ -175,16 +170,18 @@ private:
      */
     template<class Matrix, class Vector, bool isParallel>
     void prepareLinearAlgebra_(Matrix& A, Vector& b, int& rank,
-                               std::shared_ptr<typename AmgTraits::Comm>& comm,
-                               std::shared_ptr<typename AmgTraits::LinearOperator>& fop,
-                               std::shared_ptr<typename AmgTraits::ScalarProduct>& sp)
+                               std::shared_ptr<Comm>& comm,
+                               std::shared_ptr<LinearOperator>& fop,
+                               std::shared_ptr<ScalarProduct>& sp)
     {
         LinearAlgebraPreparator<TypeTag, isParallel>
           ::prepareLinearAlgebra(A, b, rank, comm, fop, sp,
-                                 problem_, phelper_, firstCall_);
+                                 gridView_, dofMapper_, phelper_, firstCall_);
     }
 
-    const Problem& problem_;
+    GridView gridView_;
+    DofMapper dofMapper_;
+
     ParallelISTLHelper<TypeTag> phelper_;
     Dune::InverseOperatorResult result_;
     bool firstCall_;

@@ -29,8 +29,6 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/implicit/localresidual.hh>
 
-#include "properties.hh"
-
 namespace Dumux
 {
 /*!
@@ -47,6 +45,7 @@ class BoxLocalResidual : public ImplicitLocalResidual<TypeTag>
     using ParentType = ImplicitLocalResidual<TypeTag>;
     friend class ImplicitLocalResidual<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum {
@@ -64,176 +63,82 @@ class BoxLocalResidual : public ImplicitLocalResidual<TypeTag>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
 
 public:
-    // copying the local residual class is not a good idea
-    BoxLocalResidual(const BoxLocalResidual &) = delete;
+    using ParentType::ParentType;
 
-    BoxLocalResidual() : ParentType() {}
-
-protected:
-
-    void evalFluxes_(const Element& element,
-                     const FVElementGeometry& fvGeometry,
-                     const ElementVolumeVariables& elemVolVars,
-                     const ElementBoundaryTypes& bcTypes,
-                     const ElementFluxVariablesCache& elemFluxVarsCache)
+    void evalFlux(ElementResidualVector& residual,
+                  const Problem& problem,
+                  const Element& element,
+                  const FVElementGeometry& fvGeometry,
+                  const ElementVolumeVariables& elemVolVars,
+                  const ElementBoundaryTypes& elemBcTypes,
+                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                  const SubControlVolumeFace& scvf) const
     {
-        // calculate the mass flux over the scv faces and subtract
-        for (auto&& scvf : scvfs(fvGeometry))
+        const auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
+        if (!scvf.boundary())
         {
-            if (!scvf.boundary())
-            {
-                const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
-
-                auto flux = this->asImp_().computeFlux(element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
-
-                this->residual_[insideScv.indexInElement()] += flux;
-                this->residual_[outsideScv.indexInElement()] -= flux;
-            }
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            residual[insideScv.indexInElement()] += flux;
+            residual[outsideScv.indexInElement()] -= flux;
+        }
+        else
+        {
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            residual[insideScv.indexInElement()] += flux;
         }
     }
 
-    void evalBoundary_(const Element &element,
-                       const FVElementGeometry& fvGeometry,
-                       const ElementVolumeVariables& elemVolVars,
-                       const ElementBoundaryTypes& bcTypes,
-                       const ElementFluxVariablesCache& elemFluxVarsCache)
+
+    ResidualVector evalFlux(const Problem& problem,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const ElementBoundaryTypes& elemBcTypes,
+                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                            const SubControlVolumeFace& scvf) const
     {
-        if (bcTypes.hasNeumann() || bcTypes.hasOutflow())
+        ResidualVector flux(0.0);
+
+        // inner faces
+        if (!scvf.boundary())
         {
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                if (scvf.boundary())
-                {
-                    auto&& scv = fvGeometry.scv(scvf.insideScvIdx());
-                    this->asImp_().evalBoundaryFluxes_(element, fvGeometry, elemVolVars, scvf, scv, bcTypes[scv.indexInElement()], elemFluxVarsCache);
-                }
-            }
+            flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
         }
 
-        // additionally treat mixed D/N conditions in a strong sense
-        if (bcTypes.hasDirichlet())
+        // boundary faces
+        else
         {
-            for (auto&& scv : scvs(fvGeometry))
+            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& bcTypes = elemBcTypes[scv.indexInElement()];
+
+            // Neumann and Robin ("solution dependent Neumann") boundary conditions
+            if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
-                auto scvBcTypes = bcTypes[scv.indexInElement()];
-                if (scvBcTypes.hasDirichlet())
-                    this->asImp_().evalDirichlet_(element, fvGeometry, elemVolVars, scv, scvBcTypes);
+                auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
+
+                // multiply neumann fluxes with the area and the extrusion factor
+                neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
+
+                flux += neumannFluxes;
             }
+
+            // for Dirichlet there is no addition to the residual here but they
+            // are enforced strongly by replacing the residual entry afterwards
+            else if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
+                return flux;
+            else
+                DUNE_THROW(Dune::NotImplemented, "Mixed boundary conditions. Use pure boundary conditions by converting Dirichlet BCs to Robin BCs");
         }
-    }
-
-    /*!
-     * \brief Set the values of the Dirichlet boundary control volumes
-     *        of the current element.
-     */
-    void evalDirichlet_(const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& elemVolVars,
-                        const SubControlVolume &scv,
-                        const BoundaryTypes& bcTypes)
-    {
-        PrimaryVariables dirichletValues = this->problem().dirichlet(element, scv);
-
-        // set the dirichlet conditions
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
-            if (bcTypes.isDirichlet(eqIdx))
-            {
-                int pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
-                assert(0 <= pvIdx && pvIdx < numEq);
-                Valgrind::CheckDefined(dirichletValues[pvIdx]);
-
-                // get the primary variables
-                const auto& priVars = elemVolVars[scv].priVars();
-
-                this->residual_[scv.indexInElement()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
-            }
-        }
-    }
-
-    /*!
-     * \brief Add all fluxes resulting from Neumann and outflow boundary conditions to the local residual.
-     */
-    void evalBoundaryFluxes_(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace &scvf,
-                             const SubControlVolume& insideScv,
-                             const BoundaryTypes& bcTypes,
-                             const ElementFluxVariablesCache& elemFluxVarsCache)
-    {
-
-        // evaluate the Neumann conditions at the boundary face
-        if (bcTypes.hasNeumann())
-            this->residual_[insideScv.indexInElement()] += this->asImp_().evalNeumannSegment_(element, fvGeometry, elemVolVars, scvf, insideScv, bcTypes);
-
-        // TODO: evaluate the outflow conditions at the boundary face
-        //if (bcTypes.hasOutflow())
-        //    flux += this->asImp_().evalOutflowSegment_(&intersection, bcTypes);
-    }
-
-    /*!
-     * \brief Add Neumann boundary conditions for a single scv face
-     */
-    PrimaryVariables evalNeumannSegment_(const Element& element,
-                                         const FVElementGeometry& fvGeometry,
-                                         const ElementVolumeVariables& elemVolVars,
-                                         const SubControlVolumeFace &scvf,
-                                         const SubControlVolume& insideScv,
-                                         const BoundaryTypes &bcTypes)
-    {
-        // temporary vector to store the neumann boundary fluxes
-        PrimaryVariables flux(0);
-
-        auto neumannFluxes = this->problem().neumann(element, fvGeometry, elemVolVars, scvf);
-
-        // multiply neumann fluxes with the area and the extrusion factor
-        neumannFluxes *= scvf.area()*elemVolVars[insideScv].extrusionFactor();
-
-        // add fluxes to the temporary vector
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-            if (bcTypes.isNeumann(eqIdx))
-                flux[eqIdx] += neumannFluxes[eqIdx];
 
         return flux;
     }
-
-    /*!
-    * \brief Add outflow boundary conditions for a single sub-control
-    *        volume face to the local residual.
-    *
-    * \param isIt   The intersection iterator of current element
-    * \param scvIdx The index of the considered face of the sub-control volume
-    * \param boundaryFaceIdx The index of the considered boundary face of the sub control volume
-    */
-    // template <class IntersectionIterator>
-    // void evalOutflowSegment_(const IntersectionIterator &isIt,
-    //                         const int scvIdx,
-    //                         const int boundaryFaceIdx)
-    // {
-    //     const BoundaryTypes &bcTypes = this->bcTypes_(scvIdx);
-    //     // deal with outflow boundaries
-    //     if (bcTypes.hasOutflow())
-    //     {
-    //         //calculate outflow fluxes
-    //         PrimaryVariables values(0.0);
-    //         this->asImp_().computeFlux(values, boundaryFaceIdx, true);
-    //         Valgrind::CheckDefined(values);
-
-    //         for (int equationIdx = 0; equationIdx < numEq; ++equationIdx)
-    //         {
-    //             if (!bcTypes.isOutflow(equationIdx) )
-    //                 continue;
-    //             // deduce outflow
-    //             this->residual_[scvIdx][equationIdx] += values[equationIdx];
-    //         }
-    //     }
-    // }
 };
 
-}
+} // end namespace Dumux
 
 #endif

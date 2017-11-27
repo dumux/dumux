@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 3e4 # [s]
 MaxTimeStepSize = 1e3
@@ -15,3 +15,4 @@ EnableGravity = 0 # disable gravity
 
 [Vtk]
 AddVelocity = 1 #Enable velocity output
+

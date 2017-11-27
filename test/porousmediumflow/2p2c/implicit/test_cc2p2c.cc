@@ -23,7 +23,7 @@
  */
 #include <config.h>
 #include "injectionproblem.hh"
-#include <dumux/common/start.hh>
+#include <dumux/common/start/instationarynonlinear.hh>
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -62,6 +62,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(InjectionCCProblem) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
+    using ProblemTypeTag = TTAG(InjectionCCProblem);
+    return Dumux::InstationaryNonLinearSimulation<ProblemTypeTag>::start(argc, argv);
 }

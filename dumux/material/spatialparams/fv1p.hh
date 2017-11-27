@@ -71,11 +71,6 @@ public:
     FVSpatialParamsOneP(const GridView &gridView)
     {
     }
-
-    ~FVSpatialParamsOneP()
-    {
-    }
-
     /*!
      * \brief Averages the intrinsic permeability (Scalar).
      * \param K1 intrinsic permeability of the first element

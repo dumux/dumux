@@ -492,7 +492,7 @@ public:
         fvGeometry.bindElement(element);
 
         BulkVolumeVariables volVars;
-        volVars.update(BulkElementSolutionVector({bulkPriVars}),
+        volVars.update(BulkElementSolutionVector(bulkPriVars),
                        bulkProblem(),
                        element,
                        fvGeometry.scv(data.bulkElementIdx()));

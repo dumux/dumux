@@ -24,9 +24,10 @@
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
 #define DUMUX_FUELCELL_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/2pnc/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/h2on2o2.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
 
@@ -75,14 +76,13 @@ SET_INT_PROP(FuelCellProblem, ReplaceCompEqIdx, 3);
  * <tt>./test_box2pnc</tt>
  */
 template <class TypeTag>
-class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
+class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
@@ -90,9 +90,15 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using VtkOutputModule = typename GET_PROP_TYPE(TypeTag, VtkOutputModule);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+
+
+
 
     // Select the electrochemistry method
     using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
@@ -124,7 +130,7 @@ class FuelCellProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     enum { dofCodim = isBox ? dim : 0 };
@@ -135,20 +141,20 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    FuelCellProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    FuelCellProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        nTemperature_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, NTemperature);
-        nPressure_          = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, NPressure);
-        pressureLow_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureLow);
-        pressureHigh_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, PressureHigh);
-        temperatureLow_     = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureLow);
-        temperatureHigh_    = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, TemperatureHigh);
-        temperature_        = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, FluidSystem, InitialTemperature);
+        nTemperature_       = getParam<int>("Problem.NTemperature");
+        nPressure_          = getParam<int>("Problem.NPressure");
+        pressureLow_        = getParam<Scalar>("Problem.PressureLow");
+        pressureHigh_       = getParam<Scalar>("Problem.PressureHigh");
+        temperatureLow_     = getParam<Scalar>("Problem.TemperatureLow");
+        temperatureHigh_    = getParam<Scalar>("Problem.TemperatureHigh");
+        temperature_        = getParam<Scalar>("Problem.InitialTemperature");
 
-        name_               = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_               = getParam<std::string>("Problem.Name");
 
-        pO2Inlet_            = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, ElectroChemistry, pO2Inlet);
+        pO2Inlet_           = getParam<Scalar>("ElectroChemistry.pO2Inlet");
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -156,6 +162,12 @@ public:
                           /*pmin=*/pressureLow_,
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
+
+        currentDensity_.resize(fvGridGeometry->gridView().size(dofCodim));
+        reactionSourceH2O_.resize(fvGridGeometry->gridView().size(dofCodim));
+        reactionSourceO2_.resize(fvGridGeometry->gridView().size(dofCodim));
+        Kxx_.resize(fvGridGeometry->gridView().size(dofCodim));
+        Kyy_.resize(fvGridGeometry->gridView().size(dofCodim));
     }
 
     /*!
@@ -233,9 +245,9 @@ public:
 
         if(onUpperBoundary_(globalPos))
         {
-            Scalar pg = 1.0e5;
-            priVars[pressureIdx] = pg;
-            priVars[switchIdx] = 0.3;//Sl for bothPhases
+            Scalar pn = 1.0e5;
+            priVars[pressureIdx] = pn;
+            priVars[switchIdx] = 0.3;//Sw for bothPhases
             priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
         }
 
@@ -259,49 +271,73 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    const std::vector<Scalar>& getCurrentDensity()
     {
-        // create the required scalar fields
-        auto& currentDensity = outputModule.createScalarField("currentDensity [A/cm^2]", dofCodim);
-        auto& reactionSourceH2O = outputModule.createScalarField("reactionSourceH2O [mol/(sm^2)]", dofCodim);
-        auto& reactionSourceO2 = outputModule.createScalarField("reactionSourceO2 [mol/(sm^2)]", dofCodim);
+        return currentDensity_;
+    }
 
-        for (const auto& element : elements(this->gridView()))
+    const std::vector<Scalar>& getReactionSourceH2O()
+    {
+        return reactionSourceH2O_;
+    }
+
+    const std::vector<Scalar>& getReactionSourceO2()
+    {
+        return reactionSourceO2_;
+    }
+
+    const std::vector<Scalar>& getKxx()
+    {
+        return Kxx_;
+    }
+
+    const std::vector<Scalar>& getKyy()
+    {
+        return Kyy_;
+    }
+
+    void updateVtkOutput(const SolutionVector& curSol)
+    {
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
-            fvGeometry.bindElement(element);
+            ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
 
-            auto elemVolVars = localView(this->model().curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
 
             for (auto&& scv : scvs(fvGeometry))
             {
+                VolumeVariables volVars;
+                volVars.update(elemSol, *this, element, scv);
                 const auto& globalPos = scv.dofPosition();
                 const auto dofIdxGlobal = scv.dofIndex();
 
-                //reaction sources from electro chemistry
                 if(inReactionLayer_(globalPos))
                 {
                     //reactionSource Output
                     PrimaryVariables source;
-                    auto i = ElectroChemistry::calculateCurrentDensity(elemVolVars[scv]);
+                    auto i = ElectroChemistry::calculateCurrentDensity(volVars);
                     ElectroChemistry::reactionSource(source, i);
 
-                    reactionSourceH2O[dofIdxGlobal] = source[wPhaseIdx];
-                    reactionSourceO2[dofIdxGlobal] = source[numComponents-1];
+                    reactionSourceH2O_[dofIdxGlobal] = source[wPhaseIdx];
+                    reactionSourceO2_[dofIdxGlobal] = source[numComponents-1];
 
                     //Current Output in A/cm^2
-                    currentDensity[dofIdxGlobal] = i/10000;
+                    currentDensity_[dofIdxGlobal] = i/10000;
                 }
                 else
                 {
-                    reactionSourceH2O[dofIdxGlobal] = 0.0;
-                    reactionSourceO2[dofIdxGlobal] = 0.0;
-                    currentDensity[dofIdxGlobal] = 0.0;
+                    reactionSourceH2O_[dofIdxGlobal] = 0.0;
+                    reactionSourceO2_[dofIdxGlobal] = 0.0;
+                    currentDensity_[dofIdxGlobal] = 0.0;
                 }
+                Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
+                Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
             }
         }
     }
+
+
 
 private:
 
@@ -310,28 +346,28 @@ private:
         PrimaryVariables priVars(0.0);
         priVars.setState(Indices::bothPhases);
 
-        Scalar pg = 1.0e5;
-        priVars[pressureIdx] = pg;
-        priVars[switchIdx] = 0.3;//Sl for bothPhases
+        Scalar pn = 1.0e5;
+        priVars[pressureIdx] = pn;
+        priVars[switchIdx] = 0.3;//Sw for bothPhases
         priVars[switchIdx+1] = pO2Inlet_/4.315e9; //moleFraction xlO2 for bothPhases
 
         return priVars;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < this->bBoxMin()[0] + eps_; }
+    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > this->bBoxMax()[0] - eps_; }
+    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_; }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < this->bBoxMin()[1] + eps_; }
+    { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] > this->bBoxMax()[1] - eps_; }
+    { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
 
     bool inReactionLayer_(const GlobalPosition& globalPos) const
-    { return globalPos[1] < 0.1*(this->bBoxMax()[1] - this->bBoxMin()[1]) + eps_; }
+    { return globalPos[1] < 0.1*(this->fvGridGeometry().bBoxMax()[1] - this->fvGridGeometry().bBoxMin()[1]) + eps_; }
 
     Scalar temperature_;
     static constexpr Scalar eps_ = 1e-6;
@@ -341,6 +377,11 @@ private:
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
     Scalar pO2Inlet_;
+    std::vector<double> currentDensity_;
+    std::vector<double> reactionSourceH2O_;
+    std::vector<double> reactionSourceO2_;
+    std::vector<double> Kxx_;
+    std::vector<double> Kyy_;
 };
 
 } //end namespace Dumux

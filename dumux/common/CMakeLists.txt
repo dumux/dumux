@@ -1,3 +1,4 @@
+add_subdirectory(start)
 
 #install headers
 install(FILES

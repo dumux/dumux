@@ -23,7 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_GLOBAL_FLUXVARSCACHE_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 
 namespace Dumux
@@ -43,45 +42,91 @@ class CCTpfaGlobalFluxVariablesCache;
 template<class TypeTag>
 class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
 {
-    // the local class needs access to the problem
-    friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    // the filler class needs access to the access operators
-    friend CCTpfaFluxVariablesCacheFiller<TypeTag>;
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:
+    // The constructor
+    CCTpfaGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
-    void update(Problem& problem)
+    void update(const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol,
+                bool forceUpdate = false)
     {
-        problemPtr_ = &problem;
-
-        // instantiate helper class to fill the caches
-        FluxVariablesCacheFiller filler(problem);
-
-        const auto& fvGridGeometry = problem.model().fvGridGeometry();
-        fluxVarsCache_.resize(fvGridGeometry.numScvf());
-        for (const auto& element : elements(problem.gridView()))
+        // only do the update if fluxes are solution dependent or if update is forced
+        if (FluxVariablesCacheFiller::isSolDependent || forceUpdate)
         {
-            // Prepare the geometries within the elements of the stencil
-            auto fvGeometry = localView(fvGridGeometry);
-            fvGeometry.bind(element);
+            // instantiate helper class to fill the caches
+            FluxVariablesCacheFiller filler(problem());
 
-            auto elemVolVars = localView(problem.model().curGlobalVolVars());
-            elemVolVars.bind(element, fvGeometry, problem.model().curSol());
-
-            for (auto&& scvf : scvfs(fvGeometry))
+            fluxVarsCache_.resize(fvGridGeometry.numScvf());
+            for (const auto& element : elements(fvGridGeometry.gridView()))
             {
-                filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf);
+                // Prepare the geometries within the elements of the stencil
+                auto fvGeometry = localView(fvGridGeometry);
+                fvGeometry.bind(element);
+
+                auto elemVolVars = localView(gridVolVars);
+                elemVolVars.bind(element, fvGeometry, sol);
+
+                for (auto&& scvf : scvfs(fvGeometry))
+                {
+                    filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf, forceUpdate);
+                }
             }
         }
     }
+
+    void updateElement(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars)
+    {
+        if (FluxVariablesCacheFiller::isSolDependent)
+        {
+            const auto globalI = fvGeometry.fvGridGeometry().elementMapper().index(element);
+
+            // instantiate filler class
+            FluxVariablesCacheFiller filler(problem());
+
+            // update the caches inside this element
+            for (const auto& scvf : scvfs(fvGeometry))
+                filler.fill(*this, fluxVarsCache_[scvf.index()], element, fvGeometry, elemVolVars, scvf);
+
+            // update the caches in the neighbors
+            for (const auto& dataJ : fvGeometry.fvGridGeometry().connectivityMap()[globalI])
+            {
+                const auto elementJ = fvGeometry.fvGridGeometry().element(dataJ.globalJ);
+                for (const auto scvfIdxJ : dataJ.scvfsJ)
+                {
+                    const auto& scvfJ = fvGeometry.scvf(scvfIdxJ);
+                    filler.fill(*this, fluxVarsCache_[scvfJ.index()], elementJ, fvGeometry, elemVolVars, scvfJ);
+                }
+            }
+        }
+    }
+
+    // access operators in the case of caching
+    const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
+    { return fluxVarsCache_[scvf.index()]; }
+
+    FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
+    { return fluxVarsCache_[scvf.index()]; }
+
+    const Problem& problem() const
+    { return *problemPtr_; }
 
     /*!
      * \brief Return a local restriction of this global object
@@ -92,22 +137,6 @@ public:
     { return ElementFluxVariablesCache(global); }
 
 private:
-    // // access operators in the case of caching
-    // const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    // { return fluxVarsCache_[scvf.index()]; }
-
-    // FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
-    // { return fluxVarsCache_[scvf.index()]; }
-
-    const FluxVariablesCache& operator [](IndexType scvfIdx) const
-    { return fluxVarsCache_[scvfIdx]; }
-
-    FluxVariablesCache& operator [](IndexType scvfIdx)
-    { return fluxVarsCache_[scvfIdx]; }
-
-    const Problem& problem_() const
-    { return *problemPtr_; }
-
     const Problem* problemPtr_;
 
     std::vector<FluxVariablesCache> fluxVarsCache_;
@@ -121,15 +150,32 @@ private:
 template<class TypeTag>
 class CCTpfaGlobalFluxVariablesCache<TypeTag, false>
 {
-    // the local class needs access to the problem
-    friend typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
+    // The constructor
+    CCTpfaGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+
     // When global flux variables caching is disabled, we don't need to update the cache
-    void update(Problem& problem)
-    { problemPtr_ = &problem; }
+    void update(const FVGridGeometry& fvGridGeometry,
+                const GridVolumeVariables& gridVolVars,
+                const SolutionVector& sol,
+                bool forceUpdate = false) {}
+
+    void updateElement(const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars) {}
+
+    const Problem& problem() const
+    { return *problemPtr_; }
 
     /*!
      * \brief Return a local restriction of this global object
@@ -140,10 +186,6 @@ public:
     { return ElementFluxVariablesCache(global); }
 
 private:
-
-    const Problem& problem_() const
-    { return *problemPtr_; }
-
     const Problem* problemPtr_;
 };
 

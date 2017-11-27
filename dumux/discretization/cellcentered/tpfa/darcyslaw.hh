@@ -32,17 +32,10 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(ProblemEnableGravity);
-}
 
 /*!
  * \ingroup DarcysLaw
@@ -72,25 +65,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    class TpfaDarcysLawCache
-    {
-    public:
-        void updateAdvection(const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace &scvf)
-        {
-            tij_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
-        }
-
-        const Scalar& tij() const
-        { return tij_; }
-
-    private:
-        Scalar tij_;
-    };
-
     //! Class that fills the cache corresponding to tpfa Darcy's Law
     class TpfaDarcysLawCacheFiller
     {
@@ -110,13 +84,33 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
         }
     };
 
+    class TpfaDarcysLawCache
+    {
+    public:
+        using Filler = TpfaDarcysLawCacheFiller;
+
+        void updateAdvection(const Problem& problem,
+                             const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace &scvf)
+        {
+            tij_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
+        }
+
+        const Scalar& advectionTij() const
+        { return tij_; }
+
+    private:
+        Scalar tij_;
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    // state the type for the corresponding cache and its filler
+    // state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache;
-    using CacheFiller = TpfaDarcysLawCacheFiller;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -126,6 +120,8 @@ public:
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
+        static const bool gravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
 
         // Get the inside and outside volume variables
@@ -133,7 +129,7 @@ public:
         const auto& insideVolVars = elemVolVars[insideScv];
         const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
 
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (gravity)
         {
             // do averaging for the density over all neighboring elements
             const auto rho = [&]()
@@ -187,8 +183,8 @@ public:
                 {
                     const auto& insideFluxVarsCache = elemFluxVarsCache[scvf];
 
-                    Scalar sumTi(insideFluxVarsCache.tij());
-                    Scalar sumPTi(insideFluxVarsCache.tij()*hInside);
+                    Scalar sumTi(insideFluxVarsCache.advectionTij());
+                    Scalar sumPTi(insideFluxVarsCache.advectionTij()*hInside);
                     for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
                     {
                         const auto outsideScvIdx = scvf.outsideScvIdx(i);
@@ -198,14 +194,14 @@ public:
                         const auto xOutside = scvf.boundary() ? scvf.ipGlobal() : fvGeometry.scv(outsideScvIdx).center();
                         const auto gOutside = problem.gravityAtPos(xOutside);
 
-                        sumTi += outsideFluxVarsCache.tij();
-                        sumPTi += outsideFluxVarsCache.tij()*(outsideVolVars.pressure(phaseIdx) - rho*(gOutside*xOutside));
+                        sumTi += outsideFluxVarsCache.advectionTij();
+                        sumPTi += outsideFluxVarsCache.advectionTij()*(outsideVolVars.pressure(phaseIdx) - rho*(gOutside*xOutside));
                     }
                     return sumPTi/sumTi;
                 }
             }();
 
-            return fluxVarsCache.tij()*(hInside - hOutside);
+            return fluxVarsCache.advectionTij()*(hInside - hOutside);
         }
         else // no gravity
         {
@@ -221,8 +217,8 @@ public:
                 {
 
                     const auto& insideFluxVarsCache = elemFluxVarsCache[scvf];
-                    Scalar sumTi(insideFluxVarsCache.tij());
-                    Scalar sumPTi(insideFluxVarsCache.tij()*pInside);
+                    Scalar sumTi(insideFluxVarsCache.advectionTij());
+                    Scalar sumPTi(insideFluxVarsCache.advectionTij()*pInside);
 
                     for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
                     {
@@ -230,14 +226,14 @@ public:
                         const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
                         const auto& outsideVolVars = elemVolVars[outsideScvIdx];
                         const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
-                        sumTi += outsideFluxVarsCache.tij();
-                        sumPTi += outsideFluxVarsCache.tij()*outsideVolVars.pressure(phaseIdx);
+                        sumTi += outsideFluxVarsCache.advectionTij();
+                        sumPTi += outsideFluxVarsCache.advectionTij()*outsideVolVars.pressure(phaseIdx);
                     }
                     return sumPTi/sumTi;
                 }
             }();
 
-            return fluxVarsCache.tij()*(pInside - pOutside);
+            return fluxVarsCache.advectionTij()*(pInside - pOutside);
         }
     }
 

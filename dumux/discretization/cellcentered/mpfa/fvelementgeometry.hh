@@ -28,7 +28,6 @@
 #include <dune/common/iteratorrange.hh>
 
 #include <dumux/discretization/scvandscvfiterators.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
 
 namespace Dumux
 {
@@ -120,7 +119,7 @@ public:
         return fvGridGeometry().scvfIndicesOfScv(scvIndices_[0]).size();
     }
 
-    //! Binding of an element, called by the local jacobian to prepare element assembly
+    //! Binding of an element, called by the local assembler to prepare element assembly
     void bind(const Element& element)
     {
         this->bindElement(element);
@@ -129,8 +128,7 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element)
     {
-        elementPtr_ = &element;
-        scvIndices_ = std::vector<IndexType>({fvGridGeometry().problem_().elementMapper().index(*elementPtr_)});
+        scvIndices_ = std::vector<IndexType>({fvGridGeometry().elementMapper().index(element)});
     }
 
     //! The global finite volume geometry we are a restriction of
@@ -139,7 +137,6 @@ public:
 
 private:
 
-    const Element* elementPtr_;
     std::vector<IndexType> scvIndices_;
     const FVGridGeometry* fvGridGeometryPtr_;
 };
@@ -249,15 +246,14 @@ public:
     { return scvfs_.size(); }
 
     //! Binding of an element preparing the geometries of the whole stencil
-    //! called by the local jacobian to prepare element assembly
+    //! called by the local assembler to prepare element assembly
     void bind(const Element& element)
     {
         bindElement(element);
 
         // get some references for convenience
-        const auto& problem = fvGridGeometry().problem_();
-        const auto globalI = problem.elementMapper().index(element);
-        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
+        const auto globalI = fvGridGeometry().elementMapper().index(element);
+        const auto& assemblyMapI = fvGridGeometry().connectivityMap()[globalI];
 
         // reserve memory
         const auto numNeighbors = assemblyMapI.size();
@@ -269,7 +265,7 @@ public:
 
         // make neighbor geometries
         // use the assembly map to determine which faces are necessary
-        for (auto&& dataJ : assemblyMapI)
+        for (const auto& dataJ : assemblyMapI)
             makeNeighborGeometries(fvGridGeometry().element(dataJ.globalJ),
                                    dataJ.globalJ,
                                    dataJ.scvfsJ,
@@ -279,26 +275,26 @@ public:
         if (dim < dimWorld)
             makeFlipIndexSet();
 
-        //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
-        //! on additional DOFs not included in the discretization schemes' occupation pattern
-        const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
-        if (!additionalDofDependencies.empty())
-        {
-            neighborScvs_.reserve(neighborScvs_.size() + additionalDofDependencies.size());
-            neighborScvIndices_.reserve(neighborScvIndices_.size() + additionalDofDependencies.size());
-            for (auto globalJ : additionalDofDependencies)
-            {
-                neighborScvs_.emplace_back(fvGridGeometry().element(globalJ).geometry(), globalJ);
-                neighborScvIndices_.emplace_back(globalJ);
-            }
-        }
+        // //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
+        // //! on additional DOFs not included in the discretization schemes' occupation pattern
+        // const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
+        // if (!additionalDofDependencies.empty())
+        // {
+        //     const auto newNumNeighbors = neighborScvs_.size() + additionalDofDependencies.size();
+        //     neighborScvs_.reserve(newNumNeighbors);
+        //     neighborScvIndices_.reserve(newNumNeighbors);
+        //     for (auto globalJ : additionalDofDependencies)
+        //     {
+        //         neighborScvs_.emplace_back(fvGridGeometry().element(globalJ).geometry(), globalJ);
+        //         neighborScvIndices_.emplace_back(globalJ);
+        //     }
+        // }
     }
 
     //! Binding of an element preparing the geometries only inside the element
     void bindElement(const Element& element)
     {
         clear();
-        elementPtr_ = &element;
         makeElementGeometries(element);
     }
 
@@ -308,8 +304,7 @@ public:
 
 private:
 
-    //! Estimates the number of neighboring scvfs that have to be prepared
-    //! The estimate holds for inner elements, overestimats on the boundary
+    //! Computes the number of neighboring scvfs that have to be prepared
     template<class DataJ>
     unsigned int numNeighborScvfs_(const std::vector<DataJ>& dataJVector)
     {
@@ -322,11 +317,8 @@ private:
     //! create scvs and scvfs of the bound element
     void makeElementGeometries(const Element& element)
     {
-        // the problem
-        const auto& problem = fvGridGeometry().problem_();
-
         // make the scv
-        auto eIdx = problem.elementMapper().index(element);
+        const auto eIdx = fvGridGeometry().elementMapper().index(element);
         scvs_.emplace_back(element.geometry(), eIdx);
         scvIndices_.emplace_back(eIdx);
 
@@ -335,10 +327,10 @@ private:
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
 
         // the quadrature point to be used on the scvf
-        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+        static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
         // reserve memory for the scv faces
-        auto numLocalScvf = scvFaceIndices.size();
+        const auto numLocalScvf = scvFaceIndices.size();
         scvfIndices_.reserve(numLocalScvf);
         scvfs_.reserve(numLocalScvf);
 
@@ -355,16 +347,12 @@ private:
             // only make a new scvf if we haven't handled it yet
             if (dim < dimWorld)
             {
-                auto indexInInside = is.indexInInside();
+                const auto indexInInside = is.indexInInside();
                 if(finishedFacets[indexInInside])
                     continue;
                 else
                     finishedFacets[indexInInside] = true;
             }
-
-            // get the intersection corners according to generic numbering
-            auto numCorners = is.geometry().corners();
-            std::vector<GlobalPosition> isCorners(numCorners);
 
             // if outside level > inside level, use the outside element in the following
             bool useNeighbor = is.neighbor() && is.outside().level() > element.level();
@@ -373,22 +361,26 @@ private:
             const auto eg = e.geometry();
             const auto& refElement = ReferenceElements::general(eg.type());
 
-            for (unsigned int c = 0; c < numCorners; ++c)
-                isCorners[c] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, dim), dim));
+            // Set up a container with all relevant positions for scvf corner computation
+            const auto numCorners = is.geometry().corners();
+            const auto isPositions = MpfaHelper::computeScvfCornersOnIntersection(eg,
+                                                                                  refElement,
+                                                                                  indexInElement,
+                                                                                  numCorners);
 
             // make the scv faces belonging to each corner of the intersection
-            for (unsigned int c = 0; c < numCorners; ++c)
+            for (int c = 0; c < numCorners; ++c)
             {
                 // get the global vertex index the scv face is connected to
                 auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
-                auto vIdxGlobal = problem.vertexMapper().subIndex(e, vIdxLocal, dim);
+                auto vIdxGlobal = fvGridGeometry().vertexMapper().subIndex(e, vIdxLocal, dim);
 
                 // do not build scvfs connected to a processor boundary
                 if (fvGridGeometry().isGhostVertex(vIdxGlobal))
                     continue;
 
                 scvfs_.emplace_back(MpfaHelper(),
-                                    MpfaHelper::getScvfCorners(isCorners, c),
+                                    MpfaHelper::getScvfCorners(isPositions, numCorners, c),
                                     is.centerUnitOuterNormal(),
                                     vIdxGlobal,
                                     vIdxLocal,
@@ -396,8 +388,7 @@ private:
                                     eIdx,
                                     neighborVolVarIndices[scvfCounter],
                                     q,
-                                    is.boundary()
-                                    );
+                                    is.boundary());
 
                 scvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
                 scvfCounter++;
@@ -421,7 +412,7 @@ private:
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdxGlobal);
 
         // the quadrature point to be used on the scvf
-        const Scalar q = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Mpfa, Q);
+        static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
         // for network grids we only want to do one scvf per half facet
         // this approach assumes conforming grids at branching facets
@@ -443,10 +434,6 @@ private:
                     finishedFacets[indexInInside] = true;
             }
 
-            // get the intersection corners according to generic numbering
-            auto numCorners = is.geometry().corners();
-            std::vector<GlobalPosition> isCorners(numCorners);
-
             // if outside level > inside level, use the outside element in the following
             bool useNeighbor = is.neighbor() && is.outside().level() > element.level();
             const auto& e = useNeighbor ? is.outside() : element;
@@ -454,45 +441,54 @@ private:
             const auto eg = e.geometry();
             const auto& refElement = ReferenceElements::general(eg.type());
 
-            for (unsigned int c = 0; c < numCorners; ++c)
-                isCorners[c] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, dim), dim));
+            // Set up a container with all relevant positions for scvf corner computation
+            const auto numCorners = is.geometry().corners();
+            const auto isPositions = MpfaHelper::computeScvfCornersOnIntersection(eg,
+                                                                                  refElement,
+                                                                                  indexInElement,
+                                                                                  numCorners);
 
             // make the scv faces belonging to each corner of the intersection
-            for (unsigned int c = 0; c < numCorners; ++c)
+            for (int c = 0; c < numCorners; ++c)
             {
+                // only build the scvf if it is in the list of necessary indices
+                if (!MpfaHelper::vectorContainsValue(scvfIndices, scvFaceIndices[scvfCounter])
+                    && !MpfaHelper::vectorContainsValue(additionalScvfs, scvFaceIndices[scvfCounter]))
+                {
+                    // increment counter either way
+                    scvfCounter++;
+                    continue;
+                }
+
                 // get the global vertex index the scv face is connected to
                 auto vIdxLocal = refElement.subEntity(indexInElement, 1, c, dim);
-                auto vIdxGlobal = fvGridGeometry().problem_().vertexMapper().subIndex(e, vIdxLocal, dim);
+                auto vIdxGlobal = fvGridGeometry().vertexMapper().subIndex(e, vIdxLocal, dim);
 
                 // do not build scvfs connected to a processor boundary
                 if (fvGridGeometry().isGhostVertex(vIdxGlobal))
                     continue;
 
-                // only build the scvf if it is in the list of necessary indices
-                if (MpfaHelper::contains(scvfIndices, scvFaceIndices[scvfCounter])
-                    || MpfaHelper::contains(additionalScvfs, scvFaceIndices[scvfCounter]))
-                {
-                    neighborScvfs_.emplace_back(MpfaHelper(),
-                                                MpfaHelper::getScvfCorners(isCorners, c),
-                                                is.centerUnitOuterNormal(),
-                                                vIdxGlobal,
-                                                vIdxLocal,
-                                                scvFaceIndices[scvfCounter],
-                                                eIdxGlobal,
-                                                neighborVolVarIndices[scvfCounter],
-                                                q,
-                                                is.boundary()
-                                                );
+                // build scvf
+                neighborScvfs_.emplace_back(MpfaHelper(),
+                                            MpfaHelper::getScvfCorners(isPositions, numCorners, c),
+                                            is.centerUnitOuterNormal(),
+                                            vIdxGlobal,
+                                            vIdxLocal,
+                                            scvFaceIndices[scvfCounter],
+                                            eIdxGlobal,
+                                            neighborVolVarIndices[scvfCounter],
+                                            q,
+                                            is.boundary());
 
-                    neighborScvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
-                }
+                neighborScvfIndices_.emplace_back(scvFaceIndices[scvfCounter]);
 
-                // increment counter either way
+                // increment counter
                 scvfCounter++;
             }
         }
     }
 
+    //! find the "flip" indices for all scvfs
     void makeFlipIndexSet()
     {
         const auto numInsideScvfs = scvfIndices_.size();
@@ -502,7 +498,7 @@ private:
         flipScvfIndices_.resize(numInsideScvfs);
         for (unsigned int insideFace = 0; insideFace < numInsideScvfs; ++insideFace)
         {
-            auto&& scvf = scvfs_[insideFace];
+            const auto& scvf = scvfs_[insideFace];
             if (scvf.boundary())
                 continue;
 
@@ -516,11 +512,11 @@ private:
                 const auto outsideScvIdx = scvf.outsideScvIdx(nIdx);
                 for (unsigned int outsideFace = 0; outsideFace < numNeighborScvfs; ++outsideFace)
                 {
-                    auto&& outsideScvf = neighborScvfs_[outsideFace];
+                    const auto& outsideScvf = neighborScvfs_[outsideFace];
                     // check if outside face is the flip face
                     if (outsideScvf.insideScvIdx() == outsideScvIdx &&
                         outsideScvf.vertexIndex() == vIdxGlobal &&
-                        MpfaHelper::contains(outsideScvf.outsideScvIndices(), insideScvIdx))
+                        MpfaHelper::vectorContainsValue(outsideScvf.outsideScvIndices(), insideScvIdx))
                     {
                         flipScvfIndices_[insideFace][nIdx] = outsideFace;
                         // there is always only one flip face in an outside element
@@ -534,7 +530,7 @@ private:
         neighborFlipScvfIndices_.resize(numNeighborScvfs);
         for (unsigned int outsideFace = 0; outsideFace < numNeighborScvfs; ++outsideFace)
         {
-            auto&& scvf = neighborScvfs_[outsideFace];
+            const auto& scvf = neighborScvfs_[outsideFace];
             if (scvf.boundary())
                 continue;
 
@@ -553,10 +549,10 @@ private:
                 {
                     for (unsigned int insideFace = 0; insideFace < numInsideScvfs; ++insideFace)
                     {
-                        auto&& insideScvf = scvfs_[insideFace];
+                        const auto& insideScvf = scvfs_[insideFace];
                         // check if the face is the flip face
                         if (insideScvf.vertexIndex() == vIdxGlobal &&
-                            MpfaHelper::contains(insideScvf.outsideScvIndices(), insideScvIdx))
+                            MpfaHelper::vectorContainsValue(insideScvf.outsideScvIndices(), insideScvIdx))
                         {
                             neighborFlipScvfIndices_[outsideFace][nIdx] = insideFace;
                             // there is always only one flip face in an outside element
@@ -572,7 +568,7 @@ private:
                         // check if outside face is the flip face
                         if (outsideScvf.insideScvIdx() == neighborScvIdx &&
                             outsideScvf.vertexIndex() == vIdxGlobal &&
-                            MpfaHelper::contains(outsideScvf.outsideScvIndices(), insideScvIdx))
+                            MpfaHelper::vectorContainsValue(outsideScvf.outsideScvIndices(), insideScvIdx))
                         {
                             neighborFlipScvfIndices_[outsideFace][nIdx] = outsideFace2;
                             // there is always only one flip face in an outside element
@@ -604,9 +600,6 @@ private:
         neighborScvs_.clear();
         neighborScvfs_.clear();
     }
-
-    // the bound element
-    const Element* elementPtr_;
 
     const FVGridGeometry* fvGridGeometryPtr_;
 

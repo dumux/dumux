@@ -28,7 +28,6 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
@@ -68,14 +67,53 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
+    //! Class that fills the cache corresponding to tpfa Fick's Law
+    class TpfaFouriersLawCacheFiller
+    {
+    public:
+        //! Function to fill a TpfaFicksLawCache of a given scvf
+        //! This interface has to be met by any diffusion-related cache filler class
+        template<class FluxVariablesCacheFiller>
+        static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                         const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace& scvf,
+                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+        {
+            scvfFluxVarsCache.updateHeatConduction(problem, element, fvGeometry, elemVolVars, scvf);
+        }
+    };
+
+    //! Class that caches the transmissibility
+    class TpfaFouriersLawCache
+    {
+    public:
+        using Filler = TpfaFouriersLawCacheFiller;
+
+        void updateHeatConduction(const Problem& problem,
+                                  const Element& element,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& elemVolVars,
+                                  const SubControlVolumeFace &scvf)
+        {
+            tij_ = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
+        }
+
+        const Scalar& heatConductionTij() const
+        { return tij_; }
+
+    private:
+        Scalar tij_;
+    };
+
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    //! state the type for the corresponding cache and its filler
-    //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyHeatConductionCache;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
+    //! export the type for the corresponding cache
+    using Cache = TpfaFouriersLawCache;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -85,49 +123,21 @@ public:
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
         // heat conductivities are always solution dependent (?)
-        Scalar tij = calculateTransmissibility_(problem, element, fvGeometry, elemVolVars, scvf);
+        Scalar tij = elemFluxVarsCache[scvf].heatConductionTij();
 
         // get the inside/outside temperatures
         const auto tInside = elemVolVars[scvf.insideScvIdx()].temperature();
         const auto tOutside = scvf.numOutsideScvs() == 1 ? elemVolVars[scvf.outsideScvIdx()].temperature()
-                              : branchingFacetTemperature_(problem, element, fvGeometry, elemVolVars, scvf, tInside, tij);
+                              : branchingFacetTemperature_(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf, tInside, tij);
 
         return tij*(tInside - tOutside);
     }
 
-private:
-
-    //! compute the temperature at branching facets for network grids
-    static Scalar branchingFacetTemperature_(const Problem& problem,
-                                             const Element& element,
-                                             const FVElementGeometry& fvGeometry,
-                                             const ElementVolumeVariables& elemVolVars,
-                                             const SubControlVolumeFace& scvf,
-                                             Scalar insideTemperature,
-                                             Scalar insideTi)
-    {
-        Scalar sumTi(insideTi);
-        Scalar sumTempTi(insideTi*insideTemperature);
-
-        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
-        {
-            const auto outsideScvIdx = scvf.outsideScvIdx(i);
-            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-            const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
-            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
-
-            auto outsideTi = calculateTransmissibility_(problem, outsideElement, fvGeometry, elemVolVars, flippedScvf);
-            sumTi += outsideTi;
-            sumTempTi += outsideTi*outsideVolVars.temperature();
-        }
-        return sumTempTi/sumTi;
-    }
-
-    static Scalar calculateTransmissibility_(const Problem& problem,
-                                             const Element& element,
-                                             const FVElementGeometry& fvGeometry,
-                                             const ElementVolumeVariables& elemVolVars,
-                                             const SubControlVolumeFace& scvf)
+    static Scalar calculateTransmissibility(const Problem& problem,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const SubControlVolumeFace& scvf)
     {
         Scalar tij;
 
@@ -171,6 +181,35 @@ private:
         }
 
         return tij;
+    }
+
+private:
+
+    //! compute the temperature at branching facets for network grids
+    static Scalar branchingFacetTemperature_(const Problem& problem,
+                                             const Element& element,
+                                             const FVElementGeometry& fvGeometry,
+                                             const ElementVolumeVariables& elemVolVars,
+                                             const ElementFluxVarsCache& elemFluxVarsCache,
+                                             const SubControlVolumeFace& scvf,
+                                             Scalar insideTemperature,
+                                             Scalar insideTi)
+    {
+        Scalar sumTi(insideTi);
+        Scalar sumTempTi(insideTi*insideTemperature);
+
+        for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
+        {
+            const auto outsideScvIdx = scvf.outsideScvIdx(i);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
+            const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
+
+            auto outsideTi = outsideFluxVarsCache.heatConductionTij();
+            sumTi += outsideTi;
+            sumTempTi += outsideTi*outsideVolVars.temperature();
+        }
+        return sumTempTi/sumTi;
     }
 
     static Scalar calculateOmega_(const SubControlVolumeFace& scvf,

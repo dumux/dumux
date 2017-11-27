@@ -4,11 +4,12 @@ from math import *
 import subprocess
 import sys
 
-if len(sys.argv) != 2:
+if len(sys.argv) < 2:
     sys.stderr.write('Please provide a single argument <testname> to the script\n')
     sys.exit(1)
 
 testname = str(sys.argv[1])
+testargs = [str(i) for i in sys.argv][2:]
 
 # remove the old log file
 subprocess.call(['rm', testname + '.log'])
@@ -16,7 +17,7 @@ print("Removed old log file ({})!".format(testname + '.log'))
 
 # do the runs with different refinement
 for i in [0, 1, 2, 3, 4, 5]:
-    subprocess.call(['./' + testname, '-Grid.Refinement', str(i),
+    subprocess.call(['./' + testname] + testargs + ['-Grid.Refinement', str(i),
                                       '-Problem.Name', testname])
 
 # check the rates and append them to the log file

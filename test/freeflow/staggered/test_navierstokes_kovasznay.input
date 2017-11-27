@@ -1,0 +1,25 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+LowerLeft = -0.5 -0.5
+UpperRight = 2 1.5
+Cells = 50 50
+
+[Problem]
+Name = test_kovasznay # name passed to the output routines
+EnableGravity = false
+PrintL2Error = false
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 0.025
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+AddVelocity = true

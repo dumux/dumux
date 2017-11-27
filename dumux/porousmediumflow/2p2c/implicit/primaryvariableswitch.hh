@@ -66,6 +66,9 @@ class TwoPTwoCPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
+public:
+    using ParentType::ParentType;
+
 protected:
 
     // perform variable switch at a degree of freedom location

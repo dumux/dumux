@@ -71,8 +71,6 @@ class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-
 public:
     // export type of fluid state for non-isothermal models
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);

@@ -1,0 +1,16 @@
+[TimeLoop]
+DtInitial = 1e4 # [s]
+MaxTimeStepSize = 1e4
+TEnd = 1e6 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 50 50
+
+[Problem]
+Name = tracer # name passed to the output routines
+D = 1e-8
+D2 = 0
+
+[Vtk]
+AddVelocity = true

@@ -23,7 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_VOLUMEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/basicproperties.hh>
 
 namespace Dumux
 {
@@ -93,8 +93,11 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -102,6 +105,12 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
+
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    typename DofTypeIndices::FaceIdx faceIdx;
+
+    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
 public:
 
@@ -115,30 +124,35 @@ public:
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
-        auto eIdx = globalVolVars().problem_().elementMapper().index(element);
+        clear();
 
-        // stencil information
-        const auto& neighborStencil = globalVolVars().problem_().model().stencils(element).neighborStencil();
-        const auto numDofs = neighborStencil.size() + 1;
+        const auto& problem = globalVolVars().problem();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto map = fvGridGeometry.connectivityMap();
+        const auto& connectivityMapI = map(cellCenterIdx, cellCenterIdx, globalI);
+        const auto numDofs = connectivityMapI.size();
+
+        auto&& scvI = fvGeometry.scv(globalI);
 
         // resize local containers to the required size (for internal elements)
         volumeVariables_.resize(numDofs);
         volVarIndices_.resize(numDofs);
         int localIdx = 0;
 
-        // update the volume variables of the element at hand
-        auto&& scvI = fvGeometry.scv(eIdx);
-        volumeVariables_[localIdx].update(sol[eIdx], globalVolVars().problem_(), element, scvI);
-        volVarIndices_[localIdx] = scvI.index();
-        ++localIdx;
-
-        // Update the volume variables of the neighboring elements
-        for (auto globalJ : neighborStencil)
+        // Update the volume variables of the element at hand and the neighboring elements
+        for (auto globalJ : connectivityMapI)
         {
-            const auto& elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+            const auto& elementJ = fvGridGeometry.element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
-            volumeVariables_[localIdx].update(sol[globalJ], globalVolVars().problem_(), elementJ, scvJ);
-            volVarIndices_[localIdx] = scvJ.index();
+            PrimaryVariables priVars(0.0);
+            priVars[cellCenterIdx] = sol[cellCenterIdx][globalJ];
+            ElementSolution elemSol{std::move(priVars)};
+            volumeVariables_[localIdx].update(elemSol,
+                                              problem,
+                                              elementJ,
+                                              scvJ);
+            volVarIndices_[localIdx] = scvJ.dofIndex();
             ++localIdx;
         }
 
@@ -149,18 +163,33 @@ public:
             if (!scvf.boundary())
                 continue;
 
-            // check if boundary is a pure dirichlet boundary
-            const auto bcTypes = globalVolVars().problem_().boundaryTypes(element, scvf);
-            if (bcTypes.hasOnlyDirichlet())
-            {
-                const auto dirichletPriVars = globalVolVars().problem_().dirichlet(element, scvf);
+            const auto bcTypes = problem.boundaryTypes(element, scvf);
 
-                volumeVariables_.resize(localIdx+1);
-                volVarIndices_.resize(localIdx+1);
-                volumeVariables_[localIdx].update(dirichletPriVars, globalVolVars().problem_(), element, scvI);
-                volVarIndices_[localIdx] = scvf.outsideScvIdx();
-                ++localIdx;
+            PrimaryVariables boundaryPriVars(0.0);
+
+            for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
+            {
+                if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
+                    boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichlet(element, scvf)[cellCenterIdx][eqIdx];
+                else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
+                    boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
+                //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
+                // could be made more general by allowing a non-zero-gradient, provided in problem file
+                else
+                    if(eqIdx == Indices::pressureIdx)
+                        DUNE_THROW(Dune::InvalidStateException, "Face at: " << scvf.center() << " has neither Dirichlet nor Neumann BC.");
             }
+
+            volumeVariables_.resize(localIdx+1);
+            volVarIndices_.resize(localIdx+1);
+
+            ElementSolution elemSol{std::move(boundaryPriVars)};
+            volumeVariables_[localIdx].update(elemSol,
+                                              problem,
+                                              element,
+                                              scvI);
+            volVarIndices_[localIdx] = scvf.outsideScvIdx();
+             ++localIdx;
         }
     }
 
@@ -170,13 +199,21 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        auto eIdx = globalVolVars().problem_().elementMapper().index(element);
+        clear();
+
+        const auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(sol[eIdx], globalVolVars().problem_(), element, scv);
+        PrimaryVariables priVars(0.0);
+        priVars[cellCenterIdx] = sol[cellCenterIdx][eIdx];
+        ElementSolution elemSol{std::move(priVars)};
+        volumeVariables_[0].update(elemSol,
+                                   globalVolVars().problem(),
+                                   element,
+                                   scv);
         volVarIndices_[0] = scv.dofIndex();
     }
 
@@ -195,6 +232,13 @@ public:
     //! The global volume variables object we are a restriction of
     const GlobalVolumeVariables& globalVolVars() const
     { return *globalVolVarsPtr_; }
+
+    //! Clear all local storage
+    void clear()
+    {
+        volVarIndices_.clear();
+        volumeVariables_.clear();
+    }
 
 private:
     const GlobalVolumeVariables* globalVolVarsPtr_;

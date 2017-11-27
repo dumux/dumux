@@ -23,9 +23,9 @@
 #ifndef DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 #define DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fluxvariablescaching.hh>
 
 namespace Dumux
 {
@@ -37,8 +37,6 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(InteriorBoundaryData);
-NEW_PROP_TAG(EnableInteriorBoundaries);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,12 +74,14 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 
     using CoordScalar = typename GridView::ctype;
     static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
 
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ShapeJacobian = typename FeLocalBasis::Traits::JacobianType;
     using ShapeValue = typename Dune::FieldVector<Scalar, 1>;
     using JacobianInverseTransposed = typename Element::Geometry::JacobianInverseTransposed;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 
@@ -98,7 +98,13 @@ public:
         const auto ipLocal = geometry.local(scvf.center());
         jacInvT_ = geometry.jacobianInverseTransposed(ipLocal);
         localBasis.evaluateJacobian(ipLocal, shapeJacobian_);
-        localBasis.evaluateFunction(ipLocal, shapeValues_); // do we need the shapeValues for the flux?
+        localBasis.evaluateFunction(ipLocal, shapeValues_); // shape values for rho
+
+        // compute the gradN at for every scv/dof
+        gradN_.resize(fvGeometry.numScv());
+        for (const auto& scv: scvs(fvGeometry))
+            jacInvT_.mv(shapeJacobian_[scv.indexInElement()][0], gradN_[scv.indexInElement()]);
+
     }
 
     const std::vector<ShapeJacobian>& shapeJacobian() const
@@ -110,159 +116,66 @@ public:
     const JacobianInverseTransposed& jacInvT() const
     { return jacInvT_; }
 
+    const GlobalPosition& gradN(unsigned int scvIdxInElement) const
+    { return gradN_[scvIdxInElement]; }
+
 private:
+    std::vector<GlobalPosition> gradN_;
     std::vector<ShapeJacobian> shapeJacobian_;
     std::vector<ShapeValue> shapeValues_;
     JacobianInverseTransposed jacInvT_;
 };
 
-// forward declaration of the base class of the tpfa flux variables cache
-template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
-class CCTpfaPorousMediumFluxVariablesCache : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                             public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
-                                             public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
+// the following classes choose the cache type: empty if the law disabled and the law's cache if it's enabled
+// if advections is disabled the advection type is still instatiated if we use std::conditional_t and has to be a full type
+// in order to prevent that instead of std::conditional_t we use this helper type is only dependent on the advection type
+// if advection is enabled otherwise its an empty cache type
+template<class TypeTag, bool EnableAdvection> class AdvectionCacheChooser : public FluxVariablesCaching::EmptyAdvectionCache<TypeTag> {};
+template<class TypeTag> class AdvectionCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache {};
+template<class TypeTag, bool EnableMolecularDiffusion> class DiffusionCacheChooser : public FluxVariablesCaching::EmptyDiffusionCache<TypeTag> {};
+template<class TypeTag> class DiffusionCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
+template<class TypeTag, bool EnableEnergyBalance> class EnergyCacheChooser : public FluxVariablesCaching::EmptyHeatConductionCache<TypeTag> {};
+template<class TypeTag> class EnergyCacheChooser<TypeTag, true> : public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
+
 
 // specialization for the cell centered tpfa method
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCTpfa>
-      : public CCTpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
-                                                             GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
-                                                             GET_PROP_VALUE(TypeTag, EnableEnergyBalance)> {};
+: public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
+, public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
+, public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+{};
 
-// // specialization for the case of pure advection
-// TODO ALL THESE SHOULDNOT BE NECESSARY AND ALWAYS DERIVE FROM ALL CACHES!
-template<class TypeTag>
-class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                                                          public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
-
-// specialization for the case of advection & diffusion
-template<class TypeTag>
-class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, true, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
-
-// specialization for the case of advection & heat conduction
-template<class TypeTag>
-class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, false, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
-                                                                         public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
-
-// specialization for the case of advection, diffusion & heat conduction
-template<class TypeTag>
-class CCTpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                                                        public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
-                                                                        public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
-
-// TODO further specializations
-
-// forward declaration of the base class of the mpfa flux variables cache
-template<class TypeTag, bool EnableAdvection, bool EnableMolecularDiffusion, bool EnableEnergyBalance>
-class CCMpfaPorousMediumFluxVariablesCache;
-
-// specialization of the flux variables cache for the cell centered finite volume mpfa scheme
+//! specialization of the flux variables cache for the cell centered finite volume mpfa scheme
+//! stores data which is commonly used by all the different types of processes
 template<class TypeTag>
 class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::CCMpfa>
-      : public CCMpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
-                                                             GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
-                                                             GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+: public AdvectionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection)>
+, public DiffusionCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>
+, public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
 {
-    using InteriorBoundaryData = typename GET_PROP_TYPE(TypeTag, InteriorBoundaryData);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ParentType = CCMpfaPorousMediumFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableAdvection),
-                                                                     GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion),
-                                                                     GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
-
-    static constexpr bool enableInteriorBoundaries = GET_PROP_VALUE(TypeTag, EnableInteriorBoundaries);
-
+    using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
 public:
-    //! the constructor
-    PorousMediumFluxVariablesCacheImplementation()
-    : ParentType(),
-      isUpdated_(false),
-      interiorBoundaryInfoSelf_(false, -1)
-    {}
-
     //! Returns whether or not this cache has been updated
-    bool isUpdated() const
-    { return isUpdated_; }
+    bool isUpdated() const { return isUpdated_; }
 
-    //! Sets the update status from outside. This is used to only update
-    //! the cache once after solving the local system. When visiting an scvf
-    //! of the same interaction region again, the update is skipped.
-    void setUpdateStatus(const bool status)
-    {
-        isUpdated_ = status;
-    }
+    //! Sets the update status. When set to true, consecutive updates will be skipped
+    void setUpdateStatus(bool status) { isUpdated_ = status; }
 
-    //! maybe update data on interior Dirichlet boundaries
-    template<class InteractionVolume>
-    void updateInteriorBoundaryData(const InteractionVolume& iv, const SubControlVolumeFace &scvf)
-    {
-        if (enableInteriorBoundaries)
-        {
-            interiorBoundaryData_ = iv.interiorBoundaryData();
+    //! Sets the index of the iv (this scvf is embedded in) in its container
+    void setIvIndexInContainer(GridIndexType ivIndex) { ivIndexInContainer_ = ivIndex; }
 
-            // check if the actual scvf is on an interior Dirichlet boundary
-            const auto scvfIdx = scvf.index();
-            unsigned int indexInData = 0;
-            for (auto&& data : interiorBoundaryData_)
-            {
-                if (data.scvfIndex() == scvfIdx)
-                {
-                    interiorBoundaryInfoSelf_ = std::make_pair(true, indexInData);
-                    break;
-                }
-
-                indexInData++;
-            }
-        }
-    }
-
-    bool isInteriorBoundary() const
-    { return interiorBoundaryInfoSelf_.first; }
-
-    const std::vector<InteriorBoundaryData>& interiorBoundaryData() const
-    { return interiorBoundaryData_; }
-
-    const InteriorBoundaryData& interiorBoundaryDataSelf() const
-    {
-        assert(interiorBoundaryInfoSelf_.first && "Trying to obtain interior boundary data on a face that is not marked as such");
-        assert(interiorBoundaryInfoSelf_.second != -1 && "The index to the interior boundary data of this face has not been set");
-        return interiorBoundaryData_[interiorBoundaryInfoSelf_.second];
-    }
+    //! Returns the index of the iv (this scvf is embedded in) in its container
+    GridIndexType ivIndexInContainer() const { return ivIndexInContainer_; }
 
 private:
-    // indicates whether or not this cache has been fully updated
-    bool isUpdated_;
+    //! indicates if cache has been fully updated
+    bool isUpdated_ = false;
 
-    // if this face is an interior Dirichlet boundary itself, store additional data
-    std::pair<bool, unsigned int> interiorBoundaryInfoSelf_;
-
-    // contains all the interior Dirichlet boundary data within the stencil of this face
-    std::vector<InteriorBoundaryData> interiorBoundaryData_;
+    //! the index of the iv (this scvf is embedded in) in its container
+    GridIndexType ivIndexInContainer_;
 };
 
-// specialization for the case of pure advection
-template<class TypeTag>
-class CCMpfaPorousMediumFluxVariablesCache<TypeTag, true, false, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache {};
-
-// specialization for the case of advection & diffusion
-template<class TypeTag>
-class CCMpfaPorousMediumFluxVariablesCache<TypeTag, true, true, false> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                                                         public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache {};
-
-// specialization for the case of advection & heat conduction
-template<class TypeTag>
-class CCMpfaPorousMediumFluxVariablesCache<TypeTag, true, false, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                                                         public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
-
-// specialization for the case of advection, diffusion & heat conduction
-template<class TypeTag>
-class CCMpfaPorousMediumFluxVariablesCache<TypeTag, true, true, true> : public GET_PROP_TYPE(TypeTag, AdvectionType)::Cache,
-                                                                        public GET_PROP_TYPE(TypeTag, MolecularDiffusionType)::Cache,
-                                                                        public GET_PROP_TYPE(TypeTag, HeatConductionType)::Cache {};
-
-// TODO further specializations
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

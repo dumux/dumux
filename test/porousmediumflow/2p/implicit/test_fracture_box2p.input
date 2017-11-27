@@ -1,9 +1,0 @@
-[TimeManager]
-DtInitial = 250 # [s]
-TEnd = 300000 # [s]
-
-[Grid]
-File = grids/fracture.msh
-
-[Problem]
-Name = fracturebox # name passed to the output routines

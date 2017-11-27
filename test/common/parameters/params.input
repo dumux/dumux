@@ -1,0 +1,9 @@
+[TimeLoop]
+TEnd = 1e6
+
+[Bulk.TimeLoop]
+TEnd = 1e5
+
+[Grid]
+Cells = 100 100
+Bells = 10 10

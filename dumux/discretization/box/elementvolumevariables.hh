@@ -23,8 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_BOX_ELEMENT_VOLUMEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
-#include <dumux/implicit/model.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -41,7 +40,6 @@ class BoxElementVolumeVariables
 template<class TypeTag>
 class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 {
-    friend ImplicitModel<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -54,7 +52,7 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    enum{ isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
     //! Constructor
@@ -81,7 +79,7 @@ public:
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
-        eIdx_ = globalVolVars().problem_().elementMapper().index(element);
+        eIdx_ = fvGeometry.fvGridGeometry().elementMapper().index(element);
     }
 
     //! The global volume variables object we are a restriction of
@@ -106,6 +104,7 @@ class BoxElementVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -129,15 +128,15 @@ public:
                      const SolutionVector& sol)
     {
         // get the solution at the dofs of the element
-        auto elemSol = globalVolVars().problem_().model().elementSolution(element, sol);
+        ElementSolutionVector elemSol(element, sol, fvGeometry);
 
         // resize volume variables to the required size
         volumeVariables_.resize(fvGeometry.numScv());
         for (auto&& scv : scvs(fvGeometry))
         {
             // TODO: INTERFACE SOLVER
-            // globalVolVars().problem_().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
-            volumeVariables_[scv.indexInElement()].update(elemSol, globalVolVars().problem_(), element, scv);
+            // globalVolVars().problem().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
+            volumeVariables_[scv.indexInElement()].update(elemSol, globalVolVars().problem(), element, scv);
         }
     }
 

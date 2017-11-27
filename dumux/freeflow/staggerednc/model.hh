@@ -27,15 +27,9 @@
 #ifndef DUMUX_NAVIERSTOKES_NC_MODEL_HH
 #define DUMUX_NAVIERSTOKES_NC_MODEL_HH
 
-// #include <dumux/porousmediumflow/implicit/velocityoutput.hh>
-#include "properties.hh"
-#include "../staggered/model.hh"
-#include "../staggeredni/model.hh"
 
-namespace Dumux
-{
 /*!
- * \ingroup NavierStokesModel
+ * \ingroup NavierStokesModel TODO: doc me properly!
  * \brief A single-phase, isothermal flow model using the fully implicit scheme.
  *
  * Single-phase, isothermal flow model, which uses a standard Darcy approach as the
@@ -55,63 +49,6 @@ namespace Dumux
  * and the implicit Euler method as time discretization.
  * The model supports compressible as well as incompressible fluids.
  */
-template<class TypeTag >
-class NavierStokesNCModel : public NavierStokesModel<TypeTag>
-{
-    using ParentType = NavierStokesModel<TypeTag>;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVGridGeometry) FVGridGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
 
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    enum { dim = GridView::dimension };
-    enum { dimWorld = GridView::dimensionworld };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    enum { phaseIdx = Indices::phaseIdx };
-
-public:
-
-    void init(Problem& problem)
-    {
-        ParentType::init(problem);
-
-        // register standardized vtk output fields
-        auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addSecondaryVariable("rhoMolar",[](const VolumeVariables& v){ return v.molarDensity(); });
-        vtkOutputModule.addSecondaryVariable("rho",[](const VolumeVariables& v){ return v.density(); });
-        for (int j = 0; j < numComponents; ++j)
-        {
-            vtkOutputModule.addSecondaryVariable("X^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx),
-                                                 [j](const VolumeVariables& v){ return v.massFraction(phaseIdx,j); });
-
-            vtkOutputModule.addSecondaryVariable("x^" + FluidSystem::componentName(j) + "_" + FluidSystem::phaseName(phaseIdx),
-                                                 [j](const VolumeVariables& v){ return v.moleFraction(phaseIdx,j); });
-        }
-
-//         NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
-    }
-};
-}
-
-#include "propertydefaults.hh"
 
 #endif

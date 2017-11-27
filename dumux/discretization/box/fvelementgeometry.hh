@@ -30,7 +30,6 @@
 
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
-#include <dumux/implicit/box/properties.hh>
 
 namespace Dumux
 {
@@ -54,7 +53,6 @@ template<class TypeTag>
 class BoxFVElementGeometry<TypeTag, true>
 {
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -150,7 +148,7 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        eIdx_ = fvGridGeometry().problem_().elementMapper().index(element);
+        eIdx_ = fvGridGeometry().elementMapper().index(element);
     }
 
     //! The global finite volume geometry we are a restriction of
@@ -188,7 +186,7 @@ class BoxFVElementGeometry<TypeTag, false>
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    using GeometryHelper = BoxGeometryHelper<GridView, dim>;
+    using GeometryHelper = BoxGeometryHelper<GridView, dim, SubControlVolume, SubControlVolumeFace>;
 
 public:
     //! Constructor
@@ -263,7 +261,7 @@ public:
     void bindElement(const Element& element)
     {
         elementPtr_ = &element;
-        eIdx_ = fvGridGeometry().problem_().elementMapper().index(element);
+        eIdx_ = fvGridGeometry().elementMapper().index(element);
         makeElementGeometries(element);
     }
 
@@ -275,7 +273,7 @@ private:
 
     void makeElementGeometries(const Element& element)
     {
-        auto eIdx = fvGridGeometry().problem_().elementMapper().index(element);
+        auto eIdx = fvGridGeometry().elementMapper().index(element);
 
         // get the element geometry
         auto elementGeometry = element.geometry();
@@ -289,7 +287,7 @@ private:
         for (unsigned int scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
-            auto dofIdxGlobal = fvGridGeometry().problem_().vertexMapper().subIndex(element, scvLocalIdx, dim);
+            auto dofIdxGlobal = fvGridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,

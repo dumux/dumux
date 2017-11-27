@@ -184,7 +184,7 @@ public:
     /*!
      * \brief Returns true if the gas phase is assumed to be compressible
      */
-    static bool gasIsCompressible()
+    static constexpr bool gasIsCompressible()
     { return true; }
 
     /*!
@@ -192,6 +192,18 @@ public:
      */
     static constexpr bool liquidIsCompressible()
     { return false; }
+
+    /*!
+     * \brief Returns true if the gas phase viscostiy is constant
+     */
+    static constexpr bool gasViscosityIsConstant()
+    { return true; }
+
+    /*!
+     * \brief Returns true if the liquid phase viscostiy is constant
+     */
+    static constexpr bool liquidViscosityIsConstant()
+    { return true; }
 
     /*!
      * \brief The density \f$\mathrm{[kg/m^3]}\f$ of steam at a given pressure and temperature.

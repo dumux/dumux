@@ -23,8 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
 
-#include <dumux/implicit/properties.hh>
-
 #include "fluxvariablescachefiller.hh"
 
 namespace Dumux
@@ -45,9 +43,6 @@ class CCMpfaElementFluxVariablesCache;
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, true>
 {
-    // the local jacobian needs to be able to update the cache during assembly
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
-
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -78,9 +73,14 @@ public:
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf) {}
 
+    // Specialization for the global caching being enabled - do nothing here
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars) {}
+
     // access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
+    { return (*globalFluxVarsCachePtr_)[scvf]; }
 
     //! The global object we are a restriction of
     const GlobalFluxVariablesCache& globalFluxVarsCache() const
@@ -88,11 +88,6 @@ public:
 
 private:
     const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
-
-    // Specialization for the global caching being enabled - do nothing here
-    void update(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars) {}
 };
 
 /*!
@@ -102,8 +97,9 @@ private:
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, false>
 {
-    // the local jacobian needs to be able to update the cache during assembly
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
+    // the flux variables cache filler needs to be friend to fill
+    // the interaction volumes and data handles
+    friend CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -115,6 +111,12 @@ class CCMpfaElementFluxVariablesCache<TypeTag, false>
     using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+    using DataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
+
+    static constexpr int dim = GridView::dimension;
 
 public:
     CCMpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
@@ -136,53 +138,61 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
-        fluxVarsCache_.clear();
-        globalScvfIndices_.clear();
+        // clear data
+        clear_();
 
-        const auto& problem = globalFluxVarsCache().problem_();
+        // some references for convenience
+        const auto& problem = globalFluxVarsCache().problem();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
 
-        const auto globalI = problem.elementMapper().index(element);
-        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
+        // the assembly map of the given element
+        const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
 
-        // reserve memory
+        // reserve memory for scvf index container
         unsigned int numNeighborScvfs = 0;
-        for (auto&& dataJ : assemblyMapI)
+        for (const auto& dataJ : assemblyMapI)
             numNeighborScvfs += dataJ.scvfsJ.size();
-        globalScvfIndices_.reserve(fvGeometry.numScvf() + numNeighborScvfs);
+        globalScvfIndices_.resize(fvGeometry.numScvf() + numNeighborScvfs);
 
-        // first add all the indices inside the element
-        for (auto&& scvf : scvfs(fvGeometry))
-            globalScvfIndices_.push_back(scvf.index());
-
-        // for the indices in the neighbors, use assembly map of the local jacobian
-        for (auto&& dataJ : assemblyMapI)
+        // set the scvf indices in scvf index container
+        unsigned int i = 0;
+        for (const auto& scvf : scvfs(fvGeometry))
+            globalScvfIndices_[i++] = scvf.index();
+        for (const auto& dataJ : assemblyMapI)
             for (auto scvfIdx : dataJ.scvfsJ)
-                globalScvfIndices_.push_back(scvfIdx);
+                globalScvfIndices_[i++] = scvfIdx;
+
+        // reserve memory estimate for interaction volumes and corresponding data
+        const auto numIvEstimate = getNoInteractionVolumesEstimate_(element, assemblyMapI);
+        const auto maxBoundaryIv = element.subEntities(dim);
+        primaryInteractionVolumes_.reserve(numIvEstimate);
+        secondaryInteractionVolumes_.reserve(maxBoundaryIv);
+        primaryIvDataHandles_.reserve(numIvEstimate);
+        secondaryIvDataHandles_.reserve(maxBoundaryIv);
 
         // helper class to fill flux variables caches
         FluxVariablesCacheFiller filler(problem);
 
-        // prepare all the caches of the scvfs inside the corresponding interaction volumes
+        // resize the cache container
         fluxVarsCache_.resize(globalScvfIndices_.size());
-        for (auto&& scvf : scvfs(fvGeometry))
+
+        // go through the caches and fill them
+        i = 0;
+        for (const auto& scvf : scvfs(fvGeometry))
         {
-            auto& scvfCache = (*this)[scvf];
+            auto& scvfCache = fluxVarsCache_[i++];
             if (!scvfCache.isUpdated())
-                filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
+                filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf, true);
         }
 
-        // prepare the caches in the remaining neighbors
-        for (auto&& dataJ : assemblyMapI)
+        for (const auto& dataJ : assemblyMapI)
         {
-            for (auto scvfIdx : dataJ.scvfsJ)
+            const auto elementJ = fvGridGeometry.element(dataJ.globalJ);
+            for (const auto scvfIdx : dataJ.scvfsJ)
             {
-                const auto& scvf = fvGeometry.scvf(scvfIdx);
-                auto& scvfCache = (*this)[scvf];
+                auto& scvfCache = fluxVarsCache_[i++];
                 if (!scvfCache.isUpdated())
-                {
-                    auto elementJ = problem.model().fvGridGeometry().element(dataJ.globalJ);
-                    filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, scvf);
-                }
+                    filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx), true);
             }
         }
     }
@@ -194,6 +204,48 @@ public:
     {
         // TODO
         DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes");
+    }
+
+    // This function is used to update the transmissibilities if the volume variables have changed
+    // Results in undefined behaviour if called before bind() or with a different element
+    void update(const Element& element,
+                const FVElementGeometry& fvGeometry,
+                const ElementVolumeVariables& elemVolVars)
+    {
+        // update only if transmissibilities are solution-dependent
+        if (FluxVariablesCacheFiller::isSolDependent)
+        {
+            const auto& problem = globalFluxVarsCache().problem();
+            const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+            const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
+
+            // helper class to fill flux variables caches
+            FluxVariablesCacheFiller filler(problem);
+
+            // set all the caches to "outdated"
+            for (auto& cache : fluxVarsCache_)
+                cache.setUpdateStatus(false);
+
+            // go through the caches maybe update them
+            unsigned int i = 0;
+            for (const auto& scvf : scvfs(fvGeometry))
+            {
+                auto& scvfCache = fluxVarsCache_[i++];
+                if (!scvfCache.isUpdated())
+                    filler.fill(*this, scvfCache, element, fvGeometry, elemVolVars, scvf);
+            }
+
+            for (const auto& dataJ : assemblyMapI)
+            {
+                const auto elementJ = fvGridGeometry.element(dataJ.globalJ);
+                for (const auto scvfIdx : dataJ.scvfsJ)
+                {
+                    auto& scvfCache = fluxVarsCache_[i++];
+                    if (!scvfCache.isUpdated())
+                        filler.fill(*this, scvfCache, elementJ, fvGeometry, elemVolVars, fvGeometry.scvf(scvfIdx));
+                }
+            }
+        }
     }
 
     // access operators in the case of no caching
@@ -216,57 +268,54 @@ public:
 private:
     const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
 
-    // This function updates the transmissibilities after the solution has been deflected during jacobian assembly
-    void update(const Element& element,
-                const FVElementGeometry& fvGeometry,
-                const ElementVolumeVariables& elemVolVars)
+    void clear_()
     {
-        static const bool isSolIndependent = FluxVariablesCacheFiller::isSolutionIndependent();
+        fluxVarsCache_.clear();
+        globalScvfIndices_.clear();
+        primaryInteractionVolumes_.clear();
+        secondaryInteractionVolumes_.clear();
+        primaryIvDataHandles_.clear();
+        secondaryIvDataHandles_.clear();
+    }
 
-        if (!isSolIndependent)
+    // get number of interaction volumes that are going to be required
+    template<class AssemblyMap>
+    std::size_t getNoInteractionVolumesEstimate_(const Element& element, const AssemblyMap& assemblyMap)
+    {
+        //! Get the mpfa method only once per simulation
+        static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
+
+        if (method == MpfaMethods::oMethod || method == MpfaMethods::oMethodFps)
+            return element.subEntities(dim);
+        else if (method == MpfaMethods::lMethod)
         {
-            const auto& problem = globalFluxVarsCache().problem_();
-
-            // helper class to fill flux variables caches
-            FluxVariablesCacheFiller filler(problem);
-
-            // set all the caches to "outdated"
-            for (auto& cache : fluxVarsCache_)
-                cache.setUpdateStatus(false);
-
-            // the global index of the element at hand
-            const auto globalI = problem.elementMapper().index(element);
-
-            // Let the filler do the update of the cache
-            for (unsigned int localScvfIdx = 0; localScvfIdx < globalScvfIndices_.size(); ++localScvfIdx)
-            {
-                const auto& scvf = fvGeometry.scvf(globalScvfIndices_[localScvfIdx]);
-
-                auto& scvfCache = fluxVarsCache_[localScvfIdx];
-                if (!scvfCache.isUpdated())
-                {
-                    // obtain the corresponding element
-                    const auto scvfInsideScvIdx = scvf.insideScvIdx();
-                    const auto insideElement = scvfInsideScvIdx == globalI ?
-                                               element :
-                                               problem.model().fvGridGeometry().element(scvfInsideScvIdx);
-
-                    filler.update(*this, scvfCache, insideElement, fvGeometry, elemVolVars, scvf);
-                }
-            }
+            std::size_t numInsideScvfs = MpfaHelper::getNumLocalScvfs(element.geometry().type());
+            std::size_t numOutsideScvf = 0;
+            for (const auto& dataJ : assemblyMap) numOutsideScvf += dataJ.scvfsJ.size();
+            return numOutsideScvf - numInsideScvfs;
         }
+        else
+            DUNE_THROW(Dune::NotImplemented, "number of interaction volumes estimate for chosen mpfa scheme");
     }
 
     // get index of an scvf in the local container
-    int getLocalScvfIdx_(const int scvfIdx) const
+    unsigned int getLocalScvfIdx_(const int scvfIdx) const
     {
         auto it = std::find(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
         assert(it != globalScvfIndices_.end() && "Could not find the flux vars cache for scvfIdx");
         return std::distance(globalScvfIndices_.begin(), it);
     }
 
+
+    // the local flux vars caches and the index set
     std::vector<FluxVariablesCache> fluxVarsCache_;
     std::vector<IndexType> globalScvfIndices_;
+
+    // store the interaction volumes and handles
+    std::vector<PrimaryInteractionVolume> primaryInteractionVolumes_;
+    std::vector<SecondaryInteractionVolume> secondaryInteractionVolumes_;
+    std::vector<DataHandle> primaryIvDataHandles_;
+    std::vector<DataHandle> secondaryIvDataHandles_;
 };
 
 } // end namespace

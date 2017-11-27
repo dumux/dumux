@@ -25,9 +25,14 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/common/elementmap.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/common/boundingboxtree.hh>
+
+#include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/cellcentered/connectivitymap.hh>
 
 namespace Dumux
 {
@@ -44,20 +49,23 @@ class CCTpfaFVGridGeometry
 
 // specialization in case the FVElementGeometries are stored globally
 template<class TypeTag>
-class CCTpfaFVGridGeometry<TypeTag, true>
+class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParentType = BaseFVGridGeometry<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using Element = typename GridView::template Codim<0>::Entity;
+    using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     //! The local class needs access to the scv, scvfs and the fv element geometry
     //! as they are globally cached
@@ -66,7 +74,14 @@ class CCTpfaFVGridGeometry<TypeTag, true>
 public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
-    : gridView_(gridView), elementMap_(gridView) {}
+    : ParentType(gridView)
+    , elementMap_(gridView)
+    {}
+
+    //! the element mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const ElementMapper& dofMapper() const
+    { return this->elementMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -86,6 +101,10 @@ public:
         return numBoundaryScvf_;
     }
 
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
@@ -94,14 +113,10 @@ public:
     Element element(IndexType eIdx) const
     { return elementMap_.element(eIdx); }
 
-    //! Return the gridView this global object lives on
-    const GridView& gridView() const
-    { return gridView_; }
-
     //! update all fvElementGeometries (do this again after grid adaption)
-    void update(const Problem& problem)
+    void update()
     {
-        problemPtr_ = &problem;
+        ParentType::update();
 
         // clear containers (necessary after grid refinement)
         scvs_.clear();
@@ -111,9 +126,9 @@ public:
         elementMap_.clear();
 
         // determine size of containers
-        IndexType numScvs = gridView_.size(0);
+        IndexType numScvs = numDofs();
         IndexType numScvf = 0;
-        for (const auto& element : elements(gridView_))
+        for (const auto& element : elements(this->gridView()))
             numScvf += element.subEntities(1);
 
         // reserve memory
@@ -125,9 +140,9 @@ public:
         // Build the scvs and scv faces
         IndexType scvfIdx = 0;
         numBoundaryScvf_ = 0;
-        for (const auto& element : elements(gridView_))
+        for (const auto& element : elements(this->gridView()))
         {
-            auto eIdx = problem.elementMapper().index(element);
+            const auto eIdx = this->elementMapper().index(element);
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
 
             // fill the element map with seeds
@@ -143,29 +158,29 @@ public:
             if (dim < dimWorld)
             {
                 outsideIndices.resize(element.subEntities(1));
-                for (const auto& intersection : intersections(gridView_, element))
+                for (const auto& intersection : intersections(this->gridView(), element))
                 {
                     if (intersection.neighbor())
                     {
                         const auto& outside = intersection.outside();
-                        auto nIdx = problem.elementMapper().index(outside);
+                        const auto nIdx = this->elementMapper().index(outside);
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
 
                 }
             }
 
-            for (const auto& intersection : intersections(gridView_, element))
+            for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // check if intersection is on interior boundary
-                const auto isInteriorBoundary = problem.isInteriorBoundary(element, intersection);
+                // TODO check if intersection is on interior boundary
+                const auto isInteriorBoundary = false;
 
                 // inner sub control volume faces
                 if (intersection.neighbor() && !isInteriorBoundary)
                 {
                     if (dim == dimWorld)
                     {
-                        auto nIdx = problem.elementMapper().index(intersection.outside());
+                        const auto nIdx = this->elementMapper().index(intersection.outside());
                         scvfs_.emplace_back(intersection,
                                             intersection.geometry(),
                                             scvfIdx,
@@ -201,7 +216,7 @@ public:
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
-                                        std::vector<IndexType>({eIdx, gridView_.size(0) + numBoundaryScvf_++}),
+                                        std::vector<IndexType>({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
                                         true);
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
@@ -227,17 +242,10 @@ public:
                     flipScvfIndices_[scvf.index()][i] = findFlippedScvfIndex_(insideScvIdx, scvf.outsideScvIdx(i));
             }
         }
+
+        // build the connectivity map for an effecient assembly
+        connectivityMap_.update(*this);
     }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline FVElementGeometry localView(const CCTpfaFVGridGeometry& fvGridGeometry)
-    { return FVElementGeometry(fvGridGeometry); }
-
-//private:
 
     //! Get a sub control volume with a global scv index
     const SubControlVolume& scv(IndexType scvIdx) const
@@ -264,6 +272,13 @@ public:
         return scvfIndicesOfScv_[scvIdx];
     }
 
+    /*!
+     * \brief Returns the connectivity map of which dofs have derivatives with respect
+     *        to a given dof.
+     */
+    const ConnectivityMap &connectivityMap() const
+    { return connectivityMap_; }
+
 private:
     // find the scvf that has insideScvIdx in its outsideScvIdx list and outsideScvIdx as its insideScvIdx
     IndexType findFlippedScvfIndex_(IndexType insideScvIdx, IndexType outsideScvIdx)
@@ -280,43 +295,51 @@ private:
         DUNE_THROW(Dune::InvalidStateException, "No flipped version of this scvf found!");
     }
 
-    const Problem& problem_() const
-    { return *problemPtr_; }
-
-    const Problem* problemPtr_;
-
-    const GridView gridView_;
+    // mappers
+    ConnectivityMap connectivityMap_;
     Dumux::ElementMap<GridView> elementMap_;
+
+    // containers storing the global data
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     IndexType numBoundaryScvf_;
+
     // needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<IndexType>> flipScvfIndices_;
 };
 
 // specialization in case the FVElementGeometries are not stored
 template<class TypeTag>
-class CCTpfaFVGridGeometry<TypeTag, false>
+class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParentType = BaseFVGridGeometry<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using Element = typename GridView::template Codim<0>::Entity;
+    using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    //! The local fvGeometry needs access to the problem
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
-    : gridView_(gridView), elementMap_(gridView) {}
+    : ParentType(gridView)
+    , elementMap_(gridView)
+    {}
+
+    //! the element mapper is the dofMapper
+    //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
+    const ElementMapper& dofMapper() const
+    { return this->elementMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -336,6 +359,10 @@ public:
         return numBoundaryScvf_;
     }
 
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const
+    { return this->gridView().size(0); }
+
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return elementMap_.element(scv.elementIndex()); }
@@ -344,14 +371,10 @@ public:
     Element element(IndexType eIdx) const
     { return elementMap_.element(eIdx); }
 
-    //! Return the gridView this global object lives on
-    const GridView& gridView() const
-    { return gridView_; }
-
     //! update all fvElementGeometries (do this again after grid adaption)
-    void update(const Problem& problem)
+    void update()
     {
-        problemPtr_ = &problem;
+        ParentType::update();
 
         // clear local data
         elementMap_.clear();
@@ -359,7 +382,7 @@ public:
         neighborVolVarIndices_.clear();
 
         // reserve memory or resize the containers
-        numScvs_ = gridView_.size(0);
+        numScvs_ = numDofs();
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
         elementMap_.resize(numScvs_);
@@ -367,9 +390,9 @@ public:
         neighborVolVarIndices_.resize(numScvs_);
 
         // Build the SCV and SCV face
-        for (const auto& element : elements(gridView_))
+        for (const auto& element : elements(this->gridView()))
         {
-            auto eIdx = problem.elementMapper().index(element);
+            const auto eIdx = this->elementMapper().index(element);
 
             // fill the element map with seeds
             elementMap_[eIdx] = element.seed();
@@ -387,22 +410,22 @@ public:
             if (dim < dimWorld)
             {
                 outsideIndices.resize(numLocalFaces);
-                for (const auto& intersection : intersections(gridView_, element))
+                for (const auto& intersection : intersections(this->gridView(), element))
                 {
                     if (intersection.neighbor())
                     {
                         const auto& outside = intersection.outside();
-                        auto nIdx = problem.elementMapper().index(outside);
+                        const auto nIdx = this->elementMapper().index(outside);
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
 
                 }
             }
 
-            for (const auto& intersection : intersections(gridView_, element))
+            for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // check if intersection is on interior boundary
-                const auto isInteriorBoundary = problem.isInteriorBoundary(element, intersection);
+                // TODO check if intersection is on interior boundary
+                const auto isInteriorBoundary = false;
 
                 // inner sub control volume faces
                 if (intersection.neighbor() && !isInteriorBoundary)
@@ -410,7 +433,7 @@ public:
                     if (dim == dimWorld)
                     {
                         scvfsIndexSet.push_back(numScvf_++);
-                        auto nIdx = problem.elementMapper().index(intersection.outside());
+                        const auto nIdx = this->elementMapper().index(intersection.outside());
                         neighborVolVarIndexSet.push_back({nIdx});
                     }
                     // this is for network grids
@@ -441,6 +464,9 @@ public:
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
+
+        // build the connectivity map for an effecient assembly
+        connectivityMap_.update(*this);
     }
 
     const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
@@ -451,33 +477,28 @@ public:
     { return neighborVolVarIndices_[scvIdx]; }
 
     /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
+     * \brief Returns the connectivity map of which dofs have derivatives with respect
+     *        to a given dof.
      */
-    friend inline FVElementGeometry localView(const CCTpfaFVGridGeometry& global)
-    { return FVElementGeometry(global); }
+    const ConnectivityMap &connectivityMap() const
+    { return connectivityMap_; }
 
 private:
-
-    const Problem& problem_() const
-    { return *problemPtr_; }
-
-    const Problem* problemPtr_;
-
-    const GridView gridView_;
 
     // Information on the global number of geometries
     IndexType numScvs_;
     IndexType numScvf_;
     IndexType numBoundaryScvf_;
 
-    // vectors that store the global data
+    // mappers
     Dumux::ElementMap<GridView> elementMap_;
+    ConnectivityMap connectivityMap_;
+
+    // vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<std::vector<IndexType>>> neighborVolVarIndices_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

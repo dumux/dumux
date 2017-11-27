@@ -29,21 +29,13 @@
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/math.hh>
 
-#include <dumux/implicit/properties.hh>
-
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux {
-// forward declaration of property tags
-namespace Properties {
-NEW_PROP_TAG(SpatialParams);
-NEW_PROP_TAG(SpatialParamsForchCoeff);
-}
 
 /*!
  * \ingroup SpatialParameters
  */
-
 
 /**
  * \brief The base class for spatial parameters of one-phase problems
@@ -68,7 +60,7 @@ class ImplicitSpatialParamsOneP
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
-    ImplicitSpatialParamsOneP(const Problem& problem, const GridView &gridView)
+    ImplicitSpatialParamsOneP(const Problem& problem)
     : problemPtr_(&problem)
     {}
 
@@ -306,18 +298,20 @@ public:
         return forchCoeff;
     }
 
-    const Problem& problem()
+    //! The problem we are associated with
+    const Problem& problem() const
     {
         return *problemPtr_;
     }
 
-private:
+protected:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
+private:
     const Problem *problemPtr_;
 };
 

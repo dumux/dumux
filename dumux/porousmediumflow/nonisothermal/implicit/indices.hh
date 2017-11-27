@@ -24,10 +24,9 @@
 #ifndef DUMUX_ENERGY_INDICES_HH
 #define DUMUX_ENERGY_INDICES_HH
 
-#include "properties.hh"
-
 namespace Dumux
 {
+
 /*!
  * \ingroup NIModel
  * \ingroup ImplicitIndices

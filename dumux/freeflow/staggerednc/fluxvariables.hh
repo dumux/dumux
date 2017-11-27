@@ -23,7 +23,7 @@
 #ifndef DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
 #define DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include "../staggered/fluxvariables.hh"
 
@@ -36,6 +36,7 @@ namespace Properties
 NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableEnergyBalance);
 NEW_PROP_TAG(EnableInertiaTerms);
+NEW_PROP_TAG(ElementFaceVariables);
 }
 
 // // forward declaration
@@ -60,7 +61,7 @@ class FreeFlowFluxVariablesImpl<TypeTag, true> : public FreeFlowFluxVariablesImp
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -95,17 +96,18 @@ class FreeFlowFluxVariablesImpl<TypeTag, true> : public FreeFlowFluxVariablesImp
     };
 
 public:
+
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
                                                         const ElementVolumeVariables& elemVolVars,
-                                                        const GlobalFaceVars& globalFaceVars,
+                                                        const ElementFaceVariables& elemFaceVars,
                                                         const SubControlVolumeFace &scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
         CellCenterPrimaryVariables flux(0.0);
 
-        flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, globalFaceVars, scvf);
+        flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, elemFaceVars, scvf);
         flux += MolecularDiffusionType::diffusiveFluxForCellCenter(problem, fvGeometry, elemVolVars, scvf);
         return flux;
     }
@@ -115,7 +117,7 @@ private:
     CellCenterPrimaryVariables advectiveFluxForCellCenter_(const Problem& problem,
                                                           const FVElementGeometry& fvGeometry,
                                                           const ElementVolumeVariables& elemVolVars,
-                                                          const GlobalFaceVars& globalFaceVars,
+                                                          const ElementFaceVariables& elemFaceVars,
                                                           const SubControlVolumeFace &scvf)
     {
         CellCenterPrimaryVariables flux(0.0);
@@ -123,10 +125,10 @@ private:
         const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& insideVolVars = elemVolVars[insideScv];
 
-        const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
 
         const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
-        const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
+        const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {

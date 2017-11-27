@@ -23,9 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/discretization/cellcentered/mpfa/facetypes.hh>
 #include <dumux/discretization/fluxstencil.hh>
 #include <dumux/discretization/upwindscheme.hh>
 
@@ -107,14 +105,13 @@ public:
         return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);
     }
 
-    static Stencil computeStencil(const Problem& problem,
-                                  const Element& element,
+    static Stencil computeStencil(const Element& element,
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
     {
         //! Give the upwind scheme access to the cached variables
         //! Forward to the discretization specific implementation
-        return FluxStencil::stencil(problem, element, fvGeometry, scvf);
+        return FluxStencil::stencil(element, fvGeometry, scvf);
     }
 
 private:

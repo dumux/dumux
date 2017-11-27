@@ -33,6 +33,7 @@
 #include "volumevariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"
+#include "vtkoutputfields.hh"
 
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/discretization/stationaryvelocityfield.hh>
@@ -68,6 +69,9 @@ SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
 //! define the model
 SET_TYPE_PROP(Tracer, Model, TracerModel<TypeTag>);
 
+//! Set the default vtk output fields
+SET_TYPE_PROP(Tracer, VtkOutputFields, TracerVtkOutputFields<TypeTag>);
+
 //! define the VolumeVariables
 SET_TYPE_PROP(Tracer, VolumeVariables, TracerVolumeVariables<TypeTag>);
 
@@ -79,6 +83,7 @@ SET_BOOL_PROP(Tracer, ProblemEnableGravity, false);
 
 //! Set the indices used by the tracer model
 SET_TYPE_PROP(Tracer, Indices, TracerIndices<TypeTag>);
+
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParamsOneP by default.
 SET_TYPE_PROP(Tracer, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);

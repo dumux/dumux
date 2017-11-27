@@ -29,7 +29,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 
-#include <dumux/implicit/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
@@ -87,10 +86,9 @@ public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::Staggered;
 
-    //! state the type for the corresponding cache and its filler
+    //! state the type for the corresponding cache
     //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyDiffusionCache;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyDiffusionCache<TypeTag>;
 
     static CellCenterPrimaryVariables diffusiveFluxForCellCenter(const Problem& problem,
                                                            const FVElementGeometry& fvGeometry,

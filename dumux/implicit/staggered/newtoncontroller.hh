@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 2p1cni specific controller for the newton solver.
+ * \brief A StaggeredModel specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -27,28 +27,19 @@
 #ifndef DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 #define DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 
-#include "properties.hh"
+#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
-#include "newtonconvergencewriter.hh"
+// #include "newtonconvergencewriter.hh"
 
 namespace Dumux {
 
-namespace Properties
-{
-    SET_PROP(StaggeredModel, LinearSolverBlockSize)
-    {
-        // LinearSolverAcceptsMultiTypeMatrix<T>::value
-        // TODO: make somehow dependend? or only relevant for direct solvers?
-    public:
-        static constexpr auto value = 1;
-    };
-}
 /*!
- * \ingroup PNMModel
- * \brief A PNM specific controller for the newton solver.
+ * \ingroup StaggeredModel
+ * \brief A StaggeredModel specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -58,12 +49,14 @@ namespace Properties
 template <class TypeTag>
 class StaggeredNewtonController : public NewtonController<TypeTag>
 {
-    typedef NewtonController<TypeTag> ParentType;
-    typedef NewtonConvergenceWriter<TypeTag> StaggeredNewtonConvergenceWriter;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianMatrix) JacobianMatrix;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using ParentType = NewtonController<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+
+    using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
+    using Communicator = typename GridView::CollectiveCommunication;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -75,8 +68,12 @@ class StaggeredNewtonController : public NewtonController<TypeTag>
     };
 
 public:
-    StaggeredNewtonController(const Problem &problem)
-        : ParentType(problem)
+    StaggeredNewtonController(const Communicator& comm)
+        : ParentType(comm)
+    {}
+
+    StaggeredNewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+        : ParentType(comm, timeLoop)
     {}
 
     /*!
@@ -92,11 +89,13 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    template<typename T = TypeTag>
-    typename std::enable_if<!LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
-    newtonSolveLinear(JacobianMatrix &A,
-                      SolutionVector &x,
-                      SolutionVector &b)
+    // template<typename T = TypeTag>
+    // typename std::enable_if<!LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
+    template<class LinearSolver, class JacobianMatrix, class SolutionVector>
+    void solveLinearSystem(LinearSolver& ls,
+                           JacobianMatrix& A,
+                           SolutionVector& x,
+                           SolutionVector& b)
     {
         try
         {
@@ -124,10 +123,10 @@ public:
             BlockVector y;
             y.resize(numRows);
 
-            // printmatrix(std::cout, M, "", "");
+            // printmatrix(std::cout, M, "old", "");
 
             // solve
-            const bool converged = this->linearSolver_.solve(M, y, bTmp);
+            const bool converged = ls.solve(M, y, bTmp);
 
             // copy back the result y into x
             VectorConverter<SolutionVector>::retrieveValues(x, y);
@@ -153,29 +152,29 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    template<typename T = TypeTag>
-    typename std::enable_if<LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
-    newtonSolveLinear(JacobianMatrix &A,
-                      SolutionVector &x,
-                      SolutionVector &b)
-    {
-        try
-        {
-            if (this->numSteps_ == 0)
-                this->initialResidual_ = b.two_norm();
-
-            bool converged = this->linearSolver_.solve(A, x, b);
-
-            if (!converged)
-                DUNE_THROW(NumericalProblem, "Linear solver did not converge");
-        }
-        catch (const Dune::Exception &e)
-        {
-            Dumux::NumericalProblem p;
-            p.message(e.what());
-            throw p;
-        }
-    }
+    // template<typename T = TypeTag>
+    // typename std::enable_if<LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
+    // newtonSolveLinear(JacobianMatrix &A,
+    //                   SolutionVector &x,
+    //                   SolutionVector &b)
+    // {
+    //     try
+    //     {
+    //         if (this->numSteps_ == 0)
+    //             this->initialResidual_ = b.two_norm();
+    //
+    //         bool converged = this->linearSolver_.solve(A, x, b);
+    //
+    //         if (!converged)
+    //             DUNE_THROW(NumericalProblem, "Linear solver did not converge");
+    //     }
+    //     catch (const Dune::Exception &e)
+    //     {
+    //         Dumux::NumericalProblem p;
+    //         p.message(e.what());
+    //         throw p;
+    //     }
+    // }
 
      /*!
      * \brief Update the current solution with a delta vector.
@@ -194,18 +193,20 @@ public:
      *               system of equations. This parameter also stores
      *               the updated solution.
      */
-    void newtonUpdate(SolutionVector &uCurrentIter,
-                      const SolutionVector &uLastIter,
-                      const SolutionVector &deltaU)
+     template<class JacobianAssembler, class SolutionVector>
+     void newtonUpdate(JacobianAssembler& assembler,
+                       SolutionVector &uCurrentIter,
+                       const SolutionVector &uLastIter,
+                       const SolutionVector &deltaU)
     {
         if (this->enableShiftCriterion_)
             this->newtonUpdateShift(uLastIter, deltaU);
 
-        this->writeConvergence_(uLastIter, deltaU);
+        // this->writeConvergence_(uLastIter, deltaU);
 
         if (this->useLineSearch_)
         {
-            this->lineSearchUpdate_(uCurrentIter, uLastIter, deltaU);
+            this->lineSearchUpdate_(assembler, uCurrentIter, uLastIter, deltaU);
         }
         else {
             for (unsigned int i = 0; i < uLastIter[cellCenterIdx].size(); ++i) {
@@ -219,11 +220,14 @@ public:
 
             if (this->enableResidualCriterion_)
             {
-                SolutionVector tmp(uLastIter);
-                this->reduction_ = this->method().model().globalResidual(tmp, uCurrentIter);
+                this->residualNorm_ = assembler.residualNorm(uCurrentIter);
+                this->reduction_ = this->residualNorm_;
                 this->reduction_ /= this->initialResidual_;
             }
         }
+
+        // update the variables class to the new solution
+        assembler.gridVariables().update(uCurrentIter);
     }
 
      /*!
@@ -242,7 +246,7 @@ public:
             auto uNewI = uLastIter[cellCenterIdx][i];
             uNewI -= deltaU[cellCenterIdx][i];
 
-            Scalar shiftAtDof = this->model_().relativeShiftAtDof(uLastIter[cellCenterIdx][i],
+            Scalar shiftAtDof = this->relativeShiftAtDof_(uLastIter[cellCenterIdx][i],
                                                             uNewI);
             this->shift_ = std::max(this->shift_, shiftAtDof);
         }
@@ -250,13 +254,13 @@ public:
             auto uNewI = uLastIter[faceIdx][i];
             uNewI -= deltaU[faceIdx][i];
 
-            Scalar shiftAtDof = this->model_().relativeShiftAtDof(uLastIter[faceIdx][i],
+            Scalar shiftAtDof = this->relativeShiftAtDof_(uLastIter[faceIdx][i],
                                                             uNewI);
             this->shift_ = std::max(this->shift_, shiftAtDof);
         }
 
-        if (this->gridView_().comm().size() > 1)
-            this->shift_ = this->gridView_().comm().max(this->shift_);
+        if (this->communicator().size() > 1)
+            this->shift_ = this->communicator().max(this->shift_);
     }
 
 };

@@ -24,7 +24,7 @@
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
-#include <dune/common/fvector.hh>
+#include <dune/geometry/type.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
@@ -36,19 +36,17 @@ namespace Dumux
  * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. We simply use the base class here.
  */
-template<class G, typename I>
-class BoxSubControlVolumeFace : public SubControlVolumeFaceBase<BoxSubControlVolumeFace<G, I>, G, I>
+template<class ScvfGeometryTraits>
+class BoxSubControlVolumeFace
+: public SubControlVolumeFaceBase<BoxSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
 {
-    using ParentType = SubControlVolumeFaceBase<BoxSubControlVolumeFace<G, I>, G, I>;
-    using Geometry = G;
-    using IndexType = I;
-
-    using Scalar = typename Geometry::ctype;
-    static const int dim = Geometry::mydimension;
-    static const int dimworld = Geometry::coorddimension;
-
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
+    using ParentType = SubControlVolumeFaceBase<BoxSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>;
+    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
+    using LocalIndexType = typename ScvfGeometryTraits::LocalIndexType;
+    using Scalar = typename ScvfGeometryTraits::Scalar;
+    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
+    using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
+    using Geometry = typename ScvfGeometryTraits::Geometry;
 
 public:
     //! The default constructor
@@ -59,8 +57,8 @@ public:
     BoxSubControlVolumeFace(const GeometryHelper& geometryHelper,
                             const Element& element,
                             const typename Element::Geometry& elemGeometry,
-                            IndexType scvfIndex,
-                            const std::vector<IndexType>& scvIndices,
+                            GridIndexType scvfIndex,
+                            const std::vector<LocalIndexType>& scvIndices,
                             bool boundary = false)
     : corners_(geometryHelper.getScvfCorners(scvfIndex)),
       center_(0.0),
@@ -80,9 +78,9 @@ public:
     BoxSubControlVolumeFace(const GeometryHelper& geometryHelper,
                             const Intersection& intersection,
                             const typename Intersection::Geometry& isGeometry,
-                            unsigned int indexInIntersection,
-                            IndexType scvfIndex,
-                            const std::vector<IndexType>& scvIndices,
+                            LocalIndexType indexInIntersection,
+                            GridIndexType scvfIndex,
+                            const std::vector<LocalIndexType>& scvIndices,
                             bool boundary = false)
     : corners_(geometryHelper.getBoundaryScvfCorners(isGeometry, indexInIntersection)),
       center_(0.0),
@@ -128,21 +126,21 @@ public:
     }
 
     //! index of the inside sub control volume for spatial param evaluation
-    IndexType insideScvIdx() const
+    LocalIndexType insideScvIdx() const
     {
         return scvIndices_[0];
     }
 
     //! index of the outside sub control volume for spatial param evaluation
     // This results in undefined behaviour if boundary is true
-    IndexType outsideScvIdx() const
+    LocalIndexType outsideScvIdx() const
     {
         assert(!boundary());
         return scvIndices_[1];
     }
 
     //! The global index of this sub control volume face
-    IndexType index() const
+    GridIndexType index() const
     {
         return scvfIndex_;
     }
@@ -156,16 +154,16 @@ public:
     //! The geometry of the sub control volume face
     Geometry geometry() const
     {
-        return Geometry(Dune::GeometryType(Dune::GeometryType::cube, dim), corners_);
+        return Geometry(Dune::GeometryTypes::cube(Geometry::mydimension), corners_);
     }
 
 private:
-    std::vector<GlobalPosition> corners_;
+    CornerStorage corners_;
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
     Scalar area_;
-    IndexType scvfIndex_;
-    std::vector<IndexType> scvIndices_;
+    GridIndexType scvfIndex_;
+    std::vector<LocalIndexType> scvIndices_;
     bool boundary_;
 };
 

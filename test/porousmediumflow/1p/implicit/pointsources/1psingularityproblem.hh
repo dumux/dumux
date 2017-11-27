@@ -25,9 +25,10 @@
 #ifndef DUMUX_1P_SINGULARITY_PROBLEM_HH
 #define DUMUX_1P_SINGULARITY_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
@@ -40,11 +41,11 @@ class OnePSingularityProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePSingularityProblem, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(OnePSingularityBoxProblem, INHERITS_FROM(BoxModel, OnePSingularityProblem));
-NEW_TYPE_TAG(OnePSingularityCCProblem, INHERITS_FROM(CCTpfaModel, OnePSingularityProblem));
+NEW_TYPE_TAG(OnePSingularityTypeTag, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(OnePSingularityBoxTypeTag, INHERITS_FROM(BoxModel, OnePSingularityTypeTag));
+NEW_TYPE_TAG(OnePSingularityCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePSingularityTypeTag));
 
-SET_PROP(OnePSingularityProblem, Fluid)
+SET_PROP(OnePSingularityTypeTag, Fluid)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -53,20 +54,14 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePSingularityProblem, Grid,
+SET_TYPE_PROP(OnePSingularityTypeTag, Grid,
     Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(OnePSingularityProblem, Problem, OnePSingularityProblem<TypeTag> );
+SET_TYPE_PROP(OnePSingularityTypeTag, Problem, OnePSingularityProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePSingularityProblem, SpatialParams, OnePSingularitySpatialParams<TypeTag> );
-
-// Linear solver settings
-SET_TYPE_PROP(OnePSingularityProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
-
-// Enable gravity
-SET_BOOL_PROP(OnePSingularityProblem, ProblemEnableGravity, false);
+SET_TYPE_PROP(OnePSingularityTypeTag, SpatialParams, OnePSingularitySpatialParams<TypeTag> );
 }
 
 /*!
@@ -84,9 +79,9 @@ SET_BOOL_PROP(OnePSingularityProblem, ProblemEnableGravity, false);
  * <tt>./test_cc1p_pointsources</tt>
  */
 template <class TypeTag>
-class OnePSingularityProblem : public ImplicitPorousMediaProblem<TypeTag>
+class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
@@ -105,15 +100,15 @@ class OnePSingularityProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    OnePSingularityProblem(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    OnePSingularityProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -173,36 +168,12 @@ public:
         return initialAtPos(globalPos);
     }
 
-    /*!
-     * \brief Evaluate the boundary conditions for a neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
     // \}
 
     /*!
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Return the sources within the domain.
-     *
-     * \param values Stores the source values, acts as return value
-     * \param globalPos The global position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
 
     /*!
      * \brief Applies a vector of point sources. The point sources
@@ -241,6 +212,6 @@ private:
     std::string name_;
 };
 
-} //end namespace
+} //end namespace Dumux
 
 #endif

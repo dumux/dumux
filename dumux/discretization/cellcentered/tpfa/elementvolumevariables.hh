@@ -23,8 +23,6 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
-
 namespace Dumux
 {
 
@@ -119,10 +117,11 @@ public:
     {
         clear();
 
-        const auto& problem = globalVolVars().problem_();
-        const auto globalI = problem.elementMapper().index(element);
-        const auto& assemblyMapI = problem.model().localJacobian().assemblyMap()[globalI];
-        const auto numDofs = assemblyMapI.size() + 1;
+        const auto& problem = globalVolVars().problem();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
+        const auto numDofs = connectivityMapI.size() + 1;
 
         // resize local containers to the required size (for internal elements)
         volumeVariables_.resize(numDofs);
@@ -131,7 +130,7 @@ public:
 
         // update the volume variables of the element at hand
         auto&& scvI = fvGeometry.scv(globalI);
-        volumeVariables_[localIdx].update(problem.model().elementSolution(element, sol),
+        volumeVariables_[localIdx].update(ElementSolution(sol[globalI]),
                                           problem,
                                           element,
                                           scvI);
@@ -139,11 +138,11 @@ public:
         ++localIdx;
 
         // Update the volume variables of the neighboring elements
-        for (const auto& dataJ : assemblyMapI)
+        for (const auto& dataJ : connectivityMapI)
         {
-            const auto& elementJ = fvGeometry.fvGridGeometry().element(dataJ.globalJ);
+            const auto& elementJ = fvGridGeometry.element(dataJ.globalJ);
             auto&& scvJ = fvGeometry.scv(dataJ.globalJ);
-            volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
+            volumeVariables_[localIdx].update(ElementSolution(sol[dataJ.globalJ]),
                                               problem,
                                               elementJ,
                                               scvJ);
@@ -177,24 +176,24 @@ public:
 
         //! Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
         //! on additional DOFs not included in the discretization schemes' occupation pattern
-        const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
-        if (!additionalDofDependencies.empty())
-        {
-            volumeVariables_.resize(volumeVariables_.size() + additionalDofDependencies.size());
-            volVarIndices_.resize(volVarIndices_.size() + additionalDofDependencies.size());
-            for (auto globalJ : additionalDofDependencies)
-            {
-                const auto& elementJ = fvGeometry.fvGridGeometry().element(globalJ);
-                auto&& scvJ = fvGeometry.scv(globalJ);
+        // const auto& additionalDofDependencies = problem.getAdditionalDofDependencies(globalI);
+        // if (!additionalDofDependencies.empty())
+        // {
+        //     volumeVariables_.resize(volumeVariables_.size() + additionalDofDependencies.size());
+        //     volVarIndices_.resize(volVarIndices_.size() + additionalDofDependencies.size());
+        //     for (auto globalJ : additionalDofDependencies)
+        //     {
+        //         const auto& elementJ = fvGridGeometry.element(globalJ);
+        //         auto&& scvJ = fvGeometry.scv(globalJ);
 
-                volumeVariables_[localIdx].update(problem.model().elementSolution(elementJ, sol),
-                                                  problem,
-                                                  elementJ,
-                                                  scvJ);
-                volVarIndices_[localIdx] = scvJ.dofIndex();
-                ++localIdx;
-            }
-        }
+        //         volumeVariables_[localIdx].update(ElementSolution(sol[globalJ]),
+        //                                           problem,
+        //                                           elementJ,
+        //                                           scvJ);
+        //         volVarIndices_[localIdx] = scvJ.dofIndex();
+        //         ++localIdx;
+        //     }
+        // }
     }
 
     // Binding of an element, prepares only the volume variables of the element
@@ -205,14 +204,14 @@ public:
     {
         clear();
 
-        auto eIdx = globalVolVars().problem_().elementMapper().index(element);
+        const auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        volumeVariables_[0].update(globalVolVars().problem_().model().elementSolution(element, sol),
-                                   globalVolVars().problem_(),
+        volumeVariables_[0].update(ElementSolution(sol[eIdx]),
+                                   globalVolVars().problem(),
                                    element,
                                    scv);
         volVarIndices_[0] = scv.dofIndex();

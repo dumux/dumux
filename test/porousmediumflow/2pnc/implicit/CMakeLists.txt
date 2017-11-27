@@ -1,19 +1,23 @@
-# isothermal tests
-add_dumux_test(test_box2pnc test_box2pnc test_box2pnc.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/fuelcell-box-00015.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pnc -ParameterFile test_2pnc.input -Problem.Name fuelcell-box")
-
-add_dumux_test(test_cc2pnc test_cc2pnc test_cc2pnc.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pnccc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/fuelcell-cc-00015.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc -ParameterFile test_2pnc.input -Problem.Name fuelcell-cc")
-
 dune_symlink_to_source_files(FILES test_2pnc.input)
+
+# isothermal tests
+dune_add_test(NAME test_box2pnc
+              SOURCES test_box2pnc.cc
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pncbox-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/fuelcell-box-00015.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_box2pnc -ParameterFile test_2pnc.input -Problem.Name fuelcell-box")
+
+dune_add_test(NAME test_cc2pnc
+              SOURCES test_cc2pnc.cc
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/fuelcell2pnccc-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/fuelcell-cc-00015.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc -ParameterFile test_2pnc.input -Problem.Name fuelcell-cc")
+
+set(CMAKE_BUILD_TYPE Release)
 
 #install sources
 install(FILES

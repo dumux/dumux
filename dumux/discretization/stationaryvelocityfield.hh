@@ -49,10 +49,9 @@ public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::None;
 
-    //! state the type for the corresponding cache and its filler
+    //! state the type for the corresponding cache
     //! We don't cache anything for this law
-    using Cache = FluxVariablesCaching::EmptyAdvectionCache;
-    using CacheFiller = FluxVariablesCaching::EmptyCacheFiller<TypeTag>;
+    using Cache = FluxVariablesCaching::EmptyAdvectionCache<TypeTag>;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -62,11 +61,8 @@ public:
                        int phaseIdx,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        //! Obtain the velocity field from the user, specified in the spatial params
-        return problem.spatialParams().velocity(element, scvf)
-                  * scvf.unitOuterNormal()
-                  * scvf.area()
-                  * elemVolVars[fvGeometry.scv(scvf.insideScvIdx())].extrusionFactor();
+        //! Obtain the volume flux from the user, specified in the spatial params in m^3/s
+        return problem.spatialParams().volumeFlux(element, fvGeometry, elemVolVars, scvf);
     }
 };
 

@@ -1,0 +1,22 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 2 # [s]
+
+[Grid]
+UpperRight = 1 1
+Cells = 40 40
+
+[Problem]
+Name = test_donea # name passed to the output routines
+EnableGravity = false
+PrintL2Error = false
+LiquidKinematicViscosity = 1
+LiquidDensity = 1
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+AddVelocity = true

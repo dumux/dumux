@@ -69,8 +69,8 @@ public:
      *
      * \param gridView The grid view
      */
-    FractureSpatialParams(const Problem& problem, const GridView& gridView)
-    : ParentType(problem, gridView)
+    FractureSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {}
 
     /*!

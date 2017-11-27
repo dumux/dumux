@@ -29,42 +29,27 @@
 #ifndef DUMUX_ENERGY_PROPERTIES_HH
 #define DUMUX_ENERGY_PROPERTIES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/properties.hh>
+#include "indices.hh"
+#include "vtkoutputfields.hh"
 
-namespace Dumux
-{
-// \{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 
-//////////////////////////////////////////////////////////////////
-// Type tags
-//////////////////////////////////////////////////////////////////
 NEW_TYPE_TAG(NonIsothermal);
 
-//////////////////////////////////////////////////////////////////
-// Property tags required for the non-isothermal models
-//////////////////////////////////////////////////////////////////
+SET_BOOL_PROP(NonIsothermal, EnableEnergyBalance, true);
 
-//TODO cleanup
+//! add the energy balance
+SET_INT_PROP(NonIsothermal, NumEq, GET_PROP_VALUE(TypeTag, IsothermalNumEq) + 1);
 
-NEW_PROP_TAG(IsothermalModel);
-NEW_PROP_TAG(IsothermalFluxVariables);
-NEW_PROP_TAG(IsothermalVolumeVariables);
-NEW_PROP_TAG(IsothermalLocalResidual);
-NEW_PROP_TAG(IsothermalIndices);
-NEW_PROP_TAG(IsothermalNumEq);
-NEW_PROP_TAG(HaveVariableFormulation);
-NEW_PROP_TAG(ThermalConductivityModel);
-NEW_PROP_TAG(NiOutputLevel);
+//! indices for non-isothermal models
+SET_TYPE_PROP(NonIsothermal, Indices, EnergyIndices<TypeTag, 0>);
 
-// forward declaration of other property tags
-NEW_PROP_TAG(Indices);
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidSystem);
+//! indices for non-isothermal models
+SET_TYPE_PROP(NonIsothermal, VtkOutputFields, EnergyVtkOutputFields<TypeTag>);
 
-}
-// \}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif
