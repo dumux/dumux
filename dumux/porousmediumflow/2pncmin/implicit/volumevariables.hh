@@ -191,6 +191,7 @@ protected:
 
     Scalar precipitateVolumeFraction_[numSPhases];
     Scalar sumPrecipitates_;
+    FluidState fluidState_;
 
 private:
     Implementation &asImp_()
