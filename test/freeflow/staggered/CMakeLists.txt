@@ -1,37 +1,41 @@
 add_input_file_links()
 
-add_executable(test_closedsystem test_closedsystem.cc)
+add_executable(test_stokes_closedsystem EXCLUDE_FROM_ALL test_closedsystem.cc)
 
-dune_add_test(NAME test_liddrivencavity
-              TARGET test_closedsystem
+dune_add_test(NAME test_stokes_liddrivencavity
+              TARGET test_stokes_closedsystem
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/liddrivencavity-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_liddrivencavity-00002.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_liddrivencavity.input")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_closedsystem test_liddrivencavity.input")
 
-dune_add_test(NAME test_hydrostaticpressure
-              TARGET test_closedsystem
+dune_add_test(NAME test_stokes_hydrostaticpressure
+              TARGET test_stokes_closedsystem
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokeshydrostaticpressure-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_hydrostaticpressure-00002.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_hydrostaticpressure.input"
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_closedsystem test_hydrostaticpressure.input"
                              --zeroThreshold {"velocity_Constant \(m/s\)":1e-16})
 
 dune_add_test(NAME test_channel_stokes
               SOURCES test_channel.cc
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/channel-stokes.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_stokes")
 
-add_executable(test_channel_stokesni test_channel.cc)
+add_executable(test_channel_stokesni EXCLUDE_FROM_ALL test_channel.cc)
 target_compile_definitions(test_channel_stokesni PUBLIC "NONISOTHERMAL=1")
 
 dune_add_test(NAME test_channel_stokesni_convection
               TARGET test_channel_stokesni
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokesni-convection-reference.vtu
@@ -40,6 +44,7 @@ dune_add_test(NAME test_channel_stokesni_convection
 
 dune_add_test(NAME test_channel_stokesni_conduction
               TARGET test_channel_stokesni
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokesni-conduction-reference.vtu
@@ -49,25 +54,28 @@ dune_add_test(NAME test_channel_stokesni_conduction
 
 dune_add_test(NAME test_channel_navierstokes
               SOURCES test_channel.cc
+              COMPILE_DEFINITIONS ENABLE_NAVIERSTOKES=1
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/channel-navierstokes-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes-00002.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_channel_navierstokes")
-target_compile_definitions(test_channel_navierstokes PUBLIC "ENABLE_NAVIERSTOKES=1")
 
-dune_add_test(NAME test_donea
+dune_add_test(NAME test_stokes_donea
               SOURCES test_donea.cc
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes-donea-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_donea-00002.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_donea")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_donea")
 
-dune_add_test(NAME test_kovasznay
+dune_add_test(NAME test_navierstokes_kovasznay
               SOURCES test_kovasznay.cc
+              CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_kovasznay-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay-00002.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay")
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_navierstokes_kovasznay")
