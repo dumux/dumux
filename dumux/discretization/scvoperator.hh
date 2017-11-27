@@ -37,7 +37,7 @@ class SubControlVolumeOperatorImplementation;
  * \brief The base class for solution dependent spatial parameters.
  */
 template<class TypeTag>
-using SubControlVolumeOperator = SubControlVolumeOperatorImplementation<TypeTag, GET_PROP_VALUE(TypeTag, ImplicitIsBox)>;
+using SubControlVolumeOperator = SubControlVolumeOperatorImplementation<TypeTag, (GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box)>;
 
 //! Specialization for the box method
 template<class TypeTag>

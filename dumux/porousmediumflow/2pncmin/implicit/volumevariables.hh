@@ -48,7 +48,7 @@ namespace Dumux
 template <class TypeTag>
 class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
 {
-    // base type is used for energy related quantites
+    // base type is used for energy related quantities
     using BaseType = ImplicitVolumeVariables<TypeTag>;
 
     using ParentType = TwoPNCVolumeVariables<TypeTag>;
@@ -97,7 +97,6 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
-        useSalinity = GET_PROP_VALUE(TypeTag, useSalinity)
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -105,9 +104,6 @@ class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
     using CoordScalar = typename Grid::ctype;
     using Miscible2pNCComposition = Dumux::Miscible2pNCComposition<Scalar, FluidSystem>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
@@ -129,7 +125,7 @@ public:
         /////////////
         // calculate the remaining quantities
         /////////////
-        auto&& priVars = isBox ? elemSol[scv.indexInElement()] : elemSol[0];
+        auto&& priVars = elemSol[scv.indexInElement()];
 
         sumPrecipitates_ = 0.0;
         for(int sPhaseIdx = 0; sPhaseIdx < numSPhases; ++sPhaseIdx)
@@ -195,6 +191,7 @@ protected:
 
     Scalar precipitateVolumeFraction_[numSPhases];
     Scalar sumPrecipitates_;
+    FluidState fluidState_;
 
 private:
     Implementation &asImp_()
