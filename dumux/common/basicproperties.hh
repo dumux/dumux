@@ -44,6 +44,8 @@
 #include <dumux/io/defaultvtkoutputfields.hh>
 #include <dumux/io/gridcreator.hh>
 
+#include <dune/common/version.hh>
+
 namespace Dumux
 {
 namespace Properties
