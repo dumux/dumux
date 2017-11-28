@@ -290,17 +290,15 @@ public:
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
-     * \param Vertex The finite element
+     * \param globalPos The global position
      *
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    PrimaryVariables initial(const Vertex &vertex) const
+    PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
         PrimaryVariables priVars(0.0);
         priVars.setState(bothPhases);
-
-        const auto& globalPos = vertex.geometry().corner(0);
 
         priVars[pressureIdx] = reservoirPressure_;
         priVars[switchIdx]   = initLiqSaturation_;                 // Sw primary variable
