@@ -55,7 +55,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
@@ -253,10 +253,18 @@ public:
         // check if we evaluate the permeability in the volume (for discontinuous fields, default)
         // or at the scvf center for analytical permeability fields (e.g. convergence studies)
         auto getPermeability = [&problem](const VolumeVariables& volVars,
-                                          const GlobalPosition& scvfIpGlobal)
+                                          const GlobalPosition& scvfIpGlobal) -> typename SpatialParams::PermeabilityType
                                {
                                     if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
+                                    {
+                                        // TODO: Make PermeabilityType a property!!
+                                        // We do an implicit cast to permeability type in case EvaluatePermeabilityAtScvfIP is not true so that it compiles
+                                        // If it is true make sure that no cast is necessary and the correct return type is specified in the spatial params
+                                        static_assert(!GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP)
+                                                || std::is_same<std::decay_t<typename SpatialParams::PermeabilityType>, std::decay_t<decltype(problem.spatialParams().permeabilityAtPos(scvfIpGlobal))>>::value,
+                                                "permeabilityAtPos doesn't return PermeabilityType stated in the spatial params!");
                                         return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
+                                    }
                                     else
                                         return volVars.permeability();
                                };
