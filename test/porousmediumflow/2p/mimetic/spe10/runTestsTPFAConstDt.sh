@@ -3,7 +3,7 @@ make test_spe10_tpfa
 
 inputArgs="-Newton.UseLineSearch 0
            -Newton.EnableChop 1 -TimeManager.DtInitial 5e6  -TimeManager.MaxTimeStepSize 5e6
-           -Newton.MaxSteps 500 -Newton.TargetSteps 500"
+           -Newton.MaxSteps 100 -Newton.TargetSteps 100"
 outputName="test_spe10_tpfanext_superlu_chop_constDt_noEquil"
 
 echo $outputName

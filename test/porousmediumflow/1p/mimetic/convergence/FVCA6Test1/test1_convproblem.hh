@@ -95,7 +95,7 @@ SET_BOOL_PROP(Test1ConvProblem, EnableGlobalVolumeVariablesCache, true);
 // Enable gravity
 SET_BOOL_PROP(Test1ConvProblem, ProblemEnableGravity, false);
 
-SET_TYPE_PROP(Test1ConvProblem, LinearSolver, SuperLUBackend<TypeTag> );
+SET_TYPE_PROP(Test1ConvProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
 }
 
 template <class TypeTag>

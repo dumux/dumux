@@ -4,11 +4,11 @@ make test_spe10
 inputArgs="-Newton.UseLineSearch 0
            -Newton.EnableChop 1 -TimeManager.DtInitial 5e6  -TimeManager.MaxTimeStepSize 5e6
            -Newton.MaxSteps 100 -Newton.TargetSteps 100"
-outputName="test_spe10_mimetic_superlu_chop_constDt_noEquil"
+outputName="test_spe10_mimetic_superlu_chop_constDt"
 
 #inputArgs="-Newton.UseLineSearch 0
 #           -Newton.EnableChop 1 -LinearSolver.Verbosity 1 -LinearSolver.MaxIterations 2000 -TimeManager.DtInitial 5e6  -TimeManager.MaxTimeStepSize 5e6
-#           -Newton.MaxSteps 500 -Newton.TargetSteps 500"
+#           -Newton.MaxSteps 100 -Newton.TargetSteps 100"
 #outputName="test_spe10_mimetic_ilu0bicgstab_chop_constDt"
 
 echo $outputName

@@ -237,7 +237,7 @@ public:
                 Scalar approximateFlux = faceVol*approximateVel;
                 Scalar fluxDiff = faceVol*velDiff;
 
-                Scalar faceDist = (unitOuterNormal*(faceCenter - cellCenter));
+                Scalar faceDist = std::abs(unitOuterNormal*(faceCenter - cellCenter));
 
                 if(scvf.boundary()){
                     Scalar facePressure = problem.dirichletAtPos(faceCenter)[cellCenterIdx];
