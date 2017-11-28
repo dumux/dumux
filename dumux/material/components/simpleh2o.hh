@@ -53,7 +53,7 @@ public:
      * \brief A human readable name for the water.
      */
     static std::string name()
-    { return "H2O"; }
+    { return "SimpleH2O"; }
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of water.

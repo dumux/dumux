@@ -51,7 +51,7 @@ public:
      * \brief A human readable name for the \f$CO_2\f$.
      */
     static std::string name()
-    { return "CO2"; }
+    { return "SimpleCO2"; }
 
     /*!
      * \brief The molar mass in \f$\mathrm{[kg/mol]}\f$ of \f$CO_2\f$.
