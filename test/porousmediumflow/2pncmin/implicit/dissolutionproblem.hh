@@ -97,7 +97,7 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
 
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx, //Saturation
-        xlNaClIdx = FluidSystem::NaClIdx,
+        xwNaClIdx = FluidSystem::NaClIdx,
         precipNaClIdx = FluidSystem::numComponents,
 
         //Indices of the components
@@ -271,7 +271,7 @@ public:
         {
             priVars[pressureIdx]   = outerPressure_ ; // Outer boundary pressure bar
             priVars[switchIdx]     = outerLiqSaturation_; // Saturation outer boundary
-            priVars[xlNaClIdx]     = massToMoleFrac_(outerSalinity_);// mole fraction salt
+            priVars[xwNaClIdx]     = massToMoleFrac_(outerSalinity_);// mole fraction salt
             priVars[precipNaClIdx] = 0.0;// precipitated salt
         }
 
@@ -280,7 +280,7 @@ public:
 
             priVars[pressureIdx]   = innerPressure_ ; // Inner boundary pressure bar
             priVars[switchIdx]     = innerLiqSaturation_; // Saturation inner boundary
-            priVars[xlNaClIdx]     = massToMoleFrac_(innerSalinity_);// mole fraction salt
+            priVars[xwNaClIdx]     = massToMoleFrac_(innerSalinity_);// mole fraction salt
             priVars[precipNaClIdx] = 0.0;// precipitated salt
         }
 
@@ -302,7 +302,7 @@ public:
 
         priVars[pressureIdx] = reservoirPressure_;
         priVars[switchIdx]   = initLiqSaturation_;                 // Sw primary variable
-        priVars[xlNaClIdx]   = massToMoleFrac_(outerSalinity_);     // mole fraction
+        priVars[xwNaClIdx]   = massToMoleFrac_(outerSalinity_);     // mole fraction
         if(globalPos[0] > 5.0 - eps_ && globalPos[0] < 19.0 + eps_)
             priVars[precipNaClIdx] = initPrecipitatedSalt2_; // [kg/m^3]
         else
@@ -345,23 +345,23 @@ public:
 
         const auto& volVars = elemVolVars[scv];
 
-        Scalar moleFracNaCl_lPhase = volVars.moleFraction(wPhaseIdx, NaClIdx);
-        Scalar moleFracNaCl_gPhase = volVars.moleFraction(nPhaseIdx, NaClIdx);
-        Scalar massFracNaCl_Max_lPhase = this->spatialParams().solubilityLimit();
-        Scalar moleFracNaCl_Max_lPhase = massToMoleFrac_(massFracNaCl_Max_lPhase);
-        Scalar moleFracNaCl_Max_gPhase = moleFracNaCl_Max_lPhase / volVars.pressure(nPhaseIdx);
+        Scalar moleFracNaCl_wPhase = volVars.moleFraction(wPhaseIdx, NaClIdx);
+        Scalar moleFracNaCl_nPhase = volVars.moleFraction(nPhaseIdx, NaClIdx);
+        Scalar massFracNaCl_Max_wPhase = this->spatialParams().solubilityLimit();
+        Scalar moleFracNaCl_Max_wPhase = massToMoleFrac_(massFracNaCl_Max_wPhase);
+        Scalar moleFracNaCl_Max_nPhase = moleFracNaCl_Max_wPhase / volVars.pressure(nPhaseIdx);
         Scalar saltPorosity = this->spatialParams().minPorosity(element, scv);
 
         // liquid phase
         using std::abs;
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
                                                * volVars.saturation(wPhaseIdx)
-                                               * (moleFracNaCl_lPhase - moleFracNaCl_Max_lPhase);
+                                               * (moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase);
 
         // gas phase
         precipSalt += volVars.porosity() * volVars.molarDensity(nPhaseIdx)
                                          * volVars.saturation(nPhaseIdx)
-                                         * (moleFracNaCl_gPhase - moleFracNaCl_Max_gPhase);
+                                         * (moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
 
         // make sure we don't dissolve more salt than previously precipitated
         if (precipSalt*time_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
@@ -415,17 +415,17 @@ private:
     /*!
      * \brief Returns the molality of NaCl (mol NaCl / kg water) for a given mole fraction
      *
-     * \param XlNaCl the XlNaCl [kg NaCl / kg solution]
+     * \param XwNaCl the XwNaCl [kg NaCl / kg solution]
      */
-    static Scalar massToMoleFrac_(Scalar XlNaCl)
+    static Scalar massToMoleFrac_(Scalar XwNaCl)
     {
        const Scalar Mw = 18.015e-3; /* molecular weight of water [kg/mol] */
        const Scalar Ms = 58.44e-3; /* molecular weight of NaCl  [kg/mol] */
 
-       const Scalar X_NaCl = XlNaCl;
-       /* XlNaCl: conversion from mass fraction to mol fraction */
-       auto xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
-       return xlNaCl;
+       const Scalar X_NaCl = XwNaCl;
+       /* XwNaCl: conversion from mass fraction to mol fraction */
+       auto xwNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
+       return xwNaCl;
     }
 
     int nTemperature_;
