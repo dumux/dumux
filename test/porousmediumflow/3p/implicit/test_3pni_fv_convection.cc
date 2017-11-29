@@ -19,11 +19,10 @@
 /*!
  * \file
  *
- * \brief Test for the three-phase box model
+ * \brief test for the 3pni CC model
  */
 #include <config.h>
-#include "infiltration3pproblem.hh"
-
+#include "3pniconvectionproblem.hh"
 #include <ctime>
 #include <iostream>
 
@@ -65,11 +64,17 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd              End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
-                                        "\t-Grid.File                     Name of the file containing the grid \n"
-                                        "\t                               definition in DGF format\n";
+                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
+                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
+                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
+                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
+                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
+                                        "\t                                definition in DGF format\n"
+                                        "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
+                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
 
         std::cout << errorMessageOut
                   << "\n";
@@ -78,14 +83,10 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv) try
 {
-
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(InfiltrationThreePBoxProblem);
-
-    ////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -119,9 +120,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -146,7 +146,10 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
+    // output every vtkOutputInterval time step
+    const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -158,7 +161,7 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = Dumux::AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonController = Dumux::NewtonController<TypeTag>;
@@ -183,13 +186,16 @@ int main(int argc, char** argv) try
 
             if (!converged && i == maxDivisions-1)
                 DUNE_THROW(Dune::MathError,
-                            "Newton solver didn't converge after "
-                            << maxDivisions
-                            << " time-step divisions. dt="
-                            << timeLoop->timeStepSize()
-                            << ".\nThe solutions of the current and the previous time steps "
-                            << "have been saved to restart files.");
+                           "Newton solver didn't converge after "
+                           << maxDivisions
+                           << " time-step divisions. dt="
+                           << timeLoop->timeStepSize()
+                           << ".\nThe solutions of the current and the previous time steps "
+                           << "have been saved to restart files.");
         }
+
+        // compute the new analytical temperature field for the output
+        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
@@ -198,15 +204,15 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
-
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
+
+        // write vtk output
+        if(timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
+            vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 
@@ -224,8 +230,7 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-
-}
+} // end main
 catch (Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;

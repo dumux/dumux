@@ -42,18 +42,18 @@ class InfiltrationThreePProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InfiltrationThreePProblem, INHERITS_FROM(ThreeP, InfiltrationThreePSpatialParams));
-NEW_TYPE_TAG(InfiltrationThreePBoxProblem, INHERITS_FROM(BoxModel, InfiltrationThreePProblem));
-NEW_TYPE_TAG(InfiltrationThreePCCProblem, INHERITS_FROM(CCTpfaModel, InfiltrationThreePProblem));
+NEW_TYPE_TAG(InfiltrationThreePTypeTag, INHERITS_FROM(ThreeP, InfiltrationThreePSpatialParams));
+NEW_TYPE_TAG(InfiltrationThreePBoxTypeTag, INHERITS_FROM(BoxModel, InfiltrationThreePTypeTag));
+NEW_TYPE_TAG(InfiltrationThreePCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationThreePProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(InfiltrationThreePTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InfiltrationThreePProblem, Problem, InfiltrationThreePProblem<TypeTag>);
+SET_TYPE_PROP(InfiltrationThreePTypeTag, Problem, InfiltrationThreePProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationThreePProblem,
+SET_TYPE_PROP(InfiltrationThreePTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
