@@ -202,11 +202,11 @@ public:
                         {
                             const auto globalScvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(outsideLocalScvIdx, coord);
                             const auto& flipScvf = fvGeometry.scvf(globalScvfIdx);
-                            localFaceData_.emplace_back(faceIdxLocal,         //! iv-local scvf idx
-                                                        outsideLocalScvIdx,   //! iv-local scv index
-                                                        numOutsideFaces_++,    //! iv-local index in outside faces
-                                                        i-1,                  //! scvf-local index in outside faces
-                                                        flipScvf.index());   //! global scvf index
+                            localFaceData_.emplace_back(faceIdxLocal,       //! iv-local scvf idx
+                                                        outsideLocalScvIdx, //! iv-local scv index
+                                                        numOutsideFaces_++, //! iv-local index in outside faces
+                                                        i-1,                //! scvf-local index in outside faces
+                                                        flipScvf.index());  //! global scvf index
                         }
                     }
                 }
@@ -225,6 +225,9 @@ public:
     {
       // resize the transmissibility matrix in the data handle
       dataHandle.resizeT(numFaces_, numPotentials_);
+
+      // move the dirichlet data into the handle
+      dataHandle.setDirichletData(std::move(dirichletData_));
 
       // resize possible additional containers in the data handle
       if (requireABMatrix_())
@@ -261,9 +264,8 @@ public:
                 dataHandle.AB() = B_.leftmultiply(A_);
         }
 
-        // // set vol vars stencil & positions pointer in handle
+        // set vol vars stencil pointer in handle
         dataHandle.setVolVarsStencilPointer(indexSet().globalScvIndices());
-        dataHandle.setDirichletDataPointer(dirichletData_);
 
         // on surface grids, additionally prepare the outside transmissibilities
         if (dim < dimWorld)
@@ -290,9 +292,6 @@ public:
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
     const LocalScvType& localScv(const LocalIndexType ivLocalScvfIdx) const { return scvs_[ivLocalScvfIdx]; }
-
-    //! returns a reference to the container with the data on Dirichlet boundaries
-    const DirichletDataContainer& dirichletData() const { return dirichletData_; }
 
     //! returns a reference to the container with the local face data
     const std::vector<LocalFaceData>& localFaceData() const { return localFaceData_; }

@@ -46,9 +46,8 @@ namespace Dumux
         void resizeAB(unsigned int n, unsigned int m) {}
         void resizeOutsideTij(unsigned int n, unsigned int m) {}
 
-        //! functions to set the pointers to stencil and Dirichlet data
+        //! functions to set the pointers to the stencil
         void setVolVarsStencilPointer(const GlobalIndexContainer& stencil) {}
-        void setDirichletDataPointer(const DirichletDataContainer& data) {}
 
         //! return functions for the stored data
         const GlobalIndexContainer& volVarsStencil() const { return throw_<const GlobalIndexContainer&>(); }
@@ -80,18 +79,16 @@ namespace Dumux
         using Vector = typename InteractionVolume::Traits::DynamicVector;
 
     public:
-        //! functions to set the size of the matrices
+        //! set the sizes of the matrices
         void resizeT(unsigned int n, unsigned int m) { advectionT_.resize(n, m); }
         void resizeAB(unsigned int n, unsigned int m) { advectionAB_.resize(n, m); }
         void resizeOutsideTij(unsigned int n, unsigned int m) { advectionTout_.resize(n, m); }
 
-        //! functions to set the pointers to stencil and Dirichlet data
+        //! sets the pointer to the stencil
         void setVolVarsStencilPointer(const GlobalIndexContainer& stencil) { advectionVolVarsStencil_ = &stencil; }
-        void setDirichletDataPointer(const DirichletDataContainer& data) { advectionDirichletData_ = &data; }
 
         //! return functions for the stored data
         const GlobalIndexContainer& volVarsStencil() const { return *advectionVolVarsStencil_; }
-        const DirichletDataContainer& dirichletData() const { return *advectionDirichletData_; }
 
         const Matrix& T() const { return advectionT_; }
         Matrix& T() { return advectionT_; }
@@ -105,7 +102,6 @@ namespace Dumux
     private:
         // advection-related variables
         const GlobalIndexContainer* advectionVolVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
-        const DirichletDataContainer* advectionDirichletData_; //! Pointer to the container with dirichlet data of the iv
         Matrix advectionT_;                                    //! The transmissibilities
         Matrix advectionAB_;                                   //! Coefficients for gradient reconstruction
         Matrix advectionTout_;                                 //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
@@ -133,7 +129,7 @@ namespace Dumux
             contextCompIdx_ = compIdx;
         }
 
-        //! functions to set the size of the matrices
+        //! set the sizes of the matrices
         void resizeT(unsigned int n, unsigned int m)
         {
             for (auto& array : diffusionT_)
@@ -155,23 +151,15 @@ namespace Dumux
                     matrix.resize(n, m);
         }
 
-        //! functions to set the pointers to stencil and Dirichlet data
+        //! sets the pointer to stencil
         void setVolVarsStencilPointer(const GlobalIndexContainer& stencil)
         {
             diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_] = &stencil;
         }
 
-        void setDirichletDataPointer(const DirichletDataContainer& data)
-        {
-            diffusionDirichletData_[contextPhaseIdx_][contextCompIdx_] = &data;
-        }
-
         //! return functions for the stored data
         const GlobalIndexContainer& volVarsStencil() const
         { return *diffusionVolVarsStencil_[contextPhaseIdx_][contextCompIdx_]; }
-
-        const DirichletDataContainer& dirichletData() const
-        { return *diffusionDirichletData_[contextPhaseIdx_][contextCompIdx_]; }
 
         const Matrix& T() const { return diffusionT_[contextPhaseIdx_][contextCompIdx_]; }
         Matrix& T() { return diffusionT_[contextPhaseIdx_][contextCompIdx_]; }
@@ -187,7 +175,6 @@ namespace Dumux
         unsigned int contextPhaseIdx_;                         //! The phase index set for the context
         unsigned int contextCompIdx_;                          //! The component index set for the context
         std::array<std::array<const GlobalIndexContainer*, numComponents>, numPhases> diffusionVolVarsStencil_;
-        std::array<std::array<const DirichletDataContainer*, numComponents>, numPhases> diffusionDirichletData_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionT_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionAB_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionTout_;
@@ -205,18 +192,16 @@ namespace Dumux
         using Vector = typename InteractionVolume::Traits::DynamicVector;
 
     public:
-        //! functions to set the size of the matrices
+        //! set the sizes of the matrices
         void resizeT(unsigned int n, unsigned int m) { heatConductionT_.resize(n, m); }
         void resizeAB(unsigned int n, unsigned int m) { heatConductionAB_.resize(n, m); }
         void resizeOutsideTij(unsigned int n, unsigned int m) { heatConductionTout_.resize(n, m); }
 
-        //! functions to set the pointers to stencil and Dirichlet data
+        //! sets the pointer to the stencil
         void setVolVarsStencilPointer(const GlobalIndexContainer& stencil) { heatConductionVolVarsStencil_ = &stencil; }
-        void setDirichletDataPointer(const DirichletDataContainer& data) { heatConductionDirichletData_ = &data; }
 
         //! return functions for the stored data
         const GlobalIndexContainer& volVarsStencil() const { return *heatConductionVolVarsStencil_; }
-        const DirichletDataContainer& dirichletData() const { return *heatConductionDirichletData_; }
 
         const Matrix& T() const { return heatConductionT_; }
         Matrix& T() { return heatConductionT_; }
@@ -230,7 +215,6 @@ namespace Dumux
     private:
         // heat conduction-related variables
         const GlobalIndexContainer* heatConductionVolVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
-        const DirichletDataContainer* heatConductionDirichletData_; //! Pointer to the container with dirichlet data of the iv
         Matrix heatConductionT_;                                    //! The transmissibilities
         Matrix heatConductionAB_;                                   //! Coefficients for gradient reconstruction
         Matrix heatConductionTout_;                                 //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
@@ -282,7 +266,7 @@ namespace Dumux
         //! returns the current context
         Contexts getContext() const { return context_; }
 
-        //! functions to set the size of the matrices
+        //! set the sizes of the matrices
         void resizeT(unsigned int n, unsigned int m)
         {
             AdvectionHandle::resizeT(n, m);
@@ -304,7 +288,7 @@ namespace Dumux
             HeatConductionHandle::resizeOutsideTij(n, m);
         }
 
-        //! functions to set the pointers to stencil and Dirichlet data
+        //! sets the pointer to the stencil
         void setVolVarsStencilPointer(const GlobalIndexContainer& stencil)
         {
             if (context_ == Contexts::advection)
@@ -317,19 +301,15 @@ namespace Dumux
                 DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
         }
 
-        void setDirichletDataPointer(const DirichletDataContainer& data)
+        //! sets the dirichlet data container
+        void setDirichletData(DirichletDataContainer&& data)
         {
-            if (context_ == Contexts::advection)
-                AdvectionHandle::setDirichletDataPointer(data);
-            else if (context_ == Contexts::diffusion)
-                DiffusionHandle::setDirichletDataPointer(data);
-            else if (context_ == Contexts::heatConduction)
-                HeatConductionHandle::setDirichletDataPointer(data);
-            else
-                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
+            dirichletData_ = std::move(data);
         }
 
         //! return functions for the stored data
+        const DirichletDataContainer& dirichletData() const { return dirichletData_; }
+
         const GlobalIndexContainer& volVarsStencil() const
         {
             if (context_ == Contexts::advection)
@@ -338,18 +318,6 @@ namespace Dumux
                 return DiffusionHandle::volVarsStencil();
             else if (context_ == Contexts::heatConduction)
                 return HeatConductionHandle::volVarsStencil();
-            else
-                DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
-        }
-
-        const DirichletDataContainer& dirichletData() const
-        {
-            if (context_ == Contexts::advection)
-                return AdvectionHandle::dirichletData();
-            else if (context_ == Contexts::diffusion)
-                return DiffusionHandle::dirichletData();
-            else if (context_ == Contexts::heatConduction)
-                return HeatConductionHandle::dirichletData();
             else
                 DUNE_THROW(Dune::InvalidStateException, "No valid context set!");
         }
@@ -427,7 +395,8 @@ namespace Dumux
         }
 
     private:
-        Contexts context_; //! The context variable
+        Contexts context_;                     //! The context variable
+        DirichletDataContainer dirichletData_; //! The dirichlet data container of this iv
     };
 
 } // end namespace Dumux

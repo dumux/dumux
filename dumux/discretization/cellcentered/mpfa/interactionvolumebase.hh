@@ -195,10 +195,6 @@ public:
     const LocalFaceDataContainer& localFaceData() const
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() method."); }
 
-    //! returns a reference to the container with the data on Dirichlet boundaries
-    const DirichletDataContainer& dirichletData() const
-    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a dirichletData() method."); }
-
     //! returns the indices of the volvars in the stencil of the interaction volume
     const GlobalIndexContainer& volVarsStencil() const
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a volVarsStencil() method."); }
