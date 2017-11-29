@@ -26,8 +26,8 @@
 #ifndef DUMUX_MIMETIC_SPE10_HH
 #define DUMUX_MIMETIC_SPE10_HH
 
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/dnapl.hh>
+#include "spe103DWetting.hh"
+#include "spe103DNonwetting.hh"
 
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
@@ -35,7 +35,6 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include "spe10spatialparams.hh"
-#include "spe10oil.hh"
 
 namespace Dumux
 {
@@ -62,7 +61,7 @@ SET_PROP(TwoPSpe10Problem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, SPE10Wetting<Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -71,7 +70,7 @@ SET_PROP(TwoPSpe10Problem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Oil<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Dumux::SPE10Nonwetting<Scalar> > type;
 };
 
 SET_TYPE_PROP(TwoPSpe10Problem, SpatialParams, Spe10SpatialParams<TypeTag> );
@@ -82,7 +81,7 @@ SET_TYPE_PROP(TwoPSpe10Problem, BaseProblem, ImplicitPorousMediaProblem<TypeTag>
 SET_TYPE_PROP(TwoPSpe10Problem, LinearSolver, AMGBackend<TypeTag>);
 
 // Enable gravity
-SET_BOOL_PROP(TwoPSpe10Problem, ProblemEnableGravity, true);
+SET_BOOL_PROP(TwoPSpe10Problem, ProblemEnableGravity, false);
 
 SET_BOOL_PROP(TwoPSpe10Problem, EnableGlobalFVGeometryCache, false);
 
@@ -205,7 +204,84 @@ public:
 
         pIn_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, PressureIn);
         pOut_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, PressureOut);
+
+        IPoreVol_ = 0.0;
+        P1PoreVol_ = 0.0;
+        P2PoreVol_ = 0.0;
+        P3PoreVol_ = 0.0;
+        P4PoreVol_ = 0.0;
     }
+
+    /*!
+     * \brief Called by the TimeManager in order to
+     *        initialize the problem.
+     *
+     * If you overload this method don't forget to call
+     * ParentType::init()
+     */
+    void init()
+    {
+        ParentType::init();
+
+        Scalar IX = 185.928;
+        Scalar IY = 336.804;
+
+        Scalar P1X = 0.0;
+        Scalar P1Y = 0.0;
+
+        Scalar P2X = 365.76;
+        Scalar P2Y = 0.0;
+
+        Scalar P3X = 365.76;
+        Scalar P3Y = 670.56;
+
+        Scalar P4X = 0.0;
+        Scalar P4Y = 670.56;
+
+        Scalar hX = 6.096;
+        Scalar hY = 3.048;
+        Scalar hZ = 0.6096;
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            auto fvGeometry = localView(this->model().globalFvGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto poro = this->spatialParams().porosity(element, scv,
+                        this->model().elementSolution(element, this->model().curSol()));
+
+                auto center = scv.center();
+
+                Scalar x = center[0];
+                Scalar y = center[1];
+                Scalar z = center[2];
+
+                if(std::abs(x-IX) < hX - eps_ && std::abs(y-IY) < hY - eps_)
+                {
+                    IPoreVol_ += poro*scv.volume();
+                }
+                else if(std::abs(x-P1X) < hX - eps_ && std::abs(y-P1Y) < hY - eps_)
+                {
+                    P1PoreVol_ += poro*scv.volume();
+                }
+                else if(std::abs(x-P2X) < hX - eps_ && std::abs(y-P2Y) < hY - eps_)
+                {
+                    P2PoreVol_ += poro*scv.volume();
+                }
+                else if(std::abs(x-P3X) < hX - eps_ && std::abs(y-P3Y) < hY - eps_)
+                {
+                    P3PoreVol_ += poro*scv.volume();
+                }
+                else if(std::abs(x-P4X) < hX - eps_ && std::abs(y-P4Y) < hY - eps_)
+                {
+                    P4PoreVol_ += poro*scv.volume();
+                }
+            }
+        }
+    }
+
 
     /*!
      * \name Problem parameters
@@ -262,41 +338,51 @@ public:
         Scalar hY = 3.048;
         Scalar hZ = 0.6096;
 
+        Scalar lZ = this->bBoxMax()[dim-1];
+
+        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+        fluidState.setTemperature(temperature_);
+        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
+        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+        Scalar densityN = FluidSystem::density(fluidState, FluidSystem::nPhaseIdx);
+        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+
+        auto poro = this->spatialParams().porosity(element, scv,
+                this->model().elementSolution(element, this->model().curSol()));
+
+        Scalar scalingFactor = poro * scv.volume();
+
         if(std::abs(x-IX) < hX - eps_ && std::abs(y-IY) < hY - eps_)
         {
-            values[contiWEqIdx] = 0.01;
+            values[contiWEqIdx] = 0.01 * densityW * scalingFactor/IPoreVol_;
         }
         else if(std::abs(x-P1X) < hX - eps_ && std::abs(y-P1Y) < hY - eps_)
         {
-            values[contiNEqIdx] = 0.0025;
+            values[contiNEqIdx] = -0.0025 * densityN * scalingFactor/P1PoreVol_;
         }
         else if(std::abs(x-P2X) < hX - eps_ && std::abs(y-P2Y) < hY - eps_)
         {
-            values[contiNEqIdx] = 0.0025;
-        }
-        else if(std::abs(x-P3X) < hX - eps_ && std::abs(y-P3Y) < hY - eps_)
-        {
-            values[contiNEqIdx] = 0.0025;
-        }
-        else if(std::abs(x-P4X) < hX - eps_ && std::abs(y-P4Y) < hY - eps_)
-        {
-            values[contiNEqIdx] = 0.0025;
+            values[contiNEqIdx] = -0.0025 * densityN;
 
-            if(z > 51.816 - hZ )
+            if(z < hZ )
             {
                 Scalar pn = elemVolVars[scv].pressure(nPhaseIdx);
                 Scalar mobN = elemVolVars[scv].mobility(nPhaseIdx);
 
-                typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
-                fluidState.setTemperature(temperature_);
-                fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
-                fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
-                Scalar densityN = FluidSystem::density(fluidState, FluidSystem::nPhaseIdx);
-
                 auto K = this->spatialParams().permeability(element, scv,
                         this->model().elementSolution(element, this->model().curSol()));
-                values[contiNEqIdx] = densityN * K[0][0] * mobN * (pIn_ - pn);
+                values[contiNEqIdx] = densityN * K[0][0] * mobN * (1.0e5 - pn);
             }
+
+            values[contiNEqIdx] *= scalingFactor/P2PoreVol_;
+        }
+        else if(std::abs(x-P3X) < hX - eps_ && std::abs(y-P3Y) < hY - eps_)
+        {
+            values[contiNEqIdx] = -0.0025 * densityN * scalingFactor/P3PoreVol_;
+        }
+        else if(std::abs(x-P4X) < hX - eps_ && std::abs(y-P4Y) < hY - eps_)
+        {
+            values[contiNEqIdx] = -0.0025 * densityN * scalingFactor/P4PoreVol_;
         }
 
         values[contiWEqIdx] /= element.geometry().volume();
@@ -377,7 +463,7 @@ public:
 
         Scalar depth = this->bBoxMax()[dim-1] - globalPos[dim-1];
 
-        values[pwIdx] = pOut_ + (pIn_-pOut_)/this->bBoxMax()[dim-1] * depth - densityW*this->gravity()[dim-1]*depth;
+        values[pwIdx] = 1.0e5 - densityW*this->gravity()[dim-1]*depth;
         values[snIdx] = 1.0;
 
         return values;
@@ -480,6 +566,11 @@ private:
     Scalar pIn_;
     Scalar pOut_;
     Scalar episodeLength_;
+    Scalar IPoreVol_;
+    Scalar P1PoreVol_;
+    Scalar P2PoreVol_;
+    Scalar P3PoreVol_;
+    Scalar P4PoreVol_;
 };
 } //end namespace
 

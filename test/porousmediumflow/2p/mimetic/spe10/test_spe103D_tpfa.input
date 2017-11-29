@@ -1,5 +1,5 @@
 [TimeManager]
-DtInitial = 1e3# [s]
+DtInitial = 1.0e3# [s]
 TEnd = 2.592e+7# [s]
 MaxTimeStepSize = 5e6
 
@@ -18,8 +18,9 @@ PressureOut = 1e7
 ReferenceEntryPressure = 0.0
 
 [Newton]
-UseLineSearch = 1
+UseLineSearch = 0
+EnableChop = 1
 
 [LinearSolver]
-Verbosity = 1
+Verbosity = 2
 MaxIterations = 1000
