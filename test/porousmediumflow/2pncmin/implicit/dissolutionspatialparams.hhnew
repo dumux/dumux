@@ -105,6 +105,7 @@ public:
         pEntry1_             = getParam<Scalar>("SpatialParams.Pentry1", 500);
         bcLambda1_           = getParam<Scalar>("SpatialParams.BCLambda1", 2);
 
+
         // residual saturations
         materialParams_.setSwr(irreducibleLiqSat_);
         materialParams_.setSnr(irreducibleGasSat_);
@@ -112,12 +113,13 @@ public:
         // parameters of Brooks & Corey Law
         materialParams_.setPe(pEntry1_);
         materialParams_.setLambda(bcLambda1_);
+    }
 
-        // set main diagonal entries of the permeability tensor to a value
-        // setting to one value means: isotropic, homogeneous
-        for (int i = 0; i < dim; i++)  //TODO make this nice and dependend on PermeabilityType!
-            initK_[i][i] = initialPermeability_;
-
+    /*!
+     * \brief Called by the Problem to initialize the spatial params.
+     */
+    void init()
+    {
         //! Intitialize the parameter laws
         poroLaw_.init(*this);
         permLaw_.init(*this);
@@ -160,8 +162,8 @@ public:
      *  \param element The finite element
      *  \param scv The sub-control volume
      */
-    PermeabilityType initialPermeability(const Element& element, const SubControlVolume &scv) const
-    { return initK_; }
+    Scalar initialPermeability(const Element& element, const SubControlVolume &scv) const
+    { return initialPermeability_; }
 
     /*!
      *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
@@ -196,7 +198,6 @@ private:
     Scalar solubilityLimit_;
     Scalar initialPorosity_;
     Scalar initialPermeability_;
-    PermeabilityType initK_= 0.0;
     Scalar irreducibleLiqSat_;
     Scalar irreducibleGasSat_;
     Scalar pEntry1_;
