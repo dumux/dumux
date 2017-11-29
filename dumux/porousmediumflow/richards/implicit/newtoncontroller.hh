@@ -47,6 +47,8 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Communicator = typename GridView::CollectiveCommunication;
+    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { pressureIdx = Indices::pressureIdx };
@@ -57,10 +59,17 @@ class RichardsNewtonController : public NewtonController<TypeTag>
 
 public:
     /*!
-     * \brief Constructor
+     * \brief Constructor for stationary problems
      */
-    RichardsNewtonController(const Problem &problem)
-        : ParentType(problem)
+    RichardsNewtonController(const Communicator& comm)
+    : ParentType(comm)
+    {}
+
+    /*!
+     * \brief Constructor for stationary problems
+     */
+    RichardsNewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+    : ParentType(comm, timeLoop)
     {}
 
     /*!
@@ -74,24 +83,25 @@ public:
      * \param deltaU The vector of differences between the last
      *               iterative solution and the next one \f$ \Delta u^k \f$
      */
-    void newtonUpdate(SolutionVector &uCurrentIter,
+    template<class JacobianAssembler, class SolutionVector>
+    void newtonUpdate(JacobianAssembler& assembler,
+                      SolutionVector &uCurrentIter,
                       const SolutionVector &uLastIter,
                       const SolutionVector &deltaU)
     {
-        ParentType::newtonUpdate(uCurrentIter, uLastIter, deltaU);
-
-        if ((!GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, UseLineSearch))
-            && GET_PARAM_FROM_GROUP(TypeTag, bool, Newton, EnableChop ))
+        ParentType::newtonUpdate(assembler, uCurrentIter, uLastIter, deltaU);
+        const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        if (!this->useLineSearch_ && getParamFromGroup<bool>(group, "Newton.EnableChop"))
         {
             // do not clamp anything after 5 iterations
             if (this->numSteps_ > 4)
                 return;
 
             // clamp saturation change to at most 20% per iteration
-            const auto gridView = this->problem_().gridView();
-            for (const auto& element : elements(gridView))
+            const auto& fvGridGeometry = assembler.fvGridGeometry();
+            for (const auto& element : elements(fvGridGeometry.gridView()))
             {
-                auto fvGeometry = localView(this->model_().fvGridGeometry());
+                auto fvGeometry = localView(fvGridGeometry);
                 fvGeometry.bindElement(element);
 
                 for (auto&& scv : scvs(fvGeometry))
@@ -99,13 +109,13 @@ public:
                     auto dofIdxGlobal = scv.dofIndex();
 
                     // calculate the old wetting phase saturation
-                    const auto& spatialParams = this->problem_().spatialParams();
-                    const auto& elemSol = this->model_().elementSolution(element, this->model_().curSol());
+                    const auto& spatialParams = assembler.problem().spatialParams();
+                    const ElementSolution elemSol(element, uCurrentIter, fvGridGeometry);
                     const MaterialLawParams &materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
                     using std::max;
-                    const Scalar pn = max(this->problem_().nonWettingReferencePressure(), pw + pcMin);
+                    const Scalar pn = max(assembler.problem().nonWettingReferencePressure(), pw + pcMin);
                     const Scalar pcOld = pn - pw;
                     const Scalar SwOld = max(0.0, MaterialLaw::sw(materialLawParams, pcOld));
 
