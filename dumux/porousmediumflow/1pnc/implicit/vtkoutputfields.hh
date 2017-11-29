@@ -43,9 +43,10 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "pressure");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(phaseIdx); }, "pressure");
         vtk.addVolumeVariable([](const auto& volVars){ return volVars.density(phaseIdx); }, "rho");
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.porosity(); }, "porosity");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.viscosity(phaseIdx); }, "mu");
+        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(phaseIdx) - 1e5; }, "delp");
 
         for (int i = 0; i < numComponents; ++i)
            vtk.addVolumeVariable([i](const auto& volVars){ return volVars.moleFraction(phaseIdx, i); },
