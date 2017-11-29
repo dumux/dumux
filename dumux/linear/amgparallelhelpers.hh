@@ -919,7 +919,7 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(MatrixType& m, 
     // Compute start index start_p = \sum_{i=0}^{i<p} counts_i
     GlobalIndex start = 0;
     for (int i = 0; i < gridView_.comm().rank(); ++i)
-        start += counts[i];
+        start = start + counts[i];
 
     std::vector<GlobalIndex> scalarIndices(mapper_.size(),
                                            std::numeric_limits<GlobalIndex>::max());
