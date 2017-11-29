@@ -120,8 +120,6 @@ public:
         // Update parent type (also completes the fluid state)
         ParentType::update(elemSol, problem, element, scv);
 
-        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
-
         /////////////
         // calculate the remaining quantities
         /////////////
@@ -191,7 +189,6 @@ protected:
 
     Scalar precipitateVolumeFraction_[numSPhases];
     Scalar sumPrecipitates_;
-    FluidState fluidState_;
 
 private:
     Implementation &asImp_()
