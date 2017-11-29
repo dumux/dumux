@@ -1,7 +1,6 @@
 add_subdirectory(adaptive)
 add_subdirectory(box)
 add_subdirectory(cellcentered)
-add_subdirectory(cornerpoint)
 
 install(FILES
 assembler.hh
