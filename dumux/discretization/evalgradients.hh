@@ -61,14 +61,14 @@ evalGradients(const Element& element,
     // evaluate gradients using the local finite element basis
     const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
 
-    // the inverse transposed of the jacobian matrix
-    const auto jacInvT = g.jacobianInverseTransposed(local);
-
     // evaluate the shape function gradients at the scv center
-    using ShapeJacobian = typename decltype(localBasis)::Traits::JacobianType;
+    using ShapeJacobian = typename std::decay_type< decltype(localBasis) >::Traits::JacobianType;
     const auto localPos = geometry.local(globalPos);
     std::vector< ShapeJacobian > shapeJacobian;
     localBasis.evaluateJacobian(localPos, shapeJacobian);
+
+    // the inverse transposed of the jacobian matrix
+    const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
 
     // interpolate the gradients
     Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( PrimaryVariables(0.0) );
