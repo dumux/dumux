@@ -20,10 +20,10 @@
  * \file
  *
  * \ingroup Discretization
- * \brief free functions for the evaluation of primary variables inside elements.
+ * \brief free functions for the evaluation of primary variable gradients inside elements.
  */
-#ifndef DUMUX_DISCRETIZATION_EVAL_SOLUTION_HH
-#define DUMUX_DISCRETIZATION_EVAL_SOLUTION_HH
+#ifndef DUMUX_DISCRETIZATION_EVAL_GRADIENTS_HH
+#define DUMUX_DISCRETIZATION_EVAL_GRADIENTS_HH
 
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
@@ -34,48 +34,68 @@ namespace Dumux
 {
 
 /*!
- * \brief Interpolates a given box element solution to a given global position.
+ * \brief Evaluates the gradient of a given box element solution to a given global position.
  *
  * \return the interpolated Primary Variables
  * \param element The element
  * \param fvGridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
+ *
+ * \return Dune::FieldVector with as many entries as dimension of
+ *         the PrimaryVariables object (i.e. numEq). Each entry is
+ *         a GlobalCoordinate object holding the priVar gradient.
  */
 template< class Element, class FVGridGeometry, class TypeTag >
-typename BoxElementSolution<TypeTag>::PrimaryVariables
-evalSolution(const Element& element,
-             const typename Element::Geometry& geometry,
-             const FVGridGeometry& fvGridGeometry,
-             const BoxElementSolution<TypeTag>& elemSol,
-             const typename Element::Geometry::GlobalCoordinate& globalPos)
+Dune::FieldVector<typename Element::Geometry::GlobalCoordinate,
+                  BoxElementSolution<TypeTag>::PrimaryVariables::dimension>
+evalGradients(const Element& element,
+              const typename Element::Geometry& geometry,
+              const FVGridGeometry& fvGridGeometry,
+              const BoxElementSolution<TypeTag>& elemSol,
+              const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
     using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
-    using Scalar = typename PrimaryVariables::value_type;
+    using PriVarGradients = Dune::FieldVector<typename Element::Geometry::GlobalCoordinate, PrimaryVariables::dimension>;
 
-    // interpolate the solution
+    // evalutae gradients using the local finite element basis
     const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
 
-    // evaluate the shape functions at the scv center
+    // evaluate the shape function gradients at the scv center
+    using ShapeJacobian = typename decltype(localBasis)::Traits::JacobianType;
     const auto localPos = geometry.local(globalPos);
-    std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
-    localBasis.evaluateFunction(localPos, shapeValues);
+    std::vector< ShapeJacobian > shapeJacobian;
+    localBasis.evaluateJacobian(localPos, shapeJacobian);
 
-    PrimaryVariables result(0.0);
-    for (int i = 0; i < geometry.corners(); ++i)
+    // interpolate the gradients
+    PriVarGradients result( PrimaryVariables(0.0) );
+    for (int i = 0; i < element.subEntities(dim); ++i)
     {
-        auto value = elemSol[i];
-        value *= shapeValues[i][0];
-        result += value;
+        // the global shape function gradient
+        GlobalPosition gradN;
+        jacInvT.mv(shapeJacobian[i][0], gradN);
+
+        // add gradient to global privar gradients
+        for (unsigned int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+        {
+            GlobalPosition tmp(gradN);
+            tmp *= elemSol[i][pvIdx];
+            result[pvIdx] += tmp;
+        }
     }
 
     return result;
 }
 
 /*!
- * \brief Interpolates a given CCElementSolution to a given global position.
+ * \brief Evaluates the gradient of a given CCElementSolution to a given global position.
+ *        This function is only here for (compilation) compatibility reasons with the box scheme.
+ *        The solution within the control volumes is constant and thus gradients are zero.
+ *        One can compute gradients towards the sub-control volume faces after reconstructing
+ *        the solution on the faces. However, this has to be done manually. Here, we simply
+ *        throw an exception that this shouldn't be used.
  *
- * \return the (constant over the element) Primary Variables
+ * \return throw statement
  * \param element The element
  * \param fvGridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
@@ -88,9 +108,7 @@ evalSolution(const Element& element,
              const FVGridGeometry& fvGridGeometry,
              const CCElementSolution<TypeTag>& elemSol,
              const typename Element::Geometry::GlobalCoordinate& globalPos)
-{
-    return elemSol[0];
-}
+{ DUNE_THROW(Dune::NotImplemented, "General gradient evaluation for cell-centered methods"); }
 
 } // namespace Dumux
 
