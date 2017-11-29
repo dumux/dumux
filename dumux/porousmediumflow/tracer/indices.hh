@@ -24,8 +24,6 @@
 #ifndef DUMUX_TRACER_INDICES_HH
 #define DUMUX_TRACER_INDICES_HH
 
-#include "properties.hh"
-
 namespace Dumux
 {
 // \{

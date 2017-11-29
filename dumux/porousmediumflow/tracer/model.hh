@@ -16,43 +16,74 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+#ifndef DUMUX_TRACER_MODEL_HH
+#define DUMUX_TRACER_MODEL_HH
+
 /*!
- * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup TracerModel
  * \file
+ * \ingroup TracerModel
+ * \brief Adaption of the fully implicit scheme to the tracer transport model.
  *
- * \brief Defines some default values for the properties of the fully implicit tracer model.
- */
+ * This model implements a transport of a tracer, where density and viscosity of the
+ * fluid phase in which the tracer gets transported are not affected by the tracer.
+ * The velocity field is a given spatial parameter.
+ * The model is mainly useful for fast computations on given or precomputed
+ * velocity fields and thus generally makes sense only in combination with an incompressible
+ * one-phase flow velocity field or analytically given / artificial fields. However, reactions
+ * between multiple tracer components can be implemented.
+ *
+ * The transport of the components \f$\kappa \in \{ a, b, c, ... \}\f$ is described by the following equation:
+ \f[
+ \phi \frac{ \partial \varrho X^\kappa}{\partial t}
+ - \text{div} \left\lbrace \varrho X^\kappa {\textbf v_f}
+ + \varrho D^\kappa_\text{pm} \frac{M^\kappa}{M_\alpha} \textbf{grad} x^\kappa \right\rbrace = q.
+ \f]
+ *
+ * All equations are discretized using a vertex-centered finite volume (box)
+ * or cell-centered finite volume scheme (TPFA or MPFA) as spatial
+ * and the implicit Euler method as time discretization.
+ * The model is able to use either mole or mass fractions. The property useMoles can be set to either true or false in the
+ * problem file. Make sure that the according units are used in the problem setup. useMoles is set to true by default.
+ *
+ * The primary variables the mole or mass fraction of dissolved components \f$x\f$.
+ * Note that the tracer model is always considered non-isothermal.
+ * The velocity output is fully compatible with the tracer model if you want to write the velocity field to vtk.
+*/
 
-#ifndef DUMUX_TRACER_PROPERTY_DEFAULTS_HH
-#define DUMUX_TRACER_PROPERTY_DEFAULTS_HH
-
-#include "properties.hh"
-#include "model.hh"
-#include "volumevariables.hh"
-#include "indices.hh"
-#include "localresidual.hh"
-#include "vtkoutputfields.hh"
-
+#include <dumux/common/properties.hh>
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/discretization/stationaryvelocityfield.hh>
-#include <dumux/material/fluidmatrixinteractions/diffusivityconstant.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
+#include <dumux/porousmediumflow/properties.hh>
+
+#include "indices.hh"
+#include "volumevariables.hh"
+#include "vtkoutputfields.hh"
+#include "localresidual.hh"
 
 namespace Dumux
 {
 // \{
 namespace Properties
 {
+
 //////////////////////////////////////////////////////////////////
-// Property values
+// Type tags
 //////////////////////////////////////////////////////////////////
+
+//! The type tags for the fully implicit tracer model.
+NEW_TYPE_TAG(Tracer, INHERITS_FROM(PorousMediumFlow));
+
+///////////////////////////////////////////////////////////////////////////
+// properties for the tracer model
+///////////////////////////////////////////////////////////////////////////
 SET_INT_PROP(Tracer, NumPhases, 1); //!< The number of phases
 
 SET_PROP(Tracer, NumEq) //!< set the number of equations
 {
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     static const int value = FluidSystem::numComponents;
+    static_assert(GET_PROP_VALUE(TypeTag, NumComponents) == value, "Number of equation has to be equal to number of components.");
 };
 
 SET_PROP(Tracer, NumComponents) //!< set the number of components
@@ -66,9 +97,6 @@ SET_BOOL_PROP(Tracer, UseMoles, true); //!< Define that mole fractions are used 
 //! Use the tracer local residual function for the tracer model
 SET_TYPE_PROP(Tracer, LocalResidual, TracerLocalResidual<TypeTag>);
 
-//! define the model
-SET_TYPE_PROP(Tracer, Model, TracerModel<TypeTag>);
-
 //! Set the default vtk output fields
 SET_TYPE_PROP(Tracer, VtkOutputFields, TracerVtkOutputFields<TypeTag>);
 
@@ -78,43 +106,19 @@ SET_TYPE_PROP(Tracer, VolumeVariables, TracerVolumeVariables<TypeTag>);
 //! We use darcy's law as the default for the advective fluxes
 SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<TypeTag>);
 
-//! set gravity flag for compatibility
-SET_BOOL_PROP(Tracer, ProblemEnableGravity, false);
-
 //! Set the indices used by the tracer model
 SET_TYPE_PROP(Tracer, Indices, TracerIndices<TypeTag>);
 
-//! The spatial parameters to be employed.
 //! Use ImplicitSpatialParamsOneP by default.
 SET_TYPE_PROP(Tracer, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
 
 //! Use simple model with constant tortuosity as pm diffusivity model
-SET_PROP(Tracer, EffectiveDiffusivityModel)
-{
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = DiffusivityConstant<TypeTag>;
-};
+SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // physical processes to be considered by the isothermal model
 SET_BOOL_PROP(Tracer, EnableAdvection, true);
 SET_BOOL_PROP(Tracer, EnableMolecularDiffusion, true);
 SET_BOOL_PROP(Tracer, EnableEnergyBalance, false);
-
-//! default value for the forchheimer coefficient
-// Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
-//        Actually the Forchheimer coefficient is also a function of the dimensions of the
-//        porous medium. Taking it as a constant is only a first approximation
-//        (Nield, Bejan, Convection in porous media, 2006, p. 10)
-SET_SCALAR_PROP(Tracer, SpatialParamsForchCoeff, 0.55);
-
-/*!
- * \brief default value for tortuosity value (tau) used in macroscopic diffusion
- *
- * Value is 0.5 according to Carman 1937: <i>Fluid flow through granular beds</i>
- * \cite carman1937
- */
-SET_SCALAR_PROP(Tracer, TauTortuosity, 0.5);
-
 } // end namespace Properties
 // \}
 } // end namespace Dumux

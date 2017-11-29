@@ -25,6 +25,8 @@
 #ifndef DUMUX_TRACER_LOCAL_RESIDUAL_HH
 #define DUMUX_TRACER_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 
@@ -186,7 +188,7 @@ public:
     }
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<!GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -203,7 +205,7 @@ public:
         const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
 
         // the upwind weight
-        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
         // get the inside and outside volvars
         const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
@@ -230,7 +232,7 @@ public:
     }
 
     template<class JacobianMatrix, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, ImplicitIsBox), void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
     addFluxDerivatives(JacobianMatrix& A,
                        const Problem& problem,
                        const Element& element,
@@ -248,7 +250,7 @@ public:
         const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
 
         // the upwind weight
-        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
 
         // get the inside and outside volvars
         const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];

@@ -23,9 +23,8 @@
 #ifndef DUMUX_TRACER_VOLUME_VARIABLES_HH
 #define DUMUX_TRACER_VOLUME_VARIABLES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/volumevariables.hh>
-
-#include "properties.hh"
 
 namespace Dumux
 {
