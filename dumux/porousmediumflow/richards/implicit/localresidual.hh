@@ -40,6 +40,7 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -66,6 +67,7 @@ class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     static constexpr bool enableWaterDiffusionInAir
         = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
 public:
+    using ParentType::ParentType;
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -77,7 +79,8 @@ public:
      * \note The volVars can be different to allow computing
      *       the implicit euler time derivative here
      */
-    ResidualVector computeStorage(const SubControlVolume& scv,
+    ResidualVector computeStorage(const Problem& problem,
+                                  const SubControlVolume& scv,
                                   const VolumeVariables& volVars) const
     {
         // partial time derivative of the phase mass
@@ -107,14 +110,15 @@ public:
      * \brief Evaluate the mass flux over a face of a sub control volume
      * \param scvf The sub control volume face to compute the flux on
      */
-    ResidualVector computeFlux(const Element& element,
+    ResidualVector computeFlux(const Problem& problem,
+                               const Element& element,
                                const FVElementGeometry& fvGeometry,
                                const ElementVolumeVariables& elemVolVars,
                                const SubControlVolumeFace& scvf,
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         ResidualVector flux(0.0);
         // the physical quantities for which we perform upwinding
@@ -124,8 +128,8 @@ public:
         flux[conti0EqIdx] = fluxVars.advectiveFlux(wPhaseIdx, upwindTerm);
 
         // for extended Richards we consider water vapor diffusion in air
-        if (enableWaterDiffusionInAir)
-            flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(nPhaseIdx)[wCompIdx]*FluidSystem::molarMass(wCompIdx);
+//         if (enableWaterDiffusionInAir)
+//             flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(nPhaseIdx)[wCompIdx]*FluidSystem::molarMass(wCompIdx);
 
         //! Add advective phase energy fluxes for the water phase only. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);
