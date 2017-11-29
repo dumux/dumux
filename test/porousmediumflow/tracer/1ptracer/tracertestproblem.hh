@@ -24,11 +24,12 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/tracer/implicit/propertydefaults.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/fluidsystems/base.hh>
 
 #include "tracertestspatialparams.hh"
 
@@ -65,7 +66,8 @@ SET_BOOL_PROP(TracerTestCCProblem, SolutionDependentMolecularDiffusion, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
-class TracerFluidSystem
+class TracerFluidSystem : public FluidSystems::BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                               TracerFluidSystem<TypeTag>>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -74,6 +76,14 @@ class TracerFluidSystem
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
 public:
+    //! If the fluid system only contains tracer components
+    static constexpr bool isTracerFluidSystem()
+    { return true; }
+
+    //! No component is the main component
+    static constexpr int getMainComponent(int phaseIdx)
+    { return -1; }
+
     //! The number of components
     static constexpr int numComponents = 1;
 
@@ -95,7 +105,7 @@ public:
                                              const Problem& problem,
                                              const Element& element,
                                              const SubControlVolume& scv)
-    { return 0.0;}//1.0e-9; }
+    { return 0.0; }
 };
 
 SET_TYPE_PROP(TracerTestProblem, FluidSystem, TracerFluidSystem<TypeTag>);
@@ -124,7 +134,6 @@ class TracerTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -165,20 +174,6 @@ public:
         values.setAllNeumann();
         return values;
     }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     *
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(0.0); }
-
     // \}
 
     /*!

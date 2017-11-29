@@ -1,17 +1,21 @@
-add_input_file_links()
+dune_symlink_to_source_files(FILES "tracer.input")
 
-# tracer tests
-add_dumux_test(test_1ptracer test_1ptracer test_cctracer.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/cctracer-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/cctracer-00027.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cctracer")
-set(CMAKE_BUILD_TYPE Release)
+dune_add_test(NAME test_tracer_sequential
+              SOURCES test_cctracer.cc
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/tracer-sequential-transport-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/tracer-00010.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/tracer-sequential-pressure-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/1p.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_tracer_sequential tracer.input")
+
 #install sources
 install(FILES
-1ptracertestproblem.hh
-1ptracertestspatialparams.hh
+1ptestproblem.hh
+1ptestspatialparams.hh
+tracertestproblem.hh
+tracertestspatialparams.hh
 test_cctracer.cc
-test_cctracer.input
+tracer.input
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/porousmediumflow/tracer/1ptracer)
