@@ -25,6 +25,7 @@
 
 #include <functional>
 
+#include <dune/common/version.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/typetraits.hh>
@@ -54,10 +55,16 @@ namespace Vtk
         using Element = typename GridView::template Codim<0>::Entity;
 
         // a VTK function that supports both scalar and vector values for each element
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         template <typename F>
         struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
         {
             using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
+        template<typename F, typename Mapper>
+        struct VectorP0VTKFunction : Dune::VTKFunction<GridView>
+        {
+#endif
         public:
             //! return number of components
             virtual int ncomps () const
@@ -92,10 +99,16 @@ namespace Vtk
         };
 
         // a VTK function that supports both scalar and vector values for each vertex
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         template <typename F>
         struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
         {
             using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
+        template<typename F, typename Mapper>
+        struct VectorP1VTKFunction : Dune::VTKFunction<GridView>
+        {
+#endif
         public:
             //! return number of components
             virtual int ncomps () const
@@ -148,9 +161,17 @@ namespace Vtk
         : codim_(codim)
         {
             if (codim == GridView::dimension)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                 field_ = std::make_shared<VectorP1VTKFunction<F>>(gridView, mapper, f, name, numComp);
+#else
+                field_ = std::make_shared<VectorP1VTKFunction<F, Mapper>>(gridView, mapper, f, name, numComp);
+#endif
             else if (codim == 0)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                 field_ = std::make_shared<VectorP0VTKFunction<F>>(gridView, mapper, f, name, numComp);
+#else
+                field_ = std::make_shared<VectorP0VTKFunction<F, Mapper>>(gridView, mapper, f, name, numComp);
+#endif
             else
                 DUNE_THROW(Dune::NotImplemented, "Only element or vertex quantities allowed.");
         }
