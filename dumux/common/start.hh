@@ -29,7 +29,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
@@ -41,9 +41,6 @@ namespace Dumux
 // forward declaration of property tags
 namespace Properties
 {
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(GridCreator);
-NEW_PROP_TAG(Problem);
 NEW_PROP_TAG(TimeManager);
 }
 
@@ -69,7 +66,6 @@ int start_(int argc,
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -82,43 +78,13 @@ int start_(int argc,
     // parse the command line arguments and input file
     ////////////////////////////////////////////////////////////
 
-    // if the user just wanted to see the help / usage message show usage and stop program
-    if(!ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree(), usage))
-    {
-        usage(argv[0], defaultUsageMessage(argv[0]));
-        return 0;
-    }
-    // parse the input file into the parameter tree
-    // check first if the user provided an input file through the command line, if not use the default
-    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
-    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName, usage);
-
-    ////////////////////////////////////////////////////////////
-    // check for some user debugging parameters
-    ////////////////////////////////////////////////////////////
-
-    bool printProps = false; // per default don't print all properties
-    if (ParameterTree::tree().hasKey("PrintProperties") || ParameterTree::tree().hasKey("TimeManager.PrintProperties"))
-        printProps = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintProperties);
-
-    if (printProps && mpiHelper.rank() == 0)
-        Properties::print<TypeTag>();
-
-    bool printParams = true; // per default print all properties
-    if (ParameterTree::tree().hasKey("PrintParameters") || ParameterTree::tree().hasKey("TimeManager.PrintParameters"))
-        printParams = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, TimeManager, PrintParameters);
+    Dumux::Parameters::init(argc, argv, usage);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
     /////////////////////////////////////////////////////////////////////
 
-    try { GridCreator::makeGrid(); }
-    catch (...) {
-        std::string usageMessage = "\n\t -> Creation of the grid failed! <- \n\n";
-        usageMessage += defaultUsageMessage(argv[0]);
-        usage(argv[0], usageMessage);
-        throw;
-    }
+    GridCreator::makeGrid();
     GridCreator::loadBalance();
 
     //////////////////////////////////////////////////////////////////////
@@ -126,16 +92,16 @@ int start_(int argc,
     /////////////////////////////////////////////////////////////////////
 
     // read the initial time step and the end time (mandatory parameters)
-    auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, TEnd);
-    auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, DtInitial);
+    auto tEnd = getParam<Scalar>("TimeManager.TEnd");
+    auto dt = getParam<Scalar>("TimeManager.DtInitial");
 
     // check if we are about to restart a previously interrupted simulation
     bool restart = false;
     Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeManager.Restart"))
+    if (haveParam("Restart") || haveParam("TimeManager.Restart"))
     {
         restart = true;
-        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, Restart);
+        restartTime =  getParam<Scalar>("TimeManager.Restart");
     }
 
     // instantiate and run the problem
@@ -146,12 +112,7 @@ int start_(int argc,
 
     // print dumux end message and maybe the parameters for debugging
     if (mpiHelper.rank() == 0)
-    {
         DumuxMessage::print(/*firstCall=*/false);
-
-        if (printParams)
-            Parameters::print<TypeTag>();
-    }
 
     return 0;
 }
@@ -176,7 +137,6 @@ int start(int argc,
         return start_<TypeTag>(argc, argv, usage);
     }
     catch (ParameterException &e) {
-        Parameters::print<TypeTag>();
         std::cerr << std::endl << e << ". Abort!" << std::endl;
         return 1;
     }

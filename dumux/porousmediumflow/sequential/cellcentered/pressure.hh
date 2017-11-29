@@ -502,7 +502,7 @@ void FVPressure<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
-    int verboseLevelSolver = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    int verboseLevelSolver = getParam<int>("LinearSolver, Verbosity", 0);
 
     if (verboseLevelSolver)
         std::cout << __FILE__ << ": solve for pressure" << std::endl;
@@ -521,7 +521,7 @@ void FVPressure<TypeTag>::solve()
 //    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
 //    printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);
 
-    Solver solver(problem_);
+    Solver solver;
     solver.solve(A_, pressure_, f_);
 
 //    printvector(std::cout, pressure_, "pressure", "row", 200, 1, 3);

@@ -57,6 +57,11 @@ NEW_PROP_TAG( SolutionTypes);
 NEW_PROP_TAG( PrimaryVariables);
 NEW_PROP_TAG( Indices);
 
+// Some properties that have been removed from numeric model
+NEW_PROP_TAG( Model ); //!< The type of the mode
+NEW_PROP_TAG( TimeManager ); //!< The type of the time manager
+NEW_PROP_TAG( DiscretizationMethod ); //!< The type of discretization method
+
 NEW_PROP_TAG( PressureModel ); //!< The type of the discretization of a pressure model
 NEW_PROP_TAG( TransportModel ); //!< The type of the discretization of a transport model
 NEW_PROP_TAG( Velocity ); //!< The type velocity reconstruction
@@ -77,6 +82,7 @@ NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of 
 #include <dumux/common/timemanager.hh>
 #include <dumux/common/boundarytypes.hh>
 #include<dumux/common/boundaryconditions.hh>
+#include<dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -89,6 +95,11 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
+
+SET_PROP(SequentialModel, DiscretizationMethod)
+{
+    static const DiscretizationMethods value = DiscretizationMethods::CCTpfa;
+};
 
 //! Use the leaf grid view if not defined otherwise
 SET_PROP(SequentialModel, GridView)

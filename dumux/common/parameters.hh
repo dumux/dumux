@@ -75,7 +75,7 @@
  * \endcode
  */
 #define GET_PARAM_FROM_GROUP(TypeTag, ParamType, GroupName, ParamName)  \
-    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName))
+    ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName), ParamType(GET_PROP_VALUE(TypeTag, GroupName##ParamName)))
 
 
 /*!

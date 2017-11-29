@@ -132,9 +132,9 @@ public:
         if (adaptiveGrid)
             gridAdapt_ = std::make_shared<GridAdaptModel>(asImp_());
 
-        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel", 0);
         dtVariationRestrictionFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, DtVariationRestrictionFactor);
-        maxTimeStepSize_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
+        maxTimeStepSize_ = getParam<Scalar>("TimeManager.MaxTimeStepSize", std::numeric_limits<Scalar>::max());
     }
 
     /*!
