@@ -37,17 +37,16 @@ template<class TypeTag>
 class BoxElementSolution
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+
     //! Default constructors
     BoxElementSolution() = default;
-    BoxElementSolution(BoxElementSolution&& other) = default;
-    BoxElementSolution(const BoxElementSolution& other) = default;
 
     //! Constructor with element and solution and gridgeometry
     BoxElementSolution(const Element& element, const SolutionVector& sol,
