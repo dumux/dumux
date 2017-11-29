@@ -127,7 +127,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! computation. This includes all participating boundary volume variables
         //! and it can be different for the phases & components.
         const Stencil& diffusionVolVarsStencil(unsigned int phaseIdx, unsigned int compIdx) const
-        { return diffusionVolVarsStencil_[phaseIdx][compIdx]; }
+        { return *diffusionVolVarsStencil_[phaseIdx][compIdx]; }
 
         //! On faces that are "outside" w.r.t. a face in the interaction volume,
         //! we have to take the negative value of the fluxes, i.e. multiply by -1.0
@@ -137,12 +137,12 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! Returns the transmissibilities associated with the volume variables
         //! This can be different for the phases & components.
         const CoefficientVector& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
-        { return diffusionTij_[phaseIdx][compIdx]; }
+        { return *diffusionTij_[phaseIdx][compIdx]; }
 
         //! Returns the data on dirichlet boundary conditions affecting
         //! the flux computation on this face
         const DirichletDataContainer& diffusionDirichletData(unsigned int phaseIdx, unsigned int compIdx) const
-        { return diffusionDirichletData_[phaseIdx][compIdx]; }
+        { return *diffusionDirichletData_[phaseIdx][compIdx]; }
 
     private:
         std::array< std::array<bool, numComponents>, numPhases> diffusionSwitchFluxSign_;
