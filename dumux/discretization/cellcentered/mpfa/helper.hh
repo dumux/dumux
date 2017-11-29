@@ -23,6 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 
+#include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 
 #include "methods.hh"
@@ -112,11 +113,19 @@ public:
      */
     static std::size_t getGlobalNumScvf(const GridView& gridView)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         assert(gridView.size(Dune::GeometryTypes::triangle)
                + gridView.size(Dune::GeometryTypes::quadrilateral) == gridView.size(0));
 
         return gridView.size(Dune::GeometryTypes::triangle)*6
                + gridView.size(Dune::GeometryTypes::quadrilateral)*8;
+#else
+        assert(gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 2))
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 2)) == gridView.size(0));
+
+        return gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 2))*6
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 2))*8;
+#endif
     }
 
     /*!
@@ -194,12 +203,21 @@ public:
      */
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         if (gt == Dune::GeometryTypes::triangle)
             return 6;
         else if (gt == Dune::GeometryTypes::quadrilateral)
             return 8;
         else
             DUNE_THROW(Dune::NotImplemented, "Mpfa for 2d geometry type " << gt);
+#else
+        if (gt.isTriangle())
+            return 6;
+        else if (gt.isQuadrilateral())
+            return 8;
+        else
+            DUNE_THROW(Dune::NotImplemented, "Mpfa for 2d geometry type " << gt);
+#endif
     }
 };
 
@@ -334,6 +352,7 @@ public:
      */
     static std::size_t getGlobalNumScvf(const GridView& gridView)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         assert(gridView.size(Dune::GeometryTypes::tetrahedron)
                + gridView.size(Dune::GeometryTypes::pyramid)
                + gridView.size(Dune::GeometryTypes::prism)
@@ -343,6 +362,17 @@ public:
                + gridView.size(Dune::GeometryTypes::pyramid)*16
                + gridView.size(Dune::GeometryTypes::prism)*18
                + gridView.size(Dune::GeometryTypes::cube)*24;
+#else
+        assert(gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 3))
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::pyramid, 3))
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::prism, 3))
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 3)) == gridView.size(0));
+
+        return gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 3))*12
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::pyramid, 3))*16
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::prism, 3))*18
+               + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 3))*24;
+#endif
     }
 
     /*!
