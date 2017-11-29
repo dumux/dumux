@@ -26,8 +26,9 @@
 #ifndef DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 #define DUMUX_RICHARDS_NC_WELL_TRACER_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/richardsnc/implicit/model.hh>
 
 #include "richardswelltracerspatialparams.hh"
@@ -55,8 +56,6 @@ SET_TYPE_PROP(RichardsWellTracerProblem, Problem, RichardsWellTracerProblem<Type
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsWellTracerProblem, PointSource, SolDependentPointSource<TypeTag>);
 
-// Enable gravity
-SET_BOOL_PROP(RichardsWellTracerProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -86,9 +85,9 @@ SET_BOOL_PROP(RichardsWellTracerProblem, ProblemEnableGravity, true);
  * simulation time is 10,000,000 seconds (115.7 days)
  */
 template <class TypeTag>
-class RichardsWellTracerProblem : public ImplicitPorousMediaProblem<TypeTag>
+class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -97,11 +96,13 @@ class RichardsWellTracerProblem : public ImplicitPorousMediaProblem<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     enum {
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
@@ -122,36 +123,37 @@ public:
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
      */
-    RichardsWellTracerProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    RichardsWellTracerProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-        contaminantMoleFraction_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, ContaminantMoleFraction);
-        pumpRate_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, PumpRate); // in kg/s
+        name_ = getParam<std::string>("Problem.Name");
+        contaminantMoleFraction_ = getParam<Scalar>("Problem.ContaminantMoleFraction");
+        pumpRate_ = getParam<Scalar>("Problem.PumpRate"); // in kg/s
 
         // for initial conditions
         const Scalar sw = 0.4; // start with 80% saturation on top
-        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->bBoxMax()), sw);
+        pcTop_ = MaterialLaw::pc(this->spatialParams().materialLawParamsAtPos(this->fvGridGeometry().bBoxMax()), sw);
 
         // for post time step mass balance
         accumulatedSource_ = 0.0;
     }
 
-    void postTimeStep()
-    {
-        ParentType::postTimeStep();
+    void postTimeStep(const SolutionVector& curSol,
+                      const GridVariables& gridVariables,
+                      const Scalar timeStepSize)
 
+    {
         // compute the mass in the entire domain to make sure the tracer is conserved
         Scalar tracerMass = 0.0;
 
         // bulk elements
-        for (const auto& element : elements(this->gridView()))
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            auto fvGeometry = localView(this->model().fvGridGeometry());
+            auto fvGeometry = localView(this->fvGridGeometry());
             fvGeometry.bindElement(element);
 
-            auto elemVolVars = localView(this->model().curGlobalVolVars());
-            elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
+            auto elemVolVars = localView(gridVariables.curGridVolVars());
+            elemVolVars.bindElement(element, fvGeometry, curSol);
 
             for (auto&& scv : scvs(fvGeometry))
             {
@@ -162,7 +164,7 @@ public:
                 accumulatedSource_ += this->scvPointSources(element, fvGeometry, elemVolVars, scv)[compIdx]
                                        * scv.volume() * volVars.extrusionFactor()
                                        * FluidSystem::molarMass(compIdx)
-                                       * this->timeManager().timeStepSize();
+                                       * timeStepSize;
             }
         }
 
@@ -269,7 +271,7 @@ public:
      */
     void addPointSources(std::vector<PointSource>& pointSources) const
     {
-        auto globalPos = this->bBoxMax()-this->bBoxMin();
+        auto globalPos = this->fvGridGeometry().bBoxMax()-this->fvGridGeometry().bBoxMin();
         globalPos *= 0.5;
         //! Add point source in middle of domain
         pointSources.emplace_back(globalPos,
@@ -305,8 +307,8 @@ private:
     {
         const auto xTracer = [&,this]()
         {
-            const GlobalPosition contaminationPos({0.2*this->bBoxMax()[0], 0.5*this->bBoxMax()[1]});
-            if ((globalPos - contaminationPos).two_norm() < 0.1*(this->bBoxMax()-this->bBoxMin()).two_norm() + eps_)
+            const GlobalPosition contaminationPos({0.2*this->fvGridGeometry().bBoxMax()[0], 0.5*this->fvGridGeometry().bBoxMax()[1]});
+            if ((globalPos - contaminationPos).two_norm() < 0.1*(this->fvGridGeometry().bBoxMax()-this->fvGridGeometry().bBoxMin()).two_norm() + eps_)
                 return contaminantMoleFraction_;
             else
                 return 0.0;
@@ -315,29 +317,29 @@ private:
         PrimaryVariables values(0.0);
         //! hydrostatic pressure profile
         values[pressureIdx] = (nonWettingReferencePressure() - pcTop_)
-                               - 9.81*1000*(globalPos[dimWorld-1] - this->bBoxMax()[dimWorld-1]);
+                               - 9.81*1000*(globalPos[dimWorld-1] - this->fvGridGeometry().bBoxMax()[dimWorld-1]);
         values[compIdx] = xTracer;
         return values;
     }
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
+        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
+        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->bBoxMax()[1] - eps_;
+        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
     static constexpr Scalar eps_ = 1.5e-7;

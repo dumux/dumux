@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 10 # [s]
 TEnd = 1e6 # [s]
 
@@ -22,3 +22,6 @@ Name = "D2O"
 
 [Vtk]
 AddVelocity = true
+
+[Newton]
+EnableChop = false  # chop for better convergence
