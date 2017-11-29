@@ -37,12 +37,12 @@ InitPrecipitatedSalt1    = 0.0     # [-]  initial precipitated salt
 InitPrecipitatedSalt2    = 0.05    # [-]  initial precipitated salt in the blocked part
 
 [SpatialParams]
-SolubilityLimit     = 0.295        # [-]  solubility limit of salt in brine
+SolubilityLimit     = 0.26 #0.295        # [-]  solubility limit of salt in brine
 Porosity            = 0.11         # [-]  initial porosity
 Permeability        = 2.23e-14
 IrreducibleLiqSat   = 0.2          # [-]  irreducible liquid saturation
 IrreducibleGasSat   = 0.001        # [-]  irreducible gas saturation
-Pentry1             = 0.0          # [Pa]
+Pentry1             = 500 #0.0          # [Pa]
 BCLambda1           = 2            # [-]
 
 [Vtk]
