@@ -496,6 +496,20 @@ void FVPressure<TypeTag>::assemble(bool first)
 //    printvector(std::cout, f_, "right hand side", "row", 10);
 }
 
+template<class Solver, class Problem>
+typename std::enable_if<std::is_default_constructible<std::decay_t<Solver>>::value, Solver>::type
+getSolver(const Problem& problem)
+{
+    return Solver();
+}
+
+template<class Solver, class Problem>
+typename std::enable_if<!std::is_default_constructible<std::decay_t<Solver>>::value, Solver>::type
+getSolver(const Problem& problem)
+{
+    return Solver(problem.gridView(), problem.model().dofMapper());
+}
+
 //!Solves the global system of equations to get the spatial distribution of the pressure
 template<class TypeTag>
 void FVPressure<TypeTag>::solve()
@@ -521,7 +535,7 @@ void FVPressure<TypeTag>::solve()
 //    printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
 //    printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);
 
-    Solver solver;
+    auto solver = getSolver<Solver>(problem_);
     solver.solve(A_, pressure_, f_);
 
 //    printvector(std::cout, pressure_, "pressure", "row", 200, 1, 3);
