@@ -47,27 +47,25 @@ class ThreePNIConductionProblem;
 namespace Properties
 {
 
-NEW_PROP_TAG(FVGridGeometry);
-
-NEW_TYPE_TAG(ThreePNIConductionProblem, INHERITS_FROM(ThreePNI));
-NEW_TYPE_TAG(ThreePNIConductionBoxProblem, INHERITS_FROM(BoxModel, ThreePNIConductionProblem, ThreePNISpatialParams));
-NEW_TYPE_TAG(ThreePNIConductionCCProblem, INHERITS_FROM(CCTpfaModel, ThreePNIConductionProblem, ThreePNISpatialParams));
-NEW_TYPE_TAG(ThreePNIConductionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, ThreePNIConductionProblem, ThreePNISpatialParams));
+NEW_TYPE_TAG(ThreePNIConductionTypeTag, INHERITS_FROM(ThreePNI));
+NEW_TYPE_TAG(ThreePNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
+NEW_TYPE_TAG(ThreePNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
+NEW_TYPE_TAG(ThreePNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, ThreePNIConductionTypeTag, ThreePNISpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(ThreePNIConductionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ThreePNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ThreePNIConductionProblem, Problem, ThreePNIConductionProblem<TypeTag>);
+SET_TYPE_PROP(ThreePNIConductionTypeTag, Problem, ThreePNIConductionProblem<TypeTag>);
 
 
 // Set the fluid system
-SET_TYPE_PROP(ThreePNIConductionProblem,
+SET_TYPE_PROP(ThreePNIConductionTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThreePNIConductionProblem,
+SET_TYPE_PROP(ThreePNIConductionTypeTag,
               SpatialParams,
               ThreePNISpatialParams<TypeTag>);
 

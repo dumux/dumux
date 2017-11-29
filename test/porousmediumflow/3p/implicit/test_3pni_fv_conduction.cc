@@ -19,10 +19,10 @@
 /*!
  * \file
  *
- * \brief Test for the three-phase CC model
+ * \brief test for the 3pni CC model
  */
 #include <config.h>
-#include "infiltration3pproblem.hh"
+#include "3pniconductionproblem.hh"
 #include <ctime>
 #include <iostream>
 
@@ -38,7 +38,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/linear/seqsolverbackend.hh>
+#include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
@@ -86,9 +86,9 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(InfiltrationThreePCCProblem);
+    using TypeTag = TTAG(TYPETAG);
 
-    // initialize MPI, finalize is done automatically on exit
+// initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
 
     // print dumux start message
@@ -121,7 +121,7 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(0));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -146,7 +146,10 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
+    // output every vtkOutputInterval time step
+    const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -157,8 +160,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = UMFPackBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = Dumux::AMGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonController = Dumux::NewtonController<TypeTag>;
@@ -171,10 +174,6 @@ int main(int argc, char** argv) try
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
-
-        // set the end of the next time step as time in the problem to control
-        // the boundary conditions for the implicit Euler scheme
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
 
         // try solving the non-linear system
         for (int i = 0; i < maxDivisions; ++i)
@@ -195,6 +194,9 @@ int main(int argc, char** argv) try
                            << "have been saved to restart files.");
         }
 
+        // update the exact time temperature
+        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
+
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
@@ -208,8 +210,8 @@ int main(int argc, char** argv) try
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
 
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
+       if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
+            vtkWriter.write(timeLoop->time());
 
     } while (!timeLoop->finished());
 
