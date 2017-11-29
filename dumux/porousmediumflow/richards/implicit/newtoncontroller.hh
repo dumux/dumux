@@ -52,7 +52,7 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     enum { pressureIdx = Indices::pressureIdx };
 
     enum { dim = GridView::dimension };
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     enum { dofCodim = isBox ? dim : 0 };
 
 public:

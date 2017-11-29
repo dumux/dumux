@@ -26,7 +26,7 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/porousmediumflow/richards/implicit/model.hh>

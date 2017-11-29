@@ -33,7 +33,6 @@
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/spatialparams/implicit.hh>
@@ -65,14 +64,7 @@ namespace Properties {
 
 //! The type tags for the implicit isothermal one-phase two-component problems
 NEW_TYPE_TAG(Richards, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
-NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(TwoP, NonIsothermal));
-
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-//! Enabling the water diffusion in air leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
-NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into extended Richards
-NEW_PROP_TAG(UseKelvinEquation); //!< Property for turning Richards into extended Richards
+NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards, NonIsothermal));
 
 //////////////////////////////////////////////////////////////////
 // Properties values
@@ -93,9 +85,6 @@ SET_TYPE_PROP(Richards, VtkOutputFields, RichardsVtkOutputFields<TypeTag>);     
 
 //! The class for the volume averaged quantities
 SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
-
-//! Smarter newton controller
-SET_TYPE_PROP(Richards, NewtonController, RichardsNewtonController<TypeTag>);
 
 //! Enable advection
 SET_BOOL_PROP(Richards, EnableAdvection, true);
@@ -127,7 +116,7 @@ SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, in
 SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
 
 //! The primary variable switch for the richards model
-SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
+//SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 
 //! The spatial parameters to be employed.
 //! Use ImplicitSpatialParams by default.
@@ -159,9 +148,6 @@ public:
     using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
-// enable gravity by default
-SET_BOOL_PROP(Richards, ProblemEnableGravity, true);
-
 //! default value for the forchheimer coefficient
 // Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90.
 //        Actually the Forchheimer coefficient is also a function of the dimensions of the
@@ -183,9 +169,6 @@ public:
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-// set isothermal Model
-SET_TYPE_PROP(RichardsNI, IsothermalModel, RichardsModel<TypeTag>);
-
 //set isothermal VolumeVariables
 SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
 
@@ -197,6 +180,8 @@ SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
 
 //set isothermal NumEq
 SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);
+
+SET_TYPE_PROP(RichardsNI, IsothermalVtkOutputFields, RichardsVtkOutputFields<TypeTag>);
 
 // \}
 }
