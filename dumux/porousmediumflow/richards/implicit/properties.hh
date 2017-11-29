@@ -93,8 +93,8 @@ SET_BOOL_PROP(Richards, EnableAdvection, true);
 //! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
 SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
 
-//! The default richards model has no molecular diffusion
-SET_BOOL_PROP(Richards, EnableMolecularDiffusion, GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir));
+//! we need to set this to true so that we can calculate the WaterDiffusionInAir whenever we want and still use the same fluxVarsCache for all models
+SET_BOOL_PROP(Richards, EnableMolecularDiffusion, true);
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
@@ -173,7 +173,7 @@ public:
 SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
 
 //set isothermal LocalResidual
-SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
 
 //set isothermal Indices
 SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);

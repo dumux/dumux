@@ -128,8 +128,8 @@ public:
         flux[conti0EqIdx] = fluxVars.advectiveFlux(wPhaseIdx, upwindTerm);
 
         // for extended Richards we consider water vapor diffusion in air
-//         if (enableWaterDiffusionInAir)
-//             flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(nPhaseIdx)[wCompIdx]*FluidSystem::molarMass(wCompIdx);
+        if (enableWaterDiffusionInAir)
+            flux[conti0EqIdx] += fluxVars.molecularDiffusionFlux(nPhaseIdx)[wCompIdx]*FluidSystem::molarMass(wCompIdx);
 
         //! Add advective phase energy fluxes for the water phase only. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, wPhaseIdx);
