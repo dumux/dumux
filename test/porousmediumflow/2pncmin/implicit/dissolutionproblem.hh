@@ -351,18 +351,21 @@ public:
         using std::abs;
         Scalar precipSalt = volVars.porosity() * volVars.molarDensity(wPhaseIdx)
                                                * volVars.saturation(wPhaseIdx)
-                                               * (moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase);
+                                               * abs(moleFracNaCl_wPhase - moleFracNaCl_Max_wPhase);
+
+        if (moleFracNaCl_wPhase < moleFracNaCl_Max_wPhase)
+            precipSalt *= -1;
 
         // gas phase
         precipSalt += volVars.porosity() * volVars.molarDensity(nPhaseIdx)
                                          * volVars.saturation(nPhaseIdx)
-                                         * (moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
+                                         * abs(moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
 
         // make sure we don't dissolve more salt than previously precipitated
         if (precipSalt*timeStepSize_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
             precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/timeStepSize_;
 
-        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= volVars.porosity() - saltPorosity  && precipSalt > 0)
+        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().initialPorosity(element, scv) - saltPorosity  && precipSalt > 0)
             precipSalt = 0;
 
         source[conti0EqIdx + NaClIdx] += -precipSalt;
