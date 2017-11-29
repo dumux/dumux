@@ -56,10 +56,13 @@ evalGradients(const Element& element,
               const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
     using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
-    using PriVarGradients = Dune::FieldVector<typename Element::Geometry::GlobalCoordinate, PrimaryVariables::dimension>;
+    using GlobalPosition = typename Element::Geometry::GlobalCoordinate;
 
-    // evalutae gradients using the local finite element basis
+    // evaluate gradients using the local finite element basis
     const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
+
+    // the inverse transposed of the jacobian matrix
+    const auto jacInvT = g.jacobianInverseTransposed(local);
 
     // evaluate the shape function gradients at the scv center
     using ShapeJacobian = typename decltype(localBasis)::Traits::JacobianType;
@@ -68,15 +71,15 @@ evalGradients(const Element& element,
     localBasis.evaluateJacobian(localPos, shapeJacobian);
 
     // interpolate the gradients
-    PriVarGradients result( PrimaryVariables(0.0) );
-    for (int i = 0; i < element.subEntities(dim); ++i)
+    Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( PrimaryVariables(0.0) );
+    for (int i = 0; i < element.subEntities(Element::Geometry::mydimension); ++i)
     {
         // the global shape function gradient
         GlobalPosition gradN;
         jacInvT.mv(shapeJacobian[i][0], gradN);
 
         // add gradient to global privar gradients
-        for (unsigned int pvIdx = 0; pvIdx < numEq; ++pvIdx)
+        for (unsigned int pvIdx = 0; pvIdx < PrimaryVariables::dimension; ++pvIdx)
         {
             GlobalPosition tmp(gradN);
             tmp *= elemSol[i][pvIdx];
@@ -103,11 +106,11 @@ evalGradients(const Element& element,
  */
 template< class Element, class FVGridGeometry, class TypeTag >
 typename CCElementSolution<TypeTag>::PrimaryVariables
-evalSolution(const Element& element,
-             const typename Element::Geometry& geometry,
-             const FVGridGeometry& fvGridGeometry,
-             const CCElementSolution<TypeTag>& elemSol,
-             const typename Element::Geometry::GlobalCoordinate& globalPos)
+evalGradients(const Element& element,
+              const typename Element::Geometry& geometry,
+              const FVGridGeometry& fvGridGeometry,
+              const CCElementSolution<TypeTag>& elemSol,
+              const typename Element::Geometry::GlobalCoordinate& globalPos)
 { DUNE_THROW(Dune::NotImplemented, "General gradient evaluation for cell-centered methods"); }
 
 } // namespace Dumux
