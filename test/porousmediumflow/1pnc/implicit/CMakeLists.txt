@@ -1,10 +1,31 @@
 add_input_file_links()
 
-dune_add_test(NAME test_1pnc_box
-              SOURCES test_1pnc.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNCTestBoxProblem
+dune_add_test(NAME test_1p2c_box
+              SOURCES test_1p2c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestBoxProblem
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p_tpfa-00010.vtu
-                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pnc_box")
+                        --files ${CMAKE_SOURCE_DIR}/test/references/outflowbox-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pnctestbox-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_box test_1p2c_fv.input -Problem.Name 1pnctestbox"
+                        --zeroThreshold {"velocity_w \(m/s\)_1":1e-15})
+
+dune_add_test(NAME test_1p2c_tpfa
+              SOURCES test_1p2c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCTpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestcc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pnctest_tpfa-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_tpfa test_1p2c_fv.input -Problem.Name 1pnctest_tpfa"
+                        --zeroThreshold {"velocity_w \(m/s\)_1":1e-15})
+
+dune_add_test(NAME test_1p2c_mpfa
+              SOURCES test_1p2c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCTestCCMpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1p2ctestcc-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pnctest_mpfa-00009.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_mpfa test_1p2c_fv.input -Problem.Name 1pnctest_mpfa"
+                        --zeroThreshold {"velocity_w \(m/s\)_1":1e-15})

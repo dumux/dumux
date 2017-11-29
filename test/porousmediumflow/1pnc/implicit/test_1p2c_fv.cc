@@ -23,7 +23,7 @@
  */
  #include <config.h>
 
- #include "1pnctestproblem.hh"
+ #include "1p2ctestproblem.hh"
 
  #include <ctime>
  #include <iostream>
@@ -120,7 +120,8 @@
      vtkWriter.write(0.0);
 
      // instantiate time loop
-     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
+    //  auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
+     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
      timeLoop->setMaxTimeStepSize(maxDt);
 
      // the assembler with time loop for instationary problem
@@ -137,7 +138,8 @@
      NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
      // set some check points for the time loop
-     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
+    //  timeLoop->setPeriodicCheckPoint(1);
+    //  timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
      // time loop
      timeLoop->start(); do
@@ -172,7 +174,7 @@
          timeLoop->advanceTimeStep();
 
          // write vtk output
-         if (timeLoop->isCheckPoint())
+        //  if (timeLoop->isCheckPoint())
              vtkWriter.write(timeLoop->time());
 
          // report statistics of this time step
