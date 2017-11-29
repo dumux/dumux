@@ -33,6 +33,7 @@
 
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
+#include "localresidual.hh"
 
 namespace Dumux
 {
@@ -55,7 +56,7 @@ SET_TYPE_PROP(TwoPNCMin, VolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);   
 SET_TYPE_PROP(TwoPNCMin, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);                    //! Using the 2pnc indices required by the isothermal 2pncmin model
 SET_TYPE_PROP(TwoPNCMin, SpatialParams, ImplicitSpatialParams<TypeTag>);                       //! Use the ImplicitSpatialParams by default
 SET_TYPE_PROP(TwoPNCMin, VtkOutputFields, TwoPNCMinVtkOutputFields<TypeTag>);                  //! Set the vtk output fields specific to the TwoPNCMin model
-SET_TYPE_PROP(TwoPNCMin, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //! Use the compositional local residual
+SET_TYPE_PROP(TwoPNCMin, LocalResidual, TwoPNCMinLocalResidual<TypeTag>);                  //! Use the compositional local residual
 
 SET_INT_PROP(TwoPNCMin, NumComponents, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);    //! Use the number of components of the fluid system
 SET_INT_PROP(TwoPNCMin, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //! Per default, no component mass balance is replaced
