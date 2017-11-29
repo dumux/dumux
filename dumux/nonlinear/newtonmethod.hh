@@ -55,6 +55,14 @@ NEW_PROP_TAG(JacobianMatrix);
 template <class NewtonController, class JacobianAssembler, class LinearSolver>
 class NewtonMethod
 {
+    //! provide an interface as a form of type erasure
+    //! this is the minimal requirements a convergence write passed to a newton method has to fulfill
+    struct ConvergenceWriterInferface
+    {
+        template<class SolutionVector>
+        void write(const SolutionVector &uLastIter, const SolutionVector &deltaU, const SolutionVector &residual) {}
+    };
+
 public:
     NewtonMethod(std::shared_ptr<NewtonController> controller,
                  std::shared_ptr<JacobianAssembler> assembler,
@@ -77,8 +85,8 @@ public:
      * \brief Run the newton method to solve a non-linear system.
      *        The controller is responsible for all the strategic decisions.
      */
-    template<class SolutionVector>
-    bool solve(SolutionVector& u)
+    template<class SolutionVector, class ConvergenceWriter = ConvergenceWriterInferface>
+    bool solve(SolutionVector& u, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
     {
         try
         {
@@ -164,6 +172,13 @@ public:
 
                 // tell the controller that we're done with this iteration
                 controller_->newtonEndStep(*assembler_, uCurrentIter, uLastIter);
+
+                // if a convergence writer was specified compute residual and write output
+                if (convWriter)
+                {
+                    assembler_->assembleResidual(uCurrentIter);
+                    convWriter->write(uLastIter, deltaU, assembler_->residual());
+                }
             }
 
             // tell controller we are done
