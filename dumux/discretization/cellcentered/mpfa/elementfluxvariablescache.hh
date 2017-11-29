@@ -285,15 +285,16 @@ private:
         //! Get the mpfa method only once per simulation
         static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
 
-        if (method == MpfaMethods::oMethod || method == MpfaMethods::oMethodFps)
+        // TODO: uncomment as soon as methods are re-implemented
+        if (method == MpfaMethods::oMethod /*|| method == MpfaMethods::oMethodFps*/)
             return element.subEntities(dim);
-        else if (method == MpfaMethods::lMethod)
+      /*  else if (method == MpfaMethods::lMethod)
         {
             std::size_t numInsideScvfs = MpfaHelper::getNumLocalScvfs(element.geometry().type());
             std::size_t numOutsideScvf = 0;
             for (const auto& dataJ : assemblyMap) numOutsideScvf += dataJ.scvfsJ.size();
             return numOutsideScvf - numInsideScvfs;
-        }
+        }*/
         else
             DUNE_THROW(Dune::NotImplemented, "number of interaction volumes estimate for chosen mpfa scheme");
     }

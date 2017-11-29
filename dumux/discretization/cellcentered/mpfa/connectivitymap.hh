@@ -45,10 +45,6 @@ class CCMpfaConnectivityMapImplementation : public CCMpfaGeneralConnectivityMap<
 //! The o-method can use the simple assembly map
 template<class TypeTag>
 class CCMpfaConnectivityMapImplementation<TypeTag, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<TypeTag> {};
-
-//! The o-method with full pressure support can use the simple assembly map
-template<class TypeTag>
-class CCMpfaConnectivityMapImplementation<TypeTag, MpfaMethods::oMethodFps> : public CCSimpleConnectivityMap<TypeTag> {};
 }
 
 #endif

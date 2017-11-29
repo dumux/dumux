@@ -41,8 +41,6 @@ using CCMpfaInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, G
 } // end namespace
 
 // the specializations of this class for the available methods have to be included here
-// #include <dumux/discretization/cellcentered/mpfa/lmethod/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
-// #include <dumux/discretization/cellcentered/mpfa/omethodfps/interactionvolume.hh>
 
 #endif

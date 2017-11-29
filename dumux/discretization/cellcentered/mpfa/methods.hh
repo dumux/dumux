@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Face types of the sub control volume faces in the mpfa method.
+ * \brief Available implemented mpfa schemes
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_METHODS_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_METHODS_HH
@@ -27,9 +27,7 @@ namespace Dumux
 {
     enum class MpfaMethods : unsigned int
     {
-        lMethod,
-        oMethod,
-        oMethodFps
+        oMethod
     };
 } // end namespace
 
