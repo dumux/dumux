@@ -31,6 +31,7 @@
 #include <memory>
 #include <sstream>
 
+#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/classname.hh>
 #include <dune/common/parallel/collectivecommunication.hh>
@@ -1202,7 +1203,12 @@ public:
 
         // make the grid (structured interval grid in dimworld space)
         Dune::GridFactory<Grid> factory;
-        constexpr auto geomType = Dune::GeometryTypes::simplex(1);
+
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        constexpr auto geomType = Dune::GeometryTypes::line;
+#else
+        auto geomType = Dune::GeometryType(1);
+#endif
 
         // create a step vector
         GlobalPosition step = upperRight;
