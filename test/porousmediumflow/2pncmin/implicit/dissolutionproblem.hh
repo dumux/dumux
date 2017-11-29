@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISSOLUTION_PROBLEM_HH
 #define DUMUX_DISSOLUTION_PROBLEM_HH
 
+#include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/2pncmin/implicit/model.hh>
@@ -168,11 +169,9 @@ public:
         temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
         name_                   = getParam<std::string>("Problem.Name");
 
-        Kxx_.resize(fvGridGeometry->gridView().size(0));
-        Kyy_.resize(fvGridGeometry->gridView().size(0));
-
-        outfile.open("evaporation.out");
-        outfile << "time; evaporationRate" << std::endl;
+        unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0;
+        Kxx_.resize(fvGridGeometry->gridView().size(codim));
+        Kyy_.resize(fvGridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -182,10 +181,6 @@ public:
                           /*np=*/nPressure_);
     }
 
-    ~DissolutionProblem()
-    {
-        outfile.close();
-    }
 
     void setTime( Scalar time )
     {
@@ -364,7 +359,7 @@ public:
                                          * (moleFracNaCl_nPhase - moleFracNaCl_Max_nPhase);
 
         // make sure we don't dissolve more salt than previously precipitated
-        if (precipSalt*time_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
+        if (precipSalt*timeStepSize_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
             precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/timeStepSize_;
 
         if (volVars.precipitateVolumeFraction(sPhaseIdx) >= volVars.porosity() - saltPorosity  && precipSalt > 0)
@@ -449,7 +444,6 @@ private:
     Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
     Scalar reservoirSaturation_;
-    std::ofstream outfile;
     std::vector<double> Kxx_;
     std::vector<double> Kyy_;
 
