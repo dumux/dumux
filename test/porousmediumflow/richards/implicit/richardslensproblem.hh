@@ -27,6 +27,7 @@
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/porousmediumflow/richards/implicit/model.hh>
@@ -63,9 +64,6 @@ private:
 public:
     using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
 };
-
-// Enable gravity
-SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -103,9 +101,9 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     enum {
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
@@ -128,7 +126,7 @@ public:
     RichardsLensProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -253,28 +251,28 @@ private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
+        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
+        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->bBoxMax()[1] - eps_;
+        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
-        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
+        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda + eps_ && lambda < 2.0/3.0 + eps_;
     }
 

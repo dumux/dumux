@@ -90,8 +90,8 @@ public:
      * \param gridView The DUNE GridView representing the spatial
      *                 domain of the problem.
      */
-    RichardsLensSpatialParams(const Problem& problem, const GridView& gridView)
-        : ParentType(problem, gridView)
+    RichardsLensSpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
 
         lensLowerLeft_ = {1.0, 2.0};
