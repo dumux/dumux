@@ -62,7 +62,7 @@ evalGradients(const Element& element,
     const auto& localBasis = fvGridGeometry.feCache().get(geometry.type()).localBasis();
 
     // evaluate the shape function gradients at the scv center
-    using ShapeJacobian = typename std::decay_type< decltype(localBasis) >::Traits::JacobianType;
+    using ShapeJacobian = typename std::decay_t< decltype(localBasis) >::Traits::JacobianType;
     const auto localPos = geometry.local(globalPos);
     std::vector< ShapeJacobian > shapeJacobian;
     localBasis.evaluateJacobian(localPos, shapeJacobian);
@@ -71,7 +71,7 @@ evalGradients(const Element& element,
     const auto jacInvT = geometry.jacobianInverseTransposed(localPos);
 
     // interpolate the gradients
-    Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( PrimaryVariables(0.0) );
+    Dune::FieldVector<GlobalPosition, PrimaryVariables::dimension> result( GlobalPosition(0.0) );
     for (int i = 0; i < element.subEntities(Element::Geometry::mydimension); ++i)
     {
         // the global shape function gradient
@@ -104,8 +104,9 @@ evalGradients(const Element& element,
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
  */
-template< class Element, class FVGridGeometry, class TypeTag >
-typename CCElementSolution<TypeTag>::PrimaryVariables
+ template< class Element, class FVGridGeometry, class TypeTag >
+ Dune::FieldVector<typename Element::Geometry::GlobalCoordinate,
+                   CCElementSolution<TypeTag>::PrimaryVariables::dimension>
 evalGradients(const Element& element,
               const typename Element::Geometry& geometry,
               const FVGridGeometry& fvGridGeometry,
