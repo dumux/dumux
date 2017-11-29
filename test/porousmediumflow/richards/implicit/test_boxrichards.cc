@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the Richards CC model.
+ * \brief Test for the Richards box model.
  */
 #include <config.h>
 
