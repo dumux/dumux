@@ -294,7 +294,7 @@ public:
      */
     Scalar forchCoeff(const SubControlVolume &scv) const
     {
-        static Scalar forchCoeff = GET_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, ForchCoeff);
+        static Scalar forchCoeff = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "SpatialParams.ForchCoeff");
         return forchCoeff;
     }
 
