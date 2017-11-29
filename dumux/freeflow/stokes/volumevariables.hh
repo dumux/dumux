@@ -29,7 +29,7 @@
 
 #include "properties.hh"
 
-#include <dumux/implicit/volumevariables.hh>
+#include <dumux/discretization/volumevariables.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux

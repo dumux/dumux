@@ -124,6 +124,7 @@ public:
 
 };
 
+
 //! Enable evaluation of shape function gradients at the sub-control volume center by default
 // Used for the computation of the pressure gradients
 SET_BOOL_PROP(BoxStokes, EvalGradientsAtSCVCenter, true);
