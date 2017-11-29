@@ -67,26 +67,25 @@ public:
 template<class TypeTag>
 class RichardsAnalyticalSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    //! The parameters of the material law to be used
-    typedef typename MaterialLaw::Params MaterialLawParams;
+
+        // export permeability type
+    using PermeabilityType = Scalar;
+
 
     /*!
      * \brief Constructor
@@ -94,8 +93,8 @@ public:
      * \param gridView The DUNE GridView representing the spatial
      *                 domain of the problem.
      */
-    RichardsAnalyticalSpatialParams(const GridView& gridView)
-        : ParentType(gridView)
+    RichardsAnalyticalSpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
         K_ = 5e-12;
         materialParams_.setSwr(0.0);
@@ -107,13 +106,9 @@ public:
     /*!
      * \brief Returns the intrinsic permeability tensor [m^2] at a given location
      *
-     * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position where we evaluate
      */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 int scvIdx) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         return K_;
     }
@@ -121,38 +116,20 @@ public:
     /*!
      * \brief Returns the porosity [] at a given location
      *
-     * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position where we evaluate
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    int scvIdx) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!
      * \brief Returns the parameters for the material law at a given location
      *
-     * \param element An arbitrary DUNE Codim<0> entity of the grid view
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
-     */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                                const FVElementGeometry &fvGeometry,
-                                                int scvIdx) const
-    {
-        return materialLawParams(fvGeometry.subContVol[scvIdx].global);
-    }
-
-    /*!
-     * \brief Returns the parameters for the material law at a given location
-     *
      * This method is not actually required by the Richards model, but provided
-     * for the convenience of the RichardsAnalyticalProblem
+     * for the convenience of the RichardsLensProblem
      *
      * \param globalPos A global coordinate vector
      */
-    const MaterialLawParams& materialLawParams(const GlobalPosition &globalPos) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition &globalPos) const
     {
         return materialParams_;
     }

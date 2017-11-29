@@ -29,8 +29,9 @@
 #define DUMUX_RICHARDS_ANALYTICALPROBLEM_HH
 
 #include <cmath>
-#include <dune/geometry/type.hh>
-#include <dune/geometry/quadraturerules.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/porousmediumflow/richards/implicit/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
@@ -51,7 +52,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(RichardsAnalyticalProblem, INHERITS_FROM(Richards, RichardsAnalyticalSpatialParams));
 NEW_TYPE_TAG(RichardsAnalyticalBoxProblem, INHERITS_FROM(BoxModel, RichardsAnalyticalProblem));
-NEW_TYPE_TAG(RichardsAnalyticalCCProblem, INHERITS_FROM(CCModel, RichardsAnalyticalProblem));
+NEW_TYPE_TAG(RichardsAnalyticalCCProblem, INHERITS_FROM(CCTpfaModel, RichardsAnalyticalProblem));
 
 // Use 2d YaspGrid
 SET_TYPE_PROP(RichardsAnalyticalProblem, Grid, Dune::YaspGrid<2>);
@@ -69,26 +70,23 @@ public:
     typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(RichardsAnalyticalProblem, ProblemEnableGravity, true);
-
-// Enable partial reassembly of the Jacobian matrix
-SET_BOOL_PROP(RichardsAnalyticalProblem, ImplicitEnablePartialReassemble, true);
-
-// Enable re-use of the Jacobian matrix for the first iteration of a time step
-SET_BOOL_PROP(RichardsAnalyticalProblem, ImplicitEnableJacobianRecycling, true);
-
-// Use forward differences to approximate the Jacobian matrix
-SET_INT_PROP(RichardsAnalyticalProblem, ImplicitNumericDifferenceMethod, +1);
-
-// Set the maximum number of newton iterations of a time step
-SET_INT_PROP(RichardsAnalyticalProblem, NewtonMaxSteps, 28);
-
-// Set the "desireable" number of newton iterations of a time step
-SET_INT_PROP(RichardsAnalyticalProblem, NewtonTargetSteps, 18);
-
-// Do not write the intermediate results of the newton method
-SET_BOOL_PROP(RichardsAnalyticalProblem, NewtonWriteConvergence, false);
+// // Enable partial reassembly of the Jacobian matrix
+// SET_BOOL_PROP(RichardsAnalyticalProblem, ImplicitEnablePartialReassemble, true);
+//
+// // Enable re-use of the Jacobian matrix for the first iteration of a time step
+// SET_BOOL_PROP(RichardsAnalyticalProblem, ImplicitEnableJacobianRecycling, true);
+//
+// // Use forward differences to approximate the Jacobian matrix
+// SET_INT_PROP(RichardsAnalyticalProblem, ImplicitNumericDifferenceMethod, +1);
+//
+// // Set the maximum number of newton iterations of a time step
+// SET_INT_PROP(RichardsAnalyticalProblem, NewtonMaxSteps, 28);
+//
+// // Set the "desireable" number of newton iterations of a time step
+// SET_INT_PROP(RichardsAnalyticalProblem, NewtonTargetSteps, 18);
+//
+// // Do not write the intermediate results of the newton method
+// SET_BOOL_PROP(RichardsAnalyticalProblem, NewtonWriteConvergence, false);
 }
 
 /*!
@@ -107,32 +105,28 @@ SET_BOOL_PROP(RichardsAnalyticalProblem, NewtonWriteConvergence, false);
  * The L2 error is decreasing with decreasing time and space discretization.
  */
 template <class TypeTag>
-class RichardsAnalyticalProblem : public RichardsProblem<TypeTag>
+class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
 {
-    typedef RichardsProblem<TypeTag> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity::Geometry Geometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     enum {
         // copy some indices for convenience
-        pwIdx = Indices::pwIdx,
-        contiEqIdx = Indices::contiEqIdx
-    };
-    enum {
+        pwIdx = Indices::pressureIdx,
+        conti0EqIdx = Indices::conti0EqIdx,
+        bothPhases = Indices::bothPhases,
+
         // Grid and world dimension
-        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Geometry = typename GridView::template Codim<0>::Entity::Geometry;
 
 public:
     /*!
@@ -141,12 +135,12 @@ public:
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
      */
-    RichardsAnalyticalProblem(TimeManager &timeManager,
-                        const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    RichardsAnalyticalProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         pnRef_ = 1e5; // air pressure
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>("Problem.Name");
+        time_ = 0.0;
     }
 
     /*!
@@ -161,6 +155,9 @@ public:
      */
     const std::string name() const
     { return name_; }
+
+    void setTime(Scalar time)
+    { time_ = time; }
 
     /*!
      * \brief Returns the temperature [K] within a finite volume
@@ -182,9 +179,7 @@ public:
      * \param scvIdx The sub control volume index inside the finite
      *               volume geometry
      */
-    Scalar referencePressure(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
+    Scalar nonWettingReferencePressure() const
     { return pnRef_; }
 
    /*!
@@ -199,10 +194,10 @@ public:
      * \param values Storage for all primary variables of the source term
      * \param globalPos The position for which the source term is set
      */
-    void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        PrimaryVariables values(0.0);
+        const Scalar time = time_;
         const Scalar pwTop = 98942.8;
         const Scalar pwBottom = 95641.1;
 
@@ -219,6 +214,7 @@ public:
             *(pow(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)-1.5E1),2.0)*5.0-5.0)*(pwBottom
             *(1.0/2.0)-pwTop*(1.0/2.0))*(pwBottom*5.0E-16-(tanh(globalPos[1]*5.0+time*(1.0/1.0E1)
             -1.5E1)+1.0)*(pwBottom*(1.0/2.0)-pwTop*(1.0/2.0))*5.0E-16+4.99995E-6)*1.0E1;
+        return values;
     }
 
     // \}
@@ -235,16 +231,17 @@ public:
      * \param values The boundary types for the conservation equations
      * \param globalPos The position for which the boundary type is set
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                       const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes bcTypes;
         if (onLowerBoundary_(globalPos) ||
             onUpperBoundary_(globalPos))
         {
-            values.setAllDirichlet();
+            bcTypes.setAllDirichlet();
         }
         else
-            values.setAllNeumann();
+            bcTypes.setAllNeumann();
+        return bcTypes;
     }
 
     /*!
@@ -256,10 +253,11 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values,
-                   const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
+        PrimaryVariables values(0.0);
+        values.setState(bothPhases);
+        const Scalar time = time_;
         const Scalar pwTop = 98942.8;
         const Scalar pwBottom = 95641.1;
         using std::tanh;
@@ -267,6 +265,7 @@ public:
           + 0.5 * (tanh( (5.0 * globalPos[1]) - 15.0 + time/10.0) + 1.0) * (pwTop - pwBottom);
 
         values[pwIdx] = pw;
+        return values;
     }
 
     /*!
@@ -279,10 +278,10 @@ public:
      * \param values The neumann values for the conservation equations
      * \param globalPos The position for which the Neumann value is set
      */
-    void neumannAtPos(PrimaryVariables &values,
-                 const GlobalPosition &globalPos) const
+    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
     {
-        values = 0.0;
+        PrimaryVariables values(0.0);
+        return values;
     }
 
     /*!
@@ -299,11 +298,12 @@ public:
      * \param values Storage for all primary variables of the initial condition
      * \param globalPos The position for which the boundary type is set
      */
-    void initialAtPos(PrimaryVariables &values,
-                 const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        const Scalar time = this->timeManager().time();
-        analyticalSolution(values, time, globalPos);
+        PrimaryVariables values(0.0);
+        values.setState(bothPhases);
+        analyticalSolution(values, time_, globalPos);
+        return values;
     }
 
     // \}
@@ -321,6 +321,7 @@ public:
                    const Scalar time,
                    const GlobalPosition &globalPos) const
     {
+
         const Scalar pwTop = 98942.8;
         const Scalar pwBottom = 95641.1;
         using std::tanh;
@@ -340,38 +341,38 @@ public:
      */
     Scalar calculateL2Error()
     {
-        const unsigned int qOrder = 4;
-        Scalar l2error = 0.0;
-        Scalar l2analytic = 0.0;
-        const Scalar time = this->timeManager().time() + this->timeManager().timeStepSize();
-
-        for (const auto& element : elements(this->gridView()))
-        {
-            // value from numerical approximation
-            Scalar numericalSolution =
-                this->model().curSol()[this->model().dofMapper().subIndex(element, 0, 0)];
-
-            // integrate over element using a quadrature rule
-            Geometry geometry = element.geometry();
-            Dune::GeometryType gt = geometry.type();
-            Dune::QuadratureRule<Scalar, dim> rule =
-                Dune::QuadratureRules<Scalar, dim>::rule(gt, qOrder);
-
-            for (auto qIt = rule.begin(); qIt != rule.end(); ++qIt)
-            {
-                // evaluate analytical solution
-                Dune::FieldVector<Scalar, dim> globalPos = geometry.global(qIt->position());
-                Dune::FieldVector<Scalar, 1> values(0.0);
-                analyticalSolution(values, time, globalPos);
-                // add contributino of current quadrature point
-                l2error += (numericalSolution - values[0]) * (numericalSolution - values[0]) *
-                    qIt->weight() * geometry.integrationElement(qIt->position());
-                l2analytic += values[0] * values[0] *
-                    qIt->weight() * geometry.integrationElement(qIt->position());
-            }
-        }
-        using std::sqrt;
-        return sqrt(l2error/l2analytic);
+//         const unsigned int qOrder = 4;
+//         Scalar l2error = 0.0;
+//         Scalar l2analytic = 0.0;
+//         const Scalar time = time_;
+//
+//         for (const auto& element : elements(this->gridView()))
+//         {
+//             // value from numerical approximation
+//             Scalar numericalSolution =
+//                 this->model().curSol()[this->model().dofMapper().subIndex(element, 0, 0)];
+//
+//             // integrate over element using a quadrature rule
+//             Geometry geometry = element.geometry();
+//             Dune::GeometryType gt = geometry.type();
+//             Dune::QuadratureRule<Scalar, dim> rule =
+//                 Dune::QuadratureRules<Scalar, dim>::rule(gt, qOrder);
+//
+//             for (auto qIt = rule.begin(); qIt != rule.end(); ++qIt)
+//             {
+//                 // evaluate analytical solution
+//                 Dune::FieldVector<Scalar, dim> globalPos = geometry.global(qIt->position());
+//                 Dune::FieldVector<Scalar, 1> values(0.0);
+//                 analyticalSolution(values, time, globalPos);
+//                 // add contributino of current quadrature point
+//                 l2error += (numericalSolution - values[0]) * (numericalSolution - values[0]) *
+//                     qIt->weight() * geometry.integrationElement(qIt->position());
+//                 l2analytic += values[0] * values[0] *
+//                     qIt->weight() * geometry.integrationElement(qIt->position());
+//             }
+//         }
+//         using std::sqrt;
+//         return sqrt(l2error/l2analytic);
     }
 
     /*!
@@ -394,39 +395,24 @@ public:
                   << std::endl;
     }
 
-    /*!
-     * \brief If we should write output
-     */
-    bool shouldWriteOutput()
-    {
-        return this->timeManager().willBeFinished();
-    }
-
-    /*!
-     * \brief If we should write output
-     */
-    bool shouldWriteRestartFile()
-    {
-        return false;
-    }
-
 private:
 
     // evalutates if global position is at lower boundary
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
     // evalutates if global position is at upper boundary
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->bBoxMax()[1] - eps_;
+        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
     static constexpr Scalar eps_ = 3e-6;
     Scalar pnRef_;
     std::string name_;
+    Scalar time_;
 };
 } //end namespace
 

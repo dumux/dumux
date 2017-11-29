@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1e-1 # [s]
 TEnd = 100 # [s]
 MaxTimeStepSize = 1e-1 # [s]
@@ -10,3 +10,6 @@ Cells = 1 512
 [Problem]
 Name = richardsanalyticalcc
 EnableGravity = false
+
+[Newton]
+EnableChop = false  # chop for better convergence
