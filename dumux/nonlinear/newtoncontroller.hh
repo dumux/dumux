@@ -67,7 +67,7 @@ public:
     }
 
     /*!
-     * \brief Constructor for stationary problems
+     * \brief Constructor for instationary problems
      */
     NewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
     : comm_(comm)
