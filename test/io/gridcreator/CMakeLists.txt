@@ -11,9 +11,11 @@ dune_add_test(NAME test_gridcreator_gmsh
                                ${CMAKE_SOURCE_DIR}/test/references/bifurcation-reference-refined.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/bifurcation-00001.vtu)
 
-add_dumux_test(test_gridcreator_cake test_gridcreator_cake test_gridcreator_cake.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_cake"
-                 --files ${CMAKE_SOURCE_DIR}/test/references/cake-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/cake-00000.vtu)
+dune_add_test(NAME test_gridcreator_cake
+              SOURCES test_gridcreator_cake.cc
+              CMAKE_GUARD "( dune-uggrid_FOUND OR dune-alugrid_FOUND )"
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_cake"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/cake-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/cake-00000.vtu)
