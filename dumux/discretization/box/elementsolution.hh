@@ -82,6 +82,12 @@ public:
             priVars_[scv.indexInElement()] = sol[scv.dofIndex()];
     }
 
+    //! resize method
+    void resize(std::size_t size)
+    {
+        priVars_.resize(size);
+    }
+
     //! bracket operator const access
     template<typename IndexType>
     const PrimaryVariables& operator [](IndexType i) const

@@ -84,6 +84,12 @@ public:
         return priVars_;
     }
 
+    //! resize method
+    void resize(std::size_t size)
+    {
+        assert(size == 1 && "Cell-centered element solution can only have one entry." );
+    }
+
 private:
     PrimaryVariables priVars_;
 };
