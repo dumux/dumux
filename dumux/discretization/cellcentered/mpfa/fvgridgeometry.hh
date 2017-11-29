@@ -166,14 +166,13 @@ public:
      */
     void update()
     {
+        ParentType::update();
+
         // stop the time required for the update
         Dune::Timer timer;
 
-        // clear containers (necessary after grid refinement)
-        scvs_.clear();
+        // clear scvfs container
         scvfs_.clear();
-        scvfIndicesOfScv_.clear();
-        elementMap_.clear();
 
         // determine the number of geometric entities
         const auto numVert = this->gridView().size(dim);
@@ -571,13 +570,10 @@ public:
      */
     void update()
     {
+        ParentType::update();
+
         // stop the time required for the update
         Dune::Timer timer;
-
-        // clear containers (necessary after grid refinement)
-        scvfIndicesOfScv_.clear();
-        neighborVolVarIndices_.clear();
-        elementMap_.clear();
 
         // resize containers
         numScvs_ = numDofs();
