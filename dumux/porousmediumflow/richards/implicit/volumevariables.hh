@@ -171,7 +171,7 @@ public:
         }
         else if (phasePresence == wPhaseOnly)
         {
-            DUNE_THROW(Dune::NotImplemented, "Water phase only phase presence!");
+            Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
         }
 
         //////////
