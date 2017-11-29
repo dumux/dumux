@@ -26,13 +26,7 @@
 #ifndef DUMUX_1PNC_MODEL_HH
 #define DUMUX_1PNC_MODEL_HH
 
-#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 
-#include "properties.hh"
-
-
-namespace Dumux
-{
 /*!
  * \ingroup OnePNCModel
  * \brief Adaption of the fully implicit scheme to the
@@ -71,53 +65,6 @@ namespace Dumux
  * The primary variables are the pressure \f$p\f$ and the mole fraction of dissolved components \f$x^\kappa\f$.
  */
 
-template<class TypeTag>
-class OnePNCModel: public GET_PROP_TYPE(TypeTag, BaseModel)
-{
-    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using NonIsothermalModel = Dumux::NonIsothermalModel<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    static const int phaseIdx = Indices::phaseIdx;
-
-    enum { dim = GridView::dimension };
-    enum {  numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
-
-public:
-    /*!
-     * \brief Apply the initial conditions to the model.
-     *
-     * \param problem The object representing the problem which needs to
-     *             be simulated.
-     */
-    void init(Problem &problem)
-    {
-        ParentType::init(problem);
-
-        // register standardized vtk output fields
-        auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addSecondaryVariable("pressure", [](const VolumeVariables& v){ return v.pressure(phaseIdx); });
-        vtkOutputModule.addSecondaryVariable("rho", [](const VolumeVariables& v){ return v.density(phaseIdx); });
-        vtkOutputModule.addSecondaryVariable("porosity", [](const VolumeVariables& v){ return v.porosity(); });
-
-        for (int i = 0; i < numComponents; ++i)
-           vtkOutputModule.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(i)),
-                                                [i](const VolumeVariables& v){ return v.moleFraction(phaseIdx, i); });
-
-        for (int i = 0; i < numComponents; ++i)
-           vtkOutputModule.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(i)),
-                                                 [i](const VolumeVariables& v){ return v.massFraction(phaseIdx,i); });
-
-        NonIsothermalModel::maybeAddTemperature(vtkOutputModule);
-    }
-};
-
-}
-
-#include "propertydefaults.hh"
+#include "properties.hh"
 
 #endif
