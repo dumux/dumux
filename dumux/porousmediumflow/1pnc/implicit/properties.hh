@@ -34,13 +34,14 @@
 
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
-#include <dumux/material/fluidstates/immiscible.hh>
+#include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"
@@ -112,7 +113,13 @@ SET_PROP(OnePNC, FluidState){
         using type = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
 };
 
+//! Use the model after Millington (1961) for the effective diffusivity
+SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
+             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
+
+SET_INT_PROP(OnePNC, NumPhases, 1); //! The number of phases in the 1pnc model is 1
+SET_INT_PROP(OnePNC, PhaseIdx, 0); //! The default phase index
 SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>); //! The local residual function
 SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);   //! the VolumeVariables property
 SET_BOOL_PROP(OnePNC, EnableAdvection, true);                           //! The one-phase model considers advection

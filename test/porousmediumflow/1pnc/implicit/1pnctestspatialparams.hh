@@ -55,8 +55,8 @@ public:
     // export permeability type
     using PermeabilityType = Scalar;
 
-    OnePNCTestSpatialParams(const Problem& problem, const GridView &gridView)
-        : ParentType(problem, gridView)
+    OnePNCTestSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;

@@ -34,11 +34,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(IsothermalVolumeVariables);
-}
-
 /*!
  * \ingroup OnePNCModel
  * \ingroup ImplicitVolumeVariables

@@ -34,6 +34,7 @@ template<class TypeTag>
 class OnePNCVtkOutputFields
 {
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
