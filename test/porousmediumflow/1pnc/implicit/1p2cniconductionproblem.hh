@@ -45,6 +45,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(OnePTwoCNIConductionProblem, INHERITS_FROM(OnePNCNI));
 NEW_TYPE_TAG(OnePTwoCNIConductionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConductionProblem));
+NEW_TYPE_TAG(OnePTwoCNIConductionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConductionProblem));
 NEW_TYPE_TAG(OnePTwoCNIConductionBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCNIConductionProblem));
 
 // Set the grid type
