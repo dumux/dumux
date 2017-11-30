@@ -18,8 +18,9 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Definition of a problem, for the 1pnc problem:
- * Component transport of nitrogen dissolved in the water phase.
+ * \brief Test for the OnePTwoCModel in combination with the NI model for a conduction problem:
+ * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ *
  */
 #ifndef DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
@@ -44,6 +45,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(OnePTwoCNIConductionProblem, INHERITS_FROM(OnePNCNI));
 NEW_TYPE_TAG(OnePTwoCNIConductionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConductionProblem));
+NEW_TYPE_TAG(OnePTwoCNIConductionBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCNIConductionProblem));
 
 // Set the grid type
 #if HAVE_UG
