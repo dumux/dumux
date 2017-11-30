@@ -91,7 +91,6 @@ NEW_PROP_TAG(VtkAddInterfacialArea);
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatialParams)
-NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the spatialParams)
 
 //! The compositional twophase system of fluids which is considered
 NEW_PROP_TAG(FluidSystem);

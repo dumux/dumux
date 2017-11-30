@@ -24,19 +24,11 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-NEW_PROP_TAG(MaterialLaw);
-NEW_PROP_TAG(MaterialLawParams);
-NEW_PROP_TAG(Scalar);
-}
-
 /*!
  *\brief Interface for plotting the three-phase fluid-matrix-interaction laws
  *
@@ -46,7 +38,7 @@ template<class TypeTag>
 class PlotMaterialLaw
 {
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:

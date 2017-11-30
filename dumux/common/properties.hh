@@ -132,7 +132,6 @@ NEW_PROP_TAG(ThermalConductivityModel);            //! Model to be used for the 
 NEW_PROP_TAG(VelocityOutput);                      //! specifies the velocity calculation module to be used
 
 NEW_PROP_TAG(MaterialLaw);                         //! The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams);                   //! The context material law (extracted from the spatial parameters)
 NEW_PROP_TAG(WettingPhase);                        //! The wetting phase for two-phase models
 NEW_PROP_TAG(NonwettingPhase);                     //! The non-wetting phase for two-phase models
 NEW_PROP_TAG(Formulation);                         //! The formulation of the model

@@ -115,16 +115,6 @@ public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
-//! Set the property for the material parameters by extracting it from the material law.
-SET_PROP(TwoPNC, MaterialLawParams)
-{
-private:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw));
-
-public:
-    using type = typename MaterialLaw::Params;
-};
-
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 2pnc model
 /////////////////////////////////////////////////

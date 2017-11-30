@@ -54,7 +54,7 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*numEnergyEqs=*/3>
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
 
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -499,7 +499,7 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*numEnergyEqs=*/0>
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
 
 
 public:

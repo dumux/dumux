@@ -119,7 +119,7 @@ class Forchheimer1pProblem
     typedef typename FluidSystem::ParameterCache ParameterCache;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
     typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
     // Grid and world dimension

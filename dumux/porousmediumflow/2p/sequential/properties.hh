@@ -60,7 +60,6 @@ NEW_TYPE_TAG(SequentialTwoP, INHERITS_FROM(SequentialModel));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The material law parameters (extracted from the spatial parameters)
 NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Formulation); //!< The formulation of the model
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the pressure model
@@ -152,19 +151,6 @@ public:
 
 //! The spatial parameters to be employed. Use FVSpatialParams by default.
 SET_TYPE_PROP(SequentialTwoP, SpatialParams, FVSpatialParams<TypeTag>);
-
-/*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
-SET_PROP(SequentialTwoP, MaterialLawParams)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-
-public:
-    typedef typename MaterialLaw::Params type;
-};
 
 //! Default error term factor
 SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermFactor, 0.5);

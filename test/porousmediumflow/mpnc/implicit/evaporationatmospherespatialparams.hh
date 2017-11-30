@@ -111,7 +111,7 @@ private:
 SET_PROP(EvaporationAtmosphereSpatialParams, AwnSurface)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
     typedef AwnSurfacePcMaxFct<Scalar>     EffectiveIALaw;
     //    typedef AwnSurfacePolynomial2ndOrder<Scalar>      EffectiveIALaw;
 public:
@@ -123,7 +123,7 @@ public:
 SET_PROP(EvaporationAtmosphereSpatialParams, AwsSurface)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
     typedef AwnSurfacePolynomial2ndOrder<Scalar>  EffectiveIALaw;
 public:
     typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;
@@ -133,7 +133,7 @@ public:
 SET_PROP(EvaporationAtmosphereSpatialParams, AnsSurface)
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLawParams) MaterialLawParams;
+    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
     typedef AwnSurfaceExpSwPcTo3<Scalar>      EffectiveIALaw;
 public:
     typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;

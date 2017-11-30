@@ -26,14 +26,10 @@
 #ifndef DUMUX_IMPLICIT_SPATIAL_PARAMS_HH
 #define DUMUX_IMPLICIT_SPATIAL_PARAMS_HH
 
+#include <dune/common/properties.hh>
 #include "implicit1p.hh"
 
 namespace Dumux {
-// forward declaration of property tags
-namespace Properties {
-NEW_PROP_TAG(MaterialLaw);
-NEW_PROP_TAG(MaterialLawParams);
-}
 
 /*!
  * \ingroup SpatialParameters
@@ -52,7 +48,7 @@ class ImplicitSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using CoordScalar = typename GridView::ctype;

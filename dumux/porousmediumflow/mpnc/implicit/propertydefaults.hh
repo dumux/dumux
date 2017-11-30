@@ -91,19 +91,6 @@ public:
 };
 
 /*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
-SET_PROP(MPNC, MaterialLawParams)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-
-public:
-    typedef typename MaterialLaw::Params type;
-};
-
-/*!
  * \brief Set the thermodynamic constraint solver which calculates the
  *        composition of any phase given all component fugacities.
  */

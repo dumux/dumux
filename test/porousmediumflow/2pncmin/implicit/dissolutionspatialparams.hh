@@ -66,7 +66,7 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using CoordScalar = typename GridView::ctype;

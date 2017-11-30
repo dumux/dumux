@@ -63,7 +63,6 @@ NEW_PROP_TAG(NumComponents);   //!< Number of components in the system
 NEW_PROP_TAG(Indices); //!< Enumerations used by the model
 NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (by default extracted from the spatial parameters)
-NEW_PROP_TAG(MaterialLawParams); //!< The type of the parameter object for the material law (by default extracted from the spatial parameters)
 NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the Richards model
 NEW_PROP_TAG(FluidState); //!< The fluid state to be used for the Richards model
 NEW_PROP_TAG(WettingPhase); //!< Fluid which represents the wetting phase

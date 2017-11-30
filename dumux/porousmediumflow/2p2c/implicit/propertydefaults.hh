@@ -112,16 +112,6 @@ SET_INT_PROP(TwoPTwoC,
 //! Set as default that no component mass balance is replaced by the total mass balance
 SET_INT_PROP(TwoPTwoC, ReplaceCompEqIdx, 2);
 
-//! Set the property for the material parameters by extracting it from the material law.
-SET_PROP(TwoPTwoC, MaterialLawParams)
-{
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-
- public:
-    typedef typename MaterialLaw::Params type;
-};
-
 //! Use the 2p2c local residual operator
 SET_TYPE_PROP(TwoPTwoC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 
