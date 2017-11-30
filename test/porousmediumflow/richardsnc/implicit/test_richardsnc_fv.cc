@@ -19,11 +19,11 @@
 /*!
  * \file
  *
- * \brief Test for the Richards box model.
+ * \brief Test for the Richards CC model.
  */
 #include <config.h>
 
-#include "richardsniconductionproblem.hh"
+#include "richardswelltracerproblem.hh"
 
 #include <ctime>
 #include <iostream>
@@ -82,7 +82,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(RichardsNIConductionBoxProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -142,7 +142,6 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
-    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -187,11 +186,10 @@ int main(int argc, char** argv) try
                             << ".\nThe solutions of the current and the previous time steps "
                             << "have been saved to restart files.");
         }
-         // compute the new analytical temperature field for the output
-        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
+        problem->postTimeStep(x, *gridVariables, timeLoop->timeStepSize());
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step

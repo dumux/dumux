@@ -7,7 +7,7 @@ UpperRight = 6 4
 Cells = 24 16
 
 [Problem]
-Name = richardslensbox
+Name = richardslens
 EnableGravity = 1 # enable gravity
 
 [Implicit]
