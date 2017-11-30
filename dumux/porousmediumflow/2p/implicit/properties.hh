@@ -81,10 +81,6 @@ SET_TYPE_PROP(TwoP, SpatialParams, ImplicitSpatialParams<TypeTag>);           //
 SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<TypeTag>);           //! Set the vtk output fields specific to the twop model
 
 SET_TYPE_PROP(TwoP,
-              MaterialLawParams,
-              typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);          //! Extract material law params from the law itself
-
-SET_TYPE_PROP(TwoP,
               Indices,
               TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>); //! The indices required by the isothermal 2p model
 

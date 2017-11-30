@@ -105,12 +105,6 @@ SET_PROP(ThreePThreeC, FluidState){
 
 SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 2
 
-/*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
-SET_TYPE_PROP(ThreePThreeC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreePThreeC, LocalResidual, CompositionalLocalResidual<TypeTag>);
 

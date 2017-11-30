@@ -112,13 +112,6 @@ SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
 
 /*!
- * \brief Set type of the parameter objects for the material law
- *
- * By default this is just retrieved from the material law.
- */
-SET_TYPE_PROP(Richards, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
-/*!
  *\brief The fluid system used by the model.
  *
  * By default this uses the H2O-Air fluid system with Simple H2O (constant density and viscosity).

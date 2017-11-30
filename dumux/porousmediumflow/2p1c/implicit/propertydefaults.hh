@@ -87,12 +87,6 @@ SET_PROP(TwoPOneCNI, NumPhases)
                   "Only fluid systems with 2 phases are supported by the 2p1cni model!");
 };
 
-/*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
-SET_TYPE_PROP(TwoPOneCNI, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 //! Use the 2p2c specific newton controller for dealing with phase switches
 SET_TYPE_PROP(TwoPOneCNI, NewtonController, TwoPOneCNINewtonController<TypeTag>);
 

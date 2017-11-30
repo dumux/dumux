@@ -114,13 +114,6 @@ SET_PROP(RichardsNC, FluidState)
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
-/*!
- * \brief Set type of the parameter objects for the material law
- *
- * By default this is just retrieved from the material law.
- */
-SET_TYPE_PROP(RichardsNC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 //! Set the indices used
 SET_TYPE_PROP(RichardsNC, Indices, RichardsNCIndices<TypeTag>);
 //! The spatial parameters to be employed.

@@ -85,12 +85,6 @@ SET_PROP(ThreePWaterOilNI, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p2cni model!");
 };
 
-/*!
- * \brief Set the property for the material parameters by extracting
- *        it from the material law.
- */
-SET_TYPE_PROP(ThreePWaterOilNI, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
-
 //! Use the 3p2cni specific newton controller for the 3p2cni model
 SET_TYPE_PROP(ThreePWaterOilNI, NewtonController, ThreePWaterOilNewtonController<TypeTag>);
 
