@@ -130,8 +130,8 @@ public:
 
         for (const auto& element : elements(gridView))
         {
-            unsigned int idx = getIndex_(element.geometry().center());
-            unsigned int idxGrid = GridCreator::grid().leafGridView().indexSet().index(element);
+            int idx = getIndex_(element.geometry().center());
+            int idxGrid = GridCreator::grid().leafGridView().indexSet().index(element);
 
             permeability_[idxGrid] = 0;
             for (int i = 0; i < dimWorld; i++)
@@ -211,8 +211,7 @@ public:
 
 
 
-private:
-    unsigned int getIndex_(const GlobalPosition& globalPos) const
+    int getIndex_(const GlobalPosition& globalPos) const
     {
         int i,j,k;
         Scalar hX = 6.096;
@@ -252,6 +251,7 @@ private:
         return k*(nX*nY) + j*nX + i;
     }
 
+private:
     std::vector<DimWorldMatrix> permeability_;
     std::vector<Scalar> porosity_;
     std::vector<MaterialLawParams> materialLawParams_;

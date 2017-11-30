@@ -22,5 +22,5 @@ UseLineSearch = 0
 EnableChop = 1
 
 [LinearSolver]
-Verbosity = 2
-MaxIterations = 1000
+Verbosity = 1
+MaxIterations = 2000

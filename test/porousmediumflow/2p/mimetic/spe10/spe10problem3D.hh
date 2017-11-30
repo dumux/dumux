@@ -223,63 +223,127 @@ public:
     {
         ParentType::init();
 
-        Scalar IX = 185.928;
-        Scalar IY = 336.804;
+//        Scalar IX = 185.928;
+//        Scalar IY = 336.804;
+//
+//        Scalar P1X = 0.0;
+//        Scalar P1Y = 0.0;
+//
+//        Scalar P2X = 365.76;
+//        Scalar P2Y = 0.0;
+//
+//        Scalar P3X = 365.76;
+//        Scalar P3Y = 670.56;
+//
+//        Scalar P4X = 0.0;
+//        Scalar P4Y = 670.56;
+//
+//        Scalar hX = 6.096;
+//        Scalar hY = 3.048;
+//        Scalar hZ = 0.6096;
+//
+//        for (const auto& element : elements(this->gridView()))
+//        {
+//            auto fvGeometry = localView(this->model().globalFvGeometry());
+//            fvGeometry.bindElement(element);
+//
+//            for (auto&& scv : scvs(fvGeometry))
+//            {
+//                auto poro = this->spatialParams().porosity(element, scv,
+//                        this->model().elementSolution(element, this->model().curSol()));
+//
+//                auto center = scv.center();
+//
+//                Scalar x = center[0];
+//                Scalar y = center[1];
+//                Scalar z = center[2];
+//
+//                if(std::abs(x-IX) < hX - eps_ && std::abs(y-IY) < hY - eps_)
+//                {
+//                    IPoreVol_ += poro*scv.volume();
+//                }
+//                else if(std::abs(x-P1X) < hX - eps_ && std::abs(y-P1Y) < hY - eps_)
+//                {
+//                    P1PoreVol_ += poro*scv.volume();
+//                }
+//                else if(std::abs(x-P2X) < hX - eps_ && std::abs(y-P2Y) < hY - eps_)
+//                {
+//                    P2PoreVol_ += poro*scv.volume();
+//                }
+//                else if(std::abs(x-P3X) < hX - eps_ && std::abs(y-P3Y) < hY - eps_)
+//                {
+//                    P3PoreVol_ += poro*scv.volume();
+//                }
+//                else if(std::abs(x-P4X) < hX - eps_ && std::abs(y-P4Y) < hY - eps_)
+//                {
+//                    P4PoreVol_ += poro*scv.volume();
+//                }
+//            }
+//        }
+//
+//        std::cout << IPoreVol_ << std::endl;
+//        std::cout << P1PoreVol_ << std::endl;
+//        std::cout << P2PoreVol_ << std::endl;
+//        std::cout << P3PoreVol_ << std::endl;
+//        std::cout << P4PoreVol_ << std::endl;
 
-        Scalar P1X = 0.0;
-        Scalar P1Y = 0.0;
+        IPoreVol_ = 195.838;
+        P1PoreVol_ = 147.786;
+        P2PoreVol_ = 138.041;
+        P3PoreVol_ = 175.53;
+        P4PoreVol_ = 147.592;
 
-        Scalar P2X = 365.76;
-        Scalar P2Y = 0.0;
+        readInitialValues();
+    }
 
-        Scalar P3X = 365.76;
-        Scalar P3Y = 670.56;
+    void readInitialValues()
+    {
+        std::ifstream file;
+        std::string iname = "spe10_tpfa_full3D";
+        iname.append("0_sn.txt");
+        file.open(iname, std::ios::in);
+        if (file.fail())
+            throw std::ios_base::failure(std::strerror(errno));
 
-        Scalar P4X = 0.0;
-        Scalar P4Y = 670.56;
+        std::vector<Scalar> valSn;
+        int lineNumber = 0;
+        while (!file.eof()) {
+            Scalar val = 0;
+            file >> val;
+            valSn.push_back(val);
+            lineNumber++;
+         }
 
-        Scalar hX = 6.096;
-        Scalar hY = 3.048;
-        Scalar hZ = 0.6096;
+        file.close();
 
+        iname = "spe10_tpfa_full3D";
+        iname.append("0_pw.txt");
+        file.open(iname, std::ios::in);
+        if (file.fail())
+            throw std::ios_base::failure(std::strerror(errno));
+
+        std::vector<Scalar> valpw;
+        lineNumber = 0;
+        while (!file.eof()) {
+            Scalar val = 0;
+            file >> val;
+            valpw.push_back(val);
+            lineNumber++;
+         }
+
+        file.close();
+        std::cout << "lineNumber: " << lineNumber << std::endl;
+        std::cout << "numEle: " << this->gridView().size(0) << std::endl;
+
+        auto& uCur = this->model().curSol();
         for (const auto& element : elements(this->gridView()))
         {
-            auto fvGeometry = localView(this->model().globalFvGeometry());
-            fvGeometry.bindElement(element);
-
-            for (auto&& scv : scvs(fvGeometry))
-            {
-                auto poro = this->spatialParams().porosity(element, scv,
-                        this->model().elementSolution(element, this->model().curSol()));
-
-                auto center = scv.center();
-
-                Scalar x = center[0];
-                Scalar y = center[1];
-                Scalar z = center[2];
-
-                if(std::abs(x-IX) < hX - eps_ && std::abs(y-IY) < hY - eps_)
-                {
-                    IPoreVol_ += poro*scv.volume();
-                }
-                else if(std::abs(x-P1X) < hX - eps_ && std::abs(y-P1Y) < hY - eps_)
-                {
-                    P1PoreVol_ += poro*scv.volume();
-                }
-                else if(std::abs(x-P2X) < hX - eps_ && std::abs(y-P2Y) < hY - eps_)
-                {
-                    P2PoreVol_ += poro*scv.volume();
-                }
-                else if(std::abs(x-P3X) < hX - eps_ && std::abs(y-P3Y) < hY - eps_)
-                {
-                    P3PoreVol_ += poro*scv.volume();
-                }
-                else if(std::abs(x-P4X) < hX - eps_ && std::abs(y-P4Y) < hY - eps_)
-                {
-                    P4PoreVol_ += poro*scv.volume();
-                }
-            }
+            int eIdx = this->elementMapper().index(element);
+            int idxGlobal = this->spatialParams().getIndex_(element.geometry().center());
+            uCur[eIdx][snIdx] = valSn[idxGlobal];
+            uCur[eIdx][pwIdx] = valpw[idxGlobal];
         }
+
     }
 
 
@@ -485,57 +549,77 @@ public:
     {
         return false;
     }
+
+    /*!
+     * \brief Called by the time manager after the time integration to
+     *        do some post processing on the solution.
+     */
+//    void postTimeStep()
+//    {
+//        auto uCur = this->model().curSol();
+//        int numEle = this->gridView().size(0);
+//        std::vector<Scalar> valSn(numEle,0.0);
+//        std::vector<Scalar> valpw(numEle,0.0);
+//
+//        for (const auto& element : elements(this->gridView()))
+//        {
+//            int eIdx = this->elementMapper().index(element);
+//            int idxGlobal = this->spatialParams().getIndex_(element.geometry().center());
+//            valSn[idxGlobal] = uCur[eIdx][snIdx];
+//            valpw[idxGlobal] = uCur[eIdx][pwIdx];
+//        }
+//
+//        std::ofstream file;
+//        std::string outname = "spe10_tpfa_full3D";
+//        outname.append(std::to_string(this->timeManager().timeStepIndex()));
+//        outname.append("_sn.txt");
+//        file.open(outname, std::ios::out);
+//        if (file.fail())
+//            throw std::ios_base::failure(std::strerror(errno));
+//
+//        for(int i=0; i<valSn.size(); i++)
+//        {
+//            file << valSn[i];
+//            if(!(i == valSn.size() -1))
+//                file << "\n";
+//        }
+//
+//        file.close();
+//
+//
+//        outname = "spe10_tpfa_full3D";
+//        outname.append(std::to_string(this->timeManager().timeStepIndex()));
+//        outname.append("_pw.txt");
+//        file.open(outname, std::ios::out);
+//        if (file.fail())
+//            throw std::ios_base::failure(std::strerror(errno));
+//
+//        for(int i=0; i<valpw.size(); i++)
+//        {
+//            file << valpw[i];
+//            if(!(i == valpw.size() -1))
+//                file << "\n";
+//        }
+//
+//        file.close();
+//    }
+
     // \}
 
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-//    template<class VtkOutputModule>
-//    void addVtkOutputFields(VtkOutputModule& outputModule) const
-//    {
-//        auto& potW = outputModule.createScalarField("potW", 0);
-//        auto& potN = outputModule.createScalarField("potN", 0);
-//        auto& Kxx = outputModule.createScalarField("Kxx", 0);
-//        auto& Kyy = outputModule.createScalarField("Kyy", 0);
-//        auto& pd = outputModule.createScalarField("pd", 0);
-//
-//        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
-//        fluidState.setTemperature(temperature_);
-//        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
-//        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
-//
-//        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
-//        Scalar densityN = FluidSystem::density(fluidState, FluidSystem::nPhaseIdx);
-//
-//        for (const auto& element : elements(this->gridView()))
-//        {
-//            auto fvGeometry = localView(this->model().globalFvGeometry());
-//            fvGeometry.bindElement(element);
-//
-//            for (auto&& scv : scvs(fvGeometry))
-//            {
-//                auto ccDofIdx = scv.dofIndex();
-//                auto ccDofPosition = scv.dofPosition();
-//
-//                auto elemVolVars = localView(this->model().curGlobalVolVars());
-//                elemVolVars.bind(element, fvGeometry, this->model().curSol());
-//
-//                auto K = this->spatialParams().permeability(element, scv,
-//                        this->model().elementSolution(element, this->model().curSol()));
-//
-//                auto materialParams = this->spatialParams().materialLawParams(element,scv,
-//                        this->model().elementSolution(element, this->model().curSol()));
-//
-//                auto center = scv.center();
-//                Scalar depth = this->bBoxMax()[1] - center[1];
-//                potW[ccDofIdx] = elemVolVars[scv].pressure(wPhaseIdx) + densityW*this->gravity()[1]*depth;
-//                potN[ccDofIdx] = elemVolVars[scv].pressure(nPhaseIdx) + densityN*this->gravity()[1]*depth;
-//                pd[ccDofIdx] = materialParams.pe();
-//                Kxx[ccDofIdx] = K[0][0];
-//                Kyy[ccDofIdx] = K[1][1];
-//            }
-//        }
-//    }
+    template<class VtkOutputModule>
+    void addVtkOutputFields(VtkOutputModule& outputModule) const
+    {
+        auto& eIdx = outputModule.createScalarField("eIdx", 0);
+
+        for (const auto& element : elements(this->gridView()))
+        {
+            int idx = this->elementMapper().index(element);
+            eIdx[idx] = idx;
+        }
+    }
 
 private:
 
