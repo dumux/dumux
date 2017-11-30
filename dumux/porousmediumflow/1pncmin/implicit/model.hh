@@ -44,7 +44,7 @@ namespace Dumux
  * of the solid phases. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
- v = - \frac{k_{r}}{\mu_} \mbox{\bf K}
+ v = - \frac{k_{r}}{\mu} \mbox{\bf K}
  \left(\text{grad}\, p - \varrho_{f} \mbox{\bf g} \right)
  * \f]
  *
@@ -57,7 +57,7 @@ namespace Dumux
  (\text{grad}\, p - \varrho_{f}  \mbox{\bf g}) \right\}
  \nonumber \\ \nonumber \\
  &-& \text{div} \left\{{\bf D_{pm}^\kappa} \varrho_{f} \text{grad}\, X^\kappa \right\}
- -  q_\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \,
+ -  q_\kappa = 0 \qquad \kappa \in \{w, a,\cdots \}
  \f}
  *
  * The solid or mineral phases are assumed to consist of a single component.
