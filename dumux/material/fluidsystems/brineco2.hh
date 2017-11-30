@@ -700,11 +700,8 @@ namespace Properties
 {
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(CO2Table);
-NEW_PROP_TAG(ProblemSalinity);
 // Set Co2 tables
 SET_TYPE_PROP(NumericModel, CO2Table, CO2Tables);
-// Set salinity defaults
-SET_SCALAR_PROP(NumericModel, ProblemSalinity, 1e-3);
 }
 
 /*!
@@ -764,13 +761,14 @@ class BrineCO2FluidSystem
 public:
     static void init()
     {
-        ParentType::init(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Salinity));
+        ParentType::init(getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Salinity", 1e-3));
     }
     static void init(Scalar startTemp, Scalar endTemp, int tempSteps,
                      Scalar startPressure, Scalar endPressure, int pressureSteps)
     {
         ParentType::init(startTemp, endTemp, tempSteps,
-                startPressure, endPressure, pressureSteps, GET_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Salinity));
+                         startPressure, endPressure, pressureSteps,
+                         getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Salinity", 1e-3));
     }
 };
 #endif
