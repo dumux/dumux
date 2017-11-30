@@ -29,6 +29,7 @@
 #define DUMUX_RICHARDS_ANALYTICALPROBLEM_HH
 
 #include <cmath>
+#include <dune/geometry/quadraturerules.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
@@ -115,16 +116,16 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     enum {
         // copy some indices for convenience
         pwIdx = Indices::pressureIdx,
         conti0EqIdx = Indices::conti0EqIdx,
         bothPhases = Indices::bothPhases,
-
-        // Grid and world dimension
-        dimWorld = GridView::dimensionworld
     };
-
+    // Grid and world dimension
+    static const int dimWorld = GridView::dimensionworld;
+    static const int dim = GridView::dimension;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using Geometry = typename GridView::template Codim<0>::Entity::Geometry;
 
@@ -339,56 +340,55 @@ public:
      *       To extend this function to the box method the evaluation
      *       has to be exted to box' subvolumes.
      */
-    Scalar calculateL2Error()
+    Scalar calculateL2Error(const SolutionVector& curSol)
     {
-//         const unsigned int qOrder = 4;
-//         Scalar l2error = 0.0;
-//         Scalar l2analytic = 0.0;
-//         const Scalar time = time_;
-//
-//         for (const auto& element : elements(this->gridView()))
-//         {
-//             // value from numerical approximation
-//             Scalar numericalSolution =
-//                 this->model().curSol()[this->model().dofMapper().subIndex(element, 0, 0)];
-//
-//             // integrate over element using a quadrature rule
-//             Geometry geometry = element.geometry();
-//             Dune::GeometryType gt = geometry.type();
-//             Dune::QuadratureRule<Scalar, dim> rule =
-//                 Dune::QuadratureRules<Scalar, dim>::rule(gt, qOrder);
-//
-//             for (auto qIt = rule.begin(); qIt != rule.end(); ++qIt)
-//             {
-//                 // evaluate analytical solution
-//                 Dune::FieldVector<Scalar, dim> globalPos = geometry.global(qIt->position());
-//                 Dune::FieldVector<Scalar, 1> values(0.0);
-//                 analyticalSolution(values, time, globalPos);
-//                 // add contributino of current quadrature point
-//                 l2error += (numericalSolution - values[0]) * (numericalSolution - values[0]) *
-//                     qIt->weight() * geometry.integrationElement(qIt->position());
-//                 l2analytic += values[0] * values[0] *
-//                     qIt->weight() * geometry.integrationElement(qIt->position());
-//             }
-//         }
-//         using std::sqrt;
-//         return sqrt(l2error/l2analytic);
+        const unsigned int qOrder = 4;
+        Scalar l2error = 0.0;
+        Scalar l2analytic = 0.0;
+        const Scalar time = time_;
+
+        for (const auto& element :elements(this->fvGridGeometry().gridView()))
+        {
+            int eIdx = this->fvGridGeometry().elementMapper().index(element);
+            // value from numerical approximation
+            Scalar numericalSolution = curSol[eIdx];
+
+            // integrate over element using a quadrature rule
+            Geometry geometry = element.geometry();
+            Dune::GeometryType gt = geometry.type();
+            Dune::QuadratureRule<Scalar, dim> rule =
+                Dune::QuadratureRules<Scalar, dim>::rule(gt, qOrder);
+
+            for (auto qIt = rule.begin(); qIt != rule.end(); ++qIt)
+            {
+                // evaluate analytical solution
+                Dune::FieldVector<Scalar, dim> globalPos = geometry.global(qIt->position());
+                PrimaryVariables values(0.0);
+                analyticalSolution(values, time, globalPos);
+                // add contributino of current quadrature point
+                l2error += (numericalSolution - values[0]) * (numericalSolution - values[0]) *
+                    qIt->weight() * geometry.integrationElement(qIt->position());
+                l2analytic += values[0] * values[0] *
+                    qIt->weight() * geometry.integrationElement(qIt->position());
+            }
+        }
+        using std::sqrt;
+        return sqrt(l2error/l2analytic);
     }
 
     /*!
      * \brief Write the relevant secondary variables of the current
      *        solution into an VTK output file.
      */
-    void writeOutput(const bool verbose = true)
+    void writeOutput(const SolutionVector& curSol)
     {
-        ParentType::writeOutput(verbose);
 
-        Scalar l2error = calculateL2Error();
+        Scalar l2error = calculateL2Error(curSol);
 
         // compute L2 error if analytical solution is available
         std::cout.precision(8);
         std::cout << "L2 error for "
-                  << std::setw(6) << this->gridView().size(0)
+                  << std::setw(6) << this->fvGridGeometry().gridView().size(0)
                   << " elements: "
                   << std::scientific
                   << l2error
