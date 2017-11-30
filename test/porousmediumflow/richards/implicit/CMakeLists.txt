@@ -36,7 +36,7 @@ dune_add_test(SOURCES test_ccrichardsanalytical.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsanalyticalcc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/richardsanalyticalcc-00000.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsanalytical-00002.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsanalytical test_ccrichardsanalytical.input -Problem.Name test_ccrichardsanalytical")
 # non-isothermal tests
 dune_add_test(SOURCES test_richardsniconvection_fv.cc
@@ -45,9 +45,9 @@ dune_add_test(SOURCES test_richardsniconvection_fv.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectionbox-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection-00010.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection-00044.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection test_richardsniconvection.input -Problem.Name test_boxrichardsniconvection"
-                       --zeroThreshold {"velocity":1e-16})
+                      )
 
 dune_add_test(SOURCES test_richardsniconvection_fv.cc
               NAME test_ccrichardsniconvection
@@ -55,7 +55,7 @@ dune_add_test(SOURCES test_richardsniconvection_fv.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectioncc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconvection-00010.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconvection-00043.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconvection test_richardsniconvection.input -Problem.Name test_ccrichardsniconvection")
 
 dune_add_test(SOURCES test_richardsniconduction_fv.cc
@@ -64,9 +64,9 @@ dune_add_test(SOURCES test_richardsniconduction_fv.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductionbox-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction-00006.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction-00024.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction test_richardsniconduction.input -Problem.Name test_boxrichardsniconduction"
-                       --zeroThreshold {"velocity":1e-8})
+                        )
 
 dune_add_test(SOURCES test_richardsniconduction_fv.cc
               NAME test_ccrichardsniconduction
@@ -74,9 +74,9 @@ dune_add_test(SOURCES test_richardsniconduction_fv.cc
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductioncc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction-00006.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction-00024.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction test_richardsniconduction.input -Problem.Name test_ccrichardsniconduction"
-                       --zeroThreshold {"velocity":1e-8})
+                      )
 
 #install sources
 install(FILES

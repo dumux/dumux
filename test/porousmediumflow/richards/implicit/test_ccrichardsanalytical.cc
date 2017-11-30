@@ -197,6 +197,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
+        if(timeLoop->willBeFinished())
         vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
