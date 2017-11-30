@@ -461,9 +461,12 @@ public:
             // reset the grid variables to the previous solution
             assembler.gridVariables().resetTimeStep(u);
 
-            std::cout << "Newton solver did not converge with dt = "
-                      << timeLoop_->timeStepSize() << " seconds. Retrying with time step of "
-                      << timeLoop_->timeStepSize()/2 << " seconds\n";
+            if (verbose())
+            {
+                std::cout << "Newton solver did not converge with dt = "
+                          << timeLoop_->timeStepSize() << " seconds. Retrying with time step of "
+                          << timeLoop_->timeStepSize()/2 << " seconds\n";
+            }
 
             // try again with dt = dt/2
             timeLoop_->setTimeStepSize(timeLoop_->timeStepSize()/2);
