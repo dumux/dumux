@@ -26,7 +26,7 @@
 #ifndef DUMUX_IMPLICIT_SPATIAL_PARAMS_HH
 #define DUMUX_IMPLICIT_SPATIAL_PARAMS_HH
 
-#include <dune/common/properties.hh>
+#include <dumux/common/properties.hh>
 #include "implicit1p.hh"
 
 namespace Dumux {
