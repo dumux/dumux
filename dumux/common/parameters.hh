@@ -361,9 +361,6 @@ private:
         params["TimeLoop.MaxTimeStepSize"] = "1e300";
         params["TimeLoop.MaxTimeStepDivisions"] = "10";
 
-        // parameters in the spatial params group
-        params["SpatialParams.ForchCoeff"] = "0.55";
-
         // parameters in the vtk group
         params["Vtk.AddVelocity"] = "false";
         params["Vtk.AddProcessRank"] = "true";

@@ -49,6 +49,7 @@ class ImplicitSpatialParamsOneP
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -287,14 +288,12 @@ public:
      *        porous medium. Taking it as a constant is only a first approximation
      *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume face where the
-     *                      intrinsic velocity ought to be calculated.
+     * \param scv The sub-control volume face where the
+     *           intrinsic velocity ought to be calculated.
      */
-    Scalar forchCoeff(const SubControlVolume &scv) const
+    Scalar forchCoeff(const SubControlVolumeFace &scvf) const
     {
-        static Scalar forchCoeff = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "SpatialParams.ForchCoeff");
+        static Scalar forchCoeff = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "SpatialParams.ForchCoeff", 0.55);
         return forchCoeff;
     }
 
