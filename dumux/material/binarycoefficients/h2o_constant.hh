@@ -35,21 +35,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration of the needed properties
-NEW_PROP_TAG(ComponentHenryComponentInWater);
-NEW_PROP_TAG(ComponentHenryWaterInComponent);
-NEW_PROP_TAG(ComponentGasDiffusionCoefficient);
-NEW_PROP_TAG(ComponentLiquidDiffusionCoefficient);
-
-// set default values
-SET_SCALAR_PROP(NumericModel, ComponentHenryComponentInWater, 1.0);
-SET_SCALAR_PROP(NumericModel, ComponentHenryWaterInComponent, 1.0);
-SET_SCALAR_PROP(NumericModel, ComponentGasDiffusionCoefficient, 1.0);
-SET_SCALAR_PROP(NumericModel, ComponentLiquidDiffusionCoefficient, 1.0);
-} // end namespace Properties
-
 namespace BinaryCoeff
 {
 
@@ -70,8 +55,8 @@ class H2O_Component
 /*!
  * \brief Binary coefficients for water and a constant component
  */
-template<class TypeTag>
-class H2O_Component<TypeTag, Constant<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)>>
+template<class TypeTag, int id>
+class H2O_Component<TypeTag, Components::Constant<id, typename GET_PROP_TYPE(TypeTag, Scalar)>>
 {
 public:
     /*!
@@ -84,7 +69,7 @@ public:
     template <class Scalar>
     static Scalar henryCompInWater(Scalar temperature)
     {
-        static const Scalar h = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Component, HenryComponentInWater);
+        static const Scalar h = getParamFromGroup<Scalar>(std::to_string(id), "Component.HenryComponentInWater", 1.0);
         return h;
     }
 
@@ -98,7 +83,7 @@ public:
     template <class Scalar>
     static Scalar henryWaterInComp(Scalar temperature)
     {
-        static const Scalar h = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Component, HenryWaterInComponent);
+        static const Scalar h = getParamFromGroup<Scalar>(std::to_string(id), "Component.HenryWaterInComponent", 1.0);
         return h;
     }
 
@@ -110,7 +95,7 @@ public:
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        static const Scalar D = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Component, GasDiffusionCoefficient);
+        static const Scalar D = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasDiffusionCoefficient", 1.0);
         return D;
     }
 
@@ -122,7 +107,7 @@ public:
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        static const Scalar D = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Component, LiquidDiffusionCoefficient);
+        static const Scalar D = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidDiffusionCoefficient", 1.0);
         return D;
     }
 };
