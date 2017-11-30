@@ -32,6 +32,7 @@ dune_add_test(NAME test_1p2c_mpfa
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2c_mpfa test_1p2c_fv.input -Problem.Name 1pnctest_mpfa -Vtk.AddVelocity false")
 
 # non-isothermal tests
+# conduction
 dune_add_test(NAME test_1p2cni_conduction_box
               SOURCES test_1p2cni_conduction_fv.cc
               COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConductionBoxProblem
@@ -62,3 +63,35 @@ dune_add_test(NAME test_1p2cni_conduction_mpfa
                         --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconduction-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_conductiontest_mpfa-00006.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_conduction_mpfa test_1p2cni_conduction_fv.input -Problem.Name 1p2cni_conductiontest_mpfa -Vtk.AddVelocity false")
+
+# convection
+dune_add_test(NAME test_1p2cni_convection_box
+              SOURCES test_1p2cni_convection_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionBoxProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniboxconvection-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_box-00010.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_box test_1p2cni_convection_fv.input -Problem.Name 1p2cni_convectiontest_box"
+                        --zeroThreshold {"velocity_w \(m/s\)":1e-9})
+
+dune_add_test(NAME test_1p2cni_convection_tpfa
+              SOURCES test_1p2cni_convection_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCTpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccconduction-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_tpfa-00006.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_tpfa test_1p2cni_convection_fv.input -Problem.Name 1p2cni_convectiontest_tpfa"
+                        --zeroThreshold {"velocity_w \(m/s\)_0":1e-9})
+
+#Note: The mpfa model does not support velocity output yet. We therefore deactivate it for the test and use a copy of the tpfa reference
+#      solution where the velocities have been removed.
+dune_add_test(NAME test_1p2cni_convection_mpfa
+              SOURCES test_1p2cni_convection_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=OnePTwoCNIConvectionCCMpfaProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconduction-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_mpfa-00006.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1p2cni_convection_mpfa test_1p2cni_convection_fv.input -Problem.Name 1p2cni_convectiontest_mpfa -Vtk.AddVelocity false")

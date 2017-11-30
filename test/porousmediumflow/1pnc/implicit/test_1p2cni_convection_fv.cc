@@ -23,7 +23,7 @@
  */
  #include <config.h>
 
- #include "1p2ctestproblem.hh"
+ #include "1p2cniconvectionproblem.hh"
 
  #include <ctime>
  #include <iostream>
@@ -117,7 +117,10 @@
      VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
      using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
      VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+     vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
      vtkWriter.write(0.0);
+     // output every vtkOutputInterval time step
+     const auto vtkOutputInterval = getParam<int>("Problem.OutputInterval");
 
      // instantiate time loop
      auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
@@ -128,6 +131,7 @@
      auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
      // the linear solver
+    //  using LinearSolver = UMFPackBackend<TypeTag>;
      using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
      auto linearSolver = std::make_shared<LinearSolver>();
 
@@ -161,6 +165,9 @@
                             << "have been saved to restart files.");
          }
 
+         // update the exact time temperature
+         problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
+
          // make the new solution the old solution
          xOld = x;
          gridVariables->advanceTimeStep();
@@ -169,7 +176,8 @@
          timeLoop->advanceTimeStep();
 
          // write vtk output
-         vtkWriter.write(timeLoop->time());
+         if (timeLoop->timeStepIndex()==0 || timeLoop->timeStepIndex() % vtkOutputInterval == 0 || timeLoop->willBeFinished())
+            vtkWriter.write(timeLoop->time());
 
          // report statistics of this time step
          timeLoop->reportTimeStep();
