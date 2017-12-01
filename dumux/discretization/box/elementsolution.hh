@@ -39,6 +39,7 @@ class BoxElementSolution
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
@@ -62,6 +63,13 @@ public:
         update(element, sol, fvGeometry);
     }
 
+    //! Constructor with element and elemVolVars and fvGeometry
+    BoxElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
+                       const FVElementGeometry& fvGeometry)
+    {
+        update(element, elemVolVars, fvGeometry);
+    }
+
     //! extract the element solution from the solution vector using a mapper
     void update(const Element& element, const SolutionVector& sol,
                 const FVGridGeometry& fvGridGeometry)
@@ -82,10 +90,14 @@ public:
             priVars_[scv.indexInElement()] = sol[scv.dofIndex()];
     }
 
-    //! resize method
-    void resize(std::size_t size)
+    //! extract the element solution from the elemVolVars using a local fv geometry
+    void update(const Element& element, const ElementVolumeVariables& elemVolVars,
+                const FVElementGeometry& fvGeometry)
     {
-        priVars_.resize(size);
+        const auto numVert = element.subEntities(GridView::dimension);
+        priVars_.resize(numVert);
+        for (const auto& scv : scvs(fvGeometry))
+            priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
     }
 
     //! bracket operator const access
