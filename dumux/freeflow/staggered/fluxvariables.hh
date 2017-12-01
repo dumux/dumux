@@ -309,10 +309,10 @@ private:
       const auto outsideScvIdx = normalFace.outsideScvIdx();
 
       // lambda to conveniently create a ghost face which is outside the domain, parallel to the scvf of interest
-    //   auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
-    //   {
-    //       return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
-    //   };
+      auto makeGhostFace = [insideScvIdx] (const GlobalPosition& pos)
+      {
+          return SubControlVolumeFace(pos, std::vector<unsigned int>{insideScvIdx,insideScvIdx});
+      };
 
       const bool innerElementIsUpstream = ( sign(normalFace.outerNormalScalar()) == sign(transportingVelocity) );
 
@@ -328,8 +328,8 @@ private:
           if(outerDofIdx >= 0)
               transportedVelocity = velocity(outerDofIdx);
           else // this is the case when the outer parallal dof would lie outside the domain TODO: discuss which one is better
-            //   transportedVelocity = problem.dirichlet(makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
-              transportedVelocity = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
+              transportedVelocity = problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
+            //   transportedVelocity = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
       }
 
       const Scalar momentum = upVolVars.density() * transportedVelocity;
@@ -373,7 +373,8 @@ private:
 
       const Scalar outerNormalVelocity = outerNormalVelocityIdx >= 0 ?
                                   velocity(outerNormalVelocityIdx) :
-                                  problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterNormalFaceDofPos))[faceIdx][normalDirIdx];
+                                  problem.dirichlet(element, normalFace)[faceIdx][normalDirIdx];
+                                //   problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterNormalFaceDofPos))[faceIdx][normalDirIdx];
 
       const Scalar normalDeltaV = scvf.normalInPosCoordDir() ?
                                     (outerNormalVelocity - innerNormalVelocity) :
@@ -388,7 +389,8 @@ private:
       const int outerParallelFaceDofIdx = subFaceData.outerParallelFaceDofIdx;
       const Scalar outerParallelVelocity = outerParallelFaceDofIdx >= 0 ?
                                            velocity(outerParallelFaceDofIdx) :
-                                           problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
+                                           problem.dirichlet(element, normalFace)[faceIdx][scvf.directionIndex()];
+                                        //    problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
 
       const Scalar parallelDeltaV = normalFace.normalInPosCoordDir() ?
                                    (outerParallelVelocity - innerParallelVelocity) :
