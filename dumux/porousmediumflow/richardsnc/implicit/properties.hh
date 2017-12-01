@@ -108,7 +108,7 @@ SET_TYPE_PROP(RichardsNC, VolumeVariables, RichardsNCVolumeVariables<TypeTag>);
 SET_PROP(RichardsNC, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhaseTwoC<TypeTag, SimpleH2O<Scalar>, Constant<TypeTag, Scalar>>;
+    using type = FluidSystems::LiquidPhaseTwoC<TypeTag, SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
 };
 
 /*!
@@ -124,12 +124,6 @@ SET_PROP(RichardsNC, FluidState)
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields<TypeTag>);           //! Set the vtk output fields specific to the twop model
-/*!
- * \brief Set type of the parameter objects for the material law
- *
- * By default this is just retrieved from the material law.
- */
-SET_TYPE_PROP(RichardsNC, MaterialLawParams, typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params);
 
 //! Set the indices used
 SET_TYPE_PROP(RichardsNC, Indices, RichardsNCIndices<TypeTag>);
