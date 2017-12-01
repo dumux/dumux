@@ -91,7 +91,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace &scvf)
         {
-            tij_ = Implementation::calculateTransmissibilities(problem, element, fvGeometry, elemVolVars, scvf);
+            tij_ = Implementation::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
         }
 
         const Scalar& advectionTij() const
@@ -234,12 +234,12 @@ public:
     }
 
     // The flux variables cache has to be bound to an element prior to flux calculations
-    // During the binding, the transmissibilities will be computed and stored using the method below.
-    static Scalar calculateTransmissibilities(const Problem& problem,
-                                              const Element& element,
-                                              const FVElementGeometry& fvGeometry,
-                                              const ElementVolumeVariables& elemVolVars,
-                                              const SubControlVolumeFace& scvf)
+    // During the binding, the transmissibility will be computed and stored using the method below.
+    static Scalar calculateTransmissibility(const Problem& problem,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const SubControlVolumeFace& scvf)
     {
         Scalar tij;
 

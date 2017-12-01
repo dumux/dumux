@@ -45,8 +45,9 @@ NEW_PROP_TAG(EffectiveDiffusivityModel);
  * \brief Specialization of Fick's Law for the CCTpfa method.
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
+class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
+    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -106,7 +107,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
                              const unsigned int phaseIdx,
                              const unsigned int compIdx)
         {
-            tij_[phaseIdx][compIdx] = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+            tij_[phaseIdx][compIdx] = Implementation::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
         }
 
         const Scalar& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const

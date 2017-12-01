@@ -45,6 +45,7 @@ NEW_PROP_TAG(ThermalConductivityModel);
 template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
+    using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -96,7 +97,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
                                   const ElementVolumeVariables& elemVolVars,
                                   const SubControlVolumeFace &scvf)
         {
-            tij_ = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
+            tij_ = Implementation::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
         }
 
         const Scalar& heatConductionTij() const
