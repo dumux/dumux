@@ -32,7 +32,6 @@
 #include <dumux/porousmediumflow/2pnc/implicit/volumevariables.hh>
 
 #include "properties.hh"
-#include "indices.hh"
 
 namespace Dumux
 {

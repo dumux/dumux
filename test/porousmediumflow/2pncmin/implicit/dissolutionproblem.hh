@@ -41,29 +41,29 @@ class DissolutionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DissolutionProblem, INHERITS_FROM(TwoPNCMin, DissolutionSpatialparams));
-NEW_TYPE_TAG(DissolutionBoxProblem, INHERITS_FROM(BoxModel, DissolutionProblem));
-NEW_TYPE_TAG(DissolutionCCProblem, INHERITS_FROM(CCTpfaModel, DissolutionProblem));
+NEW_TYPE_TAG(DissolutionTypeTag, INHERITS_FROM(TwoPNCMin, DissolutionSpatialparams));
+NEW_TYPE_TAG(DissolutionBoxTypeTag, INHERITS_FROM(BoxModel, DissolutionTypeTag));
+NEW_TYPE_TAG(DissolutionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, DissolutionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(DissolutionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DissolutionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(DissolutionProblem, Problem, DissolutionProblem<TypeTag>);
+SET_TYPE_PROP(DissolutionTypeTag, Problem, DissolutionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(DissolutionProblem, FluidSystem)
+SET_PROP(DissolutionTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::BrineAir<Scalar, H2O<Scalar>, true/*useComplexrelations=*/>;
 };
 
 // Set the spatial parameters
-SET_TYPE_PROP(DissolutionProblem, SpatialParams, DissolutionSpatialparams<TypeTag>);
+SET_TYPE_PROP(DissolutionTypeTag, SpatialParams, DissolutionSpatialparams<TypeTag>);
 
 //Set properties here to override the default property settings
-SET_INT_PROP(DissolutionProblem, ReplaceCompEqIdx, 1); //! Replace gas balance by total mass balance
-SET_INT_PROP(DissolutionProblem, Formulation, TwoPNCFormulation::pnsw);
+SET_INT_PROP(DissolutionTypeTag, ReplaceCompEqIdx, 1); //! Replace gas balance by total mass balance
+SET_INT_PROP(DissolutionTypeTag, Formulation, TwoPNCFormulation::pnsw);
 }
 
 /*!
@@ -166,9 +166,9 @@ public:
         temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
         name_                   = getParam<std::string>("Problem.Name");
 
-//        unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0; //TODO remove if not needed anymore
-//        Kxx_.resize(fvGridGeometry->gridView().size(codim));
-//        Kyy_.resize(fvGridGeometry->gridView().size(codim));
+        unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0;
+        Kxx_.resize(fvGridGeometry->gridView().size(codim));
+        Kyy_.resize(fvGridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -177,7 +177,6 @@ public:
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
     }
-
 
     void setTime( Scalar time )
     {
@@ -368,35 +367,35 @@ public:
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
 
-//    const std::vector<Scalar>& getKxx()
-//    {
-//        return Kxx_;
-//    }
-//
-//    const std::vector<Scalar>& getKyy()
-//    {
-//        return Kyy_;
-//    }
-//
-//    void updateVtkOutput(const SolutionVector& curSol)
-//        {
-//            for (const auto& element : elements(this->fvGridGeometry().gridView()))
-//            {
-//                ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
-//
-//                auto fvGeometry = localView(this->fvGridGeometry());
-//                fvGeometry.bindElement(element);
-//
-//                for (auto&& scv : scvs(fvGeometry))
-//                {
-//                    VolumeVariables volVars;
-//                    volVars.update(elemSol, *this, element, scv);
-//                    const auto dofIdxGlobal = scv.dofIndex();
-//                    Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
-//                    Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
-//                }
-//            }
-//        }
+    const std::vector<Scalar>& getKxx()
+    {
+        return Kxx_;
+    }
+
+    const std::vector<Scalar>& getKyy()
+    {
+        return Kyy_;
+    }
+
+    void updateVtkOutput(const SolutionVector& curSol)
+        {
+            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+            {
+                ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+
+                auto fvGeometry = localView(this->fvGridGeometry());
+                fvGeometry.bindElement(element);
+
+                for (auto&& scv : scvs(fvGeometry))
+                {
+                    VolumeVariables volVars;
+                    volVars.update(elemSol, *this, element, scv);
+                    const auto dofIdxGlobal = scv.dofIndex();
+                    Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
+                    Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
+                }
+            }
+        }
 
 private:
 
@@ -437,9 +436,8 @@ private:
     Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
     Scalar reservoirSaturation_;
-//    std::vector<double> Kxx_;
-//    std::vector<double> Kyy_;
-
+    std::vector<double> Kxx_;
+    std::vector<double> Kyy_;
 };
 
 } //end namespace Dumux

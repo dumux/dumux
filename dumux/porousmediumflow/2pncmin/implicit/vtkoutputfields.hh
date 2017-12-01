@@ -35,15 +35,11 @@ namespace Dumux
 template<class TypeTag>
 class TwoPNCMinVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static constexpr int dim = GridView::dimension;
 
 public:
     template <class VtkOutputModule>
@@ -57,11 +53,7 @@ public:
         {
             vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipVolFrac_"+ FluidSystem::phaseName(numPhases + i));
         }
-
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.permeability()[0][0]; },"Kxx");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.permeability()[1][1]; },"Kyy");
     }
-
 };
 
 } // end namespace Dumux
