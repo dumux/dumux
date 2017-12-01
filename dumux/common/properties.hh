@@ -147,6 +147,8 @@ NEW_PROP_TAG(NumSPhases);
 NEW_PROP_TAG(NonMineralizationVtkOutputFields);
 NEW_PROP_TAG(NonMineralizationVolumeVariables);
 
+NEW_PROP_TAG(UseConstraintSolver);                 //! Determines whether the constraint solver should be used#
+
 /////////////////////////////////////////////////////////////
 // non-isothermal porous medium flow models
 /////////////////////////////////////////////////////////////

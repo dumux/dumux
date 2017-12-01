@@ -12,3 +12,6 @@ Name = infiltrationbox
 [Implicit]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
 
+[Newton]
+MaxRelativeShift = 1e-8
+

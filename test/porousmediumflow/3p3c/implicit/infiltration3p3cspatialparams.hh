@@ -23,32 +23,33 @@
  *        which uses the isothermal two-phase two component
  *        fully implicit model.
  */
-#ifndef DUMUX_INFILTRATION_SPATIAL_PARAMETERS_HH
-#define DUMUX_INFILTRATION_SPATIAL_PARAMETERS_HH
+#ifndef DUMUX_INFILTRATION_THREEPTHREEC_SPATIAL_PARAMETERS_HH
+#define DUMUX_INFILTRATION_THREEPTHREEC_SPATIAL_PARAMETERS_HH
 
 #include <dumux/porousmediumflow/3p3c/implicit/indices.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+#include <dumux/io/plotmateriallaw3p.hh>
 
 namespace Dumux
 {
 
 //forward declaration
 template<class TypeTag>
-class InfiltrationSpatialParams;
+class InfiltrationThreePThreeCSpatialParams;
 
 namespace Properties
 {
 // The spatial parameters TypeTag
-NEW_TYPE_TAG(InfiltrationSpatialParams);
+NEW_TYPE_TAG(InfiltrationThreePThreeCSpatialParamsTypeTag);
 
 // Set the spatial parameters
-SET_TYPE_PROP(InfiltrationSpatialParams, SpatialParams, InfiltrationSpatialParams<TypeTag>);
+SET_TYPE_PROP(InfiltrationThreePThreeCSpatialParamsTypeTag, SpatialParams, InfiltrationThreePThreeCSpatialParams<TypeTag>);
 
 // Set the material Law
-SET_PROP(InfiltrationSpatialParams, MaterialLaw)
+SET_PROP(InfiltrationThreePThreeCSpatialParamsTypeTag, MaterialLaw)
 {
  private:
     // define the material law which is parameterized by effective
@@ -67,7 +68,7 @@ SET_PROP(InfiltrationSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class TypeTag>
-class InfiltrationSpatialParams : public ImplicitSpatialParams<TypeTag>
+class InfiltrationThreePThreeCSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
@@ -109,8 +110,8 @@ public:
      *
      * \param gridView The grid view
      */
-    InfiltrationSpatialParams(const Problem& problem, const GridView &gridView)
-        : ParentType(problem, gridView)
+   InfiltrationThreePThreeCSpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
         // intrinsic permeabilities
         fineK_ = 1.e-11;

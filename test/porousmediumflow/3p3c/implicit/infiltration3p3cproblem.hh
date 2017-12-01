@@ -22,44 +22,39 @@
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  */
-#ifndef DUMUX_INFILTRATIONPROBLEM_HH
-#define DUMUX_INFILTRATIONPROBLEM_HH
+#ifndef DUMUX_INFILTRATION_THREEPTHREEC_PROBLEM_HH
+#define DUMUX_INFILTRATION_THREEPTHREEC_PROBLEM_HH
 
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/3p3c/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 
-#include <dumux/porousmediumflow/3p3c/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
-
-#include "infiltrationspatialparameters.hh"
+#include "infiltration3p3cspatialparams.hh"
 
 namespace Dumux
 {
 template <class TypeTag>
-class InfiltrationProblem;
+class InfiltrationThreePThreeCProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InfiltrationProblem, INHERITS_FROM(ThreePThreeC, InfiltrationSpatialParams));
-NEW_TYPE_TAG(InfiltrationBoxProblem, INHERITS_FROM(BoxModel, InfiltrationProblem));
-NEW_TYPE_TAG(InfiltrationCCProblem, INHERITS_FROM(CCTpfaModel, InfiltrationProblem));
+NEW_TYPE_TAG(InfiltrationThreePThreeCTypeTag, INHERITS_FROM(ThreePThreeC, InfiltrationThreePThreeCSpatialParamsTypeTag));
+NEW_TYPE_TAG(InfiltrationThreePThreeCBoxTypeTag, INHERITS_FROM(BoxModel, InfiltrationThreePThreeCTypeTag));
+NEW_TYPE_TAG(InfiltrationThreePThreeCCCTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePThreeCTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(InfiltrationProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InfiltrationProblem, Problem, InfiltrationProblem<TypeTag>);
+SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Problem, InfiltrationThreePThreeCProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(InfiltrationProblem,
+SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-
-// Maximum tolerated relative error in the Newton method
-SET_SCALAR_PROP(InfiltrationProblem, NewtonMaxRelativeShift, 1e-8);
-
-// -1 backward differences, 0: central differences, +1: forward differences
-SET_INT_PROP(InfiltrationProblem, ImplicitNumericDifferenceMethod, 0);
 }
 
 /*!
@@ -93,21 +88,17 @@ SET_INT_PROP(InfiltrationProblem, ImplicitNumericDifferenceMethod, 0);
  * To run the simulation execute the following line in shell:
  * <tt>./test_box3p3c test_box3p3c.input</tt> or
  * <tt>./test_cc3p3c test_cc3p3c.input</tt>
- */
+ *  */
 template <class TypeTag >
-class InfiltrationProblem : public ImplicitPorousMediaProblem<TypeTag>
+class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
@@ -126,22 +117,16 @@ class InfiltrationProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) NeumannFluxes;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!
@@ -150,8 +135,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    InfiltrationProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    InfiltrationThreePThreeCProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
         FluidSystem::init(/*tempMin=*/temperature_ - 1,
@@ -161,13 +146,8 @@ public:
                           /*pressMax=*/3*1e5,
                           /*nPress=*/200);
 
-        name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
 
     /*!
      * \brief The problem name.

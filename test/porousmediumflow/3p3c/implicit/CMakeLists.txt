@@ -1,19 +1,23 @@
 add_input_file_links()
 
 # isothermal tests
-add_dumux_test(test_box3p3c test_box3p3c test_box3p3c.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/infiltrationbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/box3p3c-00005.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p3c -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_box3p3c_reference.input")
+dune_add_test(NAME test_box3p3c
+              SOURCES test_3p3c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCBoxTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
+                            --files ${CMAKE_SOURCE_DIR}/test/references/infiltrationbox-reference.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/infiltration3p3cbox-00005.vtu
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3p3c test_3p3c_fv.input -Problem.Name infiltration3p3cbox")
 
-add_dumux_test(test_cc3p3c test_cc3p3c test_cc3p3c.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/infiltrationcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/cc3p3c-00005.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p3c -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_cc3p3c_reference.input")
+dune_add_test(NAME test_cc3p3c
+              SOURCES test_3p3c_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=InfiltrationThreePThreeCCCTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS      --script fuzzy
+                            --files ${CMAKE_SOURCE_DIR}/test/references/infiltrationcc-reference.vtu
+                                    ${CMAKE_CURRENT_BINARY_DIR}/infiltration3p3ccc-00005.vtu
+                            --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc3p3c test_3p3c_fv.input -Problem.Name infiltration3p3ccc")
 
 # non-isothermal tests
 add_dumux_test(test_box3p3cnicolumnxylol test_box3p3cnicolumnxylol test_box3p3cnicolumnxylol.cc

@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 60 # [s]
 TEnd = 864000 # [s]
 
@@ -7,11 +7,7 @@ UpperRight = 500 10
 Cells = 250 10
 
 [Problem]
-Name = infiltrationcc
+Name = infiltration
 
 [Implicit]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
-
-[Vtk]
-AddPermeability = true
-AddPorosity = true
