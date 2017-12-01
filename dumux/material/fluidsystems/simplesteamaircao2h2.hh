@@ -53,7 +53,7 @@ namespace FluidSystems
  * \ingroup Fluidsystems
  *
  * \brief A compositional one-phase fluid system with \f$H_2O\f$ \f$Air\f$ as gaseous components
- *              and \f$CaO\f$  and \f$Ca(OH)_2/f$ as solid components drawn for thermo-chemical
+ *              and \f$CaO\f$  and \f$Ca(OH)_2\f$ as solid components drawn for thermo-chemical
  *              heat storage.
  *
  *  This fluidsystem is applied by default to the simpleh2o, as the IAPWS-formulation has to be
