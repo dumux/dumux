@@ -194,11 +194,11 @@ public:
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*computeTpfaTransmissibility(scvf, outsideD, outsideScv, outsideVolVars.extrusionFactor());
+                tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideD, outsideVolVars.extrusionFactor());
             else
                 tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()),
-                                                 outsideD,
                                                  outsideScv,
+                                                 outsideD,
                                                  outsideVolVars.extrusionFactor());
 
             // check if we are dividing by zero!
