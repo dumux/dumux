@@ -968,7 +968,7 @@ public:
             const auto cellType = getParamFromGroup<std::string>(modelParamGroup, "Grid.CellType", "Cube");
             if (cellType == "Cube")
                 ParentType::template makeStructuredGrid<dim, dim>(ParentType::CellType::Cube, modelParamGroup);
-            if (cellType == "Simplex")
+            else if (cellType == "Simplex")
                 ParentType::template makeStructuredGrid<dim, dim>(ParentType::CellType::Simplex, modelParamGroup);
             else
                 DUNE_THROW(Dune::IOError, "UGGrid only supports 'Cube' or 'Simplex' as cell type. Not '"<< cellType<<"'!");
@@ -1084,8 +1084,10 @@ public:
             // make a structured grid
             if (elType == Dune::cube)
                 ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Cube, modelParamGroup);
-            if (elType == Dune::simplex)
+            else if (elType == Dune::simplex)
                 ParentType::template makeStructuredGrid<dim, dimworld>(ParentType::CellType::Simplex, modelParamGroup);
+            else
+                DUNE_THROW(Dune::IOError, "ALUGrid only supports Dune::cube or Dune::simplex as cell type!");
             ParentType::maybeRefineGrid(modelParamGroup);
         }
 
