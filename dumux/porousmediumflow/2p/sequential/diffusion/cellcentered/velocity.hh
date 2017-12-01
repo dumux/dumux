@@ -35,12 +35,13 @@ namespace Dumux
 /*! Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization.
  * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
  * The phase velocities are calculated following  Darcy's law as
- * \f[
- * \boldsymbol v_\alpha = \lambda_\alpha \boldsymbol K \left(\textbf{grad}\, p_\alpha + \rho_\alpha g  \textbf{grad}\, z \right),
- * \f]
- * where \f$ p_\alpha \f$ denotes the pressure of phase \f$ _\alpha \f$ (wetting or non-wetting),
- * \f$ \boldsymbol K \f$ the absolute permeability, \f$ \lambda_\alpha \f$ the phase mobility,
- * \f$ \rho_\alpha \f$ the phase density and \f$ g \f$ the gravity constant.
+ \f[
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right),
+ \f]
+ * where \f$ p_\alpha \f$ denotes the pressure of phase \f$\alpha \in \{ w, n \}\f$,
+ * \f$ \boldsymbol K \f$ the absolute permeability tensor, \f$ \lambda_\alpha \f$ the phase mobility,
+ * \f$ \varrho_\alpha \f$ the phase density and \f$ {\textbf g} \f$ the gravitational acceleration vector.
  * The total velocity is either calculated as sum of the phase velocities
  * \f[
  * \boldsymbol v_{total} = \boldsymbol v_{wetting}+\boldsymbol v_{non-wetting},
@@ -48,7 +49,7 @@ namespace Dumux
  * or with a given global pressure
  * \f[
  * \boldsymbol v_{total} = \lambda_{total} \boldsymbol K \left(\textbf{grad}\,
- *  p_{global} + \sum f_\alpha \rho_\alpha g  \textbf{grad}\, z\right).
+ *  p_{global} - \sum f_\alpha \varrho_\alpha {\textbf g}\right).
  * \f]
  *
  * \tparam TypeTag The Type Tag
