@@ -135,13 +135,13 @@ int main(int argc, char** argv) try
     if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
         restartTime = getParam<Scalar>("TimeLoop.Restart");
 
-    // intialize the vtk output module
+    // initialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     //add specific output
-    vtkWriter.addField(problem->getKxx(), "Kxx");
-    vtkWriter.addField(problem->getKyy(), "Kyy");
+//    vtkWriter.addField(problem->getKxx(), "Kxx");
+//    vtkWriter.addField(problem->getKyy(), "Kyy");
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -199,7 +199,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // update the output fields before write
-        problem->updateVtkOutput(xOld);
+//        problem->updateVtkOutput(xOld);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
