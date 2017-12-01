@@ -25,14 +25,10 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_DARCYS_LAW_HH
 
-#include <memory>
-
-#include <dune/common/float_cmp.hh>
-
-#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
 
 #include <dumux/discretization/methods.hh>
+#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux
 {
@@ -261,8 +257,8 @@ public:
                                         return volVars.permeability();
                                };
 
-        const Scalar ti = calculateOmega_(scvf, getPermeability(insideVolVars, scvf.ipGlobal()),
-                                          insideScv, insideVolVars.extrusionFactor());
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, getPermeability(insideVolVars, scvf.ipGlobal()),
+                                                      insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
@@ -283,14 +279,14 @@ public:
             {
                 // normal grids
                 if (dim == dimWorld)
-                    return -1.0*calculateOmega_(scvf, getPermeability(outsideVolVars, scvf.ipGlobal()),
-                                            outsideScv, outsideVolVars.extrusionFactor());
+                    return -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+                                                            outsideVolVars.extrusionFactor());
 
                 // embedded surface and network grids
                 //(the outside normal vector might differ from the inside normal vector)
                 else
-                    return calculateOmega_(fvGeometry.flipScvf(scvf.index()), getPermeability(outsideVolVars, scvf.ipGlobal()),
-                                           outsideScv, outsideVolVars.extrusionFactor());
+                    return computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+                                                       outsideVolVars.extrusionFactor());
 
             }();
 
@@ -302,42 +298,6 @@ public:
         }
 
         return tij;
-    }
-
-private:
-    //! compute the transmissibility ti, overload for tensor permeabilites
-    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
-                                  const DimWorldMatrix &K,
-                                  const SubControlVolume &scv,
-                                  Scalar extrusionFactor)
-    {
-        GlobalPosition Knormal;
-        K.mv(scvf.unitOuterNormal(), Knormal);
-
-        auto distanceVector = scvf.ipGlobal();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = Knormal * distanceVector;
-        omega *= extrusionFactor;
-
-        return omega;
-    }
-
-    //! compute the transmissibility ti, overload for scalar permeabilites
-    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
-                                  const Scalar K,
-                                  const SubControlVolume &scv,
-                                  Scalar extrusionFactor)
-    {
-        auto distanceVector = scvf.ipGlobal();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = K * (distanceVector * scvf.unitOuterNormal());
-        omega *= extrusionFactor;
-
-        return omega;
     }
 };
 
