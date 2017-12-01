@@ -46,12 +46,12 @@ namespace Dumux
  *
  * \f[
  *  \phi \frac{\partial S_w}{\partial t} + f_w \text{div}\, \boldsymbol{v}_{t} + f_w \lambda_n \boldsymbol{K}\left(\textbf{grad}\,
- *  p_c - (\varrho_n-\rho_w) {\textbf g} \right)= q_\alpha,
+ *  p_c - (\varrho_n-\varrho_w) {\textbf g} \right)= q_\alpha,
  * \f]
  * to get a wetting phase saturation or
  * \f[
  * \phi \frac{\partial S_n}{\partial t} + f_n \text{div}\, \boldsymbol{v}_{t} - f_n \lambda_w \boldsymbol{K}\left(\textbf{grad}\,
- * p_c - (\rho_n-\rho_w) {\textbf g} \right)= q_\alpha,
+ * p_c - (\varrho_n-\varrho_w) {\textbf g} \right)= q_\alpha,
  * \f]
  * if the non-wetting phase saturation is the primary transport variable.
  *

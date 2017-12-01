@@ -86,18 +86,18 @@ namespace Dumux
  * The slightly compressible case is only implemented for phase pressures! In this case for a wetting
  * \f$(w) \f$ phase pressure as primary variable the pressure equation is formulated as
  * \f[
- * \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,
+ * \phi \left( \varrho_w  \frac{\partial S_w}{\partial t} + \varrho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,
  * \left[\lambda \boldsymbol{K} \left(\textbf{grad}\, p_w + f_n \, \textbf{grad}\, p_c - \sum f_\alpha \varrho_\alpha
  * {\textbf g}\right)\right] = q,
  * \f]
  * and for a non-wetting (\f$ n \f$) phase pressure as primary variable as
  *  \f[
- *  \phi \left( \rho_w  \frac{\partial S_w}{\partial t} + \rho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,
+ *  \phi \left( \varrho_w  \frac{\partial S_w}{\partial t} + \varrho_n \frac{\partial S_n}{\partial t}\right) - \text{div}\,
  * \left[\lambda \boldsymbol{K}  \left(\textbf{grad}\, p_n - f_w \textbf{grad}\, p_c - \sum f_\alpha \varrho_\alpha
  * {\textbf g}\right)\right] = q.
  *  \f]
  * In this slightly compressible case the following definitions are valid:
- * \f$ \lambda = \rho_w \lambda_w + \rho_n \lambda_n \f$, \f$ f_\alpha = (\varrho_\alpha \lambda_\alpha) / \lambda \f$
+ * \f$ \lambda = \varrho_w \lambda_w + \varrho_n \lambda_n \f$, \f$ f_\alpha = (\varrho_\alpha \lambda_\alpha) / \lambda \f$
  * This model assumes that temporal changes in density are very small and thus terms of temporal derivatives are negligible in the pressure equation.
  * Depending on the formulation the terms including time derivatives of saturations are simplified by inserting  \f$ S_w + S_n = 1 \f$.
  *
@@ -626,7 +626,7 @@ void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
  *
  * If compressibility is enabled this functions calculates the term
  * \f[
- *      \phi \sum_\alpha \rho_\alpha \frac{\partial S_\alpha}{\partial t} V
+ *      \phi \sum_\alpha \varrho_\alpha \frac{\partial S_\alpha}{\partial t} V
  * \f]
  *
  * In the incompressible case an volume correction term is calculated which corrects
