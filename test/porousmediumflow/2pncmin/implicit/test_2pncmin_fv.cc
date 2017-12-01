@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the two-phase n-component cc model used to model e.g. salt dissolution.
+ * \brief Test for the two-phase n-component finite volume model used to model e.g. salt dissolution.
  */
 #include <config.h>
 
@@ -79,7 +79,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(DissolutionCCProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -114,7 +114,7 @@ int main(int argc, char** argv) try
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(0));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -140,8 +140,10 @@ int main(int argc, char** argv) try
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
     //add specific output
-//    vtkWriter.addField(problem->getKxx(), "Kxx");
-//    vtkWriter.addField(problem->getKyy(), "Kyy");
+    vtkWriter.addField(problem->getKxx(), "Kxx");
+    vtkWriter.addField(problem->getKyy(), "Kyy");
+    // update the output fields before write
+    problem->updateVtkOutput(x);
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -199,7 +201,7 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // update the output fields before write
-//        problem->updateVtkOutput(xOld);
+        problem->updateVtkOutput(x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
