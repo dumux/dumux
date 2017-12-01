@@ -1,5 +1,4 @@
 add_subdirectory("1p")
-add_subdirectory("1p2c")
 add_subdirectory("1pnc")
 add_subdirectory("1pncmin")
 add_subdirectory("2p")

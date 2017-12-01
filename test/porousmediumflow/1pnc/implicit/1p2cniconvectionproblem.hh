@@ -16,89 +16,90 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
- * \file
- * \brief Definition of a problem, for the 1pnc problem:
- * Component transport of nitrogen dissolved in the water phase.
- */
-#ifndef DUMUX_1P2C_TEST_PROBLEM_HH
-#define DUMUX_1P2C_TEST_PROBLEM_HH
+ /*
+  * \file
+  * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
+  * The simulation domain is a tube where water with an elevated temperature is injected
+  * at a constant rate on the left hand side.
+  *
+  */
+#ifndef DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
+#define DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
-#include <dumux/discretization/evalsolution.hh>
-#include <dumux/discretization/evalgradients.hh>
 #include <dumux/porousmediumflow/1pnc/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/material/components/h2o.hh>
 #include "1pnctestspatialparams.hh"
 
 namespace Dumux
 {
 
 template <class TypeTag>
-class OnePTwoCTestProblem;
+class OnePTwoCNIConvectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCTestProblem, INHERITS_FROM(OnePNC));
-NEW_TYPE_TAG(OnePTwoCTestBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCTestProblem));
-NEW_TYPE_TAG(OnePTwoCTestCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCTestProblem));
-NEW_TYPE_TAG(OnePTwoCTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTwoCTestProblem));
+NEW_TYPE_TAG(OnePTwoCNIConvectionProblem, INHERITS_FROM(OnePNCNI));
+NEW_TYPE_TAG(OnePTwoCNIConvectionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConvectionProblem));
+NEW_TYPE_TAG(OnePTwoCNIConvectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConvectionProblem));
+NEW_TYPE_TAG(OnePTwoCNIConvectionBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCNIConvectionProblem));
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCTestProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(OnePTwoCTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCTestProblem, Problem, OnePTwoCTestProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Problem, OnePTwoCNIConvectionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCTestProblem,
+SET_TYPE_PROP(OnePTwoCNIConvectionProblem,
               FluidSystem,
-              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCTestProblem, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConvectionProblem, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCTestProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCNIConvectionProblem, UseMoles, true);
 }
 
 
 /*!
- * \ingroup OnePNCModel
+ * \ingroup OnePTwoCModel
  * \ingroup ImplicitTestProblems
  *
- * \brief Definition of a problem, for the 1pnc problem:
- * Nitrogen is dissolved in the water phase and
- * is transported with the water flow from the left side to the right.
+ * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
+ * The simulation domain is a tube where water with an elevated temperature is injected
+ * at a constant rate on the left hand side.
  *
- * The model domain is 1 m times 1 m with a discretization length of 0.05 m
- * and homogeneous soil properties (\f$ \mathrm{K=10e-10, \Phi=0.4, \tau=0.28}\f$).
- * Initially the domain is filled with pure water.
+ * Initially the domain is fully saturated with water at a constant temperature.
+ * On the left hand side water is injected at a constant rate and on the right hand side
+ * a Dirichlet boundary with constant pressure, saturation and temperature is applied.
  *
- * At the left side, a Dirichlet condition defines a nitrogen mole fraction
- * of 0.3 mol/mol.
- * The water phase flows from the left side to the right due to the applied pressure
- * gradient of 1e5 Pa/m. The nitrogen is transported with the water flow
- * and leaves the domain at the right boundary
- * where again Dirichlet boundary conditions are applied. Here, the nitrogen mole
- * fraction is set to 0.0 mol/mol.
+ * The results are compared to an analytical solution where a retarded front velocity is calculated as follows:
+  \f[
+     v_{Front}=\frac{q S_{water}}{\phi S_{total}}
+ \f]
  *
- * This problem uses the \ref OnePNCModel model.
+ * The result of the analytical solution is written into the vtu files.
  *
- * To run the simulation execute the following line in shell:
- * <tt>./test_box1pnc -parameterFile ./test_box1pnc.input</tt> or
- * <tt>./test_cc1pnc -parameterFile ./test_cc1pnc.input</tt>
+ * This problem uses the \ref OnePModel and \ref NIModel model.
+ *
+ * To run the simulation execute the following line in shell: <br>
+ * <tt>./test_box1p2cniconvection -ParameterFile ./test_box1p2cniconvection.input</tt> or <br>
+ * <tt>./test_cc1p2cniconvection -ParameterFile ./test_cc1p2cniconvection.input</tt>
  */
+
 template <class TypeTag>
-class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
+class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
 
@@ -114,8 +115,12 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using Element = typename GridView::template Codim<0>::Entity;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
     enum
@@ -123,10 +128,12 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
         massOrMoleFracIdx = Indices::firstMoleFracIdx,
+        temperatureIdx = Indices::temperatureIdx,
 
         // indices of the equations
         conti0EqIdx = Indices::conti0EqIdx,
-        transportEqIdx = Indices::firstTransportEqIdx
+        transportEqIdx = Indices::firstTransportEqIdx,
+        energyEqIdx = Indices::energyEqIdx
     };
 
     //! property that defines whether mole or mass fractions are used
@@ -138,8 +145,8 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    OnePTwoCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-    : ParentType(fvGridGeometry), useNitscheTypeBc_(getParam<bool>("Problem.UseNitscheTypeBc", false))
+    OnePTwoCNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
@@ -149,6 +156,63 @@ public:
             std::cout<<"problem uses mole fractions"<<std::endl;
         else
             std::cout<<"problem uses mass fractions"<<std::endl;
+
+        temperatureExact_.resize(fvGridGeometry->numDofs(), 290.0);
+
+        darcyVelocity_ = getParam<Scalar>("Problem.DarcyVelocity");
+
+        temperatureHigh_ = 291.;
+        temperatureLow_ = 290.;
+        pressureHigh_ = 2e5;
+        pressureLow_ = 1e5;
+    }
+
+    //! get the analytical temperature
+    const std::vector<Scalar>& getExactTemperature()
+    {
+        return temperatureExact_;
+    }
+
+    //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
+    {
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
+
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        const auto someInitSol = initialAtPos(someElement.geometry().center());
+
+        auto fvGeometry = localView(this->fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
+
+        VolumeVariables volVars;
+        volVars.update(someElemSol, *this, someElement, someScv);
+
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
+        const auto densityW = volVars.density(phaseIdx);
+        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
+        const auto storageW =  densityW*heatCapacityW*porosity;
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto storageTotal = storageW + densityS*heatCapacityS*(1 - porosity);
+        std::cout << "storage: " << storageTotal << '\n';
+
+        using std::max;
+        time = max(time, 1e-10);
+        const Scalar retardedFrontVelocity = darcyVelocity_*storageW/storageTotal/porosity;
+        std::cout << "retarded velocity: " << retardedFrontVelocity << '\n';
+
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                auto dofIdxGlobal = scv.dofIndex();
+                auto dofPosition = scv.dofPosition();
+                temperatureExact_[dofIdxGlobal] = (dofPosition[0] < retardedFrontVelocity*time) ? temperatureHigh_ : temperatureLow_;
+            }
+        }
     }
 
     /*!
@@ -181,10 +245,14 @@ public:
     {
         BoundaryTypes values;
 
-        if(globalPos[0] < eps_)
+        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
+        {
             values.setAllDirichlet();
+        }
         else
+        {
             values.setAllNeumann();
+        }
 
         return values;
     }
@@ -198,13 +266,6 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values = initial_(globalPos);
-
-        // condition for the N2 molefraction at left boundary
-        if (globalPos[0] < eps_ )
-        {
-            values[massOrMoleFracIdx] = 2.0e-5;
-        }
-
         return values;
     }
 
@@ -232,71 +293,17 @@ public:
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf) const
     {
-        // set a fixed pressure on the right side of the domain
-        const Scalar dirichletPressure = 1e5;
-
         ResidualVector flux(0.0);
-        const auto& ipGlobal = scvf.ipGlobal();
-        const auto& volVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& globalPos = scvf.ipGlobal();
+        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
-        // no-flow everywhere except at the right boundary
-        if(ipGlobal[0] < this->fvGridGeometry().bBoxMax()[0] - eps_)
-            return flux;
-
-        // if specified in the input file, use a Nitsche type boundary condition for the box model,
-        // otherwise compute the acutal fluxes explicitly
-        if(isBox && useNitscheTypeBc_)
+        if(globalPos[0] < eps_)
         {
-            flux[conti0EqIdx] = (volVars.pressure(phaseIdx) - dirichletPressure) * 1e7;
-            flux[transportEqIdx] = flux[conti0EqIdx]  * (useMoles ? volVars.moleFraction(phaseIdx, massOrMoleFracIdx) :
-                                                                    volVars.massFraction(phaseIdx, massOrMoleFracIdx));
-            return flux;
+             flux[pressureIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity(phaseIdx);
+             flux[massOrMoleFracIdx] = -darcyVelocity_*elemVolVars[scv].molarDensity(phaseIdx)*elemVolVars[scv].moleFraction(phaseIdx, massOrMoleFracIdx);
+             flux[temperatureIdx] = -darcyVelocity_*elemVolVars[scv].density(phaseIdx)
+                                      *IapwsH2O::liquidEnthalpy(temperatureHigh_, elemVolVars[scv].pressure(phaseIdx));
         }
-
-        // construct the element solution
-        const auto elementSolution = [&]()
-        {
-            ElementSolutionVector sol(element, elemVolVars, fvGeometry);
-
-            if(isBox)
-                for(auto&& scvf : scvfs(fvGeometry))
-                    if(scvf.center()[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
-                        sol[fvGeometry.scv(scvf.insideScvIdx()).indexInElement()][pressureIdx] = dirichletPressure;
-
-            return sol;
-        }();
-
-        // evaluate the gradient
-        const auto gradient = [&]()->GlobalPosition
-        {
-            if(isBox)
-            {
-                const auto grads = evalGradients(element, element.geometry(), fvGeometry.fvGridGeometry(), elementSolution, ipGlobal);
-                return grads[pressureIdx];
-            }
-
-            else
-            {
-                const auto& scvCenter = fvGeometry.scv(scvf.insideScvIdx()).center();
-                const Scalar scvCenterPresureSol = elementSolution[0][pressureIdx];
-                auto grad = ipGlobal - scvCenter;
-                grad /= grad.two_norm2();
-                grad *= (dirichletPressure - scvCenterPresureSol);
-                return grad;
-            }
-        }();
-
-        const Scalar K = volVars.permeability();
-        const Scalar density = useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx);
-
-        // calculate the flux
-        Scalar tpfaFlux = gradient * scvf.unitOuterNormal();
-        tpfaFlux *= -1.0  * K;
-        tpfaFlux *=  density * volVars.mobility(phaseIdx);
-        flux[conti0EqIdx] = tpfaFlux;
-
-        // emulate an outflow condition for the component transport on the right side
-        flux[transportEqIdx] = tpfaFlux  * (useMoles ? volVars.moleFraction(phaseIdx, massOrMoleFracIdx) : volVars.massFraction(phaseIdx, massOrMoleFracIdx));
 
         return flux;
     }
@@ -334,18 +341,25 @@ public:
     { return initial_(globalPos); }
 
     // \}
-
 private:
+
     // the internal method for the initial condition
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars;
-        priVars[pressureIdx] = 2e5 - 1e5*globalPos[0]; // initial condition for the pressure
-        priVars[massOrMoleFracIdx] = 0.0;  // initial condition for the N2 molefraction
+        priVars[pressureIdx] = pressureLow_; // initial condition for the pressure
+        priVars[massOrMoleFracIdx] = 1e-10;  // initial condition for the N2 molefraction
+        priVars[temperatureIdx] = temperatureLow_;
         return priVars;
     }
         static constexpr Scalar eps_ = 1e-6;
-        bool useNitscheTypeBc_;
+        Scalar temperatureHigh_;
+        Scalar temperatureLow_;
+        Scalar pressureHigh_;
+        Scalar pressureLow_;
+        Scalar darcyVelocity_;
+
+        std::vector<Scalar> temperatureExact_;
     };
 
 } //end namespace Dumux

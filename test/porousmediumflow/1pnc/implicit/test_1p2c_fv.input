@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 100 # [s]
 
@@ -8,8 +8,9 @@ UpperRight = 1 1
 Cells = 20 2
 
 [Problem]
-Name = 1pnctestbox # name passed to the output routines
+Name = outflowtest # name passed to the output routines
 EnableGravity = 0 # disable gravity
+UseNitscheTypeBc = true
 
 [Vtk]
 AddVelocity = 1 # enable velocity output

@@ -38,6 +38,8 @@ class CCElementSolution
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
@@ -52,6 +54,14 @@ public:
                       const FVGridGeometry& fvGridGeometry)
     : CCElementSolution(sol[fvGridGeometry.elementMapper().index(element)])
     {}
+
+    //! Constructor with element and elemVolVars and fvGeometry
+    CCElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
+                      const FVElementGeometry& fvGeometry)
+    {
+        for(const auto& scv : scvs(fvGeometry))
+            priVars_ = elemVolVars[scv].priVars();
+    }
 
     //! Constructor with a primary variable object
     CCElementSolution(PrimaryVariables&& priVars)

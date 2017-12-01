@@ -39,6 +39,7 @@ class BoxElementSolution
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
@@ -60,6 +61,16 @@ public:
                        const FVElementGeometry& fvGeometry)
     {
         update(element, sol, fvGeometry);
+    }
+
+    //! Constructor with element and elemVolVars and fvGeometry
+    BoxElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
+                       const FVElementGeometry& fvGeometry)
+    {
+        const auto numVert = element.subEntities(GridView::dimension);
+        priVars_.resize(numVert);
+        for (const auto& scv : scvs(fvGeometry))
+            priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
     }
 
     //! extract the element solution from the solution vector using a mapper

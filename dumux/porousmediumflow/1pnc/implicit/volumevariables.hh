@@ -34,11 +34,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(IsothermalVolumeVariables);
-}
-
 /*!
  * \ingroup OnePNCModel
  * \ingroup ImplicitVolumeVariables
@@ -270,6 +265,13 @@ public:
      */
     Scalar mobility(int pIdx = 0) const
     { return 1.0/fluidState_.viscosity(phaseIdx); }
+
+    /*!
+     * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     *        control volume.
+     */
+    Scalar viscosity(int phaseIdx = 0) const
+    { return fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
