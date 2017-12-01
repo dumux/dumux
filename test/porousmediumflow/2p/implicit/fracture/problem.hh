@@ -203,8 +203,11 @@ public:
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
+        const auto depth = this->fvGridGeometry().bBoxMax()[dimWorld-1] - globalPos[dimWorld-1];
+        const auto g = this->gravityAtPos(globalPos)[dimWorld-1];
+
         PrimaryVariables values;
-        values[pwIdx] = 1e5;
+        values[pwIdx] = 1e5 + 1000*g*depth;
         values[snIdx] = 0.0;
         return values;
     }
