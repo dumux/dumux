@@ -171,7 +171,7 @@ public:
         }
         else if (phasePresence == wPhaseOnly)
         {
-            DUNE_THROW(Dune::NotImplemented, "Water phase only phase presence!");
+            Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
         }
 
         //////////
@@ -198,8 +198,10 @@ public:
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
 
         // set the wetting pressure
+        using std::max;
+        Scalar minPc = MaterialLaw::pc(materialParams, 1.0);
         fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
-        fluidState.setPressure(nPhaseIdx, problem.nonWettingReferencePressure());
+        fluidState.setPressure(nPhaseIdx, max(problem.nonWettingReferencePressure(), fluidState.pressure(wPhaseIdx) + minPc));
 
         // compute the capillary pressure to compute the saturation
         // make sure that we the capillary pressure is not smaller than the minimum pc

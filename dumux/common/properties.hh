@@ -157,6 +157,13 @@ NEW_PROP_TAG(Chemistry);                           //!< The chemistry class with
 NEW_PROP_TAG(NumMajorComponents);                  //!< Number of major fluid components which are considered in the calculation of the phase density
 NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in the wetting or non-wetting phase
 
+//////////////////////////////////////////////////////////////
+// Additional properties used by the richards model
+//////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into extended Richards
+NEW_PROP_TAG(UseKelvinEquation); //!< Property for turning Richards into extended Richards
+
 /////////////////////////////////////////////////////////////
 // Properties used by the staggered-grid discretization method
 /////////////////////////////////////////////////////////////

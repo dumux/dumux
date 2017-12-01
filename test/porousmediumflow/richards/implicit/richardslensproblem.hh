@@ -26,8 +26,10 @@
 #ifndef DUMUX_RICHARDS_LENSPROBLEM_HH
 #define DUMUX_RICHARDS_LENSPROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
+
 #include <dumux/porousmediumflow/richards/implicit/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -62,9 +64,6 @@ private:
 public:
     using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
 };
-
-// Enable gravity
-SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
 }
 
 /*!
@@ -95,16 +94,16 @@ SET_BOOL_PROP(RichardsLensProblem, ProblemEnableGravity, true);
  * simulation time is 10,000,000 seconds (115.7 days)
  */
 template <class TypeTag>
-class RichardsLensProblem : public ImplicitPorousMediaProblem<TypeTag>
+class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     enum {
         // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
@@ -124,10 +123,10 @@ public:
      * \param timeManager The Dumux TimeManager for simulation management.
      * \param gridView The grid view on the spatial domain of the problem
      */
-    RichardsLensProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    RichardsLensProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -252,28 +251,28 @@ private:
 
     bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
+        return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;
     }
 
     bool onRightBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
+        return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;
     }
 
     bool onLowerBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
+        return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_;
     }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     {
-        return globalPos[1] > this->bBoxMax()[1] - eps_;
+        return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const
     {
-        Scalar width = this->bBoxMax()[0] - this->bBoxMin()[0];
-        Scalar lambda = (this->bBoxMax()[0] - globalPos[0])/width;
+        Scalar width = this->fvGridGeometry().bBoxMax()[0] - this->fvGridGeometry().bBoxMin()[0];
+        Scalar lambda = (this->fvGridGeometry().bBoxMax()[0] - globalPos[0])/width;
         return onUpperBoundary_(globalPos) && 0.5 < lambda + eps_ && lambda < 2.0/3.0 + eps_;
     }
 

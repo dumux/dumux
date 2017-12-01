@@ -89,12 +89,12 @@ public:
      * \param gridView The DUNE GridView representing the spatial
      *                 domain of the problem.
      */
-    RichardsWellTracerSpatialParams(const Problem& problem, const GridView& gridView)
-        : ParentType(problem, gridView)
+    RichardsWellTracerSpatialParams(const Problem& problem)
+        : ParentType(problem)
     {
 
-        lensLowerLeft_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, LensLowerLeft);
-        lensUpperRight_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, Problem, LensUpperRight);
+        lensLowerLeft_ = getParam<GlobalPosition>("Problem.LensLowerLeft");
+        lensUpperRight_ = getParam<GlobalPosition>("Problem.LensUpperRight");
 
         // residual saturations
         lensMaterialParams_.setSwr(0.18);

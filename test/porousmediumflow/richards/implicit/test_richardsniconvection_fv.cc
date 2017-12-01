@@ -19,11 +19,11 @@
 /*!
  * \file
  *
- * \brief Test for the Richards CC model.
+ * \brief Test for the Richards box model.
  */
 #include <config.h>
 
-#include "richardsanalyticalproblem.hh"
+#include "richardsniconvectionproblem.hh"
 
 #include <ctime>
 #include <iostream>
@@ -82,7 +82,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(RichardsAnalyticalCCProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -142,6 +142,7 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -167,7 +168,6 @@ int main(int argc, char** argv) try
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
 
         // try solving the non-linear system
         for (int i = 0; i < maxDivisions; ++i)
@@ -187,17 +187,17 @@ int main(int argc, char** argv) try
                             << ".\nThe solutions of the current and the previous time steps "
                             << "have been saved to restart files.");
         }
+         // compute the new analytical temperature field for the output
+        problem->updateExactTemperature(x, timeLoop->time()+timeLoop->timeStepSize());
 
         // make the new solution the old solution
         xOld = x;
         gridVariables->advanceTimeStep();
-        problem->writeOutput(x);
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        if(timeLoop->willBeFinished())
         vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step

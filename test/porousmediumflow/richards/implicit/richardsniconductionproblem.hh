@@ -27,9 +27,11 @@
 
 #include <math.h>
 
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+
+#include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/richards/implicit/model.hh>
-#include <dumux/porousmediumflow/richards/implicit/problem.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include "richardsnispatialparams.hh"
@@ -44,7 +46,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(RichardsNIConductionProblem, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
 NEW_TYPE_TAG(RichardsNIConductionBoxProblem, INHERITS_FROM(BoxModel, RichardsNIConductionProblem));
-NEW_TYPE_TAG(RichardsNIConductionCCProblem, INHERITS_FROM(CCModel, RichardsNIConductionProblem));
+NEW_TYPE_TAG(RichardsNIConductionCCProblem, INHERITS_FROM(CCTpfaModel, RichardsNIConductionProblem));
 
 // Set the grid type
 SET_TYPE_PROP(RichardsNIConductionProblem, Grid, Dune::YaspGrid<2>);
@@ -85,19 +87,23 @@ SET_TYPE_PROP(RichardsNIConductionProblem,
  * <tt>./test_ccrichardsniconduction -ParameterFile ./test_ccrichardsniconduction.input</tt>
  */
 template <class TypeTag>
-class RichardsNIConductionProblem : public RichardsProblem<TypeTag>
+class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
 {
-    typedef RichardsProblem<TypeTag> ParentType;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -106,19 +112,14 @@ class RichardsNIConductionProblem : public RichardsProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dimWorld : 0 };
 
     enum {
         // indices of the primary variables
-        pressureIdx = Indices::pwIdx,
+        pressureIdx = Indices::pressureIdx,
+        conti0EqIdx = Indices::conti0EqIdx,
+        wPhaseOnly = Indices::wPhaseOnly,
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-        temperatureIdx = Indices::temperatureIdx
-    };
-    enum {
-        // index of the transport equation
-        contiEqIdx = Indices::contiEqIdx,
+        temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx
     };
 
@@ -128,25 +129,15 @@ class RichardsNIConductionProblem : public RichardsProblem<TypeTag>
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    RichardsNIConductionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    RichardsNIConductionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         //initialize fluid system
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-        outputInterval_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
+        name_ = getParam<std::string>("Problem.Name");
         temperatureHigh_ = 300.;
-    }
-
-
-    bool shouldWriteOutput() const
-    {
-        return
-            this->timeManager().timeStepIndex() == 0 ||
-            this->timeManager().timeStepIndex() % outputInterval_ == 0 ||
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished();
+        temperatureExact_.resize(fvGridGeometry->numDofs());
     }
 
     /*!
@@ -154,57 +145,53 @@ public:
      *        from the solution of the current time step to the VTK
      *        writer.
      */
-    void addOutputVtkFields()
+    //! get the analytical temperature
+    const std::vector<Scalar>& getExactTemperature()
     {
-        //Here we calculate the analytical solution
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        unsigned numDofs = this->model().numDofs();
+        return temperatureExact_;
+    }
 
-        //create required scalar fields
-        ScalarField *temperatureExact = this->resultWriter().allocateManagedBuffer(numDofs);
+  //! udpate the analytical temperature
+    void updateExactTemperature(const SolutionVector& curSol, Scalar time)
+    {
+        const auto someElement = *(elements(this->fvGridGeometry().gridView()).begin());
 
-        FVElementGeometry fvGeometry;
+        ElementSolutionVector someElemSol(someElement, curSol, this->fvGridGeometry());
+        const auto someInitSol = initialAtPos(someElement.geometry().center());
+
+        auto fvGeometry = localView(this->fvGridGeometry());
+        fvGeometry.bindElement(someElement);
+        const auto someScv = *(scvs(fvGeometry).begin());
+
         VolumeVariables volVars;
+        volVars.update(someElemSol, *this, someElement, someScv);
 
-        const auto firstElement = *this->gridView().template begin<0>();
-        fvGeometry.update(this->gridView(), firstElement);
-        PrimaryVariables initialPriVars(0);
-        GlobalPosition globalPos(0);
-        initial_(initialPriVars, globalPos);
-
-        //update the constant volume variables
-        volVars.update(initialPriVars, *this, firstElement, fvGeometry, 0, false);
-
-        Scalar porosity = this->spatialParams().porosity(firstElement, fvGeometry, 0);
-        Scalar densityW = volVars.density(wPhaseIdx);
-        Scalar heatCapacityW = FluidSystem::heatCapacity(volVars.fluidState(), 0);
-        Scalar densityS = this->spatialParams().solidDensity(firstElement, fvGeometry, 0);
-        Scalar heatCapacityS = this->spatialParams().solidHeatCapacity(firstElement, fvGeometry, 0);
-        Scalar storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
-        Scalar effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
-                firstElement, fvGeometry, 0);
+        const auto porosity = this->spatialParams().porosity(someElement, someScv, someElemSol);
+        const auto densityW = volVars.density(wPhaseIdx);
+        const auto heatCapacityW = IapwsH2O::liquidHeatCapacity(someInitSol[temperatureIdx], someInitSol[pressureIdx]);
+        const auto densityS = this->spatialParams().solidDensity(someElement, someScv, someElemSol);
+        const auto heatCapacityS = this->spatialParams().solidHeatCapacity(someElement, someScv, someElemSol);
+        const auto storage = densityW*heatCapacityW*porosity + densityS*heatCapacityS*(1 - porosity);
+        const auto effectiveThermalConductivity = ThermalConductivityModel::effectiveThermalConductivity(volVars, this->spatialParams(),
+                                                                                                         someElement, fvGeometry, someScv);
         using std::max;
-        Scalar time = max(this->timeManager().time() + this->timeManager().timeStepSize(), 1e-10);
-
-        for (const auto& element : elements(this->gridView()))
+        time = max(time, 1e-10);
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
-            fvGeometry.update(this->gridView(), element);
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
             {
-                int globalIdx = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
+               auto globalIdx = scv.dofIndex();
+               const auto& globalPos = scv.dofPosition();
+               using std::erf;
+               using std::sqrt;
+               temperatureExact_[globalIdx] = temperatureHigh_ + (someInitSol[temperatureIdx] - temperatureHigh_)
+                                              *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
 
-                if (isBox)
-                    globalPos = element.geometry().corner(scvIdx);
-                else
-                    globalPos = element.geometry().center();
-
-                using std::sqrt;
-                using std::erf;
-                (*temperatureExact)[globalIdx] = temperatureHigh_ + (initialPriVars[temperatureIdx] - temperatureHigh_)
-                                                             *erf(0.5*sqrt(globalPos[0]*globalPos[0]*storage/time/effectiveThermalConductivity));
             }
         }
-        this->resultWriter().attachDofData(*temperatureExact, "temperatureExact", isBox);
     }
     /*!
      * \name Problem parameters
@@ -231,13 +218,12 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
-     * \param globalPos The position for which the bc type should be evaluated
+     * \param globalPos The position for which the boundary type is set
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        if(globalPos[0] < eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
+        BoundaryTypes values;
+        if(globalPos[0] < eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
         {
             values.setAllDirichlet();
         }
@@ -245,6 +231,7 @@ public:
         {
             values.setAllNeumann();
         }
+        return values;
     }
 
     /*!
@@ -256,14 +243,16 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+        PrimaryVariables values(0.0);
+        values = initial_(globalPos);
 
         if (globalPos[0] < eps_)
         {
             values[temperatureIdx] = temperatureHigh_;
         }
+        return values;
     }
 
     /*!
@@ -274,14 +263,10 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    void neumann(PrimaryVariables &priVars,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 const int scvIdx,
-                 const int boundaryFaceIdx) const
+    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
     {
-        priVars = 0;
+        PrimaryVariables values(0.0);
+        return values;
     }
 
     // \}
@@ -290,21 +275,6 @@ public:
      * \name Volume terms
      */
     // \{
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
-     *
-     * For this method, the \a priVars parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     */
-    void sourceAtPos(PrimaryVariables &priVars,
-                     const GlobalPosition &globalPos) const
-    {
-        priVars = Scalar(0.0);
-    }
 
     /*!
      * \brief Returns the reference pressure [Pa] of the non-wetting
@@ -318,9 +288,7 @@ public:
      * \param scvIdx The sub control volume index inside the finite
      *               volume geometry
      */
-    Scalar referencePressure(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
+     Scalar nonWettingReferencePressure() const
     { return 1e5; };
 
     /*!
@@ -332,26 +300,29 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+   PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+         return initial_(globalPos);
     }
 
     // \}
 
 private:
-    // the internal method for the initial condition
-    void initial_(PrimaryVariables &priVars,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables priVars(0.0);
+        priVars.setState(wPhaseOnly);
         priVars[pressureIdx] = 1e5; // initial condition for the pressure
+
         priVars[temperatureIdx] = 290.;
+        return priVars;
     }
 
     Scalar temperatureHigh_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
     int outputInterval_;
+    std::vector<Scalar> temperatureExact_;
 };
 
 } //end namespace

@@ -23,7 +23,7 @@
  */
 #include <config.h>
 
-#include "richardsanalyticalproblem.hh"
+#include "richardswelltracerproblem.hh"
 
 #include <ctime>
 #include <iostream>
@@ -82,7 +82,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(RichardsAnalyticalCCProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -167,7 +167,6 @@ int main(int argc, char** argv) try
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
 
         // try solving the non-linear system
         for (int i = 0; i < maxDivisions; ++i)
@@ -190,14 +189,13 @@ int main(int argc, char** argv) try
 
         // make the new solution the old solution
         xOld = x;
+        problem->postTimeStep(x, *gridVariables, timeLoop->timeStepSize());
         gridVariables->advanceTimeStep();
-        problem->writeOutput(x);
 
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        if(timeLoop->willBeFinished())
         vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step

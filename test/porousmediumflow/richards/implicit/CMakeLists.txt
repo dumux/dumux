@@ -1,67 +1,92 @@
 add_input_file_links()
 
+add_executable(test_richards_tpfa EXCLUDE_FROM_ALL test_richardslens_fv.cc)
+target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCCProblem)
+
+add_executable(test_richards_box EXCLUDE_FROM_ALL test_richardslens_fv.cc)
+target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBoxProblem)
+
 if(MPI_FOUND)
-  add_dumux_test(test_boxrichards_parallel test_boxrichards test_boxrichards.cc
-                 python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                   --script fuzzy
-                   --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
-                           ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-richardslensbox-00008.vtu
-                   --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
+dune_add_test(NAME test_richards_box_parallel
+              TARGET test_richards_box
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_box_parallel-00008.vtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box_parallel")
+
+
+dune_add_test(NAME test_richards_tpfa_parallel
+              TARGET test_richards_tpfa
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                      --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference-parallel.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_tpfa_parallel-00007.vtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel")
 endif()
 # isothermal tests
-add_dumux_test(test_boxrichards test_boxrichards test_boxrichards.cc
-                 python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                   --script fuzzy
-                   --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
-                           ${CMAKE_CURRENT_BINARY_DIR}/richardslensbox-00008.vtu
-                   --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards")
+dune_add_test(TARGET test_richards_box
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box-00008.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box")
 
-add_dumux_test(test_ccrichards test_ccrichards test_ccrichards.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/richardslenscc-00007.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichards")
+dune_add_test(TARGET test_richards_tpfa
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa-00007.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa")
 
 # comparison to analytical solution - only with cc
-add_dumux_test(test_ccrichardsanalytical test_ccrichardsanalytical test_ccrichardsanalytical.cc
-                 python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/richardsanalyticalcc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/richardsanalyticalcc-00000.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsanalytical")
-
+dune_add_test(SOURCES test_ccrichardsanalytical.cc
+              NAME test_ccrichardsanalytical
+              COMPILE_DEFINITIONS TYPETAG=RichardsAnalyticalCCProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardsanalyticalcc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsanalytical-00002.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsanalytical test_ccrichardsanalytical.input -Problem.Name test_ccrichardsanalytical")
 # non-isothermal tests
-add_dumux_test(test_boxrichardsniconvection test_boxrichardsniconvection test_boxrichardsniconvection.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectionbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection-00010.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection"
-                 --zeroThreshold {"velocity":1e-16})
+dune_add_test(SOURCES test_richardsniconvection_fv.cc
+              NAME test_boxrichardsniconvection
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionBoxProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectionbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection-00044.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconvection test_richardsniconvection.input -Problem.Name test_boxrichardsniconvection"
+                      )
 
-add_dumux_test(test_ccrichardsniconvection test_ccrichardsniconvection test_ccrichardsniconvection.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectioncc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconvection-00010.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconvection")
+dune_add_test(SOURCES test_richardsniconvection_fv.cc
+              NAME test_ccrichardsniconvection
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionCCProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectioncc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconvection-00043.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconvection test_richardsniconvection.input -Problem.Name test_ccrichardsniconvection")
 
-add_dumux_test(test_boxrichardsniconduction test_boxrichardsniconduction test_boxrichardsniconduction.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductionbox-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction-00006.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction"
-                 --zeroThreshold {"velocity":1e-8})
+dune_add_test(SOURCES test_richardsniconduction_fv.cc
+              NAME test_boxrichardsniconduction
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBoxProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductionbox-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction-00024.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichardsniconduction test_richardsniconduction.input -Problem.Name test_boxrichardsniconduction"
+                        )
 
-add_dumux_test(test_ccrichardsniconduction test_ccrichardsniconduction test_ccrichardsniconduction.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductioncc-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction-00006.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction"
-                 --zeroThreshold {"velocity":1e-8})
+dune_add_test(SOURCES test_richardsniconduction_fv.cc
+              NAME test_ccrichardsniconduction
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCCProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductioncc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction-00024.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichardsniconduction test_richardsniconduction.input -Problem.Name test_ccrichardsniconduction"
+                      )
 
 #install sources
 install(FILES
@@ -72,11 +97,8 @@ richardslensspatialparams.hh
 richardsniconductionproblem.hh
 richardsniconvectionproblem.hh
 richardsnispatialparams.hh
-test_boxrichards.cc
-test_boxrichardsniconduction.cc
-test_boxrichardsniconvection.cc
+test_richardslens_fv.cc
+test_richardsniconduction_fv.cc
+test_richardsniconvection_fv.cc
 test_ccrichardsanalytical.cc
-test_ccrichards.cc
-test_ccrichardsniconduction.cc
-test_ccrichardsniconvection.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/richards)

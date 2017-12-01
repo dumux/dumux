@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 100 # [s]
 TEnd = 3000 # [s]
 
@@ -7,12 +7,8 @@ UpperRight = 6 4
 Cells = 24 16
 
 [Problem]
-Name = richardslenscc
+Name = richardslens
 EnableGravity = 1 # enable gravity
-
-[Implicit]
-EnablePartialReassemble = true # enable partial reassembly of the Jacobian matrix
-EnableJacobianRecycling = true #
 
 [Newton]
 TargetSteps = 18 # set the "desireable" number of newton iterations of a time step

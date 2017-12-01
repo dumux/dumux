@@ -28,9 +28,27 @@
 #ifndef DUMUX_RICHARDS_PROPERTIES_HH
 #define DUMUX_RICHARDS_PROPERTIES_HH
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/properties.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
+
+#include <dumux/porousmediumflow/immiscible/localresidual.hh>
+#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
+
+#include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+
+#include "indices.hh"
+#include "volumevariables.hh"
+#include "vtkoutputfields.hh"
+#include "newtoncontroller.hh"
+#include "localresidual.hh"
+#include "primaryvariableswitch.hh"
 
 namespace Dumux
 {
@@ -45,34 +63,118 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit isothermal one-phase two-component problems
-NEW_TYPE_TAG(Richards);
-NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxModel, Richards));
-NEW_TYPE_TAG(CCRichards, INHERITS_FROM(CCModel, Richards));
-
-//! The type tags for the corresponding non-isothermal problems
+NEW_TYPE_TAG(Richards, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
 NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards, NonIsothermal));
-NEW_TYPE_TAG(BoxRichardsNI, INHERITS_FROM(BoxModel, RichardsNI));
-NEW_TYPE_TAG(CCRichardsNI, INHERITS_FROM(CCModel, RichardsNI));
 
 //////////////////////////////////////////////////////////////////
-// Property tags
+// Properties values
+//////////////////////////////////////////////////////////////////
+//! Number of equations required by the model
+SET_INT_PROP(Richards, NumEq, 1);
+
+//! Number of fluid phases considered
+SET_INT_PROP(Richards, NumPhases, 2);
+
+//! Number of components considered (only water)
+SET_INT_PROP(Richards, NumComponents, 1);
+
+//! The local residual operator
+SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
+
+SET_TYPE_PROP(Richards, VtkOutputFields, RichardsVtkOutputFields<TypeTag>);           //! Set the vtk output fields specific to the twop model
+
+//! The class for the volume averaged quantities
+SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);
+
+//! Enable advection
+SET_BOOL_PROP(Richards, EnableAdvection, true);
+
+//! The default richards model computes no diffusion in the air phase
+//! Turning this on leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
+SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
+
+//! we need to set this to true so that we can calculate the WaterDiffusionInAir whenever we want and still use the same fluxVarsCache for all models
+SET_BOOL_PROP(Richards, EnableMolecularDiffusion, true);
+
+//! Use the model after Millington (1961) for the effective diffusivity
+SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
+              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+//! The default is not to use the kelvin equation for the water vapor pressure (dependency on pc)
+SET_BOOL_PROP(Richards, UseKelvinEquation, false);
+
+//! Isothermal model by default
+SET_BOOL_PROP(Richards, EnableEnergyBalance, false);
+
+//! The class with all index definitions for the model
+SET_TYPE_PROP(Richards, Indices, RichardsIndices);
+
+//! The class with all index definitions for the model
+SET_TYPE_PROP(Richards, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+
+//! The primary variable switch for the richards model
+SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSwitch<TypeTag>);
+
+//! The primary variable switch for the richards model
+//SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
+
+//! The spatial parameters to be employed.
+//! Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
+
+/*!
+ *\brief The fluid system used by the model.
+ *
+ * By default this uses the H2O-Air fluid system with Simple H2O (constant density and viscosity).
+ */
+SET_PROP(Richards, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar>, false>;
+};
+
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(Richards, FluidState)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    using type = ImmiscibleFluidState<Scalar, FluidSystem>;
+};
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity
+SET_PROP(RichardsNI, ThermalConductivityModel)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+public:
+    using type = ThermalConductivitySomerton<Scalar, Indices>;
+};
+
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
-NEW_PROP_TAG(NumComponents);   //!< Number of components in the system
-NEW_PROP_TAG(Indices); //!< Enumerations used by the model
-NEW_PROP_TAG(SpatialParams); //!< The type of the spatial parameters
-NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (by default extracted from the spatial parameters)
-NEW_PROP_TAG(FluidSystem); //!< The fluid system to be used for the Richards model
-NEW_PROP_TAG(FluidState); //!< The fluid state to be used for the Richards model
-NEW_PROP_TAG(WettingPhase); //!< Fluid which represents the wetting phase
-NEW_PROP_TAG(NonwettingPhase); //!< Fluid which represents the non-wetting phase
-NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
-NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
-//! Enabling the water diffusion in air leads to the extended Richards equation (see e.g. Vanderborght et al. 2017)
-NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into extended Richards
-NEW_PROP_TAG(UseKelvinEquation); //!< Property for turning Richards into extended Richards
-NEW_PROP_TAG(ProblemUsePrimaryVariableSwitch); //!< If we should use a primary variable switch
+//set isothermal VolumeVariables
+SET_TYPE_PROP(RichardsNI, IsothermalVolumeVariables, RichardsVolumeVariables<TypeTag>);
+
+//set isothermal LocalResidual
+SET_TYPE_PROP(RichardsNI, IsothermalLocalResidual, RichardsLocalResidual<TypeTag>);
+
+//set isothermal Indices
+SET_TYPE_PROP(RichardsNI, IsothermalIndices, RichardsIndices);
+
+//set isothermal NumEq
+SET_INT_PROP(RichardsNI, IsothermalNumEq, 1);
+
+SET_TYPE_PROP(RichardsNI, IsothermalVtkOutputFields, RichardsVtkOutputFields<TypeTag>);
 
 // \}
 }
