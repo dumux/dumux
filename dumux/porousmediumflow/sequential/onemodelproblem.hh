@@ -109,6 +109,7 @@ public:
         timeManager_ = std::make_shared<TimeManager>(verbose);
 
         model_ = std::make_shared<Model>(asImp_()) ;
+        maxTimeStepSize_ = getParam<Scalar>("TimeManager.MaxTimeStepSize", std::numeric_limits<Scalar>::max());
     }
 
     //! Constructs an object of type OneModelProblemProblem
@@ -137,6 +138,7 @@ public:
         timeManager_ = Dune::stackobject_to_shared_ptr<TimeManager>(timeManager);
 
         model_ = std::make_shared<Model>(asImp_()) ;
+        maxTimeStepSize_ = getParam<Scalar>("TimeManager.MaxTimeStepSize", std::numeric_limits<Scalar>::max());
     }
 
     /*!
@@ -365,9 +367,7 @@ public:
      * Overload in problem for custom needs.
      */
     Scalar maxTimeStepSize() const
-    {
-        return GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, MaxTimeStepSize);
-    }
+    { return maxTimeStepSize_; }
 
     /*!
      * \brief Returns the current time step size [seconds].
@@ -665,6 +665,7 @@ private:
     GlobalPosition bBoxMax_;
 
     std::shared_ptr<TimeManager> timeManager_;
+    Scalar maxTimeStepSize_;
 
     Variables variables_;
 

@@ -45,7 +45,7 @@ namespace Components {
  *       [1.Component]
  *       MolarMass = 0.018 # kg/mol
  *       \endcode
- * \note If you only have one component you can also leaf out the "1.".
+ * \note If you only have one component you can also omit the "1.".
  */
 template<int id, class Scalar>
 class Constant : public Component<Scalar, Constant<id, Scalar> >
