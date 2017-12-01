@@ -15,6 +15,11 @@ Differences Between DuMuX 2.11 and DuMuX 2.12
       dune-cornerpoint), the OPM release 2016.04 has to be used.
 
 * IMPROVEMENTS and ENHANCEMENTS:
+  - Fixed bug in heatCapacity() of component air and replace
+    the use of a constant value in  gasEnthalpy() by calling heatCapacity().
+  - GnuplotInterface now supports in-simulation generation of image files (*.png).
+  - Add a paraview python script for exporting 2d pictures from *.vtu files.
+  - A class for estimating turbulence properties has been added with turbulenceproperties.hh.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
   - gnuplotinterface.hh: The add...ToPlot() functions have changed signature,
