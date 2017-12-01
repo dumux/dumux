@@ -25,7 +25,7 @@
 #define DUMUX_TEST_1P_PROBLEM_HH
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/components/unit.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/1p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/1p/sequential/diffusion/problem.hh>
@@ -55,7 +55,7 @@ SET_PROP(TestProblemOneP, Fluid)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
 
 // Set the spatial parameters
@@ -94,7 +94,6 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
     typedef typename GridView::Intersection Intersection;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
     typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
 
 
@@ -102,13 +101,10 @@ public:
     TestProblemOneP(TimeManager &timeManager, const GridView &gridView) :
         ParentType(gridView), velocity_(*this)
     {
-        delta_ = 1e-3 ;
+        delta_ = getParam<Scalar>("Problem.Delta", 1e-3);
 
-            if (ParameterTree::tree().hasKey("Problem.Delta"))
-            delta_       = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Delta);
-            int numRefine;
-            numRefine = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Grid, NumRefine);
-            GridCreator::grid().globalRefine(numRefine);
+        int numRefine = getParam<int>("Grid.NumRefine");
+        GridCreator::grid().globalRefine(numRefine);
 
         this->spatialParams().initialize(delta_);
     }
