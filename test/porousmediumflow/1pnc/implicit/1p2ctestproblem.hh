@@ -256,11 +256,7 @@ public:
         // construct the element solution
         const auto elementSolution = [&]()
         {
-            ElementSolutionVector sol;
-            sol.resize(fvGeometry.numScv());
-
-            for(auto&& scv : scvs(fvGeometry))
-                sol[scv.indexInElement()] = elemVolVars[scv].priVars();
+            ElementSolutionVector sol(element, elemVolVars, fvGeometry);
 
             if(isBox)
                 for(auto&& scvf : scvfs(fvGeometry))
