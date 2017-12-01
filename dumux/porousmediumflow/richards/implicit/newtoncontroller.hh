@@ -44,7 +44,6 @@ class RichardsNewtonController : public NewtonController<TypeTag>
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLawParams);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Communicator = typename GridView::CollectiveCommunication;
@@ -52,10 +51,6 @@ class RichardsNewtonController : public NewtonController<TypeTag>
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { pressureIdx = Indices::pressureIdx };
-
-    enum { dim = GridView::dimension };
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     /*!
@@ -111,7 +106,7 @@ public:
                     // calculate the old wetting phase saturation
                     const auto& spatialParams = assembler.problem().spatialParams();
                     const ElementSolution elemSol(element, uCurrentIter, fvGridGeometry);
-                    const MaterialLawParams &materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
+                    const auto& materialLawParams = spatialParams.materialLawParams(element, scv, elemSol);
                     const Scalar pcMin = MaterialLaw::pc(materialLawParams, 1.0);
                     const Scalar pw = uLastIter[dofIdxGlobal][pressureIdx];
                     using std::max;
