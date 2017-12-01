@@ -31,7 +31,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/parallel/vertexhandles.hh>
 #include <dumux/discretization/methods.hh>
 
 //#include <dumux/io/restart.hh>
@@ -470,16 +469,6 @@ public:
     {
         // set the initial values by forwarding to a specialized method
         applyInitialSolutionImpl_(sol, std::integral_constant<bool, isBox>());
-
-        // add up the primary variables which cross process borders
-        if (isBox && fvGridGeometry_->gridView().comm().size() > 1)
-        {
-            VertexHandleSum<PrimaryVariables, SolutionVector, VertexMapper>
-                sumPVHandle(sol, fvGridGeometry_->vertexMapper());
-            fvGridGeometry_->gridView().communicate(sumPVHandle,
-                                                    Dune::InteriorBorder_InteriorBorder_Interface,
-                                                    Dune::ForwardCommunication);
-        }
     }
 
     /*!
