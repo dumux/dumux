@@ -52,12 +52,16 @@ public:
         // use default fields from the 2pnc model
         TwoPNCVtkOutputFields<TypeTag>::init(vtk);
 
-        //output additional to TwoPNCMin output:
+        //output additional to TwoPNC output:
         for (int i = 0; i < numSPhases; ++i)
         {
             vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipVolFrac_"+ FluidSystem::phaseName(numPhases + i));
         }
+
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.permeability()[0][0]; },"Kxx");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.permeability()[1][1]; },"Kyy");
     }
+
 };
 
 } // end namespace Dumux
