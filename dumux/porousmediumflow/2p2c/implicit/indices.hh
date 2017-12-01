@@ -19,13 +19,12 @@
 
 /*!
  * \file
- * \brief Defines the indices required for the two-phase two-component
- *        fully implicit model.
+ * \brief Defines the indices required for the two-phase two-component model
  */
 #ifndef DUMUX_2P2C_INDICES_HH
 #define DUMUX_2P2C_INDICES_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
@@ -33,30 +32,20 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup ImplicitIndices
  * \brief Enumerates the formulations which the two-phase two-component model accepts.
  */
 struct TwoPTwoCFormulation
-{
-    enum {
-        pnsw,
-        pwsn
-        };
-};
+{ enum { pnsw, pwsn}; };
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup ImplicitIndices
  * \brief The indices for the isothermal two-phase two-component model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset = 0>
-class TwoPTwoCIndices
+template <class FluidSystem, int PVOffset = 0>
+struct TwoPTwoCIndices
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
-public:
     // Phase indices
     static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase
     static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase
@@ -85,6 +74,6 @@ public:
     static const int contiNEqIdx = conti0EqIdx + nCompIdx;
 };
 
-}
+} // end namespace Dumux
 
 #endif

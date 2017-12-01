@@ -24,11 +24,14 @@
 #ifndef DUMUX_INJECTION_PROBLEM_HH
 #define DUMUX_INJECTION_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 
 #include "injectionspatialparams.hh"
 
@@ -92,15 +95,20 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
+        pressureIdx = Indices::pressureIdx,
+//        swIdx = Indices::swIdx,
+//        snIdx = Indices::snIdx,
+
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
     // copy some indices for convenience
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+//    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
@@ -118,16 +126,20 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+//    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Intersection = typename GridView::Intersection;
+//    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+//    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+//    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -189,6 +201,12 @@ public:
     //     }
     // }
 
+    /*!
+     * \name Problem parameters
+     */
+    // \{
+    void setTime(Scalar time)
+    { time_ = time; }
 
     /*!
      * \name Problem parameters
@@ -366,6 +384,7 @@ private:
 
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
+    Scalar time_;
 };
 
 } //end namespace Dumux

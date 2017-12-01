@@ -25,6 +25,7 @@
 #define DUMUX_2P2C_PRIMARY_VARIABLE_SWITCH_HH
 
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
+#include "indices.hh" // for TwoPTwoCFormulation
 
 namespace Dumux
 {

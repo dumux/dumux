@@ -25,11 +25,15 @@
 #ifndef DUMUX_WATER_AIR_PROBLEM_HH
 #define DUMUX_WATER_AIR_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/linear/seqsolverbackend.hh>
+
 
 #include "waterairspatialparams.hh"
 
@@ -95,12 +99,12 @@ SET_BOOL_PROP(WaterAirProblem, UseMoles, true);
  * <tt>./test_cc2p2cni</tt>
  *  */
 template <class TypeTag >
-class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
+class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GridView::Grid;
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
@@ -128,18 +132,19 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Intersection = typename GridView::Intersection;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
+
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -151,14 +156,14 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    WaterAirProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    WaterAirProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         maxDepth_ = 1000.0; // [m]
 
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        name_ = getParam<std::string>("Problem.Name");
 
         //stating in the console whether mole or mass fractions are used
         if(useMoles)
@@ -168,6 +173,13 @@ public:
 
         this->spatialParams().plotMaterialLaw();
     }
+
+    /*!
+     * \name Problem parameters
+     */
+    void setTime(Scalar time)
+    { time_ = time; }
+
 
     /*!
      * \name Problem parameters
@@ -323,6 +335,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
+        priVars.setState(Indices::wPhaseOnly);
         Scalar densityW = 1000.0;
         priVars[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         priVars[switchIdx] = 0.0;
@@ -335,6 +348,7 @@ private:
     Scalar maxDepth_;
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
+    Scalar time_;
 };
 
 } //end namespace Dumux

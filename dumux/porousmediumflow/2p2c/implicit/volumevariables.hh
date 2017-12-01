@@ -25,10 +25,12 @@
 #ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
 #define DUMUX_2P2C_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/model.hh>
+//#include <dumux/implicit/model.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
+#include <dumux/discretization/volumevariables.hh>
+#include <dumux/discretization/methods.hh>
 #include "properties.hh"
 #include "indices.hh"
 
@@ -93,7 +95,6 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using PermeabilityType = typename SpatialParams::PermeabilityType;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static constexpr bool useKelvinEquation = GET_PROP_VALUE(TypeTag, UseKelvinEquation);
     static constexpr bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
@@ -105,7 +106,8 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     static constexpr int dim = GridView::dimension;
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static constexpr int dofCodim = isBox ? dim : 0;
+    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
