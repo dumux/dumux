@@ -61,7 +61,7 @@ SET_PROP(DissolutionProblem, FluidSystem)
 // Set the spatial parameters
 SET_TYPE_PROP(DissolutionProblem, SpatialParams, DissolutionSpatialparams<TypeTag>);
 
-//Set properties here to override the default property settings in the model.
+//Set properties here to override the default property settings
 SET_INT_PROP(DissolutionProblem, ReplaceCompEqIdx, 1); //! Replace gas balance by total mass balance
 SET_INT_PROP(DissolutionProblem, Formulation, TwoPNCFormulation::pnsw);
 }
@@ -95,7 +95,6 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
-
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx, //Saturation
         xwNaClIdx = FluidSystem::NaClIdx,
@@ -127,7 +126,6 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld,
     };
 
-
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -146,7 +144,6 @@ public:
     DissolutionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
-
         outerSalinity_          = getParam<Scalar>("Problem.OuterSalinity");
         temperature_            = getParam<Scalar>("Problem.Temperature");
         reservoirPressure_      = getParam<Scalar>("Problem.ReservoirPressure");
@@ -169,9 +166,9 @@ public:
         temperatureHigh_        = getParam<Scalar>("FluidSystem.TemperatureHigh");
         name_                   = getParam<std::string>("Problem.Name");
 
-        unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0;
-        Kxx_.resize(fvGridGeometry->gridView().size(codim));
-        Kyy_.resize(fvGridGeometry->gridView().size(codim));
+//        unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0; //TODO remove if not needed anymore
+//        Kxx_.resize(fvGridGeometry->gridView().size(codim));
+//        Kyy_.resize(fvGridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -189,15 +186,8 @@ public:
 
     void setTimeStepSize( Scalar timeStepSize )
      {
-         timeStepSize_ = timeStepSize;
+        timeStepSize_ = timeStepSize;
      }
-//    bool shouldWriteOutput() const
-//    {
-//        return this->timeManager().timeStepIndex() % 1 == 0 ||
-//               this->timeManager().episodeWillBeFinished() ||
-//               this->timeManager().willBeFinished();
-//    }
-
 
     /*!
      * \name Problem parameters
@@ -378,35 +368,35 @@ public:
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
 
-    const std::vector<Scalar>& getKxx()
-    {
-        return Kxx_;
-    }
-
-    const std::vector<Scalar>& getKyy()
-    {
-        return Kyy_;
-    }
-
-    void updateVtkOutput(const SolutionVector& curSol)
-        {
-            for (const auto& element : elements(this->fvGridGeometry().gridView()))
-            {
-                ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
-
-                auto fvGeometry = localView(this->fvGridGeometry());
-                fvGeometry.bindElement(element);
-
-                for (auto&& scv : scvs(fvGeometry))
-                {
-                    VolumeVariables volVars;
-                    volVars.update(elemSol, *this, element, scv);
-                    const auto dofIdxGlobal = scv.dofIndex();
-                    Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
-                    Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
-                }
-            }
-        }
+//    const std::vector<Scalar>& getKxx()
+//    {
+//        return Kxx_;
+//    }
+//
+//    const std::vector<Scalar>& getKyy()
+//    {
+//        return Kyy_;
+//    }
+//
+//    void updateVtkOutput(const SolutionVector& curSol)
+//        {
+//            for (const auto& element : elements(this->fvGridGeometry().gridView()))
+//            {
+//                ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+//
+//                auto fvGeometry = localView(this->fvGridGeometry());
+//                fvGeometry.bindElement(element);
+//
+//                for (auto&& scv : scvs(fvGeometry))
+//                {
+//                    VolumeVariables volVars;
+//                    volVars.update(elemSol, *this, element, scv);
+//                    const auto dofIdxGlobal = scv.dofIndex();
+//                    Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
+//                    Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
+//                }
+//            }
+//        }
 
 private:
 
@@ -417,8 +407,8 @@ private:
      */
     static Scalar massToMoleFrac_(Scalar XwNaCl)
     {
-       const Scalar Mw = 18.015e-3; /* molecular weight of water [kg/mol] */
-       const Scalar Ms = 58.44e-3; /* molecular weight of NaCl  [kg/mol] */
+       const Scalar Mw = 18.015e-3; //FluidSystem::molarMass(wCompIdx); /* molecular weight of water [kg/mol] */ //TODO use correct link to FluidSyswem later
+       const Scalar Ms = 58.44e-3;  //FluidSystem::molarMass(NaClIdx); /* molecular weight of NaCl  [kg/mol] */
 
        const Scalar X_NaCl = XwNaCl;
        /* XwNaCl: conversion from mass fraction to mol fraction */
@@ -447,8 +437,8 @@ private:
     Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
     Scalar reservoirSaturation_;
-    std::vector<double> Kxx_;
-    std::vector<double> Kyy_;
+//    std::vector<double> Kxx_;
+//    std::vector<double> Kyy_;
 
 };
 
