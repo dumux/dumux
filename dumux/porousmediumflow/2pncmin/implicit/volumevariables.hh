@@ -29,8 +29,6 @@
 
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/discretization/volumevariables.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-#include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 #include <dumux/porousmediumflow/2pnc/implicit/volumevariables.hh>
 
 #include "properties.hh"
