@@ -130,9 +130,9 @@ public:
             // do averaging for the density over all neighboring elements
             const auto rho = [&]()
             {
-                // boundaries
+                // use "Dirichlet" density on boundaries
                 if (scvf.boundary())
-                    return insideVolVars.density(phaseIdx);
+                    return outsideVolVars.density(phaseIdx);
 
                 // inner faces with two neighboring elements
                 else if (scvf.numOutsideScvs() == 1)
