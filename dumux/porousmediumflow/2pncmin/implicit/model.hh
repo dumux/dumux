@@ -25,8 +25,6 @@
 #ifndef DUMUX_2PNCMIN_MODEL_HH
 #define DUMUX_2PNCMIN_MODEL_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
-
 #include "properties.hh"
 
 #endif
