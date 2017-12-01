@@ -78,11 +78,12 @@ protected:
                  IndexType dofIdxGlobal,
                  const GlobalPosition& globalPos)
     {
-        static const bool usePriVarSwitch = GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, UsePrimaryVariableSwitch);
+        static const bool usePriVarSwitch = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.UsePrimaryVariableSwitch");
         if (!usePriVarSwitch)
             return false;
 
-        assert(enableWaterDiffusionInAir && "The Richards primary variable switch only works with water diffusion in air enabled!");
+        if (!enableWaterDiffusionInAir)
+            DUNE_THROW(Dune::InvalidStateException, "The Richards primary variable switch only works with water diffusion in air enabled!");
 
         // evaluate primary variable switch
         bool wouldSwitch = false;
