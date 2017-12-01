@@ -25,13 +25,17 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_DARCYS_LAW_HH
 
+#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux
 {
+//! Forward declaration
+template<class TypeTag, bool isNetwork> class CCTpfaDarcysLaw;
 
 /*!
  * \ingroup DarcysLaw
@@ -39,6 +43,70 @@ namespace Dumux
  */
 template <class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+    : public CCTpfaDarcysLaw<TypeTag, (GET_PROP_TYPE(TypeTag, Grid)::dimension < GET_PROP_TYPE(TypeTag, Grid)::dimensionworld) >
+{};
+
+//! Class that fills the cache corresponding to tpfa Darcy's Law
+template<class TypeTag>
+class TpfaDarcysLawCacheFiller
+{
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+
+public:
+    //! Function to fill a TpfaDarcysLawCache of a given scvf
+    //! This interface has to be met by any advection-related cache filler class
+    template<class FluxVariablesCacheFiller>
+    static void fill(FluxVariablesCache& scvfFluxVarsCache,
+                     const Problem& problem,
+                     const Element& element,
+                     const FVElementGeometry& fvGeometry,
+                     const ElementVolumeVariables& elemVolVars,
+                     const SubControlVolumeFace& scvf,
+                     const FluxVariablesCacheFiller& fluxVarsCacheFiller)
+    {
+        scvfFluxVarsCache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf);
+    }
+};
+
+//! the cache corresponding to tpfa Darcy's Law
+template<class TypeTag>
+class TpfaDarcysLawCache
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
+public:
+    using Filler = TpfaDarcysLawCacheFiller<TypeTag>;
+
+    void updateAdvection(const Problem& problem,
+                         const Element& element,
+                         const FVElementGeometry& fvGeometry,
+                         const ElementVolumeVariables& elemVolVars,
+                         const SubControlVolumeFace &scvf)
+    {
+        tij_ = AdvectionType::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
+    }
+
+    const Scalar& advectionTij() const
+    { return tij_; }
+
+private:
+    Scalar tij_;
+};
+
+//! Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
+template<class TypeTag>
+class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 {
     using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -58,55 +126,158 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    //! Class that fills the cache corresponding to tpfa Darcy's Law
-    class TpfaDarcysLawCacheFiller
+  public:
+    // state the discretization method this implementation belongs to
+    static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
+
+    // state the type for the corresponding cache
+    using Cache = TpfaDarcysLawCache<TypeTag>;
+
+    static Scalar flux(const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& elemVolVars,
+                       const SubControlVolumeFace& scvf,
+                       int phaseIdx,
+                       const ElementFluxVarsCache& elemFluxVarsCache)
     {
-    public:
-        //! Function to fill a TpfaDarcysLawCache of a given scvf
-        //! This interface has to be met by any advection-related cache filler class
-        template<class FluxVariablesCacheFiller>
-        static void fill(FluxVariablesCache& scvfFluxVarsCache,
-                         const Problem& problem,
-                         const Element& element,
-                         const FVElementGeometry& fvGeometry,
-                         const ElementVolumeVariables& elemVolVars,
-                         const SubControlVolumeFace& scvf,
-                         const FluxVariablesCacheFiller& fluxVarsCacheFiller)
-        {
-            scvfFluxVarsCache.updateAdvection(problem, element, fvGeometry, elemVolVars, scvf);
-        }
-    };
+        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
 
-    class TpfaDarcysLawCache
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+
+        // Get the inside and outside volume variables
+        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+        const auto& insideVolVars = elemVolVars[insideScv];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        if (enableGravity)
+        {
+            // do averaging for the density over all neighboring elements
+            const auto rho = scvf.boundary() ? outsideVolVars.density(phaseIdx)
+                                             : (insideVolVars.density(phaseIdx) + outsideVolVars.density(phaseIdx))*0.5;
+
+            // Obtain inside and outside pressures
+            const auto pInside = insideVolVars.pressure(phaseIdx);
+            const auto pOutside = outsideVolVars.pressure(phaseIdx);
+
+            const auto& tij = fluxVarsCache.advectionTij();
+            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
+
+            //! compute alpha := n^T*K*g
+            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
+
+            Scalar flux = tij*(pInside - pOutside) + rho*scvf.area()*alpha_inside;
+
+            //! On interior faces we have to add K-weighted gravitational contributions
+            if (!scvf.boundary())
+            {
+                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const auto outsideK = outsideVolVars.permeability();
+                const auto outsideTi = computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
+                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g);
+
+                flux += rho*tij/outsideTi*(alpha_inside - alpha_outside);
+            }
+
+            return flux;
+        }
+        else
+        {
+            // Obtain inside and outside pressures
+            const auto pInside = insideVolVars.pressure(phaseIdx);
+            const auto pOutside = outsideVolVars.pressure(phaseIdx);
+
+            // return flux
+            return fluxVarsCache.advectionTij()*(pInside - pOutside);
+        }
+    }
+
+    // The flux variables cache has to be bound to an element prior to flux calculations
+    // During the binding, the transmissibility will be computed and stored using the method below.
+    static Scalar calculateTransmissibility(const Problem& problem,
+                                            const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const SubControlVolumeFace& scvf)
     {
-    public:
-        using Filler = TpfaDarcysLawCacheFiller;
+        Scalar tij;
 
-        void updateAdvection(const Problem& problem,
-                             const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace &scvf)
+        const auto insideScvIdx = scvf.insideScvIdx();
+        const auto& insideScv = fvGeometry.scv(insideScvIdx);
+        const auto& insideVolVars = elemVolVars[insideScvIdx];
+        // check if we evaluate the permeability in the volume (for discontinuous fields, default)
+        // or at the scvf center for analytical permeability fields (e.g. convergence studies)
+        auto getPermeability = [&problem](const VolumeVariables& volVars,
+                                          const GlobalPosition& scvfIpGlobal)
+                               {
+                                    if (GET_PROP_VALUE(TypeTag, EvaluatePermeabilityAtScvfIP))
+                                        return problem.spatialParams().permeabilityAtPos(scvfIpGlobal);
+                                    else
+                                        return volVars.permeability();
+                               };
+
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, getPermeability(insideVolVars, scvf.ipGlobal()),
+                                                      insideVolVars.extrusionFactor());
+
+        // on the boundary (dirichlet) we only need ti
+        if (scvf.boundary())
+            tij = scvf.area()*ti;
+
+        // otherwise we compute a tpfa harmonic mean
+        else
         {
-            tij_ = Implementation::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
+            const auto outsideScvIdx = scvf.outsideScvIdx();
+            // as we assemble fluxes from the neighbor to our element the outside index
+            // refers to the scv of our element, so we use the scv method
+            const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
+            const auto& outsideVolVars = elemVolVars[outsideScvIdx];
+            const Scalar tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+                                                               outsideVolVars.extrusionFactor());
+
+            // harmonic mean (check for division by zero!)
+            // TODO: This could lead to problems!? Is there a better way to do this?
+            if (ti*tj <= 0.0)
+                tij = 0;
+            else
+                tij = scvf.area()*(ti * tj)/(ti + tj);
         }
 
-        const Scalar& advectionTij() const
-        { return tij_; }
+        return tij;
+    }
+};
 
-    private:
-        Scalar tij_;
-    };
+//! Specialization of the CCTpfaDarcysLaw for network/surface grids
+template<class TypeTag>
+class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ true>
+{
+    using Implementation = DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GridView::IndexSet::IndexType;
+
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     // state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     // state the type for the corresponding cache
-    using Cache = TpfaDarcysLawCache;
+    using Cache = TpfaDarcysLawCache<TypeTag>;
 
     static Scalar flux(const Problem& problem,
                        const Element& element,
@@ -130,7 +301,7 @@ public:
             // do averaging for the density over all neighboring elements
             const auto rho = [&]()
             {
-                // use "Dirichlet" density on boundaries
+                // boundaries
                 if (scvf.boundary())
                     return outsideVolVars.density(phaseIdx);
 
@@ -152,55 +323,64 @@ public:
                 }
             }();
 
-            // ask for the gravitational acceleration in the inside neighbor
-            const auto xInside = insideScv.center();
-            const auto gInside = problem.gravityAtPos(xInside);
-            const auto hInside = insideVolVars.pressure(phaseIdx) - rho*(gInside*xInside);
-            const auto hOutside = [&]()
-            {
-                // boundaries
-                if (scvf.boundary())
-                {
-                    const auto xOutside = scvf.ipGlobal();
-                    const auto gOutside = problem.gravityAtPos(xOutside);
-                    return outsideVolVars.pressure(phaseIdx) - rho*(gOutside*xOutside);
-                }
+            const auto& tij = fluxVarsCache.advectionTij();
+            const auto& g = problem.gravityAtPos(scvf.ipGlobal());
 
-                // inner faces with two neighboring elements
-                else if (scvf.numOutsideScvs() == 1)
-                {
-                    const auto xOutside = fvGeometry.scv(scvf.outsideScvIdx()).center();
-                    const auto gOutside = problem.gravityAtPos(xOutside);
-                    return outsideVolVars.pressure(phaseIdx) - rho*(gOutside*xOutside);
-                }
+            // Obtain inside and outside pressures
+            const auto pInside = insideVolVars.pressure(phaseIdx);
+            const auto pOutside = [&]()
+            {
+                // Dirichlet boundaries and inner faces with one neighbor
+                if (scvf.numOutsideScvs() == 1)
+                    return outsideVolVars.pressure(phaseIdx);
 
                 // inner faces in networks (general case)
                 else
                 {
-                    const auto& insideFluxVarsCache = elemFluxVarsCache[scvf];
+                    Scalar sumTi(tij);
+                    Scalar sumPTi(tij*pInside);
 
-                    Scalar sumTi(insideFluxVarsCache.advectionTij());
-                    Scalar sumPTi(insideFluxVarsCache.advectionTij()*hInside);
+                    // add inside gravitational contribution
+                    sumPTi += rho*scvf.area()*vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
+
                     for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
                     {
                         const auto outsideScvIdx = scvf.outsideScvIdx(i);
                         const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
                         const auto& outsideVolVars = elemVolVars[outsideScvIdx];
                         const auto& outsideFluxVarsCache = elemFluxVarsCache[flippedScvf];
-                        const auto xOutside = scvf.boundary() ? scvf.ipGlobal() : fvGeometry.scv(outsideScvIdx).center();
-                        const auto gOutside = problem.gravityAtPos(xOutside);
-
                         sumTi += outsideFluxVarsCache.advectionTij();
-                        sumPTi += outsideFluxVarsCache.advectionTij()*(outsideVolVars.pressure(phaseIdx) - rho*(gOutside*xOutside));
+                        sumPTi += outsideFluxVarsCache.advectionTij()*outsideVolVars.pressure(phaseIdx);
+
+                        // add outside gravitational contribution
+                        sumPTi += rho*scvf.area()*vtmv(flippedScvf.unitOuterNormal(), outsideVolVars.permeability(), g);
                     }
                     return sumPTi/sumTi;
                 }
             }();
 
-            return fluxVarsCache.advectionTij()*(hInside - hOutside);
+            //! precompute alpha := n^T*K*g
+            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
+
+            Scalar flux = tij*(pInside - pOutside) + scvf.area()*rho*alpha_inside;
+
+            //! On interior faces with one neighbor we have to add K-weighted gravitational contributions
+            if (!scvf.boundary() && scvf.numOutsideScvs() == 1)
+            {
+                const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+                const auto& outsideScvf = fvGeometry.flipScvf(scvf.index());
+                const auto outsideK = outsideVolVars.permeability();
+                const auto outsideTi = computeTpfaTransmissibility(outsideScvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
+                const auto alpha_outside = vtmv(outsideScvf.unitOuterNormal(), outsideK, g);
+
+                flux -= rho*tij/outsideTi*(alpha_inside + alpha_outside);
+            }
+
+            return flux;
         }
-        else // no gravity
+        else
         {
+            // Obtain inside and outside pressures
             const auto pInside = insideVolVars.pressure(phaseIdx);
             const auto pOutside = [&]()
             {
@@ -211,7 +391,6 @@ public:
                 // inner faces in networks (general case)
                 else
                 {
-
                     const auto& insideFluxVarsCache = elemFluxVarsCache[scvf];
                     Scalar sumTi(insideFluxVarsCache.advectionTij());
                     Scalar sumPTi(insideFluxVarsCache.advectionTij()*pInside);
@@ -229,6 +408,7 @@ public:
                 }
             }();
 
+            // return flux
             return fluxVarsCache.advectionTij()*(pInside - pOutside);
         }
     }
@@ -262,9 +442,7 @@ public:
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
-        {
             tij = scvf.area()*ti;
-        }
 
         // otherwise we compute a tpfa harmonic mean
         else
@@ -274,23 +452,11 @@ public:
             // refers to the scv of our element, so we use the scv method
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
-
-            const Scalar tj = [&]()
-            {
-                // normal grids
-                if (dim == dimWorld)
-                    return -1.0*computeTpfaTransmissibility(scvf, outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
-                                                            outsideVolVars.extrusionFactor());
-
-                // embedded surface and network grids
-                //(the outside normal vector might differ from the inside normal vector)
-                else
-                    return computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
-                                                       outsideVolVars.extrusionFactor());
-
-            }();
+            const Scalar tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, getPermeability(outsideVolVars, scvf.ipGlobal()),
+                                                          outsideVolVars.extrusionFactor());
 
             // harmonic mean (check for division by zero!)
+            // TODO: This could lead to problems!? Is there a better way to do this?
             if (ti*tj <= 0.0)
                 tij = 0;
             else
