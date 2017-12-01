@@ -67,7 +67,10 @@ public:
     BoxElementSolution(const Element& element, const ElementVolumeVariables& elemVolVars,
                        const FVElementGeometry& fvGeometry)
     {
-        update(element, elemVolVars, fvGeometry);
+        const auto numVert = element.subEntities(GridView::dimension);
+        priVars_.resize(numVert);
+        for (const auto& scv : scvs(fvGeometry))
+            priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
     }
 
     //! extract the element solution from the solution vector using a mapper
@@ -88,16 +91,6 @@ public:
         priVars_.resize(numVert);
         for (const auto& scv : scvs(fvGeometry))
             priVars_[scv.indexInElement()] = sol[scv.dofIndex()];
-    }
-
-    //! extract the element solution from the elemVolVars using a local fv geometry
-    void update(const Element& element, const ElementVolumeVariables& elemVolVars,
-                const FVElementGeometry& fvGeometry)
-    {
-        const auto numVert = element.subEntities(GridView::dimension);
-        priVars_.resize(numVert);
-        for (const auto& scv : scvs(fvGeometry))
-            priVars_[scv.indexInElement()] = elemVolVars[scv].priVars();
     }
 
     //! bracket operator const access
