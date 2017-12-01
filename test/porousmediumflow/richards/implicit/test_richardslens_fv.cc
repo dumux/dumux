@@ -153,8 +153,8 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = Dumux::ILU0BiCGSTABBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>();
+    using LinearSolver = Dumux::AMGBackend<TypeTag>;
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonController = Dumux::RichardsNewtonController<TypeTag>;

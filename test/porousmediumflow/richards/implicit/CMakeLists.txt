@@ -1,33 +1,43 @@
 add_input_file_links()
 
+add_executable(test_richards_tpfa EXCLUDE_FROM_ALL test_richardslens_fv.cc)
+target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCCProblem)
+
+add_executable(test_richards_box EXCLUDE_FROM_ALL test_richardslens_fv.cc)
+target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBoxProblem)
+
 if(MPI_FOUND)
-dune_add_test(SOURCES test_richardslens_fv.cc
-              NAME test_boxrichards_parallel
-              COMPILE_DEFINITIONS TYPETAG=RichardsLensBoxProblem
+dune_add_test(NAME test_richards_box_parallel
+              TARGET test_richards_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference-parallel.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-richardslensbox-00008.vtu
-                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards test_richardslens.input -Problem.Name test_boxrichards")
+                               ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_box_parallel-00008.vtu
+                       --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box_parallel")
+
+
+dune_add_test(NAME test_richards_tpfa_parallel
+              TARGET test_richards_tpfa
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                      --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference-parallel.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/s0002-p0000-test_richards_tpfa_parallel-00007.vtu
+                      --command "${MPIEXEC} -np 2 ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa_parallel")
 endif()
 # isothermal tests
-dune_add_test(SOURCES test_richardslens_fv.cc
-              NAME test_boxrichards
-              COMPILE_DEFINITIONS TYPETAG=RichardsLensBoxProblem
+dune_add_test(TARGET test_richards_box
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslensbox-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards-00008.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxrichards test_richardslens.input -Problem.Name test_boxrichards")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_box-00008.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_box test_richardslens.input -Problem.Name test_richards_box")
 
-dune_add_test(SOURCES test_richardslens_fv.cc
-              NAME test_ccrichards
-              COMPILE_DEFINITIONS TYPETAG=RichardsLensCCProblem
+dune_add_test(TARGET test_richards_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardslenscc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_ccrichards-00007.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_ccrichards test_richardslens.input -Problem.Name test_ccrichards")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa-00007.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_richards_tpfa test_richardslens.input -Problem.Name test_richards_tpfa")
 
 # comparison to analytical solution - only with cc
 dune_add_test(SOURCES test_ccrichardsanalytical.cc

@@ -10,10 +10,6 @@ Cells = 24 16
 Name = richardslens
 EnableGravity = 1 # enable gravity
 
-[Implicit]
-EnablePartialReassemble = true # enable partial reassembly of the Jacobian matrix
-EnableJacobianRecycling = true #
-
 [Newton]
 TargetSteps = 18 # set the "desireable" number of newton iterations of a time step
 EnableChop = true # chop for better convergence
