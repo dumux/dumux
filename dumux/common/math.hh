@@ -618,6 +618,51 @@ Scalar trace(const Dune::DynamicMatrix<Scalar>& M)
     return trace;
 }
 
+/*!
+ * \brief Evaluates the scalar product of a vector v2, projected by
+ *        a matrix M, with a vector v1.
+ *
+ *        Note: We use DenseVector and DenseMatrix here so that
+ *        it can be used with the statically and dynamically
+ *        allocated Dune Vectors/Matrices. Size mismatch
+ *        assertions are done in the respective Dune classes.
+ *
+ * \param v1 The first vector
+ * \param M The matrix
+ * \param v2 The second vector
+ */
+template <class V1, class MAT, class V2>
+typename Dune::DenseMatrix<MAT>::value_type
+vtmv(const Dune::DenseVector<V1>& v1,
+     const Dune::DenseMatrix<MAT>& M,
+     const Dune::DenseVector<V2>& v2)
+{
+    auto tmp(v2);
+    M.mv(v2, tmp);
+    return v1*tmp;
+}
+
+/*!
+ * \brief Evaluates the scalar product of a vector v2, scaled by
+ *        a scalar m, with a vector v1.
+ *
+ *        Note: We use DenseVector and DenseMatrix here so that
+ *        it can be used with the statically and dynamically
+ *        allocated Dune Vectors/Matrices. Size mismatch
+ *        assertions are done in the respective Dune classes.
+ *
+ * \param v1 The first vector
+ * \param m The scale factor
+ * \param v2 The second vector
+ */
+template <class V1, class FieldScalar, class V2>
+FieldScalar vtmv(const Dune::DenseVector<V1>& v1,
+                 const FieldScalar m,
+                 const Dune::DenseVector<V2>& v2)
+{
+    return m*(v1*v2);
+}
+
 } // end namespace Dumux
 
 #endif
