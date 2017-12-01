@@ -250,7 +250,8 @@ public:
         const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
 
         // the upwind weight
-        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
+        static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>(modelParamGroup, "Implicit.UpwindWeight");
 
         // get the inside and outside volvars
         const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
