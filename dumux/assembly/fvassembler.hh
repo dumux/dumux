@@ -31,6 +31,7 @@
 #include <dumux/common/timeloop.hh>
 #include <dumux/implicit/localresidual.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/parallel/vertexhandles.hh>
 
 #include "diffmethod.hh"
 #include "boxlocalassembler.hh"
@@ -50,6 +51,7 @@ class FVAssembler
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -217,6 +219,16 @@ public:
     {
         ResidualType residual(numDofs());
         assembleResidual(residual, curSol);
+
+        // for box communicate the residual with the neighboring processes
+        if (isBox && gridView().comm().size() > 1)
+        {
+            VertexHandleSum<typename SolutionVector::block_type, SolutionVector, VertexMapper>
+            sumResidualHandle(residual, fvGridGeometry_->vertexMapper());
+            gridView().communicate(sumResidualHandle,
+                                   Dune::InteriorBorder_InteriorBorder_Interface,
+                                   Dune::ForwardCommunication);
+        }
 
         // calculate the square norm of the residual
         Scalar result2 = residual.two_norm2();
