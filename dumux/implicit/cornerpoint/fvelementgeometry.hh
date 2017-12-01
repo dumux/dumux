@@ -64,7 +64,6 @@ class CpFVElementGeometry
 public:
     struct SubControlVolume //! FV intersected with element
     {
-        LocalPosition local; //!< local position
         GlobalPosition global; //!< global position
         Scalar volume; //!< volume of scv
         bool inner;
@@ -86,7 +85,6 @@ public:
 
     typedef SubControlVolumeFace BoundaryFace; //!< compatibility typedef
 
-    LocalPosition elementLocal; //!< local coordinate of element center
     GlobalPosition elementGlobal; //!< global coordinate of element center
     Scalar elementVolume; //!< element volume
     SubControlVolume subContVol[1]; //!< data of the sub control volumes
@@ -104,12 +102,10 @@ public:
 
         elementVolume = geometry.volume();
         elementGlobal = geometry.center();
-        //elementLocal = geometry.local(elementGlobal);
 
         numScv = 1;
         numScvf = 0;
 
-        subContVol[0].local = elementLocal;
         subContVol[0].global = elementGlobal;
         subContVol[0].inner = true;
         subContVol[0].volume = elementVolume;
@@ -124,8 +120,6 @@ public:
     void update(const GridView& gridView, const Element& element)
     {
         updateInner(element);
-
-        const Geometry geometry = element.geometry();
 
         bool onBoundary = false;
 
@@ -147,7 +141,6 @@ public:
                 scvFace.j = scvfIdx + 1;
 
                 scvFace.ipGlobal = isGeometry.center();
-                //scvFace.ipLocal =  geometry.local(scvFace.ipGlobal);
                 scvFace.normal = intersection.centerUnitOuterNormal();
                 auto di = scvFace.ipGlobal;
                 di -= elementGlobal;
@@ -184,7 +177,6 @@ public:
                 SubControlVolumeFace& bFace = boundaryFace[bfIdx];
 
                 bFace.ipGlobal = isGeometry.center();
-                //bFace.ipLocal =  geometry.local(bFace.ipGlobal);
                 bFace.normal = intersection.centerUnitOuterNormal();
                 auto di = bFace.ipGlobal;
                 di -= elementGlobal;
