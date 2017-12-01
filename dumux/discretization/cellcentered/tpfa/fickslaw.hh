@@ -24,21 +24,14 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
 
-
 #include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(EffectiveDiffusivityModel);
-}
 
 /*!
  * \ingroup CCTpfaFicksLaw
