@@ -216,6 +216,7 @@ public:
         return tij;
     }
 
+private:
     //! compute the mole/mass fraction at branching facets for network grids
     static Scalar branchingFacetX(const Problem& problem,
                                   const Element& element,
