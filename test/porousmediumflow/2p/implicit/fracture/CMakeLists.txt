@@ -27,6 +27,25 @@ dune_add_test(NAME test_2p_fracture_mpfa
                               ${CMAKE_CURRENT_BINARY_DIR}/fracturempfa-00031.vtu
                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa test_fracture.input -Problem.Name fracturempfa")
 
+# tests with gravity
+dune_add_test(NAME test_2p_fracture_gravity_box
+              SOURCES test_2p_fracture_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=FractureBoxTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/fracturebox2p_gravity-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/fracturebox_gravity-00028.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_box test_fracture.input -Problem.Name fracturebox_gravity -Problem.EnableGravity true")
+
+dune_add_test(NAME test_2p_fracture_gravity_tpfa
+              SOURCES test_2p_fracture_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=FractureCCTpfaTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/fracturecc2p_gravity-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/fracturetpfa_gravity-00043.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa test_fracture.input -Problem.Name fracturetpfa_gravity -Problem.EnableGravity true")
+
 set(CMAKE_BUILD_TYPE Release)
 
 #install sources

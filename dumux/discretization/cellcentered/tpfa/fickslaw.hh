@@ -24,31 +24,23 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-
-#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/discretization/methods.hh>
-#include <dumux/discretization/fluxvariablescaching.hh>
+#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(EffectiveDiffusivityModel);
-}
 
 /*!
  * \ingroup CCTpfaFicksLaw
  * \brief Specialization of Fick's Law for the CCTpfa method.
  */
 template <class TypeTag>
-class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
+class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
+    using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -108,7 +100,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa >
                              const unsigned int phaseIdx,
                              const unsigned int compIdx)
         {
-            tij_[phaseIdx][compIdx] = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
+            tij_[phaseIdx][compIdx] = Implementation::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, compIdx);
         }
 
         const Scalar& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
@@ -178,12 +170,10 @@ public:
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
         using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
-        auto insideD = insideVolVars.diffusionCoefficient(phaseIdx, compIdx);
-        insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(), insideVolVars.saturation(phaseIdx), insideD);
-        const Scalar ti = calculateOmega_(scvf,
-                                    insideD,
-                                    insideScv,
-                                    insideVolVars.extrusionFactor());
+        const auto insideD = EffDiffModel::effectiveDiffusivity(insideVolVars.porosity(),
+                                                                insideVolVars.saturation(phaseIdx),
+                                                                insideVolVars.diffusionCoefficient(phaseIdx, compIdx));
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideD, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
@@ -197,21 +187,19 @@ public:
             const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
 
-            auto outsideD = outsideVolVars.diffusionCoefficient(phaseIdx, compIdx);
-            outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(), outsideVolVars.saturation(phaseIdx), outsideD);
+            const auto outsideD = EffDiffModel::effectiveDiffusivity(outsideVolVars.porosity(),
+                                                                     outsideVolVars.saturation(phaseIdx),
+                                                                     outsideVolVars.diffusionCoefficient(phaseIdx, compIdx));
 
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*calculateOmega_(scvf,
-                                          outsideD,
-                                          outsideScv,
-                                          outsideVolVars.extrusionFactor());
+                tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideD, outsideVolVars.extrusionFactor());
             else
-                tj = calculateOmega_(fvGeometry.flipScvf(scvf.index()),
-                                     outsideD,
-                                     outsideScv,
-                                     outsideVolVars.extrusionFactor());
+                tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()),
+                                                 outsideScv,
+                                                 outsideD,
+                                                 outsideVolVars.extrusionFactor());
 
             // check if we are dividing by zero!
             if (ti*tj <= 0.0)
@@ -223,6 +211,7 @@ public:
         return tij;
     }
 
+private:
     //! compute the mole/mass fraction at branching facets for network grids
     static Scalar branchingFacetX(const Problem& problem,
                                   const Element& element,
@@ -263,41 +252,6 @@ public:
             rho += outsideVolVars.molarDensity(phaseIdx);
         }
         return rho/(scvf.numOutsideScvs()+1);
-    }
-
-private:
-
-    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
-                                  const DimWorldMatrix &D,
-                                  const SubControlVolume &scv,
-                                  const Scalar extrusionFactor)
-    {
-        GlobalPosition Dnormal;
-        D.mv(scvf.unitOuterNormal(), Dnormal);
-
-        auto distanceVector = scvf.ipGlobal();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = Dnormal * distanceVector;
-        omega *= extrusionFactor;
-
-        return omega;
-    }
-
-    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
-                                  const Scalar D,
-                                  const SubControlVolume &scv,
-                                  const Scalar extrusionFactor)
-    {
-        auto distanceVector = scvf.ipGlobal();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = D * (distanceVector * scvf.unitOuterNormal());
-        omega *= extrusionFactor;
-
-        return omega;
     }
 };
 } // end namespace

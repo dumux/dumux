@@ -136,16 +136,15 @@ dune_add_test(NAME test_1pcctpfa_fracture2d3d
                                ${CMAKE_CURRENT_BINARY_DIR}/1pcctpfa_fracture2d3d-00001.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pcctpfa_fracture2d3d test_1pfv_fracture2d3d.input -Problem.Name 1pcctpfa_fracture2d3d")
 
-# TODO: Fix this test mpfa 2d3d!
-# dune_add_test(NAME test_1pccmpfa_fracture2d3d
-#               SOURCES test_1pfv_fracture2d3d.cc
-#               COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaProblem
-#               CMAKE_GUARD dune-foamgrid_FOUND
-#               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-#               CMD_ARGS --script fuzzy
-#                       --files ${CMAKE_SOURCE_DIR}/test/references/1pccfracture2d3d-reference.vtu
-#                               ${CMAKE_CURRENT_BINARY_DIR}/1pccmpfa_fracture2d3d-00001.vtu
-#                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pccmpfa_fracture2d3d test_1pfv_fracture2d3d.input -Problem.Name 1pccmpfa_fracture2d3d")
+dune_add_test(NAME test_1pccmpfa_fracture2d3d
+              SOURCES test_1pfv_fracture2d3d.cc
+              COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaProblem
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                      --files ${CMAKE_SOURCE_DIR}/test/references/1pccfracture2d3d-reference.vtu
+                              ${CMAKE_CURRENT_BINARY_DIR}/1pccmpfa_fracture2d3d-00001.vtu
+                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pccmpfa_fracture2d3d test_1pfv_fracture2d3d.input -Problem.Name 1pccmpfa_fracture2d3d")
 
 #install sources
 install(FILES

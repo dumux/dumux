@@ -24,21 +24,14 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-
-#include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
+
 #include <dumux/discretization/methods.hh>
-#include <dumux/discretization/fluxvariablescaching.hh>
+#include <dumux/discretization/cellcentered/tpfa/computetransmissibility.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(ThermalConductivityModel);
-}
 
 /*!
  * \ingroup FouriersLaw
@@ -47,6 +40,7 @@ NEW_PROP_TAG(ThermalConductivityModel);
 template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
+    using Implementation = FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -98,7 +92,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
                                   const ElementVolumeVariables& elemVolVars,
                                   const SubControlVolumeFace &scvf)
         {
-            tij_ = calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
+            tij_ = Implementation::calculateTransmissibility(problem, element, fvGeometry, elemVolVars, scvf);
         }
 
         const Scalar& heatConductionTij() const
@@ -145,8 +139,12 @@ public:
         const auto& insideScv = fvGeometry.scv(insideScvIdx);
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars, problem.spatialParams(), element, fvGeometry, insideScv);
-        Scalar ti = calculateOmega_(scvf, insideLambda, insideScv, insideVolVars.extrusionFactor());
+        const auto insideLambda = ThermalConductivityModel::effectiveThermalConductivity(insideVolVars,
+                                                                                         problem.spatialParams(),
+                                                                                         element,
+                                                                                         fvGeometry,
+                                                                                         insideScv);
+        const Scalar ti = computeTpfaTransmissibility(scvf, insideScv, insideLambda, insideVolVars.extrusionFactor());
 
         // for the boundary (dirichlet) or at branching points we only need ti
         if (scvf.boundary() || scvf.numOutsideScvs() > 1)
@@ -161,17 +159,17 @@ public:
             const auto& outsideVolVars = elemVolVars[outsideScvIdx];
             const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
 
-            auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars,
-                                                                                        problem.spatialParams(),
-                                                                                        outsideElement,
-                                                                                        fvGeometry,
-                                                                                        outsideScv);
+            const auto outsideLambda = ThermalConductivityModel::effectiveThermalConductivity(outsideVolVars,
+                                                                                              problem.spatialParams(),
+                                                                                              outsideElement,
+                                                                                              fvGeometry,
+                                                                                              outsideScv);
             Scalar tj;
             if (dim == dimWorld)
                 // assume the normal vector from outside is anti parallel so we save flipping a vector
-                tj = -1.0*calculateOmega_(scvf, outsideLambda, outsideScv, outsideVolVars.extrusionFactor());
+                tj = -1.0*computeTpfaTransmissibility(scvf, outsideScv, outsideLambda, outsideVolVars.extrusionFactor());
             else
-                tj = calculateOmega_(fvGeometry.flipScvf(scvf.index()), outsideLambda, outsideScv, outsideVolVars.extrusionFactor());
+                tj = computeTpfaTransmissibility(fvGeometry.flipScvf(scvf.index()), outsideScv, outsideLambda, outsideVolVars.extrusionFactor());
 
             // check for division by zero!
             if (ti*tj <= 0.0)
@@ -210,35 +208,6 @@ private:
             sumTempTi += outsideTi*outsideVolVars.temperature();
         }
         return sumTempTi/sumTi;
-    }
-
-    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
-                                  const DimWorldMatrix& lambda,
-                                  const SubControlVolume& scv,
-                                  Scalar extrusionFactor)
-    {
-        GlobalPosition lambdaNormal;
-        lambda.mv(scvf.unitOuterNormal(), lambdaNormal);
-
-        auto distanceVector = scvf.ipGlobal();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = lambdaNormal * distanceVector;
-        return omega*extrusionFactor;
-    }
-
-    static Scalar calculateOmega_(const SubControlVolumeFace& scvf,
-                                  Scalar lambda,
-                                  const SubControlVolume &scv,
-                                  Scalar extrusionFactor)
-    {
-        auto distanceVector = scvf.ipGlobal();
-        distanceVector -= scv.center();
-        distanceVector /= distanceVector.two_norm2();
-
-        Scalar omega = lambda * (distanceVector * scvf.unitOuterNormal());
-        return omega*extrusionFactor;
     }
 };
 

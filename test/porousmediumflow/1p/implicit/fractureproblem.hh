@@ -53,11 +53,8 @@ SET_BOOL_PROP(FractureProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(FractureProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(FractureProblem, EnableGlobalFluxVariablesCache, true);
 
-#if HAVE_DUNE_FOAMGRID
+//! The grid type
 SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
-#else
-SET_TYPE_PROP(FractureProblem, Grid, Dune::YaspGrid<3>);
-#endif
 
 // Set the problem property
 SET_TYPE_PROP(FractureProblem, Problem, Dumux::FractureProblem<TypeTag>);

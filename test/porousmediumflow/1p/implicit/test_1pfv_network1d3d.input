@@ -7,5 +7,6 @@ File = ./grids/network1d3d.msh
 
 [Problem]
 Name = 1pfvnetwork1d3d
+EnableGravity = false
 LiquidDensity = 1050 # blood density
 LiquidKinematicViscosity = 4.0e-3 # blood viscosity
