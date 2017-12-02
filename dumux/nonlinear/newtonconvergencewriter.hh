@@ -51,13 +51,7 @@ public:
                             const std::string& name = "newton_convergence")
     : writer_(gridView, name, "", "")
     {
-        // resize the output fields
-        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
-            def_[eqIdx].resize(size);
-            delta_[eqIdx].resize(size);
-            x_[eqIdx].resize(size);
-        }
+        resize(gridView, size);
 
         if (size == gridView.size(GridView::dimension))
         {
@@ -80,6 +74,18 @@ public:
         else
         {
             DUNE_THROW(Dune::InvalidStateException, "Wrong size of output fields in the Newton convergence writer!");
+        }
+    }
+
+    //! Resizes the output fields. This has to be called whenever the grid changes
+    void resize(const GridView& gridView, std::size_t size)
+    {
+        // resize the output fields
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            def_[eqIdx].resize(size);
+            delta_[eqIdx].resize(size);
+            x_[eqIdx].resize(size);
         }
     }
 
