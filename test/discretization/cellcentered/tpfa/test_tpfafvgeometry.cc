@@ -31,20 +31,28 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
-namespace Dumux
+//! Dummy flux variables class so that we can update the connectivity map
+class MockFluxVariables
 {
+public:
+  template<class Element, class FvGeometry, class Scvf>
+  static std::vector<std::size_t> computeStencil(const Element& element,
+                                                 const FvGeometry& fvGeometry,
+                                                 const Scvf& scvf)
+  {
+      return std::vector<std::size_t>();
+  }
+};
 
-namespace Properties
-{
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel));
-
-SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
-
-SET_TYPE_PROP(TestFVGeometry, Problem, Dumux::MockProblem<TypeTag>);
-}
-
+namespace Dumux {
+    namespace Properties {
+        NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel, NumericModel));
+        SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
+        SET_TYPE_PROP(TestFVGeometry, FluxVariables, MockFluxVariables);
+    }
 }
 
 template<class T>
@@ -74,26 +82,24 @@ int main (int argc, char *argv[]) try
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     // make a grid
     GlobalPosition lower(0.0);
     GlobalPosition upper(1.0);
     std::array<unsigned int, dim> els{{2, 2}};
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
+
+    // obtain leaf and make FVGridGeometry
     auto leafGridView = grid->leafGridView();
-
-    Problem problem(leafGridView);
-
-    FVGridGeometry global(leafGridView);
-    global.update(problem);
+    FVGridGeometry fvGridGeometry(leafGridView);
+    fvGridGeometry.update();
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        auto eIdx = problem.elementMapper().index(element);
+        auto eIdx = fvGridGeometry.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(global);
+        auto fvGeometry = localView(fvGridGeometry);
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);
