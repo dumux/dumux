@@ -37,11 +37,10 @@ class SubControlVolumeOperatorImplementation;
  * \brief The base class for solution dependent spatial parameters.
  */
 template<class TypeTag>
-using SubControlVolumeOperator = SubControlVolumeOperatorImplementation<TypeTag, GET_PROP_VALUE(TypeTag, ImplicitIsBox)>;
+using SubControlVolumeOperator DUNE_DEPRECATED_MSG("Use evalSolution() instead") = SubControlVolumeOperatorImplementation<TypeTag, GET_PROP_VALUE(TypeTag, ImplicitIsBox)>;
 
 //! Specialization for the box method
-template<class TypeTag>
-class SubControlVolumeOperatorImplementation<TypeTag, true>
+template<class TypeTag> SubControlVolumeOperatorImplementation<TypeTag, true>
 {
     using ThisType = SubControlVolumeOperatorImplementation<TypeTag, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
