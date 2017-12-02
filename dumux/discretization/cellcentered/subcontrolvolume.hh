@@ -24,7 +24,7 @@
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
 #include <dumux/discretization/subcontrolvolumebase.hh>
-#include <dumux/common/optional.hh>
+#include <dune/common/std/optional.hh>
 
 namespace Dumux
 {
@@ -48,7 +48,11 @@ public:
     // the contructor in the cc case
     CCSubControlVolume(Geometry&& geometry,
                        GridIndexType elementIndex)
-    : ParentType(), geometry_(std::forward<Geometry>(geometry)), elementIndex_(elementIndex) {}
+    : ParentType()
+    , geometry_(std::move(geometry))
+    , center_(geometry_.value().center())
+    , elementIndex_(elementIndex)
+    {}
 
     //! The copy constrcutor
     CCSubControlVolume(const CCSubControlVolume& other) = default;
@@ -62,28 +66,30 @@ public:
         // We want to use the default copy/move assignment.
         // But since geometry is not copy assignable :( we
         // have to construct it again
-        geometry_.release();
+        geometry_.reset();
         geometry_.emplace(other.geometry_.value());
+        center_ = other.center_;
         elementIndex_ = other.elementIndex_;
         return *this;
     }
 
     //! The move assignment operator
-    CCSubControlVolume& operator=(CCSubControlVolume&& other)
+    CCSubControlVolume& operator=(CCSubControlVolume&& other) noexcept
     {
         // We want to use the default copy/move assignment.
         // But since geometry is not copy assignable :( we
         // have to construct it again
-        geometry_.release();
-        geometry_.emplace(other.geometry_.value());
+        geometry_.reset();
+        geometry_.emplace(std::move(other.geometry_.value()));
+        center_ = std::move(other.center_);
         elementIndex_ = std::move(other.elementIndex_);
         return *this;
     }
 
     //! The center of the sub control volume
-    GlobalPosition center() const
+    const GlobalPosition& center() const
     {
-        return geometry().center();
+        return center_;
     }
 
     //! The volume of the sub control volume
@@ -113,9 +119,9 @@ public:
     }
 
     // The position of the dof this scv is embedded in
-    GlobalPosition dofPosition() const
+    const GlobalPosition& dofPosition() const
     {
-        return geometry().center();
+        return center_;
     }
 
     //! The global index of the element this scv is embedded in
@@ -133,7 +139,8 @@ public:
 
 private:
     // Work around the fact that geometry is not default constructible
-    Optional<Geometry> geometry_;
+    Dune::Std::optional<Geometry> geometry_;
+    GlobalPosition center_;
     GridIndexType elementIndex_;
 };
 
