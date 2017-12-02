@@ -66,7 +66,6 @@ class BoxFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     static const int dimWorld = GridView::dimensionworld;
 
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
     using GeometryHelper = BoxGeometryHelper<GridView, dim, SubControlVolume, SubControlVolumeFace>;
@@ -258,7 +257,6 @@ class BoxFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using CoordScalar = typename GridView::ctype;
 
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
