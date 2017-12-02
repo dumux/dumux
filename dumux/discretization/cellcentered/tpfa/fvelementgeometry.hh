@@ -252,13 +252,27 @@ public:
     void bind(const Element& element)
     {
         bindElement(element);
+
+        neighborScvs_.reserve(element.subEntities(1));
+        neighborScvfIndices_.reserve(element.subEntities(1));
+        neighborScvfs_.reserve(element.subEntities(1));
+
+        std::vector<IndexType> handledNeighbors;
+        handledNeighbors.reserve(element.subEntities(1));
         for (const auto& intersection : intersections(fvGridGeometry().gridView(), element))
         {
-            neighborScvs_.reserve(element.subEntities(1));
-            neighborScvfIndices_.reserve(element.subEntities(1));
-            neighborScvfs_.reserve(element.subEntities(1));
             if (intersection.neighbor())
-                makeNeighborGeometries(intersection.outside());
+            {
+                const auto outside = intersection.outside();
+                const auto outsideIdx = fvGridGeometry().elementMapper().index(outside);
+
+                // make outside geometries only if not done yet (could happen on non-conforming grids)
+                if ( std::find(handledNeighbors.begin(), handledNeighbors.end(), outsideIdx) == handledNeighbors.end() )
+                {
+                    makeNeighborGeometries(outside, outsideIdx);
+                    handledNeighbors.push_back(outsideIdx);
+                }
+            }
         }
 
         if (dim < dimWorld)
@@ -402,10 +416,9 @@ private:
     }
 
     //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
-    void makeNeighborGeometries(const Element& element)
+    void makeNeighborGeometries(const Element& element, const IndexType eIdx)
     {
         // create the neighbor scv
-        const auto eIdx = fvGridGeometry().elementMapper().index(element);
         neighborScvs_.emplace_back(element.geometry(), eIdx);
         neighborScvIndices_.push_back(eIdx);
 
