@@ -109,18 +109,17 @@ public:
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)
     {
-        //! Give the upwind scheme access to the cached variables
         //! Forward to the discretization specific implementation
         return FluxStencil::stencil(element, fvGeometry, scvf);
     }
 
 private:
-    const Problem* problemPtr_;              //! Pointer to the problem
-    const Element* elementPtr_;              //! Pointer to the element at hand
-    const FVElementGeometry* fvGeometryPtr_;
-    const SubControlVolumeFace* scvFacePtr_; //! Pointer to the sub control volume face for which the flux variables are created
-    const ElementVolumeVariables* elemVolVarsPtr_;
-    const ElementFluxVariablesCache* elemFluxVarsCachePtr_;
+    const Problem* problemPtr_;                             //! Pointer to the problem
+    const Element* elementPtr_;                             //! Pointer to the element at hand
+    const FVElementGeometry* fvGeometryPtr_;                //! Pointer to the current FVElementGeometry
+    const SubControlVolumeFace* scvFacePtr_;                //! Pointer to the sub control volume face for which the flux variables are created
+    const ElementVolumeVariables* elemVolVarsPtr_;          //! Pointer to the current element volume variables
+    const ElementFluxVariablesCache* elemFluxVarsCachePtr_; //! Pointer to the current element flux variables cache
 };
 
 } // end namespace Dumux
