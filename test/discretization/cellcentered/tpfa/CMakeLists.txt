@@ -1,2 +1,3 @@
-add_dumux_test(test_tpfafvgeometry test_tpfafvgeometry test_tpfafvgeometry.cc
-               ${CMAKE_CURRENT_BINARY_DIR}/test_tpfafvgeometry)
+dune_add_test(NAME test_tpfafvgeometry
+              SOURCES test_tpfafvgeometry.cc
+              COMMAND ./test_tpfafvgeometry)
