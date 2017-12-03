@@ -50,7 +50,6 @@ template<class TypeTag>
 class BoxFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
     using ParentType = BaseFVGridGeometry<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -239,7 +238,6 @@ template<class TypeTag>
 class BoxFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
 {
     using ParentType = BaseFVGridGeometry<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
