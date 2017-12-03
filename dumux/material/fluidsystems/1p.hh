@@ -430,7 +430,8 @@ NEW_PROP_TAG(Fluid);
  * are usually defined in the property system anyhow.
  */
 template<class TypeTag>
-class OnePFluidSystem
+class DUNE_DEPRECATED_MSG("Use FluidSystems::OneP directly! Will be removed after release of dumux 3.0.")
+OnePFluidSystem
 : public FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar),
                             typename GET_PROP_TYPE(TypeTag, Fluid)>
 {};

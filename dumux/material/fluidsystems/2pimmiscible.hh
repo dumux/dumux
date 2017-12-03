@@ -458,7 +458,8 @@ NEW_PROP_TAG(NonwettingPhase);
  * are usually defined in the property system anyhow.
  */
 template<class TypeTag>
-class TwoPImmiscibleFluidSystem
+class DUNE_DEPRECATED_MSG("Use FluidSystems::TwoPImmiscible directly! Will be removed after release of dumux 3.0.")
+TwoPImmiscibleFluidSystem
 : public FluidSystems::TwoPImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar),
                                       typename GET_PROP_TYPE(TypeTag, WettingPhase),
                                       typename GET_PROP_TYPE(TypeTag, NonwettingPhase)>

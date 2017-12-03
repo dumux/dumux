@@ -853,7 +853,8 @@ public:
  * done with most other classes in Dumux.
  */
 template<class TypeTag>
-class H2ON2O2FluidSystem
+class DUNE_DEPRECATED_MSG("Use FluidSystems::H2ON2O2 directly! Will be removed after release of dumux 3.0.")
+H2ON2O2FluidSystem
 : public FluidSystems::H2ON2O2<typename GET_PROP_TYPE(TypeTag, Scalar),
                              GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
 {};

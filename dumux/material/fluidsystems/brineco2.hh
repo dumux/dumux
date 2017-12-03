@@ -744,7 +744,8 @@ SET_TYPE_PROP(NumericModel, CO2Table, CO2Tables);
  */
 
 template <class TypeTag, bool verbose=true>
-class BrineCO2FluidSystem
+class DUNE_DEPRECATED_MSG("Use FluidSystems::BrineCO2 directly! Will be removed after release of dumux 3.0.")
+BrineCO2FluidSystem
 : public FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
                                 typename GET_PROP_TYPE(TypeTag, CO2Table),
                                 typename GET_PROP(TypeTag, Components)::H2O,

@@ -633,7 +633,8 @@ namespace Properties {
  *   is not necessary for non-tabularized ones.
  */
 template<class TypeTag>
-class H2OAirMesityleneFluidSystem
+class DUNE_DEPRECATED_MSG("Use FluidSystems::H2OAirMesitylene directly! Will be removed after release of dumux 3.0.")
+H2OAirMesityleneFluidSystem
 : public FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar),
                                         typename GET_PROP(TypeTag, Components)::H2O>
 {};

@@ -59,8 +59,7 @@ namespace FluidSystems
  *
  *  To change the component formulation (i.e. to use nontabulated or
  *  incompressible water), or to switch on verbosity of tabulation,
- *  specify the water formulation via template arguments or via the property
- *  system, as described in the TypeTag Adapter at the end of the file.
+ *  specify the water formulation via template arguments
  *
  * \code{.cpp}
  * // Select fluid system

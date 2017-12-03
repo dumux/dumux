@@ -25,7 +25,7 @@
 #ifndef DUMUX_DEFAULT_COMPONENTS_HH
 #define DUMUX_DEFAULT_COMPONENTS_HH
 
-#include <dumux/common/propertysystem.hh>
+#warning "DefaultComponents is deprecated. Specify fluid system via template parameters and not using the property system!"
 
 #include <dumux/common/basicproperties.hh>
 
@@ -38,8 +38,6 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/brine.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-
-#include <dune/common/stdstreams.hh>
 
 namespace Dumux
 {
@@ -77,9 +75,9 @@ public:
     {
         int nT = 100;
         int nP = 200;
-        Dune::dinfo << "Initializing tables for the H2O fluid properties ("
-                    << nT*nP
-                    << " entries).\n";
+        std::cout << "Initializing tables for the H2O fluid properties ("
+                  << nT*nP
+                  << " entries).\n";
         H2O::init(273.15, 623.15, nT, -10, 20e6, nP);
     }
 };

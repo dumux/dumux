@@ -40,7 +40,7 @@
 #include "base.hh"
 
 #ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/defaultcomponents.hh>
 #endif
 
@@ -760,7 +760,8 @@ public:
  * done with most other classes in Dumux.
  */
 template<class TypeTag>
-class H2ON2FluidSystem
+class DUNE_DEPRECATED_MSG("Use FluidSystems::H2ON2 directly! Will be removed after release of dumux 3.0.")
+H2ON2FluidSystem
 : public FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar),
                              GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
 {};
