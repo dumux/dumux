@@ -24,17 +24,11 @@
 #ifndef DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 #define DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-NEW_PROP_TAG(EffectiveDiffusivityModel);
-NEW_PROP_TAG(Scalar);
-}
 
 /*!
  * \brief Interface for plotting the multi-component-matrix-interaction laws
