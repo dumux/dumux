@@ -24,22 +24,12 @@
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 #define DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-NEW_PROP_TAG(ThermalConductivityModel);
-NEW_PROP_TAG(CompositionalFluidState);
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(FluidState);
-NEW_PROP_TAG(Indices);
-NEW_PROP_TAG(Scalar);
-}
 
 /*!
  * \brief Interface for plotting the non-isothermal two-phase fluid-matrix-interaction laws
@@ -75,8 +65,8 @@ public:
         fluidstate.setTemperature(temperature);
         fluidstate.setPressure(wPhaseIdx, pressure);
         fluidstate.setPressure(nPhaseIdx, pressure);
-        lambdaW_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, wPhaseIdx);
-        lambdaN_ = FluidSystem::template thermalConductivity<FluidState>(fluidstate, nPhaseIdx);
+        lambdaW_ = FluidSystem::thermalConductivity(fluidstate, wPhaseIdx);
+        lambdaN_ = FluidSystem::thermalConductivity(fluidstate, nPhaseIdx);
     }
 
     /*!
