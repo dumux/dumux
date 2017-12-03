@@ -31,44 +31,17 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/implicit/box/properties.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/discretization/box/properties.hh>
 
 namespace Dumux
 {
 
-template<class TypeTag>
-class MockProblem
-{
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-public:
-    MockProblem(const GridView& gridView) : elementMapper_(gridView), vertexMapper_(gridView)  {}
-
-    const ElementMapper& elementMapper() const
-    { return elementMapper_; }
-
-    const VertexMapper& vertexMapper() const
-    { return vertexMapper_; }
-
-    template<class Element, class Intersection>
-    bool isInteriorBoundary(const Element& e, const Intersection& i) const
-    { return false; }
-
-    std::vector<unsigned int> getAdditionalDofDependencies(unsigned int index) const
-    { return std::vector<unsigned int>(); }
-private:
-    ElementMapper elementMapper_;
-    VertexMapper vertexMapper_;
-};
-
 namespace Properties
 {
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(BoxModel));
+NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(BoxModel, NumericModel));
 
 SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<3>);
-
-SET_TYPE_PROP(TestFVGeometry, Problem, Dumux::MockProblem<TypeTag>);
 }
 
 }
@@ -100,7 +73,6 @@ int main (int argc, char *argv[]) try
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     // make a grid
     GlobalPosition lower(0.0);
@@ -109,17 +81,15 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
     auto leafGridView = grid->leafGridView();
 
-    Problem problem(leafGridView);
-
-    FVGridGeometry global(leafGridView);
-    global.update(problem);
+    FVGridGeometry fvGridGeometry(leafGridView);
+    fvGridGeometry.update();
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        auto eIdx = problem.elementMapper().index(element);
+        auto eIdx = fvGridGeometry.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(global);
+        auto fvGeometry = localView(fvGridGeometry);
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);

@@ -1,2 +1,6 @@
-add_dumux_test(test_boxfvgeometry test_boxfvgeometry test_boxfvgeometry.cc
-               ${CMAKE_CURRENT_BINARY_DIR}/test_boxfvgeometry)
+dune_add_test(SOURCES test_boxfvgeometry.cc)
+
+#install sources
+install(FILES
+test_boxfvgeometry.cc
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/discretization/box)
