@@ -24,44 +24,13 @@
 #ifndef DIFFUSIVITY_CONSTANT_TAU_HH
 #define DIFFUSIVITY_CONSTANT_TAU_HH
 
-#include <dumux/common/parameters.hh>
-#include <dumux/common/basicproperties.hh>
+#include <dune/common/deprecated.hh>
+#include "diffusivityconstanttortuosity.hh"
 
 namespace Dumux
 {
-/*!
- * \ingroup fluidmatrixinteractionslaws
- *
- * \brief Relation for the saturation-dependent effective diffusion coefficient
- *
- * The material law is:
- * \f[
- *  D_\text{eff,pm} = \phi * S_w * \tau * D
- * \f]
- *
- * with a constant tau.
- */
 template<class TypeTag, class Scalar>
-class DiffusivityConstantTau
-{
-public:
-    /*!
-     * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
-     *        on a constant tortuosity value
-     *
-     * \param porosity The porosity
-     * \param saturation The saturation of the phase
-     * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
-     */
-    static Scalar effectiveDiffusivity(const Scalar porosity,
-                                       const Scalar saturation,
-                                       const Scalar diffCoeff)
-
-    {
-        Scalar tau = GET_RUNTIME_PARAM(TypeTag, Scalar, tau);
-
-        return porosity * saturation * tau * diffCoeff;
-    }
-};
+using DiffusivityConstantTau DUNE_DEPRECATED_MSG("Use DiffusivityConstantTortuosity instead")
+= DiffusivityConstantTortuosity<Scalar>;
 }
 #endif
