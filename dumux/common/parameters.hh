@@ -222,40 +222,7 @@ public:
         defaultParams(defaultParamTree());
 
         // parse paramters from the command line
-        for (int i = 1; i < argc; ++i)
-        {
-            if (argv[i][0] != '-' && i == 1)
-            {
-                // try to pass first argument as parameter file
-                parameterFileName = argv[1];
-                continue;
-            }
-
-            if (argv[i][0] != '-')
-                DUNE_THROW(ParameterException, "-> Command line argument " << i << " (='" << argv[i] << "') is invalid. <-");
-
-            if (i+1 == argc)
-                DUNE_THROW(ParameterException, "-> No argument given for parameter '" << argv[i] << "'! <-");
-
-            // check for the ParameterFile argument
-            if (argv[i]+1 == std::string("ParameterFile")) // +1 removes the '-'
-            {
-                parameterFileName = argv[i+1];
-                ++i;
-            }
-
-            // add all other options as key value pairs
-            else
-            {
-                // read a -MyOpt VALUE option
-                std::string paramName = argv[i]+1; // +1 removes the '-'
-                std::string paramValue = argv[i+1];
-                ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
-
-                // Put the key=value pair into the parameter tree
-                paramTree()[paramName] = paramValue;
-            }
-        }
+        parameterFileName = parseCommandLineArguments(argc, argv);
 
         // otherwise use the default name (executable name + .input)
         if (parameterFileName == "")
@@ -293,6 +260,48 @@ public:
                                                    /*overwrite=*/false);
         }
         parameterFile.close();
+    }
+
+    //! \brief parse the arguments given on the command line
+    //! \returns the parameterFileName if one was given otherwise returns empty string
+    static std::string parseCommandLineArguments(int argc, char **argv)
+    {
+        std::string parameterFileName = "";
+        for (int i = 1; i < argc; ++i)
+        {
+            if (argv[i][0] != '-' && i == 1)
+            {
+                // try to pass first argument as parameter file
+                parameterFileName = argv[1];
+                continue;
+            }
+
+            if (argv[i][0] != '-')
+                DUNE_THROW(ParameterException, "-> Command line argument " << i << " (='" << argv[i] << "') is invalid. <-");
+
+            if (i+1 == argc)
+                DUNE_THROW(ParameterException, "-> No argument given for parameter '" << argv[i] << "'! <-");
+
+            // check for the ParameterFile argument
+            if (argv[i]+1 == std::string("ParameterFile")) // +1 removes the '-'
+            {
+                parameterFileName = argv[i+1];
+                ++i;
+            }
+
+            // add all other options as key value pairs
+            else
+            {
+                // read a -MyOpt VALUE option
+                std::string paramName = argv[i]+1; // +1 removes the '-'
+                std::string paramValue = argv[i+1];
+                ++i; // In the case of '-MyOpt VALUE' each pair counts as two arguments
+
+                // Put the key=value pair into the parameter tree
+                paramTree()[paramName] = paramValue;
+            }
+        }
+        return parameterFileName;
     }
 
     //! prints all used and unused parameters
