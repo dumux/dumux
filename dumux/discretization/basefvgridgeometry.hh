@@ -26,6 +26,7 @@
 #include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/boundingboxtree.hh>
 
 namespace Dumux
