@@ -1,5 +1,4 @@
-add_dumux_test(test_pengrobinson test_pengrobinson test_pengrobinson.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_pengrobinson)
+dune_add_test(SOURCES test_pengrobinson.cc)
 
 #install sources
 install(FILES

@@ -1,5 +1,4 @@
-add_dumux_test(test_immiscibleflash test_immiscibleflash test_immiscibleflash.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_immiscibleflash)
+dune_add_test(SOURCES test_immiscibleflash.cc)
 
 #install sources
 install(FILES

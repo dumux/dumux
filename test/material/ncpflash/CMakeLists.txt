@@ -1,5 +1,4 @@
-add_dumux_test(test_ncpflash test_ncpflash test_ncpflash.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_ncpflash)
+dune_add_test(SOURCES test_ncpflash.cc)
 
 #install sources
 install(FILES

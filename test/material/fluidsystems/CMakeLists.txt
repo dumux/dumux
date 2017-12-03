@@ -1,5 +1,4 @@
-add_dumux_test(test_fluidsystems test_fluidsystems test_fluidsystems.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_fluidsystems)
+dune_add_test(SOURCES test_fluidsystems.cc)
 
 #install sources
 install(FILES
