@@ -24,9 +24,7 @@
 #ifndef THERMALCONDUCTIVITY_JOHANSEN_HH
 #define THERMALCONDUCTIVITY_JOHANSEN_HH
 
-#include <algorithm>
-#include <dumux/common/basicproperties.hh>
-#include <dumux/common/propertysystem.hh>
+#include <cmath>
 
 namespace Dumux
 {
