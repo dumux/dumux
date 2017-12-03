@@ -23,50 +23,38 @@
  */
 #include <config.h>
 
-#include "../testproblem.hh"
-#include "thermalconductivityspatialparams.hh"
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/plotthermalconductivitymodel.hh>
 
-#include <dumux/common/start.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivityjohansen.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
-// Set thermal conductivity law
-SET_TYPE_PROP(FluidMatrixInteractionTestProblem, ThermalConductivityModel,
-              ThermalConductivityJohansen<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-SET_TYPE_PROP(FluidMatrixInteractionTestProblem, SpatialParams, ThermalConductivityTestSpatialParamsTwoP<TypeTag>);
-}
-}
-
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                        "\t-Grid.File             Name of the file containing the grid \n"
-                                        "\t                       definition in DGF format\n";
-
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+namespace Dumux {
+namespace Properties {
+NEW_TYPE_TAG(TestTypeTag);
+SET_TYPE_PROP(TestTypeTag, Scalar, double);
+SET_TYPE_PROP(TestTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(TestTypeTag, Indices, JohansenIndices);
+SET_TYPE_PROP(TestTypeTag, ThermalConductivityModel, ThermalConductivityJohansen<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+} // end namespace Properties
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
-    return Dumux::start<TTAG(FluidMatrixInteractionTestProblem)>(argc, argv, usage);
+    using namespace Dumux;
+    using TypeTag = TTAG(TestTypeTag);
+
+    GnuplotInterface<double> gnuplot;
+    gnuplot.setOpenPlotWindow(false);
+
+    PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel(293.15, 1e5);
+    const std::string fileName = "johansen_lambda_eff.dat";
+    const double porosity = 0.3; // [-]
+    const double rhoSolid = 2700.0; // kg/m^3
+    const double lambdaSolid = 2.8; // W/(m K)
+    plotThermalConductivityModel.addlambdaeffcurve(gnuplot, porosity, rhoSolid, lambdaSolid, 0.0, 1.0, fileName);
+
+    gnuplot.plot("lambda_eff");
+
+    return 0;
 }
