@@ -1,5 +1,4 @@
-add_dumux_test(test_spline test_spline test_spline.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_spline)
+dune_add_test(SOURCES test_spline.cc)
 
 #install sources
 install(FILES

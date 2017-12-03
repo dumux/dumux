@@ -1,6 +1,5 @@
 # build the test for the property system
-add_dumux_test(test_propertysystem test_propertysystem test_propertysystem.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_propertysystem)
+dune_add_test(SOURCES test_propertysystem.cc)
 
 #install sources
 install(FILES
