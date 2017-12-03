@@ -32,40 +32,21 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/implicit/staggered/properties.hh>
+#include <dumux/common/basicproperties.hh>
+#include <dumux/discretization/staggered/properties.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
-// #include <dumux/discretization/staggered/subcontrolvolume.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
-
-#include <dumux/freeflow/staggered/propertydefaults.hh>
 
 namespace Dumux
 {
 
-template<class TypeTag>
-class MockProblem
-{
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-public:
-    MockProblem(const GridView& gridView) : mapper_(gridView) {}
-
-    const ElementMapper& elementMapper() const
-    { return mapper_; }
-private:
-    ElementMapper mapper_;
-};
-
 namespace Properties
 {
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel, NavierStokes));
+NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel, NumericModel));
 
 SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(TestFVGeometry, Problem, Dumux::MockProblem<TypeTag>);
-
-SET_BOOL_PROP(TestFVGeometry, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(TestFVGeometry, EnableFVGridGeometryCache, ENABLE_CACHING);
 }
 
 }
@@ -92,12 +73,10 @@ int main (int argc, char *argv[]) try
     constexpr int dim = GridView::dimension;
     constexpr int dimworld = GridView::dimensionworld;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GlobalPosition = typename Dune::FieldVector<Grid::ctype, dimworld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     // make a grid
     GlobalPosition lower(0.0);
@@ -106,28 +85,26 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
     auto leafGridView = grid->leafGridView();
 
-    Problem problem(leafGridView);
-
-    FVGridGeometry global(leafGridView);
-    global.update(problem);
+    FVGridGeometry fvGridGeometry(leafGridView);
+    fvGridGeometry.update();
 
     std::cout << "Abbreviatons:\n"
-              << "ip - global postition of face center\n"
-              << "face - global face index\n"
-              << "self/oppo - global dofIdx on intersection (self/opposite)\n"
-              << "norm in/out - global dofIdx on side normal to intersection (within own element / in adjacent element)" << std::endl;
+              << "ip - postition of face center\n"
+              << "face - face index\n"
+              << "self/oppo - dofIdx on intersection (self/opposite)\n"
+              << "norm in/out - dofIdx on side normal to intersection (within own element / in adjacent element)" << std::endl;
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        auto eIdx = problem.elementMapper().index(element);
+        auto eIdx = fvGridGeometry.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(global);
+        auto fvGeometry = localView(fvGridGeometry);
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);
         NoopFunctor<SubControlVolume> op;
-        if(0 != testForwardIterator(range.begin(), range.end(), op))
+        if(0 != testForwardIterator(range.begin(), range.end(), [](const SubControlVolumeFace& scvf){}))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
         for (auto&& scv : scvs(fvGeometry))
@@ -137,7 +114,7 @@ int main (int argc, char *argv[]) try
 
         auto range2 = scvfs(fvGeometry);
         NoopFunctor<SubControlVolumeFace> op2;
-        if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
+        if(0 != testForwardIterator(range2.begin(), range2.end(), [](const SubControlVolumeFace& scvf){}))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
 

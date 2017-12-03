@@ -27,6 +27,9 @@
 #ifndef DUMUX_NAVIERSTOKES_NC_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_NC_PROPERTIES_HH
 
+#include <dumux/common/basicproperties.hh>
+#include <dumux/linear/linearsolverproperties.hh>
+
 #include <dumux/freeflow/staggered/properties.hh>
 #include <dumux/freeflow/staggeredni/properties.hh>
 #include <dumux/discretization/fickslaw.hh>
@@ -56,7 +59,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit single-phase problems
-NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(NavierStokes));
+NEW_TYPE_TAG(NavierStokesNC, INHERITS_FROM(NavierStokes, NumericModel, LinearSolverTypeTag));
 NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC, NavierStokesNonIsothermal));
 
 ///////////////////////////////////////////////////////////////////////////
