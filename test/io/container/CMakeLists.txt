@@ -1,5 +1,4 @@
-add_dumux_test(test_container_io test_container_io test_container_io.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_container_io)
+dune_add_test(SOURCES test_container_io.cc)
 
 #install sources
 install(FILES

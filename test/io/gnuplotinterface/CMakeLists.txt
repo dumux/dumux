@@ -1,6 +1,5 @@
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/output")
-add_dumux_test(test_gnuplotinterface test_gnuplotinterface test_gnuplotinterface.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/test_gnuplotinterface)
+dune_add_test(SOURCES test_gnuplotinterface.cc)
 
 #install sources
 install(FILES
