@@ -39,9 +39,10 @@ namespace Dumux
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(BoxModel, NumericModel));
+NEW_TYPE_TAG(TestBoxFVGeometry, INHERITS_FROM(BoxModel, NumericModel));
 
-SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(TestBoxFVGeometry, Grid, Dune::YaspGrid<3>);
+SET_BOOL_PROP(TestBoxFVGeometry, EnableFVGridGeometryCache, ENABLE_CACHING);
 }
 
 }
@@ -61,7 +62,7 @@ int main (int argc, char *argv[]) try
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 
     // aliases
-    using TypeTag = TTAG(TestFVGeometry);
+    using TypeTag = TTAG(TestBoxFVGeometry);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename Grid::LeafGridView;
 
