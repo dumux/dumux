@@ -222,7 +222,7 @@ public:
         defaultParams(defaultParamTree());
 
         // parse paramters from the command line
-        parameterFileName = parseCommandLineArguments(argc, argv);
+        parameterFileName = parseCommandLineArguments(argc, argv, parameterFileName);
 
         // otherwise use the default name (executable name + .input)
         if (parameterFileName == "")
@@ -264,9 +264,9 @@ public:
 
     //! \brief parse the arguments given on the command line
     //! \returns the parameterFileName if one was given otherwise returns empty string
-    static std::string parseCommandLineArguments(int argc, char **argv)
+    static std::string parseCommandLineArguments(int argc, char **argv,
+                                                 std::string parameterFileName = "")
     {
-        std::string parameterFileName = "";
         for (int i = 1; i < argc; ++i)
         {
             if (argv[i][0] != '-' && i == 1)
