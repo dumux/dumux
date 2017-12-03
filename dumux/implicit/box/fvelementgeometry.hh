@@ -1076,6 +1076,7 @@ public:
                 }
             }
 
+
         bool evalGradientsAtSCVCenter = GET_PROP_VALUE(TypeTag, EvalGradientsAtSCVCenter);
         if(evalGradientsAtSCVCenter)
         {

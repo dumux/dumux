@@ -62,6 +62,12 @@ SET_PROP(BoxModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::Box;
 };
 
+//! Disable evaluation of shape function gradients at the sub-control volume center by default
+// The shape function gradients at the sub-control volume center are currently only
+// needed for the Stokes and the linear elastic models
+SET_BOOL_PROP(BoxModel, EvalGradientsAtSCVCenter, false);
+
+
 //! Set the default for the FVElementGeometry vector
 SET_TYPE_PROP(BoxModel, GlobalFVGeometry, BoxGlobalFVGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFVGeometryCache)>);
 
