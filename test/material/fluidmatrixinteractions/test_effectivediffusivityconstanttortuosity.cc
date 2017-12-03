@@ -19,46 +19,40 @@
 /*!
  * \file
  *
- * \brief Definition of the spatial parameters for the effective diffusivity tests.
+ * \brief Test for the Millington and Quirk effective diffusivity model
  */
-#ifndef DUMUX_DIFFUSIVITY_SPATIAL_PARAMS_HH
-#define DUMUX_DIFFUSIVITY_SPATIAL_PARAMS_HH
+#include <config.h>
 
+#include <dumux/common/parameters.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
 
-#include "fluidmatrixinteractionsspatialparams.hh"
+#include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
-namespace Dumux
-{
-
-template<class TypeTag>
-class DiffusivityTestSpatialParams
- : public FluidMatrixInteractionTestSpatialParams<TypeTag>
-{
-    using ParentType = FluidMatrixInteractionTestSpatialParams<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    DiffusivityTestSpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView) {}
-
-    /*!
-     * \brief This is called from the problem and creates a gnuplot output
-     *        of e.g the pc-Sw curve
-     */
-    void plotMaterialLaw()
-    {
-        GnuplotInterface<Scalar> gnuplot;
-        gnuplot.setOpenPlotWindow(GET_PARAM_FROM_GROUP(TypeTag, bool, Output, OpenPlotWindow));
-        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
-        std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Output, File);
-        plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, this->porosity_, 0.0, 1.0, fileName);
-        gnuplot.plot("d_eff");
-    }
-};
-
+namespace Dumux {
+namespace Properties {
+NEW_TYPE_TAG(TestTypeTag);
+SET_TYPE_PROP(TestTypeTag, Scalar, double);
+SET_TYPE_PROP(TestTypeTag, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+} // end namespace Properties
 } // end namespace Dumux
 
-#endif
+int main(int argc, char** argv)
+{
+    using namespace Dumux;
+    using TypeTag = TTAG(TestTypeTag);
+
+    Parameters::parseCommandLineArguments(argc, argv);
+
+    GnuplotInterface<double> gnuplot;
+    gnuplot.setOpenPlotWindow(false);
+
+    PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+    const std::string fileName = "constant_d_eff.dat";
+    const double porosity = 0.3; // [-]
+    plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity, 0.0, 1.0, fileName);
+
+    gnuplot.plot("d_eff");
+
+    return 0;
+}

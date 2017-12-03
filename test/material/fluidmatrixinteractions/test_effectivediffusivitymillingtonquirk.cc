@@ -22,49 +22,34 @@
  * \brief Test for the Millington and Quirk effective diffusivity model
  */
 #include <config.h>
-#include "testproblem.hh"
-#include "diffusivityspatialparams.hh"
 
-#include <dumux/common/start.hh>
+#include <dumux/io/gnuplotinterface.hh>
+#include <dumux/io/ploteffectivediffusivitymodel.hh>
+
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
-namespace Dumux
-{
-namespace Properties
-{
-// Set thermal conductivity law
-SET_TYPE_PROP(FluidMatrixInteractionTestProblem, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<double>);
-SET_TYPE_PROP(FluidMatrixInteractionTestProblem, SpatialParams, DiffusivityTestSpatialParams<TypeTag>);
-}
-}
-
-/*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
- */
-void usage(const char *progName, const std::string &errorMsg)
-{
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                        "\t-Grid.File             Name of the file containing the grid \n"
-                                        "\t                       definition in DGF format\n";
-
-        std::cout << errorMessageOut
-                  << "\n";
-    }
-}
+namespace Dumux {
+namespace Properties {
+NEW_TYPE_TAG(TestTypeTag);
+SET_TYPE_PROP(TestTypeTag, Scalar, double);
+SET_TYPE_PROP(TestTypeTag, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+} // end namespace Properties
+} // end namespace Dumux
 
 int main(int argc, char** argv)
 {
-    return Dumux::start<TTAG(FluidMatrixInteractionTestProblem)>(argc, argv, usage);
+    using namespace Dumux;
+    using TypeTag = TTAG(TestTypeTag);
+
+    GnuplotInterface<double> gnuplot;
+    gnuplot.setOpenPlotWindow(false);
+
+    PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+    const std::string fileName = "millingtonquirk_d_eff.dat";
+    const double porosity = 0.3; // [-]
+    plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity, 0.0, 1.0, fileName);
+
+    gnuplot.plot("d_eff");
+
+    return 0;
 }
