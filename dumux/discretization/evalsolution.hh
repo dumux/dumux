@@ -92,13 +92,12 @@ evalSolution(const Element& element,
              const BoxElementSolution<TypeTag>& elemSol,
              const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
-    //! The box scheme always uses linear Ansatz functions
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using CoordScalar = typename GridView::ctype;
-    static constexpr int dim = GridView::dimension;
     using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
     using Scalar = typename PrimaryVariables::value_type;
+    using CoordScalar = typename Element::Geometry::GlobalCoordinate::ctype;
+    static constexpr int dim = Element::Geometry::mydimension;
+
+    //! The box scheme always uses linear Ansatz functions
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     using ShapeValue = typename FeCache::FiniteElementType::Traits::LocalBasisType::Traits::RangeType;
 
