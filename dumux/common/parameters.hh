@@ -37,7 +37,7 @@
 #include <dune/common/parametertreeparser.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties/propertysystem.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/loggingparametertree.hh>

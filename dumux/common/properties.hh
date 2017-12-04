@@ -28,7 +28,7 @@
 #define DUMUX_PROPERTIES_HH
 
 #ifndef DUMUX_PROPERTY_SYSTEM_HH
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties/propertysystem.hh>
 #endif
 
 namespace Dumux
@@ -66,6 +66,7 @@ NEW_PROP_TAG(LocalResidual);
 
 //! TODO: Remove this property as soon as the decoupled models are integrated
 NEW_PROP_TAG(LinearSolver);
+NEW_PROP_TAG(LinearSolverPreconditionerBlockLevel); //! Block level depth for the preconditioner
 
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations

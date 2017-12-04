@@ -27,7 +27,8 @@
 
 #warning "DefaultComponents is deprecated. Specify fluid system via template parameters and not using the property system!"
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties/numericmodel.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/n2.hh>

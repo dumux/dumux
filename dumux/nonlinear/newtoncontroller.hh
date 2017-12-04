@@ -25,8 +25,7 @@
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/timeloop.hh>

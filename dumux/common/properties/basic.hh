@@ -20,41 +20,48 @@
  * \ingroup Properties
  * \file
  *
- * \brief Declares properties required for finite-volume models models.
+ * \brief Defines a type tags and some fundamental properties for
+ *        all models
  */
+#ifndef DUMUX_BASIC_PROPERTIES_HH
+#define DUMUX_BASIC_PROPERTIES_HH
 
-#ifndef DUMUX_FV_PROPERTIES_HH
-#define DUMUX_FV_PROPERTIES_HH
-
-#include <dune/istl/bvector.hh>
-
+#include <dumux/common/balanceequationopts.hh>
 #include <dumux/common/properties.hh>
 
-#include <dumux/implicit/gridvariables.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/io/defaultvtkoutputfields.hh>
+
 
 namespace Dumux
 {
 namespace Properties
 {
-//! Type tag for finite-volume schemes.
-NEW_TYPE_TAG(FiniteVolumeModel);
+//! Type tag for numeric models.
+NEW_TYPE_TAG(BasicProperties);
 
-//! The grid variables
-SET_TYPE_PROP(FiniteVolumeModel, GridVariables, GridVariables<TypeTag>);
+//! Set the default type of scalar values to double
+SET_TYPE_PROP(BasicProperties, Scalar, double);
 
-//! The type of a solution for a whole element
-SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);
+//! Set the default number of equations to one
+SET_INT_PROP(BasicProperties, NumEq, 1);
 
-//! We do not store the FVGeometry by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
+//! use the global group as default for the model's parameter group
+SET_STRING_PROP(BasicProperties, ModelParameterGroup, "");
 
-//! We do not store the volume variables by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalVolumeVariablesCache, false);
+//! do not specific any model-specific default parameters here
+SET_PROP(BasicProperties, ModelDefaultParameters)
+{
+    static void defaultParams(Dune::ParameterTree& tree, const std::string& group = "") { }
+};
 
-//! disable flux variables data caching by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalFluxVariablesCache, false);
+//! Set the default to a function throwing a NotImplemented error
+SET_TYPE_PROP(BasicProperties, VtkOutputFields, DefaultVtkOutputFields);
+
+//! Set the default class for the balance equation options
+SET_TYPE_PROP(BasicProperties, BalanceEqOpts, BalanceEquationOptions<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux
 
- #endif
+#endif
