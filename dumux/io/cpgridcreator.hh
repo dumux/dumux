@@ -58,9 +58,6 @@ public:
      */
     static void makeGrid()
     {
-        std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
-
-        deck() = Opm::Parser().parseFile(fileName);
         Opm::EclipseGrid ecl_grid(deck());
 
         gridPtr() = std::make_shared<Grid>(*(new Grid()));
@@ -91,7 +88,8 @@ public:
      */
     static Deck &deck()
     {
-        static Deck deck_;
+        static auto fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
+        static auto deck_ = Opm::Parser().parseFile(fileName);
         return deck_;
     }
 
