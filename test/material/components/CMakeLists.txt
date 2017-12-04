@@ -1,63 +1,74 @@
-add_dumux_test(plot_air plot_air plotproperties.cc
-               plot_air false)
-target_compile_definitions(plot_air PUBLIC COMPONENT=Dumux::Air<double>)
+dune_add_test(NAME plot_air
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::Air<double>
+              COMMAND ./plot_air)
 
-add_dumux_test(plot_benzene plot_benzene plotproperties.cc
-               plot_benzene false)
-target_compile_definitions(plot_benzene PUBLIC COMPONENT=Dumux::Benzene<double>)
+dune_add_test(NAME plot_benzene
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::Benzene<double>
+              COMMAND ./plot_benzene false)
 
-add_dumux_test(plot_brine plot_brine plotproperties.cc
-               plot_brine false)
-target_compile_definitions(plot_brine PUBLIC COMPONENT=Dumux::Brine<double>)
+dune_add_test(NAME plot_brine
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::Brine<double>
+              COMMAND ./plot_brine false)
 
-add_dumux_test(plot_ch4 plot_ch4 plotproperties.cc
-               plot_ch4 false)
-target_compile_definitions(plot_ch4 PUBLIC COMPONENT=Dumux::CH4<double>)
+dune_add_test(NAME plot_ch4
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::CH4<double>
+              COMMAND ./plot_ch4 false)
 
-# add_dumux_test(plot_co2 plot_co2 plotproperties.cc
-#                plot_co2 false)
-# target_compile_definitions(plot_co2 COMPONENT=Dumux::CO2<double>)
+dune_add_test(NAME plot_dnapl
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::DNAPL<double>
+              COMMAND ./plot_dnapl false)
 
-add_dumux_test(plot_dnapl plot_dnapl plotproperties.cc
-               plot_dnapl false)
-target_compile_definitions(plot_dnapl PUBLIC COMPONENT=Dumux::DNAPL<double>)
+dune_add_test(NAME plot_h2
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::H2<double>
+              COMMAND ./plot_h2 false)
 
-add_dumux_test(plot_h2 plot_h2 plotproperties.cc
-               plot_h2 false)
-target_compile_definitions(plot_h2 PUBLIC COMPONENT=Dumux::H2<double>)
+dune_add_test(NAME plot_h2o
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::H2O<double>
+              COMMAND ./plot_h2o false)
 
-add_dumux_test(plot_h2o plot_h2o plotproperties.cc
-               plot_h2o false)
-target_compile_definitions(plot_h2o PUBLIC COMPONENT=Dumux::H2O<double>)
+dune_add_test(NAME plot_heavyoil
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::HeavyOil<double>
+              COMMAND ./plot_heavyoil false)
 
-add_dumux_test(plot_heavyoil plot_heavyoil plotproperties.cc
-               plot_heavyoil false)
-target_compile_definitions(plot_heavyoil PUBLIC COMPONENT=Dumux::HeavyOil<double>)
+dune_add_test(NAME plot_lnapl
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::LNAPL<double>
+              COMMAND ./plot_lnapl false)
 
-add_dumux_test(plot_lnapl plot_lnapl plotproperties.cc
-               plot_lnapl false)
-target_compile_definitions(plot_lnapl PUBLIC COMPONENT=Dumux::LNAPL<double>)
+dune_add_test(NAME plot_mesitylene
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::Mesitylene<double>
+              COMMAND ./plot_mesitylene false)
 
-add_dumux_test(plot_mesitylene plot_mesitylene plotproperties.cc
-               plot_mesitylene false)
-target_compile_definitions(plot_mesitylene PUBLIC COMPONENT=Dumux::Mesitylene<double>)
+dune_add_test(NAME plot_n2
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::N2<double>
+              COMMAND ./plot_n2 false)
 
-add_dumux_test(plot_n2 plot_n2 plotproperties.cc
-               plot_n2 false)
-target_compile_definitions(plot_n2 PUBLIC COMPONENT=Dumux::N2<double>)
+dune_add_test(NAME plot_o2
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::O2<double>
+              COMMAND ./plot_o2 false)
 
-add_dumux_test(plot_o2 plot_o2 plotproperties.cc
-               plot_o2 false)
-target_compile_definitions(plot_o2 PUBLIC COMPONENT=Dumux::O2<double>)
+dune_add_test(NAME plot_simpleco2
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::SimpleCO2<double>
+              COMMAND ./plot_simpleco2 false)
 
-add_dumux_test(plot_simpleco2 plot_simpleco2 plotproperties.cc
-               plot_simpleco2 false)
-target_compile_definitions(plot_simpleco2 PUBLIC COMPONENT=Dumux::SimpleCO2<double>)
+dune_add_test(NAME plot_simpleh2o
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::SimpleH2O<double>
+              COMMAND ./plot_simpleh2o false)
 
-add_dumux_test(plot_simpleh2o plot_simpleh2o plotproperties.cc
-               plot_simpleh2o false)
-target_compile_definitions(plot_simpleh2o PUBLIC COMPONENT=Dumux::SimpleH2O<double>)
-
-add_dumux_test(plot_xylene plot_xylene plotproperties.cc
-               plot_xylene false)
-target_compile_definitions(plot_xylene PUBLIC COMPONENT=Dumux::Xylene<double>)
+dune_add_test(NAME plot_xylene
+              SOURCES plotproperties.cc
+              COMPILE_DEFINITIONS COMPONENT=Dumux::Xylene<double>
+              COMMAND ./plot_xylene false)
