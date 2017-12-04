@@ -26,6 +26,7 @@
 #ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
 #define DUMUX_FREE_FLOW_PROPERTIES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/properties/basic.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
 #include <dumux/implicit/staggered/primaryvariables.hh>

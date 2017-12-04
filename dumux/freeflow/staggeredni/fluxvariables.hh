@@ -23,7 +23,7 @@
 #ifndef DUMUX_FREELOW_IMPLICIT_NI_FLUXVARIABLES_HH
 #define DUMUX_FREELOW_IMPLICIT_NI_FLUXVARIABLES_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

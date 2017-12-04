@@ -27,6 +27,7 @@
 #ifndef DUMUX_NAVIER_STOKES_NI_PROPERTIES_HH
 #define DUMUX_NAVIER_STOKES_NI_PROPERTIES_HH
 
+#include <dumux/common/properties.hh>
 #include "fluxvariables.hh"
 #include "indices.hh"
 #include "localresidual.hh"

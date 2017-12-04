@@ -23,6 +23,7 @@
 #ifndef STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
 #define STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/boundarytypes.hh>
 
 namespace Dumux

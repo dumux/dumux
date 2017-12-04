@@ -23,8 +23,8 @@
 #ifndef DUMUX_FREEFLOW_IMPLICIT_FLUXVARIABLESCACHE_HH
 #define DUMUX_FREEFLOW_IMPLICIT_FLUXVARIABLESCACHE_HH
 
-#include <dumux/common/basicproperties.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux

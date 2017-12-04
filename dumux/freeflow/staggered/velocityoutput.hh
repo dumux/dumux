@@ -28,7 +28,7 @@
 #include <dune/istl/bvector.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux

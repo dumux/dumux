@@ -23,7 +23,7 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 
-
+#include <dumux/common/properties.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/implicit/staggered/localresidual.hh>
 
