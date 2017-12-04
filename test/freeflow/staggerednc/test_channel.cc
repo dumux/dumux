@@ -34,7 +34,7 @@
 
 #include "channeltestproblem.hh"
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
