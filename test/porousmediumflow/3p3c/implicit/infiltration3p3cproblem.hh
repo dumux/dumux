@@ -253,7 +253,7 @@ public:
         NeumannFluxes values(0.0);
 
         // negative values for injection
-        if ((globalPos[0] <= 75.0 + eps_) && (globalPos[0] >= 50.0 - eps_) && (globalPos[1] >= 10.0 - eps_))
+        if ((globalPos[0] <= 80.0) && (globalPos[0] >= 55.0) && (globalPos[1] >= 10.0 - eps_))
         {
             values[contiWEqIdx] = -0.0;
             //mole flow conversion to mass flow with molar mass M(Mesit.)=0,120 kg/mol --> 1.2e-4 kg/(sm)
