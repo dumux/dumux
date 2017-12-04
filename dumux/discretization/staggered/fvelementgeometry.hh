@@ -27,6 +27,7 @@
 
 #include <dune/common/iteratorrange.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
 namespace Dumux

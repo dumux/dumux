@@ -23,7 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FACE_SOLUTION_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FACE_SOLUTION_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 
 namespace Dumux

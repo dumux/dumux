@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 
-#include <dumux/common/basicproperties.hh>
+#include<dumux/common/properties.hh>
 
 namespace Dumux
 {

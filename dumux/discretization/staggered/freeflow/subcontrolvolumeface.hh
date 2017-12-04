@@ -25,8 +25,11 @@
 
 #include <utility>
 #include <dune/common/fvector.hh>
+
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/optional.hh>
 
 #include <typeinfo>
 

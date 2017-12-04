@@ -53,7 +53,6 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
-#include <dumux/linear/linearsolverproperties.hh>
 
 namespace Dumux
 {

@@ -23,7 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENTFACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENTFACEVARIABLES_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
