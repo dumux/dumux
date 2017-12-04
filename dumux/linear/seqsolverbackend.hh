@@ -31,8 +31,7 @@
 #include <dune/istl/umfpack.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/linear/solver.hh>
 
 namespace Dumux
