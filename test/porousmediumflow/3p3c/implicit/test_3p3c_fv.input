@@ -1,13 +1,16 @@
 [TimeLoop]
-DtInitial = 60 # [s]
+DtInitial = 86400 # [s]
 TEnd = 864000 # [s]
 
 [Grid]
 UpperRight = 500 10
-Cells = 250 10
+Cells = 40 4
 
 [Problem]
 Name = infiltration
 
 [Implicit]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
+
+[LinearSolver]
+ResidualReduction = 1e-6
