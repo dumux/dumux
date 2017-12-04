@@ -66,7 +66,7 @@ public:
      *
      * \param globalPos The global position
      */
-    PermeabilityType porosityAtPos(const GlobalPosition& globalPos) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     { return 0.4; }
 
     /*!
