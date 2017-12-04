@@ -92,7 +92,7 @@ class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
-    static const Scalar R; // universial nonwetting constant
+    static const Scalar R; // universial gas constant
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
