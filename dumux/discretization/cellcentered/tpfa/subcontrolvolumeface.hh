@@ -81,13 +81,13 @@ public:
     }
 
     //! The center of the sub control volume face
-    GlobalPosition center() const
+    const GlobalPosition& center() const
     {
         return center_;
     }
 
     //! The integration point for flux evaluations in global coordinates
-    GlobalPosition ipGlobal() const
+    const GlobalPosition& ipGlobal() const
     {
         // Return center for now
         return center_;
@@ -106,7 +106,7 @@ public:
     }
 
     //! The unit outer normal of the sub control volume face
-    GlobalPosition unitOuterNormal() const
+    const GlobalPosition& unitOuterNormal() const
     {
         return unitOuterNormal_;
     }
@@ -136,10 +136,11 @@ public:
         return scvfIndex_;
     }
 
-    GlobalPosition corner(unsigned int localIdx) const
+    //! return the i-th corner of this sub control volume face
+    const GlobalPosition& corner(int i) const
     {
-        assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
-        return corners_[localIdx];
+        assert(i < corners_.size() && "provided index exceeds the number of corners");
+        return corners_[i];
     }
 
     //! The geometry of the sub control volume face

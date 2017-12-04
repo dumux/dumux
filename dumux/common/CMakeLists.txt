@@ -9,6 +9,7 @@ exceptions.hh
 fixedlengthspline_.hh
 intersectionmapper.hh
 math.hh
+optional.hh
 parameters.hh
 propertysystem.hh
 quad.hh
