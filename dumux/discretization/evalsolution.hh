@@ -93,17 +93,22 @@ evalSolution(const Element& element,
              const typename Element::Geometry::GlobalCoordinate& globalPos)
 {
     //! The box scheme always uses linear Ansatz functions
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using CoordScalar = typename GridView::ctype;
+    static constexpr int dim = GridView::dimension;
     using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
     using Scalar = typename PrimaryVariables::value_type;
+    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+    using ShapeValue = typename FeCache::FiniteElementType::Traits::LocalBasisType::Traits::RangeType;
 
     // obtain local finite element basis
     FeCache feCache;
-    const auto& localBasis = feCache.get(geometry.type()).localBasis;
+    const auto& localBasis = feCache.get(geometry.type()).localBasis();
 
     // evaluate the shape functions at the scv center
     const auto localPos = geometry.local(globalPos);
-    std::vector< Dune::FieldVector<Scalar, 1> > shapeValues;
+    std::vector< ShapeValue > shapeValues;
     localBasis.evaluateFunction(localPos, shapeValues);
 
     PrimaryVariables result(0.0);

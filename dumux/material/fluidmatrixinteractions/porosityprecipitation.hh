@@ -24,7 +24,7 @@
 #ifndef DUMUX_POROSITY_PRECIPITATION_HH
 #define DUMUX_POROSITY_PRECIPITATION_HH
 
-#include <dumux/discretization/scvoperator.hh>
+#include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux
 {
@@ -45,7 +45,6 @@ class PorosityPrecipitation
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using ScvOperator = SubControlVolumeOperator<TypeTag>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -65,7 +64,7 @@ public:
                             const SubControlVolume& scv,
                             const ElementSolution& elemSol) const
     {
-        auto priVars = ScvOperator::evaluateSolution(element, scv, elemSol);
+        auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
 
         Scalar sumPrecipitates = 0.0;
         for (unsigned int solidPhaseIdx = 0; solidPhaseIdx < numSolidPhases; ++solidPhaseIdx)
