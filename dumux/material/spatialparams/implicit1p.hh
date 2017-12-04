@@ -26,7 +26,8 @@
 #ifndef DUMUX_IMPLICIT_SPATIAL_PARAMS_ONE_P_HH
 #define DUMUX_IMPLICIT_SPATIAL_PARAMS_ONE_P_HH
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
 #include <dune/common/fmatrix.hh>
