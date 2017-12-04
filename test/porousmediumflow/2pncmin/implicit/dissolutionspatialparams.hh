@@ -19,7 +19,6 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/porousmediumflow/2pncmin/implicit/indices.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
@@ -92,25 +91,32 @@ class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
-    using PermeabilityType = Scalar;
+    using PermeabilityType = Tensor;
 
-    DissolutionSpatialparams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView)
+    DissolutionSpatialparams(const Problem& problem)
+    : ParentType(problem)
     {
+        solubilityLimit_     = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
+        initialPorosity_     = getParam<Scalar>("SpatialParams.Porosity", 0.11);
+        initialPermeability_ = getParam<Scalar>("SpatialParams.Permeability", 2.23e-14);
+        irreducibleLiqSat_   = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
+        irreducibleGasSat_   = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
+        pEntry1_             = getParam<Scalar>("SpatialParams.Pentry1", 500);
+        bcLambda1_           = getParam<Scalar>("SpatialParams.BCLambda1", 2);
+
         // residual saturations
-        materialParams_.setSwr(0.2);
-        materialParams_.setSnr(1e-3);
+        materialParams_.setSwr(irreducibleLiqSat_);
+        materialParams_.setSnr(irreducibleGasSat_);
 
         // parameters of Brooks & Corey Law
-        materialParams_.setPe(500);
-        materialParams_.setLambda(2);
-    }
+        materialParams_.setPe(pEntry1_);
+        materialParams_.setLambda(bcLambda1_);
 
-    /*!
-     * \brief Called by the Problem to initialize the spatial params.
-     */
-    void init()
-    {
+        // set main diagonal entries of the permeability tensor to a value
+        // setting to one value means: isotropic, homogeneous
+        for (int i = 0; i < dim; i++)  //TODO make this nice and dependend on PermeabilityType!
+            initK_[i][i] = initialPermeability_;
+
         //! Intitialize the parameter laws
         poroLaw_.init(*this);
         permLaw_.init(*this);
@@ -124,7 +130,7 @@ public:
      *
      *  Solution dependent permeability function
      */
-    Scalar permeability(const Element& element,
+    PermeabilityType permeability(const Element& element,
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     { return permLaw_.evaluatePermeability(element, scv, elemSol); }
@@ -145,7 +151,7 @@ public:
      *  \param scv The sub-control volume
      */
     Scalar initialPorosity(const Element& element, const SubControlVolume &scv) const
-    { return 0.11; }
+    { return initialPorosity_; }
 
     /*!
      *  \brief Define the initial permeability \f$[m^2]\f$ distribution
@@ -153,8 +159,8 @@ public:
      *  \param element The finite element
      *  \param scv The sub-control volume
      */
-    Scalar initialPermeability(const Element& element, const SubControlVolume &scv) const
-    { return 2.23e-14; }
+    PermeabilityType initialPermeability(const Element& element, const SubControlVolume &scv) const
+    { return initK_; }
 
     /*!
      *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
@@ -172,7 +178,7 @@ public:
     { return 1.0 - porosityAtPos(scv.center()); }
 
     Scalar solubilityLimit() const
-    { return 0.26; }
+    { return solubilityLimit_; }
 
     Scalar theta(const SubControlVolume &scv) const
     { return 10.0; }
@@ -186,6 +192,14 @@ private:
 
     PorosityLaw poroLaw_;
     PermeabilityLaw permLaw_;
+    Scalar solubilityLimit_;
+    Scalar initialPorosity_;
+    Scalar initialPermeability_;
+    PermeabilityType initK_= 0.0;
+    Scalar irreducibleLiqSat_;
+    Scalar irreducibleGasSat_;
+    Scalar pEntry1_;
+    Scalar bcLambda1_;
 };
 
 } // end namespace Dumux

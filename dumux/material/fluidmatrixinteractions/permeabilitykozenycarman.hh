@@ -69,7 +69,9 @@ public:
     {
         auto initPoro = spatialParams().initialPorosity(element, scv);
         auto poro = spatialParams().porosity(element, scv, elemSol);
-        auto factor = std::pow((1.0 - initPoro)/(1.0 - poro), 2) * std::pow(poro/initPoro, 3);
+
+        using std::pow;
+        auto factor = pow((1.0 - initPoro)/(1.0 - poro), 2) * pow(poro/initPoro, 3);
         return applyFactorToPermeability_(spatialParams().initialPermeability(element, scv), factor);
     }
 

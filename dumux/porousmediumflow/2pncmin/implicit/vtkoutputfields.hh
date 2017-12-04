@@ -18,38 +18,44 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the two-phase n-component isothermal cc model.
+ * \brief Adds vtk output fields specific to the twop-nc-min model
  */
-#include <config.h>
-#include "dissolutionproblem.hh"
-#include <dumux/common/start.hh>
+#ifndef DUMUX_TWOP_NC_MIN_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_TWOP_NC_MIN_VTK_OUTPUT_FIELDS_HH
+
+#include <dumux/porousmediumflow/2pnc/implicit/vtkoutputfields.hh>
+
+namespace Dumux
+{
 
 /*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
+ * \ingroup TwoPNCMin, InputOutput
+ * \brief Adds vtk output fields specific to the TwoPNCMin model
  */
-void usage(const char *progName, const std::string &errorMsg)
+template<class TypeTag>
+class TwoPNCMinVtkOutputFields
 {
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-ParameterFile Parameter file (Input file) \n";
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-        std::cout << errorMessageOut
-                  << "\n";
+    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
+
+public:
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        // use default fields from the 2pnc model
+        TwoPNCVtkOutputFields<TypeTag>::init(vtk);
+
+        //output additional to TwoPNC output:
+        for (int i = 0; i < numSPhases; ++i)
+        {
+            vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipVolFrac_"+ FluidSystem::phaseName(numPhases + i));
+        }
     }
-}
+};
 
-int main(int argc, char** argv)
-{
-    typedef TTAG(DissolutionCCProblem) ProblemTypeTag;
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
-}
+} // end namespace Dumux
+
+#endif

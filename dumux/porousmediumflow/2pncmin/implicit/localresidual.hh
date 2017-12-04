@@ -40,7 +40,7 @@ namespace Dumux
  * This class is used to fill the gaps in ImplicitLocalResidual for the two-phase n-component flow.
  */
 template<class TypeTag>
-class TwoPNCMinLocalResidual: public CompositionalLocalResidual<TypeTag>
+class TwoPNCMinLocalResidual : public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
     using ThisType = TwoPNCMinLocalResidual<TypeTag>;
@@ -48,6 +48,7 @@ class TwoPNCMinLocalResidual: public CompositionalLocalResidual<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     enum
     {
@@ -59,6 +60,7 @@ class TwoPNCMinLocalResidual: public CompositionalLocalResidual<TypeTag>
     };
 
 public:
+    using ParentType::ParentType;
     /*!
      * \brief Evaluate the amount all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -70,11 +72,12 @@ public:
      *  \param scv the SCV (sub-control-volume)
      *  \param volVars The volume variables of the right time step
      */
-    PrimaryVariables computeStorage(const SubControlVolume& scv,
+    PrimaryVariables computeStorage(const Problem& problem,
+                                    const SubControlVolume& scv,
                                     const VolumeVariables& volVars) const
     {
         // call parenttype function
-        auto storage = ParentType::computeStorage(scv, volVars);
+        auto storage = ParentType::computeStorage(problem, scv, volVars);
 
         // Compute storage term of all solid (precipitated) phases (excluding the non-reactive matrix)
         for (int phaseIdx = numPhases; phaseIdx < numPhases + numSPhases; ++phaseIdx)

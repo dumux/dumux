@@ -289,7 +289,7 @@ public:
      */
     static Scalar precipitateMolarDensity(int phaseIdx)
      {
-        return precipitateDensity(phaseIdx)/molarMass(phaseIdx);
+        return precipitateDensity(phaseIdx)/molarMass(phaseIdx); //TODO this only works for this specific case here with phaseIdx=compIdx!
      }
 
     /****************************************

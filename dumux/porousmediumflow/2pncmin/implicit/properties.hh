@@ -31,6 +31,10 @@
 
 #include <dumux/porousmediumflow/2pnc/implicit/properties.hh>
 
+#include "volumevariables.hh"
+#include "vtkoutputfields.hh"
+#include "localresidual.hh"
+
 namespace Dumux
 {
 
@@ -39,30 +43,43 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-
-//! The type tag for the isothermal two phase n component mineralisation problems
 NEW_TYPE_TAG(TwoPNCMin, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(BoxTwoPNCMin, INHERITS_FROM(BoxModel, TwoPNCMin));
-NEW_TYPE_TAG(CCTwoPNCMin, INHERITS_FROM(CCModel, TwoPNCMin));
-
-//! The type tag for the non-isothermal two phase n component mineralisation problems
-NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin, NonIsothermal));
-NEW_TYPE_TAG(BoxTwoPNCMinNI, INHERITS_FROM(BoxModel, TwoPNCMinNI));
-NEW_TYPE_TAG(CCTwoPNCMinNI, INHERITS_FROM(CCModel, TwoPNCMinNI));
+NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin, TwoPNCNI, NonIsothermal));
 
 //////////////////////////////////////////////////////////////////
-// Property tags
+// Property tags for the isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
 
-NEW_PROP_TAG(NumSPhases); //!< Number of solid phases in the system
-NEW_PROP_TAG(NumFSPhases); //!< Number of fluid and solid phases in the system
-NEW_PROP_TAG(NumSComponents); //!< Number of solid components in the system
-NEW_PROP_TAG(NumPSComponents); //!< Number of fluid and solid components in the system
-NEW_PROP_TAG(NumTraceComponents); //!< Number of trace fluid components which are not considered in the calculation of the phase density
-NEW_PROP_TAG(NumSecComponents); //!< Number of secondary components which are not primary variables
-NEW_PROP_TAG(TwoPNCMinIndices); //!< Enumerations for the 2pncMin models
-NEW_PROP_TAG(useSalinity); //!< Determines if salinity is used
-NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
+SET_TYPE_PROP(TwoPNCMin, VolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);                  //! the VolumeVariables property
+SET_TYPE_PROP(TwoPNCMin, VtkOutputFields, TwoPNCMinVtkOutputFields<TypeTag>);                  //! Set the vtk output fields specific to the TwoPNCMin model
+SET_TYPE_PROP(TwoPNCMin, LocalResidual, TwoPNCMinLocalResidual<TypeTag>);                  //! Use the compositional local residual
+
+//! Set the property for the number of solid phases, excluding the non-reactive matrix.
+SET_PROP(TwoPNCMin, NumSPhases)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+
+public:
+    static const int value = FluidSystem::numSPhases;
+};
+
+//! Set the property for the number of equations. For each component and each
+//precipitated mineral/solid phase one equation has to be solved.
+
+SET_PROP(TwoPNCMin, NumEq)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+
+public:
+    static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
+};
+/////////////////////////////////////////////////
+// Properties for the non-isothermal 2pncmin model
+/////////////////////////////////////////////////
+SET_TYPE_PROP(TwoPNCMinNI, IsothermalVolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);     //! set isothermal VolumeVariables
+SET_TYPE_PROP(TwoPNCMinNI, IsothermalVtkOutputFields, TwoPNCMinVtkOutputFields<TypeTag>);     //! set isothermal output fields
 
 }
 }
