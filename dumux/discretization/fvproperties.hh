@@ -29,6 +29,8 @@
 #include <dune/istl/bvector.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/properties/grid.hh>
+#include <dumux/common/properties/numericmodel.hh>
 
 #include <dumux/implicit/gridvariables.hh>
 
@@ -37,7 +39,7 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for finite-volume schemes.
-NEW_TYPE_TAG(FiniteVolumeModel);
+NEW_TYPE_TAG(FiniteVolumeModel, INHERITS_FROM(GridProperties, NumericModel));
 
 //! The grid variables
 SET_TYPE_PROP(FiniteVolumeModel, GridVariables, GridVariables<TypeTag>);
