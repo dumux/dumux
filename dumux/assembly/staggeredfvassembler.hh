@@ -28,6 +28,7 @@
 
 #include <dune/istl/matrixindexset.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/discretization/methods.hh>
