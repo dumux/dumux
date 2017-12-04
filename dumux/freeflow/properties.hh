@@ -26,6 +26,7 @@
 #ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
 #define DUMUX_FREE_FLOW_PROPERTIES_HH
 
+#include <dumux/common/properties/basic.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
 #include <dumux/implicit/staggered/primaryvariables.hh>
 
@@ -36,7 +37,7 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for models involving flow in porous media
-NEW_TYPE_TAG(FreeFlow);
+NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(BasicProperties));
 
 SET_PROP(FreeFlow, NumEq)
 {

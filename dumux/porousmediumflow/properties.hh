@@ -26,6 +26,7 @@
 #ifndef DUMUX_POROUSMEDIUM_FLOW_PROPERTIES_HH
 #define DUMUX_POROUSMEDIUM_FLOW_PROPERTIES_HH
 
+#include <dumux/common/properties/basic.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/porousmediumflow/implicit/fluxvariables.hh>
@@ -43,7 +44,7 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for models involving flow in porous media
-NEW_TYPE_TAG(PorousMediumFlow);
+NEW_TYPE_TAG(PorousMediumFlow, INHERITS_FROM(BasicProperties));
 
 //! The flux variables for models involving flow in porous media
 SET_TYPE_PROP(PorousMediumFlow, FluxVariables, PorousMediumFluxVariables<TypeTag>);

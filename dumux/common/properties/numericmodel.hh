@@ -28,6 +28,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/properties/basic.hh>
 #include <dumux/common/boundarytypes.hh>
 
 
@@ -37,7 +38,7 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for numeric models.
-NEW_TYPE_TAG(NumericModel);
+NEW_TYPE_TAG(NumericModel, INHERITS_FROM(BasicProperties));
 
 //! Set the default vector with size number of equations to a field vector
 SET_TYPE_PROP(NumericModel, NumEqVector, Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_VALUE(TypeTag, NumEq)>);

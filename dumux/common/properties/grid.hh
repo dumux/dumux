@@ -26,6 +26,7 @@
 #define DUMUX_GRID_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/properties/basic.hh>
 
 #include <dune/common/parametertree.hh>
 #include <dune/common/fvector.hh>
@@ -42,7 +43,7 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for numeric models.
-NEW_TYPE_TAG(GridProperties);
+NEW_TYPE_TAG(GridProperties, INHERITS_FROM(BasicProperties));
 
 //! Use the leaf grid view if not defined otherwise
 SET_TYPE_PROP(GridProperties, GridView, typename GET_PROP_TYPE(TypeTag, Grid)::LeafGridView);
