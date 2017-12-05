@@ -31,6 +31,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/grid.hh>
+#include <dumux/common/boundarytypes.hh>
 
 #include <dumux/implicit/gridvariables.hh>
 
@@ -80,6 +81,7 @@ public:
 // Set this to more than one if the matrix to solve is nested multiple times
 // e.g. for Dune::MultiTypeBlockMatrix'es. TODO: move to LinearAlgebra traits
 SET_INT_PROP(FiniteVolumeModel, LinearSolverPreconditionerBlockLevel, 1);
+
 } // namespace Properties
 } // namespace Dumux
 
