@@ -141,7 +141,7 @@ public:
         }
 
         // live plot of the results if gnuplot is installed
-#ifdef HAVE_GNUPLOT
+
         std::string interactivePlot = "reset\n";
 
         // set the terminal if the defaults were overwritten
@@ -151,7 +151,6 @@ public:
         interactivePlot += plot;
         if (openPlotWindow_)
             executeGnuplot(interactivePlot.c_str());
-#endif
 
         // create a gnuplot file if a filename is specified
         if (filename.compare("") != 0)
@@ -166,11 +165,9 @@ public:
             file << filePlot;
             file.close();
 
-          // live plot of the results if gnuplot is installed
-#ifdef HAVE_GNUPLOT
+          // live plot of the results
           if (createImage_)
               executeGnuplot(filePlot.c_str());
-#endif
         }
     }
 
@@ -412,8 +409,10 @@ private:
     // Give plot command to gnuplot
     void executeGnuplot(const std::string& plotCommand) const
     {
+#ifdef HAVE_GNUPLOT
         fputs((plotCommand + "\n").c_str(), pipe_);
         fflush(pipe_);
+#endif
     }
 
     // Check validity of number

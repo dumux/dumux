@@ -166,4 +166,5 @@ int main(int argc, char *argv[])
             gnuplot.plot(Component::name() + "_" + phaseNames[phaseIdx] + "_" + propertyNames[propertyIdx]);
         }
     }
+
 }
