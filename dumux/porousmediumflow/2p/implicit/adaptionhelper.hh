@@ -173,10 +173,7 @@ public:
                     //For some grids the father element is identical to the son element.
                     //For that case averaging is not necessary.
                     if(&adaptedValues != &adaptedValuesFather)
-                    {
-                        adaptedValuesFather.count += 1;
                         storeAdaptionValues(adaptedValues, adaptedValuesFather);
-                    }
                 }
 
                 if(isBox && !element.isLeaf())
@@ -247,8 +244,12 @@ public:
                             // get index
                             int dofIdx = this->dofIndex(problem, element, scvIdx);
 
+                            // obtain the right privars for the volume variables update
+                            auto priVars = adaptedValues.u[scvIdx];
+                            priVars /= adaptedValues.count;
+
                             VolumeVariables volVars;
-                            volVars.update(adaptedValues.u[scvIdx],
+                            volVars.update(priVars,
                                           problem,
                                           element,
                                           fvGeometry,
@@ -320,7 +321,10 @@ public:
                             FVElementGeometry fvGeometry;
                             fvGeometry.update(problem.gridView(), element);
 
-                            adaptedValues.u.push_back(adaptedValuesFather.u[0]);
+                            // obtain the right privars from father
+                            auto priVars = adaptedValuesFather.u[0];
+                            priVars /= adaptedValuesFather.count;
+                            adaptedValues.u.push_back(priVars);
 
                             VolumeVariables volVars;
                             volVars.update(adaptedValues.u[0],
@@ -355,6 +359,7 @@ public:
                         else
                         {
                             AdaptedValues& adaptedValuesFather = adaptionMap_[eFather];
+
                             // access new son
                             AdaptedValues& adaptedValues = adaptionMap_[element];
                             adaptedValues.u.clear();
@@ -470,12 +475,17 @@ public:
             if(adaptedValuesFather.u.size() == 0)
                 adaptedValuesFather.u.resize(1);
 
-            adaptedValuesFather.u[0] += adaptedValues.u[0];
-            adaptedValuesFather.u[0] /= adaptedValues.count;
+            auto values = adaptedValues.u[0];
+            values /= adaptedValues.count;
+
+            adaptedValuesFather.u[0] += values;
             adaptedValuesFather.associatedMass += adaptedValues.associatedMass;
+            adaptedValuesFather.count += 1;
         }
         else
         {
+            //! count should always be one for box (division by count only necessary for cc)
+            adaptedValuesFather.count = 1;
             adaptedValuesFather.associatedMass += adaptedValues.associatedMass;
         }
     }
