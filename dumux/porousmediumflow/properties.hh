@@ -26,6 +26,7 @@
 #ifndef DUMUX_POROUSMEDIUM_FLOW_PROPERTIES_HH
 #define DUMUX_POROUSMEDIUM_FLOW_PROPERTIES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 

@@ -27,8 +27,7 @@
 #ifndef DUMUX_1P_PROPERTIES_HH
 #define DUMUX_1P_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
@@ -48,7 +47,7 @@ namespace Dumux
 {
 namespace Properties {
 //! The type tags for the isothermal & non-isothermal single phase model
-NEW_TYPE_TAG(OneP, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(OneP, INHERITS_FROM(PorousMediumFlow));
 NEW_TYPE_TAG(OnePNI, INHERITS_FROM(OneP, NonIsothermal));
 
 ///////////////////////////////////////////////////////////////////////////
