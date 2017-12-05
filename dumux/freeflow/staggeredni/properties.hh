@@ -58,6 +58,16 @@ public:
     static constexpr auto value = isothermalNumEqCellCenter + 1;
 };
 
+SET_PROP(NavierStokesNonIsothermal, NumEq)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+public:
+    static constexpr int value = dim + numComponents + 1;
+};
+
 SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
 
 SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, FreeFlowEnergyVtkOutputFields<TypeTag>);

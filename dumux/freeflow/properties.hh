@@ -40,7 +40,19 @@ namespace Properties
 //! Type tag for models involving flow in porous media
 NEW_TYPE_TAG(FreeFlow);
 
+SET_PROP(FreeFlow, NumEq)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+public:
+    static constexpr int value = dim + numComponents;
+};
+
 SET_INT_PROP(FreeFlow, NumEqFace, 1); //!< set the number of equations to 1
+SET_INT_PROP(FreeFlow, NumEqCellCenter, 1); //!< set the number of equations to 1
+
 
 //! The sub-controlvolume face
 SET_PROP(FreeFlow, SubControlVolumeFace)
@@ -100,9 +112,14 @@ public:
 };
 
 //! Boundary types at a single degree of freedom
-SET_TYPE_PROP(FreeFlow,
-              BoundaryTypes,
-              StaggeredFreeFlowBoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
+SET_PROP(FreeFlow, BoundaryTypes)
+{
+private:
+    static constexpr auto size = GET_PROP_VALUE(TypeTag, NumEqCellCenter) + GET_PROP_VALUE(TypeTag, NumEqFace);
+public:
+    using type = StaggeredFreeFlowBoundaryTypes<size>;
+};
+
 
 } // namespace Properties
 } // namespace Dumux
