@@ -28,7 +28,7 @@
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/material/fluidstates/nonequilibrium.hh>
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 
 #include <cmath>
 #include <algorithm>

@@ -40,8 +40,7 @@
 #include <dumux/common/exceptions.hh>
 
 #ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #endif
 
 namespace Dumux

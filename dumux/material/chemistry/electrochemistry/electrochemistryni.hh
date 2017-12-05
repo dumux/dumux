@@ -25,7 +25,7 @@
 #ifndef DUMUX_ELECTROCHEMISTRY_NI_HH
 #define DUMUX_ELECTROCHEMISTRY_NI_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/chemistry/electrochemistry/electrochemistry.hh>
 

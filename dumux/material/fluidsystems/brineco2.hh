@@ -26,8 +26,7 @@
 
 #include <dumux/material/idealgas.hh>
 
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
 #include <dumux/material/fluidsystems/defaultcomponents.hh>
