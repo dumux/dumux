@@ -120,12 +120,8 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
-    using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -192,9 +188,9 @@ public:
      *
      * \param globalPos The global position
      */
-    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return SourceValues(0.0);
+        return PrimaryVariables(0.0);
     }
 
     // \}
@@ -230,7 +226,7 @@ public:
      *
      * \param globalPos The global position
      */
-    BoundaryValues dirichletAtPos(const GlobalPosition & globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition & globalPos) const
     {
         // use the values of the analytical solution
         return analyticalSolution(globalPos);
@@ -241,12 +237,12 @@ public:
      *
      * \param globalPos The global position
      */
-    BoundaryValues analyticalSolution(const GlobalPosition& globalPos) const
+    PrimaryVariables analyticalSolution(const GlobalPosition& globalPos) const
     {
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 
-        BoundaryValues values;
+        PrimaryVariables values;
         values[pressureIdx] = 0.5 * (1.0 - std::exp(2.0 * lambda_ * x));
         values[velocityXIdx] = 1.0 - std::exp(lambda_ * x) * std::cos(2.0 * M_PI * y);
         values[velocityYIdx] = 0.5 * lambda_ / M_PI * std::exp(lambda_ * x) * std::sin(2.0 * M_PI * y);
@@ -266,9 +262,9 @@ public:
      *
      * \param globalPos The global position
      */
-    InitialValues initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        InitialValues values;
+        PrimaryVariables values;
         values[pressureIdx] = 0.0;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
@@ -283,7 +279,7 @@ public:
      */
     auto calculateL2Error(const SolutionVector& curSol) const
     {
-        BoundaryValues sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
+        PrimaryVariables sumError(0.0), sumReference(0.0), l2NormAbs(0.0), l2NormRel(0.0);
 
         const int numFaceDofs = this->fvGridGeometry().gridView().size(1);
 
