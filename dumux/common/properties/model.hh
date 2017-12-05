@@ -26,6 +26,8 @@
 #ifndef DUMUX_BASIC_PROPERTIES_HH
 #define DUMUX_BASIC_PROPERTIES_HH
 
+#include <dune/common/fvector.hh>
+
 #include <dumux/common/balanceequationopts.hh>
 #include <dumux/common/properties.hh>
 
@@ -38,28 +40,34 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for numeric models.
-NEW_TYPE_TAG(BasicProperties);
+NEW_TYPE_TAG(ModelProperties);
 
 //! Set the default type of scalar values to double
-SET_TYPE_PROP(BasicProperties, Scalar, double);
+SET_TYPE_PROP(ModelProperties, Scalar, double);
 
 //! Set the default number of equations to one
-SET_INT_PROP(BasicProperties, NumEq, 1);
+SET_INT_PROP(ModelProperties, NumEq, 1);
+
+//! Set the default vector with size number of equations to a field vector
+SET_TYPE_PROP(ModelProperties, NumEqVector, Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_VALUE(TypeTag, NumEq)>);
+
+//! Set the default primary variable vector to a vector of size of number of equations
+SET_TYPE_PROP(ModelProperties, PrimaryVariables, typename GET_PROP_TYPE(TypeTag, NumEqVector));
 
 //! use the global group as default for the model's parameter group
-SET_STRING_PROP(BasicProperties, ModelParameterGroup, "");
+SET_STRING_PROP(ModelProperties, ModelParameterGroup, "");
 
 //! do not specific any model-specific default parameters here
-SET_PROP(BasicProperties, ModelDefaultParameters)
+SET_PROP(ModelProperties, ModelDefaultParameters)
 {
     static void defaultParams(Dune::ParameterTree& tree, const std::string& group = "") { }
 };
 
 //! Set the default to a function throwing a NotImplemented error
-SET_TYPE_PROP(BasicProperties, VtkOutputFields, DefaultVtkOutputFields);
+SET_TYPE_PROP(ModelProperties, VtkOutputFields, DefaultVtkOutputFields);
 
 //! Set the default class for the balance equation options
-SET_TYPE_PROP(BasicProperties, BalanceEqOpts, BalanceEquationOptions<TypeTag>);
+SET_TYPE_PROP(ModelProperties, BalanceEqOpts, BalanceEquationOptions<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux
