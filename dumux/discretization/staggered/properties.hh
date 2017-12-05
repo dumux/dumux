@@ -177,17 +177,20 @@ SET_TYPE_PROP(StaggeredModel,
               Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
                                 GET_PROP_VALUE(TypeTag, NumEqFace)>);
 
-//! The type of a solution for the whole grid at a fixed time
+// TODO: bundle SolutionVector, JacobianMatrix and LinearSolverPreconditionerBlockLevel
+//       in LinearAlgebra traits
+
+//! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
 SET_TYPE_PROP(StaggeredModel,
               CellCenterSolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
 
-//! The type of a solution for the whole grid at a fixed time
+//! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
 SET_TYPE_PROP(StaggeredModel,
               FaceSolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables)>);
 
-//! default property value for the solution vector only used for monolithic solver
+//! default property value for the solution vector only used for monolithic solver TODO: move to LinearAlgebra traits
 SET_PROP(StaggeredModel, SolutionVector)
 {
 private:
@@ -197,7 +200,7 @@ public:
     typedef typename Dune::MultiTypeBlockVector<CellCenterSolutionVector, FaceSolutionVector> type;
 };
 
-//! Set the type of a global jacobian matrix from the solution types
+//! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
 SET_PROP(StaggeredModel, JacobianMatrix)
 {
 private:
@@ -230,6 +233,9 @@ public:
     // the jacobian matrix
     using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
 };
+
+// set the block level to 2 (nested multiple times) TODO: move to LinearAlgebra traits
+SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
 
 SET_PROP(StaggeredModel, NumEq)
 {
