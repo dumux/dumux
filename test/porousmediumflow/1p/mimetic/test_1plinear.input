@@ -3,17 +3,15 @@ DtInitial = 1 # [s]
 TEnd = 1 # [s]
 
 [Grid]
-File = ../implicit/grids/flat_fault_refTwo.grdecl
-#File = ../implicit/grids/testModel1.grdecl
-#File = ../implicit/grids/WellMesh_5.msh.dgf
+File = ./grids/flat_fault_refTwo.grdecl
 
 [Problem]
-Name = test_1PLinearityPreservation_mimetic
+Name = test_1PLinearityPreservation_fault_mimetic_superlu
 TestCase = 1
 a = 14 1 1 0
 b = 4 1 1 6
-Plow = 1.0e5
-Phigh = 2.0e5
+Plow = 1.0
+Phigh = 2.0
 
 #[Newton]
 #EnableShiftCriterion = 0

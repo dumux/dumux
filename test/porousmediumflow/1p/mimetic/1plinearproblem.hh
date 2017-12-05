@@ -96,7 +96,7 @@ SET_BOOL_PROP(OnePLinearProblem, EnableGlobalVolumeVariablesCache, true);
 // Enable gravity
 SET_BOOL_PROP(OnePLinearProblem, ProblemEnableGravity, false);
 
-SET_TYPE_PROP(OnePLinearProblem, LinearSolver, UMFPackBackend<TypeTag> );
+SET_TYPE_PROP(OnePLinearProblem, LinearSolver, SuperLUBackend<TypeTag> );
 
 #if PROBLEM==1
 SET_BOOL_PROP(OnePLinearProblem, VtkWriteFaceData, false);
@@ -278,7 +278,7 @@ public:
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
     {
-        PrimaryVariables priVars(1.0);
+        PrimaryVariables priVars(exact(globalPos));
 
         return priVars;
     }
