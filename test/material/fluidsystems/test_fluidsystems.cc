@@ -26,7 +26,7 @@
 
 // include the property system just to make sure that all fluid system
 // type tag adapter behave nicely together
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 
 #include "checkfluidsystem.hh"
 

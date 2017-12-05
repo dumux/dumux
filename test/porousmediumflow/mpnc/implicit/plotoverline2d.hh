@@ -27,7 +27,7 @@
 #define DUMUX_PLOTOVERLINE_2D_HH
 
 #include <dumux/common/valgrind.hh>
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>

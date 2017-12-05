@@ -27,7 +27,7 @@
  */
 #include <config.h>
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties/propertysystem.hh>
 
 #include <iostream>
 
