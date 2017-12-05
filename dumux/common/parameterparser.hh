@@ -30,7 +30,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/exceptions.hh>
