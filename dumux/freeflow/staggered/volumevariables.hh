@@ -63,7 +63,7 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, false>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
     static const int phaseIdx = Indices::phaseIdx;
 
@@ -88,7 +88,7 @@ public:
     /*!
      * \brief Returns the primary variables at the dof associated with a given scv.
      */
-    static const PrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
+    static const CellCenterPrimaryVariables& extractDofPriVars(const ElementSolutionVector& elemSol,
                                                      const SubControlVolume& scv)
     { return elemSol[0]; }
 
@@ -219,7 +219,7 @@ public:
 
 protected:
     FluidState fluidState_;
-    PrimaryVariables priVars_;
+    CellCenterPrimaryVariables priVars_;
     Scalar extrusionFactor_;
 };
 
@@ -241,7 +241,6 @@ class NavierStokesVolumeVariablesImplementation<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     static const int phaseIdx = Indices::phaseIdx;
     static const int temperatureIdx = Indices::temperatureIdx;

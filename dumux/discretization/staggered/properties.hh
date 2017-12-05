@@ -209,14 +209,9 @@ public:
     static constexpr auto value = numEqCellCenter + numEqFace;
 };
 
-SET_PROP(StaggeredModel, LinearSolverBlockSize)
-{
-    // LinearSolverAcceptsMultiTypeMatrix<T>::value
-    // TODO: make somehow dependend? or only relevant for direct solvers?
-public:
-    static constexpr auto value = 1;
-};
+SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
 
+SET_INT_PROP(StaggeredModel, LinearSolverBlockSize, 1);
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredModel, BoundaryTypes)

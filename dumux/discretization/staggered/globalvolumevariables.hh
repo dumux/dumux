@@ -55,7 +55,6 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
@@ -76,8 +75,8 @@ public:
 
             for (auto&& scv : scvs(fvGeometry))
             {
-                PrimaryVariables priVars(0.0);
-                priVars[cellCenterIdx] = sol[cellCenterIdx][scv.dofIndex()];
+                CellCenterPrimaryVariables priVars(0.0);
+                priVars = sol[cellCenterIdx][scv.dofIndex()];
                 ElementSolutionVector elemSol{std::move(priVars)};
                 volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
             }
@@ -93,14 +92,14 @@ public:
                 const auto insideScvIdx = scvf.insideScvIdx();
                 const auto& insideScv = fvGeometry.scv(insideScvIdx);
 
-                PrimaryVariables boundaryPriVars(0.0);
+                CellCenterPrimaryVariables boundaryPriVars(0.0);
 
                 for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
                 {
                     if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
-                        boundaryPriVars[cellCenterIdx][eqIdx] = problem().dirichlet(element, scvf)[cellCenterIdx][eqIdx];
+                        boundaryPriVars[eqIdx] = problem().dirichlet(element, scvf)[cellCenterIdx][eqIdx];
                     else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                        boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
+                        boundaryPriVars[eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
                     //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                     // could be made more general by allowing a non-zero-gradient, provided in problem file
                     else
