@@ -16,170 +16,161 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-#ifndef DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
-#define DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
+#ifndef DUMUX_TWOP_ADAPTION_INDICATOR_HH
+#define DUMUX_TWOP_ADAPTION_INDICATOR_HH
+
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/properties.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-//#include <dumux/linear/vectorexchange.hh>
+#include <dumux/discretization/evalsolution.hh>
 
 /**
- * @file
- * @brief  Class defining a standard, saturation dependent indicator for grid adaptation
+ * \file
+ * \brief Class defining a standard, saturation dependent indicator for grid adaptation
  */
 namespace Dumux
 {
-/*!\ingroup IMPES
- * @brief  Class defining a standard, saturation dependent indicator for grid adaptation
- *
- * \tparam TypeTag The problem TypeTag
+
+/*!\ingroup TwoPModel
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaptation
  */
 template<class TypeTag>
-class TwoPImplicitGridAdaptIndicator
+class TwoPGridAdaptIndicator
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-
-    enum
-    {
-        saturationIdx = Indices::saturationIdx,
-        pressureIdx = Indices::pressureIdx
-    };
-    enum
-    {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
-
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef typename GridView::ctype CoordScalar;
-
-    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
-    typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
+    enum { saturationIdx = Indices::saturationIdx };
 
 public:
+    /*! \brief The Constructor
+     *
+     *  \param fvGridGeometry The finite volume grid geometry
+     *
+     *  Note: refineBound_, coarsenBound_ & maxSaturationDelta_ are chosen
+     *        in a way such that the indicator returns false for all elements
+     *        before having been calculated.
+     */
+    TwoPGridAdaptIndicator(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : fvGridGeometry_(fvGridGeometry)
+    , refineBound_(std::numeric_limits<Scalar>::max())
+    , coarsenBound_(std::numeric_limits<Scalar>::lowest())
+    , maxSaturationDelta_(fvGridGeometry_->gridView().size(0), 0.0)
+    , minLevel_(getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MinLevel", 0))
+    , maxLevel_(getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MaxLevel", 0))
+    {}
+
+    /*! \brief Function to set the minumum allowed levels.
+     *.
+     */
+    void setMinLevel(std::size_t minLevel)
+    {
+        minLevel_ = minLevel;
+    }
+
+    /*! \brief Function to set the maximum allowed levels.
+     *.
+     */
+    void setMaxLevel(std::size_t maxLevel)
+    {
+        maxLevel_ = maxLevel;
+    }
+
+    /*! \brief Function to set the minumum/maximum allowed levels.
+     *.
+     */
+    void setLevels(std::size_t minLevel, std::size_t maxLevel)
+    {
+        minLevel_ = minLevel;
+        maxLevel_ = maxLevel;
+    }
+
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
      *
-     * This standard indicator is based on the saturation gradient.
+     *  This standard two-phase indicator is based on the saturation gradient.
      */
-    void calculateIndicator()
+    void calculate(const SolutionVector& sol,
+                   Scalar refineTol = 0.05,
+                   Scalar coarsenTol = 0.001)
     {
-        // prepare an indicator for refinement
-        if(indicatorVector_.size() != problem_.gridView().size(0))
+        //! reset the indicator to a state that returns false for all elements
+        refineBound_ = std::numeric_limits<Scalar>::max();
+        coarsenBound_ = std::numeric_limits<Scalar>::lowest();
+        maxSaturationDelta_.assign(fvGridGeometry_->gridView().size(0), 0.0);
+
+        //! maxLevel_ must be higher than minLevel_ to allow for refinement
+        if (minLevel_ >= maxLevel_)
+            return;
+
+        //! check for inadmissible tolerance combination
+        if (coarsenTol > refineTol)
+            DUNE_THROW(Dune::InvalidStateException, "Refine tolerance must be higher than coarsen tolerance");
+
+        //! variables to hold the max/mon saturation values on the leaf
+        Scalar globalMax = std::numeric_limits<Scalar>::lowest();
+        Scalar globalMin = std::numeric_limits<Scalar>::max();
+
+        //! Calculate minimum and maximum saturation
+        for (const auto& element : elements(fvGridGeometry_->gridView()))
         {
-            indicatorVector_.resize(problem_.gridView().size(0));
-        }
-        indicatorVector_ = -1e100;
+            //! index of the current leaf-element
+            const auto globalIdxI = fvGridGeometry_->elementMapper().index(element);
 
-        Scalar globalMax = -1e100;
-        Scalar globalMin = 1e100;
+            //! obtain the saturation at the center of the element
+            const auto geometry = element.geometry();
+            const ElementSolution elemSol(element, sol, *fvGridGeometry_);
+            const Scalar satI = evalSolution(element, geometry, *fvGridGeometry_, elemSol, geometry.center())[saturationIdx];
 
-        // 1) calculate Indicator -> min, maxvalues
-        // loop over all leaf-elements
-        for (const auto& element : elements(problem_.gridView()))
-        {
-            // calculate minimum and maximum saturation
-            // index of the current leaf-elements
-            int globalIdxI = problem_.elementMapper().index(element);
-
-            Scalar satI = 0.0;
-
-            if(!isBox)
-                satI = problem_.model().curSol()[globalIdxI][saturationIdx];
-            else
-            {
-                const LocalFiniteElementCache feCache;
-                const auto geometryI = element.geometry();
-                Dune::GeometryType geomType = geometryI.type();
-
-                GlobalPosition centerI = geometryI.local(geometryI.center());
-                const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
-                std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
-                localFiniteElement.localBasis().evaluateFunction(centerI, shapeVal);
-
-                for (int i = 0; i < shapeVal.size(); ++i)
-                  {
-                     int dofIdxGlobal = problem_.model().dofMapper().subIndex(element, i, dofCodim);
-                      satI += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
-                  }
-            }
-
+            //! maybe update the global minimum/maximum
             using std::min;
             using std::max;
             globalMin = min(satI, globalMin);
             globalMax = max(satI, globalMax);
 
-            // calculate refinement indicator in all cells
-            for (const auto& intersection : intersections(problem_.gridView(), element))
+            //! calculate maximum delta in saturation for this cell
+            for (const auto& intersection : intersections(fvGridGeometry_->gridView(), element))
             {
-                // Only consider internal intersections
+                //! Only consider internal intersections
                 if (intersection.neighbor())
                 {
-                    // Access neighbor
-                    auto outside = intersection.outside();
-                    int globalIdxJ = problem_.elementMapper().index(outside);
+                    //! Access neighbor
+                    const auto outside = intersection.outside();
+                    const auto globalIdxJ = fvGridGeometry_->elementMapper().index(outside);
 
-                    // Visit intersection only once
+                    //! Visit intersection only once
                     if (element.level() > outside.level() || (element.level() == outside.level() && globalIdxI < globalIdxJ))
                     {
-                        Scalar satJ = 0.0;
-
-                        if(!isBox)
-                            satJ = problem_.model().curSol()[globalIdxJ][saturationIdx];
-                        else
-                        {
-                            const LocalFiniteElementCache feCache;
-                            const auto geometryJ = outside.geometry();
-                            Dune::GeometryType geomType = geometryJ.type();
-
-                            GlobalPosition centerJ = geometryJ.local(geometryJ.center());
-                            const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
-                            std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
-                            localFiniteElement.localBasis().evaluateFunction(centerJ, shapeVal);
-
-                            for (int i = 0; i < shapeVal.size(); ++i)
-                              {
-                                  int dofIdxGlobal = problem_.model().dofMapper().subIndex(outside, i, dofCodim);
-
-                                  satJ += shapeVal[i]*problem_.model().curSol()[dofIdxGlobal][saturationIdx];
-                              }
-                        }
-
-
+                        //! obtain saturation in the neighbor
+                        const auto outsideGeometry = outside.geometry();
+                        const ElementSolution elemSolJ(outside, sol, *fvGridGeometry_);
+                        const Scalar satJ = evalSolution(outside, outsideGeometry, *fvGridGeometry_, elemSolJ, outsideGeometry.center())[saturationIdx];
 
                         using std::abs;
                         Scalar localdelta = abs(satI - satJ);
-                        using std::max;
-                        indicatorVector_[globalIdxI][0] = max(indicatorVector_[globalIdxI][0], localdelta);
-                        indicatorVector_[globalIdxJ][0] = max(indicatorVector_[globalIdxJ][0], localdelta);
+                        maxSaturationDelta_[globalIdxI] = max(maxSaturationDelta_[globalIdxI], localdelta);
+                        maxSaturationDelta_[globalIdxJ] = max(maxSaturationDelta_[globalIdxJ], localdelta);
                     }
                 }
             }
         }
 
-        Scalar globaldelta = globalMax - globalMin;
+        //! compute the maximum delta in saturation
+        const auto globalDelta = globalMax - globalMin;
 
-        refineBound_ = refinetol_*globaldelta;
-        coarsenBound_ = coarsentol_*globaldelta;
+        //! compute the refinement/coarsening bounds
+        refineBound_ = refineTol*globalDelta;
+        coarsenBound_ = coarsenTol*globalDelta;
 
+// TODO: fix adaptive simulations in parallel
 //#if HAVE_MPI
 //    // communicate updated values
 //    typedef VectorExchange<ElementMapper, ScalarSolutionType> DataHandle;
-//    DataHandle dataHandle(problem_.elementMapper(), indicatorVector_);
+//    DataHandle dataHandle(problem_.elementMapper(), maxSaturationDelta_);
 //    problem_.gridView().template communicate<DataHandle>(dataHandle,
 //                                                         Dune::InteriorBorder_All_Interface,
 //                                                         Dune::ForwardCommunication);
@@ -189,62 +180,84 @@ public:
 //    coarsenBound_ = problem_.gridView().comm().max(coarsenBound_);
 //
 //#endif
+
+        //! check if neighbors have to be refined too
+        for (const auto& element : elements(fvGridGeometry_->gridView(), Dune::Partitions::interior))
+            if (this->operator()(element) > 0)
+                checkNeighborsRefine_(element);
     }
 
-    /*! \brief Indicator function for marking of grid cells for refinement
+    /*! \brief function call operator to return mark
      *
-     * Returns true if an element should be refined.
+     *  \return  1 if an element should be refined
+     *          -1 if an element should be coarsened
+     *           0 otherwise
      *
      *  \param element A grid element
      */
-    bool refine(const Element& element)
+    int operator() (const Element& element) const
     {
-        return (indicatorVector_[problem_.elementMapper().index(element)] > refineBound_);
+        if (element.hasFather()
+            && maxSaturationDelta_[fvGridGeometry_->elementMapper().index(element)] < coarsenBound_)
+        {
+            return -1;
+        }
+        else if (element.level() < maxLevel_
+                 && maxSaturationDelta_[fvGridGeometry_->elementMapper().index(element)] > refineBound_)
+        {
+            return 1;
+        }
+        else
+            return 0;
     }
 
-    /*! \brief Indicator function for marking of grid cells for coarsening
+private:
+    /*!
+     * \brief Method ensuring the refinement ratio of 2:1
      *
-     * Returns true if an element should be coarsened.
+     *  For any given element, a loop over the neighbors checks if the
+     *  entities refinement would require that any of the neighbors has
+     *  to be refined, too. This is done recursively over all levels of the grid.
      *
-     *  \param element A grid element
+     * \param element Element of interest that is to be refined
+     * \param level level of the refined element: it is at least 1
+     * \return true if everything was successful
      */
-    bool coarsen(const Element& element)
+    bool checkNeighborsRefine_(const Element &element, std::size_t level = 1)
     {
-        return (indicatorVector_[problem_.elementMapper().index(element)] < coarsenBound_);
+        for(const auto& intersection : intersections(fvGridGeometry_->gridView(), element))
+        {
+            if(!intersection.neighbor())
+                continue;
+
+            // obtain outside element
+            const auto outside = intersection.outside();
+
+            // only mark non-ghost elements
+            if (outside.partitionType() == Dune::GhostEntity)
+                continue;
+
+            if (outside.level() < maxLevel_ && outside.level() < element.level())
+            {
+                // ensure refinement for outside element
+                maxSaturationDelta_[fvGridGeometry_->elementMapper().index(outside)] = std::numeric_limits<Scalar>::max();
+                if(level < maxLevel_)
+                    checkNeighborsRefine_(outside, ++level);
+            }
+        }
+
+        return true;
     }
 
-    /*! \brief Initializes the adaptation indicator class*/
-    void init()
-    {
-        refineBound_ = 0.;
-        coarsenBound_ = 0.;
-        indicatorVector_.resize(problem_.gridView().size(0));
-    };
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
 
-    /*! @brief Constructs a GridAdaptIndicator instance
-     *
-     *  This standard indicator is based on the saturation gradient.
-     *  It checks the local gradient compared to the maximum global gradient.
-     *  The indicator is compared locally to a refinement/coarsening threshold to decide whether
-     *  a cell should be marked for refinement or coarsening or should not be adapted.
-     *
-     * \param problem The problem object
-     */
-    TwoPImplicitGridAdaptIndicator(Problem& problem):
-        problem_(problem)
-    {
-        refinetol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineTolerance);
-        coarsentol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenTolerance);
-    }
-
-protected:
-    Problem& problem_;
-    Scalar refinetol_;
-    Scalar coarsentol_;
     Scalar refineBound_;
     Scalar coarsenBound_;
-    Dune::BlockVector<Dune::FieldVector<Scalar, 1> > indicatorVector_;
+    std::vector< Scalar > maxSaturationDelta_;
+    std::size_t minLevel_;
+    std::size_t maxLevel_;
 };
-}
 
-#endif
+} // end namespace Dumux
+
+#endif /* DUMUX_TWOP_ADAPTION_INDICATOR_HH */
