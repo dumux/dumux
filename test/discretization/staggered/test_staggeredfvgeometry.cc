@@ -33,10 +33,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
 #include <dumux/discretization/staggered/properties.hh>
-#include <dumux/discretization/staggered/fvgridgeometry.hh>
-#include <dumux/discretization/staggered/fvelementgeometry.hh>
 
 namespace Dumux
 {
@@ -76,7 +73,7 @@ public:
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel, ModelProperties));
+NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel));
 
 SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
 
