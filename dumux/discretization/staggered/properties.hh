@@ -46,8 +46,7 @@
 #include <dumux/discretization/staggered/globalfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
 #include <dumux/discretization/staggered/elementfacevariables.hh>
-#include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
+#include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 
 #include <dumux/common/intersectionmapper.hh>
 #include <dune/istl/multitypeblockvector.hh>
@@ -128,7 +127,7 @@ SET_PROP(StaggeredModel, StaggeredGeometryHelper)
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 public:
-    using type = StaggeredGeometryHelper<GridView>;
+    using type = BaseStaggeredGeometryHelper<GridView>;
 };
 
 SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, StaggeredGlobalFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);
