@@ -97,7 +97,7 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -145,8 +145,8 @@ public:
         {
             const auto& elementJ = fvGridGeometry.element(globalJ);
             auto&& scvJ = fvGeometry.scv(globalJ);
-            PrimaryVariables priVars(0.0);
-            priVars[cellCenterIdx] = sol[cellCenterIdx][globalJ];
+            CellCenterPrimaryVariables priVars(0.0);
+            priVars = sol[cellCenterIdx][globalJ];
             ElementSolution elemSol{std::move(priVars)};
             volumeVariables_[localIdx].update(elemSol,
                                               problem,
@@ -165,14 +165,14 @@ public:
 
             const auto bcTypes = problem.boundaryTypes(element, scvf);
 
-            PrimaryVariables boundaryPriVars(0.0);
+            CellCenterPrimaryVariables boundaryPriVars(0.0);
 
             for(int eqIdx = 0; eqIdx < numEqCellCenter; ++eqIdx)
             {
                 if(bcTypes.isDirichlet(eqIdx) || bcTypes.isDirichletCell(eqIdx))
-                    boundaryPriVars[cellCenterIdx][eqIdx] = problem.dirichlet(element, scvf)[cellCenterIdx][eqIdx];
+                    boundaryPriVars[eqIdx] = problem.dirichlet(element, scvf)[cellCenterIdx][eqIdx];
                 else if(bcTypes.isNeumann(eqIdx) || bcTypes.isOutflow(eqIdx) || bcTypes.isSymmetry())
-                    boundaryPriVars[cellCenterIdx][eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
+                    boundaryPriVars[eqIdx] = sol[cellCenterIdx][scvf.insideScvIdx()][eqIdx];
                 //TODO: this assumes a zero-gradient for e.g. the pressure on the boundary
                 // could be made more general by allowing a non-zero-gradient, provided in problem file
                 else
@@ -207,8 +207,8 @@ public:
 
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
-        PrimaryVariables priVars(0.0);
-        priVars[cellCenterIdx] = sol[cellCenterIdx][eIdx];
+        CellCenterPrimaryVariables priVars(0.0);
+        priVars = sol[cellCenterIdx][eIdx];
         ElementSolution elemSol{std::move(priVars)};
         volumeVariables_[0].update(elemSol,
                                    globalVolVars().problem(),
