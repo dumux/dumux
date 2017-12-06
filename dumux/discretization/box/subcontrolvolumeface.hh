@@ -58,14 +58,14 @@ public:
                             const Element& element,
                             const typename Element::Geometry& elemGeometry,
                             GridIndexType scvfIndex,
-                            const std::vector<LocalIndexType>& scvIndices,
+                            std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
     : corners_(geometryHelper.getScvfCorners(scvfIndex)),
       center_(0.0),
       unitOuterNormal_(geometryHelper.normal(corners_, scvIndices)),
       area_(geometryHelper.scvfArea(corners_)),
       scvfIndex_(scvfIndex),
-      scvIndices_(scvIndices),
+      scvIndices_(std::move(scvIndices)),
       boundary_(boundary)
     {
         for (const auto& corner : corners_)
@@ -80,14 +80,14 @@ public:
                             const typename Intersection::Geometry& isGeometry,
                             LocalIndexType indexInIntersection,
                             GridIndexType scvfIndex,
-                            const std::vector<LocalIndexType>& scvIndices,
+                            std::vector<LocalIndexType>&& scvIndices,
                             bool boundary = false)
     : corners_(geometryHelper.getBoundaryScvfCorners(isGeometry, indexInIntersection)),
       center_(0.0),
       unitOuterNormal_(intersection.centerUnitOuterNormal()),
       area_(geometryHelper.scvfArea(corners_)),
       scvfIndex_(scvfIndex),
-      scvIndices_(scvIndices),
+      scvIndices_(std:: move(scvIndices)),
       boundary_(boundary)
     {
         for (const auto& corner : corners_)

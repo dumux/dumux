@@ -135,7 +135,7 @@ public:
             scvs_[eIdx].resize(elementGeometry.corners());
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
-                auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
+                const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
 
                 scvs_[eIdx][scvLocalIdx] = SubControlVolume(geometryHelper,
                                                             scvLocalIdx,
@@ -156,7 +156,7 @@ public:
                                                                   element,
                                                                   elementGeometry,
                                                                   scvfLocalIdx,
-                                                                  localScvIndices,
+                                                                  std::move(localScvIndices),
                                                                   false);
             }
 
@@ -173,7 +173,7 @@ public:
                     for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                     {
                         // find the scvs this scvf is belonging to
-                        LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
+                        const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
                         std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                         scvfs_[eIdx].emplace_back(geometryHelper,
@@ -181,7 +181,7 @@ public:
                                                   isGeometry,
                                                   isScvfLocalIdx,
                                                   scvfLocalIdx,
-                                                  localScvIndices,
+                                                  std::move(localScvIndices),
                                                   true);
 
                         // increment local counter

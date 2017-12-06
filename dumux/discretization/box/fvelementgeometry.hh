@@ -311,7 +311,7 @@ private:
                                                         element,
                                                         elementGeometry,
                                                         scvfLocalIdx,
-                                                        localScvIndices,
+                                                        std::move(localScvIndices),
                                                         false);
         }
 
@@ -325,7 +325,7 @@ private:
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
                     // find the scv this scvf is connected to
-                    LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
+                    const LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
                     std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                     scvfs_.emplace_back(geometryHelper,
@@ -333,7 +333,7 @@ private:
                                         isGeometry,
                                         isScvfLocalIdx,
                                         scvfLocalIdx,
-                                        localScvIndices,
+                                        std::move(localScvIndices),
                                         true);
 
                     // increment local counter
