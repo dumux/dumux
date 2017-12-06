@@ -31,7 +31,8 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/properties/model.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
 //! Dummy flux variables class so that we can update the connectivity map
@@ -49,7 +50,7 @@ public:
 
 namespace Dumux {
     namespace Properties {
-        NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel, NumericModel));
+        NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel, ModelProperties));
         SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
         SET_TYPE_PROP(TestFVGeometry, FluxVariables, MockFluxVariables);
     }

@@ -31,7 +31,8 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/properties/model.hh>
 #include <dumux/discretization/box/properties.hh>
 
 namespace Dumux
@@ -39,7 +40,7 @@ namespace Dumux
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestBoxFVGeometry, INHERITS_FROM(BoxModel, NumericModel));
+NEW_TYPE_TAG(TestBoxFVGeometry, INHERITS_FROM(BoxModel, ModelProperties));
 
 SET_TYPE_PROP(TestBoxFVGeometry, Grid, Dune::YaspGrid<3>);
 SET_BOOL_PROP(TestBoxFVGeometry, EnableFVGridGeometryCache, ENABLE_CACHING);
