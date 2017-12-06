@@ -33,7 +33,6 @@
 
 #include <dumux/common/parameters.hh>
 #include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
 
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>

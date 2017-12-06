@@ -34,7 +34,6 @@
 #include <dune/istl/multitypeblockmatrix.hh>
 
 #include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/timemanager.hh>
 

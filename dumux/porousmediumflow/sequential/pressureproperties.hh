@@ -24,7 +24,6 @@
 #include <dune/istl/bvector.hh>
 
 #include "properties.hh"
-#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 

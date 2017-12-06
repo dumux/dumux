@@ -28,16 +28,8 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
 
-#include "linearsolverproperties.hh"
-
 namespace Dumux
 {
-
-namespace Properties
-{
-//! The type traits required for using the AMG backend
-NEW_PROP_TAG(AmgTraits);
-}
 
 /*!
  * \brief A parallel helper class providing a nonoverlapping
