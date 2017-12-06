@@ -36,6 +36,7 @@ namespace Dumux
 template<class Grid>
 class BoundaryFlag
 {
+public:
     BoundaryFlag() : flag_(-1) {}
 
     template<class Intersection>
@@ -45,12 +46,12 @@ class BoundaryFlag
             flag_ = i.boundarySegmentIndex();
     }
 
-    using value_type = int;
+    using value_type = std::size_t;
 
-    value_type get() { return flag_; } const
+    value_type get() const { return flag_; }
 
 private:
-    int flag_;
+    value_type flag_;
 };
 
 
@@ -59,6 +60,7 @@ private:
 template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
 class BoundaryFlag<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
 {
+public:
     BoundaryFlag() : flag_(-1) {}
 
     template<class Intersection>
@@ -70,7 +72,7 @@ class BoundaryFlag<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
 
     using value_type = int;
 
-    value_type get() { return flag_; } const
+    value_type get() const { return flag_; }
 
 private:
     int flag_;
