@@ -33,7 +33,7 @@
 
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/linearsolverproperties.hh>
-#include <dumux/linear/amgproperties.hh>
+#include <dumux/linear/amgtraits.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
 
 namespace Dumux {
@@ -76,7 +76,7 @@ class AMGBackend : public LinearSolver<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
+    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     enum { numEq = AmgTraits::numEq };
     using LinearOperator = typename AmgTraits::LinearOperator;
     using ScalarProduct = typename AmgTraits::ScalarProduct;

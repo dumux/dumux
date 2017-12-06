@@ -48,7 +48,7 @@ template<class TypeTag>
 class ParallelISTLHelper
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
+    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     using DofMapper = typename AmgTraits::DofMapper;
 
     enum { dofCodim = AmgTraits::dofCodim };
@@ -484,7 +484,7 @@ template<class TypeTag>
 class EntityExchanger
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
+    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     enum { numEq = AmgTraits::numEq };
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -1008,7 +1008,7 @@ template<class TypeTag, bool isParallel>
 struct LinearAlgebraPreparator
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
+    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     using DofMapper = typename AmgTraits::DofMapper;
     using ParallelHelper = ParallelISTLHelper<TypeTag>;
     using Comm = typename AmgTraits::Comm;
@@ -1040,7 +1040,7 @@ template<class TypeTag>
 struct LinearAlgebraPreparator<TypeTag, true>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AmgTraits = typename GET_PROP(TypeTag, AmgTraits);
+    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     using DofMapper = typename AmgTraits::DofMapper;
     using ParallelHelper = ParallelISTLHelper<TypeTag>;
     using Comm = typename AmgTraits::Comm;

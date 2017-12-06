@@ -73,6 +73,7 @@ NEW_PROP_TAG( CellData );//!< Defines data object to be stored
 NEW_PROP_TAG( TimeManager );  //!< Manages the simulation time
 NEW_PROP_TAG( BoundaryTypes ); //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG( MaxIntersections ); //!< Gives maximum number of intersections of an element and neighboring elements
+NEW_PROP_TAG( PressureCoefficientMatrix ); //!< Gives maximum number of intersections of an element and neighboring elements
 }
 }
 
@@ -92,6 +93,7 @@ class VariableClass;
 
 namespace Properties
 {
+
 //////////////////////////////////////////////////////////////////
 // Properties
 //////////////////////////////////////////////////////////////////
@@ -100,6 +102,9 @@ SET_PROP(SequentialModel, DiscretizationMethod)
 {
     static const DiscretizationMethods value = DiscretizationMethods::CCTpfa;
 };
+
+//!< Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
+SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix));
 
 //! Use the leaf grid view if not defined otherwise
 SET_PROP(SequentialModel, GridView)
