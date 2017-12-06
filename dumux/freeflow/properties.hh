@@ -28,7 +28,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
+#include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
+#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/implicit/staggered/primaryvariables.hh>
 
 #include "./staggered/boundarytypes.hh"
@@ -53,6 +55,35 @@ public:
 SET_INT_PROP(FreeFlow, NumEqFace, 1); //!< set the number of equations to 1
 SET_INT_PROP(FreeFlow, NumEqCellCenter, 1); //!< set the number of equations to 1
 
+//! The default sub-controlvolume face
+SET_PROP(FreeFlow, SubControlVolumeFace)
+{
+private:
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    static constexpr int dim = Grid::dimension;
+    static constexpr int dimWorld = Grid::dimensionworld;
+
+    struct ScvfGeometryTraits
+    {
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using Geometry = typename Grid::template Codim<1>::Geometry;
+        using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+    };
+
+public:
+    using type = FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>;
+};
+
+//! The default geometry helper required for the stencils, etc.
+SET_PROP(FreeFlow, StaggeredGeometryHelper)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = FreeFlowStaggeredGeometryHelper<GridView>;
+};
 
 //! The variables living on the faces
 SET_TYPE_PROP(FreeFlow, FaceVariables, StaggeredFaceVariables<TypeTag>);

@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a sub control volume face
+ * \brief Specilialized sub control volume face for free-flow staggered grid models
  */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_SUBCONTROLVOLUMEFACE_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_SUBCONTROLVOLUMEFACE_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
 #include <dune/common/fvector.hh>
@@ -38,13 +38,13 @@ namespace Dumux
 
 /*!
  * \ingroup Discretization
- * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
- *        of a sub control volume we compute fluxes on. We simply use the base class here.
+ * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
+ *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
 template<class ScvfGeometryTraits>
-class StaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
+class FreeFlowStaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
 {
-    using ParentType = SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>;
+    using ParentType = SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>;
     using Geometry = typename ScvfGeometryTraits::Geometry;
     using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
 
@@ -61,11 +61,11 @@ public:
     using Traits = ScvfGeometryTraits;
 
     // the default constructor
-    StaggeredSubControlVolumeFace() = default;
+    FreeFlowStaggeredSubControlVolumeFace() = default;
 
     //! Constructor with intersection
     template <class Intersection, class GeometryHelper>
-    StaggeredSubControlVolumeFace(const Intersection& is,
+    FreeFlowStaggeredSubControlVolumeFace(const Intersection& is,
                                const typename Intersection::Geometry& isGeometry,
                                GridIndexType scvfIndex,
                                const std::vector<GridIndexType>& scvIndices,
@@ -97,7 +97,7 @@ public:
       }
 
       //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
-      StaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
+      FreeFlowStaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
                                     const std::vector<GridIndexType>& scvIndices)
       {
           isGhostFace_ = true;
@@ -106,44 +106,21 @@ public:
           scvfIndex_ = -1;
           dofIdx_ = -1;
       }
-    /*//! The copy constrcutor
-    StaggeredSubControlVolumeFace(const StaggeredSubControlVolumeFace& other) = delete;
-
-    //! The move constrcutor
-    StaggeredSubControlVolumeFace(StaggeredSubControlVolumeFace&& other) = default;
-
-    //! The copy assignment operator
-    StaggeredSubControlVolumeFace& operator=(const StaggeredSubControlVolumeFace& other) = delete;
-
-    //! The move assignment operator
-    // StaggeredSubControlVolumeFace& operator=(StaggeredSubControlVolumeFace&& other)
-    // {
-    //     // We want to use the default copy/move assignment.
-    //     // But since geometry is not copy assignable :( we
-    //     // have to construct it again
-    //     geometry_.release();
-    //     geometry_.emplace(other.geometry_.value());
-    //     unitOuterNormal_ = std::move(other.unitOuterNormal_);
-    //     scvfIndex_ = std::move(other.scvfIndex_);
-    //     scvIndices_ = std::move(other.scvIndices_);
-    //     boundary_ = std::move(other.boundary_);
-    //     return *this;
-    // }*/
 
     //! The center of the sub control volume face
-    GlobalPosition center() const
+    const GlobalPosition& center() const
     {
         return center_;
     }
 
     //! The center of the sub control volume face
-    GlobalPosition dofPosition() const
+    const GlobalPosition& dofPosition() const
     {
         return center_;
     }
 
     //! The integration point for flux evaluations in global coordinates
-    GlobalPosition ipGlobal() const
+    const GlobalPosition& ipGlobal() const
     {
         // Return center for now
         return center_;
@@ -161,7 +138,7 @@ public:
         return boundary_;
     }
 
-    GlobalPosition unitOuterNormal() const
+    const GlobalPosition& unitOuterNormal() const
     {
         return unitOuterNormal_;
     }
@@ -185,7 +162,7 @@ public:
         return scvfIndex_;
     }
 
-    GlobalPosition corner(unsigned int localIdx) const
+    const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
         return corners_[localIdx];
@@ -239,12 +216,12 @@ public:
     }
 
 
-    auto pairData(const int idx) const
+    const PairData<Scalar, GlobalPosition>& pairData(const int idx) const
     {
         return pairData_[idx];
     }
 
-    auto& pairData() const
+    const auto& pairData() const
     {
         return pairData_;
     }
@@ -268,7 +245,6 @@ private:
     bool normalInPosCoordDir_;
     Scalar outerNormalScalar_;
     bool isGhostFace_;
-
 };
 
 
