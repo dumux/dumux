@@ -111,8 +111,7 @@ public:
             gradP.axpy(-rho, problem.gravityAtPos(scvf.center()));
 
         // apply the permeability and return the flux
-        const auto KGradP = applyPermeability_(K, gradP);
-        return -1.0*(KGradP*scvf.unitOuterNormal())*scvf.area();
+        return -1.0*vtmv(scvf.unitOuterNormal(), K, gradP)*scvf.area();
     }
 
     // compute transmissibilities ti for analytical jacobians
@@ -140,25 +139,9 @@ public:
         std::vector<Scalar> ti(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry))
             ti[scv.indexInElement()] =
-                -1.0*(applyPermeability_(K, fluxVarCache.gradN(scv.indexInElement()))
-                        *scvf.unitOuterNormal())*scvf.area();
+                -1.0*scvf.area()*vtmv(scvf.unitOuterNormal(), K, fluxVarCache.gradN(scv.indexInElement()));
 
         return ti;
-    }
-
-private:
-    inline static GlobalPosition applyPermeability_(const DimWorldMatrix& K, const GlobalPosition& gradI)
-    {
-        GlobalPosition result(0.0);
-        K.mv(gradI, result);
-        return result;
-    }
-
-    inline static GlobalPosition applyPermeability_(const Scalar k, const GlobalPosition& gradI)
-    {
-        GlobalPosition result(gradI);
-        result *= k;
-        return result;
     }
 };
 
