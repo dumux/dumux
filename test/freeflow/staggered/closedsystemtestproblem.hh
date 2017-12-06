@@ -111,6 +111,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -153,9 +154,9 @@ public:
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return SourceValues(0.0);
     }
     // \}
     /*!
