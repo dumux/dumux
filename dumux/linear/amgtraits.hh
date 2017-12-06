@@ -21,10 +21,10 @@
  * \ingroup Properties
  * \ingroup Linear
  *
- * \brief Defines some fundamental properties for the AMG backend.
+ * \brief Define traits for the AMG backend.
  */
-#ifndef DUMUXAMGPROPERTIES_HH
-#define DUMUXAMGPROPERTIES_HH
+#ifndef DUMUX_AMG_TRAITS_HH
+#define DUMUX_AMG_TRAITS_HH
 
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/novlpschwarz.hh>
@@ -32,14 +32,9 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/grid/common/capabilities.hh>
-#include <dune/common/version.hh>
 
-#include <dumux/discretization/box/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/sequential/properties.hh>
-#include <dumux/porousmediumflow/sequential/pressureproperties.hh>
-#include "linearsolverproperties.hh"
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -47,11 +42,14 @@ namespace Dumux
 // Forward declaration for the property definitions
 template <class TypeTag> class AMGBackend;
 
-namespace Properties
-{
-//! The type traits required for using the AMG backend
-NEW_PROP_TAG(AmgTraits);
+//! The implementation is specialized for the different discretizations
+template<class TypeTag, DiscretizationMethods DM> struct AmgTraitsImpl;
 
+//! The type traits required for using the AMG backend
+template<class TypeTag>
+using AmgTraits = AmgTraitsImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+
+//! NonoverlappingSolverTraits used by discretization with non-overlapping parallel model
 template <class MType, class VType, bool isParallel>
 class NonoverlappingSolverTraits
 {
@@ -75,9 +73,9 @@ public:
 #endif
 
 //! Box: use the non-overlapping AMG
-SET_PROP(BoxModel, AmgTraits)
+template<class TypeTag>
+struct AmgTraitsImpl<TypeTag, DiscretizationMethods::Box>
 {
-public:
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     enum {
@@ -98,6 +96,7 @@ public:
     using DofMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
 };
 
+//! OverlappingSolverTraits used by discretization with overlapping parallel model
 template <class MType, class VType, bool isParallel>
 class OverlappingSolverTraits
 {
@@ -121,9 +120,9 @@ public:
 #endif
 
 //! Cell-centered tpfa: use the overlapping AMG
-SET_PROP(CCTpfaModel, AmgTraits)
+template<class TypeTag>
+struct AmgTraitsImpl<TypeTag, DiscretizationMethods::CCTpfa>
 {
-public:
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     enum {
@@ -132,6 +131,7 @@ public:
         isNonOverlapping = false,
         isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
     };
+
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
     using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
@@ -144,54 +144,10 @@ public:
     using DofMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
 };
 
-//! Cell-centered mpfa: use the overlapping AMG
-SET_PROP(CCMpfaModel, AmgTraits)
-{
-public:
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    enum {
-        numEq = JacobianMatrix::block_type::rows,
-        dofCodim = 0,
-        isNonOverlapping = false,
-        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-    };
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
-    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
-    using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
-    using Comm = typename SolverTraits::Comm;
-    using LinearOperator = typename SolverTraits::LinearOperator;
-    using ScalarProduct = typename SolverTraits::ScalarProduct;
-    using Smoother = typename SolverTraits::Smoother;
+template<class TypeTag>
+struct AmgTraitsImpl<TypeTag, DiscretizationMethods::CCMpfa>
+: public AmgTraitsImpl<TypeTag, DiscretizationMethods::CCTpfa> {};
 
-    using DofMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-};
+} // end namespace Dumux
 
-//! Sequential model: use the overlapping AMG
-SET_PROP(SequentialModel, AmgTraits)
-{
-public:
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    enum {
-        numEq = JacobianMatrix::block_type::rows,
-        dofCodim = 0,
-        isNonOverlapping = false,
-        isParallel = Dune::Capabilities::canCommunicate<Grid, dofCodim>::v
-    };
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MType = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
-    using VType = Dune::BlockVector<Dune::FieldVector<Scalar,numEq> >;
-    using SolverTraits = OverlappingSolverTraits<MType, VType, isParallel>;
-    using Comm = typename SolverTraits::Comm;
-    using LinearOperator = typename SolverTraits::LinearOperator;
-    using ScalarProduct = typename SolverTraits::ScalarProduct;
-    using Smoother = typename SolverTraits::Smoother;
-
-    using DofMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-};
-
-} // namespace Properties
-} // namespace Dumux
-#endif
+#endif // DUMUX_AMG_TRAITS_HH

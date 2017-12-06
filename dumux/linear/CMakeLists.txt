@@ -2,7 +2,7 @@
 install(FILES
 amgbackend.hh
 amgparallelhelpers.hh
-amgproperties.hh
+amgtraits.hh
 linearsolveracceptsmultitypematrix.hh
 linearsolverproperties.hh
 pardisobackend.hh
