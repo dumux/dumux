@@ -170,6 +170,7 @@ class BoxFVElementGeometry<TypeTag, false>
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
@@ -283,10 +284,10 @@ private:
 
         // construct the sub control volumes
         scvs_.resize(elementGeometry.corners());
-        for (unsigned int scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
+        for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
-            auto dofIdxGlobal = fvGridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
+            const auto dofIdxGlobal = fvGridGeometry().vertexMapper().subIndex(element, scvLocalIdx, dim);
 
             // add scv to the local container
             scvs_[scvLocalIdx] = SubControlVolume(geometryHelper,
@@ -303,8 +304,8 @@ private:
         for (; scvfLocalIdx < numInnerScvf; ++scvfLocalIdx)
         {
             // find the local scv indices this scvf is connected to
-            std::vector<IndexType> localScvIndices({static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
-                                                    static_cast<IndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
+            std::vector<LocalIndexType> localScvIndices({static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 0, dim)),
+                                                         static_cast<LocalIndexType>(referenceElement.subEntity(scvfLocalIdx, dim-1, 1, dim))});
 
             scvfs_[scvfLocalIdx] = SubControlVolumeFace(geometryHelper,
                                                         element,
@@ -324,8 +325,8 @@ private:
                 for (unsigned int isScvfLocalIdx = 0; isScvfLocalIdx < isGeometry.corners(); ++isScvfLocalIdx)
                 {
                     // find the scv this scvf is connected to
-                    IndexType insideScvIdx = static_cast<IndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
-                    std::vector<IndexType> localScvIndices = {insideScvIdx, insideScvIdx};
+                    LocalIndexType insideScvIdx = static_cast<LocalIndexType>(referenceElement.subEntity(intersection.indexInInside(), 1, isScvfLocalIdx, dim));
+                    std::vector<LocalIndexType> localScvIndices = {insideScvIdx, insideScvIdx};
 
                     scvfs_.emplace_back(geometryHelper,
                                         intersection,
