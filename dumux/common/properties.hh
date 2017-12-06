@@ -72,6 +72,7 @@ NEW_PROP_TAG(LinearSolver);
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
 /////////////////////////////////////////////////
+// TODO: Integrate UseMoles into BalanceEqOpts
 NEW_PROP_TAG(UseMoles);               //! Property whether to use moles or kg as amount unit for balance equations
 NEW_PROP_TAG(ReplaceCompEqIdx);       //! The component balance index that should be replaced by the total mass/mole balance
 NEW_PROP_TAG(BalanceEqOpts);          //! A class that collects options for the evaluation of the balance equations
@@ -141,6 +142,9 @@ NEW_PROP_TAG(MaterialLaw);                         //! The material law which ou
 NEW_PROP_TAG(WettingPhase);                        //! The wetting phase for two-phase models
 NEW_PROP_TAG(NonwettingPhase);                     //! The non-wetting phase for two-phase models
 NEW_PROP_TAG(Formulation);                         //! The formulation of the model
+// TODO: is this useful? -> everything is a constraint solver just a different type
+NEW_PROP_TAG(UseConstraintSolver);                 //! Whether to use a contraint solver for computing the secondary variables
+NEW_PROP_TAG(UseKelvinEquation);                   //! If we use Kelvin equation to lower the vapor pressure as a function of capillary pressure, temperature
 
 /////////////////////////////////////////////////////////////
 // Properties used by models involving mineralization:
@@ -171,9 +175,7 @@ NEW_PROP_TAG(SetMoleFractionsForWettingPhase);     //!< Set the mole fraction in
 //////////////////////////////////////////////////////////////
 // Additional properties used by the richards model
 //////////////////////////////////////////////////////////////
-
 NEW_PROP_TAG(EnableWaterDiffusionInAir); //!< Property for turning Richards into extended Richards
-NEW_PROP_TAG(UseKelvinEquation); //!< Property for turning Richards into extended Richards
 
 /////////////////////////////////////////////////////////////
 // Properties used by the staggered-grid discretization method
