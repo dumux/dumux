@@ -36,6 +36,8 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/parameterparser.hh>
 
+#warning "start.hh is deprecated. Use new style main files see e.g. /test/porousmediumflow/1p."
+
 namespace Dumux
 {
 // forward declaration of property tags
