@@ -1,4 +1,3 @@
-add_subdirectory(adaptive)
 add_subdirectory(box)
 add_subdirectory(cellcentered)
 
