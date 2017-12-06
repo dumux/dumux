@@ -34,7 +34,6 @@ namespace Dumux
 template<class TypeTag>
 class StaggeredConnectivityMap
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
