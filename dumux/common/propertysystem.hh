@@ -36,8 +36,8 @@
  * tag and these properties can also be defined on an arbitrary level
  * of the hierarchy.
  */
-#ifndef DUMUX_PROPERTIES_HH
-#define DUMUX_PROPERTIES_HH
+#ifndef DUMUX_PROPERTY_SYSTEM_HH
+#define DUMUX_PROPERTY_SYSTEM_HH
 
 #include <cstring>
 #include <iostream>
@@ -1249,4 +1249,4 @@ public:
 } // namespace Properties
 } // namespace Dumux
 
-#endif
+#endif // DUMUX_PROPERTY_SYSTEM_HH

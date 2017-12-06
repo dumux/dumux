@@ -20,10 +20,16 @@
  * \ingroup Properties
  * \file
  *
- * \brief Collects a list of properties used by the core of Dumux.
+ * \brief _Declares_ all properties used in Dumux.
+ * \note Include this to forward declare properties in your headers.
  */
 
+#ifndef DUMUX_PROPERTIES_HH
+#define DUMUX_PROPERTIES_HH
+
+#ifndef DUMUX_PROPERTY_SYSTEM_HH
 #include <dumux/common/propertysystem.hh>
+#endif
 
 namespace Dumux
 {
@@ -186,5 +192,8 @@ NEW_PROP_TAG(StaggeredPrimaryVariables);           //! The hybrid primary variab
 NEW_PROP_TAG(BaseEpsilon);                         //! A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //! Class containing local face-related data
 NEW_PROP_TAG(BoundaryValues);                      //! Class containing local boundary data
-}
-}
+
+} // end namespace Properties
+} // end namespace Dumux
+
+#endif // DUMUX_PROPERTIES_HH
