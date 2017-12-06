@@ -25,16 +25,10 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_DARCYS_LAW_HH
 
-#include <memory>
-
-#include <dune/common/float_cmp.hh>
-
 #include <dumux/common/math.hh>
 #include <dumux/common/parameters.hh>
-
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
-
 
 namespace Dumux
 {
