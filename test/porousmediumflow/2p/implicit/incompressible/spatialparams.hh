@@ -100,13 +100,19 @@ public:
     }
 
     /*!
-     * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$.
+     *        In this test, we use element-wise distributed permeabilities.
      *
-     * \param globalPos The global position
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return permeability
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-        if (isInLens_(globalPos))
+        if (isInLens_(element.geometry().center()))
             return lensK_;
         return outerK_;
     }
@@ -120,13 +126,19 @@ public:
     { return 0.4; }
 
     /*!
-     * \brief Returns the parameter object for the Brooks-Corey material law
+     * \brief Returns the parameter object for the Brooks-Corey material law.
+     *        In this test, we use element-wise distributed material parameters.
      *
-     * \param globalPos The global position
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolutionVector& elemSol) const
     {
-        if (isInLens_(globalPos))
+        if (isInLens_(element.geometry().center()))
             return lensMaterialParams_;
         return outerMaterialParams_;
     }
