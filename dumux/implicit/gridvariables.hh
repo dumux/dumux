@@ -79,7 +79,6 @@ public:
         gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, curSol, true);
 
         // update the old time step vol vars with the initial solution
-        // prevGridVolVars_ = curGridVolVars_;
         prevGridVolVars_.update(*fvGridGeometry_, initSol);
     }
 
