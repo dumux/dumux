@@ -268,7 +268,7 @@ public:
         GlobalPosition normal = Dumux::crossProduct(v3, t);
         normal /= normal.two_norm();
 
-        // TODO can this be done easier?, e.g. always ensure the right direction?
+        //! ensure the right direction of the normal
         const auto v = elementGeometry_.corner(scvIndices[1]) - elementGeometry_.corner(scvIndices[0]);
         const auto s = v*normal;
         if (std::signbit(s))
@@ -283,9 +283,17 @@ public:
     normal(const ScvfCornerStorage& scvfCorners,
            const std::vector<unsigned int>& scvIndices) const
     {
+        //! obtain normal vector by 90° counter-clockwise rotation of t
         const auto t = scvfCorners[1] - scvfCorners[0];
         GlobalPosition normal({-t[1], t[0]});
         normal /= normal.two_norm();
+
+        //! ensure the right direction of the normal
+        const auto v = elementGeometry_.corner(scvIndices[1]) - elementGeometry_.corner(scvIndices[0]);
+        const auto s = v*normal;
+        if (std::signbit(s))
+            normal *= -1;
+
         return normal;
     }
 
@@ -302,7 +310,10 @@ public:
     typename std::enable_if<w == 2, Scalar>::type
     scvVolume(const ScvCornerStorage& p) const
     {
-        return 0.5*Dumux::crossProduct(p[3]-p[0], p[2]-p[1]);
+        //! make sure we are using positive volumes
+        //! Cross product of diagonals might be negative, depending on element orientation
+        using std::abs;
+        return 0.5*abs(Dumux::crossProduct(p[3]-p[0], p[2]-p[1]));
     }
 
     //! get scvf area
