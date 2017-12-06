@@ -20,10 +20,8 @@
  * \file
  * \brief Class to specify the type of a boundary.
  */
-#ifndef BOUNDARY_TYPES_HH
-#define BOUNDARY_TYPES_HH
-
-#include <dumux/common/valgrind.hh>
+#ifndef DUMUX_BOUNDARY_TYPES_HH
+#define DUMUX_BOUNDARY_TYPES_HH
 
 namespace Dumux
 {
@@ -39,6 +37,10 @@ public:
     BoundaryTypes()
     { reset(); }
 
+    //! we have a boundary condition for each equation
+    static constexpr int size()
+    { return numEq; }
+
     /*!
      * \brief Reset the boundary types for all equations.
      *
@@ -49,9 +51,7 @@ public:
     void reset()
     {
         for (int eqIdx=0; eqIdx < numEq; ++eqIdx)
-        {
             resetEq(eqIdx);
-        }
     }
 
     /*!
@@ -89,11 +89,9 @@ public:
      */
     void checkWellPosed() const
     {
-#ifndef NDEBUG
+        // if this fails, at least one condition is missing.
         for (int i=0; i < numEq; ++i)
-            // if this fails, at least one condition is missing.
             assert(boundaryInfo_[i].visited);
-#endif
     }
 
     /*!
@@ -102,9 +100,7 @@ public:
     void setAllNeumann()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
             setNeumann(eqIdx);
-        }
     }
 
     /*!
@@ -113,9 +109,7 @@ public:
     void setAllDirichlet()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++ eqIdx)
-        {
             setDirichlet(eqIdx);
-        }
     }
 
     /*!
@@ -124,9 +118,7 @@ public:
     void setAllOutflow()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
             setOutflow(eqIdx);
-        }
     }
 
     /*!
@@ -135,9 +127,7 @@ public:
     void setAllCouplingDirichlet()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
             setCouplingDirichlet(eqIdx);
-        }
     }
 
     /*!
@@ -146,9 +136,7 @@ public:
     void setAllCouplingNeumann()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
             setCouplingNeumann(eqIdx);
-        }
     }
     /*!
      * \brief Set all boundary conditions to mortar coupling.
@@ -156,9 +144,7 @@ public:
     void setAllCouplingMortar()
     {
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
-        {
             setCouplingDirichlet(eqIdx);
-        }
     }
 
     /*!
@@ -172,8 +158,6 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isNeumann = true;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
@@ -194,8 +178,6 @@ public:
         // update the equation <-> primary variable mapping
         eq2pvIdx_[eqIdx] = pvIdx;
         pv2eqIdx_[pvIdx] = eqIdx;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
@@ -210,8 +192,6 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isOutflow = true;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
@@ -223,8 +203,6 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isCouplingDirichlet = true;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
@@ -236,8 +214,6 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isCouplingNeumann = true;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
@@ -249,8 +225,6 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isCouplingMortar = true;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
@@ -468,20 +442,21 @@ public:
     { return eq2pvIdx_[eqIdx]; }
 
 protected:
+    //! use bitfields to minimize the size
     struct BoundaryInfo {
-        bool visited;
-        bool isDirichlet;
-        bool isNeumann;
-        bool isOutflow;
-        bool isCouplingDirichlet;
-        bool isCouplingNeumann;
-        bool isCouplingMortar;
+        bool visited : 1;
+        bool isDirichlet : 1;
+        bool isNeumann : 1;
+        bool isOutflow : 1;
+        bool isCouplingDirichlet : 1;
+        bool isCouplingNeumann : 1;
+        bool isCouplingMortar : 1;
     };
 
     std::array<BoundaryInfo, numEq> boundaryInfo_;
     std::array<unsigned int, numEq> eq2pvIdx_, pv2eqIdx_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
