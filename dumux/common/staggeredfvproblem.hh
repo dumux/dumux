@@ -56,7 +56,6 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
     enum {
         dim = GridView::dimension,
@@ -107,7 +106,7 @@ public:
      * \param entity The dof entity (element or vertex)
      */
     template<class Entity>
-    InitialValues initial(const Entity& entity) const
+    PrimaryVariables initial(const Entity& entity) const
     {
         // static_assert(int(Entity::codimension) == 0 || int(Entity::codimension) == dim, "Entity must be element or vertex");
         return asImp_().initialAtPos(entity.center());

@@ -110,12 +110,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-
-    using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
-    using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -158,9 +153,9 @@ public:
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return SourceValues(0.0);
+        return PrimaryVariables(0.0);
     }
     // \}
     /*!
@@ -196,9 +191,9 @@ public:
      *
      * \param globalPos The global position
      */
-    BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryValues values;
+        PrimaryVariables values;
         values[pressureIdx] = 1.1e+5;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;
@@ -214,9 +209,9 @@ public:
      *
      * \param globalPos The global position
      */
-    InitialValues initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        InitialValues values;
+        PrimaryVariables values;
         values[pressureIdx] = 1.0e+5;
         values[velocityXIdx] = 0.0;
         values[velocityYIdx] = 0.0;

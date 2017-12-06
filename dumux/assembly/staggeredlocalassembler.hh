@@ -325,8 +325,7 @@ static void dCCdCC_(Assembler& assembler,
 
        for(auto pvIdx : PriVarIndices(cellCenterIdx))
        {
-           PrimaryVariables priVars(CellCenterPrimaryVariables(curSol[cellCenterIdx][globalJ]),
-                                    FacePrimaryVariables(0.0));
+           CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
 
            const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
            priVars[pvIdx] += eps;
@@ -453,8 +452,7 @@ static void dFacedCC_(Assembler& assembler,
 
            for(auto pvIdx : PriVarIndices(cellCenterIdx))
            {
-               PrimaryVariables priVars(CellCenterPrimaryVariables(curSol[cellCenterIdx][globalJ]),
-                                        FacePrimaryVariables(0.0));
+               CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
 
                const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
                priVars[pvIdx] += eps;

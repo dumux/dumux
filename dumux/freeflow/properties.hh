@@ -75,8 +75,8 @@ public:
 //! The variables living on the faces
 SET_TYPE_PROP(FreeFlow, FaceVariables, StaggeredFaceVariables<TypeTag>);
 
-//! A container class used to specify values for boundary conditions
-SET_PROP(FreeFlow, BoundaryValues)
+//! A container class used to specify values for boundary/initial conditions and sources
+SET_PROP(FreeFlow, PrimaryVariables)
 {
 private:
     using CellCenterBoundaryValues = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);

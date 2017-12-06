@@ -137,9 +137,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
-    using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
-    using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -178,9 +176,9 @@ public:
      *
      * \param globalPos The global position
      */
-    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return SourceValues(0.0);
+        return PrimaryVariables(0.0);
     }
     // \}
     /*!
@@ -237,9 +235,9 @@ public:
      *
      * \param globalPos The center of the finite volume which ought to be set.
      */
-    BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        BoundaryValues values = initialAtPos(globalPos);
+        PrimaryVariables values = initialAtPos(globalPos);
 
         // give the system some time so that the pressure can equilibrate, then start the injection of the tracer
         if(isInlet(globalPos))
@@ -268,9 +266,9 @@ public:
      *
      * \param globalPos The global position
      */
-    InitialValues initialAtPos(const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        InitialValues values;
+        PrimaryVariables values;
         values[pressureIdx] = 1.1e+5;
         values[transportCompIdx] = 0.0;
 #if NONISOTHERMAL

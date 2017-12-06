@@ -54,7 +54,6 @@ class NavierStokesProblem : public StaggeredFVProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
     enum {
         dim = Grid::dimension,
@@ -92,7 +91,7 @@ public:
      *
      * \param scvf The sub control volume face
      */
-    BoundaryValues dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
     {
         return asImp_().dirichletAtPos(scvf.center());
     }
@@ -103,7 +102,7 @@ public:
      *
      * \param scvf The sub control volume face
      */
-    BoundaryValues neumann(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables neumann(const Element &element, const SubControlVolumeFace &scvf) const
     {
         return asImp_().neumannAtPos(scvf.center());
     }
@@ -113,9 +112,9 @@ public:
      *
      * \param scvf The sub control volume face
      */
-    BoundaryValues neumannAtPos(const GlobalPosition& globalPos) const
+    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
     {
-        return BoundaryValues(0.0);
+        return PrimaryVariables(0.0);
     }
 
     /*!
