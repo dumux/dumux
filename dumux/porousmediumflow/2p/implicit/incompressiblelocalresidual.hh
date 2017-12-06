@@ -128,7 +128,7 @@ public:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
         const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
                                                 scvf, FluidSystem::wPhaseIdx, elemFluxVarsCache);
         const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
@@ -231,7 +231,7 @@ public:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
         const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
                                                 scvf, FluidSystem::wPhaseIdx, elemFluxVarsCache);
         const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
@@ -366,7 +366,7 @@ public:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
 
         // evaluate the current wetting phase Darcy flux and resulting upwind weights
-        static const Scalar upwindWeight = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Implicit, UpwindWeight);
+        static const Scalar upwindWeight = getParam<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
         const auto flux_w = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
                                                      scvf, FluidSystem::wPhaseIdx, elemFluxVarsCache);
         const auto flux_n = AdvectionType::flux(problem, element, fvGeometry, curElemVolVars,
