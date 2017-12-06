@@ -38,51 +38,27 @@
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
 
+#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/freeflow/staggered/properties.hh>
+
 namespace Dumux
 {
 
-//! Dummy flux variables class so that we can update the connectivity map
-class MockFluxVariables
-{
-public:
+template<class TypeTag>
+class MockProblem
+{ };
 
-  template<class Map, class Element, class FvGeometry, class Scvf>
-  void computeCellCenterToCellCenterStencil(Map& map,
-                                            const Element& element,
-                                            const FvGeometry& fvGeometry,
-                                            const Scvf& scvf)
-  {}
-
-  template<class Map, class Element, class FvGeometry, class Scvf>
-  void computeCellCenterToFaceStencil(Map& map,
-                                      const Element& element,
-                                      const FvGeometry& fvGeometry,
-                                      const Scvf& scvf)
-  {}
-
-  template<class Map, class FvGeometry, class Scvf>
-  void computeFaceToCellCenterStencil(Map& map,
-                                      const FvGeometry& fvGeometry,
-                                      const Scvf& scvf)
-  {}
-
-  template<class Map, class FvGeometry, class Scvf>
-  void computeFaceToFaceStencil(Map& map,
-                                const FvGeometry& fvGeometry,
-                                const Scvf& scvf)
-  {}
-
-};
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel, ModelProperties));
+NEW_TYPE_TAG(TestStaggeredFreeFlowGeometry, INHERITS_FROM(StaggeredModel, NavierStokes));
 
-SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TestStaggeredFreeFlowGeometry, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(TestFVGeometry, FluxVariables, MockFluxVariables);
+// Set the problem property
+SET_TYPE_PROP(TestStaggeredFreeFlowGeometry, Problem, MockProblem<TypeTag> );
 
-SET_BOOL_PROP(TestFVGeometry, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(TestStaggeredFreeFlowGeometry, EnableFVGridGeometryCache, true);
 }
 
 }
@@ -102,7 +78,7 @@ int main (int argc, char *argv[]) try
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 
     // aliases
-    using TypeTag = TTAG(TestFVGeometry);
+    using TypeTag = TTAG(TestStaggeredFreeFlowGeometry);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename Grid::LeafGridView;
 
@@ -124,6 +100,16 @@ int main (int argc, char *argv[]) try
     FVGridGeometry fvGridGeometry(leafGridView);
     fvGridGeometry.update();
 
+    std::cout << "Abbreviatons:\n"
+              << "pos - postition of face center\n"
+              << "fIdx - face index\n"
+              << "dofIdx (self/oppo.) - dofIdx on face (self/opposite)\n"
+              << "norm in/out - dofIdx on face normal to own face (within own element / in adjacent element)\n"
+              << "par - dofIdx on face parallel to own face\n"
+              << "normDist - distance bewteen the dofs on the faces normal the own face\n"
+              << "parDist - distance bewteen the dof on the parallel face and the one on the own face\n"
+              << "norm in/out - dofIdx on face normal to own face (within own element / in adjacent element)" << std::endl;
+
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
@@ -139,7 +125,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            std::cout << "-- scv " << scv.indexInElement() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
+            std::cout << "-- scv " << scv.dofIndex() << " center at: " << scv.center() << std::endl;
         }
 
         auto range2 = scvfs(fvGeometry);
@@ -147,10 +133,23 @@ int main (int argc, char *argv[]) try
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
+
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << " normal: " << scvf.unitOuterNormal();
-            if (scvf.boundary()) std::cout << " (on boundary).";
+            std::cout <<  std::fixed << std::left << std::setprecision(2)
+            << "pos "<< scvf.ipGlobal()
+            << "; fIdx "  << std::setw(3)  << scvf.index()
+            << "; dofIdx (self/oppo.) " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) <<scvf.dofIndexOpposingFace()
+            << "; dist (self/oppo.) " << std::setw(3) << scvf.selfToOppositeDistance()
+            << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
+            << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
+            << ", par1 " << std::setw(3)  << std::setw(3) << scvf.pairData(0).outerParallelFaceDofIdx
+            << ", par2 " << std::setw(3)  << std::setw(3) << scvf.pairData(1).outerParallelFaceDofIdx
+            << ", normDist1 " << std::setw(3) << scvf.pairData(0).normalDistance
+            << ", normDist2 " << std::setw(3) << scvf.pairData(1).normalDistance
+            << ", parDist1 " << std::setw(3) << scvf.pairData(0).parallelDistance
+            << ", parDist2 " << std::setw(3) << scvf.pairData(1).parallelDistance;
+            if (scvf.boundary()) std::cout << " (on boundary)";
             std::cout << std::endl;
         }
     }
