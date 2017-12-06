@@ -70,7 +70,7 @@ public:
     }
 
     //! The center of the sub control volume
-    GlobalPosition center() const
+    const GlobalPosition& center() const
     {
         return center_;
     }
@@ -105,10 +105,10 @@ public:
     }
 
     // The position of the dof this scv is embedded in
-    GlobalPosition dofPosition() const
+    const GlobalPosition& dofPosition() const
     {
         // The corner list is defined such that the first entry is the vertex itself
-        return corner(0);
+        return corners_[0];
     }
 
     //! The global index of the element this scv is embedded in
@@ -118,7 +118,7 @@ public:
     }
 
     //! Return the corner for the given local index
-    GlobalPosition corner(LocalIndexType localIdx) const
+    const GlobalPosition& corner(LocalIndexType localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
         return corners_[localIdx];
