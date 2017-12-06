@@ -94,7 +94,7 @@ evalSolution(const Element& element,
 {
     using PrimaryVariables = typename BoxElementSolution<TypeTag>::PrimaryVariables;
     using Scalar = typename PrimaryVariables::value_type;
-    using CoordScalar = typename Element::Geometry::GlobalCoordinate::ctype;
+    using CoordScalar = typename Element::Geometry::GlobalCoordinate::value_type;
     static constexpr int dim = Element::Geometry::mydimension;
 
     //! The box scheme always uses linear Ansatz functions
