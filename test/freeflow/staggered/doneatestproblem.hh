@@ -120,6 +120,7 @@ class DoneaTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
@@ -188,9 +189,9 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables source(0.0);
+        SourceValues source(0.0);
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
 

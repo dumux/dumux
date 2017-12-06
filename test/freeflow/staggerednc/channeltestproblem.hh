@@ -138,6 +138,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -176,9 +177,9 @@ public:
      *
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return SourceValues(0.0);
     }
     // \}
     /*!
