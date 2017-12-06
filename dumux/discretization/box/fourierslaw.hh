@@ -24,24 +24,12 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FOURIERS_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-
 #include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
-
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidState);
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(ThermalConductivityModel);
-}
 
 /*!
  * \ingroup BoxFouriersLaw
@@ -101,39 +89,14 @@ public:
 
         // evaluate gradTemp at integration point
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& jacInvT = fluxVarsCache.jacInvT();
-        const auto& shapeJacobian = fluxVarsCache.shapeJacobian();
 
+        // compute the temperature gradient with the shape functions
         GlobalPosition gradTemp(0.0);
         for (auto&& scv : scvs(fvGeometry))
-        {
-            const auto& volVars = elemVolVars[scv];
+            gradTemp.axpy(elemVolVars[scv].temperature(), fluxVarsCache.gradN(scv.indexInElement()));
 
-            // the mole/mass fraction gradient
-            GlobalPosition gradI;
-            jacInvT.mv(shapeJacobian[scv.indexInElement()][0], gradI);
-            gradI *= volVars.temperature();
-            gradTemp += gradI;
-        }
-
-        // apply the diffusion tensor and return the flux
-        auto lambdaGradT = applyHeatConductivityTensor_(lambda, gradTemp);
-        return -1.0*(lambdaGradT*scvf.unitOuterNormal())*scvf.area();
-    }
-
-private:
-    static GlobalPosition applyHeatConductivityTensor_(const DimWorldMatrix& Lambda, const GlobalPosition& gradI)
-    {
-        GlobalPosition result(0.0);
-        Lambda.mv(gradI, result);
-        return result;
-    }
-
-    static GlobalPosition applyHeatConductivityTensor_(const Scalar lambda, const GlobalPosition& gradI)
-    {
-        GlobalPosition result(gradI);
-        result *= lambda;
-        return result;
+        // comute the heat conduction flux
+        return -1.0*vtmv(scvf.unitOuterNormal(), lambda, gradTemp)*scvf.area();
     }
 };
 

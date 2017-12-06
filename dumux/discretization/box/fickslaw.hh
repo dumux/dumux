@@ -24,23 +24,12 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_BOX_FICKS_LAW_HH
 
-#include <dune/common/float_cmp.hh>
-
 #include <dumux/common/math.hh>
-#include <dumux/common/parameters.hh>
-
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(EffectiveDiffusivityModel);
-}
 
 /*!
  * \ingroup BoxFicksLaw
@@ -123,18 +112,13 @@ public:
             // the resulting averaged diffusion tensor
             const auto D = problem.spatialParams().harmonicMean(insideD, outsideD, scvf.unitOuterNormal());
 
+            // the mole/mass fraction gradient
             GlobalPosition gradX(0.0);
             for (auto&& scv : scvs(fvGeometry))
-            {
-                const auto& volVars = elemVolVars[scv];
+                gradX.axpy(elemVolVars[scv].moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
 
-                // the mole/mass fraction gradient
-                gradX.axpy(volVars.moleFraction(phaseIdx, compIdx), fluxVarsCache.gradN(scv.indexInElement()));
-            }
-
-            // apply the diffusion tensor and return the flux
-            auto DGradX = applyDiffusionTensor_(D, gradX);
-            componentFlux[compIdx] = -1.0*rho*(DGradX*scvf.unitOuterNormal())*scvf.area();
+            // compute the diffusive flux
+            componentFlux[compIdx] = -1.0*rho*vtmv(scvf.unitOuterNormal(), D, gradX)*scvf.area();
             if (BalanceEqOpts::mainComponentIsBalanced(phaseIdx) && !FluidSystem::isTracerFluidSystem())
                 componentFlux[phaseIdx] -= componentFlux[compIdx];
         }
@@ -183,27 +167,10 @@ public:
 
             ti[compIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-                ti[compIdx][scv.indexInElement()] =
-                    -rho*(applyDiffusionTensor_(D, fluxVarCache.gradN(scv.indexInElement()))
-                            *scvf.unitOuterNormal())*scvf.area();
+                ti[compIdx][scv.indexInElement()] = -rho*vtmv(scvf.unitOuterNormal(), D, fluxVarCache.gradN(scv.indexInElement()))*scvf.area();
         }
 
         return ti;
-    }
-
-private:
-    static GlobalPosition applyDiffusionTensor_(const DimWorldMatrix& D, const GlobalPosition& gradI)
-    {
-        GlobalPosition result(0.0);
-        D.mv(gradI, result);
-        return result;
-    }
-
-    static GlobalPosition applyDiffusionTensor_(const Scalar d, const GlobalPosition& gradI)
-    {
-        GlobalPosition result(gradI);
-        result *= d;
-        return result;
     }
 };
 
