@@ -103,6 +103,14 @@ public:
     PrimaryVariables& operator [](IndexType i)
     { return priVars_[i]; }
 
+    //! \brief vector space division by scalar
+    template <typename FieldType>
+    BoxElementSolution& operator/= (const FieldType& k)
+    {
+        priVars_ /= k;
+        return *this;
+    }
+
 private:
     Dune::BlockVector<PrimaryVariables> priVars_;
 };
