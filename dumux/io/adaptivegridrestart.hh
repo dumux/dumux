@@ -34,7 +34,7 @@
 #include <dune/grid/utility/grapedataioformattypes.hh>
 #endif
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

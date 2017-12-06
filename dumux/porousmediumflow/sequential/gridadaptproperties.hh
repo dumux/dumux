@@ -27,7 +27,8 @@
 #ifndef DUMUX_GRIDADAPT_PROPERTIES_HH
 #define DUMUX_GRIDADAPT_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux
 {
