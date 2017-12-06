@@ -189,45 +189,30 @@ private:
         // First we upate data which are not dependent on the physical processes.
         // We store pointers to the other flux var caches, so that we have to obtain
         // this data only once and can use it again in the sub-cache fillers.
+        const auto numGlobalScvfs = iv.localFaceData().size();
+        std::vector<const SubControlVolumeFace*> ivScvfs(numGlobalScvfs);
+        std::vector<FluxVariablesCache*> ivFluxVarCaches(numGlobalScvfs);
+
+        unsigned int i = 0;
+        for (const auto& d : iv.localFaceData())
+        {
+            // obtain the scvf
+            const auto& scvfJ = fvGeometry().scvf(d.globalScvfIndex());
+            ivScvfs[i] = &scvfJ;
+            ivFluxVarCaches[i] = &fluxVarsCacheContainer[scvfJ];
+            ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
+            ivFluxVarCaches[i]->setUpdateStatus(true);
+            i++;
+        }
+
         if (forceUpdateAll)
         {
-            const auto numGlobalScvfs = iv.localFaceData().size();
-            std::vector<const SubControlVolumeFace*> ivScvfs(numGlobalScvfs);
-            std::vector<FluxVariablesCache*> ivFluxVarCaches(numGlobalScvfs);
-
-            unsigned int i = 0;
-            for (const auto& d : iv.localFaceData())
-            {
-                // obtain the scvf
-                const auto& scvfJ = fvGeometry().scvf(d.globalScvfIndex());
-                ivScvfs[i] = &scvfJ;
-                ivFluxVarCaches[i] = &fluxVarsCacheContainer[scvfJ];
-                ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
-                ivFluxVarCaches[i]->setUpdateStatus(true);
-                i++;
-            }
-
             fillAdvection(fluxVarsCacheContainer, iv, handle, ivScvfs, ivFluxVarCaches);
             fillDiffusion(fluxVarsCacheContainer, iv, handle, ivScvfs, ivFluxVarCaches);
             fillHeatConduction(fluxVarsCacheContainer, iv, handle, ivScvfs, ivFluxVarCaches);
         }
         else
         {
-            const auto numGlobalScvfs = iv.localFaceData().size();
-            std::vector<const SubControlVolumeFace*> ivScvfs(numGlobalScvfs);
-            std::vector<FluxVariablesCache*> ivFluxVarCaches(numGlobalScvfs);
-
-            unsigned int i = 0;
-            for (const auto& d : iv.localFaceData())
-            {
-                // the iv index has been set already
-                const auto& scvfJ = fvGeometry().scvf(d.globalScvfIndex());
-                ivScvfs[i] = &scvfJ;
-                ivFluxVarCaches[i] = &fluxVarsCacheContainer[scvfJ];
-                ivFluxVarCaches[i]->setUpdateStatus(true);
-                i++;
-            }
-
             if (doAdvection && soldependentAdvection)
                 fillAdvection(fluxVarsCacheContainer, iv, handle, ivScvfs, ivFluxVarCaches);
             if (doDiffusion && soldependentDiffusion)
