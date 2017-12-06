@@ -196,6 +196,12 @@ SET_INT_PROP(ImplicitBase, ImplicitMaxTimeStepDivisions, 10);
 //! Per default we have assume isothermal problems. Set this to true to solve an energy equation
 SET_BOOL_PROP(ImplicitBase, EnableEnergyBalance, false);
 
+
+//next two lines added for test cases
+SET_BOOL_PROP(ImplicitBase, EnableAdvection, true);
+SET_BOOL_PROP(ImplicitBase, EnableMolecularDiffusion, true);
+
+
 SET_TYPE_PROP(ImplicitBase, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 
 //! Set the upwind weight for the advective term

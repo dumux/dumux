@@ -850,7 +850,7 @@ public:
     {}
 
     void update(const GridView& gridView, const Element& element)
-    {
+    { std::cout << "Waren hier" << std::endl;
         const Geometry& geometry = element.geometry();
         Dune::GeometryType geomType = geometry.type();
 
