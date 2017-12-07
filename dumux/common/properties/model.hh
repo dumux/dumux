@@ -31,9 +31,10 @@
 #include <dumux/common/balanceequationopts.hh>
 #include <dumux/common/properties.hh>
 
-#include <dumux/common/parameters.hh>
 #include <dumux/io/defaultvtkoutputfields.hh>
 
+//! Forward declare
+namespace Dune { class ParameterTree; }
 
 namespace Dumux
 {
