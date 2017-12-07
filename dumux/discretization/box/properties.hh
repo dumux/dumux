@@ -29,6 +29,8 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
+#include <dumux/common/boundaryflag.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
@@ -144,6 +146,7 @@ private:
         using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar>>;
         using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
         using GlobalPosition = typename CornerStorage::value_type;
+        using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
     };
 public:
     using type = BoxSubControlVolumeFace<ScvfGeometryTraits>;
