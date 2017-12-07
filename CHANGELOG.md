@@ -2,41 +2,49 @@ Differences Between DuMuX 2.11 and DuMuX 2.12
 =============================================
 
 * IMPORTANT NOTES:
-    - DuMuX 2.12 is expected to run based on Dune 2.4.1, 2.5 and the Dune
+    - DuMuX 2.12 is expected to run based on Dune 2.4.1, 2.5, 2.6 and the Dune
       master. We will try to keep the compatibility with the Dune master
       as long as it is technically feasible and our resources allow it. If
       you want to use Dumux multidomain models, you have to stick with the
       Dune 2.4 core and specific versions of other modules, see
-      `test/multidomain/README` for details.
+      `test/multidomain/README` for details. Also the geomechanics models
+      require Dune 2.4 and PDELab 2.0.
 
     - DuMux 2.12 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
     - For employing corner-point grids by means of opm-grid (former
-      dune-cornerpoint), the OPM release 2016.04 has to be used.
+      dune-cornerpoint), the OPM releases 2017.04 or 2017.10 have to be used.
 
 * IMPROVEMENTS and ENHANCEMENTS:
-  - Fixed bug in heatCapacity() of component air and replace
-    the use of a constant value in  gasEnthalpy() by calling heatCapacity().
-  - GnuplotInterface now supports in-simulation generation of image files (*.png).
-  - Add a paraview python script for exporting 2d pictures from *.vtu files.
-  - A class for estimating turbulence properties has been added with turbulenceproperties.hh.
+    - Four new tutorial exercises have been added in the folder
+      [tutorial](tutorial). They can be built by executing
+      `make build_tutorials` in the build folder. Each exercise
+      comes with detailed instructions:
+        1. [Exercise 1](tutorial/ex1/README.md)
+        2. [Exercise 2](tutorial/ex2/README.md)
+        3. [Exercise 3](tutorial/ex3/README.md)
+        4. [Exercise 4](tutorial/ex4/README.md)
+
+    - Fixed bug in heatCapacity() of component air and replace
+      the use of a constant value in  gasEnthalpy() by calling
+      heatCapacity().
+
+    - The GnuplotInterface now supports in-simulation generation of image
+      files (*.png).
+
+    - A paraview python script for exporting 2d pictures from *.vtu files
+      has been added.
+
+    - A class for estimating turbulence properties has been added with
+      turbulenceproperties.hh.
 
 * IMMEDIATE INTERFACE CHANGES not allowing/requiring a deprecation period:
-  - gnuplotinterface.hh: The add...ToPlot() functions have changed signature,
-    the curve name/title is not mandatory anymore and can be specified together
-    with the curve options.
-
-* Deprecated PROPERTY and PARAMETER NAMES, to be removed after 2.12: BEWARE: The
-  compiler will not print any warning if a deprecated property or parameter name
-  is used. If possible, a run-time warning will appear in the summary lines
-  after the corresponding run.
-
-* Deprecated CLASSES/FILES, to be removed after 2.12:
-
-* Deprecated MEMBER FUNCTIONS, to be removed after 2.12:
+    - gnuplotinterface.hh: The add...ToPlot() functions have changed signature,
+      the curve name/title is not mandatory anymore and can be specified together
+      with the curve options.
 
 * DELETED classes/files, property names, constants/enums,
-  member functions, which have been deprecated in DuMuX 2.11  :
+  member functions, which have been deprecated in DuMuX 2.11:
     - Everything listed as deprecated below has been removed.
 
 
