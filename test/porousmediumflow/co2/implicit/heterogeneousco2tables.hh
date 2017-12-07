@@ -25,17 +25,16 @@
 #ifndef DUMUX_HETEROGENEOUS_CO2TABLES_HH
 #define DUMUX_HETEROGENEOUS_CO2TABLES_HH
 
-#include <cassert>
 #include <dumux/material/components/co2tablereader.hh>
 
-namespace Dumux
-{
-namespace HeterogeneousCO2Tables
-{
+namespace Dumux {
+namespace HeterogeneousCO2Tables {
+
 // the real work is done by some external program which provides
 // ready-to-use tables.
 #include "co2values.inc"
-}
-}
+
+} // end namespace HeterogeneousCO2Tables
+} // end namespace Dumux
 
 #endif
