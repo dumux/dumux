@@ -24,6 +24,7 @@
 #ifndef DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 #define DUMUX_TWOCZEROEQTWOPTWOCPROBLEM_HH
 
+#include <numeric>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 
