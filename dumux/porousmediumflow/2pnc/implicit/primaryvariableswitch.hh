@@ -52,7 +52,7 @@ class TwoPNCPrimaryVariableSwitch : public Dumux::PrimaryVariableSwitch<TypeTag>
     static const int numMajorComponents = GET_PROP_VALUE(TypeTag, NumMajorComponents);
 
     enum {
-        pressureIdx = Indices::pressureIdx,
+
         switchIdx = Indices::switchIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
@@ -63,20 +63,17 @@ class TwoPNCPrimaryVariableSwitch : public Dumux::PrimaryVariableSwitch<TypeTag>
 
         wPhaseOnly = Indices::wPhaseOnly,
         nPhaseOnly = Indices::nPhaseOnly,
-        bothPhases = Indices::bothPhases
-    };
+        bothPhases = Indices::bothPhases,
 
-    enum {
-            pwsn = TwoPNCFormulation::pwsn,
-            pnsw = TwoPNCFormulation::pnsw,
-            formulation = GET_PROP_VALUE(TypeTag, Formulation)
+        pwsn = TwoPNCFormulation::pwsn,
+        pnsw = TwoPNCFormulation::pnsw,
+       formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
 public:
     using ParentType::ParentType;
 
 protected:
-
     // perform variable switch at a degree of freedom location
     bool update_(PrimaryVariables& priVars,
                  const VolumeVariables& volVars,

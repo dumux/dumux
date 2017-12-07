@@ -38,12 +38,9 @@ class TwoPNCVtkOutputFields
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    static constexpr int dim = GridView::dimension;
-
 
 public:
     template <class VtkOutputModule>

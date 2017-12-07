@@ -23,7 +23,7 @@
 #ifndef DUMUX_2PNC_NEWTON_CONTROLLER_HH
 #define DUMUX_2PNC_NEWTON_CONTROLLER_HH
 
-#include "properties.hh"
+#include "model.hh"
 
 #include <dumux/nonlinear/newtoncontroller.hh>
 
@@ -42,7 +42,6 @@ class TwoPNCNewtonController : public NewtonController<TypeTag>
 {
     typedef NewtonController<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SolutionVector)) SolutionVector;
 
 public:
     TwoPNCNewtonController(Problem &problem) : ParentType(problem) {};
