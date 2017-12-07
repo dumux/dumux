@@ -110,8 +110,12 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
-
+    //! The type of the object returned by the fluidState() method
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+
+    //! Pull member functions of the parent for deriving classes
+    using ParentType::temperature;
+    using ParentType::enthalpy;
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
@@ -123,7 +127,7 @@ public:
     {
         ParentType::update(elemSol, problem, element, scv);
 
-        completeFluidState(elemSol, problem, element, scv, fluidState_);
+        Implementation::completeFluidState(elemSol, problem, element, scv, fluidState_);
 
         /////////////
         // calculate the remaining quantities
@@ -162,7 +166,6 @@ public:
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
-     * \param isOldSol Specifies whether this is the previous solution or the current one
      */
     static void completeFluidState(const ElementSolution& elemSol,
                                    const Problem& problem,
@@ -287,16 +290,6 @@ public:
                 fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
                 fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
                 fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnn);
-
-                paramCache.updateComposition(fluidState, wPhaseIdx);
-                paramCache.updateComposition(fluidState, nPhaseIdx);
-
-                //set the phase densities
-                Scalar rhoW = FluidSystem::density(fluidState, paramCache, wPhaseIdx);
-                Scalar rhoN = FluidSystem::density(fluidState, paramCache, nPhaseIdx);
-
-                fluidState.setDensity(wPhaseIdx, rhoW);
-                fluidState.setDensity(nPhaseIdx, rhoN);
             }
         }
         else if (phasePresence == nPhaseOnly)
@@ -354,15 +347,6 @@ public:
 
                 fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xww);
                 fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwn);
-
-                paramCache.updateComposition(fluidState, wPhaseIdx);
-                paramCache.updateComposition(fluidState, nPhaseIdx);
-
-                Scalar rhoW = FluidSystem::density(fluidState, paramCache, wPhaseIdx);
-                Scalar rhoN = FluidSystem::density(fluidState, paramCache, nPhaseIdx);
-
-                fluidState.setDensity(wPhaseIdx, rhoW);
-                fluidState.setDensity(nPhaseIdx, rhoN);
             }
         }
         else if (phasePresence == wPhaseOnly)
@@ -416,23 +400,17 @@ public:
 
                 fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnn);
                 fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnw);
-
-                paramCache.updateComposition(fluidState, wPhaseIdx);
-                paramCache.updateComposition(fluidState, nPhaseIdx);
-
-                Scalar rhoW = FluidSystem::density(fluidState, paramCache, wPhaseIdx);
-                Scalar rhoN = FluidSystem::density(fluidState, paramCache, nPhaseIdx);
-
-                fluidState.setDensity(wPhaseIdx, rhoW);
-                fluidState.setDensity(nPhaseIdx, rhoN);
             }
         }
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            //set the viscosity here if constraintsolver is not used
+            // set the viscosity and desity here if constraintsolver is not used
             if(!useConstraintSolver)
             {
+                paramCache.updateComposition(fluidState, phaseIdx);
+                const Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+                fluidState.setDensity(phaseIdx, rho);
                 const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
                 fluidState.setViscosity(phaseIdx,mu);
             }

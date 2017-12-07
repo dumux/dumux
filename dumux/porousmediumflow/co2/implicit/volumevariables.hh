@@ -25,34 +25,30 @@
 #ifndef DUMUX_CO2_VOLUME_VARIABLES_HH
 #define DUMUX_CO2_VOLUME_VARIABLES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/volumevariables.hh>
 
 namespace Dumux
 {
 /*!
- * \ingroup CO2Model
- * \ingroup ImplicitVolumeVariables
+ * \ingroup TwoPTwoCModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the CO2 model.
  */
 template <class TypeTag>
-class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
+class TwoPTwoCCO2VolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
 {
-    typedef TwoPTwoCVolumeVariables<TypeTag> ParentType;
-    typedef ImplicitVolumeVariables<TypeTag> BaseClassType;
+    using ParentType = TwoPTwoCVolumeVariables<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-//    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
@@ -86,314 +82,150 @@ class CO2VolumeVariables: public TwoPTwoCVolumeVariables<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    enum { dim = GridView::dimension};
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
-    static const Scalar R; // universial gas constant
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     //! The type of the object returned by the fluidState() method
-    typedef typename ParentType::FluidState FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-
-    /*!
-     * \copydoc ImplicitVolumeVariables::update
-     */
-    void update(const PrimaryVariables &priVars,
-                const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                const bool isOldSol)
+    //! TODO: This is a lot of copy paste from the 2p2c: factor out code!
+    static void completeFluidState(const ElementSolution& elemSol,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const SubControlVolume& scv,
+                                   FluidState& fluidState)
     {
-        // Update BoxVolVars but not 2p2cvolvars
-        // ToDo: Is BaseClassType the right name?
-        BaseClassType::update(priVars,
-                problem,
-                element,
-                fvGeometry,
-                scvIdx,
-                isOldSol);
 
-        int dofIdxGlobal = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
+        const Scalar t = ParentType::temperature(elemSol, problem, element, scv);
+        fluidState.setTemperature(t);
 
-        int phasePresence = problem.model().phasePresence(dofIdxGlobal, isOldSol);
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
 
-         Scalar temp = Implementation::temperature_(priVars, problem, element, fvGeometry, scvIdx);
-         ParentType::fluidState_.setTemperature(temp);
+        /////////////
+        // set the saturations
+        /////////////
+        Scalar sn;
+        if (phasePresence == nPhaseOnly)
+            sn = 1.0;
+        else if (phasePresence == wPhaseOnly) {
+            sn = 0.0;
+        }
+        else if (phasePresence == bothPhases) {
+            if (formulation == pwsn)
+                sn = priVars[switchIdx];
+            else if (formulation == pnsw)
+                sn = 1.0 - priVars[switchIdx];
+            else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
+        fluidState.setSaturation(wPhaseIdx, 1 - sn);
+        fluidState.setSaturation(nPhaseIdx, sn);
 
-         /////////////
-         // set the saturations
-         /////////////
-         Scalar sn;
-         if (phasePresence == nPhaseOnly)
-             sn = 1.0;
-         else if (phasePresence == wPhaseOnly) {
-             sn = 0.0;
-         }
-         else if (phasePresence == bothPhases) {
-             if (formulation == pwsn)
-                 sn = priVars[switchIdx];
-             else if (formulation == pnsw)
-                 sn = 1.0 - priVars[switchIdx];
-             else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
-         }
-         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
-         ParentType::fluidState_.setSaturation(wPhaseIdx, 1 - sn);
-         ParentType::fluidState_.setSaturation(nPhaseIdx, sn);
+        // capillary pressure parameters
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
 
-         // capillary pressure parameters
-          const MaterialLawParams &materialParams =
-              problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        if (formulation == pwsn) {
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx]);
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
+        }
+        else if (formulation == pnsw) {
+            fluidState.setPressure(nPhaseIdx, priVars[pressureIdx]);
+            fluidState.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
+        /////////////
+        // calculate the phase compositions
+        /////////////
+        typename FluidSystem::ParameterCache paramCache;
+        // both phases are present
+        if (phasePresence == bothPhases)
+        {
+            //Get the equilibrium mole fractions from the FluidSystem and set them in the fluidState
+            //xCO2 = equilibrium mole fraction of CO2 in the liquid phase
+            //yH2O = equilibrium mole fraction of H2O in the gas phase
+            const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, wPhaseIdx);
+            const auto xgH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, nPhaseIdx);
+            const auto xwH2O = 1 - xwCO2;
+            const auto xgCO2 = 1 - xgH2O;
+            fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
+            fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
+            fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xgH2O);
+            fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xgCO2);
+        }
 
-          Scalar pc = MaterialLaw::pc(materialParams, 1 - sn);
-
-          if (formulation == pwsn) {
-              ParentType::fluidState_.setPressure(wPhaseIdx, priVars[pressureIdx]);
-              ParentType::fluidState_.setPressure(nPhaseIdx, priVars[pressureIdx] + pc);
-          }
-          else if (formulation == pnsw) {
-              ParentType::fluidState_.setPressure(nPhaseIdx, priVars[pressureIdx]);
-              ParentType::fluidState_.setPressure(wPhaseIdx, priVars[pressureIdx] - pc);
-          }
-          else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
-
-          /////////////
-          // calculate the phase compositions
-          /////////////
-          typename FluidSystem::ParameterCache paramCache;
-
-
-          // calculate phase composition
-          if (phasePresence == bothPhases) {
-
-              //Get the equilibrium mole fractions from the FluidSystem and set them in the fluidState
-              //xCO2 = equilibrium mole fraction of CO2 in the liquid phase
-              //yH2O = equilibrium mole fraction of H2O in the gas phase
-
-              Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx);
-              Scalar xgH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
-              Scalar xwH2O = 1 - xwCO2;
-              Scalar xgCO2 = 1 - xgH2O;
-
-              ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
-              ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-              ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xgH2O);
-              ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, xgCO2);
-
-
-              //Get the phase densities from the FluidSystem and set them in the fluidState
-
-              Scalar rhoW = FluidSystem::density(ParentType::fluidState_, paramCache, wPhaseIdx);
-              Scalar rhoN = FluidSystem::density(ParentType::fluidState_, paramCache, nPhaseIdx);
-
-              ParentType::fluidState_.setDensity(wPhaseIdx, rhoW);
-              ParentType::fluidState_.setDensity(nPhaseIdx, rhoN);
-
-
-              //Get the phase viscosities from the FluidSystem and set them in the fluidState
-
-              Scalar muW = FluidSystem::viscosity(ParentType::fluidState_, paramCache, wPhaseIdx);
-              Scalar muN = FluidSystem::viscosity(ParentType::fluidState_, paramCache, nPhaseIdx);
-
-              ParentType::fluidState_.setViscosity(wPhaseIdx, muW);
-              ParentType::fluidState_.setViscosity(nPhaseIdx, muN);
-
-          }
-          else if (phasePresence == nPhaseOnly) {
-              // only the nonwetting phase is present, i.e. nonwetting phase
-              // composition is stored explicitly.
-
-
+        // only the nonwetting phase is present, i.e. nonwetting phase
+        // composition is stored explicitly.
+        else if (phasePresence == nPhaseOnly)
+        {
             if(useMoles) // mole-fraction formulation
             {
                 // set the fluid state
-                ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
-                ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, 1-priVars[switchIdx]);
-
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 1-priVars[switchIdx]);
                 // TODO give values for non-existing wetting phase
-                Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx);
-                Scalar xwH2O = 1 - xwCO2;
-                ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-                ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
+                const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, wPhaseIdx);
+                const auto xwH2O = 1 - xwCO2;
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
             }
             else // mass-fraction formulation
             {
                 // setMassFraction() has only to be called 1-numComponents times
-                ParentType::fluidState_.setMassFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
-
+                fluidState.setMassFraction(nPhaseIdx, wCompIdx, priVars[switchIdx]);
                 // TODO give values for non-existing wetting phase
-                Scalar xwCO2 = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, wPhaseIdx);
-                Scalar xwH2O = 1 - xwCO2;
-                ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
-                ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
+                const auto xwCO2 = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, wPhaseIdx);
+                const auto xwH2O = 1 - xwCO2;
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, xwCO2);
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, xwH2O);
             }
+        }
 
-            //Get the phase densities from the FluidSystem and set them in the fluidState
+        // only the wetting phase is present, i.e. wetting phase
+        // composition is stored explicitly.
+        else if (phasePresence == wPhaseOnly)
+        {
+            if(useMoles) // mole-fraction formulation
+            {
+                // convert mass to mole fractions and set the fluid state
+                fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1-priVars[switchIdx]);
+                fluidState.setMoleFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
+                //  TODO give values for non-existing nonwetting phase
+                Scalar xnH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, nPhaseIdx);
+                Scalar xnCO2 = 1 - xnH2O;
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
+            }
+            else // mass-fraction formulation
+            {
+                // setMassFraction() has only to be called 1-numComponents times
+                fluidState.setMassFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
+                //  TODO give values for non-existing nonwetting phase
+                Scalar xnH2O = FluidSystem::equilibriumMoleFraction(fluidState, paramCache, nPhaseIdx);
+                Scalar xnCO2 = 1 - xnH2O;
+                fluidState.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
+                fluidState.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
+            }
+        }
 
-            Scalar rhoW = FluidSystem::density(ParentType::fluidState_, paramCache, wPhaseIdx);
-            Scalar rhoN = FluidSystem::density(ParentType::fluidState_, paramCache, nPhaseIdx);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            // set the viscosity and desity here if constraintsolver is not used
+            paramCache.updateComposition(fluidState, phaseIdx);
+            const Scalar rho = FluidSystem::density(fluidState, paramCache, phaseIdx);
+            fluidState.setDensity(phaseIdx, rho);
+            const Scalar mu = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+            fluidState.setViscosity(phaseIdx,mu);
 
-            ParentType::fluidState_.setDensity(wPhaseIdx, rhoW);
-            ParentType::fluidState_.setDensity(nPhaseIdx, rhoN);
-
-            //Get the phase viscosities from the FluidSystem and set them in the fluidState
-
-            Scalar muW = FluidSystem::viscosity(ParentType::fluidState_, paramCache, wPhaseIdx);
-            Scalar muN = FluidSystem::viscosity(ParentType::fluidState_, paramCache, nPhaseIdx);
-
-            ParentType::fluidState_.setViscosity(wPhaseIdx, muW);
-            ParentType::fluidState_.setViscosity(nPhaseIdx, muN);
-          }
-          else if (phasePresence == wPhaseOnly) {
-               // only the wetting phase is present, i.e. wetting phase
-               // composition is stored explicitly.
-
-              if(useMoles) // mole-fraction formulation
-              {
-                  // convert mass to mole fractions and set the fluid state
-                  ParentType::fluidState_.setMoleFraction(wPhaseIdx, wCompIdx, 1-priVars[switchIdx]);
-                  ParentType::fluidState_.setMoleFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
-
-                  //  TODO give values for non-existing nonwetting phase
-                  Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
-                  Scalar xnCO2 = 1 - xnH2O;
-                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
-                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
-              }
-              else // mass-fraction formulation
-              {
-                  // setMassFraction() has only to be called 1-numComponents times
-                  ParentType::fluidState_.setMassFraction(wPhaseIdx, nCompIdx, priVars[switchIdx]);
-
-                  //  TODO give values for non-existing nonwetting phase
-                  Scalar xnH2O = FluidSystem::equilibriumMoleFraction(ParentType::fluidState_, paramCache, nPhaseIdx);
-                  Scalar xnCO2 = 1 - xnH2O;
-                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, nCompIdx, xnCO2);
-                  ParentType::fluidState_.setMoleFraction(nPhaseIdx, wCompIdx, xnH2O);
-              }
-
-               Scalar rhoW = FluidSystem::density(ParentType::fluidState_, paramCache, wPhaseIdx);
-               Scalar rhoN = FluidSystem::density(ParentType::fluidState_, paramCache, nPhaseIdx);
-
-               ParentType::fluidState_.setDensity(wPhaseIdx, rhoW);
-               ParentType::fluidState_.setDensity(nPhaseIdx, rhoN);
-
-               //Get the phase viscosities from the FluidSystem and set them in the fluidState
-
-               Scalar muW = FluidSystem::viscosity(ParentType::fluidState_, paramCache, wPhaseIdx);
-               Scalar muN = FluidSystem::viscosity(ParentType::fluidState_, paramCache, nPhaseIdx);
-
-               ParentType::fluidState_.setViscosity(wPhaseIdx, muW);
-               ParentType::fluidState_.setViscosity(nPhaseIdx, muN);
-           }
-
-          for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-              // compute and set the enthalpy
-              Scalar h = Implementation::enthalpy_(ParentType::fluidState_, paramCache, phaseIdx);
-              ParentType::fluidState_.setEnthalpy(phaseIdx, h);
-          }
-
-          paramCache.updateAll(ParentType::fluidState_);
-
-          for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-              // relative permeabilities
-              Scalar kr;
-              if (phaseIdx == wPhaseIdx)
-                  kr = MaterialLaw::krw(materialParams, this->saturation(wPhaseIdx));
-              else // ATTENTION: krn requires the liquid saturation
-                  // as parameter!
-                  kr = MaterialLaw::krn(materialParams, this->saturation(wPhaseIdx));
-              ParentType::relativePermeability_[phaseIdx] = kr;
-              Valgrind::CheckDefined(ParentType::relativePermeability_[phaseIdx]);
-
-              // binary diffusion coefficients
-              ParentType::diffCoeff_[phaseIdx] =
-                  FluidSystem::binaryDiffusionCoefficient(ParentType::fluidState_,
-                                                          paramCache,
-                                                          phaseIdx,
-                                                          wCompIdx,
-                                                          nCompIdx);
-              Valgrind::CheckDefined(ParentType::diffCoeff_[phaseIdx]);
-          }
-
-          // porosity
-          ParentType::porosity_ = problem.spatialParams().porosity(element,
-                                                           fvGeometry,
-                                                           scvIdx);
-          Valgrind::CheckDefined(ParentType::porosity_);
-//          if(phasePresence == bothPhases)
-//          {
-//              std::cout<<"dofIdxGlobal = "<<dofIdxGlobal<<std::endl;
-//              std::cout<<"scvIdx = "<<scvIdx<<std::endl;
-//              std::cout<<"sn = "<<ParentType::fluidState_.saturation(nPhaseIdx)<<std::endl;
-//              std::cout<<"sw = "<<ParentType::fluidState_.saturation(wPhaseIdx)<<std::endl;
-//              std::cout<<"mobilityN = "<<ParentType::mobility(nPhaseIdx)<<std::endl;
-//              std::cout<<"xgH2O = "<<ParentType::fluidState_.moleFraction(nPhaseIdx, wCompIdx)<<std::endl;
-//              std::cout<<"xgCO2 = "<<ParentType::fluidState_.moleFraction(nPhaseIdx, nCompIdx)<<std::endl;
-//              std::cout<<"xwH2O = "<<ParentType::fluidState_.moleFraction(wPhaseIdx, wCompIdx)<<std::endl;
-//              std::cout<<"xwCO2 = "<<ParentType::fluidState_.moleFraction(wPhaseIdx, nCompIdx)<<std::endl;
-//              std::cout<<"XgH2O = "<<ParentType::fluidState_.massFraction(nPhaseIdx, wCompIdx)<<std::endl;
-//              std::cout<<"XgCO2 = "<<ParentType::fluidState_.massFraction(nPhaseIdx, nCompIdx)<<std::endl;
-//              std::cout<<"XwH2O = "<<ParentType::fluidState_.massFraction(wPhaseIdx, wCompIdx)<<std::endl;
-//              std::cout<<"XwCO2 = "<<ParentType::fluidState_.massFraction(wPhaseIdx, nCompIdx)<<std::endl;
-//          }
-
-          // energy related quantities not contained in the fluid state
-          asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
+            // compute and set the enthalpy
+            Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+            fluidState.setEnthalpy(phaseIdx, h);
+        }
     }
-
-
-
-
-protected:
-
-    static Scalar temperature_(const PrimaryVariables &priVars,
-                               const Problem& problem,
-                               const Element &element,
-                               const FVElementGeometry &fvGeometry,
-                               int scvIdx)
-    {
-        return problem.temperatureAtPos(fvGeometry.subContVol[scvIdx].global);
-    }
-
-    template<class ParameterCache>
-    static Scalar enthalpy_(const FluidState& fluidState,
-                            const ParameterCache& paramCache,
-                            const int phaseIdx)
-    {
-        return 0;
-    }
-
-    /*!
-     * \brief Called by update() to compute the energy related quantities
-     */
-    void updateEnergy_(const PrimaryVariables &sol,
-                       const Problem &problem,
-                       const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int vIdx,
-                       bool isOldSol)
-    { }
-
-
-
-private:
-
-
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
