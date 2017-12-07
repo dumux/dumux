@@ -1,29 +1,32 @@
 add_input_file_links()
 
-add_dumux_test(test_dec1p test_dec1p test_1p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/test_1p-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_1p-00000.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_dec1p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_1p.input")
+dune_add_test(NAME test_dec1p
+               SOURCES test_1p.cc
+               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               CMD_ARGS --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1p-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_1p-00000.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_dec1p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_1p.input")
 
-add_dumux_test(test_diffusion test_diffusion test_diffusion.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/diffusion-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/mimeticdiffusion-00000.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_diffusion 3")
+dune_add_test(NAME test_diffusion
+              SOURCES test_diffusion.cc
+              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/diffusion-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/mimeticdiffusion-00000.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_diffusion")
 
-add_dumux_test(test_diffusion3d test_diffusion3d test_diffusion3d.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_fv-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_fv-00000.vtu
-                         ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_fvmpfal-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_fvmpfal-00000.vtu
-                         ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_mimetic-reference.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_mimetic-00000.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_diffusion3d_reference.input")
+dune_add_test(NAME test_diffusion3d
+              SOURCES test_diffusion3d.cc
+              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_fv-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_fv-00000.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_fvmpfal-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_fvmpfal-00000.vtu
+                               ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_mimetic-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_mimetic-00000.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_diffusion3d_reference.input")
 
 #install sources
 install(FILES

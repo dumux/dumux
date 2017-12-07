@@ -552,16 +552,19 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Saturation type not supported!");
         }
 
-        ErrorTermFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermFactor);
-        ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
-        ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
+        ErrorTermFactor_ = getParam<Scalar>("Impet.ErrorTermFactor",
+                                            GET_PROP_VALUE(TypeTag, ImpetErrorTermFactor));
+        ErrorTermLowerBound_ = getParam<Scalar>("Impet.ErrorTermLowerBound",
+                                                GET_PROP_VALUE(TypeTag, ImpetErrorTermLowerBound));
+        ErrorTermUpperBound_ = getParam<Scalar>("Impet.ErrorTermUpperBound",
+                                                GET_PROP_VALUE(TypeTag, ImpetErrorTermUpperBound));
 
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
 
-        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
     }
 
 private:

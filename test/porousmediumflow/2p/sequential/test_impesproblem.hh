@@ -242,7 +242,7 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     values = 0;
     if (globalPos[0] < eps_)
     {
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (getParam<bool>("Problem.EnableGravity"))
         {
             Scalar pRef = referencePressureAtPos(globalPos);
             Scalar temp = temperatureAtPos(globalPos);

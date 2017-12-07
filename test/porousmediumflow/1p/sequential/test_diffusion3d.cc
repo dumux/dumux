@@ -74,31 +74,18 @@ int start(int argc,
     ////////////////////////////////////////////////////////////
 
     using TypeTag = TTAG(DiffusionTestProblem);
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
 
-    // if the user just wanted to see the help / usage message show usage and stop program
-    if(!ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree(), usage))
-    {
-        usage(argv[0], defaultUsageMessage(argv[0]));
-        return 0;
-    }
-    // parse the input file into the parameter tree
-    // check first if the user provided an input file through the command line, if not use the default
-    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ? GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
-    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName, usage);
+    auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+    Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
     ////////////////////////////////////////////////////////////
     // get some optional parameters
     ////////////////////////////////////////////////////////////
-    const int numRefine = ParameterTree::tree().hasKey("Grid.Refinement") ?
-                          GET_RUNTIME_PARAM(TypeTag, int, Grid.Refinement) : 0;
+    const int numRefine = getParam<int>("Grid.NumRefine", 0);
 
-    std::string outputName("");
-    if (ParameterTree::tree().hasKey("Problem.OutputName"))
-    {
-        outputName += "_";
-        outputName += GET_RUNTIME_PARAM(TypeTag, std::string, OutputName);
-    }
+    auto outputName = getParam<std::string>("Problem.OutputName", "");
+    if (outputName.size())
+        outputName.insert(0, "_");
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
@@ -131,8 +118,8 @@ int start(int argc,
 
     using FVTypeTag = TTAG(FVTestProblem);
     using FVProblem = GET_PROP_TYPE(FVTypeTag, Problem);
-    using FVParameterTree = GET_PROP(FVTypeTag, ParameterTree);
-    ParameterParser::parseInputFile(argc, argv, FVParameterTree::tree(), parameterFileName, usage);
+    auto fvDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(FVTypeTag, ModelDefaultParameters)::defaultParams(p);};
+    Dumux::Parameters::init(argc, argv, fvDefaultParams, usage);
 
     std::shared_ptr<FVProblem> fvProblem = std::make_shared<FVProblem>(grid.leafGridView());
     // set output name
@@ -159,8 +146,8 @@ int start(int argc,
 
     using MPFALTypeTag = TTAG(FVMPFAL3DTestProblem);
     using MPFALProblem = GET_PROP_TYPE(MPFALTypeTag, Problem);
-    using MPFALParameterTree = GET_PROP(MPFALTypeTag, ParameterTree);
-    ParameterParser::parseInputFile(argc, argv, MPFALParameterTree::tree(), parameterFileName, usage);
+    auto mpfalDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MPFALTypeTag, ModelDefaultParameters)::defaultParams(p);};
+    Dumux::Parameters::init(argc, argv, mpfalDefaultParams, usage);
 
     std::shared_ptr<MPFALProblem> mpfaProblem = std::make_shared<MPFALProblem>(grid.leafGridView());
     // set output name
@@ -187,8 +174,8 @@ int start(int argc,
 
     using MimeticTypeTag = TTAG(MimeticTestProblem);
     using MimeticProblem = GET_PROP_TYPE(MimeticTypeTag, Problem);
-    using MimeticParameterTree = GET_PROP(MimeticTypeTag, ParameterTree);
-    ParameterParser::parseInputFile(argc, argv, MimeticParameterTree::tree(), parameterFileName, usage);
+    auto mimeticDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MimeticTypeTag, ModelDefaultParameters)::defaultParams(p);};
+    Dumux::Parameters::init(argc, argv, mimeticDefaultParams, usage);
 
     std::shared_ptr<MimeticProblem> mimeticProblem = std::make_shared<MimeticProblem>(grid.leafGridView());
     // set output name

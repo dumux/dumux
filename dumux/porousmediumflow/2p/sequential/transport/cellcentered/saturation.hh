@@ -485,7 +485,7 @@ public:
         gravityFlux_ = std::make_shared<GravityFlux>(problem);
         velocity_ = std::make_shared<Velocity>(problem);
 
-        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
         porosityThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, PorosityThreshold);
     }
 

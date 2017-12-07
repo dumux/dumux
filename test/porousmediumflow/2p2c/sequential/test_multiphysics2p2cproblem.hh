@@ -73,8 +73,6 @@ SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, Default
     typedef Dumux::H2O<Scalar> H2O;
 };
 
-// Enable gravity
-SET_BOOL_PROP(TestMultTwoPTwoCProblem, ProblemEnableGravity, true);
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
 SET_INT_PROP(TestMultTwoPTwoCProblem, BoundaryMobility, GET_PROP_TYPE(TypeTag, Indices)::satDependent);
 SET_SCALAR_PROP(TestMultTwoPTwoCProblem, ImpetCFLFactor, 0.8);

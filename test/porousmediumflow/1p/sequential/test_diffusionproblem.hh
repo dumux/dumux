@@ -27,7 +27,7 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 
-#include <dumux/material/components/unit.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/omethod/2dpressureproperties.hh>
@@ -94,7 +94,7 @@ SET_PROP(FVVelocity2PTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -103,18 +103,14 @@ SET_PROP(FVVelocity2PTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
-
-// Enable gravity
-SET_BOOL_PROP(FVVelocity2PTestProblem, ProblemEnableGravity, false);
 
 
 // set the types for the MPFA-O FV method
 NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FvMpfaO2dPressureTwoP, TestDiffusionSpatialParams));
 //SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, ILUnBiCGSTABBackend<TypeTag>);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, SSORBiCGSTABBackend<TypeTag>);
-SET_INT_PROP(FVMPFAOVelocity2PTestProblem, LinearSolverPreconditionerIterations, 2);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
@@ -128,7 +124,7 @@ SET_PROP(FVMPFAOVelocity2PTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -137,11 +133,9 @@ SET_PROP(FVMPFAOVelocity2PTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(FVMPFAOVelocity2PTestProblem, ProblemEnableGravity, false);
 
 // set the types for the mimetic FD method
 NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
@@ -160,7 +154,7 @@ SET_PROP(MimeticPressure2PTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -169,11 +163,8 @@ SET_PROP(MimeticPressure2PTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
-
-// Enable gravity
-SET_BOOL_PROP(MimeticPressure2PTestProblem, ProblemEnableGravity, false);
 
 }
 
@@ -221,9 +212,11 @@ public:
     typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
     typedef typename SolutionTypes::ScalarSolution ScalarSolution;
 
-    TestDiffusionProblem(const GridView &gridView, const Scalar delta = 1.0) :
-        ParentType(gridView), delta_(delta), velocity_(*this)
-    {}
+    TestDiffusionProblem(const GridView &gridView) :
+        ParentType(gridView), velocity_(*this)
+    {
+        delta_ = getParam<Scalar>("Problem.Delta", 1e-3);
+    }
 
     //!for this specific problem: initialize the saturation and afterwards the model
     void init()

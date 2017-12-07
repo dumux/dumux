@@ -82,9 +82,6 @@ public:
     typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
 };
 
-// Enable gravity
-SET_BOOL_PROP(TestIMPESAdaptiveProblem, ProblemEnableGravity, false);
-
 //SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableCompressibility, true);
 
 //SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
@@ -150,9 +147,7 @@ public:
 
         // Refine the grid provided that no restart occurs. Otherwise, an
         // already refined grid will be read.
-        typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-        if (!(ParameterTree::tree().hasKey("Restart")
-              || ParameterTree::tree().hasKey("TimeManager.Restart")))
+        if (!(haveParam("Restart") || haveParam("TimeManager.Restart")))
         {
             GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
         }
@@ -234,7 +229,7 @@ public:
         values = 0;
         if (globalPos[0] < eps_)
         {
-            if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+            if (getParam<bool>("Problem.EnableGravity"))
             {
                 Scalar pRef = referencePressureAtPos(globalPos);
                 Scalar temp = temperatureAtPos(globalPos);

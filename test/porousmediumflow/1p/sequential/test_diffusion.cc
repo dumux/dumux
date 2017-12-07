@@ -35,10 +35,17 @@
 // the main function
 ////////////////////////
 
-void usage(const char *progname)
+void usage(const char *progName, const std::string &errorMsg)
 {
-    std::cout << "usage: " << progname << " #refine [delta]\n";
-    exit(1);
+    if (errorMsg.size() > 0) {
+        std::string errorMessageOut = "\nUsage: ";
+                    errorMessageOut += progName;
+                    errorMessageOut += " #refine [delta]\n";
+                    errorMessageOut += errorMsg;
+
+        std::cout << errorMessageOut
+                  << "\n";
+    }
 }
 
 int main(int argc, char** argv)
@@ -49,18 +56,8 @@ int main(int argc, char** argv)
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
-        ////////////////////////////////////////////////////////////
-        // parse the command line arguments
-        ////////////////////////////////////////////////////////////
-        if (argc != 2 && argc != 3)
-            usage(argv[0]);
-
-        int numRefine;
-        std::istringstream(argv[1]) >> numRefine;
-
-        double delta = 1e-3;
-        if (argc == 3)
-            std::istringstream(argv[2]) >> delta;
+        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+        Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
         ////////////////////////////////////////////////////////////
         // create the grid
@@ -68,6 +65,7 @@ int main(int argc, char** argv)
         using GridCreator = GET_PROP_TYPE(TypeTag, GridCreator);
         GridCreator::createGrid();
         auto& grid = GridCreator::grid();
+        auto numRefine = Dumux::getParam<int>("Grid.NumRefine", 0);
         grid.globalRefine(numRefine);
 
         ////////////////////////////////////////////////////////////
@@ -77,7 +75,7 @@ int main(int argc, char** argv)
         bool consecutiveNumbering = true;
 
         typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem) FVProblem;
-        FVProblem fvProblem(grid.leafGridView(), delta);
+        FVProblem fvProblem(grid.leafGridView());
         fvProblem.setName("fvdiffusion");
         timer.reset();
         fvProblem.init();
@@ -88,7 +86,7 @@ int main(int argc, char** argv)
         fvResult.evaluate(grid.leafGridView(), fvProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
-        MPFAOProblem mpfaProblem(grid.leafGridView(), delta);
+        MPFAOProblem mpfaProblem(grid.leafGridView());
         mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
         mpfaProblem.init();
@@ -98,7 +96,7 @@ int main(int argc, char** argv)
         mpfaResult.evaluate(grid.leafGridView(), mpfaProblem, consecutiveNumbering);
 
         typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
-        MimeticProblem mimeticProblem(grid.leafGridView(), delta);
+        MimeticProblem mimeticProblem(grid.leafGridView());
         mimeticProblem.setName("mimeticdiffusion");
         timer.reset();
         mimeticProblem.init();

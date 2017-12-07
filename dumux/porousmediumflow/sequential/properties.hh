@@ -205,6 +205,17 @@ SET_PROP(SequentialModel, BoundaryTypes)
 public:
     typedef BoundaryTypes<numEq>  type;
 };
+
+//! do not specific any model-specific default parameters here
+SET_PROP(SequentialModel, ModelDefaultParameters)
+{
+    static void defaultParams(Dune::ParameterTree& params, const std::string& group = "")
+    {
+        params["Vtk.OutputLevel"] = "0";
+
+    }
+};
+
 }
 }
 

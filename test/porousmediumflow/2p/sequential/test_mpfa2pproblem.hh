@@ -56,7 +56,7 @@ class MPFATwoPTestProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(MPFATwoPTestProblem, INHERITS_FROM(Test2PSpatialParams));
+NEW_TYPE_TAG(MPFATwoPTestProblem, INHERITS_FROM(SequentialModel, Test2PSpatialParams));
 
 // Set the grid type
 #if HAVE_UG
@@ -99,13 +99,6 @@ public:
 
 #if PROBLEM == 1
 SET_INT_PROP(MPFATwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pnsw);
-#endif
-
-#if PROBLEM == 2
-// Enable gravity
-SET_BOOL_PROP(MPFATwoPTestProblem, ProblemEnableGravity, true);
-#else
-SET_BOOL_PROP(MPFATwoPTestProblem, ProblemEnableGravity, false);
 #endif
 
 SET_TYPE_PROP(MPFATwoPTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
@@ -161,7 +154,6 @@ typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
 typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
 
 typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
-typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
 
 enum
 {
@@ -196,7 +188,7 @@ ParentType(timeManager, gridView)
     this->setGrid(GridCreator::grid());
 
     int refinementFactor = 0;
-    if (ParameterTree::tree().hasKey("Grid.RefinementFactor"))
+    if (haveParam("Grid.RefinementFactor"))
     {
         refinementFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RefinementFactor);
     }
@@ -204,7 +196,7 @@ ParentType(timeManager, gridView)
     this->grid().globalRefine(refinementFactor);
 
     Scalar inletWidth = 1.0;
-    if (ParameterTree::tree().hasKey("Problem.InletWidth"))
+    if (haveParam("Problem.InletWidth"))
     {
         inletWidth = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InletWidth);
     }
@@ -217,20 +209,20 @@ ParentType(timeManager, gridView)
     inletRightCoord_[0] +=0.5*inletWidth;
 
     inFlux_ = 1e-4;
-    if (ParameterTree::tree().hasKey("Problem.InjectionFlux"))
+    if (haveParam("Problem.InjectionFlux"))
     {
         inFlux_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionFlux);
     }
 
     int outputInterval = 0;
-    if (ParameterTree::tree().hasKey("Problem.OutputInterval"))
+    if (haveParam("Problem.OutputInterval"))
     {
         outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
     }
     this->setOutputInterval(outputInterval);
 
     Scalar outputTimeInterval = 1e6;
-    if (ParameterTree::tree().hasKey("Problem.OutputTimeInterval"))
+    if (haveParam("Problem.OutputTimeInterval"))
     {
         outputTimeInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OutputTimeInterval);
     }
@@ -272,7 +264,7 @@ void addOutputVtkFields()
  */
 std::string name() const
 {
-    if (ParameterTree::tree().hasKey("Problem.OutputFileName"))
+    if (haveParam("Problem.OutputFileName"))
         return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputFileName);
     else
         return "test_mpfa2p";

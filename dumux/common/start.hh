@@ -80,7 +80,8 @@ int start_(int argc,
     // parse the command line arguments and input file
     ////////////////////////////////////////////////////////////
 
-    Dumux::Parameters::init(argc, argv, usage);
+    auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+    Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)

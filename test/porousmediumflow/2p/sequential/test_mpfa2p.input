@@ -10,6 +10,7 @@ UpperRight = 20 10
 ClosureType = None
 
 [Problem]
+#EnableGravity = false # set in case of McWhorter or Buckley-Leverett
 OutputInterval =0
 OutputTimeInterval = 1e4
 

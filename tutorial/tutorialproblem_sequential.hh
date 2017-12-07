@@ -83,9 +83,6 @@ public:
 
 SET_TYPE_PROP(TutorialProblemSequential, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>); /*@\label{tutorial-sequential:cflflux}@*/
 SET_SCALAR_PROP(TutorialProblemSequential, ImpetCFLFactor, 0.95); /*@\label{tutorial-sequential:cflfactor}@*/
-
-// Disable gravity
-SET_BOOL_PROP(TutorialProblemSequential, ProblemEnableGravity, false); /*@\label{tutorial-sequential:gravity}@*/
 } /*@\label{tutorial-sequential:propertysystem-end}@*/
 
 /*! \ingroup SequentialProblems

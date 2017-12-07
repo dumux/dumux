@@ -198,6 +198,14 @@ public:
 
     //! Initialize the parameter tree singletons
     static void init(int argc, char **argv,
+                     const DefaultParams& defaultParams,
+                     const Usage& usage = [](const char *, const std::string &){})
+    {
+        init(argc, argv, defaultParams, "", usage);
+    }
+
+    //! Initialize the parameter tree singletons
+    static void init(int argc, char **argv,
                      const DefaultParams& defaultParams = [] (Dune::ParameterTree&) {},
                      std::string parameterFileName = "",
                      const Usage& usage = [](const char *, const std::string &){})

@@ -26,4 +26,8 @@ OutputInterval = 5
 
 [TimeManager]
 TEnd= 3e3 #Simulated time
-DtInitial = 500 #Initial time step 
+DtInitial = 500 #Initial time step
+
+[Vtk]
+OutputLevel = 2
+

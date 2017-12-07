@@ -59,22 +59,14 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     try {
+        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TTAG(MPFATwoPTestProblem), ModelDefaultParameters)::defaultParams(p);};
+        Parameters::init(argc, argv, defaultParams, usage);
 
-        Dune::ParameterTree paramTree;
-        // if the user just wanted to see the help / usage message show usage and stop program
-        if(!ParameterParser::parseCommandLineArguments(argc, argv, paramTree, usage))
-        {
-            usage(argv[0], defaultUsageMessage(argv[0]));
-            return 0;
-        }
-
-        const std::string modelType(paramTree.get<std::string>("ModelType", "MPFAL"));
+        const auto modelType = getParam<std::string>("ModelType", "MPFAL");
 
         if (modelType == "FV")
         {
             using ProblemTypeTag = TTAG(FVTwoPTestProblem);
-            // avoid unused parameter message
-            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Standard finite volume TPFA model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -83,8 +75,6 @@ int main(int argc, char** argv)
         else if (modelType == "FVAdaptive")
         {
             using ProblemTypeTag = TTAG(FVAdaptiveTwoPTestProblem);
-            // avoid unused parameter message
-            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Adaptive finite volume TPFA model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -93,8 +83,6 @@ int main(int argc, char** argv)
         else if (modelType == "MPFAO")
         {
             using ProblemTypeTag = TTAG(MPFAOTwoPTestProblem);
-            // avoid unused parameter message
-            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Standard finite volume MPFA-O model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -103,8 +91,6 @@ int main(int argc, char** argv)
         else if (modelType == "MPFAL")
         {
             using ProblemTypeTag = TTAG(MPFALTwoPTestProblem);
-            // avoid unused parameter message
-            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
             std::cout<<"Standard finite volume MPFA-L model" << std::endl;
@@ -114,8 +100,6 @@ int main(int argc, char** argv)
         else if (modelType == "MPFALAdaptive")
         {
             using ProblemTypeTag = TTAG(MPFALAdaptiveTwoPTestProblem);
-            // avoid unused parameter message
-            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Adaptive finite volume MPFA-L model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -124,8 +108,6 @@ int main(int argc, char** argv)
         else
         {
             using ProblemTypeTag = TTAG(MPFAOTwoPTestProblem);
-            // avoid unused parameter message
-            GET_PROP(ProblemTypeTag, ParameterTree)::runTimeParams()["ModelType"] = modelType;
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
             std::cout<<"Standard finite volume MPFA-O model" << std::endl;

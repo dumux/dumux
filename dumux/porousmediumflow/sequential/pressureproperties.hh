@@ -94,6 +94,8 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
 };
 
+SET_INT_PROP(Pressure, LinearSolverBlockSize, 1);
+
 SET_TYPE_PROP(Pressure, PressureSolutionVector, typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution);
 
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
