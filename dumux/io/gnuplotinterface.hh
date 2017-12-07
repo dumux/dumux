@@ -38,6 +38,7 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -62,7 +63,7 @@ public:
 
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :
-        pipe_(0), openPlotWindow_(true), persist_(persist),
+        pipe_(0), openPlotWindow_(true), persist_(persist), createImage_(true),
         terminalType_("x11"), outputDirectory_("./"),
         datafileSeparator_(' '), linetype_("solid"),
         xRangeIsSet_(false), yRangeIsSet_(false),
@@ -101,20 +102,15 @@ public:
     void plot(const std::string &filename = "")
     {
         // set correct terminal and general options
-        std::string plot = "reset\n";
-        plot += "set datafile separator \'" + std::string(1, datafileSeparator_) + "\'\n";
-
-        // set the terminal if the defaults were overwritten
-        if (terminalType_.compare("x11") != 0 || linetype_.compare("solid") != 0)
-          plot += "set term " + terminalType_ + " " + linetype_ + " " + " \n";
+        std::string plot = "set datafile separator \'" + std::string(1, datafileSeparator_) + "\'\n";
 
         // set the labels and axes ranges
         plot += "set xlabel \"" + xLabel_ + "\"\n";
         plot += "set ylabel \"" + yLabel_ + "\"\n";
         if (xRangeIsSet_)
-            plot += "set xrange [" + std::to_string(xRangeMin_) + ":" + std::to_string(xRangeMax_) + "]" + "\n";
+            plot += "set xrange [" + toStringWithPrecision(xRangeMin_) + ":" + toStringWithPrecision(xRangeMax_) + "]" + "\n";
         if (yRangeIsSet_)
-            plot += "set yrange [" + std::to_string(yRangeMin_) + ":" + std::to_string(yRangeMax_) + "]" + "\n";
+            plot += "set yrange [" + toStringWithPrecision(yRangeMin_) + ":" + toStringWithPrecision(yRangeMax_) + "]" + "\n";
 
         // set user defined options
         plot += plotOptions_ + "\n";
@@ -145,23 +141,33 @@ public:
         }
 
         // live plot of the results if gnuplot is installed
-#ifdef HAVE_GNUPLOT
+
+        std::string interactivePlot = "reset\n";
+
+        // set the terminal if the defaults were overwritten
+        if (terminalType_.compare("x11") != 0 || linetype_.compare("solid") != 0)
+            interactivePlot += "set term " + terminalType_ + " " + linetype_ + " " + " \n";
+
+        interactivePlot += plot;
         if (openPlotWindow_)
-            executeGnuplot(plot.c_str());
-#endif
+            executeGnuplot(interactivePlot.c_str());
 
         // create a gnuplot file if a filename is specified
         if (filename.compare("") != 0)
         {
-            plotCommandForFile += "\n";
-            plotCommandForFile += "set term pngcairo size 800,600 " + linetype_ + " \n";
-            plotCommandForFile += "set output \"" + filename + ".png\"\n";
-            plotCommandForFile += "replot\n";
+            std::string filePlot = "reset\n";
+            filePlot += "set term pngcairo size 800,600 " + linetype_ + " \n";
+            filePlot += "set output \"" + filename + ".png\"\n";
+            filePlot += plot;
             std::string gnuplotFileName = outputDirectory_ + filename + ".gp";
             std::ofstream file;
             file.open(gnuplotFileName);
-            file << plotCommandForFile;
+            file << filePlot;
             file.close();
+
+          // live plot of the results
+          if (createImage_)
+              executeGnuplot(filePlot.c_str());
         }
     }
 
@@ -350,6 +356,16 @@ public:
     }
 
     /*!
+     * \brief Define whether gnuplot should create .png files
+     *
+     * \param createImage Create an image or not
+     */
+    void setCreateImage(bool createImage)
+    {
+        createImage_ = createImage;
+    }
+
+    /*!
      * \brief Sets the datafile separator
      *
      * \param separator The separator sign between two data columns
@@ -393,8 +409,10 @@ private:
     // Give plot command to gnuplot
     void executeGnuplot(const std::string& plotCommand) const
     {
+#ifdef HAVE_GNUPLOT
         fputs((plotCommand + "\n").c_str(), pipe_);
         fflush(pipe_);
+#endif
     }
 
     // Check validity of number
@@ -408,9 +426,19 @@ private:
             Dune::dwarn << "warning: " << text << " is infinity, adjust your data range" << std::endl;
     }
 
+    // Convert string with higher precision
+    template <typename T>
+    std::string toStringWithPrecision(const T value, const int n = 8)
+    {
+        std::ostringstream out;
+        out << std::setprecision(n) << value;
+        return out.str();
+    }
+
     std::FILE * pipe_;
     bool openPlotWindow_;
     bool persist_;
+    bool createImage_;
     std::string terminalType_;
     std::string outputDirectory_;
     char datafileSeparator_;
