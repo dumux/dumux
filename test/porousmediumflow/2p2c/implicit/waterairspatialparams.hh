@@ -32,8 +32,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
-
 namespace Dumux
 {
 
@@ -221,7 +219,8 @@ public:
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return globalPos[dimWorld-1] > layerBottom_; }
+    { return true; }
+    //{ return globalPos[dimWorld-1] > layerBottom_; }
 
     Scalar fineK_;
     Scalar coarseK_;

@@ -27,11 +27,10 @@
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
-#include <dumux/discretization/methods.hh>
+
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/linear/seqsolverbackend.hh>
 
 #include "injectionspatialparams.hh"
 
@@ -43,24 +42,24 @@ class InjectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
-NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
-NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCTpfaModel, InjectionProblem));
-NEW_TYPE_TAG(InjectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, InjectionProblem));
+NEW_TYPE_TAG(InjectionTypeTag, INHERITS_FROM(TwoPTwoC, InjectionSpatialParams));
+NEW_TYPE_TAG(InjectionBoxTypeTag, INHERITS_FROM(BoxModel, InjectionTypeTag));
+NEW_TYPE_TAG(InjectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionTypeTag));
+NEW_TYPE_TAG(InjectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, InjectionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(InjectionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
+SET_TYPE_PROP(InjectionTypeTag, Problem, InjectionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(InjectionProblem,
+SET_TYPE_PROP(InjectionTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false /*useComplexRelations*/>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(InjectionProblem, UseMoles, true);
+SET_BOOL_PROP(InjectionTypeTag, UseMoles, true);
 }
 
 
@@ -99,16 +98,12 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     enum {
         pressureIdx = Indices::pressureIdx,
-//        swIdx = Indices::swIdx,
-//        snIdx = Indices::snIdx,
 
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    // copy some indices for convenience
-//    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
@@ -126,23 +121,13 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-//    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
-//    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-//    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
-
-//    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     //! property that defines whether mole or mass fractions are used
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     /*!
@@ -174,39 +159,10 @@ public:
 
         //stateing in the console whether mole or mass fractions are used
         if(useMoles)
-        {
             std::cout<<"problem uses mole-fractions"<<std::endl;
-        }
         else
-        {
             std::cout<<"problem uses mass-fractions"<<std::endl;
-        }
     }
-
-    /*!
-     * \brief User defined output after the time integration
-     *
-     * Will be called diretly after the time integration.
-     */
-    // void postTimeStep()
-    // {
-    //     // Calculate storage terms
-    //     PrimaryVariables storage;
-    //     this->model().globalStorage(storage);
-    //
-    //     // Write mass balance information for rank 0
-    //     if (this->gridView().comm().rank() == 0) {
-    //         std::cout<<"Storage: wetting=[" << storage[wPhaseIdx] << "]"
-    //                  << " nonwetting=[" << storage[nPhaseIdx] << "]\n";
-    //     }
-    // }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
-    void setTime(Scalar time)
-    { time_ = time; }
 
     /*!
      * \name Problem parameters
@@ -226,18 +182,6 @@ public:
      */
     Scalar temperature() const
     { return temperature_; }
-
-    /*!
-     * \brief Returns the source terms for each equation
-     *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param globalPos The global position
-     */
-    Sources sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return Sources(0.0);
-    }
 
     // \}
 
@@ -305,7 +249,7 @@ public:
 
         Scalar injectedPhaseMass = 1e-3;
         Scalar moleFracW = elemVolVars[scvf.insideScvIdx()].moleFraction(nPhaseIdx, wCompIdx);
-        if (globalPos[1] < 15 -eps_ && globalPos[1] > 7 - eps_)
+        if (globalPos[1] < 14 - eps_ && globalPos[1] > 6.5 - eps_)
         {
             values[contiN2EqIdx] = -(1-moleFracW)*injectedPhaseMass/FluidSystem::molarMass(nCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
             values[contiH2OEqIdx] = -moleFracW*injectedPhaseMass/FluidSystem::molarMass(wCompIdx); //mole/(m^2*s) -> kg/(s*m^2)
@@ -379,14 +323,12 @@ private:
 
     int nTemperature_;
     int nPressure_;
-
-    std::string name_ ;
-
     Scalar pressureLow_, pressureHigh_;
     Scalar temperatureLow_, temperatureHigh_;
-    Scalar time_;
+
+    std::string name_;
 };
 
-} //end namespace Dumux
+} // end namespace Dumux
 
 #endif
