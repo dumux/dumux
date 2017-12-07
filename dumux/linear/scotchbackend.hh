@@ -35,6 +35,8 @@ extern "C"
 #include <stdint.h>
 #include <ptscotch.h>
 }
+#else
+#warning "PTSCOTCH was not found on your system. Dumux::ScotchBackend won't do anything."
 #endif
 
 namespace Dumux
@@ -73,6 +75,7 @@ public:
                                    std::vector<int>& inversePermutation,
                                    std::string scotchStrategy = "")
     {
+#if HAVE_PTSCOTCH
         // Number of local graph vertices (cells)
         const SCOTCH_Num vertnbr = graph.size();
 
@@ -163,9 +166,10 @@ public:
                   permutation.begin());
         std::copy(inversePermutationIndices.begin(), inversePermutationIndices.end(),
                   inversePermutation.begin());
+#endif // HAVE_PTSCOTCH
     }
 };
 
 } // end namespace Dumux
 
-#endif
+#endif // DUMUX_SCOTCH_BACKEND_HH
