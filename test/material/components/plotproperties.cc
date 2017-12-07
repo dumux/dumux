@@ -46,15 +46,10 @@
 #include <dumux/material/components/xylene.hh>
 
 using namespace std;
-////////////////////////
-// the main function
-////////////////////////
-int main(int argc, char *argv[])
-{
-    bool openPlotWindow = true;
-    if (argc == 2 && (strcmp(argv[1], "0") || strcmp(argv[1], "false") || strcmp(argv[1], "False")))
-        openPlotWindow = false;
 
+template<class Component>
+void plotStuff(bool openPlotWindow)
+{
     double pressure = 1e5;
     double TMin = 273.15;
     double TMax = 323.15;
@@ -69,7 +64,6 @@ int main(int argc, char *argv[])
     // components
     const unsigned int liquidPhaseIdx = 0;
     const unsigned int gasPhaseIdx = 1;
-    using Component = COMPONENT;
 
     const unsigned int numPhases = 2;
     array<string, numPhases> phaseNames;
@@ -166,5 +160,52 @@ int main(int argc, char *argv[])
             gnuplot.plot(Component::name() + "_" + phaseNames[phaseIdx] + "_" + propertyNames[propertyIdx]);
         }
     }
+}
 
+////////////////////////
+// the main function
+////////////////////////
+int main(int argc, char *argv[])
+{
+    bool openPlotWindow = false;
+    if (argc == 3 && (strcmp(argv[2], "1") || strcmp(argv[2], "true") || strcmp(argv[2], "True")))
+        openPlotWindow = true;
+
+    if (argc < 2)
+        DUNE_THROW(Dune::InvalidStateException, "At least one argument (the component name) is required!");
+
+    const std::string compName = argv[1];
+
+    if (compName == "Air")
+        plotStuff< Dumux::Air<double> >(openPlotWindow);
+    else if (compName == "Benzene")
+        plotStuff< Dumux::Benzene<double> >(openPlotWindow);
+    else if (compName == "Brine")
+        plotStuff< Dumux::Brine<double> >(openPlotWindow);
+    else if (compName == "CH4")
+        plotStuff< Dumux::CH4<double> >(openPlotWindow);
+    else if (compName == "DNAPL_TCE")
+        plotStuff< Dumux::DNAPL<double> >(openPlotWindow);
+    else if (compName == "H2")
+        plotStuff< Dumux::H2<double> >(openPlotWindow);
+    else if (compName == "H2O")
+        plotStuff< Dumux::H2O<double> >(openPlotWindow);
+    else if (compName == "HeavyOil")
+        plotStuff< Dumux::HeavyOil<double> >(openPlotWindow);
+    else if (compName == "LNAPL_oil")
+        plotStuff< Dumux::LNAPL<double> >(openPlotWindow);
+    else if (compName == "Mesitylene")
+        plotStuff< Dumux::Mesitylene<double> >(openPlotWindow);
+    else if (compName == "N2")
+        plotStuff< Dumux::N2<double> >(openPlotWindow);
+    else if (compName == "O2")
+        plotStuff< Dumux::O2<double> >(openPlotWindow);
+    else if (compName == "SimpleCO2")
+        plotStuff< Dumux::SimpleCO2<double> >(openPlotWindow);
+    else if (compName == "SimpleH2O")
+        plotStuff< Dumux::SimpleH2O<double>  >(openPlotWindow);
+    else if (compName == "Xylene")
+        plotStuff< Dumux::Xylene<double> >(openPlotWindow);
+    else
+        DUNE_THROW(Dune::NotImplemented, "Test for component " << compName);
 }
