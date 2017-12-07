@@ -20,9 +20,9 @@
  * | | RefTemperature | Scalar | - | free stream temperature |
  * | | RefVelocity | Scalar | - | free stream velocity |
  * | \b Grid | File | std::string | - | name of the grid file, if a corresponding GridCreator is used |
- * | | LowerLeft | globalPosition | - | coordinates of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
- * | | Cells | globalPosition | - | number of cells in respective coordinate directions for the Cube/SimplexGridCreator |
- * | | UpperRight | globalPosition | - | coordinates of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
+ * | | LowerLeft | GlobalPosition | - | coordinates of the lower front left corner for the Cube/Simplex/Interface-GridCreator |
+ * | | UpperRight | GlobalPosition | - | coordinates of the upper back right corner for the Cube/Simplex/Interface-GridCreator |
+ * | | Cells | int vector | - | number of cells in respective coordinate directions for the Cube/Simplex/Interface-GridCreator |
  * | | Verbosity | bool | - | whether the grid construction should output to standard out |
  * | \b GridAdapt | AdaptionInterval | int | 1 | time step interval for adaption |
  * | | CoarsenPercentileFlux | Scalar | 0.2 | percentile of cells coarsened because of flux criterion |
@@ -83,12 +83,14 @@
  * | | TransmissibilityCriterion | int | 0 | 0 = default criterion, 1 = accumulative criterion |
  * | | TransmissibilityCriterionThreshold | Scalar | 1e-8 | threshold for transmissibility choice |
  * | \b Newton | EnableChop | bool | true | chop the Newton update at the beginning of the non-linear solver (MPNC only) |
+ * | | EnableAbsoluteResidualCriterion | bool | false | declare convergence if the residual is below MaxAbsoluteResidual |
  * | | EnableResidualCriterion | bool | false | declare convergence if the initial residual is reduced by the factor ResidualReduction |
  * | | EnableShiftCriterion | bool | true | declare convergence if the primary variables differ by a maximum of MaxRelativeShift |
+ * | | MaxAbsoluteResidual | Scalar | 1e-5 | tolerance for the absolute residual criterion |
  * | | MaxRelativeShift | Scalar | 1e-8 | tolerance for the shift criterion |
  * | | MaxSteps | int | 18 | number of maximum iterations for the Newton method |
  * | | MaxTimeStepDivisions | int | 10 | |
- * | | ResidualReduction | Scalar | 1e-5 | tolerance for the residual criterion |
+ * | | ResidualReduction | Scalar | 1e-5 | tolerance for the (relative) residual criterion |
  * | | SatisfyResidualAndShiftCriterion | bool | false | declare convergence only if both criteria are met |
  * | | TargetSteps | int | 10 | number of iterations at which the Newton method should aim at |
  * | | UseLineSearch | bool | false | specifies whether the update should be done using line search |
