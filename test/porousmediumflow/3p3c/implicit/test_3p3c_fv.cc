@@ -22,8 +22,6 @@
  * \brief Test for the three-phase three-component box model
  */
 #include <config.h>
-#include "infiltration3p3cproblem.hh"
-
 #include <ctime>
 #include <iostream>
 
@@ -38,6 +36,7 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
+#include <dumux/common/timeloop.hh>
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
@@ -49,6 +48,10 @@
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+
+#include "infiltration3p3cproblem.hh"
+#include "kuevetteproblem.hh"
+#include "columnxylolproblem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -148,8 +151,9 @@ int main(int argc, char** argv) try
     vtkWriter.write(0.0);
 
     // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
+    auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
+    timeLoop->setPeriodicCheckPoint(getParam<Scalar>("TimeLoop.EpisodeLength", std::numeric_limits<Scalar>::max()));
 
     // the assembler with time loop for instationary problem
     using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
@@ -166,7 +170,8 @@ int main(int argc, char** argv) try
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
     // time loop
-    timeLoop->start(); do
+    timeLoop->start();
+    while (!timeLoop->finished())
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
@@ -198,15 +203,16 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // write vtk output
-        vtkWriter.write(timeLoop->time());
+        // if episode length was specificied output only at the end of episodes
+        if (!haveParam("TimeLoop.EpisodeLength") || timeLoop->isCheckPoint() || timeLoop->finished() || timeLoop->timeStepIndex() == 1)
+            vtkWriter.write(timeLoop->time());
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
-
-    } while (!timeLoop->finished());
+    }
 
     timeLoop->finalize(leafGridView.comm());
 

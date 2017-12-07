@@ -53,13 +53,12 @@ SET_PROP(KuevetteSpatialParams, MaterialLaw)
  private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedParkerVanGen3P<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
  public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<RegularizedParkerVanGen3P<Scalar>>;
 };
-}
+} // end namespace Dumux
 
 /*!
  * \ingroup ThreePThreeCModel
@@ -69,42 +68,31 @@ SET_PROP(KuevetteSpatialParams, MaterialLaw)
 template<class TypeTag>
 class KuevetteSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dim> DimVector;
-
-
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using PermeabilityType = Scalar;
 
     /*!
@@ -112,8 +100,8 @@ public:
      *
      * \param gridView The grid view
      */
-    KuevetteSpatialParams(const Problem& problem, const GridView &gridView)
-        : ParentType(problem, gridView)
+    KuevetteSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         // intrinsic permeabilities
         fineK_ = 6.28e-12;
@@ -150,28 +138,20 @@ public:
         fineMaterialParams_.setRhoBulk(1500.);
     }
 
-    ~KuevetteSpatialParams()
-    {}
-
-
     /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+     * \note  It is possibly solution dependent.
      *
-     * \param globalSolution The global solution vector
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return permeability
      */
-    void update(const SolutionVector &globalSolution)
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-    }
-
-    /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
-     *
-     * \param globalPos The global position
-     */
-   Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
-    {
+        const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
@@ -180,13 +160,15 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
      */
-    Scalar porosityAtPos(const GlobalPosition& globalPos) const
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
     {
+        const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
@@ -195,14 +177,18 @@ public:
 
 
     /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolutionVector& elemSol) const
     {
+        const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
@@ -257,12 +243,12 @@ public:
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
     {
-        return ((Dune::FloatCmp::ge<Scalar>(globalPos[0],0.13)
-                    && Dune::FloatCmp::le<Scalar>(globalPos[0],1.20)
-                    && Dune::FloatCmp::ge<Scalar>(globalPos[1],0.32)
-                    && Dune::FloatCmp::le<Scalar>(globalPos[1],0.57))
-                || (Dune::FloatCmp::ge<Scalar>(globalPos[0],1.20)
-                    && Dune::FloatCmp::le<Scalar>(globalPos[1],0.15)));
+        return ((Dune::FloatCmp::ge<Scalar>(globalPos[0], 0.13)
+                    && Dune::FloatCmp::le<Scalar>(globalPos[0], 1.24)
+                    && Dune::FloatCmp::ge<Scalar>(globalPos[1], 0.32)
+                    && Dune::FloatCmp::le<Scalar>(globalPos[1], 0.60))
+                || (Dune::FloatCmp::ge<Scalar>(globalPos[0], 1.20)
+                    && Dune::FloatCmp::le<Scalar>(globalPos[1], 0.15)));
     }
 
     Scalar fineK_;
@@ -277,6 +263,6 @@ private:
     Scalar lambdaSolid_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

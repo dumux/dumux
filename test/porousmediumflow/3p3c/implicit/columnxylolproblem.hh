@@ -26,9 +26,10 @@
 #define DUMUX_COLUMNXYLOLPROBLEM_HH
 
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3p3c/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
 #include "columnxylolspatialparams.hh"
 
@@ -41,18 +42,18 @@ class ColumnProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ColumnProblem, INHERITS_FROM(ThreePThreeCNI, ColumnSpatialParams));
-NEW_TYPE_TAG(ColumnBoxProblem, INHERITS_FROM(BoxModel, ColumnProblem));
-NEW_TYPE_TAG(ColumnCCProblem, INHERITS_FROM(CCTpfaModel, ColumnProblem));
+NEW_TYPE_TAG(ColumnTypeTag, INHERITS_FROM(ThreePThreeCNI, ColumnSpatialParams));
+NEW_TYPE_TAG(ColumnBoxTypeTag, INHERITS_FROM(BoxModel, ColumnTypeTag));
+NEW_TYPE_TAG(ColumnCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, ColumnTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(ColumnProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ColumnTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ColumnProblem, Problem, ColumnProblem<TypeTag>);
+SET_TYPE_PROP(ColumnTypeTag, Problem, ColumnProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(ColumnProblem,
+SET_TYPE_PROP(ColumnTypeTag,
               FluidSystem,
               FluidSystems::H2OAirXylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 }
@@ -60,7 +61,6 @@ SET_TYPE_PROP(ColumnProblem,
 
 /*!
  * \ingroup ThreePThreeCModel
- * \ingroup ImplicitTestProblems
  * \brief Non-isothermal injection problem where a water is injected into a
  *        sand column with a NAPL contamination.
  *
@@ -81,20 +81,16 @@ SET_TYPE_PROP(ColumnProblem,
  * To adjust the simulation time it is necessary to edit the input file.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box3p3cnicolumnxylol test_box3p3cnicolumnxylol.input</tt> or
- * <tt>./test_cc3p3cnicolumnxylol test_cc3p3cnicolumnxylol.input</tt>
+ * <tt>./test_box3p3cnicolumnxylol test_columnxylol_fv.input</tt> or
+ * <tt>./test_cc3p3cnicolumnxylol test_columnxylol_fv.input</tt>
  */
 template <class TypeTag >
-class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
+class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-
-    // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
 
         pressureIdx = Indices::pressureIdx,
@@ -111,26 +107,16 @@ class ColumnProblem : public ImplicitPorousMediaProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) NeumannFluxes;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
     /*!
@@ -139,12 +125,11 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    ColumnProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ColumnProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         FluidSystem::init();
-
-        name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -159,18 +144,6 @@ public:
      */
     const std::string name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the source term
-     *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param globalPos The global position
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
 
     // \}
 
@@ -208,7 +181,6 @@ public:
     PrimaryVariables dirichletAtPos( const GlobalPosition &globalPos) const
     {
        return initial_(globalPos);
-
     }
 
     /*!
@@ -225,15 +197,15 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     NeumannFluxes neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables values(0.0);
         const auto& globalPos = scvf.ipGlobal();
 
         // negative values for injection
-        if (globalPos[1] > 1.2 - eps_)
+        if (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
         {
             values[Indices::contiWEqIdx] = -0.395710;
             values[Indices::contiGEqIdx] = -0.000001;
@@ -261,34 +233,26 @@ public:
     }
 
 
-       /*!
+    /*!
      * \brief Append all quantities of interest which can be derived
      *        from the solution of the current time step to the VTK
      *        writer. Adjust this in case of anisotropic permeabilities.
      */
-    void addOutputVtkFields()
+    template<class VTKWriter>
+    void addVtkFields(VTKWriter& vtk)
     {
-        // get the number of degrees of freedom
-        unsigned numDofs = this->model().numDofs();
-
-        // create the scalar field required for the permeabilities
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numDofs);
-
-        FVElementGeometry fvGeometry;
+        const auto& gg = this->fvGridGeometry();
+        Kxx_.resize(gg.numDofs());
+        vtk.addField(Kxx_, "permeability");
 
         for (const auto& element : elements(this->gridView()))
         {
-            fvGeometry.update(this->gridView(), element);
+            auto fvGeometry = localView(gg);
+            fvGeometry.bindElement(element);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-            {
-                int dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
-                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx);
-            }
+            for (const auto& scv : scvs(fvGeometry))
+                Kxx_[scv.dofIndex()] = this->spatialParams().intrinsicPermeabilityAtPos(scv.dofPosition());
         }
-
-        this->resultWriter().attachDofData(*Kxx, "permeability", isBox);
     }
 
 private:
@@ -298,53 +262,54 @@ private:
     {
         PrimaryVariables values;
         values.setState(threePhases);
-        Scalar y = globalPos[1];
+        const auto y = globalPos[1];
+        const auto yMax = this->fvGridGeometry().bBoxMax()[1];
 
         values[temperatureIdx] = 296.15;
         values[pressureIdx] = 1.e5;
         values[switch1Idx] = 0.005;
 
-        if (y > 1.2 - eps_)
+        if (y > yMax - eps_)
             values[switch2Idx] = 0.112;
-        else if (y > 1.2 - 0.0148 - eps_)
-            values[switch2Idx] = 0 + ((1.2 - y)/0.0148)*0.112;
-        else if (y > 1.2 - 0.0296 - eps_)
-            values[switch2Idx] = 0.112 + (((1.2 - y) - 0.0148)/0.0148)*(0.120 - 0.112);
-        else if (y > 1.2 - 0.0444 - eps_)
-            values[switch2Idx] = 0.120 + (((1.2 - y) - 0.0296)/0.0148)*(0.125 - 0.120);
-        else if (y > 1.2 - 0.0592 - eps_)
-            values[switch2Idx] = 0.125 + (((1.2 - y) - 0.0444)/0.0148)*(0.137 - 0.125);
-        else if (y > 1.2 - 0.0740 - eps_)
-            values[switch2Idx] = 0.137 + (((1.2 - y) - 0.0592)/0.0148)*(0.150 - 0.137);
-        else if (y > 1.2 - 0.0888 - eps_)
-            values[switch2Idx] = 0.150 + (((1.2 - y) - 0.0740)/0.0148)*(0.165 - 0.150);
-        else if (y > 1.2 - 0.1036 - eps_)
-            values[switch2Idx] = 0.165 + (((1.2 - y) - 0.0888)/0.0148)*(0.182 - 0.165);
-        else if (y > 1.2 - 0.1184 - eps_)
-            values[switch2Idx] = 0.182 + (((1.2 - y) - 0.1036)/0.0148)*(0.202 - 0.182);
-        else if (y > 1.2 - 0.1332 - eps_)
-            values[switch2Idx] = 0.202 + (((1.2 - y) - 0.1184)/0.0148)*(0.226 - 0.202);
-        else if (y > 1.2 - 0.1480 - eps_)
-            values[switch2Idx] = 0.226 + (((1.2 - y) - 0.1332)/0.0148)*(0.257 - 0.226);
-        else if (y > 1.2 - 0.1628 - eps_)
-            values[switch2Idx] = 0.257 + (((1.2 - y) - 0.1480)/0.0148)*(0.297 - 0.257);
-        else if (y > 1.2 - 0.1776 - eps_)
-            values[switch2Idx] = 0.297 + (((1.2 - y) - 0.1628)/0.0148)*(0.352 - 0.297);
-        else if (y > 1.2 - 0.1924 - eps_)
-            values[switch2Idx] = 0.352 + (((1.2 - y) - 0.1776)/0.0148)*(0.426 - 0.352);
-        else if (y > 1.2 - 0.2072 - eps_)
-            values[switch2Idx] = 0.426 + (((1.2 - y) - 0.1924)/0.0148)*(0.522 - 0.426);
-        else if (y > 1.2 - 0.2220 - eps_)
-            values[switch2Idx] = 0.522 + (((1.2 - y) - 0.2072)/0.0148)*(0.640 - 0.522);
-        else if (y > 1.2 - 0.2368 - eps_)
-            values[switch2Idx] = 0.640 + (((1.2 - y) - 0.2220)/0.0148)*(0.767 - 0.640);
-        else if (y > 1.2 - 0.2516 - eps_)
-            values[switch2Idx] = 0.767 + (((1.2 - y) - 0.2368)/0.0148)*(0.878 - 0.767);
-        else if (y > 1.2 - 0.2664 - eps_)
-            values[switch2Idx] = 0.878 + (((1.2 - y) - 0.2516)/0.0148)*(0.953 - 0.878);
-        else if (y > 1.2 - 0.2812 - eps_)
-            values[switch2Idx] = 0.953 + (((1.2 - y) - 0.2664)/0.0148)*(0.988 - 0.953);
-        else if (y > 1.2 - 0.3000 - eps_)
+        else if (y > yMax - 0.0148 - eps_)
+            values[switch2Idx] = 0 + ((yMax - y)/0.0148)*0.112;
+        else if (y > yMax - 0.0296 - eps_)
+            values[switch2Idx] = 0.112 + (((yMax - y) - 0.0148)/0.0148)*(0.120 - 0.112);
+        else if (y > yMax - 0.0444 - eps_)
+            values[switch2Idx] = 0.120 + (((yMax - y) - 0.0296)/0.0148)*(0.125 - 0.120);
+        else if (y > yMax - 0.0592 - eps_)
+            values[switch2Idx] = 0.125 + (((yMax - y) - 0.0444)/0.0148)*(0.137 - 0.125);
+        else if (y > yMax - 0.0740 - eps_)
+            values[switch2Idx] = 0.137 + (((yMax - y) - 0.0592)/0.0148)*(0.150 - 0.137);
+        else if (y > yMax - 0.0888 - eps_)
+            values[switch2Idx] = 0.150 + (((yMax - y) - 0.0740)/0.0148)*(0.165 - 0.150);
+        else if (y > yMax - 0.1036 - eps_)
+            values[switch2Idx] = 0.165 + (((yMax - y) - 0.0888)/0.0148)*(0.182 - 0.165);
+        else if (y > yMax - 0.1184 - eps_)
+            values[switch2Idx] = 0.182 + (((yMax - y) - 0.1036)/0.0148)*(0.202 - 0.182);
+        else if (y > yMax - 0.1332 - eps_)
+            values[switch2Idx] = 0.202 + (((yMax - y) - 0.1184)/0.0148)*(0.226 - 0.202);
+        else if (y > yMax - 0.1480 - eps_)
+            values[switch2Idx] = 0.226 + (((yMax - y) - 0.1332)/0.0148)*(0.257 - 0.226);
+        else if (y > yMax - 0.1628 - eps_)
+            values[switch2Idx] = 0.257 + (((yMax - y) - 0.1480)/0.0148)*(0.297 - 0.257);
+        else if (y > yMax - 0.1776 - eps_)
+            values[switch2Idx] = 0.297 + (((yMax - y) - 0.1628)/0.0148)*(0.352 - 0.297);
+        else if (y > yMax - 0.1924 - eps_)
+            values[switch2Idx] = 0.352 + (((yMax - y) - 0.1776)/0.0148)*(0.426 - 0.352);
+        else if (y > yMax - 0.2072 - eps_)
+            values[switch2Idx] = 0.426 + (((yMax - y) - 0.1924)/0.0148)*(0.522 - 0.426);
+        else if (y > yMax - 0.2220 - eps_)
+            values[switch2Idx] = 0.522 + (((yMax - y) - 0.2072)/0.0148)*(0.640 - 0.522);
+        else if (y > yMax - 0.2368 - eps_)
+            values[switch2Idx] = 0.640 + (((yMax - y) - 0.2220)/0.0148)*(0.767 - 0.640);
+        else if (y > yMax - 0.2516 - eps_)
+            values[switch2Idx] = 0.767 + (((yMax - y) - 0.2368)/0.0148)*(0.878 - 0.767);
+        else if (y > yMax - 0.2664 - eps_)
+            values[switch2Idx] = 0.878 + (((yMax - y) - 0.2516)/0.0148)*(0.953 - 0.878);
+        else if (y > yMax - 0.2812 - eps_)
+            values[switch2Idx] = 0.953 + (((yMax - y) - 0.2664)/0.0148)*(0.988 - 0.953);
+        else if (y > yMax - 0.3000 - eps_)
             values[switch2Idx] = 0.988;
         else
             values[switch2Idx] = 1.e-4;
@@ -353,7 +318,9 @@ private:
 
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
+    std::vector<Scalar> Kxx_;
 };
-} //end namespace
+
+} //end namespace Dumux
 
 #endif

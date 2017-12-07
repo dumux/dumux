@@ -26,7 +26,6 @@
 #ifndef DUMUX_INFILTRATION_THREEPTHREEC_SPATIAL_PARAMETERS_HH
 #define DUMUX_INFILTRATION_THREEPTHREEC_SPATIAL_PARAMETERS_HH
 
-#include <dumux/porousmediumflow/3p3c/implicit/indices.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
@@ -54,13 +53,12 @@ SET_PROP(InfiltrationThreePThreeCSpatialParamsTypeTag, MaterialLaw)
  private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedParkerVanGen3P<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
  public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<RegularizedParkerVanGen3P<Scalar>>;
 };
-}
+} // end namespace Properties
 
 /*!
  * \ingroup ThreePThreeCModel
@@ -71,38 +69,22 @@ template<class TypeTag>
 class InfiltrationThreePThreeCSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
     using ParentType = ImplicitSpatialParams<TypeTag>;
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename Grid::ctype;
     enum {
         dim = GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
-
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
-    using DimVector = Dune::FieldVector<CoordScalar,dim>;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    //get the material law from the property system
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
-
-
 public:
-
+   using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+   using MaterialLawParams = typename MaterialLaw::Params;
    using PermeabilityType = Scalar;
 
     /*!
@@ -110,8 +92,8 @@ public:
      *
      * \param gridView The grid view
      */
-   InfiltrationThreePThreeCSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    InfiltrationThreePThreeCSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         // intrinsic permeabilities
         fineK_ = 1.e-11;
@@ -136,13 +118,19 @@ public:
     }
 
     /*!
-     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+     * \note  It is possibly solution dependent.
      *
-     * \param globalPos The global position
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return permeability
      */
-
-    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
+        const auto& globalPos = scv.dofPosition();
         if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
@@ -186,6 +174,6 @@ private:
     MaterialLawParams materialParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

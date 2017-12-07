@@ -12,5 +12,5 @@ Name = infiltration
 [Implicit]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
 
-[LinearSolver]
-ResidualReduction = 1e-6
+[Newton]
+MaxRelativeShift = 1e-6

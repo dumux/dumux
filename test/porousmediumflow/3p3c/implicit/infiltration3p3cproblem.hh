@@ -27,7 +27,6 @@
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
-#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/3p3c/implicit/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
@@ -43,7 +42,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(InfiltrationThreePThreeCTypeTag, INHERITS_FROM(ThreePThreeC, InfiltrationThreePThreeCSpatialParamsTypeTag));
 NEW_TYPE_TAG(InfiltrationThreePThreeCBoxTypeTag, INHERITS_FROM(BoxModel, InfiltrationThreePThreeCTypeTag));
-NEW_TYPE_TAG(InfiltrationThreePThreeCCCTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePThreeCTypeTag));
+NEW_TYPE_TAG(InfiltrationThreePThreeCCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InfiltrationThreePThreeCTypeTag));
 
 // Set the grid type
 SET_TYPE_PROP(InfiltrationThreePThreeCTypeTag, Grid, Dune::YaspGrid<2>);
@@ -116,7 +115,6 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -136,7 +134,7 @@ public:
      * \param gridView The grid view
      */
     InfiltrationThreePThreeCProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
-        : ParentType(fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 10.0; // -> 10 degrees Celsius
         FluidSystem::init(/*tempMin=*/temperature_ - 1,
@@ -186,9 +184,9 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        if(globalPos[0] > 500. - eps_)
+        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
             values.setAllDirichlet();
-        else if(globalPos[0] < eps_)
+        else if(globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
             values.setAllDirichlet();
         else
             values.setAllNeumann();
@@ -205,34 +203,7 @@ public:
      * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
-    {
-        PrimaryVariables values;
-        values.setState(wgPhaseOnly);
-
-        Scalar y = globalPos[1];
-        Scalar x = globalPos[0];
-        Scalar sw, swr=0.12, sgr=0.03;
-
-        if(y >(-1.E-3*x+5) - eps_)
-        {
-            Scalar pc = 9.81 * 1000.0 * (y - (-5E-4*x+5));
-            if (pc < 0.0) pc = 0.0;
-
-            sw = invertPcgw_(pc, this->spatialParams().materialLawParamsAtPos(globalPos));
-            if (sw < swr) sw = swr;
-            if (sw > 1.-sgr) sw = 1.-sgr;
-
-            values[pressureIdx] = 1e5 ;
-            values[switch1Idx] = sw;
-            values[switch2Idx] = 1.e-6;
-        }else {
-            values[pressureIdx] = 1e5 + 9.81 * 1000.0 * ((-5E-4*x+5) - y);
-            values[switch1Idx] = 1.-sgr;
-            values[switch2Idx] = 1.e-6;
-        }
-
-        return values;
-    }
+    { return initial_(globalPos); }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
@@ -253,7 +224,7 @@ public:
         NeumannFluxes values(0.0);
 
         // negative values for injection
-        if ((globalPos[0] <= 80.0) && (globalPos[0] >= 55.0) && (globalPos[1] >= 10.0 - eps_))
+        if ((globalPos[0] < 80.0 + eps_) && (globalPos[0] > 55.0 - eps_) && (globalPos[1] > 10.0 - eps_))
         {
             values[contiWEqIdx] = -0.0;
             //mole flow conversion to mass flow with molar mass M(Mesit.)=0,120 kg/mol --> 1.2e-4 kg/(sm)
@@ -346,6 +317,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
 };
-} //end namespace
+} //end namespace Dumux
 
 #endif
