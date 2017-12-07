@@ -428,7 +428,7 @@ private:
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                     for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
                     {
-                        neighborDeriv[k] += localResidual.evalFlux(problem,
+                        neighborDeriv[k] -= localResidual.evalFlux(problem,
                                                                    neighborElements[k],
                                                                    fvGeometry,
                                                                    curElemVolVars,
