@@ -38,11 +38,11 @@ namespace Dumux
 {
 
 //! Helper type to determine whether a given type is a Dune::BCRSMatrix
-template<class T> struct is_BCRSMatrix : public std::false_type {};
+template<class T> struct isBCRSMatrix : public std::false_type {};
 
 //! Helper type to determine whether a given type is a Dune::BCRSMatrix
 template<class T>
-struct is_BCRSMatrix<Dune::BCRSMatrix<T> > : public std::true_type {};
+struct isBCRSMatrix<Dune::BCRSMatrix<T> > : public std::true_type {};
 
 /*!
  * \ingroup Linear
@@ -740,7 +740,7 @@ public:
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static_assert(is_BCRSMatrix<Matrix>::value, "SuperLU only works with BCRS matrices!");
+        static_assert(isBCRSMatrix<Matrix>::value, "SuperLU only works with BCRS matrices!");
         using BlockType = typename Matrix::block_type;
         static_assert(BlockType::rows == BlockType::cols, "Matrix block must be quadratic!");
         constexpr auto blockSize = BlockType::rows;
@@ -800,7 +800,7 @@ public:
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static_assert(is_BCRSMatrix<Matrix>::value, "UMFPack only works with BCRS matrices!");
+        static_assert(isBCRSMatrix<Matrix>::value, "UMFPack only works with BCRS matrices!");
         using BlockType = typename Matrix::block_type;
         static_assert(BlockType::rows == BlockType::cols, "Matrix block must be quadratic!");
         constexpr auto blockSize = BlockType::rows;
