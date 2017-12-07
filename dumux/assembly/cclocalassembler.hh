@@ -305,7 +305,7 @@ private:
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        ElementSolutionVector elemSol({origPriVars});
+        ElementSolutionVector elemSol(origPriVars);
 
         // derivatives in the neighbors with repect to the current elements
         Dune::BlockVector<NumEqVector> neighborDeriv(numNeighbors);
