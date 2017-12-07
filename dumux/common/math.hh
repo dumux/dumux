@@ -637,7 +637,7 @@ vtmv(const Dune::DenseVector<V1>& v1,
      const Dune::DenseMatrix<MAT>& M,
      const Dune::DenseVector<V2>& v2)
 {
-    auto tmp(v2);
+    typename Dune::DenseVector<V2>::derived_type tmp(v2);
     M.mv(v2, tmp);
     return v1*tmp;
 }
@@ -651,12 +651,18 @@ vtmv(const Dune::DenseVector<V1>& v1,
  *        allocated Dune Vectors/Matrices. Size mismatch
  *        assertions are done in the respective Dune classes.
  *
+ * \note We need the enable_if to make sure that only Scalars
+ *       fit here. Matrix types are forced to use the above
+ *       vtmv(DenseVector, DenseMatrix, DenseVector) instead.
+ *
  * \param v1 The first vector
  * \param m The scale factor
  * \param v2 The second vector
  */
+
 template <class V1, class FieldScalar, class V2>
-FieldScalar vtmv(const Dune::DenseVector<V1>& v1,
+typename std::enable_if_t<Dune::IsNumber<FieldScalar>::value, FieldScalar>
+vtmv(const Dune::DenseVector<V1>& v1,
                  const FieldScalar m,
                  const Dune::DenseVector<V2>& v2)
 {
