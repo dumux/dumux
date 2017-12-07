@@ -1,4 +1,3 @@
-#add_subdirectory(pointsources)
 add_subdirectory(adaptive)
 add_subdirectory(fracture)
 add_subdirectory(incompressible)

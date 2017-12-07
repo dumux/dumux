@@ -321,7 +321,7 @@ public:
                         volVars.update(elemSolSon, *problem_, element, scv);
 
                         const auto dofIdxGlobal = scv.dofIndex();
-                        const auto scvVolume = scv.volume(); //std::cout << "ratio = " << scvVolume / fatherElementVolume << std::endl;
+                        const auto scvVolume = scv.volume();
                         if (int(formulation) == pwsn)
                         {
                             massCoeff[dofIdxGlobal] += scvVolume * volVars.density(nPhaseIdx) * volVars.porosity();

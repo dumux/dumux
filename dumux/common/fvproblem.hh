@@ -91,7 +91,7 @@ public:
         problemName_ = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Name");
 
         // compute which scvs contain point sources
-        computePointSourceMap(pointSourceMap_);
+        computePointSourceMap();
     }
 
     /*!
@@ -432,11 +432,10 @@ public:
     }
 
     //! Compute the point source map, i.e. which scvs have point source contributions
-    template<class PointSourceMap>
-    void computePointSourceMap(PointSourceMap& pointSourceMap)
+    void computePointSourceMap()
     {
         // clear the given point source maps in case it's not empty
-        pointSourceMap.clear();
+        pointSourceMap_.clear();
 
         // get and apply point sources if any given in the problem
         std::vector<PointSource> sources;
@@ -448,7 +447,7 @@ public:
             // calculate point source locations and save them in a map
             PointSourceHelper::computePointSourceMap(*fvGridGeometry_,
                                                      sources,
-                                                     pointSourceMap);
+                                                     pointSourceMap_);
         }
     }
 

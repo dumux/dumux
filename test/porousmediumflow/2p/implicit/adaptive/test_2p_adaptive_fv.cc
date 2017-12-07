@@ -32,8 +32,9 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-//! Use the incompressible problem for this adaptive test
+//! Use the incompressible or point source problem for this adaptive test
 #include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
+#include "pointsourceproblem.hh"
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -66,11 +67,13 @@ namespace Dumux {
         NEW_TYPE_TAG(TwoPIncompressibleAdaptiveTpfa, INHERITS_FROM(TwoPIncompressibleTpfa));
         NEW_TYPE_TAG(TwoPIncompressibleAdaptiveMpfa, INHERITS_FROM(TwoPIncompressibleMpfa));
         NEW_TYPE_TAG(TwoPIncompressibleAdaptiveBox, INHERITS_FROM(TwoPIncompressibleBox));
+        NEW_TYPE_TAG(TwoPAdaptivePointSource, INHERITS_FROM(TwoPIncompressibleAdaptiveTpfa));
 
         //! Use non-conforming refinement in the cell-centered tests, conforming for box
         SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
         SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
         SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Grid, Dune::UGGrid<2>);
+        SET_TYPE_PROP(TwoPAdaptivePointSource, Problem, PointSourceTestProblem<TypeTag>);
     }
 }
 
@@ -146,8 +149,9 @@ int main(int argc, char** argv) try
         // update grid data after adaption
         if (wasAdapted)
         {
-            xOld = x;                        //! Overwrite the old solution with the new (resized & interpolated) one
-            gridVariables->init(x, xOld);    //! Initialize the secondary variables to the new (and "new old") solution
+            xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
+            gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
+            problem->computePointSourceMap(); //! Update the point source map
         }
     }
 
@@ -161,8 +165,9 @@ int main(int argc, char** argv) try
     // update grid data after adaption
     if (wasAdapted)
     {
-        xOld = x;                        //! Overwrite the old solution with the new (resized & interpolated) one
-        gridVariables->init(x, xOld);    //! Initialize the secondary variables to the new (and "new old") solution
+        xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
+        gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
+        problem->computePointSourceMap(); //! Update the point source map
     }
 
     // get some time loop parameters
@@ -215,10 +220,11 @@ int main(int argc, char** argv) try
         if (wasAdapted)
         {
             //! Note that if we were using point sources, we would have to update the map here as well
-            xOld = x;                        //! Overwrite the old solution with the new (resized & interpolated) one
-            assembler->setJacobianPattern(); //! Tell the assembler to resize the matrix and set pattern
-            assembler->setResidualSize();    //! Tell the assembler to resize the residual
-            gridVariables->init(x, xOld);    //! Initialize the secondary variables to the new (and "new old") solution
+            xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
+            assembler->setJacobianPattern();  //! Tell the assembler to resize the matrix and set pattern
+            assembler->setResidualSize();     //! Tell the assembler to resize the residual
+            gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
+            problem->computePointSourceMap(); //! Update the point source map
         }
 
         // set previous solution for storage evaluations
