@@ -65,24 +65,27 @@ public:
     , maxLevel_(getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Adaptive.MaxLevel", 0))
     {}
 
-    /*! \brief Function to set the minumum allowed levels.
-     *.
+    /*!
+     * \brief Function to set the minimum allowed level.
+     *
      */
     void setMinLevel(std::size_t minLevel)
     {
         minLevel_ = minLevel;
     }
 
-    /*! \brief Function to set the maximum allowed levels.
-     *.
+    /*!
+     * \brief Function to set the maximum allowed level.
+     *
      */
     void setMaxLevel(std::size_t maxLevel)
     {
         maxLevel_ = maxLevel;
     }
 
-    /*! \brief Function to set the minumum/maximum allowed levels.
-     *.
+    /*!
+     * \brief Function to set the minumum/maximum allowed levels.
+     *
      */
     void setLevels(std::size_t minLevel, std::size_t maxLevel)
     {
@@ -90,7 +93,8 @@ public:
         maxLevel_ = maxLevel;
     }
 
-    /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
+    /*!
+     * \brief Calculates the indicator used for refinement/coarsening for each grid cell.
      *
      *  This standard two-phase indicator is based on the saturation gradient.
      */

@@ -55,6 +55,7 @@
 
 #include <dumux/adaptive/adapt.hh>
 #include <dumux/adaptive/markelements.hh>
+#include <dumux/adaptive/initializationindicator.hh>
 #include <dumux/porousmediumflow/2p/implicit/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 
@@ -128,6 +129,41 @@ int main(int argc, char** argv) try
     const Scalar coarsenTol = getParam<Scalar>("Adaptive.CoarsenTolerance");
     TwoPGridAdaptIndicator<TypeTag> indicator(fvGridGeometry);
     TwoPGridDataTransfer<TypeTag> dataTransfer(problem, fvGridGeometry, gridVariables, x);
+
+    // Do initial refinement around sources/BCs
+    GridAdaptInitializationIndicator<TypeTag> initIndicator(problem, fvGridGeometry, gridVariables);
+
+    // refine up to the maximum level
+    const auto maxLevel = getParam<std::size_t>("Adaptive.MaxLevel", 0);
+    for (std::size_t i = 0; i < maxLevel; ++i)
+    {
+        initIndicator.calculate(x);
+
+        bool wasAdapted = false;
+        if (markElements(GridCreator::grid(), initIndicator))
+            wasAdapted = adapt(GridCreator::grid(), dataTransfer);
+
+        // update grid data after adaption
+        if (wasAdapted)
+        {
+            xOld = x;                        //! Overwrite the old solution with the new (resized & interpolated) one
+            gridVariables->init(x, xOld);    //! Initialize the secondary variables to the new (and "new old") solution
+        }
+    }
+
+    // Do refinement for the initial conditions using our indicator
+    indicator.calculate(x, refineTol, coarsenTol);
+
+    bool wasAdapted = false;
+    if (markElements(GridCreator::grid(), indicator))
+        wasAdapted = adapt(GridCreator::grid(), dataTransfer);
+
+    // update grid data after adaption
+    if (wasAdapted)
+    {
+        xOld = x;                        //! Overwrite the old solution with the new (resized & interpolated) one
+        gridVariables->init(x, xOld);    //! Initialize the secondary variables to the new (and "new old") solution
+    }
 
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

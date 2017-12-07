@@ -16,8 +16,7 @@ LensUpperRight = 4.0 3.0 # [m] coordinates of the upper right lens corner
 Name = 2padaptive # name passed to the output routines
 
 [Adaptive]
-EnableInitializationIndicator = 1
-RefineAtDirichletBC = 1
+RefineAtDirichletBC = 0
 RefineAtFluxBC = 1
 MinLevel = 0
 MaxLevel = 2
