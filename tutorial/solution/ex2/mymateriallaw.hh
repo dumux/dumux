@@ -28,6 +28,7 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/brookscoreyparams.hh>
 #include <cmath>
+#include <algorithm>
 
 namespace Dumux
 {
