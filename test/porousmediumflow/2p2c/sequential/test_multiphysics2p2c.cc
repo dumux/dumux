@@ -36,7 +36,7 @@
 ////////////////////////
 // the main function
 ////////////////////////
-void usage(const char *progname)
+void usage(const char *progname, const std::string &errorMsg = "")
 {
     std::cout << "usage: " << progname << " [--restart restartTime] tEnd firstDt\n";
     exit(1);
@@ -54,6 +54,9 @@ int main(int argc, char** argv)
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
+
+        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
+        Dumux::Parameters::init(argc, argv, defaultParams, usage);
 
         ////////////////////////////////////////////////////////////
         // parse the command line arguments

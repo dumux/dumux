@@ -60,7 +60,6 @@ NEW_TYPE_TAG(SequentialTwoP, INHERITS_FROM(SequentialModel));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( SpatialParams ); //!< The type of the spatial parameters object
 NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( Formulation); //!< The formulation of the model
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the pressure model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
@@ -137,7 +136,10 @@ SET_TYPE_PROP(SequentialTwoP, Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(SequentialTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
 
 //! Set default fluid system
-SET_TYPE_PROP(SequentialTwoP, FluidSystem, TwoPImmiscibleFluidSystem<TypeTag>);
+SET_TYPE_PROP(SequentialTwoP, FluidSystem,
+              FluidSystems::TwoPImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                           typename GET_PROP_TYPE(TypeTag, WettingPhase),
+                                           typename GET_PROP_TYPE(TypeTag, NonwettingPhase)>);
 
 //! Set default fluid state
 SET_PROP(SequentialTwoP, FluidState)
@@ -158,9 +160,6 @@ SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermFactor, 0.5);
 SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermLowerBound, 0.1);
 //! Default upper threshold for evaluation of an error term
 SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermUpperBound, 0.9);
-
-// enable gravity by default
-SET_BOOL_PROP(SequentialTwoP, ProblemEnableGravity, true);
 // \}
 }
 

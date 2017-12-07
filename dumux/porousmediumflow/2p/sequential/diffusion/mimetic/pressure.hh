@@ -27,6 +27,7 @@
  */
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
+#include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/operator.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimetic.hh>
 
@@ -445,7 +446,7 @@ public:
         viscosity_[wPhaseIdx] = 0.0;
         viscosity_[nPhaseIdx] = 0.0;
 
-        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
     }
 
 private:
@@ -467,15 +468,12 @@ void MimeticPressure2P<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
-    int verboseLevelSolver = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    auto verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
 
     if (verboseLevelSolver)
     std::cout << "MimeticPressure2P: solve for pressure" << std::endl;
 
-//        printmatrix(std::cout, *A_, "global stiffness matrix", "row", 11, 3);
-//        printvector(std::cout, f_, "right hand side", "row", 10, 1, 3);
-
-    Solver solver(problem_);
+    auto solver = getSolver<Solver>(problem_);
     solver.solve(*A_, pressTrace_, f_);
 
     return;

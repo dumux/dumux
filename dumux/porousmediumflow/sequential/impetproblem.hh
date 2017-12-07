@@ -132,7 +132,7 @@ public:
         if (adaptiveGrid)
             gridAdapt_ = std::make_shared<GridAdaptModel>(asImp_());
 
-        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel", 0);
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
         dtVariationRestrictionFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, DtVariationRestrictionFactor);
         maxTimeStepSize_ = getParam<Scalar>("TimeManager.MaxTimeStepSize", std::numeric_limits<Scalar>::max());
     }

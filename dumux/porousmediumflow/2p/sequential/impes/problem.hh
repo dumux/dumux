@@ -81,7 +81,7 @@ public:
         spatialParams_ = std::make_shared<SpatialParams>(gridView);
 
         gravity_ = 0;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = - 9.81;
     }
     /*!
@@ -97,7 +97,7 @@ public:
     {
         spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
         gravity_ = 0;
-        if (GET_PARAM_FROM_GROUP(TypeTag, bool, Problem, EnableGravity))
+        if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = - 9.81;
     }
 

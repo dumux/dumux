@@ -146,7 +146,7 @@ public:
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
 
-        vtkOutputLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, Vtk, OutputLevel);
+        vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
     }
 
     //calculate velocities for flux faces of an interaction volume

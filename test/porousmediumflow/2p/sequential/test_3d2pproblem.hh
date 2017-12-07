@@ -54,7 +54,7 @@ class Test3D2PProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(ThreeDTwoPTestProblem, INHERITS_FROM(Test3d2pSpatialParams));
+NEW_TYPE_TAG(ThreeDTwoPTestProblem, INHERITS_FROM(SequentialModel, Test3d2pSpatialParams));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
@@ -169,7 +169,6 @@ typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
-typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
 
 public:
 
@@ -179,7 +178,7 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
     this->setGrid(GridCreator::grid());
 
     int refinementFactor = 0;
-    if (ParameterTree::tree().hasKey("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
+    if (haveParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
     {
         refinementFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RefinementFactor);
         this->grid().globalRefine(refinementFactor);
@@ -206,14 +205,14 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
     }
 
     int outputInterval = 0;
-    if (ParameterTree::tree().hasKey("Problem.OutputInterval"))
+    if (haveParam("Problem.OutputInterval"))
     {
         outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
     }
     this->setOutputInterval(outputInterval);
 
     Scalar outputTimeInterval = 1e6;
-    if (ParameterTree::tree().hasKey("Problem.OutputTimeInterval"))
+    if (haveParam("Problem.OutputTimeInterval"))
     {
         outputTimeInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OutputTimeInterval);
     }
@@ -232,7 +231,7 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
  */
 std::string name() const
 {
-    if (ParameterTree::tree().hasKey("Problem.OutputName"))
+    if (haveParam("Problem.OutputName"))
         return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
     else
         return "test_3d2p";

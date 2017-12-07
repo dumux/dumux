@@ -10,3 +10,6 @@ UpperRight = 10 10 10 # [m] length, width and height of the domain
 [Impet]
 CFLFactor = 0.8
 
+[Vtk]
+OutputLevel = 2
+

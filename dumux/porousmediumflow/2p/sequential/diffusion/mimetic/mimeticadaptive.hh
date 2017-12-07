@@ -131,9 +131,12 @@ public:
         int size = gridView_.size(0);
         rhs_.resize(size , 0.);
         W_.resize(size);
-        ErrorTermFactor_ = GET_PARAM(TypeTag, Scalar, ImpetErrorTermFactor);
-        ErrorTermLowerBound_ = GET_PARAM(TypeTag, Scalar, ImpetErrorTermLowerBound);
-        ErrorTermUpperBound_ = GET_PARAM(TypeTag, Scalar, ImpetErrorTermUpperBound);
+        ErrorTermFactor_ = getParam<Scalar>("Impet.ErrorTermFactor",
+                                            GET_PROP_VALUE(TypeTag, ImpetErrorTermFactor));
+        ErrorTermLowerBound_ = getParam<Scalar>("Impet.ErrorTermLowerBound",
+                                                GET_PROP_VALUE(TypeTag, ImpetErrorTermLowerBound));
+        ErrorTermUpperBound_ = getParam<Scalar>("Impet.ErrorTermUpperBound",
+                                                GET_PROP_VALUE(TypeTag, ImpetErrorTermUpperBound));
 
         density_[wPhaseIdx] = 0.0;
         density_[nPhaseIdx] = 0.0;

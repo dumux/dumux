@@ -22,7 +22,7 @@
 #ifndef DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 #define DUMUX_TEST_DIFFUSION_3D_PROBLEM_HH
 
-#include <dumux/material/components/unit.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mpfa/lmethod/3dpressureproperties.hh>
@@ -65,7 +65,7 @@ SET_PROP(DiffusionTestProblem, WettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
 
 // Set the non-wetting phase
@@ -74,7 +74,7 @@ SET_PROP(DiffusionTestProblem, NonwettingPhase)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
 };
 
 #if HAVE_SUPERLU

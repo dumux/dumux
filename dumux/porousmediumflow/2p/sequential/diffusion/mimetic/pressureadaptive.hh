@@ -27,6 +27,7 @@
  */
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
+#include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/operatoradaptive.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/mimetic/mimeticadaptive.hh>
 
@@ -479,12 +480,12 @@ void MimeticPressure2PAdaptive<TypeTag>::solve()
 {
     typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
 
-    int verboseLevelSolver = GET_PARAM_FROM_GROUP(TypeTag, int, LinearSolver, Verbosity);
+    int verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
 
     if (verboseLevelSolver)
     std::cout << "MimeticPressure2PAdaptive: solve for pressure" << std::endl;
 
-    Solver solver(problem_);
+    auto solver = getSolver<Solver>(problem_);
     solver.solve(*A_, pressTrace_, f_);
 
 //                                    printmatrix(std::cout, *A_, "global stiffness matrix", "row", 11, 3);

@@ -25,3 +25,5 @@ Cells = 10 10 # [-] level 0 resolution in x- and y-direction
 UpperRight = 10 10# [m] dimension of the grid
 ClosureType = None
 
+[Vtk]
+OutputLevel = 2

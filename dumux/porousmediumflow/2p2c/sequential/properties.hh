@@ -66,7 +66,6 @@ NEW_TYPE_TAG(SequentialTwoPTwoC, INHERITS_FROM(Pressure, Transport, IMPET));
 //////////////////////////////////////////////////////////////////
 NEW_PROP_TAG( Indices );
 NEW_PROP_TAG( SpatialParams ); //!< The type of the soil properties object
-NEW_PROP_TAG( ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG( PressureFormulation); //!< The formulation of the model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the model
 NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
@@ -145,7 +144,6 @@ SET_PROP(SequentialTwoPTwoC, TransportSolutionType)
 SET_BOOL_PROP(SequentialTwoPTwoC, EnableCompressibility, true); //!< Compositional models are very likely compressible
 SET_BOOL_PROP(SequentialTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
 SET_BOOL_PROP(SequentialTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
-SET_INT_PROP(SequentialTwoPTwoC, VtkOutputLevel,2); //!< Default verbosity for VtkOutputLevel is 2 = pretty verbose
 //! Restrict (no upwind) flux in transport step if direction reverses after pressure equation
 SET_INT_PROP(SequentialTwoPTwoC, ImpetRestrictFluxInTransport, 0);
 
@@ -167,9 +165,6 @@ SET_BOOL_PROP(SequentialTwoPTwoC, ImpetEnableVolumeIntegral, true); //!< Regard 
 SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermFactor, 0.5); //!< Damping factor \f$ \alpha \f$ in pressure equation
 SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermLowerBound, 0.2); //!< Lower bound where error is not corrected
 SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermUpperBound, 0.9); //!< Upper bound for regularized error damping
-
-// enable gravity by default
-SET_BOOL_PROP(SequentialTwoPTwoC, ProblemEnableGravity, true);
 }
 
 /*!

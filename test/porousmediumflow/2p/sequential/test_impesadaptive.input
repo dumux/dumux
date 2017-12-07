@@ -4,6 +4,7 @@ DtInitial = 0 # [s]
 
 [Problem]
 Name = test_2padaptive # name passed to the output routines
+EnableGravity = 0
 
 [Grid]
 Cells = 2 1
