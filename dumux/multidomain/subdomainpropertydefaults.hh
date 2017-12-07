@@ -26,6 +26,7 @@
 #ifndef DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 #define DUMUX_SUBDOMAIN_PROPERTY_DEFAULTS_HH
 
+#include <numeric>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/pdelab/backend/istlvectorbackend.hh>
 #include <dune/pdelab/backend/istlmatrixbackend.hh>
