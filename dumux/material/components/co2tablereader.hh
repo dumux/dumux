@@ -28,8 +28,6 @@
 #include <dune/common/float_cmp.hh>
 #include <dumux/common/exceptions.hh>
 
-#include <assert.h>
-
 namespace Dumux {
 /*!
  * \brief A generic template for tabulated material laws that depend
@@ -42,8 +40,7 @@ class TabulatedCO2Properties
     enum { numTempSteps = Traits::numTempSteps, numPressSteps = Traits::numPressSteps };
 
 public:
-    TabulatedCO2Properties()
-    {}
+    TabulatedCO2Properties() = default;
 
     Scalar minTemp() const
     { return Traits::minTemp; }
