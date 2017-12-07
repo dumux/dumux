@@ -2,6 +2,7 @@ dune_symlink_to_source_files(FILES "test_fracture.input" "grids")
 
 dune_add_test(NAME test_2p_fracture_box
               SOURCES test_2p_fracture_fv.cc
+              CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS TYPETAG=FractureBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -11,6 +12,7 @@ dune_add_test(NAME test_2p_fracture_box
 
 dune_add_test(NAME test_2p_fracture_tpfa
               SOURCES test_2p_fracture_fv.cc
+              CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS TYPETAG=FractureCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -19,17 +21,19 @@ dune_add_test(NAME test_2p_fracture_tpfa
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa test_fracture.input -Problem.Name fracturetpfa")
 
 dune_add_test(NAME test_2p_fracture_mpfa
-             SOURCES test_2p_fracture_fv.cc
-             COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaTypeTag
-             COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-             CMD_ARGS --script fuzzy
-                      --files ${CMAKE_SOURCE_DIR}/test/references/fractureccmpfa2p-reference.vtu
-                              ${CMAKE_CURRENT_BINARY_DIR}/fracturempfa-00031.vtu
-                      --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa test_fracture.input -Problem.Name fracturempfa")
+              SOURCES test_2p_fracture_fv.cc
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/fractureccmpfa2p-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/fracturempfa-00031.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa test_fracture.input -Problem.Name fracturempfa")
 
 # tests with gravity
 dune_add_test(NAME test_2p_fracture_gravity_box
               SOURCES test_2p_fracture_fv.cc
+              CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS TYPETAG=FractureBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -39,6 +43,7 @@ dune_add_test(NAME test_2p_fracture_gravity_box
 
 dune_add_test(NAME test_2p_fracture_gravity_tpfa
               SOURCES test_2p_fracture_fv.cc
+              CMAKE_GUARD dune-foamgrid_FOUND
               COMPILE_DEFINITIONS TYPETAG=FractureCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
