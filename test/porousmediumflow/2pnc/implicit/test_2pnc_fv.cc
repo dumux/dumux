@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \brief Test for the 2pnc box model used for water management in PEM fuel cells.
+ * \brief Test for the 2pnc cc model used for water management in PEM fuel cells.
  */
 #include <config.h>
 
@@ -31,8 +31,6 @@
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
-
-#include "fuelcellproblem.hh"
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
@@ -50,6 +48,8 @@
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+
+#include "fuelcellproblem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
@@ -79,7 +79,7 @@ int main(int argc, char** argv) try
     using namespace Dumux;
 
     // define the type tag for this problem
-    using TypeTag = TTAG(FuelCellBoxProblem);
+    using TypeTag = TTAG(TYPETAG);
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -113,9 +113,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(GridView::dimension));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -140,12 +139,7 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
-    //add specific output
-    vtkWriter.addField(problem->getCurrentDensity(), "currentDensity [A/cm^2]");
-    vtkWriter.addField(problem->getReactionSourceH2O(), "reactionSourceH2O [mol/(sm^2)]");
-    vtkWriter.addField(problem->getReactionSourceO2(), "reactionSourceO2 [mol/(sm^2)]");
-    vtkWriter.addField(problem->getKxx(), "Kxx");
-    vtkWriter.addField(problem->getKyy(), "Kyy");
+    problem->addVtkFields(vtkWriter); //! Add problem specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -158,7 +152,7 @@ int main(int argc, char** argv) try
 
     // the linear solver
     using LinearSolver = AMGBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->elementMapper());
+    auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
     using NewtonController = PriVarSwitchNewtonController<TypeTag>;
@@ -198,8 +192,8 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // update the output fields before write
-        problem->updateVtkOutput(xOld);
+        // update the output fields with the current solution before write
+        problem->updateVtkFields(x);
 
         // write vtk output
         vtkWriter.write(timeLoop->time());

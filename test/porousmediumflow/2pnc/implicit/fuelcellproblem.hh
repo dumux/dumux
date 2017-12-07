@@ -41,19 +41,19 @@ class FuelCellProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(FuelCellProblem, INHERITS_FROM(TwoPNC, FuelCellSpatialParams));
-NEW_TYPE_TAG(FuelCellBoxProblem, INHERITS_FROM(BoxModel, FuelCellProblem));
-NEW_TYPE_TAG(FuelCellCCProblem, INHERITS_FROM(CCTpfaModel, FuelCellProblem));
+NEW_TYPE_TAG(FuelCellTypeTag, INHERITS_FROM(TwoPNC, FuelCellSpatialParams));
+NEW_TYPE_TAG(FuelCellBoxTypeTag, INHERITS_FROM(BoxModel, FuelCellTypeTag));
+NEW_TYPE_TAG(FuelCellCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FuelCellTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(FuelCellProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(FuelCellTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(FuelCellProblem, Problem, FuelCellProblem<TypeTag>);
+SET_TYPE_PROP(FuelCellTypeTag, Problem, FuelCellProblem<TypeTag>);
 // Set the primary variable combination for the 2pnc model
-SET_INT_PROP(FuelCellProblem, Formulation, TwoPNCFormulation::pnsw);
+SET_INT_PROP(FuelCellTypeTag, Formulation, TwoPNCFormulation::pnsw);
 
 // Set fluid configuration
-SET_PROP(FuelCellProblem, FluidSystem)
+SET_PROP(FuelCellTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -61,11 +61,7 @@ private:
 public:
     using type = FluidSystems::H2ON2O2<Scalar, useComplexRelations>;
 };
-
-// Set the transport equation that is replaced by the total mass balance
-SET_INT_PROP(FuelCellProblem, ReplaceCompEqIdx, 3);
-}
-
+} // end namespace Properties
 
 /*!
  * \ingroup TwoPNCModel
@@ -96,10 +92,6 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
-
-
-
     // Select the electrochemistry method
     using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
 
@@ -162,12 +154,6 @@ public:
                           /*pmin=*/pressureLow_,
                           /*pmax=*/pressureHigh_,
                           /*np=*/nPressure_);
-
-        currentDensity_.resize(fvGridGeometry->gridView().size(dofCodim));
-        reactionSourceH2O_.resize(fvGridGeometry->gridView().size(dofCodim));
-        reactionSourceO2_.resize(fvGridGeometry->gridView().size(dofCodim));
-        Kxx_.resize(fvGridGeometry->gridView().size(dofCodim));
-        Kyy_.resize(fvGridGeometry->gridView().size(dofCodim));
     }
 
     /*!
@@ -190,7 +176,7 @@ public:
     Scalar temperature() const
     { return temperature_; }
 
-    //! \copydoc Dumux::ImplicitProblem::source()
+    //! \copydoc Dumux::FVProblem::source()
     Sources source(const Element &element,
                    const FVElementGeometry& fvGeometry,
                    const ElementVolumeVariables& elemVolVars,
@@ -271,32 +257,24 @@ public:
     /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
-    const std::vector<Scalar>& getCurrentDensity()
+    template<class VTKWriter>
+    void addVtkFields(VTKWriter& vtk)
     {
-        return currentDensity_;
+        const auto& gridView = this->fvGridGeometry().gridView();
+        currentDensity_.resize(gridView.size(dofCodim));
+        reactionSourceH2O_.resize(gridView.size(dofCodim));
+        reactionSourceO2_.resize(gridView.size(dofCodim));
+        Kxx_.resize(gridView.size(dofCodim));
+        Kyy_.resize(gridView.size(dofCodim));
+
+        vtk.addField(currentDensity_, "currentDensity [A/cm^2]");
+        vtk.addField(reactionSourceH2O_, "reactionSourceH2O [mol/(sm^2)]");
+        vtk.addField(reactionSourceO2_, "reactionSourceO2 [mol/(sm^2)]");
+        vtk.addField(Kxx_, "Kxx");
+        vtk.addField(Kyy_, "Kyy");
     }
 
-    const std::vector<Scalar>& getReactionSourceH2O()
-    {
-        return reactionSourceH2O_;
-    }
-
-    const std::vector<Scalar>& getReactionSourceO2()
-    {
-        return reactionSourceO2_;
-    }
-
-    const std::vector<Scalar>& getKxx()
-    {
-        return Kxx_;
-    }
-
-    const std::vector<Scalar>& getKyy()
-    {
-        return Kyy_;
-    }
-
-    void updateVtkOutput(const SolutionVector& curSol)
+    void updateVtkFields(const SolutionVector& curSol)
     {
         for (const auto& element : elements(this->fvGridGeometry().gridView()))
         {
@@ -337,8 +315,6 @@ public:
         }
     }
 
-
-
 private:
 
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
@@ -353,15 +329,6 @@ private:
 
         return priVars;
     }
-
-    bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_; }
-
-    bool onRightBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_; }
-
-    bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    { return globalPos[1] < this->fvGridGeometry().bBoxMin()[1] + eps_; }
 
     bool onUpperBoundary_(const GlobalPosition &globalPos) const
     { return globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_; }
