@@ -85,6 +85,6 @@ public:
     static const int contiGEqIdx = conti0EqIdx + gCompIdx; //!< index of the mass conservation equation for the air component
 };
 
-}
+} // end namespace Dumux
 
 #endif

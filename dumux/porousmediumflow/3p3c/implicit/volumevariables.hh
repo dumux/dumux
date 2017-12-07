@@ -25,13 +25,13 @@
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 #include <dumux/discretization/volumevariables.hh>
 #include <dumux/discretization/methods.hh>
-#include "properties.hh"
 
 namespace Dumux
 {

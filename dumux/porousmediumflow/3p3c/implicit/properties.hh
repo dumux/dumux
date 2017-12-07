@@ -71,13 +71,8 @@ NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC, NonIsothermal));
  */
 SET_PROP(ThreePThreeC, NumComponents)
 {
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
- public:
-    static const int value = FluidSystem::numComponents;
-
-    static_assert(value == 3,
+    static const int value = 3;
+    static_assert(value == GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents,
                   "Only fluid systems with 3 components are supported by the 3p3c model!");
 };
 
@@ -89,17 +84,13 @@ SET_PROP(ThreePThreeC, NumComponents)
  */
 SET_PROP(ThreePThreeC, NumPhases)
 {
- private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
- public:
-    static const int value = FluidSystem::numPhases;
-    static_assert(value == 3,
+    static const int value = 3;
+    static_assert(value == GET_PROP_TYPE(TypeTag, FluidSystem)::numPhases,
                   "Only fluid systems with 3 phases are supported by the 3p3c model!");
 };
 
 //! Set as default that no component mass balance is replaced by the total mass balance
-SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, 100);
+SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponents));
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen
@@ -114,7 +105,7 @@ SET_PROP(ThreePThreeC, FluidState){
         typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
 
-SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 2
+SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 3
 
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
@@ -131,7 +122,7 @@ SET_BOOL_PROP(ThreePThreeC, EnableEnergyBalance, false);
 //! The primary variable switch for the 3p3c model
 SET_TYPE_PROP(ThreePThreeC, PrimaryVariableSwitch, ThreePThreeCPrimaryVariableSwitch<TypeTag>);
 
-//! The primary variables vector for the 2p2c model
+//! The primary variables vector for the 3p3c model
 SET_TYPE_PROP(ThreePThreeC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
 
 //! the VolumeVariables property
@@ -182,12 +173,7 @@ SET_TYPE_PROP(ThreePThreeCNI, IsothermalVolumeVariables, ThreePThreeCVolumeVaria
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalLocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
 //set isothermal Indices
-SET_PROP(ThreePThreeCNI, IsothermalIndices)
-{
-
-public:
-    typedef ThreePThreeCIndices<TypeTag, /*PVOffset=*/0> type;
-};
+SET_TYPE_PROP(ThreePThreeCNI, IsothermalIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 
 //set isothermal NumEq
 SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
@@ -195,8 +181,8 @@ SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
 //! Set the vtk output fields specific to the ThreeP model
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalVtkOutputFields, ThreePThreeCVtkOutputFields<TypeTag>);
 
-}
+} // end namespace Properties
 
-}
+} // end namespace Dumux
 
 #endif

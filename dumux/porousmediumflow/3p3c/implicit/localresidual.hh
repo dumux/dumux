@@ -168,16 +168,16 @@ public:
         Scalar jNW = diffusionFluxesWPhase[nCompIdx];
         Scalar jWW = -(jGW+jNW);
 
-        const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
+        const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
 
         Scalar jWG = diffusionFluxesGPhase[wCompIdx];
         Scalar jNG = diffusionFluxesGPhase[nCompIdx];
         Scalar jGG = -(jWG+jNG);
 
         // At the moment we do not consider diffusion in the NAPL phase
-        Scalar jWN = 0;
-        Scalar jGN = 0;
-        Scalar jNN = 0;
+        Scalar jWN = 0.0;
+        Scalar jGN = 0.0;
+        Scalar jNN = 0.0;
 
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
