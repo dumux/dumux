@@ -365,14 +365,14 @@ public:
 
         //! Check point management, TimeLoop::isCheckPoint() has to be called after this!
         // if we reached a periodic check point
-        if (periodicCheckPoints_ && Dune::FloatCmp::eq(this->time(), lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_, 1e-3*this->timeStepSize()))
+        if (periodicCheckPoints_ && Dune::FloatCmp::eq(this->time(), lastPeriodicCheckPoint_ + deltaPeriodicCheckPoint_, 1e-8*this->timeStepSize()))
         {
             lastPeriodicCheckPoint_ += deltaPeriodicCheckPoint_;
             isCheckPoint_ = true;
         }
 
         // or a manually set check point
-        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(this->time(), checkPoints_.front(), 1e-3*this->timeStepSize()))
+        else if (!checkPoints_.empty() && Dune::FloatCmp::eq(this->time(), checkPoints_.front(), 1e-8*this->timeStepSize()))
         {
             checkPoints_.pop();
             isCheckPoint_ = true;
