@@ -25,6 +25,7 @@
 #ifndef DUMUX_REORDERING_DOF_MAPPER_HH
 #define DUMUX_REORDERING_DOF_MAPPER_HH
 
+#include <vector>
 #include <dune/common/timer.hh>
 #include <dune/grid/common/mapper.hh>
 
