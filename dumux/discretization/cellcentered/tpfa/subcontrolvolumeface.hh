@@ -44,6 +44,7 @@ class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<CCTpfaSubCont
     using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
     using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
     using Geometry = typename ScvfGeometryTraits::Geometry;
+    using BoundaryFlag = typename ScvfGeometryTraits::BoundaryFlag;
 
 public:
     //! state the traits public and thus export all types
@@ -75,6 +76,7 @@ public:
     , scvfIndex_(scvfIndex)
     , scvIndices_(scvIndices)
     , boundary_(isBoundary)
+    , boundaryFlag_{is}
     {
         corners_.resize(isGeometry.corners());
         for (int i = 0; i < isGeometry.corners(); ++i)
@@ -150,6 +152,12 @@ public:
         return Geometry(geomType_, corners_);
     }
 
+    //! Return the boundary flag
+    typename BoundaryFlag::value_type boundaryFlag() const
+    {
+        return boundaryFlag_.get();
+    }
+
 private:
     Dune::GeometryType geomType_;
     CornerStorage corners_;
@@ -159,6 +167,7 @@ private:
     GridIndexType scvfIndex_;
     std::vector<GridIndexType> scvIndices_;
     bool boundary_;
+    BoundaryFlag boundaryFlag_;
 };
 
 } // end namespace
