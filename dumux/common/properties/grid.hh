@@ -27,9 +27,6 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dune/common/parametertree.hh>
-#include <dune/common/fvector.hh>
-
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/pointsource.hh>
