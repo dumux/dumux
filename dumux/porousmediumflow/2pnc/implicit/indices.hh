@@ -25,8 +25,6 @@
 #ifndef DUMUX_2PNC_INDICES_HH
 #define DUMUX_2PNC_INDICES_HH
 
-#include "model.hh"
-
 namespace Dumux
 {
 /*!

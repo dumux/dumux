@@ -29,13 +29,13 @@
 #include <vector>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/discretization/volumevariables.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 
-#include "model.hh"
 #include "indices.hh"
 
 namespace Dumux
