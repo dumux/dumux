@@ -45,6 +45,8 @@ namespace Dumux
  * brineco2fluidsystem.hh
  * If only gaseous co2 is regarded, one can use SimpleCO2 instead.
  */
+
+// TODO: Is this component limited to supercritical conditions?
 template <class Scalar, class CO2Tables>
 class CO2 : public Component<Scalar, CO2<Scalar, CO2Tables> >
 {
