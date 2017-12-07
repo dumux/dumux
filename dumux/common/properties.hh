@@ -68,7 +68,6 @@ NEW_PROP_TAG(LocalResidual);
 //! TODO: Remove this property as soon as the decoupled models are integrated
 NEW_PROP_TAG(LinearSolver);
 
-
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
 /////////////////////////////////////////////////
@@ -76,7 +75,6 @@ NEW_PROP_TAG(LinearSolver);
 NEW_PROP_TAG(UseMoles);               //! Property whether to use moles or kg as amount unit for balance equations
 NEW_PROP_TAG(ReplaceCompEqIdx);       //! The component balance index that should be replaced by the total mass/mole balance
 NEW_PROP_TAG(BalanceEqOpts);          //! A class that collects options for the evaluation of the balance equations
-
 
 /////////////////////////////////////////////
 // Properties used by finite volume schemes:
@@ -101,7 +99,6 @@ NEW_PROP_TAG(ElementFluxVariablesCache);           //! A local vector of flux va
 NEW_PROP_TAG(GlobalFluxVariablesCache);            //! The global vector of flux variable containers
 NEW_PROP_TAG(EnableGlobalFluxVariablesCache);      //! specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(GridVariables);                       //! The grid variables object managing variable data on the grid (volvars/fluxvars cache)
-
 
 /////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:
@@ -146,10 +143,12 @@ NEW_PROP_TAG(Formulation);                         //! The formulation of the mo
 NEW_PROP_TAG(UseConstraintSolver);                 //! Whether to use a contraint solver for computing the secondary variables
 NEW_PROP_TAG(UseKelvinEquation);                   //! If we use Kelvin equation to lower the vapor pressure as a function of capillary pressure, temperature
 
-/////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Properties used by models involving mineralization:
-/////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 NEW_PROP_TAG(NumSPhases);
+NEW_PROP_TAG(NonMineralizationVtkOutputFields);
+NEW_PROP_TAG(NonMineralizationVolumeVariables);
 
 /////////////////////////////////////////////////////////////
 // non-isothermal porous medium flow models
@@ -163,7 +162,6 @@ NEW_PROP_TAG(IsothermalNumEq);
 // specify if we evaluate the permeability in the volume (for discontinuous fields)
 // or at the scvf center for analytical permeability fields (e.g. convergence studies)
 NEW_PROP_TAG(EvaluatePermeabilityAtScvfIP);
-
 
 //////////////////////////////////////////////////////////////
 // Additional properties used by the 2pnc and 2pncmin models:
