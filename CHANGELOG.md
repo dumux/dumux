@@ -7,8 +7,8 @@ Differences Between DuMuX 2.11 and DuMuX 2.12
       as long as it is technically feasible and our resources allow it. If
       you want to use Dumux multidomain models, you have to stick with the
       Dune 2.4 core and specific versions of other modules, see
-      `test/multidomain/README` for details. Also the geomechanics models
-      require Dune 2.4 and PDELab 2.0.
+      [test/multidomain/README](test/multidomain/README) for details.
+      Also the geomechanics models require Dune 2.4 and PDELab 2.0.
 
     - DuMux 2.12 requires at least GCC 4.9 or Clang 3.5 in their C++-14 mode.
 
