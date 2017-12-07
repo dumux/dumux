@@ -26,8 +26,9 @@
 #ifndef DUMUX_MY_MATERIAL_LAW_HH
 #define DUMUX_MY_MATERIAL_LAW_HH
 
-#include <dumux/material/fluidmatrixinteractions/2p/brookscoreyparams.hh>
+#include <algorithm>
 #include <cmath>
+#include <dumux/material/fluidmatrixinteractions/2p/brookscoreyparams.hh>
 
 namespace Dumux
 {

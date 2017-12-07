@@ -23,6 +23,7 @@
 #ifndef DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
 #define DUMUX_MULTIDOMAIN_CONVERGENCEWRITER_HH
 
+#include <numeric>
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/pdelab/backend/istlsolverbackend.hh>
 
