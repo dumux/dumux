@@ -1,4 +1,4 @@
-// -**- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
  *   See the file COPYING for full copying permissions.                      *
@@ -17,71 +17,57 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup TwoPNCMinModel
- *
+ * \ingroup Mineralization
  * \file
  *
- * \brief Defines the properties required for the two-phase n-component mineralization
- *        fully implicit model.
+ * \brief Defines the properties required for the
+ *        implicit mineralization models.
  */
-#ifndef DUMUX_2PNCMIN_PROPERTIES_HH
-#define DUMUX_2PNCMIN_PROPERTIES_HH
 
-#include <dumux/porousmediumflow/2pnc/implicit/properties.hh>
+#ifndef DUMUX_MINERALIZATION_MODEL_HH
+#define DUMUX_MINERALIZATION_MODEL_HH
 
+#include <dumux/common/properties.hh>
+#include "localresidual.hh"
 #include "volumevariables.hh"
 #include "vtkoutputfields.hh"
-#include "localresidual.hh"
 
-namespace Dumux
-{
-
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(TwoPNCMin, INHERITS_FROM(TwoPNC));
-NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin, TwoPNCNI, NonIsothermal));
+NEW_TYPE_TAG(Mineralization);
 
-//////////////////////////////////////////////////////////////////
-// Property tags for the isothermal 2pncmin model
-//////////////////////////////////////////////////////////////////
+//! Set the general mineralization volume variables
+SET_TYPE_PROP(Mineralization, VolumeVariables, MineralizationVolumeVariables<TypeTag>);
 
-SET_TYPE_PROP(TwoPNCMin, VolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);                  //! the VolumeVariables property
-SET_TYPE_PROP(TwoPNCMin, VtkOutputFields, TwoPNCMinVtkOutputFields<TypeTag>);                  //! Set the vtk output fields specific to the TwoPNCMin model
-SET_TYPE_PROP(TwoPNCMin, LocalResidual, TwoPNCMinLocalResidual<TypeTag>);                  //! Use the compositional local residual
+//! Set the general mineralization compositional local residual
+SET_TYPE_PROP(Mineralization, LocalResidual, MineralizationLocalResidual<TypeTag>);
+
+//! VTK outputs for mineralization models
+SET_TYPE_PROP(Mineralization, VtkOutputFields, MineralizationVtkOutputFields<TypeTag>);
 
 //! Set the property for the number of solid phases, excluding the non-reactive matrix.
-SET_PROP(TwoPNCMin, NumSPhases)
+SET_PROP(Mineralization, NumSPhases)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-
 public:
     static const int value = FluidSystem::numSPhases;
 };
 
 //! Set the property for the number of equations. For each component and each
 //precipitated mineral/solid phase one equation has to be solved.
-
-SET_PROP(TwoPNCMin, NumEq)
+SET_PROP(Mineralization, NumEq)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
-
 public:
     static const int value = FluidSystem::numComponents + FluidSystem::numSPhases;
 };
-/////////////////////////////////////////////////
-// Properties for the non-isothermal 2pncmin model
-/////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNCMinNI, IsothermalVolumeVariables, TwoPNCMinVolumeVariables<TypeTag>);     //! set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPNCMinNI, IsothermalVtkOutputFields, TwoPNCMinVtkOutputFields<TypeTag>);     //! set isothermal output fields
 
-}
-}
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

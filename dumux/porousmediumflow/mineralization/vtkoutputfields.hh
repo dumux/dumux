@@ -20,21 +20,22 @@
  * \file
  * \brief Adds vtk output fields specific to the twop-nc-min model
  */
-#ifndef DUMUX_TWOP_NC_MIN_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TWOP_NC_MIN_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/porousmediumflow/2pnc/implicit/vtkoutputfields.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup TwoPNCMin, InputOutput
- * \brief Adds vtk output fields specific to the TwoPNCMin model
+ * \ingroup Mineralization, InputOutput
+ * \brief Adds vtk output fields specific to the a NCMin model
  */
 template<class TypeTag>
-class TwoPNCMinVtkOutputFields
+class MineralizationVtkOutputFields
 {
+    using NonMineralizationVtkOutputFields = typename GET_PROP_TYPE(TypeTag, NonMineralizationVtkOutputFields);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
@@ -45,10 +46,9 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        // use default fields from the 2pnc model
-        TwoPNCVtkOutputFields<TypeTag>::init(vtk);
+        NonMineralizationVtkOutputFields::init(vtk);
 
-        //output additional to TwoPNC output:
+        //additional output
         for (int i = 0; i < numSPhases; ++i)
         {
             vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipVolFrac_"+ FluidSystem::phaseName(numPhases + i));

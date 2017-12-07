@@ -22,88 +22,48 @@
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase, n-component mineralization model.
  */
-#ifndef DUMUX_2PNCMIN_VOLUME_VARIABLES_HH
-#define DUMUX_2PNCMIN_VOLUME_VARIABLES_HH
+#ifndef DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
+#define DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 
 #include <dumux/common/math.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/discretization/volumevariables.hh>
-#include <dumux/porousmediumflow/2pnc/implicit/volumevariables.hh>
 
-#include "properties.hh"
+#include "model.hh"
 
 namespace Dumux
 {
 
 /*!
- * \ingroup TwoPNCMinModel
+ * \ingroup Mineralization
  * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, n-component model.
+ *        finite volume in a mineralization n-component model.
  */
 template <class TypeTag>
-class TwoPNCMinVolumeVariables : public TwoPNCVolumeVariables<TypeTag>
+class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineralizationVolumeVariables)
 {
-    // base type is used for energy related quantities
-    using BaseType = ImplicitVolumeVariables<TypeTag>;
-
-    using ParentType = TwoPNCVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ParentType = typename GET_PROP_TYPE(TypeTag, NonMineralizationVolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum
     {
-        dim = GridView::dimension,
         dimWorld=GridView::dimensionworld,
 
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numSPhases =  GET_PROP_VALUE(TypeTag, NumSPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
-        numMajorComponents = GET_PROP_VALUE(TypeTag, NumMajorComponents),
-
-        // formulations
-        formulation = GET_PROP_VALUE(TypeTag, Formulation),
-        pwsn = TwoPNCFormulation::pwsn,
-        pnsw = TwoPNCFormulation::pnsw,
-
-        // phase indices
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
-
-        // component indices
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx,
-
-        // phase presence enums
-        nPhaseOnly = Indices::nPhaseOnly,
-        wPhaseOnly = Indices::wPhaseOnly,
-        bothPhases = Indices::bothPhases,
-
-        // primary variable indices
-        pressureIdx = Indices::pressureIdx,
-        switchIdx = Indices::switchIdx,
-
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using CoordScalar = typename Grid::ctype;
-    using Miscible2pNCComposition = Dumux::Miscible2pNCComposition<Scalar, FluidSystem>;
-    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-
 public:
-
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
@@ -151,6 +111,7 @@ public:
         else
             return FluidSystem::precipitateDensity(phaseIdx);
     }
+
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
@@ -183,18 +144,9 @@ public:
     }
 
 protected:
-
     Scalar precipitateVolumeFraction_[numSPhases];
     Scalar sumPrecipitates_;
-
-private:
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
 };
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

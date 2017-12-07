@@ -19,50 +19,31 @@
 /*!
  * \file
  *
- * \brief Element-wise calculation of the local residual for problems
- *        using compositional fully implicit model that also considers solid phases.
+ * \brief Element-wise calculation of the local residual for problems using a
+ *        compositional fully implicit model that also considers solid phases.
  */
-#ifndef DUMUX_COMPOSITIONAL_LOCAL_RESIDUAL_MINERAL_HH
-#define DUMUX_COMPOSITIONAL_LOCAL_RESIDUAL_MINERAL_HH
+#ifndef DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
+#define DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
+
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-NEW_PROP_TAG(ReplaceCompEqIdx);
-} // end namespace Properties
-
 /*!
- * \ingroup Implicit
- * \ingroup ImplicitLocalResidual
+ * \ingroup Mineralization
+ * \ingroup LocalResidual
  * \brief Element-wise calculation of the local residual for problems
- *        using compositional fully implicit model.
- *
+ *        using a one/two-phase n-component mineralization fully implicit model.
  */
 template<class TypeTag>
-class CompositionalMinLocalResidual: public GET_PROP_TYPE(TypeTag, CompositionalLocalResidual)
+class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, CompositionalLocalResidual);
-    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ParentType = CompositionalLocalResidual<TypeTag>;
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numSPhases = GET_PROP_VALUE(TypeTag, NumSPhases);
@@ -70,10 +51,6 @@ class CompositionalMinLocalResidual: public GET_PROP_TYPE(TypeTag, Compositional
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     enum { conti0EqIdx = Indices::conti0EqIdx };
-
-    //! The index of the component balance equation that gets replaced with the total mass balance
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    static constexpr bool useTotalMoleOrMassBalance = replaceCompEqIdx < numComponents;
 
 public:
     using ParentType::ParentType;
@@ -93,17 +70,12 @@ public:
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars) const
     {
-        ResidualVector storage(0.0);
+        auto storage = ParentType::computeStorage(problem, scv, volVars);
 
         const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
         { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
-        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
-        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
-
         // compute storage term of all components within all fluid phases
-
-        ParentType::computeStorage(problem, scv, volVars);
         for (int phaseIdx = numPhases; phaseIdx < numPhases + numSPhases; ++phaseIdx)
         {
             auto eqIdx = conti0EqIdx + numComponents-numPhases + phaseIdx;
@@ -113,13 +85,6 @@ public:
 
         return storage;
     }
-
-protected:
-    Implementation *asImp_()
-    { return static_cast<Implementation *> (this); }
-
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *> (this); }
 };
 
 } // end namespace Dumux
