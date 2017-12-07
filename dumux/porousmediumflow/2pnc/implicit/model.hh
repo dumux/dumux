@@ -334,7 +334,6 @@ public:
             {
                 auto dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
-                GlobalPosition globalPos = fvGeometry.subContVol[scvIdx].global;
                 (*sn)[dofIdxGlobal]             = elemVolVars[scvIdx].saturation(nPhaseIdx);
                 (*sw)[dofIdxGlobal]             = elemVolVars[scvIdx].saturation(wPhaseIdx);
                 (*pn)[dofIdxGlobal]             = elemVolVars[scvIdx].pressure(nPhaseIdx);
