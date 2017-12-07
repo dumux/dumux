@@ -1,4 +1,5 @@
+add_subdirectory(boundingboxtree)
+add_subdirectory(math)
+add_subdirectory(parameters)
 add_subdirectory(propertysystem)
 add_subdirectory(spline)
-add_subdirectory(boundingboxtree)
-add_subdirectory(parameters)
