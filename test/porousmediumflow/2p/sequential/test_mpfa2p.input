@@ -11,6 +11,7 @@ ClosureType = None
 
 [Problem]
 #EnableGravity = false # set in case of McWhorter or Buckley-Leverett
+Name = test_mpfa2p
 OutputInterval =0
 OutputTimeInterval = 1e4
 

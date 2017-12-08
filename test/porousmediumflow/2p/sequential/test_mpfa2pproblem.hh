@@ -24,6 +24,7 @@
 #ifndef DUMUX_TEST_MPFA2P_PROBLEM_HH
 #define DUMUX_TEST_MPFA2P_PROBLEM_HH
 
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
@@ -248,10 +249,7 @@ void addOutputVtkFields()
  */
 std::string name() const
 {
-    if (haveParam("Problem.OutputFileName"))
-        return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputFileName);
-    else
-        return "test_mpfa2p";
+    return getParam<std::string>("Problem.Name");
 }
 
 bool shouldWriteRestartFile() const
