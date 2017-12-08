@@ -49,12 +49,13 @@ namespace Properties
 {
 NEW_TYPE_TAG(AngeliTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
 
-SET_PROP(AngeliTestProblem, Fluid)
+// the fluid system
+SET_PROP(AngeliTestProblem, FluidSystem)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<1, Scalar> > type;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
 };
 
 // Set the grid type
@@ -227,10 +228,10 @@ public:
      */
     PrimaryVariables analyticalSolution(const GlobalPosition& globalPos, const Scalar time) const
     {
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
+        const Scalar x = globalPos[0];
+        const Scalar y = globalPos[1];
 
-        Scalar t = time + timeLoop_->timeStepSize();
+        const Scalar t = time + timeLoop_->timeStepSize();
 
         PrimaryVariables values;
 
