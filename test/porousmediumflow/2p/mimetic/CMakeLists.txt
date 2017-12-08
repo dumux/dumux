@@ -3,6 +3,7 @@ add_subdirectory("spe10")
 add_input_file_links()
 
 dune_symlink_to_source_files(FILES runTestWellInjection.sh)
+dune_symlink_to_source_files(FILES runTestWellInjectionFixedDt.sh)
 
 add_dumux_test(test_mimetic2p test_mimetic2p test_mimetic2p.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_mimetic2p)

@@ -6,7 +6,8 @@ TEnd = 2.0e5 # [s]
 File = ./grids/WellMesh_2.msh.dgf
 
 [Problem]
-Name = wellinjection_nltpfa
+Name = wellinjection_mimetic
+UseFixedTimeSteps = false
 
 [Newton]
 EnableChop = false

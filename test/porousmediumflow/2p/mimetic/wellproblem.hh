@@ -208,6 +208,11 @@ public:
                                              std::string,
                                              Problem,
                                              Name);
+
+        useFixedTimeSteps_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, UseFixedTimeSteps);
+
+        timeStepSizes_ = {50,70,90,110,140,200,250,330,440,580,780,1040,1390,1850,2470,3290,
+                          4110,4790,6000,6990,8160,9520,11900,13880,16200,18890,22050,23880,25870,14680};
     }
 
     /*!
@@ -382,6 +387,14 @@ public:
         return values;
     }
 
+    Scalar nextTimeStepSize(const Scalar dt)
+    {
+        if(useFixedTimeSteps_)
+            return timeStepSizes_[this->timeManager().timeStepIndex()];
+        else
+            return ParentType::nextTimeStepSize(dt);
+    }
+
     bool shouldWriteRestartFile() const
     {
         return false;
@@ -432,6 +445,8 @@ private:
     Scalar temperature_;
     static constexpr Scalar eps_ = 3e-6;
     std::string name_;
+    std::array<int,30> timeStepSizes_;
+    bool useFixedTimeSteps_;
 };
 } //end namespace
 
