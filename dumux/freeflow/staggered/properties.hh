@@ -27,7 +27,6 @@
 #ifndef DUMUX_NAVIERSTOKES_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
 #include <dumux/freeflow/properties.hh>
 
 #include <dumux/implicit/staggered/localresidual.hh>
@@ -47,6 +46,7 @@
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidsystems/1p.hh>
 
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

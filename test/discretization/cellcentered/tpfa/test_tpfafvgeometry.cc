@@ -31,7 +31,7 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
 //! Dummy flux variables class so that we can update the connectivity map
@@ -49,7 +49,7 @@ public:
 
 namespace Dumux {
     namespace Properties {
-        NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel, NumericModel));
+        NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel));
         SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
         SET_TYPE_PROP(TestFVGeometry, FluxVariables, MockFluxVariables);
     }
@@ -77,8 +77,7 @@ int main (int argc, char *argv[]) try
     constexpr int dim = GridView::dimension;
     constexpr int dimworld = GridView::dimensionworld;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimworld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);

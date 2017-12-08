@@ -24,6 +24,7 @@
 #ifndef DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 #define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 
+#include <dumux/common/properties.hh>
 #include "properties.hh"
 
 #include "../staggered/volumevariables.hh"

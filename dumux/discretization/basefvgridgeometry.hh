@@ -44,7 +44,6 @@ class BaseFVGridGeometry
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using BoundingBoxTree = Dumux::BoundingBoxTree<GridView>;
 
     static const int dim = GridView::dimension;

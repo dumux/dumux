@@ -45,7 +45,7 @@
 #include <dumux/material/fluidsystems/base.hh>
 
 #ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/defaultcomponents.hh>
 #endif
 

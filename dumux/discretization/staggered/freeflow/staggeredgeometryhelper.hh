@@ -27,6 +27,7 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 #include <type_traits>
 #include <algorithm>
@@ -61,7 +62,7 @@ inline static int directionIndex(Vector&& vector)
 
 //! A class to create face information per intersection
 template<class GridView>
-class StaggeredGeometryHelper
+class FreeFlowStaggeredGeometryHelper
 {
     using Scalar = typename GridView::ctype;
     static constexpr int dim = GridView::dimension;
@@ -85,7 +86,7 @@ class StaggeredGeometryHelper
 
 public:
 
-    StaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), elementGeometry_(element.geometry()), gridView_(gridView)
+    FreeFlowStaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), elementGeometry_(element.geometry()), gridView_(gridView)
     { }
 
     template<class IntersectionMapper>

@@ -26,8 +26,9 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/common/math.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/math.hh>
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>

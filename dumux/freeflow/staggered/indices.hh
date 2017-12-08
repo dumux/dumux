@@ -23,6 +23,8 @@
 #ifndef DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
 #define DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 // \{

@@ -28,8 +28,7 @@
 #ifndef DUMUX_RICHARDS_PROPERTIES_HH
 #define DUMUX_RICHARDS_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
@@ -63,7 +62,7 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the implicit isothermal one-phase two-component problems
-NEW_TYPE_TAG(Richards, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(Richards, INHERITS_FROM(PorousMediumFlow));
 NEW_TYPE_TAG(RichardsNI, INHERITS_FROM(Richards, NonIsothermal));
 
 //////////////////////////////////////////////////////////////////

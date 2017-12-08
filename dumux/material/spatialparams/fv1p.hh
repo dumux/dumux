@@ -26,10 +26,8 @@
 #ifndef DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 #define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
-
-#include <dumux/common/basicproperties.hh>
 
 #include <dune/common/fmatrix.hh>
 

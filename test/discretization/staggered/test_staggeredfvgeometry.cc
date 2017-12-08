@@ -32,38 +32,52 @@
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/implicit/staggered/properties.hh>
-#include <dumux/discretization/staggered/fvgridgeometry.hh>
-#include <dumux/discretization/staggered/fvelementgeometry.hh>
-// #include <dumux/discretization/staggered/subcontrolvolume.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
-
-#include <dumux/freeflow/staggered/propertydefaults.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/staggered/properties.hh>
 
 namespace Dumux
 {
 
-template<class TypeTag>
-class MockProblem
+//! Dummy flux variables class so that we can update the connectivity map
+class MockFluxVariables
 {
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 public:
-    MockProblem(const GridView& gridView) : mapper_(gridView) {}
 
-    const ElementMapper& elementMapper() const
-    { return mapper_; }
-private:
-    ElementMapper mapper_;
+  template<class Map, class Element, class FvGeometry, class Scvf>
+  void computeCellCenterToCellCenterStencil(Map& map,
+                                            const Element& element,
+                                            const FvGeometry& fvGeometry,
+                                            const Scvf& scvf)
+  {}
+
+  template<class Map, class Element, class FvGeometry, class Scvf>
+  void computeCellCenterToFaceStencil(Map& map,
+                                      const Element& element,
+                                      const FvGeometry& fvGeometry,
+                                      const Scvf& scvf)
+  {}
+
+  template<class Map, class FvGeometry, class Scvf>
+  void computeFaceToCellCenterStencil(Map& map,
+                                      const FvGeometry& fvGeometry,
+                                      const Scvf& scvf)
+  {}
+
+  template<class Map, class FvGeometry, class Scvf>
+  void computeFaceToFaceStencil(Map& map,
+                                const FvGeometry& fvGeometry,
+                                const Scvf& scvf)
+  {}
+
 };
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel, NavierStokes));
+NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel));
 
 SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(TestFVGeometry, Problem, Dumux::MockProblem<TypeTag>);
+SET_TYPE_PROP(TestFVGeometry, FluxVariables, MockFluxVariables);
 
 SET_BOOL_PROP(TestFVGeometry, EnableFVGridGeometryCache, true);
 }
@@ -92,12 +106,10 @@ int main (int argc, char *argv[]) try
     constexpr int dim = GridView::dimension;
     constexpr int dimworld = GridView::dimensionworld;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GlobalPosition = typename Dune::FieldVector<Grid::ctype, dimworld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     // make a grid
     GlobalPosition lower(0.0);
@@ -106,23 +118,15 @@ int main (int argc, char *argv[]) try
     std::shared_ptr<Grid> grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lower, upper, els);
     auto leafGridView = grid->leafGridView();
 
-    Problem problem(leafGridView);
-
-    FVGridGeometry global(leafGridView);
-    global.update(problem);
-
-    std::cout << "Abbreviatons:\n"
-              << "ip - global postition of face center\n"
-              << "face - global face index\n"
-              << "self/oppo - global dofIdx on intersection (self/opposite)\n"
-              << "norm in/out - global dofIdx on side normal to intersection (within own element / in adjacent element)" << std::endl;
+    FVGridGeometry fvGridGeometry(leafGridView);
+    fvGridGeometry.update();
 
     // iterate over elements. For every element get fv geometry and loop over scvs and scvfaces
     for (const auto& element : elements(leafGridView))
     {
-        auto eIdx = problem.elementMapper().index(element);
+        auto eIdx = fvGridGeometry.elementMapper().index(element);
         std::cout << std::endl << "Checking fvGeometry of element " << eIdx << std::endl;
-        auto fvGeometry = localView(global);
+        auto fvGeometry = localView(fvGridGeometry);
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);
@@ -132,7 +136,7 @@ int main (int argc, char *argv[]) try
 
         for (auto&& scv : scvs(fvGeometry))
         {
-            std::cout << "-- scv " << scv.dofIndex() << " center at: " << scv.center() << std::endl;
+            std::cout << "-- scv " << scv.indexInElement() << " center at: " << scv.center() << " , volume: " << scv.volume()  << std::endl;
         }
 
         auto range2 = scvfs(fvGeometry);
@@ -140,23 +144,10 @@ int main (int argc, char *argv[]) try
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
-
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            std::cout <<  std::fixed << std::left << std::setprecision(2)
-            << "ip "<< scvf.ipGlobal()
-            << "; face "  << std::setw(3)  << scvf.index()
-            << "; self/oppo " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) <<scvf.dofIndexOpposingFace()
-            << "; dist self/oppo " << std::setw(3) << scvf.selfToOppositeDistance()
-            << ", norm1 in/out " << std::setw(3) << scvf.pairData(0).normalPair.first << "/" << std::setw(3) << scvf.pairData(0).normalPair.second
-            << ", norm2 in/out " << std::setw(3) << scvf.pairData(1).normalPair.first << "/" << std::setw(3) << scvf.pairData(1).normalPair.second
-            << ", par1 in/out " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) << scvf.pairData(0).outerParallelFaceDofIdx
-            << ", par2 in/out " << std::setw(3) << scvf.dofIndex() << "/" << std::setw(3) << scvf.pairData(1).outerParallelFaceDofIdx
-            << ", normDist1 " << std::setw(3) << scvf.pairData(0).normalDistance
-            << ", normDist2 " << std::setw(3) << scvf.pairData(1).normalDistance
-            << ", parDist1 " << std::setw(3) << scvf.pairData(0).parallelDistance
-            << ", parDist2 " << std::setw(3) << scvf.pairData(1).parallelDistance;
-            if (scvf.boundary()) std::cout << " (on boundary)";
+            std::cout << "-- scvf " << scvf.index() << " ip at: " << scvf.ipGlobal() << " normal: " << scvf.unitOuterNormal();
+            if (scvf.boundary()) std::cout << " (on boundary).";
             std::cout << std::endl;
         }
     }

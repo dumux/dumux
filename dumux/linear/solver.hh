@@ -25,8 +25,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

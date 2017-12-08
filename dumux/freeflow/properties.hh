@@ -26,9 +26,11 @@
 #ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
 #define DUMUX_FREE_FLOW_PROPERTIES_HH
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/properties/model.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/facevariables.hh>
+#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
 #include <dumux/implicit/staggered/primaryvariables.hh>
 
 #include "./staggered/boundarytypes.hh"
@@ -38,7 +40,7 @@ namespace Dumux
 namespace Properties
 {
 //! Type tag for models involving flow in porous media
-NEW_TYPE_TAG(FreeFlow);
+NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
 
 SET_PROP(FreeFlow, NumEq)
 {
@@ -53,8 +55,7 @@ public:
 SET_INT_PROP(FreeFlow, NumEqFace, 1); //!< set the number of equations to 1
 SET_INT_PROP(FreeFlow, NumEqCellCenter, 1); //!< set the number of equations to 1
 
-
-//! The sub-controlvolume face
+//! The default sub-controlvolume face
 SET_PROP(FreeFlow, SubControlVolumeFace)
 {
 private:
@@ -72,16 +73,16 @@ private:
     };
 
 public:
-    using type = Dumux::StaggeredSubControlVolumeFace<ScvfGeometryTraits>;
+    using type = FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>;
 };
 
-//! The geometry helper required for the stencils, etc.
+//! The default geometry helper required for the stencils, etc.
 SET_PROP(FreeFlow, StaggeredGeometryHelper)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 public:
-    using type = StaggeredGeometryHelper<GridView>;
+    using type = FreeFlowStaggeredGeometryHelper<GridView>;
 };
 
 //! The variables living on the faces

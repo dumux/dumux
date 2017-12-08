@@ -30,8 +30,7 @@
 #ifndef DUMUX_2P_PROPERTIES_HH
 #define DUMUX_2P_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
@@ -62,7 +61,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tags for the isothermal & non-isothermal two-phase model
-NEW_TYPE_TAG(TwoP, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(TwoP, INHERITS_FROM(PorousMediumFlow));
 NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP, NonIsothermal));
 
 ///////////////////////////////////////////////////////////////////////////

@@ -18,16 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Specilialized sub control volume face for free-flow staggered grid models
+ * \brief Base class for a sub control volume face
  */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_SUBCONTROLVOLUMEFACE_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
 #include <dune/common/fvector.hh>
 
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
-#include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/optional.hh>
 
@@ -38,13 +37,59 @@ namespace Dumux
 
 /*!
  * \ingroup Discretization
+ * \brief Base class for a staggered grid geometry helper
+ */
+template<class GridView>
+class BaseStaggeredGeometryHelper
+{
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+    static constexpr int codimIntersection =  1;
+
+public:
+
+    BaseStaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), gridView_(gridView)
+    { }
+
+    template<class IntersectionMapper>
+    void updateLocalFace(const IntersectionMapper& intersectionMapper, const Intersection& intersection)
+    {
+        intersection_ = intersection;
+    }
+
+    /*!
+    * \brief Returns the global dofIdx of the intersection itself
+    */
+   int dofIndex() const
+   {
+       //TODO: use proper intersection mapper!
+       const auto inIdx = intersection_.indexInInside();
+       return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
+   }
+
+   /*!
+   * \brief Returns the local index of the face (i.e. the intersection)
+   */
+   int localFaceIndex() const
+   {
+       return intersection_.indexInInside();
+   }
+
+private:
+   Intersection intersection_; //! The intersection of interest
+   const Element element_; //! The respective element
+   const GridView gridView_;
+};
+
+/*!
+ * \ingroup Discretization
  * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
- *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
+ *        of a sub control volume we compute fluxes on.
  */
 template<class ScvfGeometryTraits>
-class FreeFlowStaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
+class StaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
 {
-    using ParentType = SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>;
+    using ParentType = SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>;
     using Geometry = typename ScvfGeometryTraits::Geometry;
     using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
 
@@ -54,18 +99,17 @@ class FreeFlowStaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<Fr
 
     using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
 
-    static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
 
 public:
     //! state the traits public and thus export all types
     using Traits = ScvfGeometryTraits;
 
     // the default constructor
-    FreeFlowStaggeredSubControlVolumeFace() = default;
+    StaggeredSubControlVolumeFace() = default;
 
     //! Constructor with intersection
     template <class Intersection, class GeometryHelper>
-    FreeFlowStaggeredSubControlVolumeFace(const Intersection& is,
+    StaggeredSubControlVolumeFace(const Intersection& is,
                                const typename Intersection::Geometry& isGeometry,
                                GridIndexType scvfIndex,
                                const std::vector<GridIndexType>& scvIndices,
@@ -85,26 +129,7 @@ public:
               corners_[i] = isGeometry.corner(i);
 
           dofIdx_ = geometryHelper.dofIndex();
-          oppositeIdx_ = geometryHelper.dofIndexOpposingFace();
-          selfToOppositeDistance_ = geometryHelper.selfToOppositeDistance();
-
-          pairData_ = geometryHelper.pairData();
           localFaceIdx_ = geometryHelper.localFaceIndex();
-          dirIdx_ = geometryHelper.directionIndex();
-          normalInPosCoordDir_ = unitOuterNormal()[directionIndex()] > 0.0;
-          outerNormalScalar_ = unitOuterNormal()[directionIndex()];
-          isGhostFace_ = false;
-      }
-
-      //! Constructor for a ghost face outside of the domain. Only needed to retrieve the center and scvIndices
-      FreeFlowStaggeredSubControlVolumeFace(const GlobalPosition& dofPosition,
-                                    const std::vector<GridIndexType>& scvIndices)
-      {
-          isGhostFace_ = true;
-          center_ = dofPosition;
-          scvIndices_ = scvIndices;
-          scvfIndex_ = -1;
-          dofIdx_ = -1;
       }
 
     //! The center of the sub control volume face
@@ -180,50 +205,10 @@ public:
         return dofIdx_;
     }
 
-    //! The global index of the dof living on the opposing face
-    GridIndexType dofIndexOpposingFace() const
-    {
-        return oppositeIdx_;
-    }
-
     //! The local index of this sub control volume face
     GridIndexType localFaceIdx() const
     {
         return localFaceIdx_;
-    }
-
-    //! Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
-    int directionIndex() const
-    {
-        return dirIdx_;
-    }
-
-    //! The global index of this sub control volume face
-    Scalar selfToOppositeDistance() const
-    {
-        return selfToOppositeDistance_;
-    }
-
-    //! The returns whether the unitNormal of the face point in positive coordinate direction
-    bool normalInPosCoordDir() const
-    {
-        return normalInPosCoordDir_;
-    }
-
-    Scalar outerNormalScalar() const
-    {
-        return outerNormalScalar_;
-    }
-
-
-    const PairData<Scalar, GlobalPosition>& pairData(const int idx) const
-    {
-        return pairData_[idx];
-    }
-
-    const auto& pairData() const
-    {
-        return pairData_;
     }
 
 private:
@@ -237,14 +222,7 @@ private:
     bool boundary_;
 
     int dofIdx_;
-    int oppositeIdx_;
-    Scalar selfToOppositeDistance_;
-    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_;
     int localFaceIdx_;
-    int dirIdx_;
-    bool normalInPosCoordDir_;
-    Scalar outerNormalScalar_;
-    bool isGhostFace_;
 };
 
 

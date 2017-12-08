@@ -23,6 +23,7 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

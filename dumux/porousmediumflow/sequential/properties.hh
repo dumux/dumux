@@ -19,8 +19,9 @@
 #ifndef DUMUX_SEQUENTIAL_PROPERTIES_HH
 #define DUMUX_SEQUENTIAL_PROPERTIES_HH
 
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/properties/model.hh>
+#include <dumux/common/properties/grid.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
@@ -44,7 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! Create a type tag for all sequential models
-NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(NumericModel, GridAdaptTypeTag));
+NEW_TYPE_TAG(SequentialModel, INHERITS_FROM(ModelProperties, GridAdaptTypeTag, GridProperties));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

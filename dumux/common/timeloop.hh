@@ -30,7 +30,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
-#include "propertysystem.hh"
+#include "properties.hh"
 #include "parameters.hh"
 
 namespace Dumux

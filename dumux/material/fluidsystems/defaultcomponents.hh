@@ -27,7 +27,8 @@
 
 #warning "DefaultComponents is deprecated. Specify fluid system via template parameters and not using the property system!"
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties/model.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/n2.hh>
@@ -54,7 +55,7 @@ NEW_PROP_TAG(EnableComplicatedFluidSystem);
 NEW_PROP_TAG(Components);
 
 //! Specifies default component names and initializes the H2O fluid properties
-SET_PROP(NumericModel, DefaultComponents)
+SET_PROP(ModelProperties, DefaultComponents)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -83,7 +84,7 @@ public:
 };
 
 //! Initialize the components with default behavior
-SET_PROP(NumericModel, Components) : public GET_PROP(TypeTag, DefaultComponents) {};
+SET_PROP(ModelProperties, Components) : public GET_PROP(TypeTag, DefaultComponents) {};
 
 /*!
  * \brief Enables a detailed description of the fluidsystem
@@ -93,7 +94,7 @@ SET_PROP(NumericModel, Components) : public GET_PROP(TypeTag, DefaultComponents)
  * Typically, such high demands on accuracy are not needed, so this property
  * is set to "false" as the default.
  */
-SET_BOOL_PROP(NumericModel, EnableComplicatedFluidSystem, false);
+SET_BOOL_PROP(ModelProperties, EnableComplicatedFluidSystem, false);
 
 } // namespace Properties
 } // namespace Dumux

@@ -32,7 +32,9 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-#include <dumux/common/propertysystem.hh>
+#include "fuelcellproblem.hh"
+
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>

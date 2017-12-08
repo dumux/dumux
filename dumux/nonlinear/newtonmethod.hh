@@ -27,7 +27,7 @@
 #define DUMUX_NEWTONMETHOD_HH
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 
 #include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>

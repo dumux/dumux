@@ -46,12 +46,12 @@
 #include <dumux/discretization/staggered/globalfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
 #include <dumux/discretization/staggered/elementfacevariables.hh>
+#include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 
 #include <dumux/common/intersectionmapper.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
-#include <dumux/linear/linearsolverproperties.hh>
 
 namespace Dumux
 {
@@ -68,8 +68,8 @@ NEW_PROP_TAG(StaggeredFaceSolution);
 NEW_PROP_TAG(ElementFaceVariables);
 NEW_PROP_TAG(EnableGlobalFaceVariablesCache);
 
-//! Type tag for the box scheme.
-NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel, NumericModel, LinearSolverTypeTag));
+//! Type tag for the staggered scheme.
+NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
 
 //! Set the corresponding discretization method property
 SET_PROP(StaggeredModel, DiscretizationMethod)
@@ -100,10 +100,40 @@ public:
         using type = CCSubControlVolume<ScvGeometryTraits>;
 };
 
-SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, Dumux::StaggeredGlobalFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);
+//! The default sub-controlvolume face
+SET_PROP(StaggeredModel, SubControlVolumeFace)
+{
+private:
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    static constexpr int dim = Grid::dimension;
+    static constexpr int dimWorld = Grid::dimensionworld;
+
+    struct ScvfGeometryTraits
+    {
+        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+        using LocalIndexType = unsigned int;
+        using Scalar = typename Grid::ctype;
+        using Geometry = typename Grid::template Codim<1>::Geometry;
+        using GlobalPosition = Dune::FieldVector<Scalar, dim>;
+    };
+
+public:
+    using type = StaggeredSubControlVolumeFace<ScvfGeometryTraits>;
+};
+
+//! The default geometry helper required for the stencils, etc.
+SET_PROP(StaggeredModel, StaggeredGeometryHelper)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = BaseStaggeredGeometryHelper<GridView>;
+};
+
+SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, StaggeredGlobalFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);
 
 //! Set the default for the ElementBoundaryTypes
-SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, Dumux::CCElementBoundaryTypes<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
 
 //! The global volume variables vector class
 SET_TYPE_PROP(StaggeredModel, GlobalVolumeVariables, StaggeredGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
@@ -120,7 +150,7 @@ SET_TYPE_PROP(StaggeredModel, ElementFluxVariablesCache, StaggeredElementFluxVar
 //! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>);
 
-SET_TYPE_PROP(StaggeredModel, IntersectionMapper, Dumux::ConformingGridIntersectionMapper<TypeTag>);
+SET_TYPE_PROP(StaggeredModel, IntersectionMapper, ConformingGridIntersectionMapper<TypeTag>);
 
 SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
 
@@ -146,17 +176,20 @@ SET_TYPE_PROP(StaggeredModel,
               Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
                                 GET_PROP_VALUE(TypeTag, NumEqFace)>);
 
-//! The type of a solution for the whole grid at a fixed time
+// TODO: bundle SolutionVector, JacobianMatrix and LinearSolverPreconditionerBlockLevel
+//       in LinearAlgebra traits
+
+//! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
 SET_TYPE_PROP(StaggeredModel,
               CellCenterSolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
 
-//! The type of a solution for the whole grid at a fixed time
+//! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
 SET_TYPE_PROP(StaggeredModel,
               FaceSolutionVector,
               Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables)>);
 
-//! default property value for the solution vector only used for monolithic solver
+//! default property value for the solution vector only used for monolithic solver TODO: move to LinearAlgebra traits
 SET_PROP(StaggeredModel, SolutionVector)
 {
 private:
@@ -166,7 +199,7 @@ public:
     typedef typename Dune::MultiTypeBlockVector<CellCenterSolutionVector, FaceSolutionVector> type;
 };
 
-//! Set the type of a global jacobian matrix from the solution types
+//! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits
 SET_PROP(StaggeredModel, JacobianMatrix)
 {
 private:
@@ -200,6 +233,9 @@ public:
     using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
 };
 
+// set the block level to 2 (nested multiple times) TODO: move to LinearAlgebra traits
+SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
+
 SET_PROP(StaggeredModel, NumEq)
 {
 private:
@@ -210,8 +246,6 @@ public:
 };
 
 SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
-
-SET_INT_PROP(StaggeredModel, LinearSolverBlockSize, 1);
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredModel, BoundaryTypes)

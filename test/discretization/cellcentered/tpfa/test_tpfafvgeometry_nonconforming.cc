@@ -33,7 +33,7 @@
 #include <dune/alugrid/grid.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
 //! Dummy flux variables class so that we can update the connectivity map
@@ -52,12 +52,12 @@ public:
 namespace Dumux {
     namespace Properties{
         //! Test without using global caching of the geometries
-        NEW_TYPE_TAG(TestFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel, NumericModel));
+        NEW_TYPE_TAG(TestFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
         SET_TYPE_PROP(TestFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
         SET_TYPE_PROP(TestFVGeometryNonConforming, FluxVariables, MockFluxVariables);
 
         //! Test using global geometry caching
-        NEW_TYPE_TAG(TestCachedFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel, NumericModel));
+        NEW_TYPE_TAG(TestCachedFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
         SET_TYPE_PROP(TestCachedFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
         SET_BOOL_PROP(TestCachedFVGeometryNonConforming, EnableFVGridGeometryCache, true);
         SET_TYPE_PROP(TestCachedFVGeometryNonConforming, FluxVariables, MockFluxVariables);

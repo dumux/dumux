@@ -30,8 +30,7 @@
 #ifndef DUMUX_3P3C_PROPERTIES_HH
 #define DUMUX_3P3C_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
 
@@ -41,7 +40,7 @@ namespace Dumux
 namespace Properties
 {
 //! The type tags for the implicit three-phase three-component problems
-NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow));
 
 //! The type tags for the corresponding non-isothermal problems
 NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC, NonIsothermal));

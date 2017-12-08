@@ -26,8 +26,7 @@
 
 #include <dumux/material/idealgas.hh>
 
-#include <dumux/common/propertysystem.hh>
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
 #include <dumux/material/fluidsystems/defaultcomponents.hh>
@@ -701,7 +700,7 @@ namespace Properties
 NEW_PROP_TAG(Scalar);
 NEW_PROP_TAG(CO2Table);
 // Set Co2 tables
-SET_TYPE_PROP(NumericModel, CO2Table, CO2Tables);
+SET_TYPE_PROP(ModelProperties, CO2Table, CO2Tables);
 }
 
 /*!

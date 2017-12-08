@@ -33,7 +33,7 @@
 
 #include <dumux/linear/seqsolverbackend.hh>
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>

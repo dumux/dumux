@@ -31,12 +31,18 @@
 #include <dune/istl/umfpack.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/linear/solver.hh>
 
 namespace Dumux
 {
+
+//! Helper type to determine whether a given type is a Dune::BCRSMatrix
+template<class T> struct isBCRSMatrix : public std::false_type {};
+
+//! Helper type to determine whether a given type is a Dune::BCRSMatrix
+template<class T>
+struct isBCRSMatrix<Dune::BCRSMatrix<T> > : public std::true_type {};
 
 /*!
  * \ingroup Linear
@@ -734,13 +740,12 @@ public:
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize);
-        using MatrixBlock = typename Dune::FieldMatrix<double, blockSize, blockSize>;
-        using ISTLMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-        static_assert(std::is_same<Matrix, ISTLMatrix>::value, "SuperLU only works with BCRS matrices!");
+        static_assert(isBCRSMatrix<Matrix>::value, "SuperLU only works with BCRS matrices!");
+        using BlockType = typename Matrix::block_type;
+        static_assert(BlockType::rows == BlockType::cols, "Matrix block must be quadratic!");
+        constexpr auto blockSize = BlockType::rows;
 
-        Dune::SuperLU<ISTLMatrix> solver(A, this->verbosity() > 0);
+        Dune::SuperLU<Matrix> solver(A, this->verbosity() > 0);
 
         Vector bTmp(b);
         solver.apply(x, bTmp, result_);
@@ -795,13 +800,12 @@ public:
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockSize = GET_PROP_VALUE(TypeTag, LinearSolverBlockSize);
-        using MatrixBlock = typename Dune::FieldMatrix<double, blockSize, blockSize>;
-        using ISTLMatrix = typename Dune::BCRSMatrix<MatrixBlock>;
-        static_assert(std::is_same<Matrix, ISTLMatrix>::value, "UMFPack only works with BCRS matrices!");
+        static_assert(isBCRSMatrix<Matrix>::value, "UMFPack only works with BCRS matrices!");
+        using BlockType = typename Matrix::block_type;
+        static_assert(BlockType::rows == BlockType::cols, "Matrix block must be quadratic!");
+        constexpr auto blockSize = BlockType::rows;
 
-        Dune::UMFPack<ISTLMatrix> solver(A, this->verbosity() > 0);
+        Dune::UMFPack<Matrix> solver(A, this->verbosity() > 0);
 
         Vector bTmp(b);
         solver.apply(x, bTmp, result_);

@@ -26,7 +26,7 @@
 
 #include <cmath>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/components/component.hh>

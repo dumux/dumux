@@ -20,6 +20,7 @@
 #define DUMUX_GRIDADAPTINITIALIZATIONINDICATORDEFAULT_HH
 
 #include "properties.hh"
+#include <dumux/common/properties.hh>
 
 #include <dune/common/dynvector.hh>
 

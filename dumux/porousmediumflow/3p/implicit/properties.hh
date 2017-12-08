@@ -27,8 +27,7 @@
 #ifndef DUMUX_3P_PROPERTIES_HH
 #define DUMUX_3P_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
@@ -51,7 +50,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
-NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow));
 NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
 
 //////////////////////////////////////////////////////////////////

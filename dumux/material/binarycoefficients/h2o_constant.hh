@@ -27,7 +27,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/constant.hh>

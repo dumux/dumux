@@ -24,7 +24,6 @@
 #include <dune/istl/bvector.hh>
 
 #include "properties.hh"
-#include <dumux/linear/linearsolverproperties.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
 
@@ -52,7 +51,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for models based on the diffusion-scheme
-NEW_TYPE_TAG(Pressure, INHERITS_FROM(LinearSolverTypeTag, SequentialModel));
+NEW_TYPE_TAG(Pressure, INHERITS_FROM(SequentialModel));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

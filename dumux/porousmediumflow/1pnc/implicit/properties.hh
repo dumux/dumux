@@ -29,8 +29,7 @@
 #ifndef DUMUX_1PNC_PROPERTIES_HH
 #define DUMUX_1PNC_PROPERTIES_HH
 
-#include <dumux/common/basicproperties.hh>
-#include <dumux/linear/linearsolverproperties.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
@@ -57,7 +56,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the implicit the isothermal & non-isothermal one phase n component problems
-NEW_TYPE_TAG(OnePNC, INHERITS_FROM(PorousMediumFlow, NumericModel, LinearSolverTypeTag));
+NEW_TYPE_TAG(OnePNC, INHERITS_FROM(PorousMediumFlow));
 NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC, NonIsothermal));
 
 ///////////////////////////////////////////////////////////////////////////
