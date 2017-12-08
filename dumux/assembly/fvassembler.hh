@@ -60,8 +60,6 @@ class FVAssembler
 
     static constexpr int dim = GridView::dimension;
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    static constexpr int dofCodim = isBox ? dim : 0;
-
     using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, diffMethod, isImplicit>,
                                                      CCLocalAssembler<TypeTag, diffMethod, isImplicit>>;
 
@@ -323,7 +321,7 @@ public:
 
     //! cell-centered schemes have one dof per cell
     std::size_t numDofs() const
-    { return gridView().size(dofCodim); }
+    { return fvGridGeometry_->numDofs(); }
 
     const Problem& problem() const
     { return *problem_; }
