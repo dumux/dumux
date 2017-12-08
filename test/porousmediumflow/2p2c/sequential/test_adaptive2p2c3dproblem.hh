@@ -59,15 +59,10 @@ SET_TYPE_PROP(Adaptive2p2c3d, TransportModel, FV3dTransport2P2CAdaptive<TTAG(Ada
 SET_TYPE_PROP(Adaptive2p2c3d, PressureModel, FV3dPressure2P2CAdaptive<TTAG(Adaptive2p2c3d)>);
 
 // Select fluid system
-SET_TYPE_PROP(Adaptive2p2c3d, FluidSystem, H2OAirFluidSystem<TypeTag>);
-
-SET_BOOL_PROP(Adaptive2p2c3d, EnableComplicatedFluidSystem, false);
-
-// Select water formulation
-SET_PROP(Adaptive2p2c3d, Components) : public GET_PROP(TypeTag, DefaultComponents)
+SET_PROP(Adaptive2p2c3d, FluidSystem)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::H2O<Scalar> H2O;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/false>;
 };
 
 // Specify indicator

@@ -61,16 +61,10 @@ SET_TYPE_PROP(TestMultTwoPTwoCProblem, PressureModel, FVPressure2P2CMultiPhysics
 SET_INT_PROP(TestMultTwoPTwoCProblem, PressureFormulation, GET_PROP_TYPE(TypeTag, Indices)::pressureNw);
 
 // Select fluid system
-SET_TYPE_PROP(TestMultTwoPTwoCProblem, FluidSystem, H2OAirFluidSystem<TypeTag>);
-
-// Select fluid system
-SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableComplicatedFluidSystem, true);
-
-// Select water formulation
-SET_PROP(TestMultTwoPTwoCProblem, Components) : public GET_PROP(TypeTag, DefaultComponents)
+SET_PROP(TestMultTwoPTwoCProblem, FluidSystem)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::H2O<Scalar> H2O;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/true>;
 };
 
 SET_BOOL_PROP(TestMultTwoPTwoCProblem, EnableCapillarity, true);
