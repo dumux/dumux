@@ -5,7 +5,6 @@ install(FILES
   base.hh
   brineair.hh
   brineco2.hh
-  defaultcomponents.hh
   gasphase.hh
   h2oair.hh
   h2oairmesitylene.hh

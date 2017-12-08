@@ -28,24 +28,16 @@
 #include <cassert>
 
 #include <dumux/material/idealgas.hh>
-
 #include <dumux/material/fluidsystems/base.hh>
 
 #include <dumux/material/binarycoefficients/h2o_air.hh>
-#include <dumux/material/fluidsystems/defaultcomponents.hh>
 #include <dumux/material/components/air.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#endif
-
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
@@ -57,35 +49,6 @@ namespace FluidSystems
  * \f$(\mathrm{H_2O})\f$) and air (Pseudo component composed of \f$\mathrm{79\%\;N_2}\f$,
  * \f$\mathrm{20\%\;O_2}\f$ and \f$\mathrm{1\%\;Ar}\f$) as components. It is applied by
  * default with the tabulated version of water of the IAPWS-formulation.
- *
- * To change the component formulation (i.e. to use nontabulated or
- * incompressible water), or to switch on verbosity of tabulation,
- * specify the \p H2O formulation via template arguments or via the property
- * system, as described in the TypeTag Adapter at the end of the file.
- *
- * \code{.cpp}
- * // Select fluid system
- * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
- * {
- *     // e.g. to use a simple version of H2O
- *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *     typedef FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar> > type;
- * };
- * \endcode
- *
- * Also remember to initialize tabulated components (FluidSystem::init()), while this
- * is not necessary for non-tabularized ones.
- *
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace FluidSystem::.
- * An adapter class using FluidSystem<TypeTag> is also provided
- * at the end of this file.
- *
- * \note The template argument \p useComplexRelations can be used to switch from a complex
- * relation, in which compositional effects are considered for the gas phase and the
- * density of the liquid phase, to a non-complex formulation in which compositional
- * effects are not considered.
  */
 template <class Scalar,
           class H2Otype = TabulatedComponent<Scalar, H2O<Scalar> >,
@@ -95,7 +58,6 @@ class H2OAir
 {
     typedef H2OAir<Scalar,H2Otype, useComplexRelations > ThisType;
     typedef BaseFluidSystem <Scalar, ThisType> Base;
-
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
@@ -809,51 +771,6 @@ public:
 };
 
 } // end namespace FluidSystems
-
-#ifdef DUMUX_PROPERTIES_HH
-// forward definitions of the property tags
-namespace Properties {
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(Components);
-}
-
-/*!
- * \brief A two-phase fluid system with water and air as components.
- *
- * This is an adapter to use H2OAirFluidSystem<TypeTag>, as is
- * done with most other classes in Dumux.
- *  This fluidsystem is applied by default with the tabulated version of
- *  water of the IAPWS-formulation.
- *
- *  To change the component formulation (ie to use nontabulated or
- *  incompressible water), or to switch on verbosity of tabulation,
- *  use the property system and the property "Components":
- *
- *  \code{.cpp}
- * // Select desired version of the component
- * SET_PROP(TheSpecificProblemTypeTag, Components) : public GET_PROP(TypeTag, DefaultComponents)
- * {
- *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *
- *     // Do not use the defaults !
- *     // typedef TabulatedComponent<Scalar, H2O<Scalar> > H2O;
- *
- *     // Apply e.g. untabulated water:
- *     typedef Dumux::H2O<Scalar> H2O;
- * };
- * \endcode
- * Also remember to initialize tabulated components (FluidSystem::init()), while this
- * is not necessary for non-tabularized ones.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::H2OAir directly! Will be removed after release of dumux 3.0.")
-H2OAirFluidSystem
-: public FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar),
-                              typename GET_PROP(TypeTag, Components)::H2O,
-                             GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
-{};
-#endif
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

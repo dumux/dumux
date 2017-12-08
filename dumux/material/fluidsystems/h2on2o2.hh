@@ -27,6 +27,10 @@
 
 #include <cassert>
 
+#include <dumux/common/valgrind.hh>
+#include <dumux/common/exceptions.hh>
+
+#include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/constants.hh>
 
@@ -38,16 +42,6 @@
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/binarycoefficients/h2o_o2.hh>
 #include <dumux/material/binarycoefficients/n2_o2.hh>
-
-#include <dumux/common/valgrind.hh>
-#include <dumux/common/exceptions.hh>
-
-#include <dumux/material/fluidsystems/base.hh>
-
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/defaultcomponents.hh>
-#endif
 
 namespace Dumux
 {
@@ -64,11 +58,6 @@ namespace FluidSystems
  *
  * Also remember to initialize tabulated components (FluidSystem::init()), while this
  * is not necessary for non-tabularized ones.
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace FluidSystem::.
- * An adapter class using FluidSystem<TypeTag> is also provided
- * at the end of this file.
  */
 template <class Scalar, bool useComplexRelations = true>
 class H2ON2O2
@@ -79,8 +68,7 @@ class H2ON2O2
 
     typedef Dumux::IdealGas<Scalar> IdealGas;
     typedef Dumux::Constants<Scalar> Constants;
-    typedef Dumux::H2O<Scalar> IapwsH2O;
-    typedef TabulatedComponent<Scalar, IapwsH2O > TabulatedH2O;
+    typedef TabulatedComponent<Scalar, Dumux::H2O<Scalar> > TabulatedH2O;
     typedef Dumux::N2<Scalar> SimpleN2;
     typedef Dumux::O2<Scalar> O2;
 
@@ -843,23 +831,6 @@ public:
 };
 
 } // end namespace FluidSystems
-
-#ifdef DUMUX_PROPERTIES_HH
-/*!
- * \brief A two-phase (water and air) fluid system
- *        with water, nitrogen and oxygen as components.
- *
- * This is an adapter to use H2ON2O2<TypeTag>, as is
- * done with most other classes in Dumux.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::H2ON2O2 directly! Will be removed after release of dumux 3.0.")
-H2ON2O2FluidSystem
-: public FluidSystems::H2ON2O2<typename GET_PROP_TYPE(TypeTag, Scalar),
-                             GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
-{};
-#endif
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -26,23 +26,17 @@
 
 #include <cassert>
 
+#include <dumux/common/valgrind.hh>
+#include <dumux/common/exceptions.hh>
+
 #include <dumux/material/idealgas.hh>
 
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 
-#include <dumux/common/valgrind.hh>
-#include <dumux/common/exceptions.hh>
-
 #include "base.hh"
-
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/defaultcomponents.hh>
-#endif
 
 namespace Dumux
 {
@@ -54,12 +48,6 @@ namespace FluidSystems
  *
  * \brief A two-phase fluid system with two components water \f$(\mathrm{H_2O})\f$
  *        Nitrogen \f$(\mathrm{N_2})\f$ for non-equilibrium models.
- *
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace FluidSystem::.
- * An adapter class using FluidSystem<TypeTag> is also provided
- * at the end of this file.
  */
 template <class Scalar, bool useComplexRelations = true>
 class H2ON2
@@ -69,10 +57,9 @@ class H2ON2
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
     // convenience typedefs
-    typedef Dumux::IdealGas<Scalar> IdealGas;
-    typedef Dumux::H2O<Scalar> IapwsH2O;
-    typedef TabulatedComponent<Scalar, IapwsH2O > TabulatedH2O;
-    typedef Dumux::N2<Scalar> SimpleN2;
+    using IdealGas = Dumux::IdealGas<Scalar>;
+    using TabulatedH2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
+    using SimpleN2 = Dumux::N2<Scalar>;
 
 public:
     /****************************************
@@ -183,12 +170,10 @@ public:
     static constexpr int N2Idx = nCompIdx;
 
     //! The components for pure water
-    typedef TabulatedH2O H2O;
-    //typedef SimpleH2O H2O;
-    //typedef IapwsH2O H2O;
+    using H2O = TabulatedH2O;
 
     //! The components for pure nitrogen
-    typedef SimpleN2 N2;
+    using N2 = SimpleN2;
 
     /*!
      * \brief Return the human readable name of a component
@@ -752,21 +737,6 @@ public:
 
 } // end namespace FluidSystems
 
-#ifdef DUMUX_PROPERTIES_HH
-/*!
- * \brief A two-phase fluid system with water and nitrogen as components.
- *
- * This is an adapter to use H2ON2FluidSystem<TypeTag>, as is
- * done with most other classes in Dumux.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::H2ON2 directly! Will be removed after release of dumux 3.0.")
-H2ON2FluidSystem
-: public FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar),
-                             GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
-{};
-#endif
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -27,11 +27,11 @@
 #include <limits>
 #include <cassert>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
-
-#include <dune/common/exceptions.hh>
 
 #include "base.hh"
 

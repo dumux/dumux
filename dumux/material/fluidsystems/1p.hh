@@ -27,21 +27,8 @@
 #include <limits>
 #include <cassert>
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
-
 #include <dune/common/exceptions.hh>
-
 #include "base.hh"
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/n2.hh>
-#include <dumux/material/components/tabulatedcomponent.hh>
-
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/defaultcomponents.hh>
-#endif
 
 namespace Dumux {
 namespace FluidSystems {
@@ -51,8 +38,9 @@ namespace FluidSystems {
  *
  * \brief A fluid system for single phase models.
  *
- * The fluid is defined as a template parameter. For existing
- * components the FluidSystems::LiquidPhase<Component> and
+ * \tparam Scalar the scalar type
+ * \tparam Fluid The fluid is defined as a template parameter. For existing
+ * fluids the FluidSystems::LiquidPhase<Component> and
  * FluidSystems::GasPhase<Component> may be used.
  */
 template <class Scalar, class Fluid>
@@ -414,28 +402,7 @@ public:
 
 };
 
-} // end namespace
-
-#ifdef DUMUX_PROPERTIES_HH
-namespace Properties
-{
-NEW_PROP_TAG(Fluid);
-}
-
-/*!
- * \brief A pure single-phase fluid system.
- *
- * This is an adapter to use TwoPImmiscible<TypeTag>, as is
- * done with most other classes in Dumux and all template parameters
- * are usually defined in the property system anyhow.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::OneP directly! Will be removed after release of dumux 3.0.")
-OnePFluidSystem
-: public FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar),
-                            typename GET_PROP_TYPE(TypeTag, Fluid)>
-{};
-#endif
-} // end namespace
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

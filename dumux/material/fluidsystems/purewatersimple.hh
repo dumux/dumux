@@ -28,38 +28,22 @@
 
 #include <dumux/material/idealgas.hh>
 
+#include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/n2.hh>
-#include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
-#include <dumux/material/fluidsystems/base.hh>
-
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/defaultcomponents.hh>
-#endif
-
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
  *
  * \brief A two-phase fluid system with water as sole component.
  *           Values are taken from Shi & Wang, A numerical investigation of transpiration cooling with liquid coolant phase change, Transport in Porous Media, 2011
- *
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace FluidSystem::.
- * An adapter class using FluidSystem<TypeTag> is also provided
- * at the end of this file.
  */
 template <class Scalar, bool useComplexRelations = false>
 class PureWaterSimpleFluidSystem
@@ -557,21 +541,6 @@ public:
 };
 
 } // end namespace FluidSystems
-
-#ifdef DUMUX_PROPERTIES_HH
-/*!
- * \brief A two-phase fluid system with water and nitrogen as components.
- *
- * This is an adapter to use H2ON2FluidSystem<TypeTag>, as is
- * done with most other classes in Dumux.
- */
-template<class TypeTag>
-class PureWaterSimpleFluidSystem
-: public FluidSystems::PureWaterSimpleFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
-                             GET_PROP_VALUE(TypeTag, EnableComplicatedFluidSystem)>
-{};
-#endif
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

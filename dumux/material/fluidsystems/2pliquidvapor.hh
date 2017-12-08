@@ -28,39 +28,25 @@
 #include <cassert>
 #include <iostream>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
-#include <dune/common/exceptions.hh>
-
 #include "base.hh"
 
-namespace Dumux
-{
-namespace FluidSystems
-{
-
+namespace Dumux {
+namespace FluidSystems {
 /*!
  * \ingroup Fluidsystems
  *
  * \brief A two-phase fluid system with only one component.
- *
- *
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
- * at the end of this file.
  */
 template <class Scalar, class ComponentType>
 class TwoPLiquidVaporFluidsystem
     : public BaseFluidSystem<Scalar, TwoPLiquidVaporFluidsystem<Scalar, ComponentType> >
 {
-    // do not try to instantiate this class, it has only static members!
-    TwoPLiquidVaporFluidsystem()
-    {}
-
     typedef TwoPLiquidVaporFluidsystem<Scalar, ComponentType> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
     typedef ComponentType Component;
@@ -548,32 +534,11 @@ public:
             return Component::gasHeatCapacity(fluidState.temperature(phaseIdx),
                                            fluidState.pressure(phaseIdx));//2.029e3;
         }
-        else DUNE_THROW(Dune::NotImplemented,
-                   "wrong index");
+        else DUNE_THROW(Dune::NotImplemented, "wrong index");
     }
 };
 
 } // end namespace FluidSystems
-
-#ifdef DUMUX_PROPERTIES_HH
-// forward definitions of the property tags
-namespace Properties {
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(Components);
-}
-/*!
- * \brief A two-phase fluid system with only one component.
- *
- * This is an adapter to use Dumux::TwoPLiquidVaporFluidsystem<TypeTag>, as is
- * done with most other classes in Dumux.
- */
-template<class TypeTag>
-class TwoPLiquidVaporFluidsystem
-: public FluidSystems::TwoPLiquidVaporFluidsystem<typename GET_PROP_TYPE(TypeTag, Scalar),
-                             typename GET_PROP_VALUE(TypeTag, Components)::Component>
-{};
-#endif
-
-} // end namespace
+} // end namespace Dumux
 
 #endif
