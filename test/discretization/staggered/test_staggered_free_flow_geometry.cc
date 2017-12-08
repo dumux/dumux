@@ -44,9 +44,38 @@
 namespace Dumux
 {
 
-template<class TypeTag>
-class MockProblem
-{ };
+//! Dummy flux variables class so that we can update the connectivity map
+class MockFluxVariables
+{
+public:
+
+  template<class Map, class Element, class FvGeometry, class Scvf>
+  void computeCellCenterToCellCenterStencil(Map& map,
+                                            const Element& element,
+                                            const FvGeometry& fvGeometry,
+                                            const Scvf& scvf)
+  {}
+
+  template<class Map, class Element, class FvGeometry, class Scvf>
+  void computeCellCenterToFaceStencil(Map& map,
+                                      const Element& element,
+                                      const FvGeometry& fvGeometry,
+                                      const Scvf& scvf)
+  {}
+
+  template<class Map, class FvGeometry, class Scvf>
+  void computeFaceToCellCenterStencil(Map& map,
+                                      const FvGeometry& fvGeometry,
+                                      const Scvf& scvf)
+  {}
+
+  template<class Map, class FvGeometry, class Scvf>
+  void computeFaceToFaceStencil(Map& map,
+                                const FvGeometry& fvGeometry,
+                                const Scvf& scvf)
+  {}
+
+};
 
 
 namespace Properties
@@ -55,8 +84,7 @@ NEW_TYPE_TAG(TestStaggeredFreeFlowGeometry, INHERITS_FROM(StaggeredModel, Navier
 
 SET_TYPE_PROP(TestStaggeredFreeFlowGeometry, Grid, Dune::YaspGrid<2>);
 
-// Set the problem property
-SET_TYPE_PROP(TestStaggeredFreeFlowGeometry, Problem, MockProblem<TypeTag> );
+SET_TYPE_PROP(TestStaggeredFreeFlowGeometry, FluxVariables, MockFluxVariables);
 
 SET_BOOL_PROP(TestStaggeredFreeFlowGeometry, EnableFVGridGeometryCache, true);
 }
