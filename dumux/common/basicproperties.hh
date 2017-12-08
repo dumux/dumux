@@ -83,9 +83,6 @@ SET_TYPE_PROP(NumericModel, PointSource, PointSource<TypeTag>);
 //! Use the point source helper using the bounding box tree as a default
 SET_TYPE_PROP(NumericModel, PointSourceHelper, BoundingBoxTreePointSourceHelper<TypeTag>);
 
-//! Set default output level to 0 -> only primary variables are added to output
-SET_INT_PROP(NumericModel, VtkOutputLevel, 0);
-
 //! Set the default to a function throwing a NotImplemented error
 SET_TYPE_PROP(NumericModel, VtkOutputFields, DefaultVtkOutputFields);
 
