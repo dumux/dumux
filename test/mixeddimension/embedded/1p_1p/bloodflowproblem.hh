@@ -30,6 +30,7 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/mixeddimension/subproblemproperties.hh>
 #include "bloodflowspatialparams.hh"
@@ -53,12 +54,11 @@ SET_STRING_PROP(BloodFlowProblem, GridParameterGroup, "VesselGrid");
 // Set the problem property
 SET_TYPE_PROP(BloodFlowProblem, Problem, BloodFlowProblem<TypeTag>);
 
-SET_PROP(BloodFlowProblem, Fluid)
+// the fluid system
+SET_PROP(BloodFlowProblem, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, Constant<TypeTag, Scalar>>;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
 };
 
 // Set the spatial parameters

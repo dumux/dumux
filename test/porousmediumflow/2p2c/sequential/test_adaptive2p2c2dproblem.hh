@@ -55,20 +55,15 @@ SET_TYPE_PROP(Adaptive2p2c2d, Grid, Dune::YaspGrid<3>);
 SET_TYPE_PROP(Adaptive2p2c2d, Problem, Adaptive2p2c2d<TTAG(Adaptive2p2c2d)>);
 
 // Select fluid system
-SET_TYPE_PROP(Adaptive2p2c2d, FluidSystem, H2OAirFluidSystem<TypeTag>);
+SET_PROP(Adaptive2p2c2d, FluidSystem)
+{
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::H2OAir<Scalar, H2O<Scalar>, /*useComplexRelations=*/true>;
+};
 
 // Set the 2d Transport and Pressure model (already set as default in properties file)
 SET_TYPE_PROP(Adaptive2p2c2d, TransportModel, FV2dTransport2P2CAdaptive<TypeTag>);
 SET_TYPE_PROP(Adaptive2p2c2d, PressureModel, FV2dPressure2P2CAdaptive<TypeTag>);
-
-SET_BOOL_PROP(Adaptive2p2c2d, EnableComplicatedFluidSystem, true);
-
-// Select water formulation
-SET_PROP(Adaptive2p2c2d, Components) : public GET_PROP(TypeTag, DefaultComponents)
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::H2O<Scalar> H2O;
-};
 
 // Specify indicator
 SET_TYPE_PROP(Adaptive2p2c2d, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);

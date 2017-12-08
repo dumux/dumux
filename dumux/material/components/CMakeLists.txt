@@ -17,7 +17,6 @@ lnapl.hh
 mesitylene.hh
 n2.hh
 nacl.hh
-nullcomponent.hh
 o2.hh
 simpleco2.hh
 simpleh2o.hh

@@ -25,11 +25,8 @@
 #define DUMUX_BRINE_CO2_SYSTEM_HH
 
 #include <dumux/material/idealgas.hh>
-
-#include <dumux/common/properties.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
-#include <dumux/material/fluidsystems/defaultcomponents.hh>
 #include <dumux/material/components/co2.hh>
 #include <dumux/material/components/co2tablereader.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
@@ -38,24 +35,15 @@
 
 namespace Dumux
 {
+// include the default tables for CO2
 #include <dumux/material/components/co2tables.inc>
 
-namespace FluidSystems{
+namespace FluidSystems
+{
 /*!
  * \ingroup Fluidsystems
  * \brief A compositional fluid with brine and carbon as
  *        components in both, the liquid and the gas (supercritical) phase.
- *
- * This class provides acess to the Brine CO2 fluid system when no property system is used.
- * For Dumux users, using BrineCO2FluidSystem<TypeTag> and the documentation therein is
- * recommended.
- *
- *  The user can provide their own material table for co2 properties.
- *  This fluidsystem is initialized as default with the tabulated version of
- *  water of the IAPWS-formulation, and the tabularized adapter to transfer
- *  this into brine.
- *  In the non-TypeTagged version, salinity information has to be provided with
- *  the init() methods.
  */
 template<class Scalar,
          class CO2Table,
@@ -690,88 +678,8 @@ private:
         return h_ls;
     }
 };
+
 } // end namespace FluidSystems
-
-
-#ifdef DUMUX_PROPERTIES_HH
-// forward definitions of the property tags
-namespace Properties
-{
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(CO2Table);
-// Set Co2 tables
-SET_TYPE_PROP(ModelProperties, CO2Table, CO2Tables);
-}
-
-/*!
- * \brief A compositional fluid with brine and carbon as
- *        components in both, the liquid and the gas (supercritical) phase.
- *
- *  This fluidsystem is initialized as default with the tabulated version of
- *  water of the IAPWS-formulation, and the tabularized adapter to transfer
- *  this into brine.
- *  To change the component formulation (e.g. change tabularization to avoid
- *  init routine), change the default components via the property "Components":
- *
- *
- * \code{.cpp}
- * // Select other components
- * SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
- * {
- *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *     // Do not use the defaults that are the following
- *     //    typedef TabulatedComponent<Scalar, H2O<Scalar> > H2O;
- *     //    typedef Brine<Scalar, H2O<Scalar> >  BrineRawComponent;
- *     //    typedef TabulatedComponent<Scalar,BrineRawComponent > Brine;
- *
- *     // Apply the following component classes:
- *     typedef Dumux::H2O<Scalar> H2O;
- *     typedef Brine<Scalar, H2O> BrineRawComponent;
- *     typedef typename BrineRawComponent Brine;// all components have to be redefined,
- *                                              // the applied H2O and Brine implemementations.
- * };
- * \endcode
- * Also remember to initialize all tabulated components (FluidSystem::init()), while this
- * is not necessary for non-tabularized ones.
- *
- * The desired material tables for CO2 can be defined via
- * \code{.cpp}
- *      SET_TYPE_PROP(myApplicationProperty, CO2Table, myCO2Tables);
- * \endcode
- *   or use the default tables. Do not forget to include the tables.
- *   Salinity is specified via the appropriate property.
- */
-
-template <class TypeTag, bool verbose=true>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::BrineCO2 directly! Will be removed after release of dumux 3.0.")
-BrineCO2FluidSystem
-: public FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                typename GET_PROP_TYPE(TypeTag, CO2Table),
-                                typename GET_PROP(TypeTag, Components)::H2O,
-                                typename GET_PROP(TypeTag, Components)::BrineRawComponent,
-                                typename GET_PROP(TypeTag, Components)::Brine>
-{
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
-            typename GET_PROP_TYPE(TypeTag, CO2Table),
-            typename GET_PROP(TypeTag, Components)::H2O,
-            typename GET_PROP(TypeTag, Components)::BrineRawComponent,
-            typename GET_PROP(TypeTag, Components)::Brine> ParentType;
-
-public:
-    static void init()
-    {
-        ParentType::init(getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Salinity", 1e-3));
-    }
-    static void init(Scalar startTemp, Scalar endTemp, int tempSteps,
-                     Scalar startPressure, Scalar endPressure, int pressureSteps)
-    {
-        ParentType::init(startTemp, endTemp, tempSteps,
-                         startPressure, endPressure, pressureSteps,
-                         getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Salinity", 1e-3));
-    }
-};
-#endif
 } // end namespace Dumux
 
 #endif

@@ -88,24 +88,14 @@ SET_TYPE_PROP(FVVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(FVVelocity2PTestProblem, GridCreator,
     UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
 
-// Set the wetting phase
-SET_PROP(FVVelocity2PTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(FVVelocity2PTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
-
-// Set the non-wetting phase
-SET_PROP(FVVelocity2PTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
-};
-
 
 // set the types for the MPFA-O FV method
 NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FvMpfaO2dPressureTwoP, TestDiffusionSpatialParams));
@@ -118,24 +108,14 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, GridCreator,
     UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
 
-// Set the wetting phase
-SET_PROP(FVMPFAOVelocity2PTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(FVMPFAOVelocity2PTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
-
-// Set the non-wetting phase
-SET_PROP(FVMPFAOVelocity2PTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
-};
-
 
 // set the types for the mimetic FD method
 NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
@@ -147,26 +127,16 @@ SET_TYPE_PROP(MimeticPressure2PTestProblem, Grid, Dune::YaspGrid<2>);
 SET_TYPE_PROP(MimeticPressure2PTestProblem, GridCreator,
     UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
 
-
-// Set the wetting phase
-SET_PROP(MimeticPressure2PTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(MimeticPressure2PTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-// Set the non-wetting phase
-SET_PROP(MimeticPressure2PTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
-};
-
-}
+} // end namespace Properties
 
 /*!
  * \ingroup SequentialProblems
@@ -184,8 +154,7 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) NonwettingPhase;
+    using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
 

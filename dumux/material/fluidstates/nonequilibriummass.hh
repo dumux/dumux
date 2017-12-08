@@ -26,23 +26,16 @@
 #ifndef DUMUX_NONEQUILIBRIUM_MASS_FLUID_STATE_HH
 #define DUMUX_NONEQUILIBRIUM_MASS_FLUID_STATE_HH
 
-#include <dumux/common/valgrind.hh>
-#include <dumux/material/fluidstates/nonequilibrium.hh>
-#include <dumux/common/properties.hh>
 
 #include <cmath>
 #include <algorithm>
 
+#include <dune/common/exceptions.hh>
+#include <dumux/common/valgrind.hh>
+#include <dumux/material/fluidstates/nonequilibrium.hh>
+
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(Indices);
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(NumComponents);
-}
 
 /*!
  * \ingroup FluidStates
@@ -53,27 +46,19 @@ NEW_PROP_TAG(NumComponents);
  *        - local thermal equilibrium
  *        - local chemical non-equilibrium
  */
-template <class TypeTag>
-class NonEquilibriumMassFluidState :
-    public NonEquilibriumFluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                    typename GET_PROP_TYPE(TypeTag, FluidSystem)>
-    {
+template <class Scalar, class FluidSystem>
+class NonEquilibriumMassFluidState
+: public NonEquilibriumFluidState<Scalar, FluidSystem>
+{
     public:
-        typedef NonEquilibriumFluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                         typename GET_PROP_TYPE(TypeTag, FluidSystem)> ParentType;
+        typedef NonEquilibriumFluidState<Scalar, FluidSystem> ParentType;
 
-        typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+        enum { numPhases       = FluidSystem::numPhases };
+        enum { numComponents   = FluidSystem::numComponents };
 
-        enum {numEnergyEqs    = Indices::numPrimaryEnergyVars};
-        enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
-        enum { numComponents   = GET_PROP_VALUE(TypeTag, NumComponents)};
-
-        NonEquilibriumMassFluidState()
-        : NonEquilibriumFluidState<Scalar, FluidSystem>()
-    {
-    }
+    NonEquilibriumMassFluidState()
+    : NonEquilibriumFluidState<Scalar, FluidSystem>()
+    {}
 
     /*****************************************************
      * Setter methods. Note that these are not part of the

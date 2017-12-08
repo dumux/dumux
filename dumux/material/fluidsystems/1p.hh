@@ -27,21 +27,8 @@
 #include <limits>
 #include <cassert>
 
-#include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/fluidsystems/gasphase.hh>
-
 #include <dune/common/exceptions.hh>
-
 #include "base.hh"
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/h2o.hh>
-#include <dumux/material/components/n2.hh>
-#include <dumux/material/components/tabulatedcomponent.hh>
-
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#include <dumux/material/fluidsystems/defaultcomponents.hh>
-#endif
 
 namespace Dumux {
 namespace FluidSystems {
@@ -51,18 +38,21 @@ namespace FluidSystems {
  *
  * \brief A fluid system for single phase models.
  *
- * The fluid is defined as a template parameter. For existing
- * components the FluidSystems::LiquidPhase<Component> and
+ * \tparam Scalar the scalar type
+ * \tparam FluidType The fluid is defined as a template parameter. For existing
+ * fluids the FluidSystems::LiquidPhase<Component> and
  * FluidSystems::GasPhase<Component> may be used.
  */
-template <class Scalar, class Fluid>
+template <class Scalar, class FluidType>
 class OneP
-    : public BaseFluidSystem<Scalar, OneP<Scalar, Fluid> >
+    : public BaseFluidSystem<Scalar, OneP<Scalar, FluidType> >
 {
-    typedef OneP<Scalar, Fluid> ThisType;
+    typedef OneP<Scalar, FluidType> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
+    using Fluid = FluidType;
+
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
@@ -75,7 +65,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static std::string phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -87,7 +77,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr bool isLiquid(int phaseIdx)
+    static constexpr bool isLiquid(int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -103,7 +93,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr bool isCompressible(int phaseIdx)
+    static constexpr bool isCompressible(int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -114,7 +104,7 @@ public:
     /*!
      * \brief Returns true if the fluid viscosity is constant
      */
-    static constexpr bool viscosityIsConstant(int phaseIdx)
+    static constexpr bool viscosityIsConstant(int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -135,7 +125,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealMixture(int phaseIdx)
+    static bool isIdealMixture(int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -149,7 +139,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static constexpr bool isIdealGas(int phaseIdx)
+    static constexpr bool isIdealGas(int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -169,7 +159,7 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static std::string componentName(int compIdx)
+    static std::string componentName(int compIdx = 0)
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
@@ -181,7 +171,7 @@ public:
      *
      * \param compIdx index of the component
      */
-    static Scalar molarMass(int compIdx)
+    static Scalar molarMass(int compIdx = 0)
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
@@ -193,7 +183,7 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static Scalar criticalTemperature(int compIdx)
+    static Scalar criticalTemperature(int compIdx = 0)
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
@@ -205,7 +195,7 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static Scalar criticalPressure(int compIdx)
+    static Scalar criticalPressure(int compIdx = 0)
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
@@ -217,7 +207,7 @@ public:
      *
      * \param compIdx The index of the component to consider
      */
-    static Scalar acentricFactor(int compIdx)
+    static Scalar acentricFactor(int compIdx = 0)
     {
         assert(0 <= compIdx && compIdx < numComponents);
 
@@ -261,7 +251,7 @@ public:
      */
     template <class FluidState>
     static Scalar viscosity(const FluidState &fluidState,
-                            int phaseIdx)
+                            int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -283,8 +273,8 @@ public:
      */
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
-                                      int phaseIdx,
-                                      int compIdx)
+                                      int phaseIdx = 0,
+                                      int compIdx = 0)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
         assert(0 <= compIdx  && compIdx < numComponents);
@@ -325,8 +315,8 @@ public:
      */
     template <class FluidState>
     static Scalar diffusionCoefficient(const FluidState &fluidState,
-                                       int phaseIdx,
-                                       int compIdx)
+                                       int phaseIdx = 0,
+                                       int compIdx = 0)
     {
         DUNE_THROW(Dune::InvalidStateException, "Not applicable: Diffusion coefficients");
     }
@@ -362,7 +352,7 @@ public:
      */
     template <class FluidState>
     static Scalar enthalpy(const FluidState &fluidState,
-                           int phaseIdx)
+                           int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -384,7 +374,7 @@ public:
      */
     template <class FluidState>
     static Scalar thermalConductivity(const FluidState &fluidState,
-                                      int phaseIdx)
+                                      int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -403,7 +393,7 @@ public:
      */
     template <class FluidState>
     static Scalar heatCapacity(const FluidState &fluidState,
-                               int phaseIdx)
+                               int phaseIdx = 0)
     {
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
@@ -411,31 +401,9 @@ public:
         Scalar pressure = fluidState.pressure(phaseIdx);
         return Fluid::heatCapacity(temperature, pressure);
     }
-
 };
 
-} // end namespace
-
-#ifdef DUMUX_PROPERTIES_HH
-namespace Properties
-{
-NEW_PROP_TAG(Fluid);
-}
-
-/*!
- * \brief A pure single-phase fluid system.
- *
- * This is an adapter to use TwoPImmiscible<TypeTag>, as is
- * done with most other classes in Dumux and all template parameters
- * are usually defined in the property system anyhow.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::OneP directly! Will be removed after release of dumux 3.0.")
-OnePFluidSystem
-: public FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar),
-                            typename GET_PROP_TYPE(TypeTag, Fluid)>
-{};
-#endif
-} // end namespace
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

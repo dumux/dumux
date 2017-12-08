@@ -27,6 +27,7 @@
 #define DUMUX_ONEP_FRACTURE_TEST_PROBLEM_HH
 
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -59,13 +60,11 @@ SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
 // Set the problem property
 SET_TYPE_PROP(FractureProblem, Problem, Dumux::FractureProblem<TypeTag>);
 
-// The fluid type
-SET_PROP(FractureProblem, Fluid)
+// the fluid system
+SET_PROP(FractureProblem, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > >;
 };
 
 } // end namespace Properties

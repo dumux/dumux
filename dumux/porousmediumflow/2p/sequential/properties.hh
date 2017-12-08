@@ -65,8 +65,6 @@ NEW_PROP_TAG( PressureFormulation); //!< The formulation of the pressure model
 NEW_PROP_TAG( SaturationFormulation); //!< The formulation of the saturation model
 NEW_PROP_TAG( VelocityFormulation); //!< The type of velocity reconstructed for the transport model
 NEW_PROP_TAG( EnableCompressibility);//!< Returns whether compressibility is allowed
-NEW_PROP_TAG( WettingPhase); //!< The wetting phase of a two-phase model
-NEW_PROP_TAG( NonwettingPhase); //!< The non-wetting phase of a two-phase model
 NEW_PROP_TAG( FluidSystem ); //!< Defines the fluid system
 NEW_PROP_TAG( FluidState );//!< Defines the fluid state
 
@@ -134,12 +132,6 @@ SET_TYPE_PROP(SequentialTwoP, Variables, VariableClass<TypeTag>);
 
 //! Set standart CellData of immiscible two-phase models as default
 SET_TYPE_PROP(SequentialTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeTag, EnableCompressibility)>);
-
-//! Set default fluid system
-SET_TYPE_PROP(SequentialTwoP, FluidSystem,
-              FluidSystems::TwoPImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                           typename GET_PROP_TYPE(TypeTag, WettingPhase),
-                                           typename GET_PROP_TYPE(TypeTag, NonwettingPhase)>);
 
 //! Set default fluid state
 SET_PROP(SequentialTwoP, FluidState)

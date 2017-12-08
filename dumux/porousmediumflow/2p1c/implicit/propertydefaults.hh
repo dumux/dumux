@@ -40,7 +40,7 @@
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
 #include <dumux/material/fluidsystems/2pliquidvapor.hh>
-#include <dumux/material/components/nullcomponent.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 
@@ -104,7 +104,7 @@ SET_PROP(TwoPOneCNI, FluidSystem)
 { private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 public:
-    typedef FluidSystems::TwoPLiquidVaporFluidsystem<Scalar, NullComponent<Scalar> > type;
+    typedef FluidSystems::TwoPLiquidVaporFluidsystem<Scalar, Components::Constant<1, Scalar> > type;
 };
 
 //! Determines whether Blocking ofspurious flow is used

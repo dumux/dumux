@@ -24,10 +24,6 @@
  */
 #include <config.h>
 
-// include the property system just to make sure that all fluid system
-// type tag adapter behave nicely together
-#include <dumux/common/properties.hh>
-
 #include "checkfluidsystem.hh"
 
 // include all fluid systems in dumux-stable
@@ -79,7 +75,9 @@ int main()
         typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> BaseFluidState;
         BaseFluidState baseFs;
 
-        // TwoPTwoCFluidState uses TypeTag
+        // TwoPTwoCFluidState TODO: doesn't fulfill interface!
+        // Dumux::TwoPTwoCFluidState<Scalar, FluidSystem> fluidStateTwoPTwoC;
+        // success += Dumux::checkFluidState<Scalar>(fluidStateTwoPTwoC);
 
         // CompositionalFluidState
         Dumux::CompositionalFluidState<Scalar, FluidSystem> compositionalFluidState;
@@ -97,9 +95,13 @@ int main()
         Dumux::NonEquilibriumFluidState<Scalar, FluidSystem> nonEquilibriumFluidState;
         success += Dumux::checkFluidState<Scalar>(nonEquilibriumFluidState);
 
-        // NonEquilibriumEnergyFluidState uses TypeTag
+        // NonEquilibriumEnergyFluidState TODO: fails the test
+        // Dumux::NonEquilibriumEnergyFluidState<Scalar, FluidSystem> nonEquilibriumEnergyFluidState;
+        // success += Dumux::checkFluidState<Scalar>(nonEquilibriumEnergyFluidState);
 
-        // NonEquilibriumMassFluidState uses TypeTag
+        // NonEquilibriumMassFluidState
+        Dumux::NonEquilibriumMassFluidState<Scalar, FluidSystem> nonEquilibriumMassFluidState;
+        success += Dumux::checkFluidState<Scalar>(nonEquilibriumMassFluidState);
 
         // PressureOverlayFluidState
         Dumux::PressureOverlayFluidState<Scalar, BaseFluidState> pressureOverlayFluidState(baseFs);

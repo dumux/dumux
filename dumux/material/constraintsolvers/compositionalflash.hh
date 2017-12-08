@@ -49,7 +49,7 @@ class CompositionalFlash
     typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef PseudoOnePTwoCFluidState<TypeTag> FluidState1p2c;
+    typedef PseudoOnePTwoCFluidState<Scalar, FluidSystem> FluidState1p2c;
 
     enum {  numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
             numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};

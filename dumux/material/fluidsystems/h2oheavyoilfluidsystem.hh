@@ -30,17 +30,14 @@
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/heavyoil.hh>
 
 #include <dumux/material/binarycoefficients/h2o_heavyoil.hh>
 
 #include <dumux/material/fluidsystems/base.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \brief A compositional fluid with water and heavy oil
@@ -441,50 +438,8 @@ public:
 private:
 
 };
+
 } // end namespace FluidSystems
-
-#ifdef DUMUX_PROPERTIES_HH
-// forward definitions of the property tags
-namespace Properties {
-    NEW_PROP_TAG(Scalar);
-    NEW_PROP_TAG(Components);
-}
-
-/*!
- * \brief A threephase fluid system with water, heavyoil as components.
- *
- * This is an adapter to use Dumux::H2OheavyoilFluidSystem<TypeTag>, as is
- * done with most other classes in Dumux.
- *  This fluidsystem is applied by default with the tabulated version of
- *  water of the IAPWS-formulation.
- *
- *  To change the component formulation (ie to use nontabulated or
- *  incompressible water), or to switch on verbosity of tabulation,
- *  use the property system and the property "Components":
- *
- *        // Select desired version of the component
- *        SET_PROP(myApplicationProperty, Components) : public GET_PROP(TypeTag, DefaultComponents)
- *        {
- *            typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *
- *        // Do not use the defaults !
- *        //    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > H2O;
- *
- *        // Apply e.g. untabulated water:
- *        typedef Dumux::H2O<Scalar> H2O;
- *        };
- *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::H2OHeavyOil directly! Will be removed after release of dumux 3.0.")
-H2OHeavyOilFluidSystem
-: public FluidSystems::H2OHeavyOil<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar),
-                                        typename GET_PROP(TypeTag, Components)::H2O>
-{};
-#endif
-
 } // end namespace Dumux
 
 #endif

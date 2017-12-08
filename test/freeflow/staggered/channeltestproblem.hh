@@ -29,6 +29,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/discretization/staggered/properties.hh>
 #include <dumux/freeflow/staggered/properties.hh>
@@ -53,15 +54,14 @@ NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
 NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredModel, NavierStokesNI));
 #endif
 
-SET_PROP(ChannelTestProblem, Fluid)
+// the fluid system
+SET_PROP(ChannelTestProblem, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
 #if NONISOTHERMAL
-    using type = FluidSystems::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > ;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > >;
 #else
-    using type = FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<1, Scalar> > ;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
 #endif
 };
 

@@ -59,36 +59,8 @@ NEW_TYPE_TAG(RichardsAnalyticalCCProblem, INHERITS_FROM(CCTpfaModel, RichardsAna
 SET_TYPE_PROP(RichardsAnalyticalProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_PROP(RichardsAnalyticalProblem, Problem)
-{ typedef RichardsAnalyticalProblem<TypeTag> type; };
-
-// Set the wetting phase
-SET_PROP(RichardsAnalyticalProblem, WettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
-};
-
-// // Enable partial reassembly of the Jacobian matrix
-// SET_BOOL_PROP(RichardsAnalyticalProblem, ImplicitEnablePartialReassemble, true);
-//
-// // Enable re-use of the Jacobian matrix for the first iteration of a time step
-// SET_BOOL_PROP(RichardsAnalyticalProblem, ImplicitEnableJacobianRecycling, true);
-//
-// // Use forward differences to approximate the Jacobian matrix
-// SET_INT_PROP(RichardsAnalyticalProblem, ImplicitNumericDifferenceMethod, +1);
-//
-// // Set the maximum number of newton iterations of a time step
-// SET_INT_PROP(RichardsAnalyticalProblem, NewtonMaxSteps, 28);
-//
-// // Set the "desireable" number of newton iterations of a time step
-// SET_INT_PROP(RichardsAnalyticalProblem, NewtonTargetSteps, 18);
-//
-// // Do not write the intermediate results of the newton method
-// SET_BOOL_PROP(RichardsAnalyticalProblem, NewtonWriteConvergence, false);
-}
+SET_TYPE_PROP(RichardsAnalyticalProblem, Problem, RichardsAnalyticalProblem<TypeTag>);
+} // end namespace Dumux
 
 /*!
  * \ingroup RichardsModel

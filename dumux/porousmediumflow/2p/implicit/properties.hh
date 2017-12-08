@@ -32,7 +32,6 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
@@ -82,38 +81,6 @@ SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<TypeTag>);           //
 SET_TYPE_PROP(TwoP,
               Indices,
               TwoPIndices<TypeTag, GET_PROP_VALUE(TypeTag, Formulation), 0>); //! The indices required by the isothermal 2p model
-
-//! By default, we set a null component as wetting phase
-SET_PROP(TwoP, WettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
-};
-
-//! By default, we set a null component as non-wetting phase
-SET_PROP(TwoP, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
-};
-
-//! The two-phase model uses the immiscible fluid system
-SET_PROP(TwoP, FluidSystem)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
-
-public:
-    typedef FluidSystems::TwoPImmiscible<Scalar,
-                                                WettingPhase,
-                                                NonwettingPhase> type;
-};
 
 //! The two-phase model uses the immiscible fluid state
 SET_PROP(TwoP, FluidState)

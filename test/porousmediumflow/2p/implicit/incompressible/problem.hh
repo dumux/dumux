@@ -57,22 +57,13 @@ SET_TYPE_PROP(TwoPIncompressible, Problem, TwoPTestProblem<TypeTag>);
 // the local residual containing the analytic derivative methods
 SET_TYPE_PROP(TwoPIncompressible, LocalResidual, TwoPIncompressibleLocalResidual<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(TwoPIncompressible, WettingPhase)
+// Set the fluid system
+SET_PROP(TwoPIncompressible, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
-};
-
-// Set the non-wetting phase
-SET_PROP(TwoPIncompressible, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 // Enable caching

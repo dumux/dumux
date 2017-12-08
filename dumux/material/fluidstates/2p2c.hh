@@ -24,7 +24,7 @@
 #ifndef DUMUX_2P2C_FLUID_STATE_HH
 #define DUMUX_2P2C_FLUID_STATE_HH
 
-#include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
+#include <dumux/common/valgrind.hh>
 
 namespace Dumux
 {
@@ -37,27 +37,17 @@ namespace Dumux
  *
  *  \tparam TypeTag The property Type Tag
  */
-template <class TypeTag>
+template <class Scalar, class FluidSystem>
 class TwoPTwoCFluidState
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    //! gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
-    static const int pressureType = GET_PROP_VALUE(TypeTag, PressureFormulation);
-
 public:
     enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-        wCompIdx = Indices::wPhaseIdx,
-        nCompIdx = Indices::nPhaseIdx
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
     };
 
-    enum {  numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-            numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {  numPhases = FluidSystem::numPhases,
+            numComponents = FluidSystem::numComponents};
     typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
 
 public:
@@ -276,6 +266,6 @@ protected:
     Scalar moleFraction_[numPhases][numComponents];
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -50,24 +50,15 @@ SET_TYPE_PROP(CC2PCornerPointProblem, Problem, CC2PCornerPointProblem<TypeTag>);
 // Set the grid creator
 SET_TYPE_PROP(CC2PCornerPointProblem, GridCreator, CpGridCreator<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(CC2PCornerPointProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(CC2PCornerPointProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
-
-// Set the non-wetting phase
-SET_PROP(CC2PCornerPointProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
-};
-}
+} // end namespace Properties
 
 template <class TypeTag >
 class CC2PCornerPointProblem : public ImplicitPorousMediaProblem<TypeTag>

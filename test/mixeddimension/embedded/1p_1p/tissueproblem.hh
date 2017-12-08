@@ -34,6 +34,7 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/mixeddimension/subproblemproperties.hh>
 
@@ -66,12 +67,11 @@ SET_STRING_PROP(TissueProblem, GridParameterGroup, "TissueGrid");
 // Set the problem property
 SET_TYPE_PROP(TissueProblem, Problem, TissueProblem<TypeTag>);
 
-SET_PROP(TissueProblem, Fluid)
+// the fluid system
+SET_PROP(TissueProblem, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, Constant<TypeTag, Scalar>>;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
 };
 
 // Set the spatial parameters

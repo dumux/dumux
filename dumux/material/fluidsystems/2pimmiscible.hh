@@ -27,11 +27,11 @@
 #include <limits>
 #include <cassert>
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
-
-#include <dune/common/exceptions.hh>
 
 #include "base.hh"
 
@@ -49,20 +49,15 @@ namespace FluidSystems {
  * The wetting and the non-wetting phase can be defined individually
  * via FluidSystem::LiquidPhase<Component> and
  * FluidSystem::GasPhase<Component>. These phases consist of one pure
- * component. With the help of this adapter class, the phase
- * properties can be accessed. This is suitable for pure two-phase
- * systems without compositional effects.
- * An adapter class using FluidSystem<TypeTag> is also provided
- * at the end of this file.
+ * component.
+ * \tparam Scalar the scalar type
+ * \tparam WettingPhase the wetting phase fluid system (use FluidSystem::LiquidPhase<Component> / FluidSystem::GasPhase<Component>)
+ * \tparam NonwettingPhase the wetting phase fluid system (use FluidSystem::LiquidPhase<Component> / FluidSystem::GasPhase<Component>)
  */
 template <class Scalar, class WettingPhase, class NonwettingPhase>
 class TwoPImmiscible
 : public BaseFluidSystem<Scalar, TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase> >
 {
-    // do not try to instantiate this class, it has only static members!
-    TwoPImmiscible()
-    {}
-
     typedef TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 public:
@@ -442,30 +437,6 @@ public:
 };
 
 } // end namespace FluidSystems
-
-#ifdef DUMUX_PROPERTIES_HH
-// forward definitions of the property tags
-namespace Properties {
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(WettingPhase);
-NEW_PROP_TAG(NonwettingPhase);
-}
-/*!
- * \brief A non-compositional twophase fluid system.
- *
- * This is an adapter to use TwoPImmiscible<TypeTag>, as is
- * done with most other classes in Dumux and all template parameters
- * are usually defined in the property system anyhow.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::TwoPImmiscible directly! Will be removed after release of dumux 3.0.")
-TwoPImmiscibleFluidSystem
-: public FluidSystems::TwoPImmiscible<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                      typename GET_PROP_TYPE(TypeTag, WettingPhase),
-                                      typename GET_PROP_TYPE(TypeTag, NonwettingPhase)>
-{};
-#endif
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -26,20 +26,15 @@
 #ifndef DUMUX_NONEQUILIBRIUM_ENERGY_FLUID_STATE_HH
 #define DUMUX_NONEQUILIBRIUM_ENERGY_FLUID_STATE_HH
 
-#include <dumux/common/valgrind.hh>
-#include <dumux/material/fluidstates/nonequilibrium.hh>
-#include <dumux/common/properties.hh>
-
 #include <cmath>
 #include <algorithm>
 
+#include <dune/common/exceptions.hh>
+#include <dumux/common/valgrind.hh>
+#include <dumux/material/fluidstates/nonequilibrium.hh>
+
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(FluidSystem);
-}
 
 /*!
  * \ingroup FluidStates
@@ -50,21 +45,17 @@ NEW_PROP_TAG(FluidSystem);
  *        - local thermal non-equilibrium
  *        - local chemical equilibrium
  */
-template <class TypeTag>
-class NonEquilibriumEnergyFluidState :
-    public NonEquilibriumFluidState<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                    typename GET_PROP_TYPE(TypeTag, FluidSystem)>
-    {
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+template <class Scalar, class FluidSystem>
+class NonEquilibriumEnergyFluidState
+: public NonEquilibriumFluidState<Scalar, FluidSystem>
+{
 public:
         enum { numPhases = FluidSystem::numPhases };
         enum { numComponents = FluidSystem::numComponents };
 
     NonEquilibriumEnergyFluidState()
-        : NonEquilibriumFluidState<Scalar, FluidSystem>()
-    {
-    }
+    : NonEquilibriumFluidState<Scalar, FluidSystem>()
+    {}
 
     /*****************************************************
      * Access to fluid properties which only make sense

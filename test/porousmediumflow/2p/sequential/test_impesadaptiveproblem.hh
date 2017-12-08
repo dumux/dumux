@@ -64,27 +64,14 @@ SET_TYPE_PROP(TestIMPESAdaptiveRestartProblem, GridCreator, GridCreator<TypeTag>
 // Set the problem property
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, TestIMPESAdaptiveProblem<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(TestIMPESAdaptiveProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(TestIMPESAdaptiveProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
-
-// Set the non-wetting phase
-SET_PROP(TestIMPESAdaptiveProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
-};
-
-//SET_BOOL_PROP(TestIMPESAdaptiveProblem, EnableCompressibility, true);
-
-//SET_TYPE_PROP(TestIMPESAdaptiveProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 
 SET_SCALAR_PROP(TestIMPESAdaptiveProblem, ImpetCFLFactor, 0.95);
 }
@@ -111,7 +98,7 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+    using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 

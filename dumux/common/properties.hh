@@ -128,7 +128,6 @@ NEW_PROP_TAG(PhaseIdx);                            //! A phase index to allow us
 NEW_PROP_TAG(NumComponents);                       //! Number of fluid phases in the system
 NEW_PROP_TAG(SpatialParams);                       //! The type of the spatial parameters object
 NEW_PROP_TAG(FluidSystem);                         //! The type of the fluid system to use
-NEW_PROP_TAG(Fluid);                               //! The fluid used for the default fluid system
 NEW_PROP_TAG(FluidState);                          //! The type of the fluid state to use
 NEW_PROP_TAG(PrimaryVariableSwitch);               //! The primary variable switch needed for compositional models
 NEW_PROP_TAG(EffectiveDiffusivityModel);           //! The employed model for the computation of the effective diffusivity
@@ -136,8 +135,6 @@ NEW_PROP_TAG(ThermalConductivityModel);            //! Model to be used for the 
 NEW_PROP_TAG(VelocityOutput);                      //! specifies the velocity calculation module to be used
 
 NEW_PROP_TAG(MaterialLaw);                         //! The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(WettingPhase);                        //! The wetting phase for two-phase models
-NEW_PROP_TAG(NonwettingPhase);                     //! The non-wetting phase for two-phase models
 NEW_PROP_TAG(Formulation);                         //! The formulation of the model
 // TODO: is this useful? -> everything is a constraint solver just a different type
 NEW_PROP_TAG(UseConstraintSolver);                 //! Whether to use a contraint solver for computing the secondary variables

@@ -35,19 +35,11 @@
 #include <dumux/material/binarycoefficients/h2o_air.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
-// #include <dumux/material/fluidsystems/nullparametercache.hh>
-
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#endif
-
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 /*!
  * \ingroup Fluidsystems
  *
@@ -57,35 +49,9 @@ namespace FluidSystems
  *
  *  This fluidsystem is applied by default to the simpleh2o, as the IAPWS-formulation has to be
  *  adapted to high temperatures and high pressures first.
- *
- *  To change the component formulation (i.e. to use (non)tabulated or
- *  incompressible water), or to switch on verbosity of tabulation,
- *  specify the water formulation via template arguments or via the property
- *  system, as described in the TypeTag Adapter at the end of the file.
- *
- * \code{.cpp}
- * // Select fluid system
- * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
- * {
- *     // e.g. to use a simple version of H2O
- *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
- * };
- * \endcode
- *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
- *
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
- * at the end of this file.
  */
 
-template <class Scalar,
-//           class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
-          bool useComplexRelations=true>
+template <class Scalar, bool useComplexRelations=true>
 class SteamAirCaO2H2
 : public BaseFluidSystem<Scalar, SteamAirCaO2H2<Scalar, /*H2Otype,*/ useComplexRelations> >
 {
@@ -654,7 +620,7 @@ private:
     }
 };
 
-} // end namespace
-} // end namespace
+} // end namespace FluidSystems
+} // end namespace Dumux
 
 #endif

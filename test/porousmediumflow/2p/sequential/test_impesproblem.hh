@@ -83,22 +83,13 @@ SET_TYPE_PROP(IMPESTestProblem, Problem, IMPESTestProblem<TypeTag>);
 //
 ////////////////////////////////////////////////////////////////////////
 
-// Set the wetting phase
-SET_PROP(IMPESTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(IMPESTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
-};
-
-// Set the non-wetting phase
-SET_PROP(IMPESTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 SET_TYPE_PROP(IMPESTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
@@ -134,7 +125,7 @@ typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
 typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 

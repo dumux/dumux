@@ -56,22 +56,13 @@ SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
 // Set the problem property
 SET_TYPE_PROP(FractureProblem, Problem, Dumux::FractureProblem<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(FractureProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(FractureProblem, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
-};
-
-// Set the non-wetting phase
-SET_PROP(FractureProblem, NonwettingPhase)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar>>;
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 // Use global caching

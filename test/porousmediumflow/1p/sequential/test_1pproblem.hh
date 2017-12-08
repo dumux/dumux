@@ -26,6 +26,7 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/porousmediumflow/1p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/1p/sequential/diffusion/problem.hh>
@@ -49,13 +50,11 @@ NEW_TYPE_TAG(TestProblemOneP, INHERITS_FROM(FVPressureOneP));
 // Set the grid type
 SET_TYPE_PROP(TestProblemOneP, Grid, Dune::YaspGrid<2>);
 
-// Set the wetting phase
-SET_PROP(TestProblemOneP, Fluid)
+// the fluid system
+SET_PROP(TestProblemOneP, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
 };
 
 // Set the spatial parameters
@@ -78,7 +77,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid Fluid;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;

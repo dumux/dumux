@@ -24,8 +24,6 @@
 #ifndef DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 #define DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 
-#include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
-
 namespace Dumux
 {
 /*!
@@ -40,22 +38,20 @@ namespace Dumux
  *  CompositionalFlash .
  *  \tparam TypeTag The property Type Tag
  */
-template <class TypeTag>
+template <class Scalar, class FluidSystem>
 class PseudoOnePTwoCFluidState
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
 public:
-    enum {     numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-            numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum { numPhases = FluidSystem::numPhases,
+           numComponents = FluidSystem::numComponents
+        };
     enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx,
 
-        wCompIdx = Indices::wPhaseIdx,
-        nCompIdx = Indices::nPhaseIdx
+        wCompIdx = FluidSystem::wPhaseIdx,
+        nCompIdx = FluidSystem::nPhaseIdx
     };
 
 public:
@@ -324,6 +320,6 @@ protected:
     int presentPhaseIdx_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

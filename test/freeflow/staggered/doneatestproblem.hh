@@ -31,7 +31,7 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
-
+#include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/discretization/staggered/properties.hh>
 #include <dumux/freeflow/staggered/properties.hh>
 
@@ -52,12 +52,11 @@ namespace Properties
 {
 NEW_TYPE_TAG(DoneaTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
 
-SET_PROP(DoneaTestProblem, Fluid)
+// the fluid system
+SET_PROP(DoneaTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Dumux::Components::Constant<1, Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
 };
 
 // Set the grid type

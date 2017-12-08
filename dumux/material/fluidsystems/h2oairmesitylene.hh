@@ -28,7 +28,6 @@
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
-#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/mesitylene.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
@@ -38,10 +37,8 @@
 
 #include <dumux/material/fluidsystems/base.hh>
 
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
@@ -594,52 +591,8 @@ private:
     }
 
 };
+
 } // end namespace FluidSystems
-
-#ifdef DUMUX_PROPERTIES_HH
-// forward definitions of the property tags
-namespace Properties {
-    NEW_PROP_TAG(Scalar);
-    NEW_PROP_TAG(Components);
-}
-
-/*!
- * \brief A threephase fluid system with water, air and mesitylene as components.
- *
- * This is an adapter to use H2OAirMesityleneFluidSystem<TypeTag>, as is
- * done with most other classes in Dumux.
- *  This fluidsystem is applied by default with the tabulated version of
- *  water of the IAPWS-formulation.
- *
- *  To change the component formulation (ie to use nontabulated or
- *  incompressible water), or to switch on verbosity of tabulation,
- *  use the property system and the property "Components":
- *
- * \code{.cpp}
- * // Select desired version of the component
- * SET_PROP(TheSpecificProblemTypeTag, Components) : public GET_PROP(TypeTag, DefaultComponents)
- * {
- *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *
- *     // Do not use the defaults !
- *     // typedef TabulatedComponent<Scalar, H2O<Scalar> > H2O;
- *
- *     // Apply e.g. untabulated water:
- *     typedef Dumux::H2O<Scalar> H2O;
- * };
- * \endcode
- *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
- */
-template<class TypeTag>
-class DUNE_DEPRECATED_MSG("Use FluidSystems::H2OAirMesitylene directly! Will be removed after release of dumux 3.0.")
-H2OAirMesityleneFluidSystem
-: public FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                        typename GET_PROP(TypeTag, Components)::H2O>
-{};
-#endif
-
 } // end namespace Dumux
 
 #endif

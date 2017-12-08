@@ -39,14 +39,8 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
 
-#ifdef DUMUX_PROPERTIES_HH
-#include <dumux/common/properties.hh>
-#endif
-
-namespace Dumux
-{
-namespace FluidSystems
-{
+namespace Dumux {
+namespace FluidSystems {
 /*!
  * \ingroup Fluidsystems
  *
@@ -55,29 +49,6 @@ namespace FluidSystems
  *
  *  This fluidsystem is applied by default with the tabulated version of
  *  water of the IAPWS-formulation.
- *
- *  To change the component formulation (i.e. to use nontabulated or
- *  incompressible water), or to switch on verbosity of tabulation,
- *  specify the water formulation via template arguments
- *
- * \code{.cpp}
- * // Select fluid system
- * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
- * {
- *     // e.g. to use a simple version of H2O
- *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *     typedef FluidSystems::H2OAir<Scalar, SimpleH2O<Scalar> > type;
- * };
- * \endcode
- *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
- *
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace FluidSystem::.
- * An adapter class using FluidSystem<TypeTag> is also provided
- * at the end of this file.
  */
 template <class Scalar,
           class H2Otype = TabulatedComponent<Scalar, H2O<Scalar>>,
@@ -87,7 +58,6 @@ class BrineAir
 {
     typedef BrineAir<Scalar, H2Otype, useComplexRelations> ThisType;
     typedef BaseFluidSystem <Scalar, ThisType> Base;
-
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
@@ -700,7 +670,6 @@ private:
 };
 
 } // end namespace FluidSystems
-
 } // end namespace Dumux
 
 #endif

@@ -48,15 +48,6 @@ NEW_TYPE_TAG(RichardsTestProblem, INHERITS_FROM(Richards, RichardsTestSpatialPar
 NEW_TYPE_TAG(RichardsTestBoxProblem, INHERITS_FROM(BoxModel, RichardsTestProblem));
 NEW_TYPE_TAG(RichardsTestCCProblem, INHERITS_FROM(CCTpfaModel, RichardsTestProblem));
 
-// Set the wetting phase
-SET_PROP(RichardsTestProblem, WettingPhase)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
-};
-
 // Set the grid type
 SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<double, 3> >);
 //SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::UGGrid<3>);

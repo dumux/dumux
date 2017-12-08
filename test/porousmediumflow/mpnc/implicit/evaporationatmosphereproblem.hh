@@ -132,8 +132,8 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableKinetic, true);
 SET_PROP(EvaporationAtmosphereProblem, FluidState){
     private:    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     private:    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-//    public: typedef NonEquilibriumEnergyFluidState<TypeTag> type;
-//    public: typedef NonEquilibriumMassFluidState<TypeTag> type;
+//    public: typedef NonEquilibriumEnergyFluidState<Scalar, FluidSystem> type;
+//    public: typedef NonEquilibriumMassFluidState<Scalar, FluidSystem> type;
     public: typedef NonEquilibriumFluidState<Scalar, FluidSystem> type;
 //    public: typedef CompositionalFluidState<Scalar, FluidSystem> type;
 };
