@@ -18,6 +18,9 @@ add_dumux_test(test_mimetic1p test_mimetic1p test_mimetic1p.cc
 add_dumux_test(test_1pgermanbasin test_1pgermanbasin test_1pgermanbasin.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1pgermanbasin)
 
+add_dumux_test(test_1pgermanbasin_mpfao test_1pgermanbasin_mpfao test_1pgermanbasin_mpfao.cc
+                ${CMAKE_CURRENT_BINARY_DIR}/test_1pgermanbasin_mpfao)
+
 add_dumux_test(test_1plinear test_1plinear test_1plinear.cc
                 ${CMAKE_CURRENT_BINARY_DIR}/test_1plinear)
 

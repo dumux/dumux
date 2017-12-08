@@ -7,15 +7,15 @@ File = ./grids/thermalPropertiesNEGermanBasin.dgf
 Refinement = 0
 
 [Problem]
-Name = 1pgermanbasin_3D_newData_mimetic
+Name = 1pgermanbasin_3D_newData_mpfao_intNormals
 
 [Newton]
-#EnableShiftCriterion = 0
-#EnableResidualCriterion = 1
+EnableShiftCriterion = 0
+EnableResidualCriterion = 1
 #UseLineSearch = 1
 MaxSteps = 100
 
 [LinearSolver]
-MaxIterations = 250
+MaxIterations = 1000
 Verbosity = 1
-ResidualReduction = 1e-12
+ResidualReduction = 1e-10

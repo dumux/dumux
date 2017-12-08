@@ -84,9 +84,9 @@ SET_TYPE_PROP(OnePGermanBasinProblem, Problem, Dumux::OnePGermanBasinProblem<Typ
 SET_TYPE_PROP(OnePGermanBasinProblem, SpatialParams, Dumux::OnePGermanBasinSpatialParams<TypeTag> );
 
 // Linear solver settings
-//SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::UMFPackBackend<TypeTag> );
+SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
 //SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::ILUnBiCGSTABBackend<TypeTag>);
+//SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(OnePGermanBasinProblem, ProblemEnableGravity, false);
