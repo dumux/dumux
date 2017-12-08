@@ -136,8 +136,6 @@ NEW_PROP_TAG(ThermalConductivityModel);            //! Model to be used for the 
 NEW_PROP_TAG(VelocityOutput);                      //! specifies the velocity calculation module to be used
 
 NEW_PROP_TAG(MaterialLaw);                         //! The material law which ought to be used (extracted from the spatial parameters)
-NEW_PROP_TAG(WettingPhase);                        //! The wetting phase for two-phase models
-NEW_PROP_TAG(NonwettingPhase);                     //! The non-wetting phase for two-phase models
 NEW_PROP_TAG(Formulation);                         //! The formulation of the model
 // TODO: is this useful? -> everything is a constraint solver just a different type
 NEW_PROP_TAG(UseConstraintSolver);                 //! Whether to use a contraint solver for computing the secondary variables

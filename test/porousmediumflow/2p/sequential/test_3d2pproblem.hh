@@ -64,22 +64,13 @@ SET_TYPE_PROP(ThreeDTwoPTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune:
 // Set the problem property
 SET_TYPE_PROP(ThreeDTwoPTestProblem, Problem, Test3D2PProblem<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(ThreeDTwoPTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(ThreeDTwoPTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
-};
-
-// Set the non-wetting phase
-SET_PROP(ThreeDTwoPTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 #if PROBLEM == 1
@@ -356,7 +347,6 @@ void dirichletAtPos(PrimaryVariables &values, const GlobalPosition& globalPos) c
     if (globalPos[0] < eps_)
     {
         values[swIdx] = 0.8;
-        typedef typename  GET_PROP_TYPE(TypeTag, NonwettingPhase) NonwettingPhase;
         values[pWIdx] = 1;
     }
 #elif PROBLEM == 1

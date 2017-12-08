@@ -68,34 +68,18 @@ SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
 SET_TYPE_PROP(MPFATwoPTestProblem, Problem, MPFATwoPTestProblem<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(MPFATwoPTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(MPFATwoPTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
-};
-
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
 #if PROBLEM == 2
-// Set the non-wetting phase
-SET_PROP(MPFATwoPTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> > type;
-};
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, DNAPL<Scalar> >;
 #else
-// Set the non-wetting phase
-SET_PROP(MPFATwoPTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
-};
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
 #endif
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+};
 
 #if PROBLEM == 1
 SET_INT_PROP(MPFATwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pnsw);
@@ -145,7 +129,7 @@ typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
 typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-typedef typename GET_PROP_TYPE(TypeTag, WettingPhase) WettingPhase;
+using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
 typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
 

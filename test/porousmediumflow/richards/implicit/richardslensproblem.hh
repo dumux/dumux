@@ -55,16 +55,7 @@ SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
 SET_TYPE_PROP(RichardsLensProblem, Problem, RichardsLensProblem<TypeTag>);
-
-// Set the wetting phase
-SET_PROP(RichardsLensProblem, WettingPhase)
-{
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
-};
-}
+} // end namespace Dumux
 
 /*!
  * \ingroup RichardsModel

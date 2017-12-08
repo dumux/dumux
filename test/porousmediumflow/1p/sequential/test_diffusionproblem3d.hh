@@ -59,22 +59,13 @@ SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::YaspGrid<3>);
 
 SET_TYPE_PROP(DiffusionTestProblem, Problem, TestDiffusion3DProblem<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(DiffusionTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(DiffusionTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
-};
-
-// Set the non-wetting phase
-SET_PROP(DiffusionTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 #if HAVE_SUPERLU

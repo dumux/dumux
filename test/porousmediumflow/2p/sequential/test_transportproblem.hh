@@ -27,7 +27,7 @@
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
-#include <dumux/material/components/unit.hh>
+#include <dumux/material/components/constant.hh>
 
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/properties.hh>
 #include <dumux/porousmediumflow/2p/sequential/transport/problem.hh>
@@ -47,29 +47,19 @@ namespace Properties
 {
 NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(FVTransportTwoP, TestTransportSpatialParams));
 
-
 // Set the grid type
 SET_TYPE_PROP(TransportTestProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
 SET_TYPE_PROP(TransportTestProblem, Problem, TestTransportProblem<TypeTag>);
 
-// Set the wetting phase
-SET_PROP(TransportTestProblem, WettingPhase)
+// Set the fluid system
+SET_PROP(TransportTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
-};
-
-// Set the non-wetting phase
-SET_PROP(TransportTestProblem, NonwettingPhase)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
 SET_INT_PROP(TransportTestProblem, VelocityFormulation, SequentialTwoPCommonIndices::velocityTotal);
