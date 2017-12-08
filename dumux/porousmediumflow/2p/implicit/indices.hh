@@ -24,7 +24,7 @@
 #ifndef DUMUX_BOX_2P_INDICES_HH
 #define DUMUX_BOX_2P_INDICES_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

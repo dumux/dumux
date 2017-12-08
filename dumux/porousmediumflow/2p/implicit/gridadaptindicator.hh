@@ -19,7 +19,7 @@
 #ifndef DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
 #define DUMUX_IMPLICIT_GRIDADAPTINDICATOR2P_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 //#include <dumux/linear/vectorexchange.hh>
 

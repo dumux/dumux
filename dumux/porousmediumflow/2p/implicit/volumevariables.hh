@@ -25,10 +25,8 @@
 #ifndef DUMUX_2P_VOLUME_VARIABLES_HH
 #define DUMUX_2P_VOLUME_VARIABLES_HH
 
-#include "properties.hh"
-
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/volumevariables.hh>
-
 #include <dune/common/fvector.hh>
 
 namespace Dumux
