@@ -32,7 +32,6 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/material/components/nullcomponent.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
