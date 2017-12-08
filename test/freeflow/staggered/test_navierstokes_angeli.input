@@ -1,0 +1,25 @@
+[TimeLoop]
+DtInitial = 1e-12 # [s]
+TEnd = 1e-2 # [s]
+
+[Grid]
+LowerLeft = 0 0
+UpperRight = 1 1
+Cells = 50 50
+
+[Problem]
+Name = test_angeli # name passed to the output routines
+EnableGravity = false
+PrintL2Error = false
+
+[Component]
+LiquidDensity = 1
+LiquidKinematicViscosity = 0.1
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+WriteFaceData = false
+AddVelocity = true
