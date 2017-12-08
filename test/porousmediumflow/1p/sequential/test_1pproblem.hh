@@ -77,7 +77,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
 
-    typedef typename GET_PROP(TypeTag, FluidSystems)::Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid Fluid;
 
     typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
