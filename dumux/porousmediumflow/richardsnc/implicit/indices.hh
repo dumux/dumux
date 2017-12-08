@@ -25,8 +25,6 @@
 #ifndef DUMUX_RICHARDSNC_INDICES_HH
 #define DUMUX_RICHARDSNC_INDICES_HH
 
-#include "properties.hh"
-
 namespace Dumux
 {
 // \{

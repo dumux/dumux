@@ -23,8 +23,8 @@
 #ifndef DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/volumevariables.hh>
-#include "properties.hh"
 
 namespace Dumux
 {
