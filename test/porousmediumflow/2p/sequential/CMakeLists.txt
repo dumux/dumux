@@ -60,24 +60,24 @@ dune_add_test(NAME test_mpfao2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpfao2p-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p-00006.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -ModelType MPFAO")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_mpfao2p-00006.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -Problem.Name test_mpfao2p -ModelType MPFAO")
 
 dune_add_test(NAME test_mpfal2p
               TARGET test_mpfa2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpfal2p-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p-00006.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -ModelType MPFAL")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_mpfal2p-00006.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -Problem.Name test_mpfal2p -ModelType MPFAL")
 
 dune_add_test(NAME test_mpfal2padaptive
               TARGET test_mpfa2p
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_mpfal2padaptive-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p-00006.vtu
-                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -ModelType MPFALAdaptive")
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_mpfal2padaptive-00006.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpfa2p -ParameterFile ${CMAKE_CURRENT_SOURCE_DIR}/test_mpfa2p.input -Problem.Name test_mpfal2padaptive -ModelType MPFALAdaptive")
 
 # 3d tests
 dune_add_test(NAME test_3d2pfv

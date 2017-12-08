@@ -46,9 +46,6 @@ NEW_TYPE_TAG(ModelProperties);
 //! Set the default type of scalar values to double
 SET_TYPE_PROP(ModelProperties, Scalar, double);
 
-//! Set the default number of equations to one
-SET_INT_PROP(ModelProperties, NumEq, 1);
-
 //! Set the default vector with size number of equations to a field vector
 SET_TYPE_PROP(ModelProperties, NumEqVector, Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_VALUE(TypeTag, NumEq)>);
 
