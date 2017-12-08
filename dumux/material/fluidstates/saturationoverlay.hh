@@ -27,7 +27,6 @@
 #define DUMUX_SATURATION_OVERLAY_FLUID_STATE_HH
 
 #include <array>
-
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux

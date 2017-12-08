@@ -43,7 +43,7 @@ class VariableClass;
 template<class TypeTag>
 class CellData2P2C;
 
-template<class TypeTag>
+template<class Scalar, class FluidSystem>
 class TwoPTwoCFluidState;
 
 template <class TypeTag>
@@ -152,7 +152,7 @@ SET_PROP(SequentialTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Di
 
 SET_TYPE_PROP(SequentialTwoPTwoC, Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(SequentialTwoPTwoC, CellData, CellData2P2C<TypeTag>);
-SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, TwoPTwoCFluidState<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, TwoPTwoCFluidState<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, FluidSystem)>);
 
 
 //! The spatial parameters to be employed.

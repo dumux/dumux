@@ -412,7 +412,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         Scalar sumC = (cellDataI.massConcentration(wCompIdx) + cellDataI.massConcentration(nCompIdx));
         Scalar Z1 = cellDataI.massConcentration(wCompIdx) / sumC;
         // initialize simple fluidstate object
-        PseudoOnePTwoCFluidState<TypeTag> pseudoFluidState;
+        PseudoOnePTwoCFluidState<Scalar, FluidSystem> pseudoFluidState;
         CompositionalFlash<TypeTag> flashSolver;
         flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
                 cellDataI.temperature(wPhaseIdx));
@@ -909,8 +909,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
         cellData.reset();
 
     // acess the simple fluid state and prepare for manipulation
-    PseudoOnePTwoCFluidState<TypeTag>& pseudoFluidState
-        = cellData.manipulateSimpleFluidState();
+    auto& pseudoFluidState = cellData.manipulateSimpleFluidState();
 
     // prepare phase pressure for fluid state
     // both phase pressures are necessary for the case 1p domain is assigned for
