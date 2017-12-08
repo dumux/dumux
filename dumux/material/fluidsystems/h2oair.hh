@@ -32,6 +32,8 @@
 
 #include <dumux/material/binarycoefficients/h2o_air.hh>
 #include <dumux/material/components/air.hh>
+#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dumux/material/components/h2o.hh>
 
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/exceptions.hh>
