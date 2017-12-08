@@ -61,7 +61,7 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Fluid) Fluid;
+    typedef typename GET_PROP(TypeTag, FluidSystem)::Fluid;
 
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;

@@ -64,21 +64,6 @@ SET_BOOL_PROP(OneP, EnableEnergyBalance, false);                      //! Isothe
 SET_TYPE_PROP(OneP, Indices, OnePIndices);                            //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(OneP, VtkOutputFields, OnePVtkOutputFields<TypeTag>);   //! Set the vtk output fields specific to this model
 
-//! The single-phase fluid system is used by default
-SET_TYPE_PROP(OneP,
-              FluidSystem,
-              FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar), typename GET_PROP_TYPE(TypeTag, Fluid)>);
-
-//! We set a fluid that only throws exceptions.
-//! This hopefully makes the user set this property correctly
-SET_PROP(OneP, Fluid)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, NullComponent<Scalar> > type;
-};
-
 /*!
  * \brief The fluid state which is used by the volume variables to
  *        store the thermodynamic state. This should be chosen

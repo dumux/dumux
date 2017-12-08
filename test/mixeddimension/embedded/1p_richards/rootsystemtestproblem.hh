@@ -26,11 +26,12 @@
 
 #include <cmath>
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 
 //! get the properties needed for subproblems
 #include <dumux/mixeddimension/subproblemproperties.hh>
@@ -48,12 +49,11 @@ NEW_TYPE_TAG(RootsystemTestProblem, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(RootsystemTestBoxProblem, INHERITS_FROM(BoxModel, RootsystemTestProblem));
 NEW_TYPE_TAG(RootsystemTestCCProblem, INHERITS_FROM(CCTpfaModel, RootsystemTestProblem));
 
-SET_PROP(RootsystemTestProblem, Fluid)
+// the fluid system
+SET_PROP(RootsystemTestProblem, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar>>;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > >;
 };
 
 // Set the grid type

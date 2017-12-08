@@ -33,6 +33,7 @@
 
 #include <dumux/material/components/unit.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 
 #include "matrixspatialparams.hh"
 
@@ -46,12 +47,11 @@ namespace Properties
 NEW_TYPE_TAG(OnePMatrixProblem, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(OnePCCMpfaMatrixProblem, INHERITS_FROM(FacetCouplingBulkMpfaModel, OnePMatrixProblem));
 
-SET_PROP(OnePMatrixProblem, Fluid)
+// the fluid system
+SET_PROP(OnePFractureProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, Unit<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
 };
 
 // Set the problem property

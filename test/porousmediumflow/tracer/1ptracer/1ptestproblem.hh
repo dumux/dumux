@@ -26,6 +26,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/1p/implicit/propertydefaults.hh>
 #include <dumux/porousmediumflow/1p/implicit/incompressiblelocalresidual.hh>
@@ -50,12 +51,10 @@ SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<Ty
 SET_TYPE_PROP(IncompressibleTestProblem, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // the fluid system
-SET_PROP(IncompressibleTestProblem, Fluid)
+SET_PROP(IncompressibleTestProblem, FluidSystem)
 {
-private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > >;
 };
 
 // Enable caching

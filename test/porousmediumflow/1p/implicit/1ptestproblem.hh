@@ -32,6 +32,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/1p.hh>
 
 #include "1ptestspatialparams.hh"
 
@@ -47,12 +48,11 @@ NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
 NEW_TYPE_TAG(OnePTestCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
 NEW_TYPE_TAG(OnePTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTestProblem));
 
-SET_PROP(OnePTestProblem, Fluid)
+// the fluid system
+SET_PROP(OnePTestProblem, FluidSystem)
 {
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:
-    typedef FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > type;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > >;
 };
 
 // Set the grid type
