@@ -104,7 +104,7 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"

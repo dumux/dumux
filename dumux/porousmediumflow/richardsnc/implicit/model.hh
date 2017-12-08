@@ -40,7 +40,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 
 #include "volumevariables.hh"
 #include "indices.hh"
