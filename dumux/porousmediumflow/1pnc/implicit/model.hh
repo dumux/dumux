@@ -65,6 +65,126 @@
  * The primary variables are the pressure \f$p\f$ and the mole fraction of dissolved components \f$x^\kappa\f$.
  */
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
+
+#include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
+#include <dumux/material/fluidstates/compositional.hh>
+
+#include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/compositional/localresidual.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
+
+#include "indices.hh"
+#include "volumevariables.hh"
+#include "vtkoutputfields.hh"
+
+namespace Dumux
+{
+
+namespace Properties
+{
+//////////////////////////////////////////////////////////////////
+// Type tags
+//////////////////////////////////////////////////////////////////
+
+//! The type tag for the implicit the isothermal & non-isothermal one phase n component problems
+NEW_TYPE_TAG(OnePNC, INHERITS_FROM(PorousMediumFlow));
+NEW_TYPE_TAG(OnePNCNI, INHERITS_FROM(OnePNC, NonIsothermal));
+
+///////////////////////////////////////////////////////////////////////////
+// properties for the isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+
+/*!
+ * \brief Set the property for the number of components.
+ *
+ * We just forward the number from the fluid system
+ *
+ */
+SET_PROP(OnePNC, NumComponents)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+
+public:
+    static constexpr auto value = FluidSystem::numComponents;
+};
+
+/*!
+ * \brief Set the property for the number of equations: For each existing component one equation has to be solved.
+ */
+SET_PROP(OnePNC, NumEq)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+public:
+    static constexpr auto value = FluidSystem::numComponents;
+};
+
+//! Set as default that no component mass balance is replaced by the total mass balance
+SET_PROP(OnePNC, ReplaceCompEqIdx)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+public:
+    static constexpr auto value = FluidSystem::numComponents;
+};
+
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(OnePNC, FluidState){
+    private:
+        using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
+        using FluidSystem =  typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    public:
+        using type = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
+};
+
+//! Use the model after Millington (1961) for the effective diffusivity
+SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
+             DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
+
+
+SET_INT_PROP(OnePNC, NumPhases, 1); //! The number of phases in the 1pnc model is 1
+SET_INT_PROP(OnePNC, PhaseIdx, 0); //! The default phase index
+SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>); //! The local residual function
+SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);   //! the VolumeVariables property
+SET_BOOL_PROP(OnePNC, EnableAdvection, true);                           //! The one-phase model considers advection
+SET_BOOL_PROP(OnePNC, EnableMolecularDiffusion, true);                 //! The one-phase model has no molecular diffusion
+SET_BOOL_PROP(OnePNC, EnableEnergyBalance, false);                      //! Isothermal model by default
+SET_TYPE_PROP(OnePNC, Indices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);                            //! The indices required by the isothermal single-phase model
+SET_TYPE_PROP(OnePNC, VtkOutputFields, OnePNCVtkOutputFields<TypeTag>);   //! Set the vtk output fields specific to this model
+
+
+///////////////////////////////////////////////////////////////////////////
+// properties for the non-isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+
+/*!
+ * \brief Set the property for the number of equations: For each existing component one equation has to be solved.
+ */
+SET_PROP(OnePNCNI, IsothermalNumEq)
+{
+private:
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
+public:
+    static constexpr auto value = FluidSystem::numComponents;
+};
+SET_BOOL_PROP(OnePNCNI, EnableEnergyBalance, true);                                   //! we do solve for the energy balance here
+SET_TYPE_PROP(OnePNCNI, IsothermalVtkOutputFields, OnePNCVtkOutputFields<TypeTag>);     //! the isothermal vtk output fields
+SET_TYPE_PROP(OnePNCNI, IsothermalVolumeVariables, OnePNCVolumeVariables<TypeTag>);     //! Vol vars of the isothermal model
+SET_TYPE_PROP(OnePNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);   //! Local residual of the isothermal model
+SET_TYPE_PROP(OnePNCNI, IsothermalIndices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);                              //! Indices of the isothermal model
+SET_TYPE_PROP(OnePNCNI,
+              ThermalConductivityModel,
+              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>); //! Use the average for effective conductivities
+
+} // end namespace Properties
+} // end namespace Dumux
 
 #endif

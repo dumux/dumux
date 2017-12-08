@@ -25,7 +25,7 @@
 #ifndef DUMUX_1PNC_INDICES_HH
 #define DUMUX_1PNC_INDICES_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
