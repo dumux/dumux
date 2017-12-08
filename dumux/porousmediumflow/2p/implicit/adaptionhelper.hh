@@ -219,217 +219,185 @@ public:
             associatedMass.resize(problem.model().numDofs(),0.0);
         }
 
-        for (int level = 0; level <= problem.grid().maxLevel(); level++)
+        for (const auto& element : elements(problem.grid().leafGridView()))
         {
-            LevelGridView levelView = problem.grid().levelGridView(level);
+            // only treat non-ghosts, ghost data is communicated afterwards
+            if (element.partitionType() == Dune::GhostEntity)
+                continue;
 
-            for (const auto& element : elements(levelView))
+            if (!element.isNew() || element.level() == 0)
             {
-                // only treat non-ghosts, ghost data is communicated afterwards
-                if (element.partitionType() == Dune::GhostEntity)
-                    continue;
+                AdaptedValues &adaptedValues = adaptionMap_[element];
 
-                if (!element.isNew() || element.level() == 0)
+                FVElementGeometry fvGeometry;
+                fvGeometry.update(problem.gridView(), element);
+
+                for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                 {
-                    //entry is in map, write in leaf
-                    if (element.isLeaf())
+                    // get index
+                    int dofIdx = this->dofIndex(problem, element, scvIdx);
+
+                    // obtain the right privars for the volume variables update
+                    auto priVars = adaptedValues.u[scvIdx];
+                    priVars /= adaptedValues.count;
+
+                    VolumeVariables volVars;
+                    volVars.update(priVars,
+                                  problem,
+                                  element,
+                                  fvGeometry,
+                                  scvIdx,
+                                  false);
+
+                    Scalar volumeElement = fvGeometry.elementVolume;
+
+                    if (int(formulation) == pwsn)
                     {
-                        AdaptedValues &adaptedValues = adaptionMap_[element];
+                        priVars[saturationIdx] = adaptedValues.associatedMass[nPhaseIdx];
+                        priVars[saturationIdx] /= volumeElement * volVars.density(nPhaseIdx) * volVars.porosity();
+                    }
+                    else if (int(formulation) == pnsw)
+                    {
+                        priVars[saturationIdx] = adaptedValues.associatedMass[wPhaseIdx];
+                        priVars[saturationIdx] /= volumeElement * volVars.density(wPhaseIdx) * volVars.porosity();
+                    }
+
+                    problem.model().curSol()[dofIdx] = priVars;
+
+                    if(isBox)
+                    {
+                        Scalar volume = fvGeometry.subContVol[scvIdx].volume;
+                        if (int(formulation) == pwsn)
+                        {
+                            massCoeff[dofIdx] += volume * volVars.density(nPhaseIdx) * volVars.porosity();
+                            associatedMass[dofIdx] += volume/volumeElement*adaptedValues.associatedMass[nPhaseIdx];
+                        }
+                        else if (int(formulation) == pnsw)
+                        {
+                            massCoeff[dofIdx] += volume * volVars.density(wPhaseIdx) * volVars.porosity();
+                            associatedMass[dofIdx] += volume/volumeElement*adaptedValues.associatedMass[wPhaseIdx];
+                        }
+                    }
+
+                }
+            }
+            else
+            {
+                // value is not in map, interpolate from father element
+                if (element.hasFather())
+                {
+                    auto eFather = element.father();
+                    while(eFather.isNew() && eFather.level() > 0)
+                        eFather = eFather.father();
+
+                    Scalar massFather = 0.0;
+
+                    if(!isBox)
+                    {
+                        AdaptedValues& adaptedValuesFather = adaptionMap_[eFather];
+
+                        if (int(formulation) == pwsn)
+                        {
+                            massFather = adaptedValuesFather.associatedMass[nPhaseIdx];
+                        }
+                        else if (int(formulation) == pnsw)
+                        {
+                            massFather = adaptedValuesFather.associatedMass[wPhaseIdx];
+                        }
+                        FVElementGeometry fvGeometry;
+                        fvGeometry.update(problem.gridView(), element);
+
+                        // obtain the right priVars from father
+                        auto priVars = adaptedValuesFather.u[0];
+                        priVars /= adaptedValuesFather.count;
+
+                        VolumeVariables volVars;
+                        volVars.update(priVars,
+                                      problem,
+                                      element,
+                                      fvGeometry,
+                                      /*scvIdx=*/0,
+                                      false);
+
+                        Scalar volume = fvGeometry.subContVol[0].volume;
+                        Scalar massCoeffSon = 0.0;
+                        if (int(formulation) == pwsn)
+                        {
+                            massCoeffSon = volume * volVars.density(nPhaseIdx) * volVars.porosity();
+                        }
+                        else if (int(formulation) == pnsw)
+                        {
+                            massCoeffSon = volume * volVars.density(wPhaseIdx) * volVars.porosity();
+                        }
+                        Scalar volumeFather = eFather.geometry().volume();
+                        priVars[saturationIdx] = (volume/volumeFather*massFather)/massCoeffSon;
+
+                        // store reconstructed priVars
+                        int newIdxI = this->elementIndex(problem, element);
+                        problem.model().curSol()[newIdxI] = priVars;
+                    }
+                    else
+                    {
+                        AdaptedValues& adaptedValuesFather = adaptionMap_[eFather];
+                        std::vector<PrimaryVariables> priVars;
+
+                        const auto geometryI = element.geometry();
 
                         FVElementGeometry fvGeometry;
                         fvGeometry.update(problem.gridView(), element);
 
                         for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
                         {
-                            // get index
-                            int dofIdx = this->dofIndex(problem, element, scvIdx);
+                            auto subEntity = element.template subEntity <dofCodim>(scvIdx);
 
-                            // obtain the right privars for the volume variables update
-                            auto priVars = adaptedValues.u[scvIdx];
-                            priVars /= adaptedValues.count;
+                            LocalPosition dofCenterPos = geometryI.local(subEntity.geometry().center());
+                            const LocalFiniteElementCache feCache;
+                            Dune::GeometryType geomType = eFather.geometry().type();
+
+                            // Interpolate values from father element by using ansatz functions
+                            const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
+                            std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
+                            localFiniteElement.localBasis().evaluateFunction(dofCenterPos, shapeVal);
+                            PrimaryVariables u(0);
+                            for (int j = 0; j < shapeVal.size(); ++j)
+                            {
+                                u.axpy(shapeVal[j], adaptedValuesFather.u[j]);
+                            }
+
+                            priVars.push_back(u);
 
                             VolumeVariables volVars;
-                            volVars.update(priVars,
+                            volVars.update(priVars[scvIdx],
                                           problem,
                                           element,
                                           fvGeometry,
                                           scvIdx,
                                           false);
 
-                            Scalar volumeElement = fvGeometry.elementVolume;
+                            Scalar volume = fvGeometry.subContVol[scvIdx].volume;
+                            Scalar volumeFather = eFather.geometry().volume();
 
-                            this->setAdaptionValues(adaptedValues, problem.model().curSol()[dofIdx],scvIdx);
-
+                            int dofIdx = this->dofIndex(problem, element, scvIdx);
                             if (int(formulation) == pwsn)
                             {
-                                problem.model().curSol()[dofIdx][saturationIdx] = adaptedValues.associatedMass[nPhaseIdx];
-                                problem.model().curSol()[dofIdx][saturationIdx] /= volumeElement * volVars.density(nPhaseIdx) * volVars.porosity();
+                                massCoeff[dofIdx] += volume * volVars.density(nPhaseIdx) * volVars.porosity();
+                                associatedMass[dofIdx] += volume/volumeFather*adaptedValuesFather.associatedMass[nPhaseIdx];
                             }
                             else if (int(formulation) == pnsw)
                             {
-                                problem.model().curSol()[dofIdx][saturationIdx] = adaptedValues.associatedMass[wPhaseIdx];
-                                problem.model().curSol()[dofIdx][saturationIdx] /= volumeElement * volVars.density(wPhaseIdx) * volVars.porosity();
+                                massCoeff[dofIdx] += volume * volVars.density(wPhaseIdx) * volVars.porosity();
+                                associatedMass[dofIdx] += volume/volumeFather*adaptedValuesFather.associatedMass[wPhaseIdx];
                             }
 
-                            if(isBox)
-                            {
-                                Scalar volume = fvGeometry.subContVol[scvIdx].volume;
-                                if (int(formulation) == pwsn)
-                                {
-                                    massCoeff[dofIdx] += volume * volVars.density(nPhaseIdx) * volVars.porosity();
-                                    associatedMass[dofIdx] += volume/volumeElement*adaptedValues.associatedMass[nPhaseIdx];
-                                }
-                                else if (int(formulation) == pnsw)
-                                {
-                                    massCoeff[dofIdx] += volume * volVars.density(wPhaseIdx) * volVars.porosity();
-                                    associatedMass[dofIdx] += volume/volumeElement*adaptedValues.associatedMass[wPhaseIdx];
-                                }
-                            }
-
+                            problem.model().curSol()[dofIdx] = priVars[scvIdx];
                         }
-
                     }
                 }
                 else
                 {
-                    // value is not in map, interpolate from father element
-                    if (element.hasFather())
-                    {
-                        auto eFather = element.father();
-                        while(eFather.isNew() && eFather.level() > 0)
-                            eFather = eFather.father();
-
-                        Scalar massFather = 0.0;
-
-                        if(!isBox)
-                        {
-                            AdaptedValues& adaptedValuesFather = adaptionMap_[eFather];
-
-                            if (int(formulation) == pwsn)
-                            {
-                                massFather = adaptedValuesFather.associatedMass[nPhaseIdx];
-                            }
-                            else if (int(formulation) == pnsw)
-                            {
-                                massFather = adaptedValuesFather.associatedMass[wPhaseIdx];
-                            }
-
-                            // access new son
-                            AdaptedValues& adaptedValues = adaptionMap_[element];
-                            adaptedValues.count = 1;
-
-                            FVElementGeometry fvGeometry;
-                            fvGeometry.update(problem.gridView(), element);
-
-                            // obtain the right privars from father
-                            auto priVars = adaptedValuesFather.u[0];
-                            priVars /= adaptedValuesFather.count;
-                            adaptedValues.u.push_back(priVars);
-
-                            VolumeVariables volVars;
-                            volVars.update(adaptedValues.u[0],
-                                          problem,
-                                          element,
-                                          fvGeometry,
-                                          /*scvIdx=*/0,
-                                          false);
-
-                            Scalar volume = fvGeometry.subContVol[0].volume;
-                            Scalar massCoeffSon = 0.0;
-                            if (int(formulation) == pwsn)
-                            {
-                                massCoeffSon = volume * volVars.density(nPhaseIdx) * volVars.porosity();
-                            }
-                            else if (int(formulation) == pnsw)
-                            {
-                                massCoeffSon = volume * volVars.density(wPhaseIdx) * volVars.porosity();
-                            }
-                            Scalar volumeFather = eFather.geometry().volume();
-                            adaptedValues.u[0][saturationIdx] = (volume/volumeFather*massFather)/massCoeffSon;
-
-                            // if we are on leaf, store reconstructed values of son in CellData object
-                            if (element.isLeaf())
-                            {
-                                // access new CellData object
-                                int newIdxI = this->elementIndex(problem, element);
-
-                                this->setAdaptionValues(adaptedValues, problem.model().curSol()[newIdxI],0);
-                            }
-                        }
-                        else
-                        {
-                            AdaptedValues& adaptedValuesFather = adaptionMap_[eFather];
-
-                            // access new son
-                            AdaptedValues& adaptedValues = adaptionMap_[element];
-                            adaptedValues.u.clear();
-                            adaptedValues.count = 1;
-
-                            const auto geometryI = element.geometry();
-
-                            FVElementGeometry fvGeometry;
-                            fvGeometry.update(problem.gridView(), element);
-
-                            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-                            {
-                                auto subEntity = element.template subEntity <dofCodim>(scvIdx);
-
-                                LocalPosition dofCenterPos = geometryI.local(subEntity.geometry().center());
-                                const LocalFiniteElementCache feCache;
-                                Dune::GeometryType geomType = eFather.geometry().type();
-
-                                // Interpolate values from father element by using ansatz functions
-                                const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
-                                std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
-                                localFiniteElement.localBasis().evaluateFunction(dofCenterPos, shapeVal);
-                                PrimaryVariables u(0);
-                                for (int j = 0; j < shapeVal.size(); ++j)
-                                {
-                                    u.axpy(shapeVal[j], adaptedValuesFather.u[j]);
-                                }
-
-                                adaptedValues.u.push_back(u);
-                                adaptedValues.count = 1;
-
-                                if (element.isLeaf())
-                                {
-                                    VolumeVariables volVars;
-                                    volVars.update(adaptedValues.u[scvIdx],
-                                                  problem,
-                                                  element,
-                                                  fvGeometry,
-                                                  scvIdx,
-                                                  false);
-
-                                    Scalar volume = fvGeometry.subContVol[scvIdx].volume;
-                                    Scalar volumeFather = eFather.geometry().volume();
-
-                                    int dofIdx = this->dofIndex(problem, element, scvIdx);
-                                    if (int(formulation) == pwsn)
-                                    {
-                                        massCoeff[dofIdx] += volume * volVars.density(nPhaseIdx) * volVars.porosity();
-                                        associatedMass[dofIdx] += volume/volumeFather*adaptedValuesFather.associatedMass[nPhaseIdx];
-                                    }
-                                    else if (int(formulation) == pnsw)
-                                    {
-                                        massCoeff[dofIdx] += volume * volVars.density(wPhaseIdx) * volVars.porosity();
-                                        associatedMass[dofIdx] += volume/volumeFather*adaptedValuesFather.associatedMass[wPhaseIdx];
-                                    }
-
-                                    this->setAdaptionValues(adaptedValues, problem.model().curSol()[dofIdx],scvIdx);
-                                }
-
-                            }
-                        }
-                    }
-                    else
-                    {
-                        DUNE_THROW(Dune::InvalidStateException, "Element is new but has no father element!");
-                    }
-
+                    DUNE_THROW(Dune::InvalidStateException, "Element is new but has no father element!");
                 }
             }
-
         }
 
         if(isBox)
@@ -488,32 +456,6 @@ public:
             adaptedValuesFather.count = 1;
             adaptedValuesFather.associatedMass += adaptedValues.associatedMass;
         }
-    }
-    /*!
-     * \brief Set adapted values in CellData
-     *
-     * This methods stores reconstructed values into the cellData object, by
-     * this setting a newly mapped solution to the storage container of the
-     * sequential models.
-     *
-     * \param adaptedValues Container for model-specific values to be adapted
-     * \param u The variables to be stored
-     * \param scvIdx The SCV (sub-control-volume) index
-     */
-    static void setAdaptionValues(AdaptedValues& adaptedValues, PrimaryVariables& u, int scvIdx)
-    {
-        PrimaryVariables uNew(0);
-        if(!isBox)
-        {
-            uNew = adaptedValues.u[scvIdx];
-            uNew /= adaptedValues.count;
-        }
-        else
-        {
-            uNew = adaptedValues.u[scvIdx];
-        }
-
-        u = uNew;
     }
 };
 }
