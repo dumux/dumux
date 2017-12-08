@@ -2,9 +2,7 @@
 #install headers
 install(FILES
 indices.hh
-localresidual.hh
 model.hh
-properties.hh
-propertydefaults.hh
 volumevariables.hh
+vtkoutputfields.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/3p/implicit)
