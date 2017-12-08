@@ -23,8 +23,7 @@
 #ifndef DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 #define DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 
-#include "properties.hh"
-
+#include <dumux/common/properties.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
 namespace Dumux {
