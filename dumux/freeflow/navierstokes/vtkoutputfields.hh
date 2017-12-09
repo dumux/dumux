@@ -18,20 +18,19 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the twop model
+ * \brief Adds vtk output fields for the NavierStokesModel
  */
 #ifndef DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 
 #include <dumux/common/properties.hh>
-#include <dune/common/fvector.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup TwoP, InputOutput
- * \brief Adds vtk output fields specific to the twop model
+ * \brief Adds vtk output fields for the NavierStokesModel
  */
 template<class TypeTag>
 class NavierStokesVtkOutputFields
@@ -45,14 +44,34 @@ class NavierStokesVtkOutputFields
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
 
+    // Helper type used for tag dispatching (to add discretization-specific fields).
+    template<DiscretizationMethods method>
+    using MethodType = std::integral_constant<DiscretizationMethods, method>;
+
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
         vtk.addVolumeVariable([](const VolumeVariables& v){ return v.pressure(); }, "p");
 
-        const bool writeFaceVars_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
-        if(writeFaceVars_)
+        // add discretization-specific fields
+        const auto discType = MethodType<GET_PROP_VALUE(TypeTag, DiscretizationMethod)>();
+        additionalOutput_(vtk, discType);
+    }
+
+private:
+
+    //! Adds discretization-specific fields (nothing by default).
+    template <class VtkOutputModule, class AnyMethod>
+    static void additionalOutput_(VtkOutputModule& vtk, AnyMethod)
+    { }
+
+    //! Adds discretization-specific fields (velocity vectors on the faces for the staggered discretization).
+    template <class VtkOutputModule>
+    static void additionalOutput_(VtkOutputModule& vtk, MethodType<DiscretizationMethods::Staggered>)
+    {
+        const bool writeFaceVars = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.WriteFaceData", false);
+        if(writeFaceVars)
         {
             auto faceVelocityVector = [](const SubControlVolumeFace& scvf, const FaceVariables& f)
                                       {
