@@ -97,7 +97,7 @@ SET_PROP(NavierStokes, FluidState){
 };
 
 //! The local residual function
-SET_TYPE_PROP(NavierStokes, LocalResidual, StaggeredNavierStokesResidual<TypeTag>);
+SET_TYPE_PROP(NavierStokes, LocalResidual, NavierStokesResidual<TypeTag>);
 
 //! the VolumeVariables property
 SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
