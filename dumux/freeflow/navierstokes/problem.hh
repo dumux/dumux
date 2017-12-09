@@ -25,51 +25,51 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/staggeredfvproblem.hh>
+#include <dumux/discretization/methods.hh>
 #include "properties.hh"
 
 namespace Dumux
 {
+
+
+//! The implementation is specialized for the different discretizations
+template<class TypeTag, DiscretizationMethods DM> struct NavierStokesParentProblemImpl;
+
+template<class TypeTag>
+struct NavierStokesParentProblemImpl<TypeTag, DiscretizationMethods::Staggered>
+{
+    using type = StaggeredFVProblem<TypeTag>;
+};
+
+//! The actual NavierStokesParentProblem
+template<class TypeTag>
+using NavierStokesParentProblem =
+      typename NavierStokesParentProblemImpl<TypeTag,
+      GET_PROP_VALUE(TypeTag, DiscretizationMethod)>::type;
+
 /*!
- * \ingroup ImplicitBaseProblems
- * \ingroup BoxStokesModel
- * \brief Base class for all problems which use the Stokes box model.
+ * \brief NavierStokes problem base class.
  *
  * This implements gravity (if desired) and a function returning the temperature.
  */
 template<class TypeTag>
-class NavierStokesProblem : public StaggeredFVProblem<TypeTag>
+class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
 {
-    using ParentType = StaggeredFVProblem<TypeTag>;
+    using ParentType = NavierStokesParentProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Grid = typename GridView::Grid;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     enum {
         dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld,
-
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-        velocityXIdx = Indices::velocityXIdx,
-        velocityYIdx = Indices::velocityYIdx
-    };
-
+        dimWorld = Grid::dimensionworld
+      };
+    // TODO: dim or dimWorld appropriate here?
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
     NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -84,38 +84,6 @@ public:
      * \name Problem parameters
      */
     // \{
-
-    /*!
-     * \brief Returns dirichlet values at a given scv face.
-       This method can be overloaded in the actual problem, e.g. for coupling strategies
-     *
-     * \param scvf The sub control volume face
-     */
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
-    {
-        return asImp_().dirichletAtPos(scvf.center());
-    }
-
-    /*!
-     * \brief Returns neumann values at a given scv face.
-       This method can be overloaded in the actual problem, e.g. for coupling strategies
-     *
-     * \param scvf The sub control volume face
-     */
-    PrimaryVariables neumann(const Element &element, const SubControlVolumeFace &scvf) const
-    {
-        return asImp_().neumannAtPos(scvf.center());
-    }
-
-    /*!
-     * \brief Returns neumann values at a position.
-     *
-     * \param scvf The sub control volume face
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
