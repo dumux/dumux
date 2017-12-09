@@ -46,6 +46,8 @@ class StaggeredPrimaryVariables : public Dune::MultiTypeBlockVector<CellCenterPr
 
     using ParentType = Dune::MultiTypeBlockVector<CellCenterPrimaryVariables, FacePrimaryVariables>;
 
+    static constexpr auto faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+
 
 public:
     StaggeredPrimaryVariables() = default;
@@ -87,10 +89,10 @@ public:
     using ParentType::operator [];
     const Scalar& operator [](const unsigned int pvIdx) const
     {
-        if(pvIdx < Indices::faceOffset)
+        if(pvIdx < faceOffset)
             return ParentType::operator[](cellCenterIdx)[pvIdx];
         else
-            return ParentType::operator[](faceIdx)[pvIdx - Indices::faceOffset];
+            return ParentType::operator[](faceIdx)[pvIdx - faceOffset];
     }
 
      /*!
@@ -101,10 +103,10 @@ public:
      */
     Scalar& operator [](const unsigned int pvIdx)
     {
-        if(pvIdx < Indices::faceOffset)
+        if(pvIdx < faceOffset)
             return ParentType::operator[](cellCenterIdx)[pvIdx];
         else
-            return ParentType::operator[](faceIdx)[pvIdx - Indices::faceOffset];
+            return ParentType::operator[](faceIdx)[pvIdx - faceOffset];
     }
 };
 

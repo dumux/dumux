@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the one-phase fully implicit model.
+ * \brief  Defines the indices for the one-phase isothermal Navier-Stoke model.
  */
 #ifndef DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
 #define DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
@@ -30,8 +30,7 @@ namespace Dumux
 // \{
 /*!
  * \ingroup NavierStokesModel
- * \ingroup ImplicitIndices
- * \brief The common indices for the isothermal stokes model.
+ * \brief The common indices for the isothermal Navier-Stoke model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
@@ -47,17 +46,20 @@ struct NavierStokesCommonIndices
     static constexpr int conti0EqIdx = massBalanceIdx; //!< Index of first (for C-guys: 0th) mass conservation equation
     static constexpr int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
 
-    static constexpr int faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter); //!< Index of the momentum balance equation
-    static constexpr int momentumBalanceIdx = PVOffset + faceOffset; //!< Index of the momentum balance equation
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+    static constexpr auto momentumBalanceOffset = GET_PROP_VALUE(TypeTag, NumEq) - dim;
+
+    static constexpr int momentumBalanceIdx = PVOffset + momentumBalanceOffset; //!< Index of the momentum balance equation
     static constexpr int momentumXBalanceIdx = momentumBalanceIdx; //!< Index of the momentum balance equation
     static constexpr int momentumYBalanceIdx = momentumBalanceIdx + 1; //!< Index of the momentum balance equation
     static constexpr int momentumZBalanceIdx = momentumBalanceIdx + 2; //!< Index of the momentum balance equation
-    static constexpr int velocityIdx = momentumBalanceIdx; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
-    static constexpr int velocityXIdx = velocityIdx; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
-    static constexpr int velocityYIdx = velocityIdx + 1; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
-    static constexpr int velocityZIdx = velocityIdx + 2; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
+    static constexpr int velocityIdx = momentumBalanceIdx; //!< Index of the velocity in a solution vector
+    static constexpr int velocityXIdx = velocityIdx; //!< Index of the velocity in a solution vector
+    static constexpr int velocityYIdx = velocityIdx + 1; //!< Index of the velocity in a solution vector
+    static constexpr int velocityZIdx = velocityIdx + 2; //!< Index of the velocity in a solution vector
 
-    static constexpr int phaseIdx = 0; //!< Index of the fluid phase (required to use the same fluid system in coupled models)
 };
 
 // \}
