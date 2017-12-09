@@ -39,7 +39,6 @@
 #include "indices.hh"
 #include "velocityoutput.hh"
 #include "vtkoutputfields.hh"
-#include "boundarytypes.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
@@ -79,9 +78,9 @@ NEW_PROP_TAG(EnergyFluxVariables); //!<  The energy flux variables
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-// SET_INT_PROP(NavierStokes, NumEqCellCenter, 1); //! set the number of equations to 1
 SET_INT_PROP(NavierStokes, NumPhases, 1); //! The number of phases in the 1p model is 1
 SET_INT_PROP(NavierStokes, NumComponents, 1); //! The number of components in the 1p model is 1
+SET_INT_PROP(NavierStokes, PhaseIdx, 0); //! The default phase index
 
 /*!
  * \brief The fluid state which is used by the volume variables to
