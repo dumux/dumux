@@ -19,35 +19,134 @@
 /*!
  * \file
  *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase flow model.
+ * \brief Isothermal Navier-Stokes model
  */
 
 #ifndef DUMUX_NAVIERSTOKES_MODEL_HH
 #define DUMUX_NAVIERSTOKES_MODEL_HH
 
+#include <dumux/common/properties.hh>
+#include <dumux/freeflow/properties.hh>
+#include <dumux/freeflow/staggeredni/properties.hh>
+
+#include "localresidual.hh"
+#include "volumevariables.hh"
+#include "fluxvariables.hh"
+#include "fluxvariablescache.hh"
+#include "indices.hh"
+#include "vtkoutputfields.hh"
+
+#include <dumux/material/fluidsystems/1p.hh>
 
 /*!
  * \ingroup NavierStokesModel
- * \brief A single-phase, isothermal flow model using the fully implicit scheme.
- *
- * Single-phase, isothermal flow model, which uses a standard Darcy approach as the
- * equation for the conservation of momentum:
- * \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- * \f]
- *
- * and solves the mass continuity equation:
- * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
- * \f]
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
- * and the implicit Euler method as time discretization.
- * The model supports compressible as well as incompressible fluids.
+ * \brief A single-phase, isothermal isothermal Navier-Stokes model
+ * TODO: doc me!
  */
 
-#endif
+ namespace Dumux
+ {
+ // \{
+ ///////////////////////////////////////////////////////////////////////////
+ // properties for the isothermal Navier-Stokes model
+ ///////////////////////////////////////////////////////////////////////////
+ namespace Properties {
+
+ //////////////////////////////////////////////////////////////////
+ // Type tags
+ //////////////////////////////////////////////////////////////////
+
+ //! The type tags for the implicit single-phase problems
+ NEW_TYPE_TAG(NavierStokes, INHERITS_FROM(FreeFlow));
+
+ //! The type tags for the corresponding non-isothermal problems
+ NEW_TYPE_TAG(NavierStokesNI, INHERITS_FROM(NavierStokes, NavierStokesNonIsothermal));
+
+ //////////////////////////////////////////////////////////////////
+ // Property tags
+ //////////////////////////////////////////////////////////////////
+
+ NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
+ NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider component transport or not
+ NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
+ NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
+ NEW_PROP_TAG(EnergyLocalResidual); //!<  The energy local residual
+ NEW_PROP_TAG(EnergyFluxVariables); //!<  The energy flux variables
+
+ ///////////////////////////////////////////////////////////////////////////
+ // default property values for the isothermal single phase model
+ ///////////////////////////////////////////////////////////////////////////
+ SET_INT_PROP(NavierStokes, NumPhases, 1); //! The number of phases in the 1p model is 1
+ SET_INT_PROP(NavierStokes, NumComponents, 1); //! The number of components in the 1p model is 1
+ SET_INT_PROP(NavierStokes, PhaseIdx, 0); //! The default phase index
+
+ /*!
+  * \brief The fluid state which is used by the volume variables to
+  *        store the thermodynamic state. This should be chosen
+  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+  *        This can be done in the problem.
+  */
+ SET_PROP(NavierStokes, FluidState){
+     private:
+         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+     public:
+         typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
+ };
+
+ //! The local residual function
+ SET_TYPE_PROP(NavierStokes, LocalResidual, NavierStokesResidual<TypeTag>);
+
+ //! the VolumeVariables property
+ SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
+
+ //! The NavierStokes FluxVariables
+ SET_TYPE_PROP(NavierStokes, FluxVariables, FreeFlowFluxVariables<TypeTag>);
+
+ //! The flux variables cache class, by default the one for porous media
+ SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
+
+ //! Enable advection
+ SET_BOOL_PROP(NavierStokes, EnableAdvection, true);
+
+ //! The one-phase model has no molecular diffusion
+ SET_BOOL_PROP(NavierStokes, EnableMolecularDiffusion, false);
+
+ //! The indices required by the isothermal single-phase model
+ SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
+
+ SET_TYPE_PROP(NavierStokes, EnergyLocalResidual, FreeFlowEnergyLocalResidual<TypeTag>);
+
+ SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<TypeTag>);
+
+ SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
+
+ SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
+
+ SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
+
+ SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
+
+ SET_BOOL_PROP(NavierStokes, EnableComponentTransport, false);
+
+ //! Normalize the pressure term in the momentum balance or not
+ SET_BOOL_PROP(NavierStokes, NormalizePressure, true);
+
+ //////////////////////////////////////////////////////////////////
+ // Property values for isothermal model required for the general non-isothermal model
+ //////////////////////////////////////////////////////////////////
+
+ //set isothermal Indices
+ SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+ SET_TYPE_PROP(NavierStokesNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
+
+ //set isothermal NumEq
+ SET_INT_PROP(NavierStokesNI, IsothermalNumEqCellCenter, 1); //!< set the number of equations to 1
+ SET_INT_PROP(NavierStokesNI, IsothermalNumEqFace, 1); //!< set the number of equations to 1
+
+ // \}
+ }
+
+ } // end namespace
+
+#endif // DUMUX_NAVIERSTOKES_MODEL_HH

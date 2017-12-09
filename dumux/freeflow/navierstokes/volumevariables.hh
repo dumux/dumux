@@ -26,7 +26,7 @@
 
 #include <dumux/common/properties.hh>
 
-#include "properties.hh"
+#include "model.hh"
 #include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux
