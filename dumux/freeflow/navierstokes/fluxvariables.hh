@@ -27,6 +27,8 @@
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 
+#include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
+
 namespace Dumux
 {
 
@@ -49,8 +51,6 @@ class NavierStokesFluxVariablesImpl;
 template<class TypeTag>
 using FreeFlowFluxVariables = NavierStokesFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-//
-};
 
 } // end namespace
 

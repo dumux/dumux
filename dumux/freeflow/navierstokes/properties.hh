@@ -79,7 +79,7 @@ NEW_PROP_TAG(EnergyFluxVariables); //!<  The energy flux variables
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_INT_PROP(NavierStokes, NumEqCellCenter, 1); //! set the number of equations to 1
+// SET_INT_PROP(NavierStokes, NumEqCellCenter, 1); //! set the number of equations to 1
 SET_INT_PROP(NavierStokes, NumPhases, 1); //! The number of phases in the 1p model is 1
 SET_INT_PROP(NavierStokes, NumComponents, 1); //! The number of components in the 1p model is 1
 
