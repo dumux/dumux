@@ -90,6 +90,7 @@ class FreeFlowEnergyFluxVariablesImplementation<TypeTag, true>
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
     using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
@@ -107,30 +108,6 @@ public:
                            const SubControlVolumeFace &scvf,
                            const FluxVariablesCache& fluxVarsCache)
     {
-        flux[energyBalanceIdx] += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, elemFaceVars, scvf);
-        flux[energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
-    }
-
-private:
-    /*!
-    * \brief Returns the advective fluxes for the cell center primary variables
-    * \param problem The problem
-    * \param fvGeometry The finite-volume geometry
-    * \param elemVolVars All volume variables for the element
-    * \param elemFaceVars The face variables
-    * \param scvf The sub control volume face
-    */
-    static Scalar advectiveFluxForCellCenter_(const Problem& problem,
-                                              const FVElementGeometry& fvGeometry,
-                                              const ElementVolumeVariables& elemVolVars,
-                                              const ElementFaceVariables& elemFaceVars,
-                                              const SubControlVolumeFace &scvf)
-    {
-        Scalar flux(0.0);
-
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-
         // if we are on an inflow/outflow boundary, use the volVars of the element itself
         // TODO: catch neumann and outflow in localResidual's evalBoundary_()
         bool isOutflow = false;
@@ -141,27 +118,12 @@ private:
                     isOutflow = true;
         }
 
-        const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+        auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
 
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-
-        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
-        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-        const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
-
-        static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
-        const Scalar upstreamDensity = upstreamVolVars.density();
-        const Scalar downstreamDensity = downstreamVolVars.density();
-        const Scalar upstreamEnthalpy = upstreamVolVars.enthalpy();
-        const Scalar downstreamEnthalpy = downstreamVolVars.enthalpy();
-
-        flux = (upWindWeight * upstreamDensity * upstreamEnthalpy
-                                 + (1.0 - upWindWeight) * downstreamDensity * downstreamEnthalpy)
-                                 * velocity;
-        flux *= scvf.area() * sign(scvf.outerNormalScalar());
-
-        return flux;
+        flux[energyBalanceIdx] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
+        flux[energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
     }
+
 };
 
 } // end namespace
