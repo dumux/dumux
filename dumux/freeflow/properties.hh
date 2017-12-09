@@ -28,21 +28,13 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
-#include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
-#include <dumux/discretization/staggered/freeflow/facevariables.hh>
-#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
-#include <dumux/implicit/staggered/primaryvariables.hh>
-
-// #include "./navierstokes/boundarytypes.hh"
 
 namespace Dumux
 {
 namespace Properties
 {
-//! Type tag for models involving flow in porous media
+//! Type tag for free-flow models
 NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
-
-// UNSET_PROP(FreeFlow, NumEq);
 
 SET_PROP(FreeFlow, NumEq)
 {
