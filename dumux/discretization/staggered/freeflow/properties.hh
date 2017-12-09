@@ -28,9 +28,10 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/properties.hh>
-#include <dumux/freeflow/navierstokes/staggered/boundarytypes.hh>
 
 #include "subcontrolvolumeface.hh"
+#include "facevariables.hh"
+#include "boundarytypes.hh"
 
 namespace Dumux
 {
@@ -38,16 +39,24 @@ namespace Dumux
 namespace Properties
 {
 
-NEW_PROP_TAG(NumEq);
-
-//! Type tag for the staggered scheme.
+//! Type tag for the staggered scheme specialized for free flow.
 NEW_TYPE_TAG(StaggeredFreeFlowModel, INHERITS_FROM(StaggeredModel));
 
-// UNSET_PROP(FreeFlow, PrimaryVariables);
+// TODO: Ugly hack. How can this be improved? This is needed, because otherwise the physical model overwrites the properties set here.
 UNSET_PROP(FreeFlow, NumEqVector);
 
-SET_INT_PROP(StaggeredFreeFlowModel, NumEqFace, 1); //!< set the number of equations to 1
+/*!
+ * \brief  Set the number of equations on the faces to 1. We only consider scalar values because the velocity vector
+ *         is normal to the face.
+ */
+SET_INT_PROP(StaggeredFreeFlowModel, NumEqFace, 1);
 
+/*!
+ * \brief  For free flow models, we take the number of "physical" equations
+ *         (e.g. 4 for a 3D NavierStokes problem, 3 velocity components and pressure)
+ *         and substract the number of dimensions. This yields the number of equations to be
+ *         solved on the cell centers. Works also for non-isothermal models.
+ */
 SET_PROP(StaggeredFreeFlowModel, NumEqCellCenter)
 {
 private:
@@ -55,12 +64,7 @@ private:
     static constexpr auto dim = GridView::dimension;
     static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
 public:
-    // static_assert(true, "fuuu");
-    // static_assert(dim == 2, "fuuuDim");
-    // static constexpr int value = GET_PROP_VALUE(TypeTag, NumEq) - dim;
-    static constexpr int value = 1;
-    // static_assert(value == 1, "fuuuVal");
-
+    static constexpr int value = GET_PROP_VALUE(TypeTag, NumEq) - dim;
 };
 
 
