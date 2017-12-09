@@ -37,7 +37,6 @@
 #include "fluxvariables.hh"
 #include "fluxvariablescache.hh"
 #include "indices.hh"
-#include "velocityoutput.hh"
 #include "vtkoutputfields.hh"
 
 #include <dumux/material/fluidsystems/gasphase.hh>
@@ -123,8 +122,6 @@ SET_TYPE_PROP(NavierStokes, EnergyLocalResidual, FreeFlowEnergyLocalResidual<Typ
 SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<TypeTag>);
 
 SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
-
-SET_TYPE_PROP(NavierStokes, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
 SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
 

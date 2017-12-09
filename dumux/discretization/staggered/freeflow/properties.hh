@@ -32,6 +32,7 @@
 #include "subcontrolvolumeface.hh"
 #include "facevariables.hh"
 #include "boundarytypes.hh"
+#include "velocityoutput.hh"
 
 namespace Dumux
 {
@@ -133,6 +134,8 @@ private:
 public:
     using type = StaggeredFreeFlowBoundaryTypes<size>;
 };
+
+SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux
