@@ -109,7 +109,7 @@
  SET_TYPE_PROP(NavierStokes, VolumeVariables, NavierStokesVolumeVariables<TypeTag>);
 
  //! The NavierStokes FluxVariables
- SET_TYPE_PROP(NavierStokes, FluxVariables, FreeFlowFluxVariables<TypeTag>);
+ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 
  //! The flux variables cache class, by default the one for porous media
  SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);

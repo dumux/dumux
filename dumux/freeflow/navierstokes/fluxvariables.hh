@@ -49,7 +49,7 @@ class NavierStokesFluxVariablesImpl;
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>
-using FreeFlowFluxVariables = NavierStokesFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+using NavierStokesFluxVariables = NavierStokesFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
 
 } // end namespace
