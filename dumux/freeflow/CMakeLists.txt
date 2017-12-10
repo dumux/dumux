@@ -1,3 +1,3 @@
 add_subdirectory("navierstokes")
-add_subdirectory("staggerednc")
+add_subdirectory("navierstokesnc")
 add_subdirectory("nonisothermal")
