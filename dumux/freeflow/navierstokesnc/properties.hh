@@ -27,8 +27,8 @@
 #ifndef DUMUX_NAVIERSTOKES_NC_PROPERTIES_HH
 #define DUMUX_NAVIERSTOKES_NC_PROPERTIES_HH
 
-#include <dumux/freeflow/staggered/properties.hh>
-#include <dumux/freeflow/staggeredni/properties.hh>
+#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/nonisothermal/model.hh>
 #include <dumux/discretization/fickslaw.hh>
 
 #include "volumevariables.hh"
@@ -62,12 +62,16 @@ NEW_TYPE_TAG(NavierStokesNCNI, INHERITS_FROM(NavierStokesNC, NavierStokesNonIsot
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
-SET_PROP(NavierStokesNC, NumEqCellCenter)
+
+//! The number of equations
+SET_PROP(NavierStokesNC, NumEq)
 {
 private:
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr auto dim = GridView::dimension;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    static constexpr int value = numComponents;
+    static constexpr int value = dim + FluidSystem::numComponents;
 };
 
 SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0);
@@ -81,16 +85,18 @@ SET_INT_PROP(NavierStokesNC, ReplaceCompEqIdx, 0);
 SET_PROP(NavierStokesNC, NumComponents)
 {
 private:
-   typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
-
+   using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
    static constexpr int value = FluidSystem::numComponents;
-
 };
 
 //! the VolumeVariables property
 SET_TYPE_PROP(NavierStokesNC, VolumeVariables, NavierStokesNCVolumeVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokesNC, Indices, NavierStokesNCIndices<TypeTag>);
+
+SET_TYPE_PROP(NavierStokesNC, FluxVariables, NavierStokesNCFluxVariables<TypeTag>);
+
+SET_TYPE_PROP(NavierStokesNC, LocalResidual, NavierStokesNCResidual<TypeTag>);
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -121,10 +127,19 @@ SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the vtk output fields
 
 // non-isothermal properties
-SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqCellCenter, GET_PROP_VALUE(TypeTag, NumComponents)); //!< set the number of equations on the cell centers
-SET_INT_PROP(NavierStokesNCNI, IsothermalNumEqFace, 1); //!< set the number of equations on the faces
 SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>); //! the isothermal indices
 SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the isothermal vtk output fields
+
+//! The number of equations
+SET_PROP(NavierStokesNCNI, IsothermalNumEq)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr auto dim = GridView::dimension;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+public:
+    static constexpr int value = dim + FluidSystem::numComponents;
+};
 
 
 // \}

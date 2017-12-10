@@ -24,7 +24,7 @@
 #define DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/freeflow/staggered/vtkoutputfields.hh>
+#include <dumux/freeflow/navierstokes/vtkoutputfields.hh>
 
 namespace Dumux
 {

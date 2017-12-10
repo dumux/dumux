@@ -23,7 +23,7 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
 
-#include <dumux/freeflow/staggered/indices.hh>
+#include <dumux/freeflow/navierstokes/indices.hh>
 #include <dumux/common/properties.hh>
 
 namespace Dumux
