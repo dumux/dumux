@@ -17,26 +17,42 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
- * \brief Defines a type tag and some properties for free flow models.
+ * \brief  Defines the indices for the staggered Navier-Stokes NC model.
  */
+#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
+#define DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
 
-#ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
-#define DUMUX_FREE_FLOW_PROPERTIES_HH
-
+#include <dumux/freeflow/navierstokes/indices.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
 
 namespace Dumux
 {
-namespace Properties
+// \{
+/*!
+ * \ingroup NavierStokesNCModel
+ * \ingroup ImplicitIndices
+ * \brief Indices for the staggered Navier-Stokes NC model model.
+ *
+ * \tparam PVOffset The first index in a primary variable vector.
+ */
+template <class TypeTag, int PVOffset = 0>
+struct NavierStokesNCIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
 {
-//! Type tag for free-flow models
-NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
+private:
+    using ParentType = NavierStokesCommonIndices<TypeTag, PVOffset>;
 
-} // namespace Properties
-} // namespace Dumux
+public:
 
- #endif
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr int mainCompIdx = phaseIdx;
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    // TODO: componentIdx?
+    //TODO: what about the offset?
+
+};
+
+// \}
+} // end namespace
+
+#endif

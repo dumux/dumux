@@ -19,42 +19,27 @@
 /*!
  * \file
  *
- * \brief Velocity output for implicit (porous media) models
+ * \brief Velocity output for staggered free-flow models
  */
 #ifndef DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 #define DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 
-#include <dune/common/fvector.hh>
-#include <dune/istl/bvector.hh>
-#include <dune/geometry/referenceelements.hh>
-
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
 
-namespace Properties
-{
-    NEW_PROP_TAG(VtkAddVelocity); //!< Returns whether velocity vectors are written into the vtk output
-}
-
 /*!
- * \brief Velocity output for implicit (porous media) models
+ * \brief Velocity output for staggered free-flow models
  */
 template<class TypeTag>
 class StaggeredFreeFlowVelocityOutput
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -64,19 +49,19 @@ class StaggeredFreeFlowVelocityOutput
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 
-    using Vertex = typename GridView::template Codim<dim>::Entity;
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
     using CoordScalar = typename GridView::ctype;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using ReferenceElements = Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
     /*!
      * \brief Constructor initializes the static data with the initial solution.
      *
-     * \param problem The problem to be solved
+     * \param problem The problem
+     * \param fvGridGeometry The fvGridGeometry
+     * \param gridVariables The gridVariables
+     * \param sol The solution vector
      */
     StaggeredFreeFlowVelocityOutput(const Problem& problem,
                            const FVGridGeometry& fvGridGeometry,
@@ -87,7 +72,7 @@ public:
     , gridVariables_(gridVariables)
     , sol_(sol)
     {
-        // check, if velocity output can be used (works only for cubes so far)
+        // check if velocity vectors shall be written to the VTK file
         velocityOutput_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.AddVelocity");
     }
 
@@ -119,7 +104,6 @@ public:
             }
         }
     }
-
 
 private:
     const Problem& problem_;

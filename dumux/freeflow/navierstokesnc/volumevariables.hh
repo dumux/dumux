@@ -25,9 +25,8 @@
 #define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include "properties.hh"
 
-#include "../staggered/volumevariables.hh"
+#include "../navierstokes/volumevariables.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
 
@@ -78,7 +77,6 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        this->priVars_ = this->extractDofPriVars(elemSol, scv);
         this->extrusionFactor_ = problem.extrusionFactor(element, scv, elemSol);
 
         completeFluidState(elemSol, problem, element, scv, this->fluidState_);

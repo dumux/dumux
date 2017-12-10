@@ -84,6 +84,7 @@ class StaggeredLocalAssembler<TypeTag,
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     static constexpr bool enableGlobalFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache);
+    static constexpr auto faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
 public:
 
@@ -402,7 +403,7 @@ static void dCCdFace_(Assembler& assembler,
            partialDeriv /= eps;
 
            // update the global jacobian matrix with the current partial derivatives
-           updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
+           updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
 
            // restore the original faceVars
            faceVars = origFaceVars;
@@ -532,7 +533,7 @@ static void dFacedFace_(Assembler& assembler,
                partialDeriv /= eps;
 
                // update the global jacobian matrix with the current partial derivatives
-               updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - Indices::faceOffset, partialDeriv);
+               updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
 
                // restore the original faceVars
                faceVars = origFaceVars;

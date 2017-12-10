@@ -24,12 +24,15 @@
 #ifndef DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 #define DUMUX_DENSITY_FLOW_NC_TEST_PROBLEM_HH
 
-#include <dumux/freeflow/staggered/problem.hh>
-#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 
-#include <dumux/freeflow/staggerednc/properties.hh>
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/freeflow/navierstokesnc/model.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
+
 
 namespace Dumux
 {
@@ -45,7 +48,7 @@ namespace Capabilities
 
 namespace Properties
 {
-NEW_TYPE_TAG(DensityDrivenFlowProblem, INHERITS_FROM(StaggeredModel, NavierStokesNC));
+NEW_TYPE_TAG(DensityDrivenFlowProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
 NEW_PROP_TAG(FluidSystem);
 

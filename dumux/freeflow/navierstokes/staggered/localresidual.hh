@@ -18,12 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \brief Element-wise calculation of the residual NavierStokes models using the staggered discretization
  */
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/implicit/staggered/localresidual.hh>
+#include <dune/common/hybridutilities.hh>
 
 namespace Dumux
 {
@@ -31,41 +34,29 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableInertiaTerms);
-NEW_PROP_TAG(ReplaceCompEqIdx);
-NEW_PROP_TAG(EnergyFluxVariables);
 NEW_PROP_TAG(NormalizePressure);
 NEW_PROP_TAG(ElementFaceVariables);
 }
 
 /*!
- * \ingroup CCModel
- * \ingroup StaggeredLocalResidual
- * \brief Element-wise calculation of the residual for models
- *        based on the fully implicit cell-centered scheme.
+ * \ingroup NavierStokes
+ * \brief Element-wise calculation of the residual NavierStokes models using the staggered discretization
  *
  * \todo Please doc me more!
  */
 
-
-
-// forward declaration
-template<class TypeTag, bool enableComponentTransport>
-class StaggeredNavierStokesResidualImpl;
-
-template<class TypeTag>
-using StaggeredNavierStokesResidual = StaggeredNavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport)>;
+ // forward declaration
+ template<class TypeTag, DiscretizationMethods Method>
+ class NavierStokesResidualImpl;
 
 
 template<class TypeTag>
-class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::StaggeredLocalResidual<TypeTag>
+class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered> : public Dumux::StaggeredLocalResidual<TypeTag>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
@@ -80,14 +71,11 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::Staggere
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
 
 
@@ -97,7 +85,6 @@ class StaggeredNavierStokesResidualImpl<TypeTag, false> : public Dumux::Staggere
 
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using FaceResidualVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
 
     enum {
          // grid and world dimension
@@ -133,7 +120,27 @@ public:
         CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
                                                  elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
-        EnergyFluxVariables::energyFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache[scvf]);
+        // add energy fluxes for non-isothermal models
+        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+        [&](auto IF)
+        {
+            // if we are on an inflow/outflow boundary, use the volVars of the element itself
+            // TODO: catch neumann and outflow in localResidual's evalBoundary_()
+            bool isOutflow = false;
+            if(scvf.boundary())
+            {
+                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                    if(bcTypes.isOutflow(Indices::energyBalanceIdx))
+                        isOutflow = true;
+            }
+
+            auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
+            using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+
+            flux[Indices::energyBalanceIdx] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
+            flux[Indices::energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
+
+        });
 
         return flux;
     }
@@ -145,8 +152,7 @@ public:
                                                           const ElementFaceVariables& elemFaceVars,
                                                           const SubControlVolume &scv) const
     {
-        return CellCenterPrimaryVariables(0.0);
-        // TODO sources
+        return problem.sourceAtPos(scv.center())[cellCenterIdx];
     }
 
 
@@ -165,8 +171,15 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
-        storage[0] = volVars.density();
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
+        storage[Indices::massBalanceIdx] = volVars.density();
+
+        // add energy storage for non-isothermal models
+        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+        [&](auto IF)
+        {
+            storage[Indices::energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
+        });
+
         return storage;
     }
 
@@ -276,7 +289,7 @@ protected:
                         if(bcTypes.isNeumann(eqIdx))
                         {
                             const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
-                            boundaryFlux[eqIdx] = problem.neumann(element, scvf)[cellCenterIdx][eqIdx]
+                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, scvf)[cellCenterIdx][eqIdx]
                                                    * extrusionFactor * scvf.area();
                         }
                 }
@@ -403,4 +416,4 @@ private:
 };
 }
 
-#endif   // DUMUX_CC_LOCAL_RESIDUAL_HH
+#endif   // DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH

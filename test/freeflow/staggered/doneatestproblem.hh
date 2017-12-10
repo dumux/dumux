@@ -26,14 +26,13 @@
 #ifndef DUMUX_DONEA_TEST_PROBLEM_HH
 #define DUMUX_DONEA_TEST_PROBLEM_HH
 
-#include <dumux/freeflow/staggered/problem.hh>
-#include <dumux/discretization/staggered/properties.hh>
-#include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1p.hh>
-#include <dumux/discretization/staggered/properties.hh>
-#include <dumux/freeflow/staggered/properties.hh>
+
+#include <dumux/freeflow/navierstokes/problem.hh>
+#include <dumux/discretization/staggered/freeflow/properties.hh>
+#include <dumux/freeflow/navierstokes/model.hh>
 
 
 namespace Dumux
@@ -50,7 +49,7 @@ namespace Capabilities
 
 namespace Properties
 {
-NEW_TYPE_TAG(DoneaTestProblem, INHERITS_FROM(StaggeredModel, NavierStokes));
+NEW_TYPE_TAG(DoneaTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
 SET_PROP(DoneaTestProblem, FluidSystem)

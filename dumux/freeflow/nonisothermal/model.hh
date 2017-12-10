@@ -24,30 +24,49 @@
  *        Adaption of the fully implicit scheme to the one-phase flow model.
  */
 
-#ifndef DUMUX_NAVIERSTOKES_MODEL_HH
-#define DUMUX_NAVIERSTOKES_MODEL_HH
+#ifndef DUMUX_STAGGERED_NI_MODEL_HH
+#define DUMUX_STAGGERED_NI_MODEL_HH
+
+#include <dumux/common/properties.hh>
+#include "indices.hh"
+#include "vtkoutputfields.hh"
+#include <dumux/discretization/fourierslaw.hh>
 
 
-/*!
- * \ingroup NavierStokesModel
- * \brief A single-phase, isothermal flow model using the fully implicit scheme.
- *
- * Single-phase, isothermal flow model, which uses a standard Darcy approach as the
- * equation for the conservation of momentum:
- * \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- * \f]
- *
- * and solves the mass continuity equation:
- * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
- * \f]
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
- * and the implicit Euler method as time discretization.
- * The model supports compressible as well as incompressible fluids.
- */
+namespace Dumux
+{
+
+namespace Properties {
+
+//! The type tags for the non-isothermal Navier Stokes problems
+NEW_TYPE_TAG(NavierStokesNonIsothermal);
+
+NEW_PROP_TAG(IsothermalNumEqCellCenter);
+NEW_PROP_TAG(IsothermalNumEqFace);
+
+///////////////////////////////////////////////////////////////////////////
+// default property values for the non-isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+
+
+SET_PROP(NavierStokesNonIsothermal, NumEq)
+{
+private:
+    static constexpr auto isothermalNumEq = GET_PROP_VALUE(TypeTag, IsothermalNumEq);
+public:
+    static constexpr int value = isothermalNumEq + 1;
+};
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, FreeFlowEnergyVtkOutputFields<TypeTag>);
+
+SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
+
+} // end namespace Properties
+
+}
 
 #endif

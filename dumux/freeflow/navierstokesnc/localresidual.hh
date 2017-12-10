@@ -17,26 +17,32 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
- * \brief Defines a type tag and some properties for free flow models.
+ * \brief Calculates the residual of models based on the box scheme element-wise.
  */
-
-#ifndef DUMUX_FREE_FLOW_PROPERTIES_HH
-#define DUMUX_FREE_FLOW_PROPERTIES_HH
+#ifndef DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
+#define DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/localresidual.hh>
+#include <dumux/freeflow/navierstokesnc/staggered/localresidual.hh>
 
 namespace Dumux
 {
-namespace Properties
-{
-//! Type tag for free-flow models
-NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
 
-} // namespace Properties
-} // namespace Dumux
+/*!
+ *
+ * \todo Please doc me more!
+ */
 
- #endif
+// // forward declaration
+template<class TypeTag, DiscretizationMethods Method>
+class NavierStokesNCResidualImpl;
+
+template<class TypeTag>
+using NavierStokesNCResidual = NavierStokesNCResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+
+}
+
+#endif   // DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH

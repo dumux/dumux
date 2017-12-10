@@ -18,32 +18,31 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the staggered Navier-Stokes NI model.
+ * \brief Calculates the residual of models based on the box scheme element-wise.
  */
-#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
-#define DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
+#ifndef DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH
+#define DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/staggered/localresidual.hh>
 
 namespace Dumux
 {
-// \{
+
+
 /*!
- * \ingroup NavierStokesNIModel
- * \ingroup ImplicitIndices
- * \brief Indices for the staggered Navier-Stokes NI model model.
  *
- * \tparam PVOffset The first index in a primary variable vector.
+ * \todo Please doc me more!
  */
-template <class TypeTag, int PVOffset = 0>
-class NavierStokesNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
-{
-public:
-    static const int numEqCC = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
-    static constexpr int energyBalanceIdx = PVOffset + numEqCC -1;
-    static constexpr int temperatureIdx = energyBalanceIdx;
-};
-} // end namespace
+// forward declaration
+template<class TypeTag, DiscretizationMethods Method>
+class NavierStokesResidualImpl;
 
-#endif
+template<class TypeTag>
+using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+
+}
+
+#endif   // DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH

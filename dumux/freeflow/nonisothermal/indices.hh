@@ -18,47 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase flow model.
+ * \brief  Defines the indices for the  Navier-Stokes NI model.
  */
+#ifndef DUMUX_NAVIERSTOKES_NI_INDICES_HH
+#define DUMUX_NAVIERSTOKES_NI_INDICES_HH
 
-#ifndef DUMUX_STAGGERED_NI_MODEL_HH
-#define DUMUX_STAGGERED_NI_MODEL_HH
-
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
+// \{
 /*!
- * \ingroup NavierStokesModel
- * \brief A single-phase, non-isothermal flow model using the fully implicit scheme.
+ * \ingroup NavierStokesNIModel
+ * \ingroup ImplicitIndices
+ * \brief Indices for the  Navier-Stokes NI model model.
  *
- * All equations are discretized using a staggered grid as spatial
- * and the implicit Euler method as time discretization.
- * The model supports compressible as well as incompressible fluids.
+ * \tparam PVOffset The first index in a primary variable vector.
  */
-template<class TypeTag >
-class NavierStokesNonIsothermalModel : public GET_PROP_TYPE(TypeTag, IsothermalModel)
+template <class TypeTag, int PVOffset = 0>
+class NavierStokesNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
 {
-    using ParentType = typename GET_PROP_TYPE(TypeTag, IsothermalModel);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
 public:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr auto dim = GridView::dimension;
+    static constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
-    void init(Problem& problem)
-    {
-        ParentType::init(problem);
-
-        // add temperature to output
-        auto& vtkOutputModule = problem.vtkOutputModule();
-        vtkOutputModule.addPrimaryVariable("temperature", Indices::temperatureIdx);
-    }
+    static constexpr auto energyBalanceIdx = PVOffset + GET_PROP_VALUE(TypeTag, NumEq) - dim - 1;
+    static constexpr int temperatureIdx = energyBalanceIdx;
 };
-}
+} // end namespace
 
-#include "propertydefaults.hh"
-
-#endif
+#endif // DUMUX_NAVIERSTOKES_NI_INDICES_HH

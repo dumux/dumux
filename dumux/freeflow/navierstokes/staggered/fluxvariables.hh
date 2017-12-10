@@ -20,11 +20,13 @@
  * \file
  * \brief Base class for the flux variables
  */
-#ifndef DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
-#define DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
+#ifndef DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
+#define DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/fluxvariables.hh>
 
 namespace Dumux
 {
@@ -32,22 +34,13 @@ namespace Dumux
 namespace Properties
 {
 // forward declaration
-NEW_PROP_TAG(EnableComponentTransport);
 NEW_PROP_TAG(EnableInertiaTerms);
 }
 
 // forward declaration
-template<class TypeTag, bool enableComponentTransport>
-class FreeFlowFluxVariablesImpl;
+template<class TypeTag, DiscretizationMethods Method>
+class NavierStokesFluxVariablesImpl;
 
-/*!
- * \ingroup ImplicitModel
- * \brief The flux variables class
- *        specializations are provided for combinations of physical processes
- * \note  Not all specializations are currently implemented
- */
-template<class TypeTag>
-using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, EnableComponentTransport)>;
 
 /*!
  * \ingroup Discretization
@@ -56,7 +49,7 @@ using FreeFlowFluxVariables = FreeFlowFluxVariablesImpl<TypeTag, GET_PROP_VALUE(
  */
 // specialization for immiscible, isothermal flow
 template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, false>
+class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 : public FluxVariablesBase<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -98,6 +91,30 @@ class FreeFlowFluxVariablesImpl<TypeTag, false>
 
 public:
 
+    template<class UpwindTerm>
+    static Scalar advectiveFluxForCellCenter(const ElementVolumeVariables& elemVolVars,
+                                             const ElementFaceVariables& elemFaceVars,
+                                             const SubControlVolumeFace &scvf,
+                                             UpwindTerm upwindTerm,
+                                             bool isOutflow = false)
+    {
+        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
+        static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+
+        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
+        const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
+
+        const Scalar flux = (upWindWeight * upwindTerm(upstreamVolVars) +
+                            (1.0 - upWindWeight) * upwindTerm(downstreamVolVars))
+                            * velocity * scvf.area() * sign(scvf.outerNormalScalar());
+
+        return flux;
+    }
+
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
@@ -106,27 +123,14 @@ public:
                                                         const SubControlVolumeFace &scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
+        auto upwindTerm = [](const auto& volVars) { return volVars.density(); };
 
-        // if we are on an inflow/outflow boundary, use the volVars of the element itself
-        const auto& outsideVolVars = scvf.boundary() ?  insideVolVars : elemVolVars[scvf.outsideScvIdx()];
+        const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, false);
 
-        CellCenterPrimaryVariables flux(0.0);
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
+        CellCenterPrimaryVariables result(0.0);
+        result[massBalanceIdx] = flux;
 
-        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity) ? true : false;
-        const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-        const auto& downstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-
-        static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
-
-        flux = (upWindWeight * upstreamVolVars.density() +
-               (1.0 - upWindWeight) * downstreamVolVars.density()) * velocity;
-
-        flux *= scvf.area() * sign(scvf.outerNormalScalar());
-
-        return flux;
+        return result;
     }
 
     void computeCellCenterToCellCenterStencil(Stencil& stencil,

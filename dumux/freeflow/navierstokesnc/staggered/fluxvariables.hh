@@ -20,39 +20,29 @@
  * \file
  * \brief Base class for the flux variables
  */
-#ifndef DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
-#define DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
+#ifndef DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
+#define DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
-#include "../staggered/fluxvariables.hh"
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
 
-namespace Properties
-{
 // forward declaration
-NEW_PROP_TAG(EnableComponentTransport);
-NEW_PROP_TAG(EnableEnergyBalance);
-NEW_PROP_TAG(EnableInertiaTerms);
-NEW_PROP_TAG(ElementFaceVariables);
-}
-
-// // forward declaration
-// template<class TypeTag, bool enableComponentTransport, bool enableEnergyBalance>
-// class FreeFlowFluxVariablesImpl;
+template<class TypeTag, DiscretizationMethods Method>
+class NavierStokesNCFluxVariablesImpl;
 
 /*!
- * \ingroup ImplicitModel
- * \brief The flux variables class
- *        specializations are provided for combinations of physical processes
- * \note  Not all specializations are currently implemented
+ * \ingroup Discretization
+ * \brief Base class for the flux variables
+ *        Actual flux variables inherit from this class
  */
-
-// specialization for miscible, isothermal flow
+// specialization for immiscible, isothermal flow
 template<class TypeTag>
-class FreeFlowFluxVariablesImpl<TypeTag, true> : public FreeFlowFluxVariablesImpl<TypeTag, false>
+class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
+: public NavierStokesFluxVariables<TypeTag>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -65,26 +55,20 @@ class FreeFlowFluxVariablesImpl<TypeTag, true> : public FreeFlowFluxVariablesImp
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
 
     using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
-    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     //! The index of the component balance equation that gets replaced with the total mass balance
     static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+    static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
-    using ParentType = FreeFlowFluxVariablesImpl<TypeTag, false>;
+    using ParentType = NavierStokesFluxVariables<TypeTag>;
 
     enum {
-         // grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
 
         pressureIdx = Indices::pressureIdx,
         velocityIdx = Indices::velocityIdx,
@@ -92,7 +76,6 @@ class FreeFlowFluxVariablesImpl<TypeTag, true> : public FreeFlowFluxVariablesImp
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
         conti0EqIdx = Indices::conti0EqIdx,
-        phaseIdx = Indices::phaseIdx
     };
 
 public:
@@ -107,29 +90,6 @@ public:
     {
         CellCenterPrimaryVariables flux(0.0);
 
-        flux += advectiveFluxForCellCenter_(problem, fvGeometry, elemVolVars, elemFaceVars, scvf);
-        flux += MolecularDiffusionType::diffusiveFluxForCellCenter(problem, fvGeometry, elemVolVars, scvf);
-        return flux;
-    }
-
-private:
-
-    CellCenterPrimaryVariables advectiveFluxForCellCenter_(const Problem& problem,
-                                                          const FVElementGeometry& fvGeometry,
-                                                          const ElementVolumeVariables& elemVolVars,
-                                                          const ElementFaceVariables& elemFaceVars,
-                                                          const SubControlVolumeFace &scvf)
-    {
-        CellCenterPrimaryVariables flux(0.0);
-
-        const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto& insideVolVars = elemVolVars[insideScv];
-
-        const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-
-        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
-        const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
-
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // get equation index
@@ -143,18 +103,14 @@ private:
                         isOutflow = true;
             }
 
-            const auto& outsideVolVars = isOutflow ? insideVolVars : elemVolVars[scvf.outsideScvIdx()];
-            const auto& upstreamVolVars = insideIsUpstream ? insideVolVars : outsideVolVars;
-            const auto& downstreamVolVars = insideIsUpstream ? outsideVolVars : insideVolVars;
+            auto upwindTerm = [compIdx](const auto& volVars)
+            {
+                const auto density = useMoles ? volVars.molarDensity() : volVars.density();
+                const auto fraction =  useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx);
+                return density * fraction;
+            };
 
-            const Scalar upstreamDensity = useMoles ? upstreamVolVars.molarDensity() : upstreamVolVars.density();
-            const Scalar downstreamDensity = useMoles ? downstreamVolVars.molarDensity() : downstreamVolVars.density();
-            const Scalar upstreamFraction = useMoles ? upstreamVolVars.moleFraction(phaseIdx, compIdx) : upstreamVolVars.massFraction(phaseIdx, compIdx);
-            const Scalar downstreamFraction = useMoles ? downstreamVolVars.moleFraction(phaseIdx, compIdx) : downstreamVolVars.massFraction(phaseIdx, compIdx);
-
-            flux[eqIdx] = (upWindWeight * upstreamDensity * upstreamFraction +
-                          (1.0 - upWindWeight) * downstreamDensity * downstreamFraction)
-                          * velocity;
+            flux[eqIdx] = ParentType::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
         }
 
         // in case one balance is substituted by the total mass balance
@@ -163,11 +119,11 @@ private:
             flux[replaceCompEqIdx] = std::accumulate(flux.begin(), flux.end(), 0.0);
         }
 
-        flux *= scvf.area() * sign(scvf.outerNormalScalar());
+        flux += MolecularDiffusionType::diffusiveFluxForCellCenter(problem, fvGeometry, elemVolVars, scvf);
         return flux;
     }
 };
 
 } // end namespace
 
-#endif
+#endif // DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH

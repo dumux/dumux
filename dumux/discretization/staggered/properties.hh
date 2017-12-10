@@ -236,15 +236,6 @@ public:
 // set the block level to 2 (nested multiple times) TODO: move to LinearAlgebra traits
 SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
 
-SET_PROP(StaggeredModel, NumEq)
-{
-private:
-    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    static constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-public:
-    static constexpr auto value = numEqCellCenter + numEqFace;
-};
-
 SET_TYPE_PROP(StaggeredModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables)>);
 
 //! Boundary types at a single degree of freedom

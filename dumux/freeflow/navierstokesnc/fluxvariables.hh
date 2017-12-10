@@ -18,41 +18,34 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the staggered Navier-Stokes NC model.
+ * \brief Base class for the flux variables
  */
-#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
-#define DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
+#ifndef DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
+#define DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
 
-#include <dumux/freeflow/staggered/indices.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/fluxvariablesbase.hh>
+#include <dumux/freeflow/navierstokes/fluxvariables.hh>
+#include <dumux/freeflow/navierstokesnc/staggered/fluxvariables.hh>
 
 namespace Dumux
 {
-// \{
+
+
+// forward declaration
+template<class TypeTag, DiscretizationMethods Method>
+class NavierStokesNCFluxVariablesImpl;
+
 /*!
- * \ingroup NavierStokesNCModel
- * \ingroup ImplicitIndices
- * \brief Indices for the staggered Navier-Stokes NC model model.
- *
- * \tparam PVOffset The first index in a primary variable vector.
+ * \ingroup ImplicitModel
+ * \brief The flux variables class
+ *        specializations are provided for combinations of physical processes
+ * \note  Not all specializations are currently implemented
  */
-template <class TypeTag, int PVOffset = 0>
-struct NavierStokesNCIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
-{
-private:
-    using ParentType = NavierStokesCommonIndices<TypeTag, PVOffset>;
+template<class TypeTag>
+using NavierStokesNCFluxVariables = NavierStokesNCFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-public:
 
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int mainCompIdx = phaseIdx;
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    // TODO: componentIdx?
-    //TODO: what about the offset?
-
-};
-
-// \}
 } // end namespace
 
 #endif

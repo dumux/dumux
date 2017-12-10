@@ -18,37 +18,40 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase flow model.
+ * \brief Base class for the flux variables
  */
+#ifndef DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
+#define DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
 
-#ifndef DUMUX_NAVIERSTOKES_NC_MODEL_HH
-#define DUMUX_NAVIERSTOKES_NC_MODEL_HH
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/fluxvariablesbase.hh>
+#include <dumux/discretization/methods.hh>
 
+#include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
+
+namespace Dumux
+{
+
+namespace Properties
+{
+// forward declaration
+NEW_PROP_TAG(EnableInertiaTerms);
+}
+
+// forward declaration
+template<class TypeTag, DiscretizationMethods Method>
+class NavierStokesFluxVariablesImpl;
 
 /*!
- * \ingroup NavierStokesModel TODO: doc me properly!
- * \brief A single-phase, isothermal flow model using the fully implicit scheme.
- *
- * Single-phase, isothermal flow model, which uses a standard Darcy approach as the
- * equation for the conservation of momentum:
- * \f[
- v = - \frac{\textbf K}{\mu}
- \left(\textbf{grad}\, p - \varrho {\textbf g} \right)
- * \f]
- *
- * and solves the mass continuity equation:
- * \f[
- \phi \frac{\partial \varrho}{\partial t} + \text{div} \left\lbrace
- - \varrho \frac{\textbf K}{\mu} \left( \textbf{grad}\, p -\varrho {\textbf g} \right) \right\rbrace = q,
- * \f]
- * All equations are discretized using a vertex-centered finite volume (box)
- * or cell-centered finite volume scheme as spatial
- * and the implicit Euler method as time discretization.
- * The model supports compressible as well as incompressible fluids.
+ * \ingroup ImplicitModel
+ * \brief The flux variables class
+ *        specializations are provided for combinations of physical processes
+ * \note  Not all specializations are currently implemented
  */
+template<class TypeTag>
+using NavierStokesFluxVariables = NavierStokesFluxVariablesImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
+
+} // end namespace
 
 #endif

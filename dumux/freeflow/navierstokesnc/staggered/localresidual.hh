@@ -18,48 +18,33 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \brief Element-wise calculation of the residual NavierStokesNC models using the staggered discretization
  */
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 
+#include <dune/common/hybridutilities.hh>
 #include <dumux/common/properties.hh>
-#include <dumux/common/valgrind.hh>
-#include <dumux/implicit/staggered/localresidual.hh>
 
-#include "properties.hh"
 
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(EnableComponentTransport);
-NEW_PROP_TAG(EnableEnergyBalance);
-NEW_PROP_TAG(EnableInertiaTerms);
-NEW_PROP_TAG(ReplaceCompEqIdx);
-}
-
 /*!
- * \ingroup CCModel
- * \ingroup StaggeredLocalResidual
- * \brief Element-wise calculation of the residual for models
- *        based on the fully implicit cell-centered scheme.
  *
  * \todo Please doc me more!
  */
 
 
 // // forward declaration
-template<class TypeTag, bool enableComponentTransport>
-class StaggeredNavierStokesResidualImpl;
+template<class TypeTag,  DiscretizationMethods Method>
+class NavierStokesNCResidualImpl;
 
 // specialization for miscible, isothermal flow
 template<class TypeTag>
-class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierStokesResidualImpl<TypeTag, false>
+class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethods::Staggered> : public NavierStokesResidual<TypeTag>
 {
-    using ParentType = StaggeredNavierStokesResidualImpl<TypeTag, false>;
+    using ParentType = NavierStokesResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;
     friend ParentType;
 
@@ -86,7 +71,6 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
     };
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -123,11 +107,17 @@ public:
             if (eqIdx != replaceCompEqIdx)
                 storage[eqIdx] += s;
         }
-            // in case one balance is substituted by the total mass balance
-            if(replaceCompEqIdx < numComponents)
-                storage[replaceCompEqIdx] = density;
 
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
+        // in case one balance is substituted by the total mass balance
+        if(replaceCompEqIdx < numComponents)
+            storage[replaceCompEqIdx] = density;
+
+        // add energy storage for non-isothermal models
+        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+        [&](auto IF)
+        {
+            storage[Indices::energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
+        });
 
         return storage;
     }
