@@ -27,13 +27,12 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/fluidsystems/h2oair.hh>
 
-#include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
+#include <dumux/freeflow/navierstokesnc/model.hh>
+#include <dumux/freeflow/navierstokes/problem.hh>
 
-#include <dumux/freeflow/staggerednc/properties.hh>
 
 namespace Dumux
 {

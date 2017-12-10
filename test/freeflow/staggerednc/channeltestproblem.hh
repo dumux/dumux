@@ -31,9 +31,8 @@
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
-#include <dumux/freeflow/navierstokes/model.hh>
 
-#include <dumux/freeflow/navierstokesnc/properties.hh>
+#include <dumux/freeflow/navierstokesnc/model.hh>
 
 namespace Dumux
 {
