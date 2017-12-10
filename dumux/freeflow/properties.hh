@@ -36,16 +36,6 @@ namespace Properties
 //! Type tag for free-flow models
 NEW_TYPE_TAG(FreeFlow, INHERITS_FROM(ModelProperties));
 
-SET_PROP(FreeFlow, NumEq)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr auto dim = GridView::dimension;
-    static constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-public:
-    static constexpr int value = dim + numComponents;
-};
-
 } // namespace Properties
 } // namespace Dumux
 

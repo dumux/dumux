@@ -18,32 +18,55 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the staggered Navier-Stokes NI model.
+ *
+ * \brief Base class for all models which use the one-phase,
+ *        fully implicit model.
+ *        Adaption of the fully implicit scheme to the one-phase flow model.
  */
-#ifndef DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
-#define DUMUX_STAGGERED_NAVIERSTOKES_NI_INDICES_HH
+
+#ifndef DUMUX_STAGGERED_NI_MODEL_HH
+#define DUMUX_STAGGERED_NI_MODEL_HH
 
 #include <dumux/common/properties.hh>
+#include "indices.hh"
+#include "vtkoutputfields.hh"
+#include <dumux/discretization/fourierslaw.hh>
+
 
 namespace Dumux
 {
-// \{
-/*!
- * \ingroup NavierStokesNIModel
- * \ingroup ImplicitIndices
- * \brief Indices for the staggered Navier-Stokes NI model model.
- *
- * \tparam PVOffset The first index in a primary variable vector.
- */
-template <class TypeTag, int PVOffset = 0>
-class NavierStokesNonIsothermalIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
-{
-public:
-    static const int numEqCC = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
-    static constexpr int energyBalanceIdx = PVOffset + numEqCC -1;
-    static constexpr int temperatureIdx = energyBalanceIdx;
+namespace Properties {
+
+//! The type tags for the non-isothermal Navier Stokes problems
+NEW_TYPE_TAG(NavierStokesNonIsothermal);
+
+NEW_PROP_TAG(IsothermalNumEqCellCenter);
+NEW_PROP_TAG(IsothermalNumEqFace);
+
+///////////////////////////////////////////////////////////////////////////
+// default property values for the non-isothermal single phase model
+///////////////////////////////////////////////////////////////////////////
+
+
+SET_PROP(NavierStokesNonIsothermal, NumEq)
+{
+private:
+    static constexpr auto isothermalNumEq = GET_PROP_VALUE(TypeTag, IsothermalNumEq);
+public:
+    static constexpr int value = isothermalNumEq + 1;
 };
-} // end namespace
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, FreeFlowEnergyVtkOutputFields<TypeTag>);
+
+SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+
+SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
+
+} // end namespace Properties
+
+}
 
 #endif

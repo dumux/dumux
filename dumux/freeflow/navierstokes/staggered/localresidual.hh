@@ -23,6 +23,7 @@
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 
+#include <dune/common/hybridutilities.hh>
 #include <dumux/common/properties.hh>
 
 namespace Dumux
@@ -32,7 +33,6 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(EnableInertiaTerms);
-NEW_PROP_TAG(EnergyFluxVariables);
 NEW_PROP_TAG(NormalizePressure);
 NEW_PROP_TAG(ElementFaceVariables);
 }
@@ -74,8 +74,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered> : publ
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
-    using EnergyFluxVariables = typename GET_PROP_TYPE(TypeTag, EnergyFluxVariables);
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
 
 
@@ -85,7 +83,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered> : publ
 
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-    using FaceResidualVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
 
     enum {
          // grid and world dimension
@@ -121,7 +118,27 @@ public:
         CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
                                                  elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
-        EnergyFluxVariables::energyFlux(flux, problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache[scvf]);
+        // add energy fluxes for non-isothermal models
+        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+        [&](auto IF)
+        {
+            // if we are on an inflow/outflow boundary, use the volVars of the element itself
+            // TODO: catch neumann and outflow in localResidual's evalBoundary_()
+            bool isOutflow = false;
+            if(scvf.boundary())
+            {
+                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                    if(bcTypes.isOutflow(Indices::energyBalanceIdx))
+                        isOutflow = true;
+            }
+
+            auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
+            using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+
+            flux[Indices::energyBalanceIdx] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
+            flux[Indices::energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
+
+        });
 
         return flux;
     }
@@ -133,8 +150,7 @@ public:
                                                           const ElementFaceVariables& elemFaceVars,
                                                           const SubControlVolume &scv) const
     {
-        return CellCenterPrimaryVariables(0.0);
-        // TODO sources
+        return problem.sourceAtPos(scv.center())[cellCenterIdx];
     }
 
 
@@ -153,8 +169,15 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
-        storage[0] = volVars.density();
-        EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
+        storage[Indices::massBalanceIdx] = volVars.density();
+
+        // add energy storage for non-isothermal models
+        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+        [&](auto IF)
+        {
+            storage[Indices::energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
+        });
+
         return storage;
     }
 

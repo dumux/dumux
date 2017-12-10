@@ -68,7 +68,6 @@ public:
     static constexpr int value = GET_PROP_VALUE(TypeTag, NumEq) - dim;
 };
 
-
 //! The default sub-controlvolume face
 SET_PROP(StaggeredFreeFlowModel, SubControlVolumeFace)
 {

@@ -27,7 +27,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/freeflow/properties.hh>
-#include <dumux/freeflow/staggeredni/properties.hh>
+#include <dumux/freeflow/nonisothermal/model.hh>
 
 #include "localresidual.hh"
 #include "volumevariables.hh"
@@ -70,8 +70,6 @@
  NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider component transport or not
  NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
  NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
- NEW_PROP_TAG(EnergyLocalResidual); //!<  The energy local residual
- NEW_PROP_TAG(EnergyFluxVariables); //!<  The energy flux variables
 
  ///////////////////////////////////////////////////////////////////////////
  // default property values for the isothermal single phase model
@@ -79,6 +77,16 @@
  SET_INT_PROP(NavierStokes, NumPhases, 1); //! The number of phases in the 1p model is 1
  SET_INT_PROP(NavierStokes, NumComponents, 1); //! The number of components in the 1p model is 1
  SET_INT_PROP(NavierStokes, PhaseIdx, 0); //! The default phase index
+
+ //! The number of equations
+ SET_PROP(NavierStokes, NumEq)
+ {
+ private:
+     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+     static constexpr auto dim = GridView::dimension;
+ public:
+     static constexpr int value = dim + 1;
+ };
 
  /*!
   * \brief The fluid state which is used by the volume variables to
@@ -115,10 +123,6 @@
  //! The indices required by the isothermal single-phase model
  SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
 
- SET_TYPE_PROP(NavierStokes, EnergyLocalResidual, FreeFlowEnergyLocalResidual<TypeTag>);
-
- SET_TYPE_PROP(NavierStokes, EnergyFluxVariables, FreeFlowEnergyFluxVariables<TypeTag>);
-
  SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false);
 
  SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
@@ -141,8 +145,14 @@
  SET_TYPE_PROP(NavierStokesNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
 
  //set isothermal NumEq
- SET_INT_PROP(NavierStokesNI, IsothermalNumEqCellCenter, 1); //!< set the number of equations to 1
- SET_INT_PROP(NavierStokesNI, IsothermalNumEqFace, 1); //!< set the number of equations to 1
+ SET_PROP(NavierStokesNI, IsothermalNumEq)
+ {
+ private:
+     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+     static constexpr auto dim = GridView::dimension;
+ public:
+     static constexpr int value = dim + 1;
+ };
 
  // \}
  }
