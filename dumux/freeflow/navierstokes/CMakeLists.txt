@@ -1,10 +1,14 @@
 
 #install headers
 install(FILES
+fluxvariables.hh
+fluxvariablescache.hh
 indices.hh
 localresidual.hh
 model.hh
-properties.hh
-propertydefaults.hh
+problem.hh
+staggered/fluxvariables.hh
+staggered/localresidual.hh
 volumevariables.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/1p/implicit)
+vtkoutputfields.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/navierstokes)
