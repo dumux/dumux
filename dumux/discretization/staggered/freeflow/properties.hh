@@ -28,6 +28,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/properties.hh>
+#include <dumux/freeflow/properties.hh>
 
 #include "subcontrolvolumeface.hh"
 #include "facevariables.hh"
@@ -44,6 +45,7 @@ namespace Properties
 NEW_TYPE_TAG(StaggeredFreeFlowModel, INHERITS_FROM(StaggeredModel));
 
 // TODO: Ugly hack. How can this be improved? This is needed, because otherwise the physical model overwrites the properties set here.
+//       This requires to include the physical model before the discretization, otherwise the type tag FreeFlow is undefined.
 UNSET_PROP(FreeFlow, NumEqVector);
 
 /*!

@@ -37,6 +37,7 @@
 #include "vtkoutputfields.hh"
 
 #include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/discretization/methods.hh>
 
 /*!
  * \ingroup NavierStokesModel
@@ -46,6 +47,7 @@
 
  namespace Dumux
  {
+
  // \{
  ///////////////////////////////////////////////////////////////////////////
  // properties for the isothermal Navier-Stokes model
