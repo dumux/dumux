@@ -29,6 +29,11 @@
 
 namespace Dumux
 {
+
+// forward declaration
+template<class TypeTag, MpfaMethods m, int dim, int dimWorld>
+class MpfaMethodHelper;
+
 /*!
  * \ingroup Mpfa
  * \brief Helper class to get the required information on an interaction volume.

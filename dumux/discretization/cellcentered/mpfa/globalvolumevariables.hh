@@ -23,7 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_GLOBAL_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_GLOBAL_VOLUMEVARIABLES_HH
 
-#include <dumux/implicit/properties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
 namespace Dumux
@@ -43,8 +43,6 @@ class CCMpfaGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 {
     // The local class needs to access and change volVars
     friend typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    // The local jacobian needs to access and change volVars for derivative calculation
-    friend typename GET_PROP_TYPE(TypeTag, LocalJacobian);
     // as does the primary variable switch
     friend class PrimaryVariableSwitch<TypeTag>;
     friend typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);

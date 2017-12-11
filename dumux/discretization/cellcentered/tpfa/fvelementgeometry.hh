@@ -25,8 +25,9 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_ELEMENT_GEOMETRY_HH
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
-
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
 namespace Dumux

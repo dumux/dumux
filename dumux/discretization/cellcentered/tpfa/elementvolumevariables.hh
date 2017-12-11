@@ -23,6 +23,8 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 

@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEDATAHANDLE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEDATAHANDLE_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
     //! Empty data handle class

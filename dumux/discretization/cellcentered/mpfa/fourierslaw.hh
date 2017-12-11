@@ -28,6 +28,9 @@
 
 namespace Dumux
 {
+// forward declaration
+template<class TypeTag, DiscretizationMethods discMethod>
+class FouriersLawImplementation;
 
 /*!
  * \ingroup Mpfa

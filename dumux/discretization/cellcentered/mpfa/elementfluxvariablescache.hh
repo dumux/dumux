@@ -23,7 +23,10 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
 
+#include <dune/common/exceptions.hh>
+#include <dumux/common/properties.hh>
 #include "fluxvariablescachefiller.hh"
+#include "methods.hh"
 
 namespace Dumux
 {
