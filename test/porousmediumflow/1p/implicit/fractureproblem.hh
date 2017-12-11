@@ -28,6 +28,7 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/porousmediumflow/1p/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/discretization/box/properties.hh>
