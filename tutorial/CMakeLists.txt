@@ -1,7 +1,5 @@
 add_input_file_links()
 
-add_subdirectory(capillaryfringe)
-
 add_dumux_test(tutorial_sequential tutorial_sequential tutorial_sequential.cc
   ${CMAKE_CURRENT_BINARY_DIR}/tutorial_sequential)
 
