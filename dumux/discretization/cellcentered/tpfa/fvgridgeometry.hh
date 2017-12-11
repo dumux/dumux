@@ -53,7 +53,6 @@ class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
     using ParentType = BaseFVGridGeometry<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
