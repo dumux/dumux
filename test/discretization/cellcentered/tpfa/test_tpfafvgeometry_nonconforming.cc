@@ -142,8 +142,7 @@ int main (int argc, char *argv[]) try
     constexpr int dim = GridView::dimension;
     constexpr int dimworld = GridView::dimensionworld;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
+    using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     //! make a grid
