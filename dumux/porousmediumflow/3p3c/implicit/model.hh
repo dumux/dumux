@@ -80,7 +80,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidstates/compositional.hh>
