@@ -1,9 +1,7 @@
 
 #install headers
 install(FILES
-cpdarcyfluxvariables.hh
-darcyfluxvariables.hh
-forchheimerfluxvariables.hh
-problem.hh
+fluxvariables.hh
+fluxvariablescache.hh
 velocityoutput.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/implicit)
