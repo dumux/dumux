@@ -6,8 +6,12 @@ dune_add_test(NAME test_stokes2c_densitydrivenflow
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes2c-densitydriven-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00029.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c_densitydrivenflow")
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_densitydrivenflow-00021.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes2c_densitydrivenflow"
+                             --zeroThreshold {"X^Air_liquid":1e-12}
+                             --zeroThreshold {"x^Air_liquid":1e-12}
+                             --zeroThreshold {"velocity_liquid \(m/s\)":1e-10}
+                             --zeroThreshold {"deltaRho":1e-7})
 
 add_executable(test_stokes2c EXCLUDE_FROM_ALL test_channel.cc)
 
