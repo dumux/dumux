@@ -94,7 +94,7 @@ public:
     { return numBoundaryScvf_; }
 
     //! The total number of degrees of freedom
-    std::size_t numDofs()
+    std::size_t numDofs() const
     { return this->gridView().size(dim); }
 
     //! update all fvElementGeometries (do this again after grid adaption)
