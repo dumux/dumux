@@ -24,9 +24,8 @@
 #ifndef DUMUX_1P_VOLUME_VARIABLES_HH
 #define DUMUX_1P_VOLUME_VARIABLES_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/volumevariables.hh>
-
 #include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux

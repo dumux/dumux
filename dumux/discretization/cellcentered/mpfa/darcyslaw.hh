@@ -30,6 +30,9 @@
 
 namespace Dumux
 {
+// forward declarations
+template<class TypeTag, DiscretizationMethods discMethod>
+class DarcysLawImplementation;
 
 /*!
  * \ingroup Mpfa

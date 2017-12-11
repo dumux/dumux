@@ -26,6 +26,7 @@
 
 #include <math.h>
 
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
@@ -33,6 +34,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 #include "1pnispatialparams.hh"

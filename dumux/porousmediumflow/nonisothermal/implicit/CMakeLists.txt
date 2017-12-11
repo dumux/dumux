@@ -2,6 +2,6 @@
 install(FILES
 indices.hh
 localresidual.hh
-properties.hh
-propertydefaults.hh
+model.hh
+vtkoutputfields.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/nonisothermal/implicit)

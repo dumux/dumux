@@ -23,6 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FLUXVARSCACHE_FILLER_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FLUXVARSCACHE_FILLER_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux

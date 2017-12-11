@@ -25,6 +25,7 @@
 
 #include <utility>
 #include <dune/geometry/type.hh>
+#include <dune/common/version.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 

@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_STATIONARY_VELOCITY_FIELD_HH
 #define DUMUX_DISCRETIZATION_STATIONARY_VELOCITY_FIELD_HH
 
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
 namespace Dumux

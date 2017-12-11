@@ -24,14 +24,14 @@
 #ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_FICKS_LAW_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
 // forward declaration
 template <class TypeTag, DiscretizationMethods Method>
-class FicksLawImplementation
-{};
+class FicksLawImplementation;
 
 /*!
  * \ingroup CCTpfaFicksLaw

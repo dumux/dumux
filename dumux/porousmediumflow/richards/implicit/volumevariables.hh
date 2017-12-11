@@ -24,8 +24,7 @@
 #ifndef DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 
-#include "properties.hh"
-
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/volumevariables.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/constants.hh>

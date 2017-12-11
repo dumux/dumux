@@ -28,7 +28,7 @@
 #ifndef DUMUX_TRACER_PROPERTIES_HH
 #define DUMUX_TRACER_PROPERTIES_HH
 
-#include <dumux/porousmediumflow/nonisothermal/implicit/properties.hh>
+#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
 
 namespace Dumux
 {

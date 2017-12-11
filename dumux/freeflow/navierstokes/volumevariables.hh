@@ -25,8 +25,6 @@
 #define DUMUX_NAVIERSTOKES_VOLUME_VARIABLES_HH
 
 #include <dumux/common/properties.hh>
-
-#include "model.hh"
 #include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux

@@ -23,6 +23,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
 
+#include <dumux/common/properties.hh>
 #include "methods.hh"
 
 namespace Dumux

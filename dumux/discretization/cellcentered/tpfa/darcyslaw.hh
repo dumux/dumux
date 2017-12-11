@@ -34,8 +34,12 @@
 
 namespace Dumux
 {
-//! Forward declaration
-template<class TypeTag, bool isNetwork> class CCTpfaDarcysLaw;
+// forward declarations
+template<class TypeTag, DiscretizationMethods discMethod>
+class DarcysLawImplementation;
+
+template<class TypeTag, bool isNetwork>
+class CCTpfaDarcysLaw;
 
 /*!
  * \ingroup DarcysLaw

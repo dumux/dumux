@@ -23,6 +23,8 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
 
+#include <dune/common/exceptions.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 
 namespace Dumux

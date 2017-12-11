@@ -3,8 +3,6 @@
 install(FILES
 indices.hh
 model.hh
-localresidual.hh
-properties.hh
-propertydefaults.hh
 volumevariables.hh
+vtkoutputfields.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/richardsnc/implicit)

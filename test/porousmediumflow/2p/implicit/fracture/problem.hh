@@ -27,6 +27,8 @@
 
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/dnapl.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
 
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>

@@ -32,6 +32,9 @@
 
 namespace Dumux
 {
+// forward declaration
+template<class TypeTag, DiscretizationMethods discMethod>
+class DarcysLawImplementation;
 
 /*!
  * \ingroup DarcysLaw

@@ -23,8 +23,6 @@
 #ifndef DUMUX_RICHARDS_INDICES_HH
 #define DUMUX_RICHARDS_INDICES_HH
 
-#include "properties.hh"
-
 namespace Dumux
 {
 // \{

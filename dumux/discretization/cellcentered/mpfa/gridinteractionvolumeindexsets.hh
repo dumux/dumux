@@ -23,10 +23,15 @@
 #ifndef DUMUX_DISCRETIZATION_MPFA_O_GRIDINTERACTIONVOLUME_INDEXSETS_HH
 #define DUMUX_DISCRETIZATION_MPFA_O_GRIDINTERACTIONVOLUME_INDEXSETS_HH
 
-#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
+#include <memory>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
+// forward declaration
+template<class TypeTag>
+class CCMpfaDualGridIndexSet;
+
 /*!
  * \ingroup Mpfa
  * \brief The grid interaction volume index sets class for the mpfa-o scheme.

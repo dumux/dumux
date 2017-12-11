@@ -23,7 +23,7 @@
 #ifndef DUMUX_3P_INDICES_HH
 #define DUMUX_3P_INDICES_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

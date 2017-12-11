@@ -26,11 +26,9 @@
 #define DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 
 #include <dumux/common/math.hh>
-
+#include <dumux/common/properties.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/discretization/volumevariables.hh>
-
-#include "model.hh"
 
 namespace Dumux
 {

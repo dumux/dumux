@@ -19,16 +19,10 @@
 #ifndef DUMUX_TWOP_ADAPTIONHELPER_HH
 #define DUMUX_TWOP_ADAPTIONHELPER_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/implicit/adaptive/adaptionhelper.hh>
-#include "properties.hh"
 
 namespace Dumux {
-
-namespace Properties
-{
-NEW_PROP_TAG(PrimaryVariables);
-NEW_PROP_TAG(Scalar);
-}
 
 /*!
  * \brief Base class holding the variables for implicit models.

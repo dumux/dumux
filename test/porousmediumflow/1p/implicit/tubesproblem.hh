@@ -35,6 +35,7 @@
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
 
 #include "tubesspatialparams.hh"
 
