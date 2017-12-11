@@ -30,7 +30,6 @@
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/properties.hh>

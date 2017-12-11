@@ -30,16 +30,9 @@
 #include <dune/common/test/iteratortest.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/properties/model.hh>
-#include <dumux/discretization/staggered/properties.hh>
-#include <dumux/discretization/staggered/fvgridgeometry.hh>
-#include <dumux/discretization/staggered/fvelementgeometry.hh>
-
-#include <dumux/discretization/staggered/properties.hh>
-#include <dumux/freeflow/staggered/properties.hh>
+#include <dumux/discretization/staggered/freeflow/properties.hh>
 
 namespace Dumux
 {
@@ -80,7 +73,7 @@ public:
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestStaggeredFreeFlowGeometry, INHERITS_FROM(StaggeredModel, NavierStokes));
+NEW_TYPE_TAG(TestStaggeredFreeFlowGeometry, INHERITS_FROM(StaggeredFreeFlowModel));
 
 SET_TYPE_PROP(TestStaggeredFreeFlowGeometry, Grid, Dune::YaspGrid<2>);
 
