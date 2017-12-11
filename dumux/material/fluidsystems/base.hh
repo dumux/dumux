@@ -24,6 +24,7 @@
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
 #define DUMUX_BASE_FLUID_SYSTEM_HH
 
+#include <string>
 #include "nullparametercache.hh"
 
 namespace Dumux

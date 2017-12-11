@@ -24,6 +24,7 @@
 #ifndef DUMUX_2P2C_FLUID_STATE_HH
 #define DUMUX_2P2C_FLUID_STATE_HH
 
+#include <dune/common/fvector.hh>
 #include <dumux/common/valgrind.hh>
 
 namespace Dumux
