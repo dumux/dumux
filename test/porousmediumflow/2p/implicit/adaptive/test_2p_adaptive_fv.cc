@@ -210,22 +210,26 @@ int main(int argc, char** argv) try
     // time loop
     timeLoop->start(); do
     {
-        // compute refinement indicator
-        indicator.calculate(x, refineTol, coarsenTol);
-
-        // mark elements and maybe adapt grid
-        bool wasAdapted = false;
-        if (markElements(GridCreator::grid(), indicator))
-            wasAdapted = adapt(GridCreator::grid(), dataTransfer);
-
-        if (wasAdapted)
+        // refine/coarsen only after first time step
+        if (timeLoop->time() > restartTime)
         {
-            //! Note that if we were using point sources, we would have to update the map here as well
-            xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
-            assembler->setJacobianPattern();  //! Tell the assembler to resize the matrix and set pattern
-            assembler->setResidualSize();     //! Tell the assembler to resize the residual
-            gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
-            problem->computePointSourceMap(); //! Update the point source map
+            // compute refinement indicator
+            indicator.calculate(x, refineTol, coarsenTol);
+
+            // mark elements and maybe adapt grid
+            bool wasAdapted = false;
+            if (markElements(GridCreator::grid(), indicator))
+                wasAdapted = adapt(GridCreator::grid(), dataTransfer);
+
+            if (wasAdapted)
+            {
+                // Note that if we were using point sources, we would have to update the map here as well
+                xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
+                assembler->setJacobianPattern();  //! Tell the assembler to resize the matrix and set pattern
+                assembler->setResidualSize();     //! Tell the assembler to resize the residual
+                gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
+                problem->computePointSourceMap(); //! Update the point source map
+            }
         }
 
         // set previous solution for storage evaluations
