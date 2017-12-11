@@ -204,7 +204,8 @@ public:
 
                 //! obtain element solution from map (divide by count!)
                 auto elemSol = adaptedValues.u;
-                elemSol /= adaptedValues.count;
+                if (!isBox)
+                    elemSol[0] /= adaptedValues.count;
 
                 const auto elementVolume = element.geometry().volume();
                 for (const auto& scv : scvs(fvGeometry))
@@ -275,7 +276,7 @@ public:
 
                     // obtain the element solution through the father
                     auto elemSolSon = adaptedValuesFather.u;
-                    elemSolSon /= adaptedValuesFather.count;
+                    elemSolSon[0] /= adaptedValuesFather.count;
 
                     auto fvGeometry = localView(*fvGridGeometry_);
                     fvGeometry.bindElement(element);

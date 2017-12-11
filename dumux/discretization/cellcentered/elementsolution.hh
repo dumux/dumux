@@ -94,14 +94,6 @@ public:
         return priVars_;
     }
 
-    //! \brief vector space division by scalar
-    template <typename FieldType>
-    CCElementSolution& operator/= (const FieldType& k)
-    {
-        priVars_ /= k;
-        return *this;
-    }
-
 private:
     PrimaryVariables priVars_;
 };
