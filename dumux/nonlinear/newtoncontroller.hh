@@ -25,13 +25,14 @@
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
 
+#include <dune/common/exceptions.hh>
+#include <dune/istl/bvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/math.hh>
 #include <dumux/common/timeloop.hh>
 #include <dumux/linear/seqsolverbackend.hh>
-
-#include "newtonmethod.hh"
 
 namespace Dumux
 {
