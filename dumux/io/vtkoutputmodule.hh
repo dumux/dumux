@@ -37,7 +37,10 @@
 #include <dune/grid/io/file/vtk/function.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/vtksequencewriter.hh>
+#include <dune/grid/common/partitionset.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/io/vtknestedfunction.hh>
 
