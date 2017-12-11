@@ -25,12 +25,17 @@
 #ifndef DUMUX_STEAM_INJECTIONPROBLEM_HH
 #define DUMUX_STEAM_INJECTIONPROBLEM_HH
 
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/2p1c/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
-#include "steaminjectionspatialparams.hh"
+#include <dumux/material/fluidsystems/2pliquidvapor.hh>
+
 #include <dumux/material/components/tabulatedcomponent.hh>
 #include <dumux/material/components/h2o.hh>
+
+#include "steaminjectionspatialparams.hh"
 
 namespace Dumux
 {
@@ -40,32 +45,28 @@ class InjectionProblem;
 namespace Properties
 {
 NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPOneCNI, InjectionProblemSpatialParams));
-NEW_TYPE_TAG(InjectionBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
-NEW_TYPE_TAG(InjectionCCProblem, INHERITS_FROM(CCModel, InjectionProblem));
+NEW_TYPE_TAG(TwoPOneCNIBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
+NEW_TYPE_TAG(TwoPOneCNICCTpfaProblem, INHERITS_FROM(CCTpfaModel, InjectionProblem));
 
 SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_PROP(InjectionProblem, Problem)
-{
-    typedef Dumux::InjectionProblem<TypeTag> type;
-};
+SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
 
-// Set the fluid system
+
+// Set fluid configuration
 SET_PROP(InjectionProblem, FluidSystem)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >  H2OType ;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
 public:
-    typedef Dumux::FluidSystems::TwoPLiquidVaporFluidsystem<Scalar, H2OType > type;
+    using type = Dumux::FluidSystems::TwoPLiquidVaporFluidsystem<Scalar, H2OType >;
 };
 
-// Enable gravity
-SET_BOOL_PROP(InjectionProblem, ProblemEnableGravity, true);
 
 //Define whether spurious cold-water flow into the steam is blocked
-SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
+SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, false);
 }
 
 //TODO: Names
@@ -78,16 +79,29 @@ SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
  *
  *  */
 template <class TypeTag>
-class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
+class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
 
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
@@ -96,32 +110,20 @@ class InjectionProblem : public ImplicitPorousMediaProblem<TypeTag>
 
         // phase and component indices
         wPhaseIdx = Indices::wPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
 
         // Phase State
         wPhaseOnly = Indices::wPhaseOnly,
-        gPhaseOnly = Indices::gPhaseOnly,
+        nPhaseOnly = Indices::nPhaseOnly,
         twoPhases = Indices::twoPhases,
-
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
@@ -132,15 +134,9 @@ public:
      * \param gridView The grid view
      */
 
-    InjectionProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
-
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag,
-                                             std::string,
-                                             Problem,
-                                             Name);
-
         FluidSystem::init();
     }
 
@@ -149,20 +145,15 @@ public:
      */
     // \{
 
-    /*!
-     * \brief The problem name.
-     *
-     * This is used as a prefix for files generated by the simulation.
-     */
-    const std::string name() const
-    { return name_; }
 
-
-    void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
-     {
-          values = 0.0;
-     }
+    //! \copydoc Dumux::FVProblem::source()
+    Sources source(const Element &element,
+                   const FVElementGeometry& fvGeometry,
+                   const ElementVolumeVariables& elemVolVars,
+                   const SubControlVolume &scv) const
+    {
+          return Sources(0.0);
+    }
 
     /*!
      * \name Boundary conditions
@@ -171,58 +162,71 @@ public:
 
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary segment.
+     *        used for which equation on a given boundary segment
      *
-     * \param bcTypes The boundary types for the conservation equations
-     * \param globalPos The position for which the bc type should be evaluated
+     * \param globalPos The global position
      */
-   void boundaryTypesAtPos(BoundaryTypes &bcTypes,
-            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
-        if(globalPos[1] > this->bBoxMax()[1] - eps_ || globalPos[0] > this->bBoxMax()[0] - eps_)
+        BoundaryTypes bcTypes;
+
+        if(globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_ || globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
            bcTypes.setAllDirichlet();
         else
            bcTypes.setAllNeumann();
+
+         return bcTypes;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        boundary segment.
+     * \brief Evaluates the boundary conditions for a Dirichlet
+     *        boundary segment
      *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The position for which the bc type should be evaluated
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The global position
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-       initial_(values, globalPos);
+       return initialAtPos(globalPos);
     }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The dirichlet values for the primary variables
-     * \param globalPos The position for which the bc type should be evaluated
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
      *
-     * For this method, the \a values parameter stores the mass flux
+     * \param values The neumann values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scvf The sub control volume face
+     *
+     * For this method, the \a values parameter stores the flux
      * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-      void neumannAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    ResidualVector neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const SubControlVolumeFace& scvf) const
     {
-        values = 0.0;
+        ResidualVector values(0.0);
 
-        if (globalPos[0] < eps_)
+        const auto& ipGlobal = scvf.ipGlobal();
+
+        if (ipGlobal[0] < eps_)
         {
-            if(globalPos[1] > 2.0 - eps_ && globalPos[1] < 3.0 + eps_)
+            if(ipGlobal[1] > 2.0 - eps_ && ipGlobal[1] < 3.0 + eps_)
             {
-            Scalar massRate = 1e-1;
-            values[Indices::conti0EqIdx] = -massRate;
-            values[Indices::energyEqIdx] = -massRate * 2690e3;
+                const Scalar massRate = 1e-1;
+                values[Indices::conti0EqIdx] = -massRate;
+                values[Indices::energyEqIdx] = -massRate * 2690e3;
             }
         }
+        return values;
     }
 
     // \}
@@ -233,48 +237,26 @@ public:
     // \{
 
     /*!
-     * \brief Evaluate the initial value for a control volume.
+     * \brief Evaluates the initial values for a control volume
      *
-     * \param values The initial values for the primary variables
-     * \param globalPos The position for which the initial condition should be evaluated
-     *
-     * For this method, the \a values parameter stores primary
-     * variables.
-     */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
-    {
-        initial_(values, globalPos);
-    }
-
-    /*!
-     * \brief Return the initial phase state inside a control volume.
-     *
-     * \param vert The vertex
-     * \param globalIdx The index of the global vertex
      * \param globalPos The global position
      */
-    int initialPhasePresence(const Vertex &vert,
-                             int &globalIdx,
-                             const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        return wPhaseOnly;
+        PrimaryVariables values(0.0);
+
+        const Scalar densityW = 1000.0;
+        values[pressureIdx] = 101300.0 + (this->fvGridGeometry().bBoxMax()[1] - globalPos[1])*densityW*9.81; // hydrostatic pressure
+        values[switch1Idx] = 283.13;
+
+        values.setState(wPhaseOnly);
+
+        return values;
     }
-
-
 
 private:
-    // internal method for the initial condition (reused for the
-    // dirichlet conditions!)
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
-    {
-        Scalar densityW = 1000.0;
-        values[pressureIdx] = 101300.0 + (this->bBoxMax()[1] - globalPos[1])*densityW*9.81; // hydrostatic pressure
-        values[switch1Idx] = 283.13;
-    }
 
     static constexpr Scalar eps_ = 1e-6;
-    std::string name_;
 };
 } //end namespace
 

@@ -64,34 +64,36 @@ SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
 template<class TypeTag>
 class InjectionProblemSpatialParams : public ImplicitSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    using ParentType = ImplicitSpatialParams<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr int wPhaseIdx = FluidSystem::wPhaseIdx;
 
-
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using PermeabilityType = DimWorldMatrix;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    InjectionProblemSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    InjectionProblemSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         // set Van Genuchten Parameters
         materialParams_.setSwr(0.1);
@@ -101,18 +103,13 @@ public:
     }
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Returns the hydraulic conductivity \f$[m^2]\f$
      *
-     * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const FieldMatrix intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
-                                       int scvIdx) const
+    DimWorldMatrix permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        FieldMatrix permMatrix(0.0);
+        DimWorldMatrix permMatrix(0.0);
 
         // intrinsic permeability
         permMatrix[0][0] = 1e-9;
@@ -124,78 +121,62 @@ public:
     /*!
      * \brief Define the porosity \f$[-]\f$ of the spatial parameters
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param globalPos The global position
      */
-    double porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
         return 0.4;
     }
 
-
     /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Returns the parameter object for the capillary-pressure/
+     *        saturation material law
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvGeometry,
-                                               const int scvIdx) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
         return materialParams_;
     }
-
     /*!
      * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
      */
-     Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
-    {
-        return 850.0; // specific heat capacity of granite [J / (kg K)]
-    }
+    Scalar solidHeatCapacity(const Element &element,
+                             const SubControlVolume& scv,
+                             const ElementSolutionVector& elemSol) const
+    { return 850.0; /*specific heat capacity of granite [J / (kg K)]*/ }
 
     /*!
      * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
      *
      * This is only required for non-isothermal models.
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
      */
     Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
-    {
-        return 2650.0; // density of granite [kg/m^3]
-    }
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
+    { return 2650; /*density of granite [kg/m^3]*/ }
 
     /*!
-     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the solid
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume
+     * \param element The element
+     * \param scv The sub control volume
+     * \param elemSol The element solution vector
      */
     Scalar solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const int scvIdx) const
-    {
-        return 2.8;
-    }
+                                    const SubControlVolume& scv,
+                                    const ElementSolutionVector& elemSol) const
+    { return 2.8; }
 
 private:
     MaterialLawParams materialParams_;
