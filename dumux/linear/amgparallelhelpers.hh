@@ -25,8 +25,11 @@
 #ifndef DUMUX_AMGPARALLELHELPERS_HH
 #define DUMUX_AMGPARALLELHELPERS_HH
 
+#include <dune/geometry/dimension.hh>
+#include <dune/grid/common/datahandleif.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

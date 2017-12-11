@@ -31,6 +31,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/linear/solver.hh>
 #include <dumux/linear/amgtraits.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
