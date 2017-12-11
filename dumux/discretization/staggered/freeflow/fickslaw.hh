@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FICKS_LAW_HH
 
+#include <numeric>
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/properties.hh>
@@ -35,15 +36,9 @@
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(ReplaceCompEqIdx);
-NEW_PROP_TAG(UseMoles);
-NEW_PROP_TAG(CellCenterPrimaryVariables);
-}
+// forward declaration
+template<class TypeTag, DiscretizationMethods discMethod>
+class FicksLawImplementation;
 
 /*!
  * \ingroup StaggeredFicksLaw

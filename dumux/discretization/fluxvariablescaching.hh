@@ -23,6 +23,8 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVAR_CACHING_HH
 #define DUMUX_DISCRETIZATION_FLUXVAR_CACHING_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 

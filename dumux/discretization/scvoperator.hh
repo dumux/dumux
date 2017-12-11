@@ -26,6 +26,8 @@
 #define DUMUX_SUBCONTROL_VOLUME_OPERATOR_HH
 
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
