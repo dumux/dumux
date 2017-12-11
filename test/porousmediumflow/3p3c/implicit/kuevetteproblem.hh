@@ -29,9 +29,10 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3p3c/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
 #include "kuevettespatialparams.hh"
 
@@ -44,23 +45,20 @@ class KuevetteProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(KuevetteProblem, INHERITS_FROM(ThreePThreeCNI, KuevetteSpatialParams));
-NEW_TYPE_TAG(KuevetteBoxProblem, INHERITS_FROM(BoxModel, KuevetteProblem));
-NEW_TYPE_TAG(KuevetteCCProblem, INHERITS_FROM(CCTpfaModel, KuevetteProblem));
+NEW_TYPE_TAG(KuevetteTypeTag, INHERITS_FROM(ThreePThreeCNI, KuevetteSpatialParams));
+NEW_TYPE_TAG(KuevetteBoxTypeTag, INHERITS_FROM(BoxModel, KuevetteTypeTag));
+NEW_TYPE_TAG(KuevetteCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, KuevetteTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(KuevetteProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(KuevetteTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(KuevetteProblem, Problem, KuevetteProblem<TypeTag>);
+SET_TYPE_PROP(KuevetteTypeTag, Problem, KuevetteProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(KuevetteProblem,
+SET_TYPE_PROP(KuevetteTypeTag,
               FluidSystem,
               FluidSystems::H2OAirMesitylene<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-
-// set newton relative tolerance
-SET_SCALAR_PROP(KuevetteProblem, NewtonMaxRelativeShift, 1e-6);
 }
 
 
@@ -98,16 +96,14 @@ SET_SCALAR_PROP(KuevetteProblem, NewtonMaxRelativeShift, 1e-6);
  * <tt>./test_cc3p3cnikuevette test_cc3p3cnikuevette.input</tt>
  */
 template <class TypeTag >
-class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>
+class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
 
         pressureIdx = Indices::pressureIdx,
@@ -125,28 +121,18 @@ class KuevetteProblem : public ImplicitPorousMediaProblem<TypeTag>
         dimWorld = GridView::dimensionworld
     };
 
-
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) NeumannFluxes;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 public:
     /*!
      * \brief The constructor.
@@ -154,14 +140,11 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    KuevetteProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    KuevetteProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         FluidSystem::init();
-
-        name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
-        episodeLength_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeManager, EpisodeLength);
-        this->timeManager().startNextEpisode(episodeLength_);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -176,19 +159,6 @@ public:
      */
     const std::string name() const
     { return name_; }
-
-    /*!
-     * \brief Returns the source term at specific position in the domain.
-     *
-     * \param values The source values for the primary variables
-     * \param globalPos The position of the center of the finite volume
-     */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
-
 
     // \}
 
@@ -207,7 +177,7 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes bcTypes;
-        if(globalPos[0] > this->bBoxMax()[0] - eps_)
+        if(globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_)
             bcTypes.setAllDirichlet();
         else
             bcTypes.setAllNeumann();
@@ -242,9 +212,9 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      */
     NeumannFluxes neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables values(0.0);
         const auto& globalPos = scvf.ipGlobal();
@@ -286,56 +256,31 @@ public:
      *        from the solution of the current time step to the VTK
      *        writer. Adjust this in case of anisotropic permeabilities.
      */
-    void addOutputVtkFields()
+    template<class VTKWriter>
+    void addVtkFields(VTKWriter& vtk)
     {
-        // get the number of degrees of freedom
-        unsigned numDofs = this->model().numDofs();
-
-        // create the scalar field required for the permeabilities
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
-        ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numDofs);
-
-        FVElementGeometry fvGeometry;
+        const auto& gg = this->fvGridGeometry();
+        Kxx_.resize(gg.numDofs());
+        vtk.addField(Kxx_, "permeability");
 
         for (const auto& element : elements(this->gridView()))
         {
-            fvGeometry.update(this->gridView(), element);
+            auto fvGeometry = localView(gg);
+            fvGeometry.bindElement(element);
 
-            for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-            {
-                int dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
-                (*Kxx)[dofIdxGlobal] = this->spatialParams().intrinsicPermeability(element, fvGeometry, scvIdx);
-            }
+            for (const auto& scv : scvs(fvGeometry))
+                Kxx_[scv.dofIndex()] = this->spatialParams().intrinsicPermeabilityAtPos(scv.dofPosition());
         }
-
-        this->resultWriter().attachDofData(*Kxx, "permeability", isBox);
-    }
-
-    bool shouldWriteOutput() const
-    {
-        return this->timeManager().timeStepIndex() == 0 ||
-               this->timeManager().episodeWillBeFinished() ||
-               this->timeManager().willBeFinished();
-    }
-
-    void episodeEnd()
-    {
-        this->timeManager().startNextEpisode(episodeLength_);
-    }
-
-    bool shouldWriteRestartFile() const
-    {
-        return false;
     }
 
 private:
     // checks, whether a point is located inside the contamination zone
     bool isInContaminationZone(const GlobalPosition &globalPos) const
     {
-        return (Dune::FloatCmp::ge<Scalar>(globalPos[0],0.2)
-               && Dune::FloatCmp::le<Scalar>(globalPos[0],0.8)
-               && Dune::FloatCmp::ge<Scalar>(globalPos[1],0.4)
-               && Dune::FloatCmp::le<Scalar>(globalPos[1],0.65));
+        return (Dune::FloatCmp::ge<Scalar>(globalPos[0], 0.2)
+               && Dune::FloatCmp::le<Scalar>(globalPos[0], 0.8)
+               && Dune::FloatCmp::ge<Scalar>(globalPos[1], 0.4)
+               && Dune::FloatCmp::le<Scalar>(globalPos[1], 0.65));
     }
 
     // internal method for the initial condition (reused for the
@@ -346,7 +291,7 @@ private:
         if (isInContaminationZone(globalPos))
             values.setState(threePhases);
         else
-         values.setState(wgPhaseOnly);
+            values.setState(wgPhaseOnly);
 
         values[pressureIdx] = 1e5 ;
         values[switch1Idx] = 0.12;
@@ -357,13 +302,14 @@ private:
         {
             values[switch2Idx] = 0.07;
         }
-         return values;
+        return values;
     }
 
     static constexpr Scalar eps_ = 1e-6;
     std::string name_;
-    Scalar episodeLength_;
+    std::vector<Scalar> Kxx_;
 };
-} //end namespace
+
+} //end namespace Dumux
 
 #endif

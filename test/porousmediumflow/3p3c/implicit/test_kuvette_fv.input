@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1 # [s]
 TEnd = 2700 # [s]
 MaxTimeStepSize = 60 # [s]
@@ -9,7 +9,10 @@ UpperRight = 1.5 0.74
 Cells = 15 8
 
 [Problem]
-Name = kuevettebox # name passed to the output routines
+Name = kuevette # name passed to the output routines
 
 [Implicit]
 NumericDifferenceMethod = 0 # use central differences (backward -1, forward +1)
+
+[Newton]
+MaxRelativeShift = 1e-6

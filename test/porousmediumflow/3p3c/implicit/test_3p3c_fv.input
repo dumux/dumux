@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 86400 # [s]
 TEnd = 864000 # [s]
 
@@ -7,8 +7,10 @@ UpperRight = 500 10
 Cells = 40 4
 
 [Problem]
-Name = box3p3c
+Name = infiltration
 
 [Implicit]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
 
+[Newton]
+MaxRelativeShift = 1e-6

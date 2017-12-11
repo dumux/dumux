@@ -25,7 +25,7 @@
 #ifndef DUMUX_3P3C_LOCAL_RESIDUAL_HH
 #define DUMUX_3P3C_LOCAL_RESIDUAL_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
@@ -42,10 +42,12 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
 {
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -76,6 +78,8 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
 
 public:
 
+    using ParentType::ParentType;
+
     /*!
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
@@ -87,10 +91,11 @@ public:
      *  \param scvIdx The SCV (sub-control-volume) index
      *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    PrimaryVariables computeStorage(const SubControlVolume& scv,
-                                    const VolumeVariables& volVars) const
+    ResidualVector computeStorage(const Problem& problem,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars) const
     {
-        PrimaryVariables storage(0.0);
+        ResidualVector storage(0.0);
 
         // compute storage term of all components within all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -123,17 +128,18 @@ public:
      * \param onBoundary A boolean variable to specify whether the flux variables
      *        are calculated for interior SCV faces or boundary faces, default=false
      */
-    PrimaryVariables computeFlux(const Element& element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& elemVolVars,
-                                 const SubControlVolumeFace& scvf,
-                                 const ElementFluxVariablesCache& elemFluxVarsCache)
+    ResidualVector computeFlux(const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVolumeVariables& elemVolVars,
+                               const SubControlVolumeFace& scvf,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         FluxVariables fluxVars;
-        fluxVars.init(this->problem(), element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
         // get upwind weights into local scope
-        PrimaryVariables flux(0.0);
+        ResidualVector flux(0.0);
 
         // advective fluxes
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -155,23 +161,23 @@ public:
         //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
+        const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
+
         // diffusive fluxes
-        Scalar jGW = fluxVars.molecularDiffusionFlux(wPhaseIdx, gCompIdx);
-        Scalar jNW = fluxVars.molecularDiffusionFlux(wPhaseIdx, nCompIdx);
+        Scalar jGW = diffusionFluxesWPhase[gCompIdx];
+        Scalar jNW = diffusionFluxesWPhase[nCompIdx];
         Scalar jWW = -(jGW+jNW);
 
-        Scalar jWG = fluxVars.molecularDiffusionFlux(gPhaseIdx, wCompIdx);
-        Scalar jNG = fluxVars.molecularDiffusionFlux(gPhaseIdx, nCompIdx);
+        const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
+
+        Scalar jWG = diffusionFluxesGPhase[wCompIdx];
+        Scalar jNG = diffusionFluxesGPhase[nCompIdx];
         Scalar jGG = -(jWG+jNG);
 
-        // Scalar jWN = fluxVars.molecularDiffusion().flux(nPhaseIdx, wCompIdx);
-        // Scalar jGN = fluxVars.molecularDiffusion().flux(nPhaseIdx, gCompIdx);
-        // Scalar jNN = -(jGN+jWN);
-
         // At the moment we do not consider diffusion in the NAPL phase
-        Scalar jWN = 0;
-        Scalar jGN = 0;
-        Scalar jNN = 0;
+        Scalar jWN = 0.0;
+        Scalar jGN = 0.0;
+        Scalar jNN = 0.0;
 
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;

@@ -24,7 +24,7 @@
 #ifndef DUMUX_3P3C_INDICES_HH
 #define DUMUX_3P3C_INDICES_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
@@ -85,6 +85,6 @@ public:
     static const int contiGEqIdx = conti0EqIdx + gCompIdx; //!< index of the mass conservation equation for the air component
 };
 
-}
+} // end namespace Dumux
 
 #endif

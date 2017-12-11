@@ -67,6 +67,9 @@ class ThreePThreeCPrimaryVariableSwitch : public Dumux::PrimaryVariableSwitch<Ty
         wgPhaseOnly = Indices::wgPhaseOnly
     };
 
+public:
+    using ParentType::ParentType;
+
 protected:
 
     // perform variable switch at a degree of freedom location

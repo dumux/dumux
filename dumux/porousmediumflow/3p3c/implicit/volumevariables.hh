@@ -25,12 +25,13 @@
 #ifndef DUMUX_3P3C_VOLUME_VARIABLES_HH
 #define DUMUX_3P3C_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/model.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-#include "properties.hh"
+#include <dumux/discretization/volumevariables.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
@@ -45,18 +46,17 @@ template <class TypeTag>
 class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
     using ParentType = ImplicitVolumeVariables<TypeTag>;
+
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     // constraint solvers
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -98,9 +98,6 @@ class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     // universial gas constant
     static constexpr Scalar R = Dumux::Constants<Scalar>::R;
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
-
 public:
 
    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -108,7 +105,7 @@ public:
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const ElementSolution &elemSol,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
                 const SubControlVolume& scv)
