@@ -25,7 +25,7 @@
 #ifndef DUMUX_3P3C_LOCAL_RESIDUAL_HH
 #define DUMUX_3P3C_LOCAL_RESIDUAL_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {

@@ -24,7 +24,7 @@
 #ifndef DUMUX_3P3C_INDICES_HH
 #define DUMUX_3P3C_INDICES_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
