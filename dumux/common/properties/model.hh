@@ -23,17 +23,16 @@
  * \brief Defines a type tags and some fundamental properties for
  *        all models
  */
-#ifndef DUMUX_BASIC_PROPERTIES_HH
-#define DUMUX_BASIC_PROPERTIES_HH
+#ifndef DUMUX_MODEL_PROPERTIES_HH
+#define DUMUX_MODEL_PROPERTIES_HH
 
 #include <dune/common/fvector.hh>
 
-#include <dumux/common/balanceequationopts.hh>
 #include <dumux/common/properties.hh>
-
+#include <dumux/common/balanceequationopts.hh>
 #include <dumux/io/defaultvtkoutputfields.hh>
 
-//! Forward declare
+// Forward declaration
 namespace Dune { class ParameterTree; }
 
 namespace Dumux
