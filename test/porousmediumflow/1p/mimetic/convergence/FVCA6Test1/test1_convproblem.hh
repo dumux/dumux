@@ -29,6 +29,7 @@
 #if PROBLEM==1
 #include <dumux/porousmediumflow/1p/mimetic/model.hh>
 #include <dumux/common/intersectionmapper.hh>
+#include <dumux/discretization/staggered/mimetic/mimeticcpgeometryhelper.hh>
 #include "../../resultevaluationmimetic.hh"
 #else
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
@@ -96,6 +97,17 @@ SET_BOOL_PROP(Test1ConvProblem, EnableGlobalVolumeVariablesCache, true);
 SET_BOOL_PROP(Test1ConvProblem, ProblemEnableGravity, false);
 
 SET_TYPE_PROP(Test1ConvProblem, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+
+#if PROBLEM==1
+// The geometry helper required for the stencils, etc.
+SET_PROP(Test1ConvProblem, StaggeredGeometryHelper)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = MimeticCPGeometryHelper<GridView>;
+};
+#endif
 }
 
 template <class TypeTag>

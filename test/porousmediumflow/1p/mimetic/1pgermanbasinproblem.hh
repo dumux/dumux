@@ -30,6 +30,7 @@
 #if PROBLEM==1
 #include <dumux/implicit/staggered/properties.hh>
 #include <dumux/porousmediumflow/1p/mimetic/model.hh>
+#include <dumux/discretization/staggered/mimetic/mimeticcpgeometryhelper.hh>
 #elif PROBLEM==2
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/implicit/cellcentered/mpfa/properties.hh>
@@ -84,9 +85,9 @@ SET_TYPE_PROP(OnePGermanBasinProblem, Problem, Dumux::OnePGermanBasinProblem<Typ
 SET_TYPE_PROP(OnePGermanBasinProblem, SpatialParams, Dumux::OnePGermanBasinSpatialParams<TypeTag> );
 
 // Linear solver settings
-SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
+//SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::SuperLUBackend<TypeTag> );
 //SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::AMGBackend<TypeTag> );
-//SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
+SET_TYPE_PROP(OnePGermanBasinProblem, LinearSolver, Dumux::ILU0BiCGSTABBackend<TypeTag>);
 
 // Enable gravity
 SET_BOOL_PROP(OnePGermanBasinProblem, ProblemEnableGravity, false);
@@ -95,6 +96,17 @@ SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalFVGeometryCache, true);
 
 SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(OnePGermanBasinProblem, EnableGlobalVolumeVariablesCache, true);
+
+#if PROBLEM==1
+// The geometry helper required for the stencils, etc.
+SET_PROP(OnePGermanBasinProblem, StaggeredGeometryHelper)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = MimeticCPGeometryHelper<GridView>;
+};
+#endif
 }
 
 template<class TypeTag>

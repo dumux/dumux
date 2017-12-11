@@ -293,58 +293,58 @@ public:
         P3PoreVol_ = 175.53;
         P4PoreVol_ = 147.592;
 
-        readInitialValues();
+        //readInitialValues();
     }
 
-    void readInitialValues()
-    {
-        std::ifstream file;
-        std::string iname = "spe10_tpfa_full3D";
-        iname.append("0_sn.txt");
-        file.open(iname, std::ios::in);
-        if (file.fail())
-            throw std::ios_base::failure(std::strerror(errno));
-
-        std::vector<Scalar> valSn;
-        int lineNumber = 0;
-        while (!file.eof()) {
-            Scalar val = 0;
-            file >> val;
-            valSn.push_back(val);
-            lineNumber++;
-         }
-
-        file.close();
-
-        iname = "spe10_tpfa_full3D";
-        iname.append("0_pw.txt");
-        file.open(iname, std::ios::in);
-        if (file.fail())
-            throw std::ios_base::failure(std::strerror(errno));
-
-        std::vector<Scalar> valpw;
-        lineNumber = 0;
-        while (!file.eof()) {
-            Scalar val = 0;
-            file >> val;
-            valpw.push_back(val);
-            lineNumber++;
-         }
-
-        file.close();
-        std::cout << "lineNumber: " << lineNumber << std::endl;
-        std::cout << "numEle: " << this->gridView().size(0) << std::endl;
-
-        auto& uCur = this->model().curSol();
-        for (const auto& element : elements(this->gridView()))
-        {
-            int eIdx = this->elementMapper().index(element);
-            int idxGlobal = this->spatialParams().getIndex_(element.geometry().center());
-            uCur[eIdx][snIdx] = valSn[idxGlobal];
-            uCur[eIdx][pwIdx] = valpw[idxGlobal];
-        }
-
-    }
+//    void readInitialValues()
+//    {
+//        std::ifstream file;
+//        std::string iname = "spe10_tpfa_full3D";
+//        iname.append("0_sn.txt");
+//        file.open(iname, std::ios::in);
+//        if (file.fail())
+//            throw std::ios_base::failure(std::strerror(errno));
+//
+//        std::vector<Scalar> valSn;
+//        int lineNumber = 0;
+//        while (!file.eof()) {
+//            Scalar val = 0;
+//            file >> val;
+//            valSn.push_back(val);
+//            lineNumber++;
+//         }
+//
+//        file.close();
+//
+//        iname = "spe10_tpfa_full3D";
+//        iname.append("0_pw.txt");
+//        file.open(iname, std::ios::in);
+//        if (file.fail())
+//            throw std::ios_base::failure(std::strerror(errno));
+//
+//        std::vector<Scalar> valpw;
+//        lineNumber = 0;
+//        while (!file.eof()) {
+//            Scalar val = 0;
+//            file >> val;
+//            valpw.push_back(val);
+//            lineNumber++;
+//         }
+//
+//        file.close();
+//        std::cout << "lineNumber: " << lineNumber << std::endl;
+//        std::cout << "numEle: " << this->gridView().size(0) << std::endl;
+//
+//        auto& uCur = this->model().curSol();
+//        for (const auto& element : elements(this->gridView()))
+//        {
+//            int eIdx = this->elementMapper().index(element);
+//            int idxGlobal = this->spatialParams().getIndex_(element.geometry().center());
+//            uCur[eIdx][snIdx] = valSn[idxGlobal];
+//            uCur[eIdx][pwIdx] = valpw[idxGlobal];
+//        }
+//
+//    }
 
 
     /*!
@@ -378,79 +378,80 @@ public:
     {
         PrimaryVariables values(0.0);
 
-        auto globalPos = scv.center();
-        Scalar x = globalPos[0];
-        Scalar y = globalPos[1];
-        Scalar z = globalPos[2];
-
-        Scalar IX = 185.928;
-        Scalar IY = 336.804;
-
-        Scalar P1X = 0.0;
-        Scalar P1Y = 0.0;
-
-        Scalar P2X = 365.76;
-        Scalar P2Y = 0.0;
-
-        Scalar P3X = 365.76;
-        Scalar P3Y = 670.56;
-
-        Scalar P4X = 0.0;
-        Scalar P4Y = 670.56;
-
-        Scalar hX = 6.096;
-        Scalar hY = 3.048;
-        Scalar hZ = 0.6096;
-
-        Scalar lZ = this->bBoxMax()[dim-1];
-
-        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
-        fluidState.setTemperature(temperature_);
-        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
-        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
-        Scalar densityN = FluidSystem::density(fluidState, FluidSystem::nPhaseIdx);
-        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
-
-        auto poro = this->spatialParams().porosity(element, scv,
-                this->model().elementSolution(element, this->model().curSol()));
-
-        Scalar scalingFactor = poro * scv.volume();
-
-        if(std::abs(x-IX) < hX - eps_ && std::abs(y-IY) < hY - eps_)
-        {
-            values[contiWEqIdx] = 0.01 * densityW * scalingFactor/IPoreVol_;
-        }
-        else if(std::abs(x-P1X) < hX - eps_ && std::abs(y-P1Y) < hY - eps_)
-        {
-            values[contiNEqIdx] = -0.0025 * densityN * scalingFactor/P1PoreVol_;
-        }
-        else if(std::abs(x-P2X) < hX - eps_ && std::abs(y-P2Y) < hY - eps_)
-        {
-            values[contiNEqIdx] = -0.0025 * densityN;
-
-            if(z < hZ )
-            {
-                Scalar pn = elemVolVars[scv].pressure(nPhaseIdx);
-                Scalar mobN = elemVolVars[scv].mobility(nPhaseIdx);
-
-                auto K = this->spatialParams().permeability(element, scv,
-                        this->model().elementSolution(element, this->model().curSol()));
-                values[contiNEqIdx] = densityN * K[0][0] * mobN * (1.0e5 - pn);
-            }
-
-            values[contiNEqIdx] *= scalingFactor/P2PoreVol_;
-        }
-        else if(std::abs(x-P3X) < hX - eps_ && std::abs(y-P3Y) < hY - eps_)
-        {
-            values[contiNEqIdx] = -0.0025 * densityN * scalingFactor/P3PoreVol_;
-        }
-        else if(std::abs(x-P4X) < hX - eps_ && std::abs(y-P4Y) < hY - eps_)
-        {
-            values[contiNEqIdx] = -0.0025 * densityN * scalingFactor/P4PoreVol_;
-        }
-
-        values[contiWEqIdx] /= element.geometry().volume();
-        values[contiNEqIdx] /= element.geometry().volume();
+//        auto globalPos = scv.center();
+//        Scalar x = globalPos[0];
+//        Scalar y = globalPos[1];
+//        Scalar z = globalPos[2];
+//
+//        Scalar IX = 185.928;
+//        Scalar IY = 336.804;
+//
+//        Scalar P1X = 0.0;
+//        Scalar P1Y = 0.0;
+//
+//        Scalar P2X = 365.76;
+//        Scalar P2Y = 0.0;
+//
+//        Scalar P3X = 365.76;
+//        Scalar P3Y = 670.56;
+//
+//        Scalar P4X = 0.0;
+//        Scalar P4Y = 670.56;
+//
+//        Scalar hX = 6.096;
+//        Scalar hY = 3.048;
+//        Scalar hZ = 0.6096;
+//
+//        Scalar lZ = this->bBoxMax()[dim-1];
+//
+//        typename GET_PROP_TYPE(TypeTag, FluidState) fluidState;
+//        fluidState.setTemperature(temperature_);
+//        fluidState.setPressure(FluidSystem::wPhaseIdx, /*pressure=*/1e5);
+//        fluidState.setPressure(FluidSystem::nPhaseIdx, /*pressure=*/1e5);
+//        Scalar densityN = FluidSystem::density(fluidState, FluidSystem::nPhaseIdx);
+//        Scalar densityW = FluidSystem::density(fluidState, FluidSystem::wPhaseIdx);
+//
+//        auto poro = this->spatialParams().porosity(element, scv,
+//                this->model().elementSolution(element, this->model().curSol()));
+//
+//        auto K = this->spatialParams().permeability(element, scv,
+//                this->model().elementSolution(element, this->model().curSol()));
+//
+//        Scalar pi = 4.0*atan(1.0);
+//        Scalar rw = 0.2;
+//        Scalar re = 0.14*std::sqrt(hX*hX + hY*hY);
+//
+//        Scalar pbhI = 6.8948e7;
+//        Scalar pbhP = 2.7579e7;
+//
+//        Scalar pn = elemVolVars[scv].pressure(nPhaseIdx);
+//        Scalar pw = elemVolVars[scv].pressure(wPhaseIdx);
+//        Scalar mobN = elemVolVars[scv].mobility(nPhaseIdx);
+//        Scalar viscosityW = elemVolVars[scv].fluidState().viscosity(wPhaseIdx);
+//
+//        if(std::abs(x-IX) < hX - eps_ && std::abs(y-IY) < hY - eps_)
+//        {
+//            values[contiWEqIdx] = (2.0*pi*hZ*K[0][0]*densityW)/(std::log(re/rw)*viscosityW) * (pbhI - pw);
+//        }
+//        else if(std::abs(x-P1X) < hX - eps_ && std::abs(y-P1Y) < hY - eps_)
+//        {
+//            values[contiNEqIdx] = (2.0*pi*hZ*K[0][0]*densityN)/(std::log(re/rw))*mobN* (pbhP - pn);
+//        }
+//        else if(std::abs(x-P2X) < hX - eps_ && std::abs(y-P2Y) < hY - eps_)
+//        {
+//            values[contiNEqIdx] = (2.0*pi*hZ*K[0][0]*densityN)/(std::log(re/rw))*mobN* (pbhP - pn);
+//        }
+//        else if(std::abs(x-P3X) < hX - eps_ && std::abs(y-P3Y) < hY - eps_)
+//        {
+//            values[contiNEqIdx] = (2.0*pi*hZ*K[0][0]*densityN)/(std::log(re/rw))*mobN* (pbhP - pn);
+//        }
+//        else if(std::abs(x-P4X) < hX - eps_ && std::abs(y-P4Y) < hY - eps_)
+//        {
+//            values[contiNEqIdx] = (2.0*pi*hZ*K[0][0]*densityN)/(std::log(re/rw))*mobN* (pbhP - pn);
+//        }
+//
+//        values[contiWEqIdx] /= element.geometry().volume();
+//        values[contiNEqIdx] /= element.geometry().volume();
 
         return values;
 
@@ -473,14 +474,54 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllNeumann();
+        Scalar hX = 6.096;
+        Scalar hY = 3.048;
+
+        Scalar x = globalPos[0];
+        Scalar y = globalPos[1];
+
+        auto xMax = this->bBoxMax();
+        auto xMin = this->bBoxMin();
+
+        if((std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY) ||
+           (std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY))
+        {
+            values.setAllDirichlet();
+        }
+        else
+        {
+            values.setAllNeumann();
+        }
 
         return values;
     }
 
-    PrimaryVariables dirichlet(const Element &element, const SubControlVolumeFace &scvf) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0);
+
+        Scalar pbhI = 6.8948e7;
+        Scalar pbhP = 2.7579e7;
+
+        Scalar hX = 6.096;
+        Scalar hY = 3.048;
+
+        Scalar x = globalPos[0];
+        Scalar y = globalPos[1];
+
+        auto xMax = this->bBoxMax();
+        auto xMin = this->bBoxMin();
+
+        if(std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY)
+        {
+            values[pwIdx] = pbhI;
+            values[snIdx] = 0.0;
+        }
+        else if(std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY)
+        {
+            values[pwIdx] = pbhP;
+            values[snIdx] = 1.0;
+        }
 
         return values;
     }
@@ -527,7 +568,7 @@ public:
 
         Scalar depth = this->bBoxMax()[dim-1] - globalPos[dim-1];
 
-        values[pwIdx] = 1.0e5 - densityW*this->gravity()[dim-1]*depth;
+        values[pwIdx] = 1.0e7 - densityW*this->gravity()[dim-1]*depth;
         values[snIdx] = 1.0;
 
         return values;
@@ -603,6 +644,59 @@ public:
 //
 //        file.close();
 //    }
+
+        void postTimeStep()
+        {
+            ParentType::postTimeStep();
+
+            auto uCur = this->model().curSol();
+
+            std::ofstream fileInj;
+            std::string outname = "spe10_tpfa_full3D";
+            outname.append(std::to_string(this->timeManager().timeStepIndex()));
+            outname.append("_solInj.txt");
+            fileInj.open(outname, std::ios::out);
+            if (fileInj.fail())
+                throw std::ios_base::failure(std::strerror(errno));
+
+            std::ofstream fileProd;
+            outname = "spe10_tpfa_full3D";
+            outname.append(std::to_string(this->timeManager().timeStepIndex()));
+            outname.append("_solProd.txt");
+            fileProd.open(outname, std::ios::out);
+            if (fileProd.fail())
+                throw std::ios_base::failure(std::strerror(errno));
+
+            for (const auto& element : elements(this->gridView()))
+            {
+                auto globalPos = element.geometry().center();
+                Scalar hX = 6.096;
+                Scalar hY = 3.048;
+
+                Scalar x = globalPos[0];
+                Scalar y = globalPos[1];
+
+                auto xMax = this->bBoxMax();
+                auto xMin = this->bBoxMin();
+
+                if(std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY)
+                {
+                    int eIdx = this->elementMapper().index(element);
+                    fileInj << uCur[eIdx][snIdx] <<  "\n";
+                    fileInj << uCur[eIdx][pwIdx] <<  "\n";
+                }
+                else if(std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY)
+                {
+                    int eIdx = this->elementMapper().index(element);
+                    fileProd << uCur[eIdx][snIdx] <<  "\n";
+                    fileProd << uCur[eIdx][pwIdx] <<  "\n";
+                }
+            }
+
+
+            fileInj.close();
+            fileProd.close();
+        }
 
     // \}
 

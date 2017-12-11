@@ -9,8 +9,8 @@ LowerLeft = 0 0 0
 Cells = 60 220 85 #  [-] resolution in x-direction
 
 [Problem]
-Name = spe10_tpfa_full3D
-EpisodeLength = 5e6
+Name = spe10_tpfa_full3D_dirichlet
+EpisodeLength = 864000
 PressureIn = 3e7
 PressureOut = 1e7
 
