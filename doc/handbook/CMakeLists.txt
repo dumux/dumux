@@ -21,15 +21,7 @@ set(TEX_INPUTS
   5_grids.tex
   5_models.tex
   5_propertysystem.tex
-  5_spatialdiscretizations.tex
-  ../../tutorial/tutorial_implicit.cc
-  ../../tutorial/tutorial_implicit.input
-  ../../tutorial/tutorialproblem_implicit.hh
-  ../../tutorial/tutorialspatialparams_implicit.hh
-  ../../tutorial/tutorial_sequential.cc
-  ../../tutorial/tutorial_sequential.input
-  ../../tutorial/tutorialproblem_sequential.hh
-  ../../tutorial/tutorialspatialparams_sequential.hh)
+  5_spatialdiscretizations.tex)
 
 set(TEX_IMAGES
   PNG/box_disc.png
