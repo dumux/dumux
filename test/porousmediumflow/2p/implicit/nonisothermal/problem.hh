@@ -27,6 +27,7 @@
 #ifndef DUMUX_INJECTION_PROBLEM_2PNI_HH
 #define DUMUX_INJECTION_PROBLEM_2PNI_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
@@ -37,7 +38,7 @@
 #include <dumux/material/components/n2.hh>
 
 // use the spatial parameters as the injection problem of the 2p2c test program
-#include "test/porousmediumflow/2p2c/implicit/injectionspatialparams.hh"
+#include <test/porousmediumflow/2p2c/implicit/injectionspatialparams.hh>
 
 namespace Dumux {
 
@@ -57,6 +58,7 @@ SET_TYPE_PROP(InjectionProblem2PNI, Problem, InjectionProblem2PNI<TypeTag>);
 
 // Use the same fluid system as the 2p2c injection problem
 SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+} // namespace Properties
 
 /*!
  * \ingroup TwoPModel
@@ -302,6 +304,7 @@ private:
     static constexpr Scalar eps_ = 1.5e-7;
     std::string name_;
 };
-} //end namespace
+
+} //end namespace Dumux
 
 #endif
