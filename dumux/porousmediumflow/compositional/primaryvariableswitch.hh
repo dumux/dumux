@@ -25,6 +25,9 @@
 #define DUMUX_PRIMARY_VARIABLE_SWITCH_HH
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
