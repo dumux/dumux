@@ -26,25 +26,17 @@
 #ifndef DUMUX_NEWTONMETHOD_HH
 #define DUMUX_NEWTONMETHOD_HH
 
-#include <dumux/common/exceptions.hh>
-#include <dumux/common/properties.hh>
+#include <memory>
+#include <iostream>
 
 #include <dune/common/timer.hh>
 #include <dune/istl/istlexception.hh>
 
-#include <iostream>
+#include <dumux/common/exceptions.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
-// forward declaration of property tags
-namespace Properties
-{
-// create a new type tag for models which apply the newton method
-NEW_TYPE_TAG(NewtonMethod);
-
-NEW_PROP_TAG(SolutionVector);
-NEW_PROP_TAG(JacobianMatrix);
-}
 
 /*!
  * \ingroup Newton
