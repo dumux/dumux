@@ -23,30 +23,29 @@
  */
 #include <config.h>
 
-#include "problem.hh"
-
 #include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
+#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 #include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+
+#include "problem.hh"
 
 /*!
  * \brief Provides an interface for customizing error messages associated with
