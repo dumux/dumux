@@ -36,7 +36,7 @@
 #include "indices.hh"
 #include "vtkoutputfields.hh"
 
-#include <dumux/material/fluidsystems/1p.hh>
+#include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/methods.hh>
 
 /*!

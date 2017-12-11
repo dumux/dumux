@@ -24,10 +24,10 @@
 #ifndef DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 #define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 
-#include "../navierstokes/volumevariables.hh"
-
+#include <dumux/freeflow/navierstokes/volumevariables.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
 
 namespace Dumux
