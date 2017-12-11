@@ -29,13 +29,13 @@
 #include <vector>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/properties.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/discretization/volumevariables.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 
-#include "properties.hh"
 #include "indices.hh"
 
 namespace Dumux
@@ -58,7 +58,6 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -69,7 +68,6 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     enum
     {
         dim = GridView::dimension,
-        dimWorld=GridView::dimensionworld,
 
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
@@ -96,7 +94,6 @@ class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         // primary variable indices
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
-
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
@@ -174,7 +171,6 @@ public:
                                    const Element& element,
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
-
     {
         Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
@@ -276,7 +272,6 @@ public:
                                            knownPhaseIdx,
                                            /*setViscosity=*/true,
                                            /*setEnthalpy=*/false);
-
         }
         else if (phasePresence == nPhaseOnly)
         {
@@ -298,7 +293,6 @@ public:
             for (int compIdx=0; compIdx<numComponents; ++compIdx)
                 fluidState.setMoleFraction(nPhaseIdx, compIdx, moleFrac[compIdx]);
 
-
             // calculate the composition of the remaining phases (as
             // well as the densities of all phases). this is the job
             // of the "ComputeFromReferencePhase" constraint solver
@@ -307,7 +301,6 @@ public:
                                              nPhaseIdx,
                                              /*setViscosity=*/true,
                                              /*setEnthalpy=*/false);
-
         }
         else if (phasePresence == wPhaseOnly)
         {
@@ -519,13 +512,6 @@ private:
     }
 
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
-
-    Implementation &asImp_()
-    { return *static_cast<Implementation*>(this); }
-
-    const Implementation &asImp_() const
-    { return *static_cast<const Implementation*>(this); }
-
 };
 
 } // end namespace Dumux

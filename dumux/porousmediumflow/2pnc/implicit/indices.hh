@@ -24,7 +24,7 @@
  */
 #ifndef DUMUX_2PNC_INDICES_HH
 #define DUMUX_2PNC_INDICES_HH
-#include "properties.hh"
+
 namespace Dumux
 {
 /*!
@@ -54,12 +54,12 @@ class TwoPNCIndices
 
 public:
     // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx;    //!< Index of the wetting phase
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx;    //!< Index of the non-wetting phase
 
     // Component indices
-    static const int wCompIdx = FluidSystem::wCompIdx; //!< Index of the primary component of the wetting phase
-    static const int nCompIdx = FluidSystem::nCompIdx; //!< Index of the primary component of the non-wetting phase
+    static const int wCompIdx = FluidSystem::wCompIdx;      //!< Index of the primary component of the wetting phase
+    static const int nCompIdx = FluidSystem::nCompIdx;      //!< Index of the primary component of the non-wetting phase
 
     // present phases (-> 'pseudo' primary variable)
     static const int wPhaseOnly = 1; //!< Only the non-wetting phase is present
@@ -67,11 +67,11 @@ public:
     static const int bothPhases = 3; //!< Both phases are present
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int switchIdx = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0;    //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int switchIdx = PVOffset + 1;      //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
 
     // equation indices
-    static const int conti0EqIdx = PVOffset + 0; //!< Reference index for mass conservation equations.
+    static const int conti0EqIdx = PVOffset + 0;                        //!< Reference index for mass conservation equations.
     static const int contiWEqIdx = conti0EqIdx + FluidSystem::wCompIdx; //!< Index of the mass conservation equation for the wetting phase major component
     static const int contiNEqIdx = conti0EqIdx + FluidSystem::nCompIdx; //!< Index of the mass conservation equation for the non-wetting phase major component
 };

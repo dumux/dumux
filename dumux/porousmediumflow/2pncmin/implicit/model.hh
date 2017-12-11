@@ -92,7 +92,7 @@
 #ifndef DUMUX_2PNCMIN_MODEL_HH
 #define DUMUX_2PNCMIN_MODEL_HH
 
-#include <dumux/porousmediumflow/2pnc/implicit/properties.hh>
+#include <dumux/porousmediumflow/2pnc/implicit/model.hh>
 #include <dumux/porousmediumflow/mineralization/model.hh>
 
 namespace Dumux
