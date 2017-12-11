@@ -42,7 +42,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/io/vtknestedfunction.hh>
 
 namespace Dumux
 {
