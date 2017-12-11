@@ -1,32 +1,30 @@
 #include <config.h>
 #include <iostream>
-#include <unordered_map>
 
-#include <dune/common/parametertreeparser.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/vtk.hh>
+#include <dune/grid/io/file/gmshreader.hh>
+#include <dune/grid/yaspgrid.hh>
 
-#include <dumux/io/gridcreator.hh>
-#include <dumux/common/basicproperties.hh>
+#if HAVE_DUNE_FOAMGRID
+#include <dune/foamgrid/foamgrid.hh>
+#include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+#include <dune/foamgrid/dgffoam.hh>
+#else
+#include <dune/foamgrid/dgffoam.cc>
+#endif
+#endif
+
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/boundingboxtree.hh>
 
 namespace Dumux {
 
-namespace Properties
-{
-    NEW_TYPE_TAG(BBoxTreeTest, INHERITS_FROM(NumericModel));
-#if HAVE_UG
-    SET_TYPE_PROP(BBoxTreeTest, Grid, Dune::UGGrid<3>);
-#else
-    SET_TYPE_PROP(BBoxTreeTest, Grid, Dune::YaspGrid<3>);
-#endif
-}
-
-template<class TypeTag>
+template<class Grid>
 class BBoxTreeTests
 {
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename Grid::LeafGridView;
     using Scalar = typename Grid::ctype;
     enum { dimWorld = Grid::dimensionworld };
@@ -128,8 +126,7 @@ int main (int argc, char *argv[]) try
     Dune::MPIHelper::instance(argc, argv);
 
     // Some aliases two type tags for tests using two grids
-    using TypeTag = TTAG(BBoxTreeTest);
-    using Grid = GET_PROP_TYPE(TypeTag, Grid);
+    using Grid = Dune::YaspGrid<3>;
     using Scalar = Grid::ctype;
     enum { dimWorld = Grid::dimensionworld };
     enum { dim = Grid::dimension };
@@ -137,7 +134,7 @@ int main (int argc, char *argv[]) try
 
     // collect returns to determine exit code
     std::vector<int> returns;
-    Dumux::BBoxTreeTests<TypeTag> test;
+    Dumux::BBoxTreeTests<Grid> test;
 
     for (const auto scaling : {1e10, 1.0, 1e-3, 1e-10})
     {

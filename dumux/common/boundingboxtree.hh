@@ -31,6 +31,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/exceptions.hh>
 #include <dumux/common/math.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/geometrycollision.hh>
 
 namespace Dumux {
