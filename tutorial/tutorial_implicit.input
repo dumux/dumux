@@ -1,7 +1,0 @@
-[TimeManager]
-TEnd = 500000 # duration of the simulation [s]
-DtInitial = 10 # initial time step size [s]
-
-[Grid]
-UpperRight = 300 60 # x-/y-coordinates of the upper-right corner of the grid [m]
-Cells = 100 1 # x-/y-resolution of the grid
