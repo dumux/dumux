@@ -156,7 +156,8 @@ int main(int argc, char** argv) try
     }
 
     // Do refinement for the initial conditions using our indicator
-    indicator.calculate(x, refineTol, coarsenTol);
+    // we set coarsen tolerance to 0.0 because we do not want any coarsening to be done here
+    indicator.calculate(x, refineTol, /*coarsenTol*/0.0);
 
     bool wasAdapted = false;
     if (markElements(GridCreator::grid(), indicator))
