@@ -6,8 +6,8 @@ dune_add_test(NAME test_2p1cni_box
               COMPILE_DEFINITIONS TYPETAG=TwoPOneCNIBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
-                        --files ${CMAKE_SOURCE_DIR}/test/references/1p2cniccmpfaconvection-reference.vtu
-                                ${CMAKE_CURRENT_BINARY_DIR}/1p2cni_convectiontest_mpfa-00010.vtu
+                        --files ${CMAKE_SOURCE_DIR}/test/references/steaminjectionbox-reference.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/test_boxsteaminjection-00006.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p1cni_box test_boxsteaminjection.input")
 
 dune_add_test(NAME test_2p1cni_tpfa
