@@ -12,6 +12,7 @@ import xml.etree.ElementTree as ET
 from operator import attrgetter, itemgetter
 import json
 import sys
+import math
 from six.moves import range
 from six.moves import zip
 
@@ -141,6 +142,15 @@ def is_fuzzy_equal_text(text1, text2, parameter, numComp, absolute, relative, ze
         # get the order of magnitude of the parameter by calculating the max
         floatList1 = [float(i) for i in list1]
         floatList2 = [float(i) for i in list2]
+
+        # check for nan and inf
+        for number1, number2 in zip(floatList1, floatList2):
+            if math.isnan(number1) or math.isnan(number2):
+                print('Parameter {} contains NaN!'.format(parameter))
+                return False
+            if math.isinf(number1) or math.isinf(number2):
+                print('Parameter {} contains inf!'.format(parameter))
+                return False
 
         # manipulate the data set for the sake of sensible comparison
         # if the parameter is listed in the zeroThreshold dictionary replace all float under threshold with zero.
