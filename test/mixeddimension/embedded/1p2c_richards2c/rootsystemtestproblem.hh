@@ -54,7 +54,7 @@ NEW_TYPE_TAG(RootsystemTestCCProblem, INHERITS_FROM(CCTpfaModel, RootsystemTestP
 SET_PROP(RootsystemTestProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhaseTwoC<TypeTag, SimpleH2O<Scalar>, Constant<TypeTag,Scalar>>;
+    using type = FluidSystems::LiquidPhaseTwoC<Scalar, SimpleH2O<Scalar>, Constant<TypeTag,Scalar>>;
 };
 
 // Set the grid type

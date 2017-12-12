@@ -67,7 +67,7 @@ SET_TYPE_PROP(RichardsTestProblem, Problem, RichardsTestProblem<TypeTag>);
 SET_PROP(RichardsTestProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhaseTwoC<TypeTag, SimpleH2O<Scalar>, Constant<TypeTag,Scalar>>;
+    using type = FluidSystems::LiquidPhaseTwoC<Scalar, SimpleH2O<Scalar>, Constant<TypeTag,Scalar>>;
 };
 
 // Set the spatial parameters

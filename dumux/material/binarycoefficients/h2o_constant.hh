@@ -27,8 +27,6 @@
 #include <dune/common/exceptions.hh>
 
 #include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
-
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/constant.hh>
 
@@ -42,7 +40,7 @@ namespace BinaryCoeff
  * \brief Binary coefficients for water and another component.
  * \todo All other binary coefficient could be generalized like this
  */
-template<class TypeTag, class Component>
+template<class Scalar, class Component>
 class H2O_Component
 {
     H2O_Component()
@@ -55,8 +53,8 @@ class H2O_Component
 /*!
  * \brief Binary coefficients for water and a constant component
  */
-template<class TypeTag, int id>
-class H2O_Component<TypeTag, Components::Constant<id, typename GET_PROP_TYPE(TypeTag, Scalar)>>
+template<class Scalar, int id>
+class H2O_Component<Scalar, Components::Constant<id, Scalar>>
 {
 public:
     /*!
@@ -66,7 +64,6 @@ public:
      *
      */
 
-    template <class Scalar>
     static Scalar henryCompInWater(Scalar temperature)
     {
         static const Scalar h = getParamFromGroup<Scalar>(std::to_string(id), "Component.HenryComponentInWater", 1.0);
@@ -80,7 +77,6 @@ public:
      *
      */
 
-    template <class Scalar>
     static Scalar henryWaterInComp(Scalar temperature)
     {
         static const Scalar h = getParamFromGroup<Scalar>(std::to_string(id), "Component.HenryWaterInComponent", 1.0);
@@ -92,7 +88,6 @@ public:
      * \brief Binary diffusion coefficent \f$m^2/s\f$ for molecular water and heavy oil.
      *
      */
-    template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
         static const Scalar D = getParamFromGroup<Scalar>(std::to_string(id), "Component.GasDiffusionCoefficient", 1.0);
@@ -104,7 +99,6 @@ public:
      *
      * \todo
      */
-    template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
         static const Scalar D = getParamFromGroup<Scalar>(std::to_string(id), "Component.LiquidDiffusionCoefficient", 1.0);

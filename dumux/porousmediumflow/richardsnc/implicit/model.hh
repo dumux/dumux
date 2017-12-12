@@ -103,7 +103,7 @@ SET_TYPE_PROP(RichardsNC, VolumeVariables, RichardsNCVolumeVariables<TypeTag>);
 SET_PROP(RichardsNC, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::LiquidPhaseTwoC<TypeTag, SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
+    using type = FluidSystems::LiquidPhaseTwoC<Scalar, SimpleH2O<Scalar>, Components::Constant<1, Scalar>>;
 };
 
 /*!

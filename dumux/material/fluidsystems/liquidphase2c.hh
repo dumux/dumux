@@ -41,15 +41,13 @@ namespace FluidSystems
  * \brief A liquid phase consisting of a two components,
  *        a main component and a conservative tracer component
  */
-template <class TypeTag, class MainComponent, class SecondComponent>
+template <class Scalar, class MainComponent, class SecondComponent>
 class LiquidPhaseTwoC
-: public BaseFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar),
-                         LiquidPhaseTwoC<TypeTag, MainComponent, SecondComponent> >
+: public BaseFluidSystem<Scalar, LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent> >
 {
-    using ThisType = LiquidPhaseTwoC<TypeTag, MainComponent, SecondComponent>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ThisType = LiquidPhaseTwoC<Scalar, MainComponent, SecondComponent>;
     using Base = BaseFluidSystem<Scalar, ThisType>;
-    using BinaryCoefficients = BinaryCoeff::H2O_Component<TypeTag, SecondComponent>;
+    using BinaryCoefficients = BinaryCoeff::H2O_Component<Scalar, SecondComponent>;
 
 public:
     using ParameterCache = NullParameterCache;
