@@ -64,31 +64,31 @@ public:
      * \brief Returns true if the gas phase is assumed to be compressible
      */
     static constexpr bool gasIsCompressible()
-    { DUNE_THROW(Dune::NotImplemented, "Component::gasIsCompressible()"); }
+    { return Implementation::gasIsCompressible(); }
 
     /*!
      * \brief Returns true if the gas phase viscostiy is constant
      */
     static constexpr bool gasViscosityIsConstant()
-    { DUNE_THROW(Dune::NotImplemented, "Component::gasViscosityIsConstant()"); }
+    { return Implementation::gasViscosityIsConstant(); }
 
     /*!
      * \brief Returns true if the gas phase is assumed to be ideal
      */
     static constexpr bool gasIsIdeal()
-    { DUNE_THROW(Dune::NotImplemented, "Component::gasIsCompressible()"); }
+    { return Implementation::gasIsCompressible(); }
 
     /*!
      * \brief Returns true if the liquid phase is assumed to be compressible
      */
     static constexpr bool liquidIsCompressible()
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidIsCompressible()"); }
+    { return Implementation::liquidIsCompressible(); }
 
     /*!
      * \brief Returns true if the liquid phase viscostiy is constant
      */
     static constexpr bool liquidViscosityIsConstant()
-    { DUNE_THROW(Dune::NotImplemented, "Component::liquidViscosityIsConstant()"); }
+    { return Implementation::liquidViscosityIsConstant(); }
 
     /*!
      * \brief A human readable name for the component.
