@@ -66,7 +66,7 @@ public:
 
 
 //Define whether spurious cold-water flow into the steam is blocked
-SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, false);
+SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
 }
 
 //TODO: Names

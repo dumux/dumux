@@ -33,6 +33,7 @@
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
+
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
@@ -40,6 +41,7 @@
 
 #include <dumux/porousmediumflow/2p/implicit/vtkoutputfields.hh>
 
+#include "darcyslaw.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
@@ -152,6 +154,8 @@ SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);                 //! 
 
  //! Determines whether Blocking ofspurious flow is used
  SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
+
+ SET_TYPE_PROP(TwoPOneCNI, AdvectionType, TwoPOneCDarcysLaw<TypeTag>);
 
   SET_TYPE_PROP(TwoPOneCNI, VolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
 
