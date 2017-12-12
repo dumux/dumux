@@ -82,9 +82,7 @@ public:
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             moleOrMassFraction_[compIdx] = this->priVars()[compIdx];
-
-            diffCoeff_[compIdx] =
-                FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
+            diffCoeff_[compIdx] = FluidSystem::binaryDiffusionCoefficient(compIdx, problem, element, scv);
         }
     }
 
@@ -165,9 +163,6 @@ protected:
     GlobalPosition dispersivity_;
     std::array<Scalar, numComponents> diffCoeff_;
     std::array<Scalar, numComponents> moleOrMassFraction_;
-
-private:
-    const Problem* problem_;
 };
 
 } // end namespace Dumux
