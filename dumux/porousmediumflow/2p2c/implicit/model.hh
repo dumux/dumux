@@ -78,10 +78,5 @@
 #define DUMUX_2P2C_MODEL_HH
 
 #include "properties.hh"
-#include "indices.hh"
-#include "volumevariables.hh"
-#include "primaryvariableswitch.hh"
-#include "vtkoutputfields.hh"
-#include "propertydefaults.hh"
 
 #endif

@@ -24,14 +24,13 @@
 #ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 #define DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
 
+#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
 #include <dumux/io/plotmateriallaw.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
-
-#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
 
 namespace Dumux
 {
@@ -83,8 +82,8 @@ public:
      *
      * \param gridView The grid view
      */
-    WaterAirSpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView)
+    WaterAirSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         layerBottom_ = 22.0;
 
@@ -111,8 +110,7 @@ public:
         fineMaterialParams_.setLambda(2.0);
         coarseMaterialParams_.setLambda(2.0);
 
-        plotFluidMatrixInteractions_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Output,
-                                                                    PlotFluidMatrixInteractions);
+        plotFluidMatrixInteractions_ = getParam<bool>("Output.PlotFluidMatrixInteractions");
     }
 
     /*!
@@ -121,7 +119,7 @@ public:
      */
     void plotMaterialLaw()
     {
-        PlotMaterialLaw<TypeTag> plotMaterialLaw;
+        PlotMaterialLaw<Scalar, MaterialLaw> plotMaterialLaw;
         GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
         gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
         plotMaterialLaw.addpcswcurve(gnuplot, fineMaterialParams_, 0.2, 1.0, "fine", "w lp");
@@ -136,13 +134,16 @@ public:
         gnuplot.plot("kr");
 
         gnuplot.resetAll();
-        PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+        using EffDiffModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
+        PlotEffectiveDiffusivityModel<Scalar, EffDiffModel> plotEffectiveDiffusivityModel;
         plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, finePorosity_, 0.0, 1.0, "fine");
         plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, coarsePorosity_, 0.0, 1.0, "coarse");
         gnuplot.plot("deff");
 
         gnuplot.resetAll();
-        PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel;
+        using ThermCondModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+        PlotThermalConductivityModel<Scalar, ThermCondModel, FluidSystem> plotThermalConductivityModel;
         plotThermalConductivityModel.addlambdaeffcurve(gnuplot, finePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "fine");
         plotThermalConductivityModel.addlambdaeffcurve(gnuplot, coarsePorosity_, 2700.0, lambdaSolid_, 0.0, 1.0, "coarse");
         gnuplot.plot("lambdaeff");
@@ -218,7 +219,8 @@ public:
 
 private:
     bool isFineMaterial_(const GlobalPosition &globalPos) const
-    { return globalPos[dimWorld-1] > layerBottom_; }
+    { return true; }
+    //{ return globalPos[dimWorld-1] > layerBottom_; }
 
     Scalar fineK_;
     Scalar coarseK_;

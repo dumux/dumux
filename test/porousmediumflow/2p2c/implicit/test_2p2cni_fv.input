@@ -1,5 +1,6 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 250 # [s]
+MaxTimeStepSize = 1000
 TEnd = 1e4 # [s]
 
 [Grid]
@@ -8,7 +9,13 @@ UpperRight = 40 40
 Cells = 64 64
 
 [Problem]
-Name = wateraircc
+Name = waterair
 
 [Output]
 PlotFluidMatrixInteractions = false
+
+[LinearSolver]
+ResidualReduction = 1e-10
+
+[Newton]
+MaxRelativeShift = 1e-13

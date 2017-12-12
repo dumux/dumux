@@ -25,15 +25,16 @@
 #ifndef DUMUX_WATER_AIR_PROBLEM_HH
 #define DUMUX_WATER_AIR_PROBLEM_HH
 
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/material/fluidsystems/h2on2.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/methods.hh>
 
+#include <dumux/material/components/n2.hh>
+#include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/porousmediumflow/2p2c/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
 #include "waterairspatialparams.hh"
-
-#define ISOTHERMAL 0
 
 namespace Dumux
 {
@@ -42,21 +43,21 @@ class WaterAirProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(TwoPTwoCNI, WaterAirSpatialParams));
-NEW_TYPE_TAG(WaterAirBoxProblem, INHERITS_FROM(BoxModel, WaterAirProblem));
-NEW_TYPE_TAG(WaterAirCCProblem, INHERITS_FROM(CCTpfaModel, WaterAirProblem));
+NEW_TYPE_TAG(WaterAirTypeTag, INHERITS_FROM(TwoPTwoCNI, WaterAirSpatialParams));
+NEW_TYPE_TAG(WaterAirBoxTypeTag, INHERITS_FROM(BoxModel, WaterAirTypeTag));
+NEW_TYPE_TAG(WaterAirCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, WaterAirTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(WaterAirProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(WaterAirTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(WaterAirProblem, Problem, WaterAirProblem<TypeTag>);
+SET_TYPE_PROP(WaterAirTypeTag, Problem, WaterAirProblem<TypeTag>);
 
 // Set the wetting phase
-SET_TYPE_PROP(WaterAirProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(WaterAirTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(WaterAirProblem, UseMoles, true);
+SET_BOOL_PROP(WaterAirTypeTag, UseMoles, true);
 }
 
 
@@ -95,12 +96,11 @@ SET_BOOL_PROP(WaterAirProblem, UseMoles, true);
  * <tt>./test_cc2p2cni</tt>
  *  */
 template <class TypeTag >
-class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
+class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
@@ -110,10 +110,8 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
         wCompIdx = FluidSystem::wCompIdx,
         nCompIdx = FluidSystem::nCompIdx,
 
-#if !ISOTHERMAL
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx,
-#endif
 
         // Phase State
         wPhaseOnly = Indices::wPhaseOnly,
@@ -127,19 +125,17 @@ class WaterAirProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
@@ -151,14 +147,14 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    WaterAirProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    WaterAirProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
     {
         maxDepth_ = 1000.0; // [m]
 
         FluidSystem::init();
 
-        name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        name_ = getParam<std::string>("Problem.Name");
 
         //stating in the console whether mole or mass fractions are used
         if(useMoles)
@@ -182,31 +178,6 @@ public:
     const std::string& name() const
     { return name_; }
 
-#if ISOTHERMAL
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * \param element The element
-     * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param scvIdx The local vertex index (SCV index)
-     *
-     * This problem assumes a temperature of 10 degrees Celsius.
-     */
-    Scalar temperature() const
-    {
-        return 273.15 + 10; // -> 10°C
-    }
-#endif
-
-    //! \copydoc Dumux::ImplicitProblem::source()
-    PrimaryVariables source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
-    {
-        return PrimaryVariables(0.0);
-    }
-
     // \}
 
     /*!
@@ -229,9 +200,6 @@ public:
         else
             bcTypes.setAllNeumann();
 
-#if !ISOTHERMAL
-        bcTypes.setDirichlet(temperatureIdx);
-#endif
         return bcTypes;
     }
 
@@ -253,32 +221,40 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * \param values The neumann values for the conservation equations
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry in the box scheme
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local vertex index
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param elemVolVars The stencil volume variables
+     * \param scvf The sub control volume boundary face
      *
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      *
      * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
-    PrimaryVariables neumann(const Element& element,
-                             const FVElementGeometry& fvGeometry,
-                             const ElementVolumeVariables& elemVolVars,
-                             const SubControlVolumeFace& scvf) const
+    NeumannFluxes neumann(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
 
         const auto& globalPos = scvf.ipGlobal();
 
-        // negative values for injection
-        if (globalPos[0] > 15 - eps_ && globalPos[0] < 25 + eps_ && globalPos[1] < eps_)
+        // we inject pure gasious nitrogen at the initial condition temperature and pressure  from the bottom (negative values mean injection)
+        if (globalPos[0] > 14.8 - eps_ && globalPos[0] < 25.2 + eps_ && globalPos[1] < eps_)
         {
-            values[contiNEqIdx] = -1e-3/FluidSystem::molarMass(nCompIdx); //(kg/(m^2*s) or mole/(m^2*s) )
+            values[contiNEqIdx] = useMoles ? -1e-3/FluidSystem::molarMass(nCompIdx) : -1e-3; // kg/(m^2*s) or mole/(m^2*s)
+
+            const auto initial = initial_(globalPos);
+            const auto& mParams = this->spatialParams().materialLawParamsAtPos(globalPos);
+            using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+            const auto pn = initial[pressureIdx] + MaterialLaw::endPointPc(mParams);
+            const auto t = initial[temperatureIdx];
+
+            // note: energy equation is always formulated in terms of mass specific quantities, not per mole
+            values[energyEqIdx] = -1e-3*N2<Scalar>::gasEnthalpy(t, pn);
         }
+
         return values;
     }
 
@@ -301,21 +277,12 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         auto priVars = initial_(globalPos);
-
-#if !ISOTHERMAL
+        // initially there is a heated lens in the domain
         if (globalPos[0] > 20 - eps_ && globalPos[0] < 30 + eps_ && globalPos[1] < 30 + eps_)
-            priVars[temperatureIdx] = 380;
-#endif
+            priVars[temperatureIdx] = 380.0;
+
         return priVars;
     }
-
-    /*!
-     * \brief Evaluate the initial phase state at a given position
-     *
-     * \param globalPos The global position
-     */
-    int initialPhasePresenceAtPos(const GlobalPosition &globalPos)
-    { return wPhaseOnly; }
 
 private:
     // internal method for the initial condition (reused for the
@@ -323,17 +290,19 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
+        priVars.setState(Indices::wPhaseOnly);
         Scalar densityW = 1000.0;
         priVars[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         priVars[switchIdx] = 0.0;
-#if !ISOTHERMAL
-        priVars[temperatureIdx] = 283.0 + (maxDepth_ - globalPos[1])*0.03;
-#endif
+        priVars[temperatureIdx] = initialTemperatureProfile_(globalPos);
         return priVars;
     }
 
+    Scalar initialTemperatureProfile_(const GlobalPosition &globalPos) const
+    { return 283.0 + (maxDepth_ - globalPos[1])*0.03; }
+
     Scalar maxDepth_;
-    static constexpr Scalar eps_ = 1e-6;
+    static constexpr Scalar eps_ = 1e-2;
     std::string name_;
 };
 

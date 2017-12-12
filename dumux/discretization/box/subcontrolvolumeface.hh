@@ -48,6 +48,7 @@ class BoxSubControlVolumeFace
     using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
     using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
     using Geometry = typename ScvfGeometryTraits::Geometry;
+    using BoundaryFlag = typename ScvfGeometryTraits::BoundaryFlag;
 
 public:
     //! The default constructor
@@ -68,6 +69,7 @@ public:
       scvfIndex_(scvfIndex),
       scvIndices_(std::move(scvIndices)),
       boundary_(boundary)
+    , boundaryFlag_{}
     {
         for (const auto& corner : corners_)
             center_ += corner;
@@ -90,6 +92,7 @@ public:
       scvfIndex_(scvfIndex),
       scvIndices_(std:: move(scvIndices)),
       boundary_(boundary)
+    , boundaryFlag_{intersection}
     {
         for (const auto& corner : corners_)
             center_ += corner;
@@ -161,6 +164,12 @@ public:
 #endif
     }
 
+    //! Return the boundary flag
+    typename BoundaryFlag::value_type boundaryFlag() const
+    {
+        return boundaryFlag_.get();
+    }
+
 private:
     CornerStorage corners_;
     GlobalPosition center_;
@@ -169,6 +178,7 @@ private:
     GridIndexType scvfIndex_;
     std::vector<LocalIndexType> scvIndices_;
     bool boundary_;
+    BoundaryFlag boundaryFlag_;
 };
 
 } // end namespace Dumux

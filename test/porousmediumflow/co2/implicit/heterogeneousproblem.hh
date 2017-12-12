@@ -24,15 +24,22 @@
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
 #define DUMUX_HETEROGENEOUS_PROBLEM_HH
 
-#include <dumux/porousmediumflow/co2/implicit/model.hh>
-#include <dumux/porousmediumflow/co2/implicit/volumevariables.hh>
-#include <dumux/material/fluidsystems/brineco2.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/implicit/box/intersectiontovertexbc.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/box/properties.hh>
 
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/co2/implicit/model.hh>
+
+#include <dumux/material/fluidsystems/brineco2.hh>
+#include <dumux/discretization/box/scvftoscvboundarytypes.hh>
 
 #include "heterogeneousspatialparameters.hh"
 #include "heterogeneousco2tables.hh"
+
+// per default use isothermal model
+#ifndef ISOTHERMAL
+#define ISOTHERMAL 1
+#endif
 
 namespace Dumux
 {
@@ -42,35 +49,41 @@ class HeterogeneousProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(HeterogeneousProblem, INHERITS_FROM(TwoPTwoC, HeterogeneousSpatialParams));
-NEW_TYPE_TAG(HeterogeneousBoxProblem, INHERITS_FROM(BoxModel, HeterogeneousProblem));
-NEW_TYPE_TAG(HeterogeneousCCProblem, INHERITS_FROM(CCModel, HeterogeneousProblem));
+NEW_TYPE_TAG(HeterogeneousTypeTag, INHERITS_FROM(TwoPTwoCCO2, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousTypeTag));
+NEW_TYPE_TAG(HeterogeneousCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousTypeTag));
 
 // Set the grid type
-#if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-#else
-SET_TYPE_PROP(HeterogeneousProblem, Grid, Dune::YaspGrid<2>);
-#endif
+SET_TYPE_PROP(HeterogeneousTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_TYPE_PROP(HeterogeneousProblem, Problem, HeterogeneousProblem<TypeTag>);
+SET_TYPE_PROP(HeterogeneousTypeTag, Problem, HeterogeneousProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(HeterogeneousProblem, FluidSystem, BrineCO2FluidSystem<TypeTag>);
-
-// Set the CO2 table to be used; in this case not the the default table
-SET_TYPE_PROP(HeterogeneousProblem, CO2Table, HeterogeneousCO2Tables::CO2Tables);
-
-// Set the salinity mass fraction of the brine in the reservoir
-SET_SCALAR_PROP(HeterogeneousProblem, ProblemSalinity, 1e-1);
-
-//! the CO2 Model and VolumeVariables properties
-SET_TYPE_PROP(HeterogeneousProblem, Model, CO2Model<TypeTag>);
-SET_TYPE_PROP(HeterogeneousProblem, VolumeVariables, CO2VolumeVariables<TypeTag>);
+SET_TYPE_PROP(HeterogeneousTypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                                        HeterogeneousCO2Tables::CO2Tables>);
 
 // Use Moles
-SET_BOOL_PROP(HeterogeneousProblem, UseMoles, false);
+SET_BOOL_PROP(HeterogeneousTypeTag, UseMoles, false);
+
+#if !ISOTHERMAL
+NEW_TYPE_TAG(HeterogeneousNITypeTag, INHERITS_FROM(TwoPTwoCCO2NI, HeterogeneousSpatialParams));
+NEW_TYPE_TAG(HeterogeneousNIBoxTypeTag, INHERITS_FROM(BoxModel, HeterogeneousNITypeTag));
+NEW_TYPE_TAG(HeterogeneousNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, HeterogeneousNITypeTag));
+
+// Set the grid type
+SET_TYPE_PROP(HeterogeneousNITypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+
+// Set the problem property
+SET_TYPE_PROP(HeterogeneousNITypeTag, Problem, HeterogeneousProblem<TypeTag>);
+
+// Set fluid configuration
+SET_TYPE_PROP(HeterogeneousNITypeTag, FluidSystem, FluidSystems::BrineCO2<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                                        HeterogeneousCO2Tables::CO2Tables>);
+
+// Use Moles
+SET_BOOL_PROP(HeterogeneousNITypeTag, UseMoles, false);
+#endif
 }
 
 
@@ -98,15 +111,16 @@ SET_BOOL_PROP(HeterogeneousProblem, UseMoles, false);
  * <tt>./test_ccco2 </tt> or <tt>./test_boxco2 </tt>
  */
 template <class TypeTag >
-class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
+class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 {
-
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
         // Grid and world dimension
@@ -115,7 +129,6 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         lPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::nPhaseIdx
@@ -133,24 +146,29 @@ class HeterogeneousProblem : public ImplicitPorousMediaProblem<TypeTag>
         contiCO2EqIdx = conti0EqIdx + CO2Idx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+#if !ISOTHERMAL
+    enum {
+        temperatureIdx = Indices::temperatureIdx,
+        energyEqIdx = Indices::energyEqIdx,
+    };
+#endif
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using CO2 = Dumux::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
-
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, CO2Table) CO2Table;
-    typedef Dumux::CO2<Scalar, CO2Table> CO2;
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+
+    // the discretization method we are using
+    static constexpr auto discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);
 
 public:
     /*!
@@ -159,38 +177,30 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    HeterogeneousProblem(TimeManager &timeManager,
-                     const GridView &gridView)
-        : ParentType(timeManager, GridCreator::grid().leafGridView()),
-          //Boundary Id Setup:
-          injectionTop_(1),
-          injectionBottom_(2),
-          dirichletBoundary_(3),
-          noFlowBoundary_(4),
-          intersectionToVertexBC_(*this)
+    HeterogeneousProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry)
+    , injectionTop_(1)
+    , injectionBottom_(2)
+    , dirichletBoundary_(3)
+    , noFlowBoundary_(4)
     {
-            nTemperature_       = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.NTemperature);
-            nPressure_          = GET_RUNTIME_PARAM(TypeTag, int, FluidSystem.NPressure);
-            pressureLow_        = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.PressureLow);
-            pressureHigh_       = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.PressureHigh);
-            temperatureLow_     = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.TemperatureLow);
-            temperatureHigh_    = GET_RUNTIME_PARAM(TypeTag, Scalar, FluidSystem.TemperatureHigh);
-            depthBOR_           = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.DepthBOR);
-            name_               = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
-            injectionRate_      = GET_RUNTIME_PARAM(TypeTag, Scalar, Problem.InjectionRate);
+        nTemperature_       = getParam<int>("FluidSystem.NTemperature");
+        nPressure_          = getParam<int>("FluidSystem.NPressure");
+        pressureLow_        = getParam<Scalar>("FluidSystem.PressureLow");
+        pressureHigh_       = getParam<Scalar>("FluidSystem.PressureHigh");
+        temperatureLow_     = getParam<Scalar>("FluidSystem.TemperatureLow");
+        temperatureHigh_    = getParam<Scalar>("FluidSystem.TemperatureHigh");
+        depthBOR_           = getParam<Scalar>("Problem.DepthBOR");
+        name_               = getParam<std::string>("Problem.Name");
+        injectionRate_      = getParam<Scalar>("Problem.InjectionRate");
 
-        /* Alternative syntax:
-         * typedef typename GET_PROP(TypeTag, ParameterTree) ParameterTree;
-         * const Dune::ParameterTree &tree = ParameterTree::tree();
-         * nTemperature_       = tree.template get<int>("FluidSystem.nTemperature");
-         *
-         * + We see what we do
-         * - Reporting whether it was used does not work
-         * - Overwriting on command line not possible
-        */
+#if !ISOTHERMAL
+        injectionPressure_ = getParam<Scalar>("Problem.InjectionPressure");
+        injectionTemperature_ = getParam<Scalar>("Problem.InjectionTemperature");
+#endif
 
         // set the spatial parameters by reading the DGF grid file
-        this->spatialParams().setParams();
+        this->spatialParams().getParamsFromGrid();
 
         // initialize the tables of the fluid system
         FluidSystem::init(/*Tmin=*/temperatureLow_,
@@ -202,32 +212,12 @@ public:
 
         //stating in the console whether mole or mass fractions are used
         if(useMoles)
-        {
             std::cout<<"problem uses mole fractions"<<std::endl;
-        }
         else
-        {
             std::cout<<"problem uses mass fractions"<<std::endl;
-        }
-    }
 
-    /*!
-     * \brief User defined output after the time integration
-     *
-     * Will be called diretly after the time integration.
-     */
-    void postTimeStep()
-    {
-        // Calculate storage terms
-        PrimaryVariables storageL, storageG;
-        this->model().globalPhaseStorage(storageL, lPhaseIdx);
-        this->model().globalPhaseStorage(storageG, gPhaseIdx);
-
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0) {
-            std::cout<<"Storage: liquid=[" << storageL << "]"
-                     << " gas=[" << storageG << "]\n";
-        }
+        // precompute the boundary types for the box method from the cell-centered boundary types
+        scvfToScvBoundaryTypes_.computeBoundaryTypes(*this);
     }
 
     /*!
@@ -235,52 +225,47 @@ public:
      *        from the solution of the current time step to the VTK
      *        writer.
      */
-    void addOutputVtkFields()
+    template<class VTKWriter>
+    void addFieldsToWriter(VTKWriter& vtk)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<double, 1> > ScalarField;
+        const auto numElements = this->fvGridGeometry().gridView().size(0);
+        const auto numDofs = this->fvGridGeometry().numDofs();
 
-         // get the number of degrees of freedom
-         unsigned numDofs = this->model().numDofs();
-         unsigned numElements = this->gridView().size(0);
+        vtkKxx_.resize(numElements);
+        vtkPorosity_.resize(numElements);
+        vtkBoxVolume_.resize(numDofs, 0.0);
 
-         //create required scalar fields
-         ScalarField *Kxx = this->resultWriter().allocateManagedBuffer(numElements);
-         ScalarField *cellPorosity = this->resultWriter().allocateManagedBuffer(numElements);
-         ScalarField *boxVolume = this->resultWriter().allocateManagedBuffer(numDofs);
-         (*boxVolume) = 0;
+        vtk.addField(vtkKxx_, "Kxx");
+        vtk.addField(vtkPorosity_, "cellwisePorosity");
+        vtk.addField(vtkBoxVolume_, "boxVolume");
 
-         //Fill the scalar fields with values
-         ScalarField *rank = this->resultWriter().allocateManagedBuffer(numElements);
+#if !ISOTHERMAL
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(Indices::wPhaseIdx); }, "enthalpyW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(Indices::nPhaseIdx); }, "enthalpyN");
+#else
+        vtkTemperature_.resize(numDofs, 0.0);
+        vtk.addField(vtkTemperature_, "temperature");
+#endif
 
-         FVElementGeometry fvGeometry;
-         VolumeVariables volVars;
+        const auto& gridView = this->fvGridGeometry().gridView();
+        for (const auto& element : elements(gridView))
+        {
+            const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
 
-         for (const auto& element : elements(this->gridView()))
-         {
-             int eIdx = this->elementMapper().index(element);
-             (*rank)[eIdx] = this->gridView().comm().rank();
-             fvGeometry.update(this->gridView(), element);
+            for (const auto& scv : scvs(fvGeometry))
+            {
+                const auto dofIdxGlobal = scv.dofIndex();
+                vtkBoxVolume_[dofIdxGlobal] += scv.volume();
+#if ISOTHERMAL
+                vtkTemperature_[dofIdxGlobal] = initialTemperatureField_(scv.dofPosition());
+#endif
+            }
 
-
-             for (int scvIdx = 0; scvIdx < fvGeometry.numScv; ++scvIdx)
-             {
-                 int dofIdxGlobal = this->model().dofMapper().subIndex(element, scvIdx, dofCodim);
-                 volVars.update(this->model().curSol()[dofIdxGlobal],
-                                *this,
-                                element,
-                                fvGeometry,
-                                scvIdx,
-                                false);
-                 (*boxVolume)[dofIdxGlobal] += fvGeometry.subContVol[scvIdx].volume;
-             }
-             (*Kxx)[eIdx] = this->spatialParams().intrinsicPermeability(element, fvGeometry, /*element data*/ 0);
-             (*cellPorosity)[eIdx] = this->spatialParams().porosity(element, fvGeometry, /*element data*/ 0);
-         }
-
-         //pass the scalar fields to the vtkwriter
-         this->resultWriter().attachDofData(*Kxx, "Kxx", false); //element data
-         this->resultWriter().attachDofData(*cellPorosity, "cellwisePorosity", false); //element data
-         this->resultWriter().attachDofData(*boxVolume, "boxVolume", isBox);
+            vtkKxx_[eIdx] = this->spatialParams().permeability(eIdx);
+            vtkPorosity_[eIdx] = this->spatialParams().porosity(eIdx);
+        }
     }
 
     /*!
@@ -293,7 +278,7 @@ public:
      *
      * This is used as a prefix for files generated by the simulation.
      */
-    const std::string name() const
+    const std::string& name() const
     { return name_; }
 
     /*!
@@ -305,22 +290,7 @@ public:
      * a surface temperature of 10 degrees Celsius.
      */
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
-    {
-        return temperature_(globalPos);
-    }
-
-    /*!
-     * \brief Returns the source term
-     *
-     * \param values Stores the source values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param globalPos The global position
-     */
-    void sourceAtPos(PrimaryVariables &values,
-                const GlobalPosition &globalPos) const
-    {
-        values = 0;
-    }
+    { return initialTemperatureField_(globalPos); }
 
     // \}
 
@@ -333,81 +303,87 @@ public:
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
-     * \param vertex The vertex for which the boundary type is set
+     * \param element The finite element
+     * \param scv The sub control volume
      */
-    void boundaryTypes(BoundaryTypes &values, const Vertex &vertex) const
-    {
-        intersectionToVertexBC_.boundaryTypes(values, vertex);
-    }
+    BoundaryTypes boundaryTypes(const Element &element,
+                                const SubControlVolume &scv) const
+    { return scvfToScvBoundaryTypes_.boundaryTypes(scv); }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param values The boundary types for the conservation equations
-     * \param intersection specifies the intersection at which boundary
-     *           condition is to set
+     * \param element The finite element
+     * \param scvf The sub control volume face
      */
-    void boundaryTypes(BoundaryTypes &values, const Intersection &intersection) const
+    BoundaryTypes boundaryTypes(const Element &element,
+                                const SubControlVolumeFace &scvf) const
     {
-        int boundaryId = intersection.boundaryId();
+        BoundaryTypes bcTypes;
+        const auto boundaryId = scvf.boundaryFlag();
+
         if (boundaryId < 1 || boundaryId > 4)
-        {
-            std::cout<<"invalid boundaryId: "<<boundaryId<<std::endl;
-            DUNE_THROW(Dune::InvalidStateException, "Invalid " << boundaryId);
-        }
+            DUNE_THROW(Dune::InvalidStateException, "Invalid boundary ID: " << boundaryId);
+
         if (boundaryId == dirichletBoundary_)
-            values.setAllDirichlet();
+            bcTypes.setAllDirichlet();
         else
-            values.setAllNeumann();
+            bcTypes.setAllNeumann();
+
+        return bcTypes;
     }
 
     /*!
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
+     * \param returns the Dirichlet values for the conservation equations in
      *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
-    {
-        initial_(values, globalPos);
-    }
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
+    { return initial_(globalPos); }
 
     /*!
-     * \brief Evaluate the boundary conditions for a Neumann
+     * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-      * \param values Stores the Neumann values for the conservation equations in
-     *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param values The neumann values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
-     * \param boundaryFaceIdx The index of the boundary face
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars All volume variables for the element
+     * \param scvf The sub control volume face
      *
-     * The \a values store the mass flux of each phase normal to the boundary.
-     * Negative values indicate an inflow.
-     *
-     * Depending on whether useMoles is set on true or false, the flux has to be given either in
-     * kg/(m^2*s) or mole/(m^2*s) in the input file!! Convertion with molar mass obtained from fluid system FluidSystem::molarMass(nCompIdx)
+     * For this method, the \a values parameter stores the flux
+     * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 int scvIdx,
-                 int boundaryFaceIdx) const
+    NeumannFluxes neumann(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolvars,
+                          const SubControlVolumeFace& scvf) const
     {
-        int boundaryId = intersection.boundaryId();
+        const auto boundaryId = scvf.boundaryFlag();
 
-        values = 0;
+        NeumannFluxes fluxes(0.0);
+         // kg/(m^2*s) or mole/(m^2*s) depending on useMoles
         if (boundaryId == injectionBottom_)
         {
-            values[contiCO2EqIdx] = -injectionRate_; //see above: either give in kg/(m^2*s) or mole/(m^2*s) depending on useMoles
+            fluxes[contiCO2EqIdx] = useMoles ? -injectionRate_/FluidSystem::molarMass(nCompIdx) : -injectionRate_;
+#if !ISOTHERMAL
+            // energy fluxes are always mass specific
+            fluxes[energyEqIdx] = -injectionRate_/*kg/(m^2 s)*/*CO2::gasEnthalpy(
+                                    injectionTemperature_, injectionPressure_)/*J/kg*/; // W/(m^2)
+#endif
         }
+
+        return fluxes;
     }
 
     // \}
@@ -418,29 +394,16 @@ public:
     // \{
 
     /*!
-     * \brief Evaluates the initial values for a control volume
+     * \brief Evaluates the initial values at a position
      *
-     * \param values Stores the initial values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variables} ] \f$
+     * \returns the initial values for the conservation equations in
+     *           \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+        return initial_(globalPos);
     }
-
-    /*!
-     * \brief Returns the initial phase state for a control volume.
-     *
-     * \param vertex The vertex
-     * \param vIdxGlobal The global index of the vertex
-     * \param globalPos The global position
-     */
-    int initialPhasePresence(const Vertex &vertex,
-                             int &vIdxGlobal,
-                             const GlobalPosition &globalPos) const
-    { return Indices::wPhaseOnly; }
 
     // \}
 
@@ -454,39 +417,44 @@ private:
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
      * \param globalPos The global position
      */
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
-        Scalar temp = temperature_(globalPos);
-        Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);
+        PrimaryVariables values(0.0);
+        values.setState(Indices::wPhaseOnly);
 
-        Scalar pl =  1e5 - densityW*this->gravity()[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
-        Scalar moleFracLiquidCO2 = 0.00;
-        Scalar moleFracLiquidBrine = 1.0 - moleFracLiquidCO2;
+        const Scalar temp = initialTemperatureField_(globalPos);
+        const Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);
 
-        Scalar meanM =
-            FluidSystem::molarMass(BrineIdx)*moleFracLiquidBrine +
-            FluidSystem::molarMass(CO2Idx)*moleFracLiquidCO2;
+        const Scalar moleFracLiquidCO2 = 0.00;
+        const Scalar moleFracLiquidBrine = 1.0 - moleFracLiquidCO2;
+
+        const Scalar meanM = FluidSystem::molarMass(BrineIdx)*moleFracLiquidBrine
+                             + FluidSystem::molarMass(CO2Idx)*moleFracLiquidCO2;
+
         if(useMoles) // mole-fraction formulation
-        {
             values[Indices::switchIdx] = moleFracLiquidCO2;
-        }
         else // mass-fraction formulation
-        {
-            Scalar massFracLiquidCO2 = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
-            values[Indices::switchIdx] = massFracLiquidCO2;
-        }
-        values[Indices::pressureIdx] = pl;
+            values[Indices::switchIdx] = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
+
+        values[Indices::pressureIdx] = 1.0e5 - densityW*this->gravity()[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
+
+#if !ISOTHERMAL
+        values[temperatureIdx] = temp;
+#endif
+        return values;
     }
 
-    Scalar temperature_(const GlobalPosition globalPos) const
+    Scalar initialTemperatureField_(const GlobalPosition globalPos) const
     {
-        Scalar T = 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03;
-        return T;
+        return 283.0 + (depthBOR_ - globalPos[dimWorld-1])*0.03;
     }
 
     Scalar depthBOR_;
     Scalar injectionRate_;
+
+#if !ISOTHERMAL
+    Scalar injectionPressure_, injectionTemperature_;
+#endif
 
     int nTemperature_;
     int nPressure_;
@@ -501,8 +469,11 @@ private:
     int dirichletBoundary_;
     int noFlowBoundary_;
 
-    const IntersectionToVertexBC<TypeTag> intersectionToVertexBC_;
+    // vtk output
+    std::vector<Scalar> vtkKxx_, vtkPorosity_, vtkBoxVolume_, vtkTemperature_;
+    ScvfToScvBoundaryTypes<BoundaryTypes, discMethod> scvfToScvBoundaryTypes_;
 };
-} //end namespace
+
+} //end namespace Dumux
 
 #endif

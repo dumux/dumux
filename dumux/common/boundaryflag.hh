@@ -16,25 +16,69 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
  *
- * \brief Provides the class with the tabulated values of CO2 density
- *        and enthalpy
+ * \brief Boundary flag to store e.g. in sub control volume faces
  */
-#ifndef DUMUX_HETEROGENEOUS_CO2TABLES_HH
-#define DUMUX_HETEROGENEOUS_CO2TABLES_HH
+#ifndef DUMUX_BOUNDARY_FLAG_HH
+#define DUMUX_BOUNDARY_FLAG_HH
 
-#include <dumux/material/components/co2tablereader.hh>
+// ALUGrid specific includes
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#endif
 
-namespace Dumux {
-namespace HeterogeneousCO2Tables {
+namespace Dumux
+{
 
-// the real work is done by some external program which provides
-// ready-to-use tables.
-#include "co2values.inc"
+//! a boundary flag class specialized on the grid type
+template<class Grid>
+class BoundaryFlag
+{
+public:
+    BoundaryFlag() : flag_(-1) {}
 
-} // end namespace HeterogeneousCO2Tables
-} // end namespace Dumux
+    template<class Intersection>
+    BoundaryFlag(const Intersection& i) : flag_(-1)
+    {
+        if (i.boundary())
+            flag_ = i.boundarySegmentIndex();
+    }
+
+    using value_type = std::size_t;
+
+    value_type get() const { return flag_; }
+
+private:
+    value_type flag_;
+};
+
+
+#if HAVE_DUNE_ALUGRID && DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
+//! alu uses boundary id
+template<int dim, int dimworld, Dune::ALUGridElementType elType, Dune::ALUGridRefinementType refinementType>
+class BoundaryFlag<Dune::ALUGrid<dim, dimworld, elType, refinementType>>
+{
+public:
+    BoundaryFlag() : flag_(-1) {}
+
+    template<class Intersection>
+    BoundaryFlag(const Intersection& i) : flag_(-1)
+    {
+        if (i.boundary())
+            flag_ = i.boundaryId();
+    }
+
+    using value_type = int;
+
+    value_type get() const { return flag_; }
+
+private:
+    int flag_;
+};
+#endif
+
+}  // end namespace Dumux
 
 #endif

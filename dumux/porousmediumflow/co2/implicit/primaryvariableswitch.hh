@@ -19,22 +19,24 @@
 /*!
  * \file
  *
- * \brief The primary variable switch for the 2p2c model
+ * \brief The primary variable switch for the 2p2c-CO2 model
  */
-#ifndef DUMUX_2P2C_PRIMARY_VARIABLE_SWITCH_HH
-#define DUMUX_2P2C_PRIMARY_VARIABLE_SWITCH_HH
+#ifndef DUMUX_2P2C_CO2_PRIMARY_VARIABLE_SWITCH_HH
+#define DUMUX_2P2C_CO2_PRIMARY_VARIABLE_SWITCH_HH
 
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
-#include "indices.hh" // for TwoPTwoCFormulation
 
 namespace Dumux
 {
 /*!
  * \ingroup TwoPTwoCModel
- * \brief The primary variable switch controlling the phase presence state variable
+ * \brief The primary variable switch for the 2p2c-CO2 model controlling the phase presence state variable
+ * The phase switch occurs when the equilibrium concentration
+ * of a component in a phase is exceeded, instead of the sum of the components in the virtual phase
+ * (the phase which is not present) being greater that unity as done in the 2p2c model.
  */
 template<class TypeTag>
-class TwoPTwoCPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
+class TwoPTwoCCO2PrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
 {
     friend typename Dumux::PrimaryVariableSwitch<TypeTag>;
     using ParentType = Dumux::PrimaryVariableSwitch<TypeTag>;
@@ -46,6 +48,7 @@ class TwoPTwoCPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
@@ -83,27 +86,30 @@ protected:
         int phasePresence = priVars.state();
         int newPhasePresence = phasePresence;
 
+        // the param cache to evaluate the equilibrium mole fraction
+        typename FluidSystem::ParameterCache paramCache;
+
         // check if a primary var switch is necessary
         if (phasePresence == nPhaseOnly)
         {
-            // calculate mole fraction in the hypothetic wetting phase
-            Scalar xww = volVars.moleFraction(wPhaseIdx, wCompIdx);
-            Scalar xwn = volVars.moleFraction(wPhaseIdx, nCompIdx);
+            // calculate wetting component mole fraction in the non-wetting phase
+            Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
+            Scalar xnwMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, nPhaseIdx);
 
-            Scalar xwMax = 1.0;
-            if (xww + xwn > xwMax)
+            // if it is larger than the equilibirum mole fraction switch
+            if(xnw > xnwMax)
                 wouldSwitch = true;
-            if (this->wasSwitched_[dofIdxGlobal])
-                xwMax *= 1.02;
 
-            // if the sum of the mole fractions is larger than
-            // 100%, wetting phase appears
-            if (xww + xwn > xwMax)
+            if (this->wasSwitched_[dofIdxGlobal])
+                xnwMax *= 1.02;
+
+            // if it is larger than the equilibirum mole fraction switch wetting phase appears
+            if (xnw > xnwMax)
             {
                 // wetting phase appears
                 std::cout << "wetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xww + xwn: "
-                          << xww + xwn << std::endl;
+                          << ", coordinates: " << globalPos << ", xnw > xnwMax: "
+                          << xnw << " > " << xnwMax << std::endl;
                 newPhasePresence = bothPhases;
                 if (formulation == pnsw)
                     priVars[switchIdx] = 0.0;
@@ -113,25 +119,24 @@ protected:
         }
         else if (phasePresence == wPhaseOnly)
         {
-            // calculate fractions of the partial pressures in the
-            // hypothetic nonwetting phase
-            Scalar xnw = volVars.moleFraction(nPhaseIdx, wCompIdx);
-            Scalar xnn = volVars.moleFraction(nPhaseIdx, nCompIdx);
+            // calculate non-wetting component mole fraction in the wetting phase
+            Scalar xwn = volVars.moleFraction(wPhaseIdx, nCompIdx);
+            Scalar xwnMax = FluidSystem::equilibriumMoleFraction(volVars.fluidState(), paramCache, wPhaseIdx);
 
-            Scalar xgMax = 1.0;
-            if (xnw + xnn > xgMax)
+            // if it is larger than the equilibirum mole fraction switch
+            if(xwn > xwnMax)
                 wouldSwitch = true;
-            if (this->wasSwitched_[dofIdxGlobal])
-                xgMax *= 1.02;
 
-            // if the sum of the mole fractions is larger than
-            // 100%, nonwetting phase appears
-            if (xnw + xnn > xgMax)
+            if (this->wasSwitched_[dofIdxGlobal])
+                xwnMax *= 1.02;
+
+            // if it is larger than the equilibirum mole fraction switch non-wetting phase appears
+            if(xwn > xwnMax)
             {
                 // nonwetting phase appears
                 std::cout << "nonwetting phase appears at vertex " << dofIdxGlobal
-                          << ", coordinates: " << globalPos << ", xnw + xnn: "
-                          << xnw + xnn << std::endl;
+                          << ", coordinates: " << globalPos << ", xwn > xwnMax: "
+                          << xwn << " > " << xwnMax << std::endl;
                 newPhasePresence = bothPhases;
                 if (formulation == pnsw)
                     priVars[switchIdx] = 0.999;
@@ -139,6 +144,7 @@ protected:
                     priVars[switchIdx] = 0.001;
             }
         }
+        // TODO: this is the same as for the 2p2c model maybe factor out
         else if (phasePresence == bothPhases)
         {
             Scalar Smin = 0.0;

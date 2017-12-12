@@ -202,6 +202,6 @@ private:
     MaterialLawParams coarseMaterialParams_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
