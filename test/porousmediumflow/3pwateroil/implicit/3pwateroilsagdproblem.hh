@@ -50,7 +50,7 @@ SET_TYPE_PROP(SagdProblem, Problem, Dumux::SagdProblem<TypeTag>);
 // Set the fluid system
 SET_TYPE_PROP(SagdProblem,
               FluidSystem,
-              Dumux::FluidSystems::H2OHeavyOil<TypeTag, typename GET_PROP_TYPE(TypeTag, Scalar)>);
+              Dumux::FluidSystems::H2OHeavyOil<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 
 // Enable gravity

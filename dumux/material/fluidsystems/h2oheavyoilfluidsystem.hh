@@ -43,12 +43,12 @@ namespace FluidSystems {
  * \brief A compositional fluid with water and heavy oil
  *        components in both, the liquid and the gas phase.
  */
-template <class TypeTag, class Scalar,
+template <class Scalar,
           class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
 class H2OHeavyOil
-    : public BaseFluidSystem<Scalar, H2OHeavyOil<TypeTag, Scalar, H2OType> >
+    : public BaseFluidSystem<Scalar, H2OHeavyOil<Scalar, H2OType> >
 {
-    typedef H2OHeavyOil<TypeTag, Scalar, H2OType> ThisType;
+    typedef H2OHeavyOil<Scalar, H2OType> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
