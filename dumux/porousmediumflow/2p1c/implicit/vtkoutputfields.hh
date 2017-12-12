@@ -18,27 +18,33 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the onep model
+ * \brief Adds vtk output fields specific to the twop-onec model
  */
-#ifndef DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_TWOP_OneC_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_TWOP_OneC_VTK_OUTPUT_FIELDS_HH
+
+#include <dumux/porousmediumflow/2p/implicit/vtkoutputfields.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup OneP, InputOutput
- * \brief Adds vtk output fields specific to the onep model
+ * \ingroup TwoPOneC, InputOutput
+ * \brief Adds vtk output fields specific to the TwoPOneC model
  */
 template<class TypeTag>
-class OnePVtkOutputFields
+class TwoPOneCVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
-        vtk.addVolumeVariable([](const auto& volVars){ return volVars.pressure(); }, "pressure");
+        // use default fields from the 2p model
+        TwoPVtkOutputFields<TypeTag>::init(vtk);
+
+        //output additional to TwoP output:
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.priVars().state(); }, "phasePresence");
     }
 };
 

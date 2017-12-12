@@ -42,6 +42,7 @@
 #include <dumux/porousmediumflow/2p/implicit/vtkoutputfields.hh>
 
 #include "darcyslaw.hh"
+#include "vtkoutputfields.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
@@ -188,7 +189,7 @@ SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);                 //! 
  SET_TYPE_PROP(TwoPOneCNI, IsothermalIndices, TwoPOneCIndices<TypeTag, 0>);
 
 //! the isothermal vtk output fields
- SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<TypeTag>);
+ SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<TypeTag>);
 
  //set isothermal NumEq
  SET_INT_PROP(TwoPOneCNI, IsothermalNumEq, 1);
