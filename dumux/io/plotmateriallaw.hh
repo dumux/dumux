@@ -24,21 +24,18 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/io/gnuplotinterface.hh>
-
 namespace Dumux
 {
+// forward declaration
+template<class Scalar> class GnuplotInterface;
 
 /*!
  *\brief Interface for plotting the two-phase fluid-matrix-interaction laws
  */
-template<class TypeTag>
+template<class Scalar, class MaterialLaw>
 class PlotMaterialLaw
 {
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 public:
     //! Constructor
