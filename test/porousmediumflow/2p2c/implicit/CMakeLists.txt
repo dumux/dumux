@@ -25,7 +25,7 @@ dune_add_test(NAME test_2p2c_mpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injectioncc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/injection_mpfa-00007.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/injection_mpfa-00008.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2c_mpfa test_2p2c_fv.input -Problem.Name injection_mpfa")
 
 # non-isothermal tests
@@ -44,7 +44,7 @@ dune_add_test(NAME test_2p2cni_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/wateraircc-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/waterair_tpfa-00009.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/waterair_tpfa-00013.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p2cni_tpfa test_2p2cni_fv.input -Problem.Name waterair_tpfa")
 
 #install sources
