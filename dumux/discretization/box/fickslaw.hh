@@ -149,7 +149,7 @@ public:
         std::array<std::vector<Scalar>, numComponents> ti;
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
-            if(FluidSystem::isMainComponent(compIdx, phaseIdx))
+            if(compIdx == FluidSystem::getMainComponent(phaseIdx))
                 continue;
 
             // effective diffusion tensors
