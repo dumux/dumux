@@ -45,11 +45,11 @@ public:
         for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
         {
             vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.moleFraction(0, compIdx); },
-            "x_" + std::string(FluidSystem::componentName(compIdx)));
+                                   "x_" + std::string(FluidSystem::componentName(compIdx)));
             vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.massFraction(0, compIdx); },
-            "X_" + std::string(FluidSystem::componentName(compIdx)));
+                                   "X_" + std::string(FluidSystem::componentName(compIdx)));
         }
-        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(); },"rho");
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(); }, "rho");
     }
 };
 
