@@ -104,16 +104,6 @@ public:
     static std::string componentName(int phaseIdx)
     { return "DefaultComponentName"; }
 
-    /*!
-     * \brief The number of components of the fluid system
-     */
-    static constexpr int numComponents = Implementation::numComponents;
-
-    /*!
-     * \brief The number of phases of the fluid system
-     */
-    static constexpr int numPhases = Implementation::numPhases;
-
     // \}
 
     /*!
