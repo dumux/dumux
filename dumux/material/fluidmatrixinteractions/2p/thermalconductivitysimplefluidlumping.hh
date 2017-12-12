@@ -33,6 +33,7 @@ namespace Dumux
 /*!
  * \ingroup fluidmatrixinteractionslaws
  * \brief   Relation for the saturation-dependent effective thermal conductivity
+ * \todo This shouldn't depend on TypeTag!!
  */
 template<class TypeTag>
 class ThermalConductivitySimpleFluidLumping
