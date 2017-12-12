@@ -67,7 +67,7 @@ public:
     BoundaryFlag(const Intersection& i) : flag_(-1)
     {
         if (i.boundary())
-            flag_ = i.boundaryId();
+            flag_ = i.impl().boundaryId();
     }
 
     using value_type = int;
