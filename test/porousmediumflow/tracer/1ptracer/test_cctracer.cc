@@ -40,12 +40,11 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 
-#include <dumux/assembly/ccassembler.hh>
+#include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
@@ -70,15 +69,7 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
 
     //! parse command line arguments
-    using OnePParameterTree = typename GET_PROP(OnePTypeTag, ParameterTree);
-    ParameterParser::parseCommandLineArguments(argc, argv, OnePParameterTree::tree());
-
-    using TracerParameterTree = typename GET_PROP(TracerTypeTag, ParameterTree);
-    ParameterParser::parseCommandLineArguments(argc, argv, TracerParameterTree::tree());
-
-    //! parse the input file into the parameter tree
-    ParameterParser::parseInputFile(argc, argv, OnePParameterTree::tree(), "1p.input");
-    ParameterParser::parseInputFile(argc, argv, TracerParameterTree::tree(), "tracer.input");
+    Parameters::init(argc, argv);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
@@ -124,7 +115,7 @@ int main(int argc, char** argv)
     onePGridVariables->init(p);
 
     //! the assembler
-    using OnePAssembler = CCAssembler<OnePTypeTag, DiffMethod::analytic>;
+    using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
     auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, onePFvGridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
 
@@ -233,16 +224,16 @@ int main(int argc, char** argv)
     gridVariables->init(x, xOld);
 
     //! get some time loop parameters
-    auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TracerTypeTag, Scalar, TimeLoop, TEnd);
-    auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TracerTypeTag, Scalar, TimeLoop, DtInitial);
-    auto maxDt = GET_PARAM_FROM_GROUP(TracerTypeTag, Scalar, TimeLoop, MaxTimeStepSize);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     //! instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     //! the assembler with time loop for instationary problem
-    using TracerAssembler = CCAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
+    using TracerAssembler = FVAssembler<TracerTypeTag, DiffMethod::analytic, /*implicit=*/false>;
     auto assembler = std::make_shared<TracerAssembler>(tracerProblem, fvGridGeometry, gridVariables, timeLoop);
     assembler->setLinearSystem(A, r);
 

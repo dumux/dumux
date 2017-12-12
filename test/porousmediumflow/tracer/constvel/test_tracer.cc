@@ -23,30 +23,26 @@
  */
 #include <config.h>
 
-#include "tracertestproblem.hh"
-
 #include <ctime>
 #include <iostream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
-#include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
+#include <dune/grid/io/file/vtk/vtksequencewriter.hh>
 
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
-
 #include <dumux/assembly/fvassembler.hh>
 
 #include <dumux/io/vtkoutputmodule.hh>
+
+#include "tracertestproblem.hh"
 
 int main(int argc, char** argv) try
 {
@@ -62,24 +58,10 @@ int main(int argc, char** argv) try
     if (mpiHelper.rank() == 0)
         DumuxMessage::print(/*firstCall=*/true);
 
-    ////////////////////////////////////////////////////////////
     // parse the command line arguments and input file
-    ////////////////////////////////////////////////////////////
+    Parameters::init(argc, argv);
 
-    //! parse command line arguments
-    using ParameterTree = typename GET_PROP(TypeTag, ParameterTree);
-    ParameterParser::parseCommandLineArguments(argc, argv, ParameterTree::tree());
-
-    //! parse the input file into the parameter tree
-    //! check first if the user provided an input file through the command line, if not use the default
-    const auto parameterFileName = ParameterTree::tree().hasKey("ParameterFile") ?
-        GET_RUNTIME_PARAM(TypeTag, std::string, ParameterFile) : "";
-    ParameterParser::parseInputFile(argc, argv, ParameterTree::tree(), parameterFileName);
-
-    //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)
-    /////////////////////////////////////////////////////////////////////
-
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     try { GridCreator::makeGrid(); }
     catch (...) {
@@ -105,11 +87,8 @@ int main(int argc, char** argv) try
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
     //! the solution vector
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr int dofCodim = isBox ? GridView::dimension : 0;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    SolutionVector x(leafGridView.size(dofCodim));
+    SolutionVector x(fvGridGeometry->numDofs());
     problem->applyInitialSolution(x);
     auto xOld = x;
 
@@ -120,14 +99,14 @@ int main(int argc, char** argv) try
 
     //! get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    auto tEnd = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, TEnd);
-    auto dt = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, DtInitial);
-    auto maxDt = GET_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, MaxTimeStepSize);
+    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
+    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
+    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
 
     //! check if we are about to restart a previously interrupted simulation
     Scalar restartTime = 0;
-    if (ParameterTree::tree().hasKey("Restart") || ParameterTree::tree().hasKey("TimeLoop.Restart"))
-        restartTime = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, TimeLoop, Restart);
+    if (haveParam("Restart") || haveParam("TimeLoop.Restart"))
+        restartTime = getParam<Scalar>("TimeLoop.Restart");
 
     //! instantiate time loop
     auto timeLoop = std::make_shared<CheckPointTimeLoop<Scalar>>(restartTime, dt, tEnd);
@@ -143,7 +122,7 @@ int main(int argc, char** argv) try
 
     //! the linear solver
     using LinearSolver = UMFPackBackend<TypeTag>;
-    auto linearSolver = std::make_shared<LinearSolver>(*problem);
+    auto linearSolver = std::make_shared<LinearSolver>();
 
     //! intialize the vtk output module
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
@@ -159,7 +138,8 @@ int main(int argc, char** argv) try
     timeLoop->setPeriodicCheckPoint(tEnd/10.0);
 
     //! start the time loop
-    timeLoop->start(); do
+    timeLoop->start();
+    while (!timeLoop->finished())
     {
         // set previous solution for storage evaluations
         assembler->setPreviousSolution(xOld);
@@ -182,11 +162,12 @@ int main(int argc, char** argv) try
 
         // statistics
         const auto elapsedTot = assembleTimer.elapsed() + solveTimer.elapsed() + updateTimer.elapsed();
-        std::cout << "Assemble/solve/update time: "
-                  <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
-                  <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
-                  <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
-                  <<  std::endl;
+        if (mpiHelper.rank() == 0)
+            std::cout << "Assemble/solve/update time: "
+                      <<  assembleTimer.elapsed() << "(" << 100*assembleTimer.elapsed()/elapsedTot << "%)/"
+                      <<  solveTimer.elapsed() << "(" << 100*solveTimer.elapsed()/elapsedTot << "%)/"
+                      <<  updateTimer.elapsed() << "(" << 100*updateTimer.elapsed()/elapsedTot << "%)"
+                      <<  std::endl;
 
         // make the new solution the old solution
         xOld = x;
@@ -195,17 +176,16 @@ int main(int argc, char** argv) try
         // advance to the time loop to the next step
         timeLoop->advanceTimeStep();
 
-        // write vtk output on check points
-        if (timeLoop->isCheckPoint())
-            vtkWriter.write(timeLoop->time());
-
         // report statistics of this time step
         timeLoop->reportTimeStep();
 
+        // write vtk output on check points
+        if (timeLoop->isCheckPoint() || timeLoop->finished())
+            vtkWriter.write(timeLoop->time());
+
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(dt);
-
-    } while (!timeLoop->finished());
+    }
 
     timeLoop->finalize(leafGridView.comm());
 

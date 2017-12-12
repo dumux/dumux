@@ -18,41 +18,31 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the onep model
+ * \brief Defines the primary variable and equation indices used by tracer model
  */
-#ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/implicit/properties.hh>
+#ifndef DUMUX_TRACER_INDICES_HH
+#define DUMUX_TRACER_INDICES_HH
 
 namespace Dumux
 {
+// \{
 
 /*!
- * \ingroup Tracer, InputOutput
- * \brief Adds vtk output fields specific to the onep model
+ * \ingroup TracerModel
+ * \ingroup ImplicitIndices
+ * \brief The indices for the isothermal tracer model.
  */
-template<class TypeTag>
-class TracerVtkOutputFields
+template <class TypeTag, int PVOffset = 0>
+struct TracerIndices
 {
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-public:
-    template <class VtkOutputModule>
-    static void init(VtkOutputModule& vtk)
-    {
-        // register standardized vtk output fields
-        for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
-        {
-            vtk.addSecondaryVariable("x_" + std::string(FluidSystem::componentName(compIdx)),
-                                     [compIdx](const VolumeVariables& v){ return v.moleFraction(0, compIdx); });
-            vtk.addSecondaryVariable("X_" + std::string(FluidSystem::componentName(compIdx)),
-                                     [compIdx](const VolumeVariables& v){ return v.massFraction(0, compIdx); });
-        }
-        vtk.addSecondaryVariable("rho", [](const VolumeVariables& v){ return v.density(); });
-    }
+    //! Component indices are just numbered by component index
+    //! primary variable indices are just numbered by component index
+    //! Equation indices
+    static const int transportEqIdx = PVOffset + 0; //!< transport equation index
 };
 
-} // end namespace Dumux
+// \}
+}
 
 #endif

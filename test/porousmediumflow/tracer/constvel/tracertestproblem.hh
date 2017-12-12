@@ -24,10 +24,10 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/tracer/implicit/propertydefaults.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
@@ -61,7 +61,7 @@ SET_TYPE_PROP(TracerTest, Problem, TracerTest<TypeTag>);
 SET_TYPE_PROP(TracerTest, SpatialParams, TracerTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TracerTest, UseMoles, false);
+SET_BOOL_PROP(TracerTest, UseMoles, USEMOLES);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
@@ -79,8 +79,8 @@ public:
     { return true; }
 
     //! None of the components are the main component of the phase
-    static constexpr bool isMainComponent(int compIdx, int phaseIdx)
-    { return false; }
+    static constexpr int getMainComponent(int phaseIdx)
+    { return -1; }
 
     //! The number of components
     static constexpr int numComponents = 2;
@@ -105,8 +105,8 @@ public:
                                              const Element& element,
                                              const SubControlVolume& scv)
     {
-        static const Scalar D = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, D);
-        static const Scalar D2 = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, D2);
+        static const Scalar D = getParam<Scalar>("Problem.D");
+        static const Scalar D2 = getParam<Scalar>("Problem.D2");
         if (compIdx == 0)
             return D;
         else
@@ -152,7 +152,6 @@ class TracerTest : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -190,23 +189,9 @@ public:
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
-        values.setAllNeumann();
+        values.setAllNeumann(); // no-flow
         return values;
     }
-
-    /*!
-     * \brief Evaluate the boundary conditions for a Neumann
-     *        boundary segment.
-     *
-     * For this method, the \a priVars parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     *
-     * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
-     */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(0.0); }
-
     // \}
 
     /*!

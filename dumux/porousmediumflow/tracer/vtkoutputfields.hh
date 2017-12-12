@@ -18,33 +18,41 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Defines the primary variable and equation indices used by tracer model
+ * \brief Adds vtk output fields specific to the onep model
  */
+#ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 
-#ifndef DUMUX_TRACER_INDICES_HH
-#define DUMUX_TRACER_INDICES_HH
-
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
-// \{
 
 /*!
- * \ingroup TracerModel
- * \ingroup ImplicitIndices
- * \brief The indices for the isothermal tracer model.
+ * \ingroup Tracer, InputOutput
+ * \brief Adds vtk output fields specific to the onep model
  */
-template <class TypeTag, int PVOffset = 0>
-struct TracerIndices
+template<class TypeTag>
+class TracerVtkOutputFields
 {
-    //! Component indices are just numbered by component index
-    //! primary variable indices are just numbered by component index
-    //! Equation indices
-    static const int transportEqIdx = PVOffset + 0; //!< transport equation index
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+public:
+    template <class VtkOutputModule>
+    static void init(VtkOutputModule& vtk)
+    {
+        // register standardized vtk output fields
+        for (int compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx)
+        {
+            vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.moleFraction(0, compIdx); },
+                                   "x_" + std::string(FluidSystem::componentName(compIdx)));
+            vtk.addVolumeVariable( [compIdx](const VolumeVariables& v){  return v.massFraction(0, compIdx); },
+                                   "X_" + std::string(FluidSystem::componentName(compIdx)));
+        }
+        vtk.addVolumeVariable( [](const VolumeVariables& v){ return v.density(); }, "rho");
+    }
 };
 
-// \}
-}
+} // end namespace Dumux
 
 #endif
