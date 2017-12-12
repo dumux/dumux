@@ -165,13 +165,14 @@ public:
             for (auto scvfIdx : dataJ.scvfsJ)
                 globalScvfIndices_[i++] = scvfIdx;
 
-        // reserve memory estimate for interaction volumes and corresponding data
+        // Reserve memory (over-) estimate for interaction volumes and corresponding data.
+        // The overestimate doesn't hurt as we are not in a memory-limited configuration.
+        // We need to avoid reallocation because in the caches we store pointers to the data handles.
         const auto numIvEstimate = getNoInteractionVolumesEstimate_(element, assemblyMapI);
-        const auto maxBoundaryIv = element.subEntities(dim);
         primaryInteractionVolumes_.reserve(numIvEstimate);
-        secondaryInteractionVolumes_.reserve(maxBoundaryIv);
+        secondaryInteractionVolumes_.reserve(numIvEstimate);
         primaryIvDataHandles_.reserve(numIvEstimate);
-        secondaryIvDataHandles_.reserve(maxBoundaryIv);
+        secondaryIvDataHandles_.reserve(numIvEstimate);
 
         // helper class to fill flux variables caches
         FluxVariablesCacheFiller filler(problem);
@@ -285,12 +286,19 @@ private:
     template<class AssemblyMap>
     std::size_t getNoInteractionVolumesEstimate_(const Element& element, const AssemblyMap& assemblyMap)
     {
-        //! Get the mpfa method only once per simulation
-        static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
-
         // TODO: uncomment as soon as methods are re-implemented
-        if (method == MpfaMethods::oMethod /*|| method == MpfaMethods::oMethodFps*/)
-            return element.subEntities(dim);
+        // if statements are optimized away by the compiler
+        if (GET_PROP_VALUE(TypeTag, MpfaMethod) == MpfaMethods::oMethod /*|| method == MpfaMethods::oMethodFps*/)
+        {
+            //! Reserve memory for the case of each facet having neighbors being 4 levels higher. Memory limitations
+            //! do not play an important role here as global caching is disabled. In the unlikely case you want
+            //! to use higher local differences in element levels set a higher value for the parameter below
+            //! in your input file (note that some grids might only support levels differences of one anyway)
+            static const unsigned int maxDiff = getParamFromGroup<unsigned int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                                "Grid.MaxLocalElementLevelDifference",
+                                                                                4);
+            return element.subEntities(dim)*maxDiff;
+        }
       /*  else if (method == MpfaMethods::lMethod)
         {
             std::size_t numInsideScvfs = MpfaHelper::getNumLocalScvfs(element.geometry().type());

@@ -170,7 +170,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
             const auto& g = problem.gravityAtPos(scvf.ipGlobal());
 
             //! compute alpha := n^T*K*g
-            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
+            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
 
             Scalar flux = tij*(pInside - pOutside) + rho*scvf.area()*alpha_inside;
 
@@ -180,7 +180,7 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
                 const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
                 const auto outsideK = outsideVolVars.permeability();
                 const auto outsideTi = computeTpfaTransmissibility(scvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
-                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g);
+                const auto alpha_outside = vtmv(scvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
 
                 flux += rho*tij/outsideTi*(alpha_inside - alpha_outside);
             }
@@ -353,7 +353,9 @@ public:
                     Scalar sumPTi(tij*pInside);
 
                     // add inside gravitational contribution
-                    sumPTi += rho*scvf.area()*vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
+                    sumPTi += rho*scvf.area()
+                              *insideVolVars.extrusionFactor()
+                              *vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
 
                     for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
                     {
@@ -365,14 +367,16 @@ public:
                         sumPTi += outsideFluxVarsCache.advectionTij()*outsideVolVars.pressure(phaseIdx);
 
                         // add outside gravitational contribution
-                        sumPTi += rho*scvf.area()*vtmv(flippedScvf.unitOuterNormal(), outsideVolVars.permeability(), g);
+                        sumPTi += rho*scvf.area()
+                                  *outsideVolVars.extrusionFactor()
+                                  *vtmv(flippedScvf.unitOuterNormal(), outsideVolVars.permeability(), g);
                     }
                     return sumPTi/sumTi;
                 }
             }();
 
             //! precompute alpha := n^T*K*g
-            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g);
+            const auto alpha_inside = vtmv(scvf.unitOuterNormal(), insideVolVars.permeability(), g)*insideVolVars.extrusionFactor();
 
             Scalar flux = tij*(pInside - pOutside) + scvf.area()*rho*alpha_inside;
 
@@ -383,7 +387,7 @@ public:
                 const auto& outsideScvf = fvGeometry.flipScvf(scvf.index());
                 const auto outsideK = outsideVolVars.permeability();
                 const auto outsideTi = computeTpfaTransmissibility(outsideScvf, outsideScv, outsideK, outsideVolVars.extrusionFactor());
-                const auto alpha_outside = vtmv(outsideScvf.unitOuterNormal(), outsideK, g);
+                const auto alpha_outside = vtmv(outsideScvf.unitOuterNormal(), outsideK, g)*outsideVolVars.extrusionFactor();
 
                 flux -= rho*tij/outsideTi*(alpha_inside + alpha_outside);
             }

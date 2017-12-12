@@ -34,7 +34,6 @@
 #include <dumux/discretization/methods.hh>
 
 //#include <dumux/io/restart.hh>
-//#include <dumux/implicit/adaptive/gridadapt.hh>
 
 namespace Dumux
 {
@@ -79,8 +78,6 @@ class FVProblem
 
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
-    // using GridAdaptModel = ImplicitGridAdapt<TypeTag, adaptiveGrid>;
-
 public:
     /*!
      * \brief Constructor
@@ -93,14 +90,8 @@ public:
         // set a default name for the problem
         problemName_ = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Name");
 
-        // TODO this has to be moved to the main file most probably
-        // // if we are calculating on an adaptive grid get the grid adapt model
-        // if (adaptiveGrid)
-        //     gridAdapt_ = std::make_shared<GridAdaptModel>(asImp_());
-        //     gridAdapt().init();
-
         // compute which scvs contain point sources
-        computePointSourceMap(pointSourceMap_);
+        computePointSourceMap();
     }
 
     /*!
@@ -441,11 +432,10 @@ public:
     }
 
     //! Compute the point source map, i.e. which scvs have point source contributions
-    template<class PointSourceMap>
-    void computePointSourceMap(PointSourceMap& pointSourceMap)
+    void computePointSourceMap()
     {
         // clear the given point source maps in case it's not empty
-        pointSourceMap.clear();
+        pointSourceMap_.clear();
 
         // get and apply point sources if any given in the problem
         std::vector<PointSource> sources;
@@ -457,7 +447,7 @@ public:
             // calculate point source locations and save them in a map
             PointSourceHelper::computePointSourceMap(*fvGridGeometry_,
                                                      sources,
-                                                     pointSourceMap);
+                                                     pointSourceMap_);
         }
     }
 
@@ -538,27 +528,6 @@ public:
      * \name Simulation steering
      */
     // \{
-
-    /*!
-     * \brief Called by the time manager before the time integration.
-     */
-    // TODO most likely move to the main file
-    // void preTimeStep()
-    // {
-    //     // If adaptivity is used, this method adapts the grid.
-    //     // Remeber to call the parent class function if this is overwritten
-    //     // on a lower problem level when using an adaptive grid
-    //     if (adaptiveGrid && timeManager().timeStepIndex() > 0)
-    //     {
-    //         this->gridAdapt().adaptGrid();
-
-    //         // if the grid changed recompute the source map and the bounding box tree
-    //         if (asImp_().gridChanged())
-    //         {
-    //             computePointSourceMap();
-    //         }
-    //     }
-    // }
 
     /*!
      * \brief TODO serialization
