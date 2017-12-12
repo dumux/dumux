@@ -539,7 +539,7 @@ void FVPressureCompositional<TypeTag>::initialMaterialLaws(bool compositional)
         CellData& cellData = problem_.variables().cellData(eIdxGlobal);
         // acess the fluid state and prepare for manipulation
         FluidState& fluidState = cellData.manipulateFluidState();
-        CompositionalFlash<TypeTag> flashSolver;
+        CompositionalFlash<Scalar, FluidSystem> flashSolver;
 
         // initial conditions
         PhaseVector pressure(0.);
@@ -751,7 +751,7 @@ void FVPressureCompositional<TypeTag>::volumeDerivatives(const GlobalPosition& g
 
     // initialize an Fluid state and a flash solver
     FluidState updFluidState;
-    CompositionalFlash<TypeTag> flashSolver;
+    CompositionalFlash<Scalar, FluidSystem> flashSolver;
 
     /**********************************
      * a) get necessary variables

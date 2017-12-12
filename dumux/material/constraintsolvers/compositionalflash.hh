@@ -26,12 +26,7 @@
 #define DUMUX_COMPOSITIONAL_FLASH_HH
 
 #include <dune/common/fvector.hh>
-#include <dune/common/fmatrix.hh>
 
-#include <dumux/common/exceptions.hh>
-#include <dumux/common/valgrind.hh>
-#include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
-#include <dumux/material/fluidstates/2p2c.hh>
 #include <dumux/material/fluidstates/pseudo1p2c.hh>
 
 namespace Dumux
@@ -43,16 +38,14 @@ namespace Dumux
  *        Routines for isothermal and isobaric 2p2c and 1p2c flash.
  *  \tparam TypeTag The property Type Tag
  */
-template <class TypeTag>
+template <class Scalar, class FluidSystem>
 class CompositionalFlash
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)      Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef PseudoOnePTwoCFluidState<Scalar, FluidSystem> FluidState1p2c;
+    using FluidState1p2c = PseudoOnePTwoCFluidState<Scalar, FluidSystem>;
 
-    enum {  numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-            numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
+    enum {  numPhases = FluidSystem::numPhases,
+            numComponents = FluidSystem::numComponents
+        };
 
     enum{
         wPhaseIdx = FluidSystem::wPhaseIdx,
@@ -81,6 +74,7 @@ public:
      * \param porosity Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
+    template<class FluidState>
     static void concentrationFlash2p2c(FluidState &fluidState,
                              const Scalar &Z1,
                              const PhaseVector &phasePressure,
@@ -261,6 +255,7 @@ public:
      * \param porosity Porosity \f$\mathrm{[-]}\f$
      * \param temperature Temperature \f$\mathrm{[K]}\f$
      */
+    template<class FluidState>
     static void saturationFlash2p2c(FluidState &fluidState,
             const Scalar &saturation,
             const PhaseVector &phasePressure,

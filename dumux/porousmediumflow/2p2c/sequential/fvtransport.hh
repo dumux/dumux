@@ -1096,7 +1096,7 @@ void FVTransport2P2C<TypeTag>::evalBoundary(GlobalPosition globalPosFace,
                                             PhaseVector &pressBound)
 {
     // prepare a flash solver
-    CompositionalFlash<TypeTag> flashSolver;
+    CompositionalFlash<Scalar, FluidSystem> flashSolver;
 
     auto element = intersection.inside();
     // read boundary values

@@ -24,6 +24,7 @@
 // dumux environment
 #include <dumux/porousmediumflow/2p2c/sequential/fvpressure.hh>
 #include <dumux/linear/vectorexchange.hh>
+#include <dumux/material/constraintsolvers/compositionalflash.hh>
 
 /**
  * @file
@@ -413,7 +414,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::get1pStorage(Dune::FieldVector<Scalar,
         Scalar Z1 = cellDataI.massConcentration(wCompIdx) / sumC;
         // initialize simple fluidstate object
         PseudoOnePTwoCFluidState<Scalar, FluidSystem> pseudoFluidState;
-        CompositionalFlash<TypeTag> flashSolver;
+        CompositionalFlash<Scalar, FluidSystem> flashSolver;
         flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, p_, cellDataI.subdomain(),
                 cellDataI.temperature(wPhaseIdx));
 
@@ -935,7 +936,7 @@ void FVPressure2P2CMultiPhysics<TypeTag>::update1pMaterialLawsInElement(const El
             + cellData.massConcentration(nCompIdx);
     Scalar Z1 = cellData.massConcentration(wCompIdx)/ sumConc;
 
-    CompositionalFlash<TypeTag> flashSolver;
+    CompositionalFlash<Scalar, FluidSystem> flashSolver;
     flashSolver.concentrationFlash1p2c(pseudoFluidState, Z1, pressure, presentPhaseIdx, problem().temperatureAtPos(globalPos));
 
     // write stuff in fluidstate

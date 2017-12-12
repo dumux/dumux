@@ -28,6 +28,7 @@
 
 // dumux environment
 #include <dumux/porousmediumflow/2p2c/sequential/fvpressurecompositional.hh>
+#include <dumux/material/constraintsolvers/compositionalflash.hh>
 #include <dumux/common/math.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
@@ -959,7 +960,7 @@ void FVPressure2P2C<TypeTag>::updateMaterialLawsInElement(const Element& element
     }
 
     //complete fluid state
-    CompositionalFlash<TypeTag> flashSolver;
+    CompositionalFlash<Scalar, FluidSystem> flashSolver;
     flashSolver.concentrationFlash2p2c(fluidState,  Z1, pressure, problem().spatialParams().porosity(elementI), temperature_);
 
     // iterations part in case of enabled capillary pressure
