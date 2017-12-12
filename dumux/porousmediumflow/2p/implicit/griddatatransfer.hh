@@ -47,9 +47,10 @@ class TwoPGridDataTransfer : public GridDataTransfer
 
     struct AdaptedValues
     {
+        AdaptedValues() : associatedMass(0.0) {}
         ElementSolution u;
         int count = 0;
-        PrimaryVariables associatedMass{0.0};
+        PrimaryVariables associatedMass;
         bool wasLeaf = false;
     };
 
