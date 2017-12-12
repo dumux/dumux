@@ -36,7 +36,6 @@ namespace Dumux
  * \brief Flash calculation routines for compositional sequential models
  *
  *        Routines for isothermal and isobaric 2p2c and 1p2c flash.
- *  \tparam TypeTag The property Type Tag
  */
 template <class Scalar, class FluidSystem>
 class CompositionalFlash

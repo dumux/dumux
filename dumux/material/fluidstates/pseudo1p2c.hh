@@ -36,7 +36,6 @@ namespace Dumux
  *  methods.
  *  The "flash" calculation routines are in the sequential flash constrain solver, see
  *  CompositionalFlash .
- *  \tparam TypeTag The property Type Tag
  */
 template <class Scalar, class FluidSystem>
 class PseudoOnePTwoCFluidState

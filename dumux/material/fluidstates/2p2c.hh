@@ -35,8 +35,6 @@ namespace Dumux
  *        sequential 2p2c model.
  *
  *        This boils down to so-called "flash calculation", in this case isothermal and isobaric.
- *
- *  \tparam TypeTag The property Type Tag
  */
 template <class Scalar, class FluidSystem>
 class TwoPTwoCFluidState
