@@ -606,9 +606,8 @@ template <class Scalar>
 Scalar trace(const Dune::DynamicMatrix<Scalar>& M)
 {
     std::size_t rows_T = M.M();
-    std::size_t cols_T = M.N();
 
-    DUNE_ASSERT_BOUNDS(rows_T == cols_T);
+    DUNE_ASSERT_BOUNDS(rows_T == M.N());
 
     Scalar trace = 0.0;
 
