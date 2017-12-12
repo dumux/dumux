@@ -24,20 +24,17 @@
 #ifndef DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 #define DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/io/gnuplotinterface.hh>
-
 namespace Dumux
 {
+// forward declaration
+template<class Scalar> class GnuplotInterface;
 
 /*!
  * \brief Interface for plotting the multi-component-matrix-interaction laws
  */
-template<class TypeTag>
+template<class Scalar, class EffectiveDiffusivityModel>
 class PlotEffectiveDiffusivityModel
 {
-    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
 
 public:
     //! Constructor

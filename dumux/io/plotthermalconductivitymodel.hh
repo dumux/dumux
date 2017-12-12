@@ -24,28 +24,23 @@
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 #define DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 
 namespace Dumux
 {
+// forward declaration
+template<class Scalar> class GnuplotInterface;
 
 /*!
  * \brief Interface for plotting the non-isothermal two-phase fluid-matrix-interaction laws
  */
-template<class TypeTag>
+template<class Scalar, class ThermalConductivityModel, class FluidSystem>
 class PlotThermalConductivityModel
 {
-    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef CompositionalFluidState<Scalar, FluidSystem> FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using FluidState = CompositionalFluidState<Scalar, FluidSystem>;
     enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
+        wPhaseIdx = FluidSystem::wPhaseIdx,
+        nPhaseIdx = FluidSystem::nPhaseIdx
     };
 
 public:

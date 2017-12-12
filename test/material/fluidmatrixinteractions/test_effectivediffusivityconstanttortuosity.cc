@@ -29,25 +29,17 @@
 
 #include <dumux/material/fluidmatrixinteractions/diffusivityconstanttortuosity.hh>
 
-namespace Dumux {
-namespace Properties {
-NEW_TYPE_TAG(TestTypeTag);
-SET_TYPE_PROP(TestTypeTag, Scalar, double);
-SET_TYPE_PROP(TestTypeTag, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-} // end namespace Properties
-} // end namespace Dumux
-
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-    using TypeTag = TTAG(TestTypeTag);
 
     Parameters::parseCommandLineArguments(argc, argv);
 
     GnuplotInterface<double> gnuplot;
     gnuplot.setOpenPlotWindow(false);
 
-    PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+    using EffDiffModel = DiffusivityConstantTortuosity<double>;
+    PlotEffectiveDiffusivityModel<double, EffDiffModel> plotEffectiveDiffusivityModel;
     const std::string fileName = "constant_d_eff.dat";
     const double porosity = 0.3; // [-]
     plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity, 0.0, 1.0, fileName);

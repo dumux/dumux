@@ -29,29 +29,21 @@
  #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
  #include <dumux/material/fluidsystems/h2on2.hh>
 
- namespace Dumux {
- namespace Properties {
- NEW_TYPE_TAG(TestTypeTag);
- SET_TYPE_PROP(TestTypeTag, Scalar, double);
- SET_TYPE_PROP(TestTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
- SET_TYPE_PROP(TestTypeTag, Indices, SomertonIndices);
- SET_TYPE_PROP(TestTypeTag, ThermalConductivityModel, ThermalConductivitySomerton<typename GET_PROP_TYPE(TypeTag, Scalar)>);
- } // end namespace Properties
- } // end namespace Dumux
-
  int main(int argc, char** argv)
  {
      using namespace Dumux;
-     using TypeTag = TTAG(TestTypeTag);
 
      GnuplotInterface<double> gnuplot;
      gnuplot.setOpenPlotWindow(false);
 
-     PlotThermalConductivityModel<TypeTag> plotThermalConductivityModel(293.15, 1e5);
+     using Scalar = double;
+     using ThermCondModel = ThermalConductivitySomerton<Scalar>;
+     using FluidSystem = FluidSystems::H2ON2<Scalar, false>;
+     PlotThermalConductivityModel<Scalar, ThermCondModel, FluidSystem> plotThermalConductivityModel(293.15, 1e5);
      const std::string fileName = "somerton_lambda_eff.dat";
-     const double porosity = 0.3; // [-]
-     const double rhoSolid = 2700.0; // kg/m^3
-     const double lambdaSolid = 2.8; // W/(m K)
+     const Scalar porosity = 0.3; // [-]
+     const Scalar rhoSolid = 2700.0; // kg/m^3
+     const Scalar lambdaSolid = 2.8; // W/(m K)
      plotThermalConductivityModel.addlambdaeffcurve(gnuplot, porosity, rhoSolid, lambdaSolid, 0.0, 1.0, fileName);
 
      gnuplot.plot("lambda_eff");

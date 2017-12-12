@@ -28,23 +28,15 @@
 
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
-namespace Dumux {
-namespace Properties {
-NEW_TYPE_TAG(TestTypeTag);
-SET_TYPE_PROP(TestTypeTag, Scalar, double);
-SET_TYPE_PROP(TestTypeTag, EffectiveDiffusivityModel, DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
-} // end namespace Properties
-} // end namespace Dumux
-
 int main(int argc, char** argv)
 {
     using namespace Dumux;
-    using TypeTag = TTAG(TestTypeTag);
 
     GnuplotInterface<double> gnuplot;
     gnuplot.setOpenPlotWindow(false);
 
-    PlotEffectiveDiffusivityModel<TypeTag> plotEffectiveDiffusivityModel;
+    using EffDiffModel = DiffusivityMillingtonQuirk<double>;
+    PlotEffectiveDiffusivityModel<double, EffDiffModel> plotEffectiveDiffusivityModel;
     const std::string fileName = "millingtonquirk_d_eff.dat";
     const double porosity = 0.3; // [-]
     plotEffectiveDiffusivityModel.adddeffcurve(gnuplot, porosity, 0.0, 1.0, fileName);
