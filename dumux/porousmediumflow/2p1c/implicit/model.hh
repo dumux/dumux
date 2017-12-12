@@ -43,6 +43,7 @@
 
 #include "darcyslaw.hh"
 #include "vtkoutputfields.hh"
+#include "localresidual.hh"
 #include "indices.hh"
 #include "volumevariables.hh"
 #include "primaryvariableswitch.hh"
@@ -132,7 +133,7 @@ namespace Properties
                    "Only fluid systems with 2 phases are supported by the 2p1cni model!");
  };
 
-SET_TYPE_PROP(TwoPOneCNI, LocalResidual, ImmiscibleLocalResidual<TypeTag>); //! The local residual function
+SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>); //! The local residual function
 
 SET_BOOL_PROP(TwoPOneCNI, EnableAdvection, true);                           //! The one-phase model considers advection
 SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);                 //! The one-phase model has no molecular diffusion
