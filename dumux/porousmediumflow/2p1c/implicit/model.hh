@@ -168,13 +168,13 @@ SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);                 //! 
  SET_TYPE_PROP(TwoPOneCNI, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
 
  //! Somerton is used as default model to compute the effective thermal heat conductivity
- SET_PROP(NonIsothermal, ThermalConductivityModel)
+ SET_PROP(TwoPOneCNI, ThermalConductivityModel)
  {
  private:
-     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
  public:
-     typedef ThermalConductivitySomerton<Scalar> type;
+     using type = ThermalConductivitySomerton<Scalar>;
  };
 
  //////////////////////////////////////////////////////////////////

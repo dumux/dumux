@@ -44,18 +44,18 @@ class InjectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(TwoPOneCNI, InjectionProblemSpatialParams));
-NEW_TYPE_TAG(TwoPOneCNIBoxProblem, INHERITS_FROM(BoxModel, InjectionProblem));
-NEW_TYPE_TAG(TwoPOneCNICCTpfaProblem, INHERITS_FROM(CCTpfaModel, InjectionProblem));
+NEW_TYPE_TAG(InjectionProblemTypeTag, INHERITS_FROM(TwoPOneCNI, InjectionProblemSpatialParams));
+NEW_TYPE_TAG(TwoPOneCNIBoxTypeTag, INHERITS_FROM(BoxModel, InjectionProblemTypeTag));
+NEW_TYPE_TAG(TwoPOneCNICCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, InjectionProblemTypeTag));
 
-SET_TYPE_PROP(InjectionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(InjectionProblemTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblem, Problem, InjectionProblem<TypeTag>);
+SET_TYPE_PROP(InjectionProblemTypeTag, Problem, InjectionProblem<TypeTag>);
 
 
 // Set fluid configuration
-SET_PROP(InjectionProblem, FluidSystem)
+SET_PROP(InjectionProblemTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -66,16 +66,14 @@ public:
 
 
 //Define whether spurious cold-water flow into the steam is blocked
-SET_BOOL_PROP(InjectionProblem, UseBlockingOfSpuriousFlow, true);
+SET_BOOL_PROP(InjectionProblemTypeTag, UseBlockingOfSpuriousFlow, true);
 }
 
-//TODO: Names
 /*!
- * \ingroup ThreePTwoCNIBoxModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TwoPOneC
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
  *
- * This problem uses the \ref ThreePTwoCNIModel.
+ * This problem uses the \ref TwoPOneC model.
  *
  *  */
 template <class TypeTag>
@@ -96,9 +94,6 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience
@@ -120,20 +115,14 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
      */
-
     InjectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
     {
