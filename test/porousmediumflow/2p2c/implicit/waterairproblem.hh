@@ -239,7 +239,6 @@ public:
         NeumannFluxes values(0.0);
 
         const auto& globalPos = scvf.ipGlobal();
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
 
         // we inject pure gasious nitrogen at the initial condition temperature and pressure  from the bottom (negative values mean injection)
         if (globalPos[0] > 14.8 - eps_ && globalPos[0] < 25.2 + eps_ && globalPos[1] < eps_)
