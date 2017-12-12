@@ -20,8 +20,8 @@
  * \file
  * \brief The properties for the incompressible test
  */
-#ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
-#define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
+#ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
+#define DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
 
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
@@ -29,6 +29,8 @@
 
 #include <dumux/material/components/dnapl.hh>
 #include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
+#include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/porousmediumflow/2p/implicit/model.hh>

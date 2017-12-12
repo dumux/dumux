@@ -32,20 +32,14 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
-//! Use the incompressible or point source problem for this adaptive test
-#include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
-#include "pointsourceproblem.hh"
-
-#include <dumux/common/propertysystem.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
-#include <dumux/nonlinear/newtonconvergencewriter.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -60,22 +54,26 @@
 #include <dumux/porousmediumflow/2p/implicit/griddatatransfer.hh>
 #include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
 
+//! Use the incompressible or point source problem for this adaptive test
+#include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
+#include "pointsourceproblem.hh"
+
 //! type tags for the adaptive versions of the two-phase incompressible problem
 namespace Dumux {
-    namespace Properties {
-        //! Type Tags for the adaptive tests
-        NEW_TYPE_TAG(TwoPIncompressibleAdaptiveTpfa, INHERITS_FROM(TwoPIncompressibleTpfa));
-        NEW_TYPE_TAG(TwoPIncompressibleAdaptiveMpfa, INHERITS_FROM(TwoPIncompressibleMpfa));
-        NEW_TYPE_TAG(TwoPIncompressibleAdaptiveBox, INHERITS_FROM(TwoPIncompressibleBox));
-        NEW_TYPE_TAG(TwoPAdaptivePointSource, INHERITS_FROM(TwoPIncompressibleAdaptiveTpfa));
+namespace Properties {
+//! Type Tags for the adaptive tests
+NEW_TYPE_TAG(TwoPIncompressibleAdaptiveTpfa, INHERITS_FROM(TwoPIncompressibleTpfa));
+NEW_TYPE_TAG(TwoPIncompressibleAdaptiveMpfa, INHERITS_FROM(TwoPIncompressibleMpfa));
+NEW_TYPE_TAG(TwoPIncompressibleAdaptiveBox, INHERITS_FROM(TwoPIncompressibleBox));
+NEW_TYPE_TAG(TwoPAdaptivePointSource, INHERITS_FROM(TwoPIncompressibleAdaptiveTpfa));
 
-        //! Use non-conforming refinement in the cell-centered tests, conforming for box
-        SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-        SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-        SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Grid, Dune::UGGrid<2>);
-        SET_TYPE_PROP(TwoPAdaptivePointSource, Problem, PointSourceTestProblem<TypeTag>);
-    }
-}
+//! Use non-conforming refinement in the cell-centered tests, conforming for box
+SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(TwoPAdaptivePointSource, Problem, PointSourceTestProblem<TypeTag>);
+} // end namespace Properties
+} // end namespace Dumux
 
 int main(int argc, char** argv) try
 {
