@@ -30,6 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
+#include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw3p.hh>
 namespace Dumux
 {
@@ -124,19 +125,23 @@ public:
         plotFluidMatrixInteractions_ =  getParam<bool>("Output.PlotFluidMatrixInteractions");
     }
 
-    ~InfiltrationThreePSpatialParams()
-    {}
-
-     /*!
+    /*!
      * \brief This is called from the problem and creates a gnuplot output
      *        of e.g the pc-Sw curve
      */
     void plotMaterialLaw()
     {
-        PlotMaterialLaw<TypeTag> plotMaterialLaw(plotFluidMatrixInteractions_);
+        GnuplotInterface<Scalar> gnuplot(plotFluidMatrixInteractions_);
+        gnuplot.setOpenPlotWindow(plotFluidMatrixInteractions_);
+        PlotMaterialLaw<Scalar, MaterialLaw> plotMaterialLaw(plotFluidMatrixInteractions_);
 
-        plotMaterialLaw.plotpc(materialParams_);
-        plotMaterialLaw.plotkr(materialParams_);
+        gnuplot.resetAll();
+        plotMaterialLaw.addpc(gnuplot, materialParams_);
+        gnuplot.plot("pc");
+
+        gnuplot.resetAll();
+        plotMaterialLaw.addkr(gnuplot, materialParams_);
+        gnuplot.plot("kr");
     }
 
       /*!

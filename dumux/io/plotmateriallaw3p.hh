@@ -24,33 +24,26 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/io/gnuplotinterface.hh>
-
 namespace Dumux
 {
+// forward declaration
+template<class Scalar> class GnuplotInterface;
+
 /*!
  *\brief Interface for plotting the three-phase fluid-matrix-interaction laws
  *
  * TODO: add theta head pressure plot (porosity and density is needed)
  */
-template<class TypeTag>
+template<class Scalar, class MaterialLaw>
 class PlotMaterialLaw
 {
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 public:
     //! Constructor
     PlotMaterialLaw(bool interaction = true)
     : numIntervals_(1000)
-    {
-        gnuplotpc_.setOpenPlotWindow(interaction);
-        gnuplotpcAlpha_.setOpenPlotWindow(interaction);
-        gnuplotkr_.setOpenPlotWindow(interaction);
-        gnuplotkrn_.setOpenPlotWindow(interaction);
-    }
+    {}
 
     /*!
      * \brief Plot the capillary pressure-saturation curve for all  phases
@@ -60,14 +53,15 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
-    void plotpc(const MaterialLawParams &params,
-                  Scalar lowerSat = 0.0,
-                  Scalar upperSat = 1.0,
-                  std::string curveTitle = "")
+    void addpc(GnuplotInterface<Scalar> &gnuplot,
+                const MaterialLawParams &params,
+                Scalar lowerSat = 0.0,
+                Scalar upperSat = 1.0,
+                std::string curveTitle = "")
     {
-        plotpcgw(params, lowerSat, upperSat, curveTitle);
-        plotpcnw(params, lowerSat, upperSat, curveTitle);
-        plotpcgn(params, lowerSat, upperSat, curveTitle);
+        addpcgw(gnuplot, params, lowerSat, upperSat, curveTitle);
+        addpcnw(gnuplot, params, lowerSat, upperSat, curveTitle);
+        addpcgn(gnuplot, params, lowerSat, upperSat, curveTitle);
     }
 
     /*!
@@ -78,7 +72,8 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
-    void plotpcgw(const MaterialLawParams &params,
+    void addpcgw(GnuplotInterface<Scalar> &gnuplot,
+                  const MaterialLawParams &params,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,
                   std::string curveTitle = "")
@@ -105,12 +100,9 @@ public:
             }
         }
 
-        gnuplotpc_.setXRange(lowerSat, upperSat);
-        gnuplotpc_.setYRange(pcMin, pcMax);
-        gnuplotpc_.setXlabel("wetting phase saturation [-]");
-        gnuplotpc_.setYlabel("capillary pressure [Pa]");
-        gnuplotpc_.addDataSetToPlot(sw, pc, curveTitle + "_pcgw-Sw");
-        gnuplotpc_.plot("pcgw-Sw");
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("capillary pressure [Pa]");
+        gnuplot.addDataSetToPlot(sw, pc, curveTitle + "_pcgw-Sw");
     }
 
     /*!
@@ -121,7 +113,8 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
-    void plotpcnw(const MaterialLawParams &params,
+    void addpcnw(GnuplotInterface<Scalar> &gnuplot,
+                  const MaterialLawParams &params,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,
                   std::string curveTitle = "")
@@ -148,12 +141,9 @@ public:
             }
         }
 
-        gnuplotpc_.setXRange(lowerSat, upperSat);
-        gnuplotpc_.setYRange(pcMin, pcMax);
-        gnuplotpc_.setXlabel("wetting phase saturation [-]");
-        gnuplotpc_.setYlabel("capillary pressure [Pa]");
-        gnuplotpc_.addDataSetToPlot(sw, pc, curveTitle + "_pcnw-Sw");
-        gnuplotpc_.plot("pcnw-Sw");
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("capillary pressure [Pa]");
+        gnuplot.addDataSetToPlot(sw, pc, curveTitle + "_pcnw-Sw");
     }
 
     /*!
@@ -164,7 +154,8 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
-    void plotpcgn(const MaterialLawParams &params,
+    void addpcgn(GnuplotInterface<Scalar> &gnuplot,
+                  const MaterialLawParams &params,
                   Scalar lowerSat = 0.0,
                   Scalar upperSat = 1.0,
                   std::string curveTitle = "")
@@ -191,12 +182,9 @@ public:
             }
         }
 
-        gnuplotpc_.setXRange(lowerSat, upperSat);
-        gnuplotpc_.setYRange(pcMin, pcMax);
-        gnuplotpc_.setXlabel("wetting phase saturation [-]");
-        gnuplotpc_.setYlabel("capillary pressure [Pa]");
-        gnuplotpc_.addDataSetToPlot(st, pc, curveTitle + "_pcgn-St");
-        gnuplotpc_.plot("pcgn-St");
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("capillary pressure [Pa]");
+        gnuplot.addDataSetToPlot(st, pc, curveTitle + "_pcgn-St");
     }
 
 
@@ -208,7 +196,8 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
-    void plotkr(const MaterialLawParams &params,
+    void addkr(GnuplotInterface<Scalar> &gnuplot,
+                const MaterialLawParams &params,
                 Scalar lowerSat = 0.0,
                 Scalar upperSat = 1.0,
                 std::string curveTitle = "")
@@ -243,14 +232,11 @@ public:
             }
         }
 
-        gnuplotkr_.setXRange(lowerSat, upperSat);
-        gnuplotkr_.setYRange(krMin, krMax);
-        gnuplotkr_.setXlabel("wetting phase saturation [-]");
-        gnuplotkr_.setYlabel("relative permeability [-]");
-        gnuplotkr_.addDataSetToPlot(sw, krw, curveTitle + "_krw");
-        gnuplotkr_.addDataSetToPlot(sw, krn, curveTitle + "_krn");
-        gnuplotkr_.addDataSetToPlot(sw, krg, curveTitle + "_krg");
-        gnuplotkr_.plot("kr");
+        gnuplot.setXlabel("wetting phase saturation [-]");
+        gnuplot.setYlabel("relative permeability [-]");
+        gnuplot.addDataSetToPlot(sw, krw, curveTitle + "_krw");
+        gnuplot.addDataSetToPlot(sw, krn, curveTitle + "_krn");
+        gnuplot.addDataSetToPlot(sw, krg, curveTitle + "_krg");
     }
 
     /*!
@@ -261,10 +247,11 @@ public:
      * \param upperSat Maximum x-value
      * \param curveTitle Name of the plotted curve
      */
-    void plotPcAlpha(const MaterialLawParams &params,
-                Scalar lowerSat = 0.0,
-                Scalar upperSat = 1.0,
-                std::string curveTitle = "")
+    void addPcAlpha(GnuplotInterface<Scalar> &gnuplot,
+                     const MaterialLawParams &params,
+                     Scalar lowerSat = 0.0,
+                     Scalar upperSat = 1.0,
+                     std::string curveTitle = "")
     {
         std::vector<Scalar> sn(numIntervals_ + 1);
         std::vector<Scalar> alpha(numIntervals_ + 1);
@@ -288,12 +275,9 @@ public:
             }
         }
 
-        gnuplotpcAlpha_.setXRange(lowerSat, upperSat);
-        gnuplotpcAlpha_.setYRange(alphaMin, alphaMax);
-        gnuplotpcAlpha_.setXlabel("non-wetting phase saturation [-]");
-        gnuplotpcAlpha_.setYlabel("transition function [-]");
-        gnuplotpcAlpha_.addDataSetToPlot(sn, alpha, curveTitle + "_alpha");
-        gnuplotpcAlpha_.plot("alpha");
+        gnuplot.setXlabel("non-wetting phase saturation [-]");
+        gnuplot.setYlabel("transition function [-]");
+        gnuplot.addDataSetToPlot(sn, alpha, curveTitle + "_alpha");
     }
 
 private:
@@ -312,12 +296,7 @@ private:
     }
 
     int numIntervals_;
-    GnuplotInterface<Scalar> gnuplotpc_;
-    GnuplotInterface<Scalar> gnuplotpcAlpha_;
-    GnuplotInterface<Scalar> gnuplotkr_;
-    GnuplotInterface<Scalar> gnuplotkrn_;
-
 };
-} // end of namespace
+} // end of namespace Dumux
 
 #endif // DUMUX_PLOT_FLUID_MATRIX_LAW_HH
