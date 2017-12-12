@@ -178,16 +178,48 @@ public:
      * thermodynamic relations
      ****************************************/
 
+    // Initializing with salinity and default tables
     static void init(Scalar salinity)
     {
         init(/*startTemp=*/273.15, /*endTemp=*/623.15, /*tempSteps=*/100,
              /*startPressure=*/1e4, /*endPressure=*/40e6, /*pressureSteps=*/200, salinity);
     }
 
+    // Initializing with salinity and custom tables
     static void init(Scalar startTemp, Scalar endTemp, int tempSteps,
                      Scalar startPressure, Scalar endPressure, int pressureSteps,
                      Scalar salinity)
     {
+        if(H2O::isTabulated)
+        {
+            std::cout << "Initializing tables for the pure-water properties.\n";
+            H2O::init(startTemp, endTemp, tempSteps,
+                                startPressure, endPressure, pressureSteps);
+        }
+        // set the salinity of brine
+        BrineRawComponent::constantSalinity = salinity;
+
+        if(Brine::isTabulated)
+        {
+            std::cout << "Initializing tables for the brine fluid properties.\n";
+            Brine::init(startTemp, endTemp, tempSteps,
+                                  startPressure, endPressure, pressureSteps);
+        }
+    }
+
+    // Initializing with input parameter salinity and default tables
+    static void init()
+    {
+        const auto salinity = getParam<Scalar>("FluidSystem.Salinity", 0.3);
+        init(/*startTemp=*/273.15, /*endTemp=*/623.15, /*tempSteps=*/100,
+             /*startPressure=*/1e4, /*endPressure=*/40e6, /*pressureSteps=*/200, salinity);
+    }
+
+    // Initializing with input parameter salinity and custom tables
+    static void init(Scalar startTemp, Scalar endTemp, int tempSteps,
+                     Scalar startPressure, Scalar endPressure, int pressureSteps)
+    {
+        const auto salinity = getParam<Scalar>("FluidSystem.Salinity", 0.3);
         if(H2O::isTabulated)
         {
             std::cout << "Initializing tables for the pure-water properties.\n";
