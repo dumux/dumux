@@ -3,6 +3,7 @@
 install(FILES
 air_mesitylene.hh
 air_xylene.hh
+ch4_co2.hh
 brine_air.hh
 brine_co2.hh
 fullermethod.hh

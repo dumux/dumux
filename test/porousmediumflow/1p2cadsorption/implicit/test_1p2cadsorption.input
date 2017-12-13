@@ -1,0 +1,29 @@
+[TimeManager]
+DtInitial 		= 1e-2 	# [s] initial TimeStep size
+TEnd 			= 1e5 	# [s] End Time
+MaxTimeStepSize = 1000  # maximum time step size
+
+[Grid]
+LowerLeft 	= 0 0
+UpperRight 	= 0.0525 0.34
+Cells 		= 50 1
+
+[Problem]
+Name 				= outflowNoAds	# name passed to the output routines
+EnableGravity 		= 0 			# disable gravity = 0, enable=1
+CO2Inj				= 8.33E-11		# [m3/s] CO2 mole fraction of Dirichlet BC (0.005 ml/min)
+
+[Initial]
+ReservoirPressure   = 1.01325E5     # [Pa] Initial reservoir pressure
+initCO2				= 0				# [-] initial mole fraction of CO2 in the entire domain
+
+[SorptionCoefficients]
+useAdsorption       = 0             # Using Ad-/Desorption in general (1: yes, 0: no)
+useEL               = 0             # Using Extended Langmuir Ad-/Desorption formulation (1: yes, 0: no=simple Langmuir), useAdsorption must be 1!
+VCH4                = 0.8           # [mol/l] or m3/kg? values from "Malgo's table [67]"
+bCH4                = 2.3e-7        # [1/Pa] or maybe use 1/MPa !conversion 1/b=Pl with Pl =167.5 psia
+VCO2                = 1.6           # [mol/l] or m3/kg? 
+bCO2                = 4.64e-7       # [1/Pa] !conversion 1/b=Pl with Pl =167.5 psia
+
+[Vtk]
+AddVelocity = 1 # enable velocity output

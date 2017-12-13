@@ -2,6 +2,7 @@ install(FILES
   1p.hh
   2pimmiscible.hh
   2pliquidvapor.hh
+  ch4co2.hh
   base.hh
   brineair.hh
   brineco2.hh
