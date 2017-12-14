@@ -126,7 +126,6 @@ public:
 
     /*!
      * \copydoc ImplicitModel::completeFluidState
-     * \param isOldSol Specifies whether this is the previous solution or the current one
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
@@ -255,7 +254,7 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar pressure(const int phaseIdx = 0) const
+    Scalar pressure(const int phaseIdx) const
     { return fluidState_.pressure(phaseIdx); }
 
     /*!
