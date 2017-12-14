@@ -1,11 +1,13 @@
 #include <config.h>
 #include <iostream>
+#include <algorithm>
 
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/io/file/gmshreader.hh>
 #include <dune/grid/yaspgrid.hh>
+#include <dune/common/timer.hh>
 
 #if HAVE_DUNE_FOAMGRID
 #include <dune/foamgrid/foamgrid.hh>
@@ -18,7 +20,9 @@
 #endif
 
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/boundingboxtree.hh>
+#include <dumux/common/geometry/boundingboxtree.hh>
+#include <dumux/common/geometry/geometricentityset.hh>
+#include <dumux/common/geometry/intersectingentities.hh>
 
 namespace Dumux {
 
@@ -29,50 +33,45 @@ class BBoxTreeTests
     using Scalar = typename Grid::ctype;
     enum { dimWorld = Grid::dimensionworld };
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using EntitySet = GridViewGeometricEntitySet<GridView, 0>;
+    using BoundingBoxTree = Dumux::BoundingBoxTree<EntitySet>;
 
 public:
-    int construct(const GridView& gv)
+    int build(const GridView& gv)
     {
-        std::cout << std::endl
-                  << "Construct bounding box tree from grid view:" << std::endl
-                  << "*******************************************"
-                  << std::endl;
-
-        // construct a bounding box tree
-        tree_ = std::make_shared<Dumux::BoundingBoxTree<GridView>>();
-        tree_->build(gv);
-
+        // build a bounding box tree
+        tree_ = std::make_shared<BoundingBoxTree>();
+        tree_->build(std::make_shared<EntitySet>(gv));
         return 0;
     }
 
     int intersectPoint(const GlobalPosition& p, std::size_t expectedCollisions)
     {
-        std::cout << std::endl
-                  << "Intersect with point ("<< p <<"):" << std::endl
-                  << "************************************************"
-                  << std::endl;
+        std::cout << "Intersect with point ("<< p <<") ";
 
-        auto entities = tree_->computeEntityCollisions(p);
+        Dune::Timer timer;
+        const auto entities = intersectingEntities(p, *tree_);
 
-        std::cout << entities.size() << " intersection(s) found ("
-                  << expectedCollisions << " expected)." << std::endl;
+        std::cout << " --> " << entities.size() << " intersection(s) found ("
+                  << expectedCollisions << " expected) in " << timer.elapsed() << " seconds.\n";
+
         if (entities.size() != expectedCollisions)
         {
             std::cerr << "Point intersection failed: Expected "
                       << expectedCollisions << " and got "
-                      << entities.size() << "!" <<std::endl;
+                      << entities.size() << "!\n";
             return 1;
         }
         return 0;
     }
 
-    template <class OtherGridView>
-    int intersectTree(const Dumux::BoundingBoxTree<OtherGridView>& otherTree,
+    template <class OtherEntitySet, class OtherGridView>
+    int intersectTree(const Dumux::BoundingBoxTree<OtherEntitySet>& otherTree,
                       const OtherGridView& otherGridView,
                       std::size_t expectedIntersections)
     {
         Dune::Timer timer;
-        auto intersections = tree_->computeEntityCollisions(otherTree);
+        const auto intersections = intersectingEntities(*tree_, otherTree);
         std::cout << "Computed tree intersections in " << timer.elapsed() << std::endl;
         timer.reset();
 
@@ -108,14 +107,7 @@ public:
     }
 
 private:
-    template<class Intersection>
-    bool intersectionsEqual(const Intersection& is1, const Intersection& is2)
-    {
-        using std::max;
-        auto eps = 1e-7*max((is1[0] - is1[1]).two_norm(), (is2[0] - is2[1]).two_norm());
-        return (is1[0] - is2[0]).two_norm() < eps && (is1[1] - is2[1]).two_norm() < eps;
-    }
-    std::shared_ptr<Dumux::BoundingBoxTree<GridView>> tree_;
+    std::shared_ptr<BoundingBoxTree> tree_;
 };
 
 } // end namespace Dumux
@@ -126,7 +118,8 @@ int main (int argc, char *argv[]) try
     Dune::MPIHelper::instance(argc, argv);
 
     // Some aliases two type tags for tests using two grids
-    using Grid = Dune::YaspGrid<3>;
+    constexpr int dimworld = WORLD_DIMENSION;
+    using Grid = Dune::YaspGrid<dimworld>;
     using Scalar = Grid::ctype;
     enum { dimWorld = Grid::dimensionworld };
     enum { dim = Grid::dimension };
@@ -144,48 +137,69 @@ int main (int argc, char *argv[]) try
                       << std::endl;
 
         // create a cube grid
-        const GlobalPosition lowerLeft(0.0);
-        const GlobalPosition upperRight(1.0*scaling);
-        std::array<unsigned int, dim> elems; elems.fill(3);
-        auto grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, elems);
-
-        Dune::VTKWriter<Grid::LeafGridView> vtkWriter(grid->leafGridView());
-        vtkWriter.write("grid", Dune::VTK::ascii);
-
-        // bboxtree tests using one bboxtree
-        returns.push_back(test.construct(grid->leafGridView()));
-        returns.push_back(test.intersectPoint(GlobalPosition(0.0), 1));
-        returns.push_back(test.intersectPoint(GlobalPosition(1e-3*scaling), 1));
-        returns.push_back(test.intersectPoint(GlobalPosition(1.0/3.0*scaling), 8));
-
-#if HAVE_DUNE_FOAMGRID
-        using NetworkGrid = Dune::FoamGrid<1, 3>;
-        using NetworkGridView = NetworkGrid::LeafGridView;
-
-        std::cout << std::endl
-                      << "Intersect with other bounding box tree:" << std::endl
-                      << "***************************************"
-                      << std::endl;
-
-        auto networkGrid = std::shared_ptr<NetworkGrid>(Dune::GmshReader<NetworkGrid>::read("network1d.msh", false, false));
-
-        // scaling
-        for (const auto& vertex : vertices(networkGrid->leafGridView()))
         {
-            auto newPos = vertex.geometry().corner(0);
-            newPos *= scaling;
-            networkGrid->setPosition(vertex, newPos);
+            const GlobalPosition lowerLeft(0.0);
+            const GlobalPosition upperRight(1.0*scaling);
+            constexpr int numCellsX = 33;
+            std::array<unsigned int, dim> elems; elems.fill(numCellsX);
+            auto grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, elems);
+
+            // Dune::VTKWriter<Grid::LeafGridView> vtkWriter(grid->leafGridView());
+            // vtkWriter.write("grid_dim" + std::to_string(dimworld), Dune::VTK::ascii);
+
+            // bboxtree tests using one bboxtree
+            returns.push_back(test.build(grid->leafGridView()));
+            returns.push_back(test.intersectPoint(GlobalPosition(0.0*scaling), 1));
+            returns.push_back(test.intersectPoint(GlobalPosition(1e-3*scaling), 1));
+            returns.push_back(test.intersectPoint(GlobalPosition(1.0*scaling/numCellsX), 1<<dimworld));
+            returns.push_back(test.intersectPoint(GlobalPosition(1.0*scaling), 1));
         }
 
-        Dune::VTKWriter<NetworkGridView> lowDimVtkWriter(networkGrid->leafGridView());
-        lowDimVtkWriter.write("network", Dune::VTK::ascii);
+#if HAVE_DUNE_FOAMGRID && WORLD_DIMENSION == 3
+        {
+            const GlobalPosition lowerLeft(0.0);
+            const GlobalPosition upperRight(1.0*scaling);
+            constexpr int numCellsX = 10;
+            std::array<unsigned int, dim> elems; elems.fill(numCellsX);
+            auto grid = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, elems);
 
-        std::cout << "Constructed " << networkGrid->leafGridView().size(0) <<
-                                  " element 1d network grid." << std::endl;
+            // Dune::VTKWriter<Grid::LeafGridView> vtkWriter(grid->leafGridView());
+            // vtkWriter.write("grid_dim" + std::to_string(dimworld), Dune::VTK::ascii);
 
-        Dumux::BoundingBoxTree<NetworkGridView> networkTree;
-        networkTree.build(networkGrid->leafGridView());
-        returns.push_back(test.intersectTree(networkTree, networkGrid->leafGridView(), 9));
+            using NetworkGrid = Dune::FoamGrid<1, dimworld>;
+            using NetworkGridView = NetworkGrid::LeafGridView;
+
+            std::cout << std::endl
+                          << "Intersect with other bounding box tree:" << std::endl
+                          << "***************************************"
+                          << std::endl;
+
+            auto networkGrid = std::shared_ptr<NetworkGrid>(Dune::GmshReader<NetworkGrid>::read("network1d.msh", false, false));
+
+            // scaling
+            for (const auto& vertex : vertices(networkGrid->leafGridView()))
+            {
+                auto newPos = vertex.geometry().corner(0);
+                newPos *= scaling;
+                networkGrid->setPosition(vertex, newPos);
+            }
+
+            // Dune::VTKWriter<NetworkGridView> lowDimVtkWriter(networkGrid->leafGridView());
+            // lowDimVtkWriter.write("network", Dune::VTK::ascii);
+
+            std::cout << "Constructed 1d network grid with " << networkGrid->leafGridView().size(0) << " elements." << std::endl;
+
+            // build the bulk grid bounding box tree
+            returns.push_back(test.build(grid->leafGridView()));
+
+            // build the network grid bounding box tree
+            using EntitySet = Dumux::GridViewGeometricEntitySet<NetworkGridView, 0>;
+            Dumux::BoundingBoxTree<EntitySet> networkTree;
+            networkTree.build(std::make_shared<EntitySet>(networkGrid->leafGridView()));
+
+            // intersect the two bounding box trees
+            returns.push_back(test.intersectTree(networkTree, networkGrid->leafGridView(), 20));
+        }
 #endif
     }
 

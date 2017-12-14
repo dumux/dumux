@@ -29,7 +29,9 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/boundingboxtree.hh>
+#include <dumux/common/geometry/boundingboxtree.hh>
+#include <dumux/common/geometry/intersectspointgeometry.hh>
+#include <dumux/common/geometry/intersectingentities.hh>
 
 #include <dumux/discretization/methods.hh>
 
@@ -67,7 +69,7 @@ public:
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
     PointSource(GlobalPosition pos)
-      : values_(0), pos_(pos), embeddings_(1) {}
+      : values_(0.0), pos_(pos), embeddings_(1) {}
 
     //! Convenience += operator overload modifying only the values
     PointSource& operator+= (Scalar s)
@@ -177,7 +179,7 @@ public:
     //! Constructor for sol dependent point sources, when there is no
     // value known at the time of initialization
     IdPointSource(GlobalPosition pos, IdType id)
-      : ParentType(pos, PrimaryVariables(0)), id_(id) {}
+      : ParentType(pos, PrimaryVariables(0.0)), id_(id) {}
 
     //! return the sources identifier
     IdType id() const
@@ -232,7 +234,7 @@ public:
     // value known at the time of initialization
     SolDependentPointSource(GlobalPosition pos,
                             ValueFunction valueFunction)
-      : ParentType(pos, PrimaryVariables(0)), valueFunction_(valueFunction) {}
+      : ParentType(pos, PrimaryVariables(0.0)), valueFunction_(valueFunction) {}
 
     //! an update function called before adding the value
     // to the local residual in the problem in scvPointSources
@@ -293,7 +295,7 @@ public:
         for (auto&& source : sources)
         {
             // compute in which elements the point source falls
-            std::vector<unsigned int> entities = boundingBoxTree.computeEntityCollisions(source.position());
+            const auto entities = intersectingEntities(source.position(), boundingBoxTree);
             // split the source values equally among all concerned entities
             source.setEmbeddings(entities.size()*source.embeddings());
             // loop over all concernes elements
@@ -302,7 +304,7 @@ public:
                 if(isBox)
                 {
                     // check in which subcontrolvolume(s) we are
-                    const auto element = boundingBoxTree.entity(eIdx);
+                    const auto element = boundingBoxTree.entitySet().entity(eIdx);
                     auto fvGeometry = localView(fvGridGeometry);
                     fvGeometry.bindElement(element);
 
@@ -311,7 +313,7 @@ public:
                     std::vector<unsigned int> scvIndices;
                     for (auto&& scv : scvs(fvGeometry))
                     {
-                        if (BoundingBoxTreeHelper<dimworld>::pointInGeometry(scv.geometry(), globalPos))
+                        if (intersectsPointGeometry(globalPos, scv.geometry()))
                             scvIndices.push_back(scv.indexInElement());
                     }
                     // for all scvs that where tested positiv add the point sources
