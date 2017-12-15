@@ -23,6 +23,8 @@
 #ifndef DUMUX_TIME_MANAGER_HH
 #define DUMUX_TIME_MANAGER_HH
 
+#warning "This file is deprecated. Use the TimeLoop class in common/timeloop.hh"
+
 #include <algorithm>
 
 #include <dune/common/float_cmp.hh>
