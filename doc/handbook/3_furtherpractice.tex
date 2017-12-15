@@ -1,47 +1,51 @@
 \section{Further Practice}
 \label{tutorial-furtherpractice}
 
-If there is a need for further practice, we refer here to the test problems, that
-are already implemented in \Dumux. Several examples for implicit and sequential models
-can be found in the \texttt{test}-directory. An overview over the available tests
-cases can be found on the class documentation \url{http://www.dumux.org/documentation.php}.
-There you also find a \emph{feature-list} for the individual tests.
+If there is a need for further practice, we refer here to the test problems that
+are already implemented in \Dumux. Several examples for all models
+can be found in the \texttt{test}-directory. An overview over the available test
+cases can be found in the class documentation \url{http://www.dumux.org/documentation.php}.
+There you also find a \emph{feature-list} for the individual tests.%TODO
 
-Another possibility to gain more experience with \Dumux is the \texttt{dumux-lecture} module, where 
-a number of \Dumux applications are provided and explained. It is structured according to
-the use of these applications in different lecture classes at the Department of Hydromechanics and
-Modelling of Hydrosystems. The majority of applications belongs accordingly to the 
-course in Multiphase Modelling (mm), while there are also some basic examples from the
-courses Environmental Fluid Mechanics (efm) and Modelling of Hydrosystems (mhs). 
-These applications contain were primarily designed to enhance the understanding of conceptualizing the
-governing physical processes and their implementation in a numerical simulator. 
-Different aspects of modelling multi-phase multi-component flow and transport processes are approached.
-In the focus are questions like the assignment of boundary conditions, the choice of the 
-appropriate physics for a given problem (which phases, which components), discretization issues,
-time stepping, etc. 
-You can find, for example, a comparison of different two-phase flow problems considering in
-the more simple approach two immiscible fluids while components in both phases with interphase
-mass transfer are considered in the more complex case.
-All the scenarios and their physical background are explained in additional .tex-files,
-which are provided in sub-directories names \emph{description}. The following test cases are 
-contained:
-\begin{itemize}
-\item \texttt{Buckley-Leverett Problem - Classical porous media flow show case}
-\item \texttt{$\text{CO}_2$ plume - The influence of the Gravitational Number}
-\item \texttt{Column Xylene - A VEGAS experiment}
-\item \texttt{Convective Mixing - Related to CO$_2$ storage}
-\item \texttt{Fuel Cell}
-\item \texttt{Heatpipe - A show case for two-phase two-component flow with heat fluxes}
-\item \texttt{Heavy Oil - SAGD (steam assisted gravity drainage)}
-\item \texttt{Henry Problem - A show case related to salt water intrusion}
-\item \texttt{McWorther Problem - Classical porous media flow show case}
-\item \texttt{NAPL Infiltration}
-\item \texttt{Remediation Scenarios - For NAPL contaminated unsaturated soils}
-\item \texttt{Groundwater - Simple groundwater flow case for MHS lecture}
-\item \texttt{Different single/two-phase single/two-component problems - Example from lecture EFM}
-\end{itemize}
-
-Dumux-lecture can be obtained as follows:
+Another possibility to gain more experience with \Dumux is the \texttt{dumux-lecture} module
+that contains different application examples that are used in the lectures at the 
+Department of Hydromechanics and Modelling of Hydrosystems in Stuttgart.
+The \texttt{dumux-lecture} module can be obtained as follows:
 \begin{lstlisting}[style=Bash]
 $ git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux-lecture.git
 \end{lstlisting}
+The module is structured based on the different lectures: 
+\begin{itemize}
+\item mm: Multiphase Modelling,
+\item efm: Environmental Fluid Mechanics,
+\item mhs: Modelling of Hydrosystems.
+\end{itemize}
+The majority of applications is covered in the course Multiphase Modelling (mm), 
+while there are also some basic examples from the
+courses Environmental Fluid Mechanics (efm) and Modelling of Hydrosystems (mhs). 
+These applications are primarily designed to enhance the understanding of conceptualizing the
+governing physical processes and their implementation in a numerical simulator. 
+Different aspects of modelling multi-phase multi-component flow and transport processes are shown.
+The lectures focus on questions like, e. g., the assignment of boundary conditions, the choice of the 
+appropriate physics for a given problem (which phases, which components), discretization issues,
+time stepping. You can find, e. g., a comparison of different two-phase flow problems: The
+more simple approach considers two immiscible fluids while components in both phases with interphase
+mass transfer are considered in the more complex approach.
+All scenarios and their physical background are explained in additional .tex-files,
+which are provided in sub-directories named \texttt{description}. The following test cases are 
+contained in the \texttt{dumux-lecture} module:
+\begin{itemize}
+\item \texttt{buckleyleverett}: The Buckley-Leverett Problem is a classical porous media flow show case
+\item \texttt{co2plume}: Analysis of the influence of the gravitational number on the $\text{CO}_2$ plume 
+\item \texttt{columnxylene}: A VEGAS experiment
+\item \texttt{convectivemixing}: A test case related to CO$_2$ storage
+\item \texttt{fuelcell}%TODO
+\item \texttt{heatpipe}: A show case for two-phase two-component flow with heat fluxes
+\item \texttt{heavyoil}: Steam assisted gravity drainage (SAGD)
+\item \texttt{henryproblem}: A show case related to salt water intrusion
+\item \texttt{mcwhorter}: The McWhorter Problem is a classical porous media flow show case
+\item \texttt{naplinfiltration}: Infiltration of non-aqueous phase liquid (NAPL) into soil
+\item \texttt{remediationscenarios}: Test case for NAPL contaminated unsaturated soils
+\item \texttt{groundwater}: Simple groundwater flow case for the course Modelling of Hydrosystems (mhs)
+\item Different single/two-phase, single/two-component problems: Examples from the course Environmental Fluid Mechanics (efm)
+\end{itemize}
