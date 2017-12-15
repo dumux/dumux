@@ -45,7 +45,7 @@
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/globalfluxvariablescache.hh>
+#include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>

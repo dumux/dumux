@@ -41,7 +41,7 @@
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/elementsolution.hh>
 #include <dumux/discretization/box/elementboundarytypes.hh>
-#include <dumux/discretization/box/globalfluxvariablescache.hh>
+#include <dumux/discretization/box/gridfluxvariablescache.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
 #include <dumux/discretization/box/gridvolumevariables.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>

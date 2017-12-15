@@ -1,12 +1,15 @@
 install(FILES
+CMakeLists.txt
+computetransmissibility.hh
 darcyslaw.hh
 elementfluxvariablescache.hh
-elementvolumevariablescache.hh
+elementvolumevariables.hh
 fickslaw.hh
 fluxvariablescachefiller.hh
-fourieslaw.hh
+fourierslaw.hh
 fvelementgeometry.hh
-globalfluxvariablescache.hh
 fvgridgeometry.hh
+gridfluxvariablescache.hh
+properties.hh
 subcontrolvolumeface.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/discretization/cellcentered/tpfa)

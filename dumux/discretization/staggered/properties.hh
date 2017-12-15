@@ -37,7 +37,7 @@
 
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/gridvariables.hh>
-#include <dumux/discretization/staggered/globalfluxvariablescache.hh>
+#include <dumux/discretization/staggered/gridfluxvariablescache.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 #include <dumux/discretization/staggered/gridvolumevariables.hh>
 #include <dumux/discretization/staggered/elementvolumevariables.hh>

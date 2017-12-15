@@ -20,8 +20,8 @@
  * \file
  * \brief The global object of flux var caches
  */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FLUXVARSCACHE_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FLUXVARSCACHE_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_FLUXVARSCACHE_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_GRID_FLUXVARSCACHE_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
