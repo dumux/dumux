@@ -26,7 +26,7 @@
 #define DUMUX_BLOOD_FLOW_PROBLEM_HH
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>

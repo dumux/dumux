@@ -30,7 +30,7 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
-#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidsystems/1p.hh>

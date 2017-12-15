@@ -27,7 +27,7 @@
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/mixeddimension/subproblemproperties.hh>
 
-#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/material/components/constant.hh>

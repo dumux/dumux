@@ -24,12 +24,12 @@
 #define DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidsystems/1p.hh>
-#include <dumux/porousmediumflow/1p/implicit/incompressiblelocalresidual.hh>
+#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include "1ptestspatialparams.hh"
 

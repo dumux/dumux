@@ -32,7 +32,7 @@
 #include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/1p/implicit/model.hh>
+#include <dumux/porousmediumflow/1p/model.hh>
 
 #include "spatialparams.hh"
 
