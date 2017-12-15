@@ -25,6 +25,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_COMPUTE_TRANSMISSIBILITY_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_COMPUTE_TRANSMISSIBILITY_HH
 
+#include <dune/common/typetraits.hh>
 #include <dune/common/fmatrix.hh>
 
 namespace Dumux
@@ -43,11 +44,11 @@ namespace Dumux
  * \param K The tensor living in the neighboring scv
  * \param extrusionFactor The extrusion factor of the scv
  */
-template< class SubControlVolumeFace, class SubControlVolume, class FieldScalar, int dimWorld >
-FieldScalar computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
-                                        const SubControlVolume& scv,
-                                        const Dune::FieldMatrix<FieldScalar, dimWorld, dimWorld>& T,
-                                        typename SubControlVolume::Traits::Scalar extrusionFactor)
+template< class SubControlVolumeFace, class SubControlVolume, class Tensor >
+typename Tensor::field_type computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
+                                                        const SubControlVolume& scv,
+                                                        const Tensor& T,
+                                                        typename SubControlVolume::Traits::Scalar extrusionFactor)
 {
     using GlobalPosition = typename SubControlVolumeFace::Traits::GlobalPosition;
     GlobalPosition Knormal;
@@ -70,11 +71,14 @@ FieldScalar computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
  * \param t The scalar quantity living in the neighboring scv
  * \param extrusionFactor The extrusion factor of the scv
  */
-template< class SubControlVolumeFace, class SubControlVolume, class FieldScalar >
-FieldScalar computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
-                                        const SubControlVolume &scv,
-                                        FieldScalar t,
-                                        typename SubControlVolumeFace::Traits::Scalar extrusionFactor)
+template< class SubControlVolumeFace,
+          class SubControlVolume,
+          class Tensor,
+          typename std::enable_if_t<Dune::IsNumber<Tensor>::value, int> = 0 >
+Tensor computeTpfaTransmissibility(const SubControlVolumeFace& scvf,
+                                   const SubControlVolume &scv,
+                                   Tensor t,
+                                   typename SubControlVolumeFace::Traits::Scalar extrusionFactor)
 {
     auto distanceVector = scvf.ipGlobal();
     distanceVector -= scv.center();
