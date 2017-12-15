@@ -2,51 +2,72 @@
 
 # 1. obtain a list new_parameters.csv of all current parameters
 # retrieve all occurrences of GET_PARAM and GET_RUNTIME_PARAM
-find dumux/ -name '*.[ch][ch]' -exec grep 'GET_PARAM' {} \; | sort -u >new_parameters.csv
-find dumux/ -name '*.[ch][ch]' -exec grep 'GET_RUNTIME_PARAM' {} \; | sort -u >>new_parameters.csv
-# remove all lines containing CSTRING
-sed -i '/CSTRING/d' new_parameters.csv
+find dumux/ -name '*.[ch][ch]' -exec  awk '/getParam</,/;/' {} \; >new_parameters.csv
+find dumux/ -name '*.[ch][ch]' -exec awk '/getParamFromGroup</,/;/' {} \; >>new_parameters.csv
+#add \ to lines not ending with ;
+sed -i '/\;$/!s/$/\\/' new_parameters.csv
+# move lines with \ to previous line
+sed -i ':x; /\\$/ { N; s/\\\n//; tx }' new_parameters.csv
 # remove #define's
 sed -i '/#define/d' new_parameters.csv
 # remove everything before GET_PARAM and GET_RUNTIME_PARAM
-sed -i 's/^.*GET_PARAM/GET_PARAM/' new_parameters.csv
-sed -i 's/^.*GET_RUNTIME_PARAM/GET_RUNTIME_PARAM/' new_parameters.csv
-# remove everything before and including first comma
-awk '{print substr($0,index($0,",")+1)}' new_parameters.csv >tmp.txt
+sed -i 's/^.*getParam/getParam/' new_parameters.csv
+# remove everything before and including first <
+awk '{print substr($0,index($0,"<")+1)}' new_parameters.csv >tmp.txt
 mv tmp.txt new_parameters.csv
-# remove leading whitespace
-sed -i 's/^[ \t]*//' new_parameters.csv
-# remove everything after and including paranthesis
-sed -i 's/).*//' new_parameters.csv
-# sort uniquely
-sort -u new_parameters.csv -o new_parameters.csv
-# keep only the lines containing two commas
-sed -i '/,.*,/!d' new_parameters.csv
-# append types to the end of the lines
-sed -i '/^bool,/ s/$/, bool/' new_parameters.csv
-sed -i '/^double,/ s/$/, double/' new_parameters.csv
-sed -i 's/unsigned int/int/' new_parameters.csv
-sed -i 's/unsigned/int/' new_parameters.csv
-sed -i '/^int,/ s/$/, int/' new_parameters.csv
-sed -i '/^Scalar,/ s/$/, Scalar/' new_parameters.csv
-sed -i '/^std::string,/ s/$/, std::string/' new_parameters.csv
-# remove types from the beginning of the lines
-sed -i 's/bool,//' new_parameters.csv
-sed -i 's/double,//' new_parameters.csv
-sed -i 's/int,//' new_parameters.csv
-sed -i 's/Scalar,//' new_parameters.csv
-sed -i 's/std::string,//' new_parameters.csv
 # remove all blanks
 sed -i 's/ //g' new_parameters.csv
-# add blanks after every comma
-sed -i 's/,/, /g' new_parameters.csv
+#change unsigned to int
+sed -i 's/unsigned int/int/' new_parameters.csv
+sed -i 's/unsignedint/int/' new_parameters.csv
+sed -i 's/unsigned/int/' new_parameters.csv
+#remove everything after last )
+sed -i 's/\(.*\)).*/\1 /' new_parameters.csv
+#remove everything after last {
+sed -i 's/{.*$//' new_parameters.csv
 # sort uniquely
 sort -u new_parameters.csv -o new_parameters.csv
-# remove lines containing no parameter names
-sed -i '/, , /d' new_parameters.csv
-#adapt to doxygen format
+# append types to the end of the lines
+sed -i 's/\(bool.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(double.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(int.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(Scalar.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(GlobalPosition.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(CoordinateType.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(CellArray.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(Dune::.*\)\(>.*\)/\2 \1/' new_parameters.csv
+sed -i 's/\(std::.*\)\(>.*\)/\2 \1/' new_parameters.csv
+#remove everything until first "
+sed -i 's/[^"]*"//' new_parameters.csv
+# move everything between , and BLANK to end of the lines
+sed -i 's/\(,.*\)\( .*\)/\2 \1/' new_parameters.csv
+# remove all "))
+sed -i 's/"))//g' new_parameters.csv
+# remove all ")
+sed -i 's/")//g' new_parameters.csv
+# remove all "
+sed -i 's/"//g' new_parameters.csv
+#remove all ,
+sed -i 's/,//g' new_parameters.csv
+#remove frist . in every line
+sed -i 's/\./\ /' new_parameters.csv
+#replace double blank by single blank
+sed -i 's/  */ /g' new_parameters.csv
+# sort uniquely
+sort -u new_parameters.csv -o new_parameters.csv
+#adapt to doxygen format:
+#add final blank
+sed -i '/\ $/!s/$/ /' new_parameters.csv
+#replace blank with |
+sed -i 's/ / | /g' new_parameters.csv
+#add starting * |
 sed -i 's/^/ * | /' new_parameters.csv
-sed -i 's/, / | /g' new_parameters.csv
+#add final | if not there 4th to 6th |)
+sed -i '/\ |$/!s/$/|/' new_parameters.csv
+#add 5th | if still missing
+sed -i '/\ |.*|.*|.*|.*|$/!s/$/ |/' new_parameters.csv
+#add 6th | if still missing
+sed -i '/\ |.*|.*|.*|.*|.*|$/!s/$/ |/' new_parameters.csv
 
 # 2. obtain a list old_parameters.csv of all old parameters
 cp -v doc/doxygen/extradoc/parameterlist.txt old_parameters.csv
