@@ -32,15 +32,15 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 
+#include <dumux/assembly/boxlocalresidual.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
-
-#include <dumux/implicit/box/elementboundarytypes.hh>
-#include <dumux/assembly/boxlocalresidual.hh>
 
 #include <dumux/discretization/box/subcontrolvolume.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>
 #include <dumux/discretization/box/elementsolution.hh>
+#include <dumux/discretization/box/elementboundarytypes.hh>
 #include <dumux/discretization/box/globalfluxvariablescache.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
 #include <dumux/discretization/box/globalvolumevariables.hh>

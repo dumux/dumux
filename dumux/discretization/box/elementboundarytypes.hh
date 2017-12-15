@@ -23,40 +23,29 @@
 #ifndef DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_BOX_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <dumux/common/valgrind.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup BoxModel
- * \ingroup ImplicitBoundaryTypes
  * \brief This class stores an array of BoundaryTypes objects
  */
 template<class TypeTag>
-class BoxElementBoundaryTypes : public std::vector<typename GET_PROP_TYPE(TypeTag, BoundaryTypes) >
+class BoxElementBoundaryTypes
 {
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef std::vector<BoundaryTypes> ParentType;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using LocalIndexType = typename SubControlVolume::Traits::LocalIndexType;
 
     enum { dim = GridView::dimension };
-    typedef typename GridView::template Codim<0>::Entity Element;
 
 public:
-    /*!
-     * \brief Copy constructor.
-     *
-     * Copying a the boundary types of an element should be explicitly
-     * requested
-     */
-    explicit BoxElementBoundaryTypes(const BoxElementBoundaryTypes &v)
-        : ParentType(v)
-    {}
-
     /*!
      * \brief Default constructor.
      */
@@ -79,26 +68,24 @@ public:
                 const Element &element,
                 const FVElementGeometry &fvGeometry)
     {
-        int numVertices = element.subEntities(dim);
-
-        this->resize(numVertices);
+        vertexBCTypes_.resize( element.subEntities(dim) );
 
         hasDirichlet_ = false;
         hasNeumann_ = false;
         hasOutflow_ = false;
 
-        for (auto&& scv : scvs(fvGeometry))
+        for (const auto& scv : scvs(fvGeometry))
         {
             int scvIdxLocal = scv.indexInElement();
-            (*this)[scvIdxLocal].reset();
+            vertexBCTypes_[scvIdxLocal].reset();
 
             if (fvGeometry.fvGridGeometry().dofOnBoundary(scv.dofIndex()))
             {
-                (*this)[scvIdxLocal] = problem.boundaryTypes(element, scv);
+                vertexBCTypes_[scvIdxLocal] = problem.boundaryTypes(element, scv);
 
-                hasDirichlet_ = hasDirichlet_ || (*this)[scvIdxLocal].hasDirichlet();
-                hasNeumann_ = hasNeumann_ || (*this)[scvIdxLocal].hasNeumann();
-                hasOutflow_ = hasOutflow_ || (*this)[scvIdxLocal].hasOutflow();
+                hasDirichlet_ = hasDirichlet_ || vertexBCTypes_[scvIdxLocal].hasDirichlet();
+                hasNeumann_ = hasNeumann_ || vertexBCTypes_[scvIdxLocal].hasNeumann();
+                hasOutflow_ = hasOutflow_ || vertexBCTypes_[scvIdxLocal].hasOutflow();
             }
         }
     }
@@ -138,7 +125,18 @@ public:
     bool hasOutflow() const
     { return hasOutflow_; }
 
+    /*
+     * \brief Access operator
+     * \return BoundaryTypes
+     */
+    const BoundaryTypes& operator[] (LocalIndexType i) const
+    {
+        assert(i < vertexBCTypes_.size());
+        return vertexBCTypes_[i];
+    }
+
 protected:
+    std::vector< BoundaryTypes > vertexBCTypes_;
     bool hasDirichlet_;
     bool hasNeumann_;
     bool hasOutflow_;

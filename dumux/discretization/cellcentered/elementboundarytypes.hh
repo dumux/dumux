@@ -23,15 +23,17 @@
 #ifndef DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 #define DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
 
-#include <dumux/common/valgrind.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup CCModel
- * \ingroup ImplicitBoundaryTypes
- * \brief This class stores an array of BoundaryTypes objects
+ * \brief This class exists only for compatibility purposes with the
+ *        box scheme. The cell-centered schemes and the box scheme use
+ *        a common base local residual, which passes an ElementBoundaryTypes
+ *        object to the implemented interfaces.
  */
 template<class TypeTag>
 class CCElementBoundaryTypes
@@ -49,6 +51,7 @@ public:
      * \param problem The problem object which needs to be simulated
      * \param element The DUNE Codim<0> entity for which the boundary
      *                types should be collected
+     * \param fvGeometry The element finite volume geometry
      */
     void update(const Problem &problem,
                 const Element &element,

@@ -32,15 +32,15 @@
 
 #include <dumux/common/properties.hh>
 
+#include <dumux/assembly/cclocalresidual.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
-
-#include <dumux/implicit/cellcentered/elementboundarytypes.hh>
-#include <dumux/assembly/cclocalresidual.hh>
 
 #include <dumux/discretization/cellcentered/globalvolumevariables.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
+#include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
