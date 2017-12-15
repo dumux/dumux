@@ -26,7 +26,7 @@
 #define DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 
 #include "properties.hh"
-#include <dumux/porousmediumflow/3p3c/implicit/localresidual.hh>
+#include <dumux/porousmediumflow/3p3c/localresidual.hh>
 
 namespace Dumux
 {

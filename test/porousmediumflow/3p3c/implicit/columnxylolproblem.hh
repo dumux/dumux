@@ -28,7 +28,7 @@
 #include <dumux/material/fluidsystems/h2oairxylene.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
-#include <dumux/porousmediumflow/3p3c/implicit/model.hh>
+#include <dumux/porousmediumflow/3p3c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "columnxylolspatialparams.hh"

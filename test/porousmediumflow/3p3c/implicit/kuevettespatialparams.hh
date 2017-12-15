@@ -26,7 +26,6 @@
 
 #include <dune/common/float_cmp.hh>
 
-#include <dumux/porousmediumflow/3p3c/implicit/indices.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
