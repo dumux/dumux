@@ -663,8 +663,8 @@ vtmv(const Dune::DenseVector<V1>& v1,
 template <class V1, class FieldScalar, class V2>
 typename std::enable_if_t<Dune::IsNumber<FieldScalar>::value, FieldScalar>
 vtmv(const Dune::DenseVector<V1>& v1,
-                 const FieldScalar m,
-                 const Dune::DenseVector<V2>& v2)
+     const FieldScalar m,
+     const Dune::DenseVector<V2>& v2)
 {
     return m*(v1*v2);
 }
