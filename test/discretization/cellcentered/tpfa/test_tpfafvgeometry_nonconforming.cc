@@ -36,33 +36,18 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
-//! Dummy flux variables class so that we can update the connectivity map
-class MockFluxVariables
-{
-public:
-  template<class Element, class FvGeometry, class Scvf>
-  static std::vector<std::size_t> computeStencil(const Element& element,
-                                                 const FvGeometry& fvGeometry,
-                                                 const Scvf& scvf)
-  {
-      return std::vector<std::size_t>();
-  }
-};
-
 namespace Dumux {
-    namespace Properties{
-        //! Test without using global caching of the geometries
-        NEW_TYPE_TAG(TestFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
-        SET_TYPE_PROP(TestFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-        SET_TYPE_PROP(TestFVGeometryNonConforming, FluxVariables, MockFluxVariables);
+namespace Properties{
+//! Test without using global caching of the geometries
+NEW_TYPE_TAG(TestFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
+SET_TYPE_PROP(TestFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
-        //! Test using global geometry caching
-        NEW_TYPE_TAG(TestCachedFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
-        SET_TYPE_PROP(TestCachedFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-        SET_BOOL_PROP(TestCachedFVGeometryNonConforming, EnableFVGridGeometryCache, true);
-        SET_TYPE_PROP(TestCachedFVGeometryNonConforming, FluxVariables, MockFluxVariables);
-    }
-}
+//! Test using global geometry caching
+NEW_TYPE_TAG(TestCachedFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
+SET_TYPE_PROP(TestCachedFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_BOOL_PROP(TestCachedFVGeometryNonConforming, EnableFVGridGeometryCache, true);
+} // end namespace Properties
+} // end namespace Dumux
 
 //! epsilon for checking direction of scvf normals
 constexpr double eps = 1e-6;

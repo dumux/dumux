@@ -45,33 +45,10 @@ class FluxStencilImplementation;
 template<class TypeTag>
 using FluxStencil = FluxStencilImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-//! Flux stencil for the box method
-template<class TypeTag>
-class FluxStencilImplementation<TypeTag, DiscretizationMethods::Box>
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
-
-public:
-    // This is for compatibility with the cc methods. The flux stencil info is obsolete for the box method.
-    static Stencil stencil(const Element& element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf)
-    {
-        return Stencil();
-    }
-};
-
 //! Flux stencil for the cell-centered TPFA scheme
 template<class TypeTag>
 class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -102,7 +79,6 @@ public:
 template<class TypeTag>
 class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);

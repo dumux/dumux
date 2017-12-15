@@ -24,6 +24,11 @@
 #ifndef DUMUX_CC_MPFA_GENERAL_CONNECTIVITY_MAP_HH
 #define DUMUX_CC_MPFA_GENERAL_CONNECTIVITY_MAP_HH
 
+#include <vector>
+#include <utility>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/fluxstencil.hh>
+
 namespace Dumux
 {
 
@@ -40,9 +45,9 @@ class CCMpfaGeneralConnectivityMap
 {
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
+    using FluxStencil = Dumux::FluxStencil<TypeTag>;
 
     // To each cell "globalI" there will be a list of "globalJ", in which globalI is part
     // of the stencil. We save the scvfs over which fluxes depend on globalI and a list of
@@ -80,8 +85,7 @@ public:
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                FluxVariables fluxVars;
-                const auto& stencil = fluxVars.computeStencil(element, fvGeometry, scvf);
+                const auto& stencil = FluxStencil::stencil(element, fvGeometry, scvf);
 
                 // insert our index in the neighbor stencils of the elements in the flux stencil
                 for (auto globalI : stencil)
@@ -192,6 +196,6 @@ public:
 private:
     Map map_;
 };
-}
+} // end namespace Dumux
 
 #endif
