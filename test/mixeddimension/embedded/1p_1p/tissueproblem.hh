@@ -56,7 +56,7 @@ SET_TYPE_PROP(TissueProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoor
 
 SET_BOOL_PROP(TissueProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(TissueProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(TissueProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(TissueProblem, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(TissueProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(TissueProblem, SolutionDependentMolecularDiffusion, false);
 SET_BOOL_PROP(TissueProblem, SolutionDependentHeatConduction, false);

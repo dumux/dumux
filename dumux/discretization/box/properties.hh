@@ -168,12 +168,12 @@ SET_TYPE_PROP(BoxModel, ElementVolumeVariables, BoxElementVolumeVariables<TypeTa
                             GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
-SET_TYPE_PROP(BoxModel, GlobalFluxVariablesCache, BoxGlobalFluxVariablesCache<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+SET_TYPE_PROP(BoxModel, GridFluxVariablesCache, BoxGridFluxVariablesCache<TypeTag,
+                            GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(BoxModel, ElementFluxVariablesCache, BoxElementFluxVariablesCache<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+                            GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
 //! Set the BaseLocalResidual to BoxLocalResidual
 SET_TYPE_PROP(BoxModel, BaseLocalResidual, BoxLocalResidual<TypeTag>);

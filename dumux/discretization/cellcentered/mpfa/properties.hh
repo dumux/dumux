@@ -95,13 +95,13 @@ SET_TYPE_PROP(CCMpfaModel,
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel,
-              GlobalFluxVariablesCache,
-              CCMpfaGlobalFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+              GridFluxVariablesCache,
+              CCMpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
 //! The local flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel,
               ElementFluxVariablesCache,
-              CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache)>);
+              CCMpfaElementFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
 
 //! The global previous volume variables vector class

@@ -36,7 +36,7 @@ namespace Dumux
  * \brief Base class for the local flux variables cache.
  *        Prepares the cache on all the faces in the stencil.
  */
-template<class TypeTag, bool EnableGlobalFluxVariablesCache>
+template<class TypeTag, bool EnableGridFluxVariablesCache>
 class CCMpfaElementFluxVariablesCache;
 
 /*!
@@ -53,12 +53,12 @@ class CCMpfaElementFluxVariablesCache<TypeTag, true>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    CCMpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
-    : globalFluxVarsCachePtr_(&global) {}
+    CCMpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    : gridFluxVarsCachePtr_(&global) {}
 
     // Specialization for the global caching being enabled - do nothing here
     void bindElement(const Element& element,
@@ -83,14 +83,14 @@ public:
 
     // access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return (*globalFluxVarsCachePtr_)[scvf]; }
+    { return (*gridFluxVarsCachePtr_)[scvf]; }
 
     //! The global object we are a restriction of
-    const GlobalFluxVariablesCache& globalFluxVarsCache() const
-    {  return *globalFluxVarsCachePtr_; }
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
 
 private:
-    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+    const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 };
 
 /*!
@@ -111,7 +111,7 @@ class CCMpfaElementFluxVariablesCache<TypeTag, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -122,8 +122,8 @@ class CCMpfaElementFluxVariablesCache<TypeTag, false>
     static constexpr int dim = GridView::dimension;
 
 public:
-    CCMpfaElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
-    : globalFluxVarsCachePtr_(&global) {}
+    CCMpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    : gridFluxVarsCachePtr_(&global) {}
 
     // This function has to be called prior to flux calculations on the element.
     // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
@@ -145,7 +145,7 @@ public:
         clear_();
 
         // some references for convenience
-        const auto& problem = globalFluxVarsCache().problem();
+        const auto& problem = gridFluxVarsCache().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
 
         // the assembly map of the given element
@@ -219,7 +219,7 @@ public:
         // update only if transmissibilities are solution-dependent
         if (FluxVariablesCacheFiller::isSolDependent)
         {
-            const auto& problem = globalFluxVarsCache().problem();
+            const auto& problem = gridFluxVarsCache().problem();
             const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
             const auto& assemblyMapI = fvGridGeometry.connectivityMap()[fvGridGeometry.elementMapper().index(element)];
 
@@ -266,11 +266,11 @@ public:
     { return fluxVarsCache_[getLocalScvfIdx_(scvfIdx)]; }
 
     //! The global object we are a restriction of
-    const GlobalFluxVariablesCache& globalFluxVarsCache() const
-    {  return *globalFluxVarsCachePtr_; }
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
 
 private:
-    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+    const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 
     void clear_()
     {

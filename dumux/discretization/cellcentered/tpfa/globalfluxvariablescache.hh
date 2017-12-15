@@ -32,15 +32,15 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
-template<class TypeTag, bool EnableGlobalFluxVariablesCache>
-class CCTpfaGlobalFluxVariablesCache;
+template<class TypeTag, bool EnableGridFluxVariablesCache>
+class CCTpfaGridFluxVariablesCache;
 
 /*!
  * \ingroup ImplicitModel
  * \brief Spezialization when caching globally
  */
 template<class TypeTag>
-class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
+class CCTpfaGridFluxVariablesCache<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -58,7 +58,7 @@ class CCTpfaGlobalFluxVariablesCache<TypeTag, true>
 
 public:
     // The constructor
-    CCTpfaGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    CCTpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     void update(const FVGridGeometry& fvGridGeometry,
@@ -133,7 +133,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCTpfaGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const CCTpfaGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:
@@ -148,7 +148,7 @@ private:
  * \brief Spezialization when not using global caching
  */
 template<class TypeTag>
-class CCTpfaGlobalFluxVariablesCache<TypeTag, false>
+class CCTpfaGridFluxVariablesCache<TypeTag, false>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -162,7 +162,7 @@ class CCTpfaGlobalFluxVariablesCache<TypeTag, false>
 
 public:
     // The constructor
-    CCTpfaGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    CCTpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global flux variables caching is disabled, we don't need to update the cache
     void update(const FVGridGeometry& fvGridGeometry,
@@ -182,7 +182,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCTpfaGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const CCTpfaGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:

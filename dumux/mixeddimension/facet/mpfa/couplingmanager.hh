@@ -208,7 +208,7 @@ public:
         auto bulkElemVolVars = localView(bulkProblem().model().curGridVolVars());
         bulkElemVolVars.bind(firstBulkElement, bulkFvGeometry, bulkProblem().model().curSol());
 
-        auto bulkElemFluxVarsCache = localView(bulkProblem().model().globalFluxVarsCache());
+        auto bulkElemFluxVarsCache = localView(bulkProblem().model().gridFluxVarsCache());
         bulkElemFluxVarsCache.bind(firstBulkElement, bulkFvGeometry, bulkElemVolVars);
 
         BulkPrimaryVariables flux(0.0);

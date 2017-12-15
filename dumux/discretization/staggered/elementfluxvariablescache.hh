@@ -32,7 +32,7 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the stencil local flux variables cache
  */
-template<class TypeTag, bool EnableGlobalFluxVariablesCache>
+template<class TypeTag, bool EnableGridFluxVariablesCache>
 class StaggeredElementFluxVariablesCache;
 
 /*!
@@ -49,12 +49,12 @@ class StaggeredElementFluxVariablesCache<TypeTag, true>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    StaggeredElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
-    : globalFluxVarsCachePtr_(&global) {}
+    StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    : gridFluxVarsCachePtr_(&global) {}
 
     // Specialization for the global caching being enabled - do nothing here
     void bindElement(const Element& element,
@@ -74,14 +74,14 @@ public:
 
     // aStaggeredess operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return (*globalFluxVarsCachePtr_)[scvf.index()]; }
+    { return (*gridFluxVarsCachePtr_)[scvf.index()]; }
 
     //! The global object we are a restriction of
-    const GlobalFluxVariablesCache& globalFluxVarsCache() const
-    {  return *globalFluxVarsCachePtr_; }
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
 
 private:
-    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+    const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 };
 
 /*!
@@ -98,12 +98,12 @@ class StaggeredElementFluxVariablesCache<TypeTag, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    StaggeredElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
-    : globalFluxVarsCachePtr_(&global) {}
+    StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    : gridFluxVarsCachePtr_(&global) {}
 
     // This function has to be called prior to flux calculations on the element.
     // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
@@ -120,7 +120,7 @@ public:
         // fill the containers
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+            fluxVarsCache_[localScvfIdx].update(gridFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
@@ -132,15 +132,15 @@ public:
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
-        const auto globalI = globalFluxVarsCache().problem_().elementMapper().index(element);
-        const auto& neighborStencil = globalFluxVarsCache().problem_().model().stencils(element).neighborStencil();
+        const auto globalI = gridFluxVarsCache().problem_().elementMapper().index(element);
+        const auto& neighborStencil = gridFluxVarsCache().problem_().model().stencils(element).neighborStencil();
         const auto numNeighbors = neighborStencil.size();
 
         // find the number of scv faces that need to be prepared
         auto numScvf = fvGeometry.numScvf();
         for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto& fluxVarIndicesJ = globalFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
+            const auto& fluxVarIndicesJ = gridFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
             numScvf += fluxVarIndicesJ.size();
         }
 
@@ -150,7 +150,7 @@ public:
         IndexType localScvfIdx = 0;
         for (auto&& scvf : scvfs(fvGeometry))
         {
-            fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+            fluxVarsCache_[localScvfIdx].update(gridFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
             globalScvfIndices_[localScvfIdx] = scvf.index();
             localScvfIdx++;
         }
@@ -158,13 +158,13 @@ public:
         // add required data on the scv faces in the neighboring elements
         for (IndexType localIdxJ = 0; localIdxJ < numNeighbors; ++localIdxJ)
         {
-            const auto& fluxVarIndicesJ = globalFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
+            const auto& fluxVarIndicesJ = gridFluxVarsCache().problem_().model().localJacobian().assemblyMap()[globalI][localIdxJ];
             const auto elementJ = fvGeometry.fvGridGeometry().element(neighborStencil[localIdxJ]);
 
             for (auto fluxVarIdx : fluxVarIndicesJ)
             {
                 auto&& scvfJ = fvGeometry.scvf(fluxVarIdx);
-                fluxVarsCache_[localScvfIdx].update(globalFluxVarsCache().problem_(), elementJ, fvGeometry, elemVolVars, scvfJ);
+                fluxVarsCache_[localScvfIdx].update(gridFluxVarsCache().problem_(), elementJ, fvGeometry, elemVolVars, scvfJ);
                 globalScvfIndices_[localScvfIdx] = scvfJ.index();
                 localScvfIdx++;
             }
@@ -179,7 +179,7 @@ public:
         fluxVarsCache_.resize(1);
         globalScvfIndices_.resize(1);
 
-        fluxVarsCache_[0].update(globalFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
+        fluxVarsCache_[0].update(gridFluxVarsCache().problem_(), element, fvGeometry, elemVolVars, scvf);
         globalScvfIndices_[0] = scvf.index();
     }
 
@@ -191,11 +191,11 @@ public:
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
     //! The global object we are a restriction of
-    const GlobalFluxVariablesCache& globalFluxVarsCache() const
-    {  return *globalFluxVarsCachePtr_; }
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
 
 private:
-    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+    const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 
     // get index of scvf in the local container
     int getLocalScvfIdx_(const int scvfIdx) const

@@ -74,7 +74,7 @@ SET_TYPE_PROP(DensityDrivenFlowProblem, Problem, Dumux::DensityDrivenFlowProblem
 
 SET_BOOL_PROP(DensityDrivenFlowProblem, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGridVolumeVariablesCache, true);
 
 SET_BOOL_PROP(DensityDrivenFlowProblem, UseMoles, true);

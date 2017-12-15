@@ -32,7 +32,7 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
-template<class TypeTag, bool EnableGlobalFluxVariablesCache>
+template<class TypeTag, bool EnableGridFluxVariablesCache>
 class BoxElementFluxVariablesCache
 {};
 
@@ -50,12 +50,12 @@ class BoxElementFluxVariablesCache<TypeTag, true>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
-    BoxElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
-    : globalFluxVarsCachePtr_(&global) {}
+    BoxElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    : gridFluxVarsCachePtr_(&global) {}
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
@@ -83,14 +83,14 @@ public:
 
     // access operator
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
-    { return globalFluxVarsCache().cache(eIdx_, scvf.index()); }
+    { return gridFluxVarsCache().cache(eIdx_, scvf.index()); }
 
     //! The global object we are a restriction of
-    const GlobalFluxVariablesCache& globalFluxVarsCache() const
-    {  return *globalFluxVarsCachePtr_; }
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
 
 private:
-    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+    const GridFluxVariablesCache* gridFluxVarsCachePtr_;
     // currently bound element
     IndexType eIdx_;
 };
@@ -110,11 +110,11 @@ class BoxElementFluxVariablesCache<TypeTag, false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GlobalFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
+    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
 
 public:
-    BoxElementFluxVariablesCache(const GlobalFluxVariablesCache& global)
-    : globalFluxVarsCachePtr_(&global) {}
+    BoxElementFluxVariablesCache(const GridFluxVariablesCache& global)
+    : gridFluxVarsCachePtr_(&global) {}
 
     // Function is called by the BoxLocalJacobian prior to flux calculations on the element.
     // We assume the FVGeometries to be bound at this point
@@ -132,7 +132,7 @@ public:
         // temporary resizing of the cache
         fluxVarsCache_.resize(fvGeometry.numScvf());
         for (auto&& scvf : scvfs(fvGeometry))
-            (*this)[scvf].update(globalFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
+            (*this)[scvf].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
     }
 
     void bindScvf(const Element& element,
@@ -141,7 +141,7 @@ public:
                   const SubControlVolumeFace& scvf)
     {
         fluxVarsCache_.resize(fvGeometry.numScvf());
-        (*this)[scvf].update(globalFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
+        (*this)[scvf].update(gridFluxVarsCache().problem(), element, fvGeometry, elemVolVars, scvf);
     }
 
     // access operator
@@ -153,11 +153,11 @@ public:
     { return fluxVarsCache_[scvf.index()]; }
 
     //! The global object we are a restriction of
-    const GlobalFluxVariablesCache& globalFluxVarsCache() const
-    {  return *globalFluxVarsCachePtr_; }
+    const GridFluxVariablesCache& gridFluxVarsCache() const
+    {  return *gridFluxVarsCachePtr_; }
 
 private:
-    const GlobalFluxVariablesCache* globalFluxVarsCachePtr_;
+    const GridFluxVariablesCache* gridFluxVarsCachePtr_;
     std::vector<FluxVariablesCache> fluxVarsCache_;
 };
 

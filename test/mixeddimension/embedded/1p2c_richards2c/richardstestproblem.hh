@@ -55,7 +55,7 @@ SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::UGGrid<3>);
 
 SET_BOOL_PROP(RichardsTestProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(RichardsTestProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(RichardsTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(RichardsTestProblem, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(RichardsTestProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(RichardsTestProblem, SolutionDependentMolecularDiffusion, false);
 SET_BOOL_PROP(RichardsTestProblem, SolutionDependentHeatConduction, false);

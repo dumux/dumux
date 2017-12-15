@@ -33,7 +33,7 @@ namespace Dumux
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
 template<class TypeTag, bool EnableGridFluxVariablesCache>
-class BoxGlobalFluxVariablesCache
+class BoxGridFluxVariablesCache
 {};
 
 /*!
@@ -41,7 +41,7 @@ class BoxGlobalFluxVariablesCache
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
 template<class TypeTag>
-class BoxGlobalFluxVariablesCache<TypeTag, true>
+class BoxGridFluxVariablesCache<TypeTag, true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -57,7 +57,7 @@ class BoxGlobalFluxVariablesCache<TypeTag, true>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
-    BoxGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
@@ -90,7 +90,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const BoxGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const BoxGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const
@@ -115,7 +115,7 @@ private:
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
 template<class TypeTag>
-class BoxGlobalFluxVariablesCache<TypeTag, false>
+class BoxGridFluxVariablesCache<TypeTag, false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -131,7 +131,7 @@ class BoxGlobalFluxVariablesCache<TypeTag, false>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
-    BoxGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
@@ -143,7 +143,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const BoxGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const BoxGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const

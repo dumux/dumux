@@ -150,7 +150,7 @@ public:
         auto prevElemVolVars = localView(this->model_().prevGridVolVars());
         prevElemVolVars.bindElement(element, fvGeometry, this->model_().prevSol());
 
-        auto elemFluxVarsCache = localView(this->model_().globalFluxVarsCache());
+        auto elemFluxVarsCache = localView(this->model_().gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
         // check for boundaries on the element

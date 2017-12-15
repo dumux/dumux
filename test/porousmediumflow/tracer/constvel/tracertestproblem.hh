@@ -48,7 +48,7 @@ NEW_TYPE_TAG(TracerTestBox, INHERITS_FROM(BoxModel, TracerTest));
 
 // enable caching
 SET_BOOL_PROP(TracerTest, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(TracerTest, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(TracerTest, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(TracerTest, EnableFVGridGeometryCache, true);
 
 // Set the grid type

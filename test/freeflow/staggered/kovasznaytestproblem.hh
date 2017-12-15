@@ -67,7 +67,7 @@ SET_TYPE_PROP(KovasznayTestProblem, Problem, Dumux::KovasznayTestProblem<TypeTag
 
 SET_BOOL_PROP(KovasznayTestProblem, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(KovasznayTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(KovasznayTestProblem, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(KovasznayTestProblem, EnableGridVolumeVariablesCache, true);
 
 #if ENABLE_NAVIERSTOKES

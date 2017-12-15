@@ -62,7 +62,7 @@ SET_TYPE_PROP(RootsystemTestProblem, Grid, Dune::FoamGrid<1, 3>);
 
 SET_BOOL_PROP(RootsystemTestProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(RootsystemTestProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(RootsystemTestProblem, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentMolecularDiffusion, false);
 SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentHeatConduction, false);

@@ -62,7 +62,7 @@ class CCLocalAssembler<TypeTag,
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
-    static constexpr bool enableGlobalFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGlobalFluxVariablesCache);
+    static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
 
 public:
 
@@ -334,7 +334,7 @@ private:
 
                 // update the volume variables and the flux var cache
                 curVolVars.update(elemSol, problem, element, scv);
-                if (enableGlobalFluxVarsCache)
+                if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
                 else
                     elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
@@ -396,7 +396,7 @@ private:
 
                 // update the volume variables and the flux var cache
                 curVolVars.update(elemSol, problem, element, scv);
-                if (enableGlobalFluxVarsCache)
+                if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
                 else
                     elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);

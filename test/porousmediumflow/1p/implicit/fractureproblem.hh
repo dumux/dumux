@@ -53,7 +53,7 @@ NEW_TYPE_TAG(FractureCCMpfaProblem, INHERITS_FROM(CCMpfaModel, FractureProblem))
 //! Enable caching (more memory, but faster runtime)
 SET_BOOL_PROP(FractureProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(FractureProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(FractureProblem, EnableGlobalFluxVariablesCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGridFluxVariablesCache, true);
 
 //! The grid type
 SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);

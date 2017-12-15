@@ -55,7 +55,7 @@ SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
 SET_BOOL_PROP(FiniteVolumeModel, EnableGridVolumeVariablesCache, false);
 
 //! disable flux variables data caching by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalFluxVariablesCache, false);
+SET_BOOL_PROP(FiniteVolumeModel, EnableGridFluxVariablesCache, false);
 
 //! Boundary types at a single degree of freedom
 SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);

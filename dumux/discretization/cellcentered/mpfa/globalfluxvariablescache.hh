@@ -32,8 +32,8 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
-template<class TypeTag, bool EnableGlobalFluxVariablesCache>
-class CCMpfaGlobalFluxVariablesCache;
+template<class TypeTag, bool EnableGridFluxVariablesCache>
+class CCMpfaGridFluxVariablesCache;
 
 
 /*!
@@ -41,7 +41,7 @@ class CCMpfaGlobalFluxVariablesCache;
  * \brief Spezialization when caching globally
  */
 template<class TypeTag>
-class CCMpfaGlobalFluxVariablesCache<TypeTag, true>
+class CCMpfaGridFluxVariablesCache<TypeTag, true>
 {
     // the flux variables cache filler needs to be friend to fill
     // the interaction volumes and data handles
@@ -65,7 +65,7 @@ class CCMpfaGlobalFluxVariablesCache<TypeTag, true>
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:
-    CCMpfaGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities for all scv faces
     void update(const FVGridGeometry& fvGridGeometry,
@@ -163,7 +163,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCMpfaGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const CCMpfaGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
     // access operators in the case of caching
@@ -202,7 +202,7 @@ private:
  * \brief Spezialization when not using global caching
  */
 template<class TypeTag>
-class CCMpfaGlobalFluxVariablesCache<TypeTag, false>
+class CCMpfaGridFluxVariablesCache<TypeTag, false>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -215,7 +215,7 @@ class CCMpfaGlobalFluxVariablesCache<TypeTag, false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
-    CCMpfaGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global flux variables caching is disabled, we don't need to update the cache
     void update(const FVGridGeometry& fvGridGeometry,
@@ -232,7 +232,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const CCMpfaGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const CCMpfaGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const

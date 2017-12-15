@@ -33,15 +33,15 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
-template<class TypeTag, bool EnableGlobalFluxVariablesCache>
-class StaggeredGlobalFluxVariablesCache;
+template<class TypeTag, bool EnableGridFluxVariablesCache>
+class StaggeredGridFluxVariablesCache;
 
 /*!
  * \ingroup ImplicitModel
  * \brief Spezialization when caching globally
  */
 template<class TypeTag>
-class StaggeredGlobalFluxVariablesCache<TypeTag, true>
+class StaggeredGridFluxVariablesCache<TypeTag, true>
 {
     // the local class needs access to the problem
     friend StaggeredElementFluxVariablesCache<TypeTag, true>;
@@ -56,7 +56,7 @@ class StaggeredGlobalFluxVariablesCache<TypeTag, true>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
-    StaggeredGlobalFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
+    StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
     void update(const FVGridGeometry& fvGridGeometry,
@@ -86,7 +86,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const StaggeredGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const StaggeredGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const
@@ -111,7 +111,7 @@ private:
  * \brief Spezialization when not using global caching
  */
 template<class TypeTag>
-class StaggeredGlobalFluxVariablesCache<TypeTag, false>
+class StaggeredGridFluxVariablesCache<TypeTag, false>
 {
     // the local class needs access to the problem
     friend StaggeredElementFluxVariablesCache<TypeTag, false>;
@@ -128,7 +128,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFluxVariablesCache localView(const StaggeredGlobalFluxVariablesCache& global)
+    friend inline ElementFluxVariablesCache localView(const StaggeredGridFluxVariablesCache& global)
     { return ElementFluxVariablesCache(global); }
 
 private:
