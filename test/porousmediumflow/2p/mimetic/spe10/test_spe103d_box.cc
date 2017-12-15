@@ -22,7 +22,7 @@
  * \brief Spe10 test for the fully-implicit two-phase cell-centered model
  */
 
-#define PROBLEM 1
+#define PROBLEM 2
 
 #include "config.h"
 

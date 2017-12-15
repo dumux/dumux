@@ -9,7 +9,7 @@ LowerLeft = 0 0 0
 Cells = 60 220 85 #  [-] resolution in x-direction
 
 [Problem]
-Name = spe10_tpfa_full3D_dirichlet
+Name = spe10_box_full3D_dirichlet
 EpisodeLength = 864000
 PressureIn = 3e7
 PressureOut = 1e7
@@ -22,5 +22,5 @@ UseLineSearch = 0
 EnableChop = 1
 
 [LinearSolver]
-Verbosity = 1
+Verbosity = 2
 MaxIterations = 2000

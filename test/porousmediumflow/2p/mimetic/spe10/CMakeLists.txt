@@ -19,3 +19,6 @@ add_dumux_test(test_spe10_tpfa test_spe10_tpfa test_spe10_tpfa.cc
 
 add_dumux_test(test_spe103D_tpfa test_spe103D_tpfa test_spe103D_tpfa.cc
   ${CMAKE_CURRENT_BINARY_DIR}/test_spe103D_tpfa)
+
+add_dumux_test(test_spe103d_box test_spe103d_box test_spe103d_box.cc
+  ${CMAKE_CURRENT_BINARY_DIR}/test_spe103d_box)

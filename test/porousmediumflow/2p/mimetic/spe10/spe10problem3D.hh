@@ -47,8 +47,11 @@ class TwoPSpe10Problem;
 //////////
 namespace Properties
 {
-
+#if PROBLEM==1
 NEW_TYPE_TAG(TwoPSpe10Problem, INHERITS_FROM(CCTpfaModel, TwoP, Spe10SpatialParams));
+#elif PROBLEM==2
+NEW_TYPE_TAG(TwoPSpe10Problem, INHERITS_FROM(BoxModel, TwoP, Spe10SpatialParams));
+#endif
 
 SET_TYPE_PROP(TwoPSpe10Problem, Grid, Dune::YaspGrid<3>);
 
@@ -179,6 +182,10 @@ class TwoPSpe10Problem : public GET_PROP_TYPE(TypeTag, BaseProblem)
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
+
+    typedef typename GridView::ctype CoordScalar;
+    typedef Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1> LocalFiniteElementCache;
+    typedef typename LocalFiniteElementCache::FiniteElementType LocalFiniteElement;
 
 public:
     /*!
@@ -346,6 +353,56 @@ public:
 //
 //    }
 
+    void readInitialValues()
+    {
+        std::ifstream file;
+        std::string iname = "spe103D_vtu13_sw.txt";;
+        file.open(iname, std::ios::in);
+        if (file.fail())
+            throw std::ios_base::failure(std::strerror(errno));
+
+        std::vector<Scalar> valSw;
+        int lineNumber = 0;
+        while (!file.eof()) {
+            Scalar val = 0;
+            file >> val;
+            valSw.push_back(val);
+            lineNumber++;
+         }
+
+        file.close();
+
+        iname = "spe103D_vtu13_pn.txt";
+        file.open(iname, std::ios::in);
+        if (file.fail())
+            throw std::ios_base::failure(std::strerror(errno));
+
+        std::vector<Scalar> valpw;
+        lineNumber = 0;
+        while (!file.eof()) {
+            Scalar val = 0;
+            file >> val;
+            valpw.push_back(val);
+            lineNumber++;
+         }
+
+        file.close();
+        std::cout << "lineNumber: " << lineNumber << std::endl;
+        std::cout << "numEle: " << this->gridView().size(0) << std::endl;
+
+        auto& uCur = this->model().curSol();
+        auto& uPrev = this->model().prevSol();
+        for (const auto& element : elements(this->gridView()))
+        {
+            int eIdx = this->elementMapper().index(element);
+            uCur[eIdx][snIdx] = 1.0 - valSw[eIdx];
+            uCur[eIdx][pwIdx] = valpw[eIdx];
+            uPrev[eIdx][snIdx] = 1.0 - valSw[eIdx];
+            uPrev[eIdx][pwIdx] = valpw[eIdx];
+        }
+
+    }
+
 
     /*!
      * \name Problem parameters
@@ -479,12 +536,13 @@ public:
 
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
+        Scalar z = globalPos[2];
 
         auto xMax = this->bBoxMax();
         auto xMin = this->bBoxMin();
 
-        if((std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY) ||
-           (std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY))
+        if((std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY && std::abs(xMin[2]-z) > 1.0e-3) ||
+           (std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY && std::abs(xMax[2]-z) > 1.0e-3))
         {
             values.setAllDirichlet();
         }
@@ -508,16 +566,17 @@ public:
 
         Scalar x = globalPos[0];
         Scalar y = globalPos[1];
+        Scalar z = globalPos[2];
 
         auto xMax = this->bBoxMax();
         auto xMin = this->bBoxMin();
 
-        if(std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY)
+        if(std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY && std::abs(xMin[2]-z) > 1.0e-3)
         {
             values[pwIdx] = pbhI;
             values[snIdx] = 0.0;
         }
-        else if(std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY)
+        else if(std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY && std::abs(xMax[2]-z) > 1.0e-3)
         {
             values[pwIdx] = pbhP;
             values[snIdx] = 1.0;
@@ -682,14 +741,58 @@ public:
                 if(std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY)
                 {
                     int eIdx = this->elementMapper().index(element);
-                    fileInj << uCur[eIdx][snIdx] <<  "\n";
-                    fileInj << uCur[eIdx][pwIdx] <<  "\n";
+                    Scalar Sn = 0.0;
+                    Scalar pw = 0.0;
+#if PROBLEM==1
+                    Sn = uCur[eIdx][snIdx];
+                    pw = uCur[eIdx][pwIdx];
+#elif PROBLEM==2
+                    const LocalFiniteElementCache feCache;
+                    const auto geometryI = element.geometry();
+                    Dune::GeometryType geomType = geometryI.type();
+
+                    GlobalPosition centerI = geometryI.local(geometryI.center());
+                    const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
+                    std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
+                    localFiniteElement.localBasis().evaluateFunction(centerI, shapeVal);
+
+                    for (int i = 0; i < shapeVal.size(); ++i)
+                    {
+                        int dofIdxGlobal = this->model().dofMapper().subIndex(element, i, dim);
+                        Sn += shapeVal[i]*this->model().curSol()[dofIdxGlobal][snIdx];
+                        pw += shapeVal[i]*this->model().curSol()[dofIdxGlobal][pwIdx];
+                    }
+#endif
+                    fileInj << Sn <<  "\n";
+                    fileInj << pw <<  "\n";
                 }
                 else if(std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY)
                 {
                     int eIdx = this->elementMapper().index(element);
-                    fileProd << uCur[eIdx][snIdx] <<  "\n";
-                    fileProd << uCur[eIdx][pwIdx] <<  "\n";
+                    Scalar Sn = 0.0;
+                    Scalar pw = 0.0;
+#if PROBLEM==1
+                    Sn = uCur[eIdx][snIdx];
+                    pw = uCur[eIdx][pwIdx];
+#elif PROBLEM==2
+                    const LocalFiniteElementCache feCache;
+                    const auto geometryI = element.geometry();
+                    Dune::GeometryType geomType = geometryI.type();
+
+                    GlobalPosition centerI = geometryI.local(geometryI.center());
+                    const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
+                    std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
+                    localFiniteElement.localBasis().evaluateFunction(centerI, shapeVal);
+
+                    for (int i = 0; i < shapeVal.size(); ++i)
+                    {
+                        int dofIdxGlobal = this->model().dofMapper().subIndex(element, i, dim);
+                        Sn += shapeVal[i]*this->model().curSol()[dofIdxGlobal][snIdx];
+                        pw += shapeVal[i]*this->model().curSol()[dofIdxGlobal][pwIdx];
+                    }
+#endif
+                    fileInj << Sn <<  "\n";
+                    fileInj << pw <<  "\n";
                 }
             }
 
@@ -707,11 +810,31 @@ public:
     void addVtkOutputFields(VtkOutputModule& outputModule) const
     {
         auto& eIdx = outputModule.createScalarField("eIdx", 0);
-
+#if PROBLEM==2
+        auto& SnCell = outputModule.createScalarField("SnCell", 0);
+#endif
         for (const auto& element : elements(this->gridView()))
         {
             int idx = this->elementMapper().index(element);
             eIdx[idx] = idx;
+#if PROBLEM==2
+            const LocalFiniteElementCache feCache;
+            const auto geometryI = element.geometry();
+            Dune::GeometryType geomType = geometryI.type();
+
+            GlobalPosition centerI = geometryI.local(geometryI.center());
+            const LocalFiniteElement &localFiniteElement = feCache.get(geomType);
+            std::vector<Dune::FieldVector<Scalar, 1> > shapeVal;
+            localFiniteElement.localBasis().evaluateFunction(centerI, shapeVal);
+
+            Scalar SnI = 0.0;
+            for (int i = 0; i < shapeVal.size(); ++i)
+            {
+                int dofIdxGlobal = this->model().dofMapper().subIndex(element, i, dim);
+                SnI += shapeVal[i]*this->model().curSol()[dofIdxGlobal][snIdx];
+            }
+            SnCell[idx] = SnI;
+#endif
         }
     }
 
