@@ -20,10 +20,10 @@
  * \file
  * \brief Adds vtk output fields specific to the twop-onec model
  */
-#ifndef DUMUX_TWOP_OneC_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_TWOP_OneC_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/porousmediumflow/2p/implicit/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
 
 namespace Dumux
 {

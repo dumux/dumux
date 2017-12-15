@@ -39,7 +39,7 @@
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 
-#include <dumux/porousmediumflow/2p/implicit/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
 
 #include "darcyslaw.hh"
 #include "vtkoutputfields.hh"
