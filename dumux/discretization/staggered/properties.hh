@@ -34,9 +34,9 @@
 #include <dumux/implicit/cellcentered/elementboundarytypes.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/implicit/staggered/primaryvariables.hh>
-#include <dumux/implicit/staggered/gridvariables.hh>
 
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+#include <dumux/discretization/staggered/gridvariables.hh>
 #include <dumux/discretization/staggered/globalfluxvariablescache.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 #include <dumux/discretization/staggered/globalvolumevariables.hh>
