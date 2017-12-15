@@ -70,7 +70,7 @@ SET_PROP(OnePIncompressible, FluidSystem)
 };
 
 // Enable caching
-SET_BOOL_PROP(OnePIncompressible, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(OnePIncompressible, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(OnePIncompressible, EnableGlobalFluxVariablesCache, false);
 SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, false);
 

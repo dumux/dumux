@@ -55,7 +55,7 @@ NEW_TYPE_TAG(TissueCCProblem, INHERITS_FROM(CCTpfaModel, TissueProblem));
 SET_TYPE_PROP(TissueProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 3> >);
 
 SET_BOOL_PROP(TissueProblem, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(TissueProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TissueProblem, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(TissueProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(TissueProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(TissueProblem, SolutionDependentMolecularDiffusion, false);
@@ -311,7 +311,7 @@ public:
                 auto fvGeometry = localView(this->model().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
-                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                auto elemVolVars = localView(this->model().curGridVolVars());
                 elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
 
                 for (auto&& scv : scvs(fvGeometry))

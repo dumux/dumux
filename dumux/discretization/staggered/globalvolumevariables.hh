@@ -30,13 +30,13 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the volume variables vector
  */
-template<class TypeTag, bool enableGlobalVolVarsCache>
-class StaggeredGlobalVolumeVariables
+template<class TypeTag, bool enableGridVolVarsCache>
+class StaggeredGridVolumeVariables
 {};
 
 //! specialization in case of storing the volume variables
 template<class TypeTag>
-class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
+class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -60,7 +60,7 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     enum { numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter) };
 
 public:
-    StaggeredGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+    StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
@@ -117,7 +117,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(const StaggeredGlobalVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const StaggeredGridVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
     const VolumeVariables& volVars(const IndexType scvIdx) const
@@ -145,7 +145,7 @@ private:
 
 //! Specialization when the current volume variables are not stored globally
 template<class TypeTag>
-class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
+class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -153,7 +153,7 @@ class StaggeredGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
-    StaggeredGlobalVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+    StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
@@ -162,7 +162,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(const StaggeredGlobalVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const StaggeredGridVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
     const Problem& problem() const

@@ -69,7 +69,7 @@ SET_PROP(TwoPIncompressible, FluidSystem)
 };
 
 // Enable caching
-SET_BOOL_PROP(TwoPIncompressible, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(TwoPIncompressible, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(TwoPIncompressible, EnableGlobalFluxVariablesCache, false);
 SET_BOOL_PROP(TwoPIncompressible, EnableFVGridGeometryCache, false);
 } // end namespace Properties

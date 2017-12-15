@@ -116,7 +116,7 @@ public:
         switchedInLastIteration_ = priVarSwitch_->update(uCurrentIter, gridVariables,
                                                          problem, fvGridGeometry);
 
-        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>(),
+        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>(),
         [&](auto IF) {
 
             std::cout << "blub";
@@ -139,7 +139,7 @@ public:
                         {
                             const auto eIdx = fvGridGeometry.elementMapper().index(element);
                             const ElementSolution elemSol(element, this->curSol(), fvGridGeometry);
-                            this->nonConstCurGlobalVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
+                            this->nonConstCurGridVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
                                                                                                         problem,
                                                                                                         element,
                                                                                                         scv);
@@ -164,7 +164,7 @@ public:
                             const auto& insideScv = fvGeometry.scv(insideScvIdx);
                             const ElementSolution elemSol(problem.dirichlet(element, scvf));
 
-                            this->nonConstCurGlobalVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, problem, element, insideScv);
+                            this->nonConstCurGridVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, problem, element, insideScv);
                         }
                     }
                 }

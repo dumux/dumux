@@ -80,7 +80,7 @@ SET_TYPE_PROP(ChannelNCTestProblem, Problem, Dumux::ChannelNCTestProblem<TypeTag
 SET_BOOL_PROP(ChannelNCTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelNCTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(ChannelNCTestProblem, EnableGridVolumeVariablesCache, true);
 
 // Enable gravity
 SET_BOOL_PROP(ChannelNCTestProblem, UseMoles, true);

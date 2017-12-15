@@ -52,7 +52,7 @@ SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typena
 SET_BOOL_PROP(FiniteVolumeModel, EnableFVGridGeometryCache, false);
 
 //! We do not store the volume variables by default
-SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(FiniteVolumeModel, EnableGridVolumeVariablesCache, false);
 
 //! disable flux variables data caching by default
 SET_BOOL_PROP(FiniteVolumeModel, EnableGlobalFluxVariablesCache, false);

@@ -107,10 +107,10 @@ SET_TYPE_PROP(CCMpfaModel,
 //! The global previous volume variables vector class
 SET_TYPE_PROP(CCMpfaModel,
               ElementVolumeVariables,
-              CCMpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+              CCMpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! The global current volume variables vector class
-SET_TYPE_PROP(CCMpfaModel, GlobalVolumeVariables, CCGlobalVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(CCMpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! The sub control volume
 SET_PROP(CCMpfaModel, SubControlVolume)

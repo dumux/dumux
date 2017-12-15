@@ -154,7 +154,7 @@ public:
             return BulkPrimaryVariables(0.0);
 
         // calculate the local residual of the bulk element
-        auto prevElemVolVars = localView(bulkProblem().model().prevGlobalVolVars());
+        auto prevElemVolVars = localView(bulkProblem().model().prevGridVolVars());
         prevElemVolVars.bindElement(element, fvGeometry, bulkProblem().model().prevSol());
         bulkLocalResidual_.eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
         return bulkLocalResidual_.residual(0);
@@ -205,7 +205,7 @@ public:
         auto bulkFvGeometry = localView(bulkProblem().model().fvGridGeometry());
         bulkFvGeometry.bind(firstBulkElement);
 
-        auto bulkElemVolVars = localView(bulkProblem().model().curGlobalVolVars());
+        auto bulkElemVolVars = localView(bulkProblem().model().curGridVolVars());
         bulkElemVolVars.bind(firstBulkElement, bulkFvGeometry, bulkProblem().model().curSol());
 
         auto bulkElemFluxVarsCache = localView(bulkProblem().model().globalFluxVarsCache());

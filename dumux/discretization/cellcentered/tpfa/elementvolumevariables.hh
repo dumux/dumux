@@ -32,13 +32,13 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the volume variables vector
  */
-template<class TypeTag, bool enableGlobalVolVarsCache>
+template<class TypeTag, bool enableGridVolVarsCache>
 class CCTpfaElementVolumeVariables
 {};
 
 // specialization in case of storing the volume variables globally
 template<class TypeTag>
-class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
+class CCTpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -46,7 +46,7 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
 
@@ -55,16 +55,16 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
 
 public:
     //! Constructor
-    CCTpfaElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
-    : globalVolVarsPtr_(&globalVolVars) {}
+    CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
+    : gridVolVarsPtr_(&gridVolVars) {}
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return globalVolVars().volVars(scv.dofIndex()); }
+    { return gridVolVars().volVars(scv.dofIndex()); }
 
     // operator for the access with an index
     // needed for cc methods for the access to the boundary volume variables
     const VolumeVariables& operator [](const IndexType scvIdx) const
-    { return globalVolVars().volVars(scvIdx); }
+    { return gridVolVars().volVars(scvIdx); }
 
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
@@ -80,24 +80,24 @@ public:
     {}
 
     //! The global volume variables object we are a restriction of
-    const GlobalVolumeVariables& globalVolVars() const
-    { return *globalVolVarsPtr_; }
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
 
 private:
-    const GlobalVolumeVariables* globalVolVarsPtr_;
+    const GridVolumeVariables* gridVolVarsPtr_;
 };
 
 
 // Specialization when the current volume variables are not stored
 template<class TypeTag>
-class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
+class CCTpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -108,8 +108,8 @@ class CCTpfaElementVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
 public:
 
     //! Constructor
-    CCTpfaElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
-    : globalVolVarsPtr_(&globalVolVars) {}
+    CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
+    : gridVolVarsPtr_(&gridVolVars) {}
 
     // Binding of an element, prepares the volume variables within the element stencil
     // called by the local jacobian to prepare element assembly
@@ -119,7 +119,7 @@ public:
     {
         clear();
 
-        const auto& problem = globalVolVars().problem();
+        const auto& problem = gridVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
         const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& connectivityMapI = fvGridGeometry.connectivityMap()[globalI];
@@ -213,7 +213,7 @@ public:
         // update the volume variables of the element
         auto&& scv = fvGeometry.scv(eIdx);
         volumeVariables_[0].update(ElementSolution(sol[eIdx]),
-                                   globalVolVars().problem(),
+                                   gridVolVars().problem(),
                                    element,
                                    scv);
         volVarIndices_[0] = scv.dofIndex();
@@ -232,8 +232,8 @@ public:
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 
     //! The global volume variables object we are a restriction of
-    const GlobalVolumeVariables& globalVolVars() const
-    { return *globalVolVarsPtr_; }
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
 
     //! Clear all local storage
     void clear()
@@ -242,7 +242,7 @@ public:
         volumeVariables_.clear();
     }
 private:
-    const GlobalVolumeVariables* globalVolVarsPtr_;
+    const GridVolumeVariables* gridVolVarsPtr_;
 
     int getLocalIdx_(const int volVarIdx) const
     {

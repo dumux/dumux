@@ -61,7 +61,7 @@ SET_PROP(RootsystemTestProblem, FluidSystem)
 SET_TYPE_PROP(RootsystemTestProblem, Grid, Dune::FoamGrid<1, 3>);
 
 SET_BOOL_PROP(RootsystemTestProblem, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(RootsystemTestProblem, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(RootsystemTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(RootsystemTestProblem, SolutionDependentMolecularDiffusion, false);
@@ -351,7 +351,7 @@ public:
                 auto fvGeometry = localView(this->model().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
-                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                auto elemVolVars = localView(this->model().curGridVolVars());
                 elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
 
                 for (auto&& scv : scvs(fvGeometry))

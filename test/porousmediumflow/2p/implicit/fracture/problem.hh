@@ -69,7 +69,7 @@ SET_PROP(FractureProblem, FluidSystem)
 
 // Use global caching
 SET_BOOL_PROP(FractureProblem, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(FractureProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(FractureProblem, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(FractureProblem, EnableGlobalFluxVariablesCache, true);
 
 // permeablility is solution-independent

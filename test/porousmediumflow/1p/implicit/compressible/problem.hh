@@ -68,7 +68,7 @@ public:
 };
 
 // Disable caching (for testing purposes)
-SET_BOOL_PROP(OnePCompressible, EnableGlobalVolumeVariablesCache, false);
+SET_BOOL_PROP(OnePCompressible, EnableGridVolumeVariablesCache, false);
 SET_BOOL_PROP(OnePCompressible, EnableGlobalFluxVariablesCache, false);
 SET_BOOL_PROP(OnePCompressible, EnableFVGridGeometryCache, false);
 

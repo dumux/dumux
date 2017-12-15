@@ -33,13 +33,13 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the volume variables vector
  */
-template<class TypeTag, bool enableGlobalVolVarsCache>
-class CCMpfaGlobalVolumeVariables
+template<class TypeTag, bool enableGridVolVarsCache>
+class CCMpfaGridVolumeVariables
 {};
 
 //! specialization in case of storing the volume variables
 template<class TypeTag>
-class CCMpfaGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/true>
+class CCMpfaGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
     // The local class needs to access and change volVars
     friend typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -108,7 +108,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(const CCMpfaGlobalVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const CCMpfaGridVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
     const VolumeVariables& volVars(const IndexType scvIdx) const
@@ -128,7 +128,7 @@ private:
 
 //! Specialization when the current volume variables are not stored globally
 template<class TypeTag>
-class CCMpfaGlobalVolumeVariables<TypeTag, /*enableGlobalVolVarsCache*/false>
+class CCMpfaGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
     // local class needs access to the problem
     friend typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -145,7 +145,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(const CCMpfaGlobalVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const CCMpfaGridVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
 private:

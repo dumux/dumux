@@ -33,7 +33,7 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the volume variables vector
  */
-template<class TypeTag, bool enableGlobalVolVarsCache>
+template<class TypeTag, bool enableGridVolVarsCache>
 class BoxElementVolumeVariables
 {};
 
@@ -45,7 +45,7 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -57,14 +57,14 @@ class BoxElementVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 
 public:
     //! Constructor
-    BoxElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
-    : globalVolVarsPtr_(&globalVolVars) {}
+    BoxElementVolumeVariables(const GridVolumeVariables& gridVolVars)
+    : gridVolVarsPtr_(&gridVolVars) {}
 
     const VolumeVariables& operator [](IndexType scvIdx) const
-    { return globalVolVars().volVars(eIdx_, scvIdx); }
+    { return gridVolVars().volVars(eIdx_, scvIdx); }
 
     const VolumeVariables& operator [](const SubControlVolume& scv) const
-    { return globalVolVars().volVars(eIdx_, scv.indexInElement()); }
+    { return gridVolVars().volVars(eIdx_, scv.indexInElement()); }
 
     // For compatibility reasons with the case of not storing the vol vars.
     // function to be called before assembling an element, preparing the vol vars within the stencil
@@ -84,11 +84,11 @@ public:
     }
 
     //! The global volume variables object we are a restriction of
-    const GlobalVolumeVariables& globalVolVars() const
-    { return *globalVolVarsPtr_; }
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
 
 private:
-    const GlobalVolumeVariables* globalVolVarsPtr_;
+    const GridVolumeVariables* gridVolVarsPtr_;
     IndexType eIdx_;
 };
 
@@ -101,7 +101,7 @@ class BoxElementVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using GlobalVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
@@ -112,8 +112,8 @@ class BoxElementVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
 
 public:
     //! Constructor
-    BoxElementVolumeVariables(const GlobalVolumeVariables& globalVolVars)
-    : globalVolVarsPtr_(&globalVolVars) {}
+    BoxElementVolumeVariables(const GridVolumeVariables& gridVolVars)
+    : gridVolVarsPtr_(&gridVolVars) {}
 
     // specialization for box models, simply forwards to the bindElement method
     void bind(const Element& element,
@@ -136,8 +136,8 @@ public:
         for (auto&& scv : scvs(fvGeometry))
         {
             // TODO: INTERFACE SOLVER
-            // globalVolVars().problem().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
-            volumeVariables_[scv.indexInElement()].update(elemSol, globalVolVars().problem(), element, scv);
+            // gridVolVars().problem().model().boxInterfaceConditionSolver().updateScvVolVars(element, scv, sol);
+            volumeVariables_[scv.indexInElement()].update(elemSol, gridVolVars().problem(), element, scv);
         }
     }
 
@@ -154,11 +154,11 @@ public:
     { return volumeVariables_[scv.indexInElement()]; }
 
     //! The global volume variables object we are a restriction of
-    const GlobalVolumeVariables& globalVolVars() const
-    { return *globalVolVarsPtr_; }
+    const GridVolumeVariables& gridVolVars() const
+    { return *gridVolVarsPtr_; }
 
 private:
-    const GlobalVolumeVariables* globalVolVarsPtr_;
+    const GridVolumeVariables* gridVolVarsPtr_;
     std::vector<VolumeVariables> volumeVariables_;
 };
 

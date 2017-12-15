@@ -39,7 +39,7 @@ class StaggeredGridVariables : public FVGridVariables<TypeTag>
     using ParentType = FVGridVariables<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
+    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GlobalFluxVariablesCache);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

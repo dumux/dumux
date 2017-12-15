@@ -91,8 +91,8 @@ NEW_PROP_TAG(EnableFVGridGeometryCache);           //! specifies if geometric da
 
 NEW_PROP_TAG(VolumeVariables);                     //! The secondary variables within a sub-control volume
 NEW_PROP_TAG(ElementVolumeVariables);              //! The type for a local (element/stencil) container for the volume variables
-NEW_PROP_TAG(GlobalVolumeVariables);               //! The type for a global container for the volume variables
-NEW_PROP_TAG(EnableGlobalVolumeVariablesCache);    //! If disabled, the volume variables are not stored (reduces memory, but is slower)
+NEW_PROP_TAG(GridVolumeVariables);                 //! The type for a global container for the volume variables
+NEW_PROP_TAG(EnableGridVolumeVariablesCache);      //! If disabled, the volume variables are not stored (reduces memory, but is slower)
 NEW_PROP_TAG(FluxVariables);                       //! Container storing the different types of flux variables
 NEW_PROP_TAG(FluxVariablesCache);                  //! Stores data associated with flux vars
 NEW_PROP_TAG(ElementFluxVariablesCache);           //! A local vector of flux variable caches per element

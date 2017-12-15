@@ -160,12 +160,12 @@ SET_TYPE_PROP(BoxModel, ElementSolutionVector, BoxElementSolution<TypeTag>);
 SET_TYPE_PROP(BoxModel, ElementBoundaryTypes, BoxElementBoundaryTypes<TypeTag>);
 
 //! The global volume variables vector class
-SET_TYPE_PROP(BoxModel, GlobalVolumeVariables, BoxGlobalVolumeVariables<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+SET_TYPE_PROP(BoxModel, GridVolumeVariables, BoxGridVolumeVariables<TypeTag,
+                            GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! The element volume variables vector class
 SET_TYPE_PROP(BoxModel, ElementVolumeVariables, BoxElementVolumeVariables<TypeTag,
-                            GET_PROP_VALUE(TypeTag, EnableGlobalVolumeVariablesCache)>);
+                            GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(BoxModel, GlobalFluxVariablesCache, BoxGlobalFluxVariablesCache<TypeTag,

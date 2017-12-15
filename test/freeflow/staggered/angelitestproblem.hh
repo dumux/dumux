@@ -66,7 +66,7 @@ SET_TYPE_PROP(AngeliTestProblem, Problem, Dumux::AngeliTestProblem<TypeTag> );
 SET_BOOL_PROP(AngeliTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(AngeliTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(AngeliTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(AngeliTestProblem, EnableGridVolumeVariablesCache, true);
 
 SET_BOOL_PROP(AngeliTestProblem, EnableInertiaTerms, true);
 }

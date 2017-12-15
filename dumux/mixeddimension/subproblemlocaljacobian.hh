@@ -144,10 +144,10 @@ public:
         auto fvGeometry = localView(this->model_().fvGridGeometry());
         fvGeometry.bind(element);
 
-        auto curElemVolVars = localView(this->model_().curGlobalVolVars());
+        auto curElemVolVars = localView(this->model_().curGridVolVars());
         curElemVolVars.bind(element, fvGeometry, this->model_().curSol());
 
-        auto prevElemVolVars = localView(this->model_().prevGlobalVolVars());
+        auto prevElemVolVars = localView(this->model_().prevGridVolVars());
         prevElemVolVars.bindElement(element, fvGeometry, this->model_().prevSol());
 
         auto elemFluxVarsCache = localView(this->model_().globalFluxVarsCache());

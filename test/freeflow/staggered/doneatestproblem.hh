@@ -67,7 +67,7 @@ SET_TYPE_PROP(DoneaTestProblem, Problem, Dumux::DoneaTestProblem<TypeTag> );
 SET_BOOL_PROP(DoneaTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(DoneaTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(DoneaTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(DoneaTestProblem, EnableGridVolumeVariablesCache, true);
 
 #if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, true);

@@ -54,7 +54,7 @@ SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::YaspGrid<3, Dune::EquidistantOffs
 //SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::conforming>);
 
 SET_BOOL_PROP(RichardsTestProblem, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(RichardsTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(RichardsTestProblem, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(RichardsTestProblem, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(RichardsTestProblem, SolutionDependentAdvection, false);
 SET_BOOL_PROP(RichardsTestProblem, SolutionDependentMolecularDiffusion, false);
@@ -238,7 +238,7 @@ public:
                 auto fvGeometry = localView(this->model().fvGridGeometry());
                 fvGeometry.bindElement(element);
 
-                auto elemVolVars = localView(this->model().curGlobalVolVars());
+                auto elemVolVars = localView(this->model().curGridVolVars());
                 elemVolVars.bindElement(element, fvGeometry, this->model().curSol());
 
                 for (auto&& scv : scvs(fvGeometry))

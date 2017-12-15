@@ -64,7 +64,7 @@ SET_TYPE_PROP(ClosedSystemTestProblem, Problem, Dumux::ClosedSystemTestProblem<T
 SET_BOOL_PROP(ClosedSystemTestProblem, EnableFVGridGeometryCache, true);
 
 SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalFluxVariablesCache, true);
-SET_BOOL_PROP(ClosedSystemTestProblem, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(ClosedSystemTestProblem, EnableGridVolumeVariablesCache, true);
 
 }
 

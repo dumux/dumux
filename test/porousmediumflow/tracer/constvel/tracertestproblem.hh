@@ -47,7 +47,7 @@ NEW_TYPE_TAG(TracerTestMpfa, INHERITS_FROM(CCMpfaModel, TracerTest));
 NEW_TYPE_TAG(TracerTestBox, INHERITS_FROM(BoxModel, TracerTest));
 
 // enable caching
-SET_BOOL_PROP(TracerTest, EnableGlobalVolumeVariablesCache, true);
+SET_BOOL_PROP(TracerTest, EnableGridVolumeVariablesCache, true);
 SET_BOOL_PROP(TracerTest, EnableGlobalFluxVariablesCache, true);
 SET_BOOL_PROP(TracerTest, EnableFVGridGeometryCache, true);
 
