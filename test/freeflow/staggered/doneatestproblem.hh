@@ -390,9 +390,9 @@ private:
             fvGeometry.bindElement(element);
             for (auto&& scv : scvs(fvGeometry))
             {
-                auto ccDofIdx = scv.dofIndex();
-                auto ccDofPosition = scv.dofPosition();
-                auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
+                const auto ccDofIdx = scv.dofIndex();
+                const auto ccDofPosition = scv.dofPosition();
+                const auto analyticalSolutionAtCc = analyticalSolution(ccDofPosition);
 
                 // velocities on faces
                 for (auto&& scvf : scvfs(fvGeometry))
@@ -401,11 +401,15 @@ private:
                     const auto faceDofPosition = scvf.center();
                     const auto dirIdx = scvf.directionIndex();
                     const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
+                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
                 }
 
                 analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
-                analyticalVelocity_[ccDofIdx] = analyticalSolutionAtCc[faceIdx];
+
+                for(int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                {
+                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
+                }
             }
         }
     }
