@@ -43,6 +43,7 @@ class StaggeredFaceVariables
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr int numPairs = (dimWorld == 2) ? 2 : 4;
@@ -120,13 +121,13 @@ public:
             {
                 const auto& normalFace = fvGeometry.scvf(scvf.insideScvIdx(), subFaceData.localNormalFaceIdx);
                 const auto normalDirIdx = normalFace.directionIndex();
-                velocityNormalOutside_[i] = problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterNormalFaceDofPos))[faceIdx][normalDirIdx];
+                velocityNormalOutside_[i] = problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterNormalFaceDofPos))[Indices::velocity(normalDirIdx)];
             }
 
             // treat the velocity parallel to the face
             velocityParallel_[i] = hasParallelNeighbor(subFaceData) ?
                                    velocityParallel_[i] = faceSol[subFaceData.outerParallelFaceDofIdx] :
-                                   problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[faceIdx][scvf.directionIndex()];
+                                   problem.dirichlet(element, makeGhostFace(subFaceData.virtualOuterParallelFaceDofPos))[Indices::velocity(scvf.directionIndex())];
         }
     }
 
