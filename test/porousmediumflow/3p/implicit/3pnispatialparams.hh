@@ -24,7 +24,6 @@
 #ifndef DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 #define DUMUX_THREEPNI_SPATIAL_PARAMS_HH
 
-#include <dumux/porousmediumflow/3p3c/implicit/indices.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
@@ -75,9 +74,6 @@ class ThreePNISpatialParams : public ImplicitSpatialParams<TypeTag>
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -92,17 +88,16 @@ public:
     using PermeabilityType = Scalar;
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using  MaterialLawParams = typename MaterialLaw::Params;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     ThreePNISpatialParams(const Problem& problem)
-        : ParentType(problem)
+    : ParentType(problem)
     {
         permeability_ = 1e-10;
         porosity_ = 0.4;
 
         // heat conductivity of granite
         lambdaSolid_ = 2.8;
-
 
         // residual saturations
         materialParams_.setSwr(0.12);
@@ -119,26 +114,12 @@ public:
         materialParams_.setRhoBulk(1500.);
     }
 
-    ~ThreePNISpatialParams()
-    {}
-
-
-    /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     *
-     * \param globalSolution the global solution vector
-     */
-    void update(const SolutionVector &globalSolution)
-    {
-    }
-
     /*!
      * \brief Returns the scalar intrinsic permeability \f$[m^2]\f$
      *
      * \param globalPos The global position
      */
-    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         return permeability_;
     }
@@ -208,6 +189,6 @@ private:
     Scalar lambdaSolid_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

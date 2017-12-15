@@ -25,13 +25,13 @@
 #ifndef DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 #define DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 
-#include <dumux/porousmediumflow/3p3c/implicit/indices.hh>
 #include <dumux/material/spatialparams/implicit.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw3p.hh>
+
 namespace Dumux
 {
 
@@ -98,7 +98,7 @@ public:
      * \param gridView The grid view
      */
     InfiltrationThreePSpatialParams(const Problem& problem)
-        : ParentType(problem)
+    : ParentType(problem)
     {
         // intrinsic permeabilities
         fineK_ = getParam<Scalar>("SpatialParams.permeability");
@@ -201,6 +201,6 @@ private:
     static constexpr Scalar eps_ = 1e-6;
 };
 
-}
+} // end namespace Dumux
 
 #endif
