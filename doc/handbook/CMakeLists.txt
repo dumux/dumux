@@ -6,8 +6,6 @@ set(TEX_INPUTS
   2_quickinstall.tex
   2_quickstartguide.tex
   3_tutorial.tex
-  3_tutorialimplicit.tex
-  3_tutorialsequential.tex
   3_furtherpractice.tex
   4_assemblinglinearsystem.tex
   4_guidelines.tex
