@@ -32,7 +32,7 @@
 #include <dumux/common/properties.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 
@@ -43,14 +43,14 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPNCModel
- * \ingroup ImplicitVolumeVariables
+ * \ingroup PorousMediumFlowVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, n-component model.
  */
 template <class TypeTag>
-class TwoPNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);

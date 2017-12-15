@@ -26,21 +26,21 @@
 #define DUMUX_2P_VOLUME_VARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 #include <dune/common/fvector.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup TwoPModel
- * \ingroup ImplicitVolumeVariables
+ * \ingroup PorousMediumFlowVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase model.
  */
 template <class TypeTag>
-class TwoPVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class TwoPVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
 
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
