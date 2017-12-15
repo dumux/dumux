@@ -24,7 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_VOLUME_VARIABLES_DEPR_HH
 #define DUMUX_DISCRETIZATION_VOLUME_VARIABLES_DEPR_HH
 
-#warning "This header is deprecated. Use PorousmediumflowVolumeVariables from dumux/porousmediumflow/volumevariables.hh"
+#warning "This header is deprecated. Use PorousMediumFlowVolumeVariables from dumux/porousmediumflow/volumevariables.hh"
 #include <dune/common/deprecated.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
@@ -32,7 +32,7 @@ namespace Dumux
 {
 
 template<class TypeTag>
-using ImplicitVolumeVariables DUNE_DEPRECATED_MSG("Use PorousmediumflowVolumeVariables from dumux/porousmediumflow/volumevariables.hh")
+using ImplicitVolumeVariables DUNE_DEPRECATED_MSG("Use PorousMediumFlowVolumeVariables from dumux/porousmediumflow/volumevariables.hh")
 = PorousMediumFlowVolumeVariables<TypeTag>;
 
 } // end namespace Dumux

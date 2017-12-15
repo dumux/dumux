@@ -24,15 +24,15 @@
 #define DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux
 {
 
 template <class TypeTag>
-class RichardsBaseVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class RichardsBaseVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

@@ -24,21 +24,20 @@
 #define DUMUX_TRACER_VOLUME_VARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup TracerModel
- * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume for the tracer model.
  */
 template <class TypeTag>
-class TracerVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class TracerVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

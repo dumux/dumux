@@ -30,7 +30,7 @@
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
@@ -38,14 +38,13 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePThreeCModel
- * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the three-phase three-component model.
  */
 template <class TypeTag>
-class ThreePThreeCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class ThreePThreeCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
 
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

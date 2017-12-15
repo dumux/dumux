@@ -26,14 +26,13 @@
 #define DUMUX_1PNC_VOLUME_VARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 
 namespace Dumux
 {
 
 /*!
  * \ingroup OnePNCModel
- * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the one-phase, n-component model.
  *
@@ -45,9 +44,9 @@ namespace Dumux
  *       model by specifying which phase is present through the DuMuX property system.
  */
 template <class TypeTag>
-class OnePNCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
