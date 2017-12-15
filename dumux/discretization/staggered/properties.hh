@@ -31,7 +31,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
-#include <dumux/implicit/cellcentered/elementboundarytypes.hh>
+#include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/implicit/staggered/primaryvariables.hh>
 
