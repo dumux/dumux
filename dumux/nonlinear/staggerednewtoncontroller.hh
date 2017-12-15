@@ -27,13 +27,12 @@
 #ifndef DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 #define DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 
-#include <dumux/discretization/staggered/properties.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/exceptions.hh>
 
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
-// #include "newtonconvergencewriter.hh"
 
 namespace Dumux {
 
@@ -68,13 +67,7 @@ class StaggeredNewtonController : public NewtonController<TypeTag>
     };
 
 public:
-    StaggeredNewtonController(const Communicator& comm)
-        : ParentType(comm)
-    {}
-
-    StaggeredNewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
-        : ParentType(comm, timeLoop)
-    {}
+    using ParentType::ParentType;
 
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
@@ -89,8 +82,6 @@ public:
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
      */
-    // template<typename T = TypeTag>
-    // typename std::enable_if<!LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
     template<class LinearSolver, class JacobianMatrix, class SolutionVector>
     void solveLinearSystem(LinearSolver& ls,
                            JacobianMatrix& A,
@@ -120,10 +111,7 @@ public:
             // create a blockvector to which the linear solver writes the solution
             using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
             using BlockVector = typename Dune::BlockVector<VectorBlock>;
-            BlockVector y;
-            y.resize(numRows);
-
-            // printmatrix(std::cout, M, "old", "");
+            BlockVector y(numRows);
 
             // solve
             const bool converged = ls.solve(M, y, bTmp);
@@ -143,66 +131,30 @@ public:
     }
 
     /*!
-     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
-     *
-     * Throws Dumux::NumericalProblem if the linear solver didn't
-     * converge.
-     *
-     * \param A The matrix of the linear system of equations
-     * \param x The vector which solves the linear system
-     * \param b The right hand side of the linear system
-     */
-    // template<typename T = TypeTag>
-    // typename std::enable_if<LinearSolverAcceptsMultiTypeMatrix<T>::value, void>::type
-    // newtonSolveLinear(JacobianMatrix &A,
-    //                   SolutionVector &x,
-    //                   SolutionVector &b)
-    // {
-    //     try
-    //     {
-    //         if (this->numSteps_ == 0)
-    //             this->initialResidual_ = b.two_norm();
-    //
-    //         bool converged = this->linearSolver_.solve(A, x, b);
-    //
-    //         if (!converged)
-    //             DUNE_THROW(NumericalProblem, "Linear solver did not converge");
-    //     }
-    //     catch (const Dune::Exception &e)
-    //     {
-    //         Dumux::NumericalProblem p;
-    //         p.message(e.what());
-    //         throw p;
-    //     }
-    // }
-
-     /*!
-     * \brief Update the current solution with a delta vector.
-     *
-     * The error estimates required for the newtonConverged() and
-     * newtonProceed() methods should be updated inside this method.
-     *
-     * Different update strategies, such as line search and chopped
-     * updates can be implemented. The default behavior is just to
-     * subtract deltaU from uLastIter, i.e.
-     * \f[ u^{k+1} = u^k - \Delta u^k \f]
-     *
-     * \param uCurrentIter The solution vector after the current iteration
-     * \param uLastIter The solution vector after the last iteration
-     * \param deltaU The delta as calculated from solving the linear
-     *               system of equations. This parameter also stores
-     *               the updated solution.
-     */
-     template<class JacobianAssembler, class SolutionVector>
-     void newtonUpdate(JacobianAssembler& assembler,
-                       SolutionVector &uCurrentIter,
-                       const SolutionVector &uLastIter,
-                       const SolutionVector &deltaU)
+    * \brief Update the current solution with a delta vector.
+    *
+    * The error estimates required for the newtonConverged() and
+    * newtonProceed() methods should be updated inside this method.
+    *
+    * Different update strategies, such as line search and chopped
+    * updates can be implemented. The default behavior is just to
+    * subtract deltaU from uLastIter, i.e.
+    * \f[ u^{k+1} = u^k - \Delta u^k \f]
+    *
+    * \param uCurrentIter The solution vector after the current iteration
+    * \param uLastIter The solution vector after the last iteration
+    * \param deltaU The delta as calculated from solving the linear
+    *               system of equations. This parameter also stores
+    *               the updated solution.
+    */
+    template<class JacobianAssembler, class SolutionVector>
+    void newtonUpdate(JacobianAssembler& assembler,
+                      SolutionVector &uCurrentIter,
+                      const SolutionVector &uLastIter,
+                      const SolutionVector &deltaU)
     {
         if (this->enableShiftCriterion_)
             this->newtonUpdateShift(uLastIter, deltaU);
-
-        // this->writeConvergence_(uLastIter, deltaU);
 
         if (this->useLineSearch_)
         {
@@ -264,6 +216,7 @@ public:
     }
 
 };
-}
+
+} // end namespace Dumux
 
 #endif

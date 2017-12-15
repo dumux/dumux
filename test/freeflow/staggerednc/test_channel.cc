@@ -46,7 +46,7 @@
 
 #include <dumux/assembly/staggeredfvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/implicit/staggered/newtoncontroller.hh>
+#include <dumux/nonlinear/staggerednewtoncontroller.hh>
 
 #include <dumux/discretization/methods.hh>
 
