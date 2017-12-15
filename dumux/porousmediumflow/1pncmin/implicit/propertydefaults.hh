@@ -33,7 +33,7 @@
 #include "volumevariables.hh"
 #include "properties.hh"
 
-#include <dumux/porousmediumflow/nonisothermal/implicit/propertydefaults.hh>
+#include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
 #include <dumux/material/spatialparams/implicit1p.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>

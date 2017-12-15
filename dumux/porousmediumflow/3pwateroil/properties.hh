@@ -31,7 +31,7 @@
 
 #include <dumux/implicit/box/properties.hh>
 #include <dumux/implicit/cellcentered/properties.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/model.hh>
 
 namespace Dumux
 {

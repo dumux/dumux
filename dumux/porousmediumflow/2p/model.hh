@@ -66,7 +66,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/model.hh>
 
 #include "indices.hh"
 #include "volumevariables.hh"

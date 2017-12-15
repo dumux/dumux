@@ -72,7 +72,7 @@
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/model.hh>
+#include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 
 #include "indices.hh"

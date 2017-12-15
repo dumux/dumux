@@ -32,7 +32,7 @@
 
 #include <dumux/porousmediumflow/fluxvariables.hh>
 #include <dumux/porousmediumflow/fluxvariablescache.hh>
-#include <dumux/porousmediumflow/nonisothermal/implicit/localresidual.hh>
+#include <dumux/porousmediumflow/nonisothermal/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 #include <dumux/porousmediumflow/velocityoutput.hh>
 
