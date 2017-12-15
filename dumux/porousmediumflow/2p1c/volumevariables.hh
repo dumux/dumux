@@ -27,35 +27,37 @@
 #ifndef DUMUX_2P1C_VOLUME_VARIABLES_HH
 #define DUMUX_2P1C_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include "properties.hh"
+#include "indices.hh"
 
 namespace Dumux
 {
 
 /*!
  * \ingroup TwoPOneCModel
- * \ingroup ImplicitVolumeVariables
+ * \ingroup PorousmediumflowVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, two-component model.
  */
 template <class TypeTag>
-class TwoPOneCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class TwoPOneCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using PermeabilityType = typename SpatialParams::PermeabilityType;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
     enum {
         dim = GridView::dimension,
 
@@ -63,7 +65,7 @@ class TwoPOneCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         wPhaseIdx = Indices::wPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
 
         switch1Idx = Indices::switch1Idx,
         pressureIdx = Indices::pressureIdx
@@ -73,42 +75,70 @@ class TwoPOneCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     enum {
         twoPhases = Indices::twoPhases,
         wPhaseOnly  = Indices::wPhaseOnly,
-        gPhaseOnly  = Indices::gPhaseOnly,
+        nPhaseOnly  = Indices::nPhaseOnly,
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
-    enum { dofCodim = isBox ? dim : 0 };
+    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
     //! The type of the object returned by the fluidState() method
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+        ParentType::update(elemSol, problem, element, scv);
 
-        // capillary pressure parameters
-        const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        completeFluidState(elemSol, problem, element, scv, fluidState_);
 
-        int globalIdx = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-        int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
+        /////////////
+        // calculate the remaining quantities
+        /////////////
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
+        // Second instance of a parameter cache.
+        // Could be avoided if diffusion coefficients also
+        // became part of the fluid state.
+        typename FluidSystem::ParameterCache paramCache;
+        paramCache.updateAll(fluidState_);
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            // relative permeabilities
+            Scalar kr;
+            if (phaseIdx == wPhaseIdx)
+                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
+            else // ATTENTION: krn requires the wetting phase saturation
+                // as parameter!
+                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
+            relativePermeability_[phaseIdx] = kr;
+            Valgrind::CheckDefined(relativePermeability_[phaseIdx]);
+        }
+
+        // porosity & permeability
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
+        permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
+    }
+
+    /*!
+     * \copydoc ImplicitModel::completeFluidState
+     */
+    static void completeFluidState(const ElementSolutionVector& elemSol,
+                                   const Problem& problem,
+                                   const Element& element,
+                                   const SubControlVolume& scv,
+                                   FluidState& fluidState)
+    {
+
+        // // capillary pressure parameters
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
 
         // get saturations
         Scalar sw(0.0);
@@ -123,7 +153,7 @@ public:
             sw = 1.0;
             sg = 0.0;
         }
-        else if (phasePresence == gPhaseOnly)
+        else if (phasePresence == nPhaseOnly)
         {
             sw = 0.0;
             sg = 1.0;
@@ -131,8 +161,8 @@ public:
         else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
         Valgrind::CheckDefined(sg);
 
-        fluidState_.setSaturation(wPhaseIdx, sw);
-        fluidState_.setSaturation(gPhaseIdx, sg);
+        fluidState.setSaturation(wPhaseIdx, sw);
+        fluidState.setSaturation(nPhaseIdx, sg);
 
         // get gas phase pressure
         const Scalar pg = priVars[pressureIdx];
@@ -144,64 +174,45 @@ public:
         const Scalar pw = pg - pc;
 
         //set pressures
-        fluidState_.setPressure(wPhaseIdx, pw);
-        fluidState_.setPressure(gPhaseIdx, pg);
+        fluidState.setPressure(wPhaseIdx, pw);
+        fluidState.setPressure(nPhaseIdx, pg);
 
         // get temperature
         Scalar temperature;
-        if (phasePresence == wPhaseOnly || phasePresence == gPhaseOnly)
+        if (phasePresence == wPhaseOnly || phasePresence == nPhaseOnly)
             temperature = priVars[switch1Idx];
         else if (phasePresence == twoPhases)
-            temperature = FluidSystem::vaporTemperature(fluidState_, wPhaseIdx);
+            temperature = FluidSystem::vaporTemperature(fluidState, wPhaseIdx);
         else
             DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
 
         Valgrind::CheckDefined(temperature);
 
-        fluidState_.setTemperature(temperature);
+        fluidState.setTemperature(temperature);
 
         // set the densities
-        const Scalar rhoW = FluidSystem::density(fluidState_, wPhaseIdx);
-        const Scalar rhoG = FluidSystem::density(fluidState_, gPhaseIdx);
+        const Scalar rhoW = FluidSystem::density(fluidState, wPhaseIdx);
+        const Scalar rhoG = FluidSystem::density(fluidState, nPhaseIdx);
 
-        fluidState_.setDensity(wPhaseIdx, rhoW);
-        fluidState_.setDensity(gPhaseIdx, rhoG);
+        fluidState.setDensity(wPhaseIdx, rhoW);
+        fluidState.setDensity(nPhaseIdx, rhoG);
 
         //get the viscosity and mobility
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             // Mobilities
             const Scalar mu =
-                FluidSystem::viscosity(fluidState_,
+                FluidSystem::viscosity(fluidState,
                                        phaseIdx);
-            fluidState_.setViscosity(phaseIdx,mu);
-
-            Scalar kr;
-            if (phaseIdx == wPhaseIdx)
-                kr = MaterialLaw::krw(materialParams, saturation(wPhaseIdx));
-            else // ATTENTION: krn requires the wetting phase saturation
-                // as parameter!
-                kr = MaterialLaw::krn(materialParams, saturation(wPhaseIdx));
-
-            mobility_[phaseIdx] = kr / mu;
-            Valgrind::CheckDefined(mobility_[phaseIdx]);
+            fluidState.setViscosity(phaseIdx,mu);
         }
-
-        // porosity
-        porosity_ = problem.spatialParams().porosity(element,
-                                                         fvGeometry,
-                                                         scvIdx);
-        Valgrind::CheckDefined(porosity_);
 
         // the enthalpies (internal energies are directly calculated in the fluidstate
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            Scalar h = FluidSystem::enthalpy(fluidState_, phaseIdx);
-            fluidState_.setEnthalpy(phaseIdx, h);
+            const Scalar h = FluidSystem::enthalpy(fluidState, phaseIdx);
+            fluidState.setEnthalpy(phaseIdx, h);
         }
-
-        // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -253,8 +264,8 @@ public:
      * temperatures of the rock matrix and of all fluid phases are
      * identical.
      */
-    Scalar temperature() const
-    { return fluidState_.temperature(/*phaseIdx=*/0); }
+    Scalar temperature(const int phaseIdx = 0) const
+    { return fluidState_.temperature(phaseIdx); }
 
     /*!
      * \brief Returns the effective mobility of a given phase within
@@ -264,20 +275,27 @@ public:
      */
     Scalar mobility(const int phaseIdx) const
     {
-        return mobility_[phaseIdx];
+        return relativePermeability_[phaseIdx]/fluidState_.viscosity(phaseIdx);
     }
 
     /*!
-     * \brief Returns the effective capillary pressure within the control volume.
+     * \brief Returns the effective capillary pressure within the control volume
+     *        in \f$[kg/(m*s^2)=N/m^2=Pa]\f$.
      */
     Scalar capillaryPressure() const
-    { return fluidState_.capillaryPressure(); }
+    { return fluidState_.pressure(nPhaseIdx) - fluidState_.pressure(wPhaseIdx); }
 
     /*!
      * \brief Returns the average porosity within the control volume.
      */
     Scalar porosity() const
     { return porosity_; }
+
+    /*!
+     * \brief Returns the average permeability within the control volume in \f$[m^2]\f$.
+     */
+    const PermeabilityType& permeability() const
+    { return permeability_; }
 
     /*!
      * \brief Returns the vapor temperature (T_{vap}(p_g) of the fluid within the control volume.
@@ -289,9 +307,9 @@ protected:
     FluidState fluidState_;
 
 private:
-
-    Scalar porosity_;
-    Scalar mobility_[numPhases];
+    Scalar porosity_;               //!< Effective porosity within the control volume
+    PermeabilityType permeability_; //!> Effective permeability within the control volume
+    std::array<Scalar, numPhases> relativePermeability_;
 
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }

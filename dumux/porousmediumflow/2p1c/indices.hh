@@ -25,10 +25,21 @@
 #ifndef DUMUX_2P1C_INDICES_HH
 #define DUMUX_2P1C_INDICES_HH
 
-#include "properties.hh"
-
 namespace Dumux
 {
+
+/*!
+ * \ingroup TwoPNCModel
+ * \ingroup ImplicitIndices
+ * \brief Enumerates the formulations which the two-phase n-component model accepts.
+ */
+struct TwoPOneCFormulation
+{
+    enum {
+        pnsw,
+        pwsn
+        };
+};
 
 /*!
  * \ingroup TwoPOneCModel
@@ -46,12 +57,12 @@ class TwoPOneCIndices
 public:
     // Phase indices
     static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting liquid phase
-    static const int gPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the gas phase
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the gas phase
 
     // present phases (-> 'pseudo' primary variable)
     static const int twoPhases = 1; //!< All three phases are present
     static const int wPhaseOnly = 2; //!< Only the water phase is present
-    static const int gPhaseOnly = 3; //!< Only gas phase is present
+    static const int nPhaseOnly = 3; //!< Only gas phase is present
 
     // Primary variable indices
     static const int pressureIdx = PVOffset + 0; //!< Index for phase pressure in a solution vector
