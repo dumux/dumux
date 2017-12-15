@@ -27,7 +27,7 @@
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
-#include <dumux/porousmediumflow/2p1c/implicit/model.hh>
+#include <dumux/porousmediumflow/2p1c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/2pliquidvapor.hh>
