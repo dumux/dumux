@@ -31,6 +31,7 @@
 #include <dune/common/reservedvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 
 #include <dumux/discretization/methods.hh>
@@ -40,7 +41,7 @@
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
 #include <dumux/implicit/cellcentered/elementboundarytypes.hh>
-#include <dumux/implicit/cellcentered/localresidual.hh>
+#include <dumux/assembly/cclocalresidual.hh>
 
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>

@@ -20,37 +20,49 @@
  * \file
  * \brief Calculates the residual of models based on the box scheme element-wise.
  */
-#ifndef DUMUX_CC_LOCAL_RESIDUAL_HH
-#define DUMUX_CC_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_BOX_LOCAL_RESIDUAL_HH
+#define DUMUX_BOX_LOCAL_RESIDUAL_HH
 
+#include <dune/geometry/type.hh>
 #include <dune/istl/matrix.hh>
 
-#include <dumux/common/valgrind.hh>
-#include <dumux/implicit/localresidual.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/assembly/fvlocalresidual.hh>
 
 namespace Dumux
 {
 /*!
- * \ingroup CCModel
- * \ingroup CCLocalResidual
+ * \ingroup BoxModel
  * \brief Element-wise calculation of the residual for models
- *        based on the fully implicit cell-centered scheme.
+ *        based on the fully implicit box scheme.
  *
  * \todo Please doc me more!
  */
 template<class TypeTag>
-class CCLocalResidual : public ImplicitLocalResidual<TypeTag>
+class BoxLocalResidual : public FVLocalResidual<TypeTag>
 {
-    using ParentType = ImplicitLocalResidual<TypeTag>;
+    using ParentType = FVLocalResidual<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    enum {
+        numEq = GET_PROP_VALUE(TypeTag, NumEq),
+        dim = GridView::dimension
+    };
+
+    using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
 
 public:
     using ParentType::ParentType;
@@ -64,15 +76,27 @@ public:
                   const ElementFluxVariablesCache& elemFluxVarsCache,
                   const SubControlVolumeFace& scvf) const
     {
-        const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
-        const auto localScvIdx = scv.indexInElement();
-        residual[localScvIdx] += evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
+        const auto flux = evalFlux(problem, element, fvGeometry, elemVolVars, elemBcTypes, elemFluxVarsCache, scvf);
+        if (!scvf.boundary())
+        {
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& outsideScv = fvGeometry.scv(scvf.outsideScvIdx());
+            residual[insideScv.indexInElement()] += flux;
+            residual[outsideScv.indexInElement()] -= flux;
+        }
+        else
+        {
+            const auto& insideScv = fvGeometry.scv(scvf.insideScvIdx());
+            residual[insideScv.indexInElement()] += flux;
+        }
     }
+
 
     ResidualVector evalFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
+                            const ElementBoundaryTypes& elemBcTypes,
                             const ElementFluxVariablesCache& elemFluxVarsCache,
                             const SubControlVolumeFace& scvf) const
     {
@@ -87,24 +111,24 @@ public:
         // boundary faces
         else
         {
-            const auto& bcTypes = problem.boundaryTypes(element, scvf);
-
-            // Dirichlet boundaries
-            if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                flux += this->asImp().computeFlux(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
+            const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
+            const auto& bcTypes = elemBcTypes[scv.indexInElement()];
 
             // Neumann and Robin ("solution dependent Neumann") boundary conditions
-            else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
+            if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
             {
                 auto neumannFluxes = problem.neumann(element, fvGeometry, elemVolVars, scvf);
 
                 // multiply neumann fluxes with the area and the extrusion factor
-                const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
                 neumannFluxes *= scvf.area()*elemVolVars[scv].extrusionFactor();
 
                 flux += neumannFluxes;
             }
 
+            // for Dirichlet there is no addition to the residual here but they
+            // are enforced strongly by replacing the residual entry afterwards
+            else if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
+                return flux;
             else
                 DUNE_THROW(Dune::NotImplemented, "Mixed boundary conditions. Use pure boundary conditions by converting Dirichlet BCs to Robin BCs");
         }

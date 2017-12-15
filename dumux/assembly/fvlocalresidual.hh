@@ -18,10 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the element-wise residual of fully-implicit models.
+ * \brief Calculates the element-wise residual of finite-volume models.
  */
-#ifndef DUMUX_IMPLICIT_LOCAL_RESIDUAL_HH
-#define DUMUX_IMPLICIT_LOCAL_RESIDUAL_HH
+#ifndef DUMUX_FV_LOCAL_RESIDUAL_HH
+#define DUMUX_FV_LOCAL_RESIDUAL_HH
 
 #include <dune/istl/matrix.hh>
 
@@ -35,7 +35,6 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the residual matrix for models
  *        using a fully implicit discretization.
  *
@@ -43,7 +42,7 @@ namespace Dumux
  *       static polymorphism.
  */
 template<class TypeTag>
-class ImplicitLocalResidual
+class FVLocalResidual
 {
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -67,10 +66,10 @@ class ImplicitLocalResidual
 
 public:
     //! the constructor for stationary problems
-    ImplicitLocalResidual() : prevSol_(nullptr) {}
+    FVLocalResidual() : prevSol_(nullptr) {}
 
     //! the constructor for instationary problems
-    ImplicitLocalResidual(std::shared_ptr<TimeLoop> timeLoop)
+    FVLocalResidual(std::shared_ptr<TimeLoop> timeLoop)
     : timeLoop_(timeLoop)
     , prevSol_(nullptr)
     {}

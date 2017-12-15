@@ -29,13 +29,14 @@
 #include <dune/common/fvector.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
 #include <dumux/implicit/box/elementboundarytypes.hh>
-#include <dumux/implicit/box/localresidual.hh>
+#include <dumux/assembly/boxlocalresidual.hh>
 
 #include <dumux/discretization/box/subcontrolvolume.hh>
 #include <dumux/discretization/box/subcontrolvolumeface.hh>

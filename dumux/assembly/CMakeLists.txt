@@ -1,0 +1,12 @@
+
+install(FILES
+boxlocalassembler.hh
+boxlocalresidual.hh
+cclocalassembler.hh
+cclocalresidual.hh
+diffmethod.hh
+fvassembler.hh
+fvlocalresidual.hh
+staggeredfvassembler.hh
+staggeredlocalassembler.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/assembly)

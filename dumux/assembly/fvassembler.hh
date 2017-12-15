@@ -30,7 +30,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/implicit/localresidual.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
