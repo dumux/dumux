@@ -30,7 +30,7 @@
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/3p/implicit/model.hh>
+#include <dumux/porousmediumflow/3p/model.hh>
 #include <dumux/material/fluidsystems/h2oairmesitylene.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
