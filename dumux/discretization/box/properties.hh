@@ -43,7 +43,7 @@
 #include <dumux/discretization/box/elementboundarytypes.hh>
 #include <dumux/discretization/box/globalfluxvariablescache.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
-#include <dumux/discretization/box/globalvolumevariables.hh>
+#include <dumux/discretization/box/gridvolumevariables.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
 #include <dumux/discretization/box/fvgridgeometry.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>

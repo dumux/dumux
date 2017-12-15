@@ -18,16 +18,16 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global volume variables class for cell centered models
+ * \brief The grid volume variables class for staggered centered models
  */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_VOLUMEVARIABLES_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_VOLUMEVARIABLES_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
 
 namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup Staggered
  * \brief Base class for the volume variables vector
  */
 template<class TypeTag, bool enableGridVolVarsCache>

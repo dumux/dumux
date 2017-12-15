@@ -39,7 +39,7 @@
 #include <dumux/discretization/staggered/gridvariables.hh>
 #include <dumux/discretization/staggered/globalfluxvariablescache.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
-#include <dumux/discretization/staggered/globalvolumevariables.hh>
+#include <dumux/discretization/staggered/gridvolumevariables.hh>
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>

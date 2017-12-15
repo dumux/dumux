@@ -18,82 +18,63 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global volume variables class for cell centered models
+ * \brief The grid volume variables class for box models
  */
-#ifndef DUMUX_DISCRETIZATION_CC_GLOBAL_VOLUMEVARIABLES_HH
-#define DUMUX_DISCRETIZATION_CC_GLOBAL_VOLUMEVARIABLES_HH
+#ifndef DUMUX_DISCRETIZATION_BOX_GRID_VOLUMEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_BOX_GRID_VOLUMEVARIABLES_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/box/elementvolumevariables.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the volume variables vector
+ * \ingroup BoxModel
+ * \brief Base class for the grid volume variables
  */
 template<class TypeTag, bool enableGridVolVarsCache>
-class CCGridVolumeVariables
+class BoxGridVolumeVariables
 {};
 
-//! specialization in case of storing the volume variables
+// specialization in case of storing the volume variables
 template<class TypeTag>
-class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
+class BoxGridVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using IndexType = typename GridView::IndexSet::IndexType;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+    BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
-        const auto numScv = fvGridGeometry.numScv();
-        const auto numBoundaryScvf = fvGridGeometry.numBoundaryScvf();
-
-        volumeVariables_.resize(numScv + numBoundaryScvf);
+        volumeVariables_.resize(fvGridGeometry.gridView().size(0));
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
+            auto eIdx = fvGridGeometry.elementMapper().index(element);
+
             auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
+            // get the element solution
+            ElementSolutionVector elemSol(element, sol, fvGeometry);
+
+            // update the volvars of the element
+            volumeVariables_[eIdx].resize(fvGeometry.numScv());
             for (auto&& scv : scvs(fvGeometry))
-            {
-                const ElementSolution elemSol({sol[scv.dofIndex()]});
-                volumeVariables_[scv.dofIndex()].update(elemSol, problem(), element, scv);
-            }
-
-            // handle the boundary volume variables
-            for (auto&& scvf : scvfs(fvGeometry))
-            {
-                // if we are not on a boundary, skip the rest
-                if (!scvf.boundary())
-                    continue;
-
-                // check if boundary is a pure dirichlet boundary
-                const auto bcTypes = problem().boundaryTypes(element, scvf);
-                if (bcTypes.hasOnlyDirichlet())
-                {
-                    const auto insideScvIdx = scvf.insideScvIdx();
-                    const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                    const ElementSolution dirichletPriVars({problem().dirichlet(element, scvf)});
-
-                    volumeVariables_[scvf.outsideScvIdx()].update(dirichletPriVars,
-                                                                  problem(),
-                                                                  element,
-                                                                  insideScv);
-                }
-            }
+                volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem(), element, scv);
         }
     }
 
@@ -102,50 +83,36 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(const CCGridVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const BoxGridVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
-    const VolumeVariables& volVars(const IndexType scvIdx) const
-    { return volumeVariables_[scvIdx]; }
+    const VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx) const
+    { return volumeVariables_[eIdx][scvIdx]; }
 
-    VolumeVariables& volVars(const IndexType scvIdx)
-    { return volumeVariables_[scvIdx]; }
+    VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx)
+    { return volumeVariables_[eIdx][scvIdx]; }
 
-    const VolumeVariables& volVars(const SubControlVolume scv) const
-    { return volumeVariables_[scv.dofIndex()]; }
-
-    VolumeVariables& volVars(const SubControlVolume scv)
-    { return volumeVariables_[scv.dofIndex()]; }
-
-    // required for compatibility with the box method
-    const VolumeVariables& volVars(const IndexType scvIdx, const IndexType localIdx) const
-    { return volumeVariables_[scvIdx]; }
-
-    // required for compatibility with the box method
-    VolumeVariables& volVars(const IndexType scvIdx, const IndexType localIdx)
-    { return volumeVariables_[scvIdx]; }
-
-    //! The problem we are solving
     const Problem& problem() const
     { return *problemPtr_; }
 
 private:
     const Problem* problemPtr_;
-    std::vector<VolumeVariables> volumeVariables_;
+    std::vector<std::vector<VolumeVariables>> volumeVariables_;
 };
 
 
-//! Specialization when the current volume variables are not stored globally
+// Specialization when the current volume variables are not stored
 template<class TypeTag>
-class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
+class BoxGridVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
-    CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
+    BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
@@ -154,10 +121,9 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementVolumeVariables localView(const CCGridVolumeVariables& global)
+    friend inline ElementVolumeVariables localView(const BoxGridVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
-    //! The problem we are solving
     const Problem& problem() const
     { return *problemPtr_;}
 
@@ -165,6 +131,6 @@ private:
     const Problem* problemPtr_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

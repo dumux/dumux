@@ -39,7 +39,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
-#include <dumux/discretization/cellcentered/globalvolumevariables.hh>
+#include <dumux/discretization/cellcentered/gridvolumevariables.hh>
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
