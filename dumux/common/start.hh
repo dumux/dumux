@@ -31,20 +31,13 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
 
 #warning "start.hh is deprecated. Use new style main files see e.g. /test/porousmediumflow/1p."
 
 namespace Dumux
 {
-// forward declaration of property tags
-namespace Properties
-{
-NEW_PROP_TAG(TimeManager);
-}
 
 /*!
  * \ingroup Start
@@ -81,7 +74,7 @@ int start_(int argc,
     ////////////////////////////////////////////////////////////
 
     auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
-    Dumux::Parameters::init(argc, argv, defaultParams, usage);
+    Parameters::init(argc, argv, defaultParams, usage);
 
     //////////////////////////////////////////////////////////////////////
     // try to create a grid (from the given grid file or the input file)

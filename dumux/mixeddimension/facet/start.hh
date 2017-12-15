@@ -31,21 +31,11 @@
 
 #include <dumux/common/propertysystem.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
 
 namespace Dumux
 {
-// forward declaration of property tags
-namespace Properties
-{
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(GridCreator);
-NEW_PROP_TAG(Problem);
-NEW_PROP_TAG(TimeManager);
-}
 
 /*!
  * \ingroup Start

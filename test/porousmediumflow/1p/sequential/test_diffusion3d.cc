@@ -34,19 +34,14 @@
 
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include "test_diffusionproblem3d.hh"
 #include "resultevaluation3d.hh"
 
 namespace Dumux
 {
-// forward declaration of property tags
-namespace Properties
-{
-NEW_PROP_TAG(GridCreator);
-NEW_PROP_TAG(Problem);
-}
 
 /*!
  * \ingroup Start
@@ -76,7 +71,7 @@ int start(int argc,
     using TypeTag = TTAG(DiffusionTestProblem);
 
     auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
-    Dumux::Parameters::init(argc, argv, defaultParams, usage);
+    Parameters::init(argc, argv, defaultParams, usage);
 
     ////////////////////////////////////////////////////////////
     // get some optional parameters

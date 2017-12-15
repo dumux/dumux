@@ -27,7 +27,8 @@
 
 #include <dumux/common/start.hh>
 #include <dumux/common/defaultusagemessage.hh>
-#include <dumux/common/parameterparser.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include "test_3d2pproblem.hh"
 
