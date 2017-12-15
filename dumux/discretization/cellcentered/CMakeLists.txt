@@ -1,4 +1,5 @@
 add_subdirectory("tpfa")
+add_subdirectory("mpfa")
 
 install(FILES
 gridvolumevariables.hh
