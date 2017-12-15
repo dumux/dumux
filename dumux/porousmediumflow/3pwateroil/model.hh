@@ -27,8 +27,6 @@
 #ifndef DUMUX_3PWATEROIL_MODEL_HH
 #define DUMUX_3PWATEROIL_MODEL_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
-
 #include "properties.hh"
 
 namespace Dumux

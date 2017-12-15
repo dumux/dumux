@@ -18,26 +18,16 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the flux variables
+ * \brief Base class for the flux variables in porous medium models
  */
-#ifndef DUMUX_POROUSMEDIUMFLOW_IMPLICIT_FLUXVARIABLES_HH
-#define DUMUX_POROUSMEDIUMFLOW_IMPLICIT_FLUXVARIABLES_HH
+#ifndef DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
+#define DUMUX_POROUSMEDIUMFLOW_FLUXVARIABLES_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
-#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(NumComponents);
-NEW_PROP_TAG(EnableAdvection);
-NEW_PROP_TAG(EnableMolecularDiffusion);
-NEW_PROP_TAG(EnableEnergyBalance);
-}
 
 /*!
  * \ingroup ImplicitModel

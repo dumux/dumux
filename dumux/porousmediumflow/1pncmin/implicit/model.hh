@@ -30,7 +30,6 @@
 #include "localresidual.hh"
 
 #include <dumux/porousmediumflow/1pnc/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 
 namespace Dumux
 {

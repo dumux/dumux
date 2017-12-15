@@ -20,10 +20,12 @@
  * \file
  * \brief Base class for the flux variables
  */
-#ifndef DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
-#define DUMUX_POROUSMEDIUM_IMPLICIT_FLUXVARIABLESCACHE_HH
+#ifndef DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
+#define DUMUX_POROUSMEDIUM_FLUXVARIABLESCACHE_HH
 
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
+
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
@@ -32,12 +34,6 @@ namespace Dumux
 // forward declaration
 template<class TypeTag, DiscretizationMethods Method>
 class PorousMediumFluxVariablesCacheImplementation;
-
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(NumPhases);
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //! The cache is dependent on the active physical processes (advection, diffusion, heat conduction)

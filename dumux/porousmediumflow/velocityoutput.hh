@@ -19,15 +19,16 @@
 /*!
  * \file
  *
- * \brief Velocity output for implicit (porous media) models
+ * \brief Velocity output for porous media models
  */
-#ifndef DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
-#define DUMUX_IMPLICIT_VELOCITYOUTPUT_HH
+#ifndef DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
+#define DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
@@ -37,7 +38,7 @@ namespace Dumux
  * \brief Velocity output for implicit (porous media) models
  */
 template<class TypeTag>
-class ImplicitVelocityOutput
+class PorousMediumFlowVelocityOutput
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -75,10 +76,10 @@ public:
      *
      * \param problem The problem to be solved
      */
-    ImplicitVelocityOutput(const Problem& problem,
-                           const FVGridGeometry& fvGridGeometry,
-                           const GridVariables& gridVariables,
-                           const SolutionVector& sol)
+    PorousMediumFlowVelocityOutput(const Problem& problem,
+                                   const FVGridGeometry& fvGridGeometry,
+                                   const GridVariables& gridVariables,
+                                   const SolutionVector& sol)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , gridVariables_(gridVariables)

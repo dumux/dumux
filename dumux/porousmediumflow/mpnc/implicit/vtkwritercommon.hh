@@ -25,7 +25,6 @@
 #ifndef DUMUX_MPNC_VTK_WRITER_COMMON_HH
 #define DUMUX_MPNC_VTK_WRITER_COMMON_HH
 
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
 #include "vtkwritermodule.hh"
 
 namespace Dumux

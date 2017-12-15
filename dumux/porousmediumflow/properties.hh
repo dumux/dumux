@@ -30,11 +30,11 @@
 #include <dumux/common/properties/model.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
-#include <dumux/porousmediumflow/implicit/fluxvariables.hh>
-#include <dumux/porousmediumflow/implicit/fluxvariablescache.hh>
+#include <dumux/porousmediumflow/fluxvariables.hh>
+#include <dumux/porousmediumflow/fluxvariablescache.hh>
 #include <dumux/porousmediumflow/nonisothermal/implicit/localresidual.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
-#include <dumux/porousmediumflow/implicit/velocityoutput.hh>
+#include <dumux/porousmediumflow/velocityoutput.hh>
 
 #include <dumux/discretization/darcyslaw.hh>
 #include <dumux/discretization/fickslaw.hh>
@@ -74,7 +74,7 @@ SET_BOOL_PROP(PorousMediumFlow, EvaluatePermeabilityAtScvfIP, false);
 SET_TYPE_PROP(PorousMediumFlow, EnergyLocalResidual, EnergyLocalResidual<TypeTag> );
 
 //! Velocity output
-SET_TYPE_PROP(PorousMediumFlow, VelocityOutput, ImplicitVelocityOutput<TypeTag>);
+SET_TYPE_PROP(PorousMediumFlow, VelocityOutput, PorousMediumFlowVelocityOutput<TypeTag>);
 
 //! By default, we set an empty primary variables switch
 SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag>);
