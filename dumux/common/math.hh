@@ -583,15 +583,16 @@ template <class Scalar>
 Dune::DynamicMatrix<Scalar> multiplyMatrices(const Dune::DynamicMatrix<Scalar> &M1,
                                              const Dune::DynamicMatrix<Scalar> &M2)
 {
+    using size_type = typename Dune::DynamicMatrix<Scalar>::size_type;
+    const size_type rows = M1.N();
+    const size_type cols = M2.M();
+
     DUNE_ASSERT_BOUNDS(M1.M() == M2.N());
 
-    std::size_t rows = M1.N();
-    std::size_t cols = M2.M();
-
     Dune::DynamicMatrix<Scalar> result(rows, cols, 0.0);
-    for (std::size_t i = 0; i < rows; i++)
-        for (std::size_t j = 0; j < cols; j++)
-            for (std::size_t k = 0; k < M1.M(); k++)
+    for (size_type i = 0; i < rows; i++)
+        for (size_type j = 0; j < cols; j++)
+            for (size_type k = 0; k < M1.M(); k++)
                 result[i][j] += M1[i][k]*M2[k][j];
 
     return result;
