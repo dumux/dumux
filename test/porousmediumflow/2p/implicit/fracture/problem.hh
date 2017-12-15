@@ -30,7 +30,7 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>

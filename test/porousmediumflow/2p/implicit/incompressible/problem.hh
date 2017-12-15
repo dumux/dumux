@@ -33,8 +33,8 @@
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
-#include <dumux/porousmediumflow/2p/implicit/incompressiblelocalresidual.hh>
+#include <dumux/porousmediumflow/2p/model.hh>
+#include <dumux/porousmediumflow/2p/incompressiblelocalresidual.hh>
 
 #include "spatialparams.hh"
 

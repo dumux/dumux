@@ -28,7 +28,7 @@
 #define DUMUX_INJECTION_PROBLEM_2PNI_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/2p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/discretization/box/properties.hh>

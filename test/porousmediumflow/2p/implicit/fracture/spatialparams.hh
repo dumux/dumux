@@ -30,7 +30,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/porousmediumflow/2p/implicit/model.hh>
+#include <dumux/porousmediumflow/2p/model.hh>
 
 namespace Dumux
 {

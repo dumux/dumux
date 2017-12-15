@@ -51,8 +51,8 @@
 #include <dumux/adaptive/adapt.hh>
 #include <dumux/adaptive/markelements.hh>
 #include <dumux/adaptive/initializationindicator.hh>
-#include <dumux/porousmediumflow/2p/implicit/griddatatransfer.hh>
-#include <dumux/porousmediumflow/2p/implicit/gridadaptindicator.hh>
+#include <dumux/porousmediumflow/2p/griddatatransfer.hh>
+#include <dumux/porousmediumflow/2p/gridadaptindicator.hh>
 
 //! Use the incompressible or point source problem for this adaptive test
 #include <test/porousmediumflow/2p/implicit/incompressible/problem.hh>
