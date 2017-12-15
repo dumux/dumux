@@ -31,7 +31,6 @@ namespace Dumux
 
 /*!
  * \ingroup TracerModel
- * \ingroup PorousMediumFlowVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume for the tracer model.
  */

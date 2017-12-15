@@ -36,7 +36,6 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePModel
- * \ingroup PorousMediumFlowVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in three-phase model.
  */

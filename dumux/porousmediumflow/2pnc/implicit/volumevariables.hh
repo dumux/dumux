@@ -43,7 +43,6 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPNCModel
- * \ingroup PorousMediumFlowVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase, n-component model.
  */

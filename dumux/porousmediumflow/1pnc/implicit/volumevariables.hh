@@ -33,7 +33,6 @@ namespace Dumux
 
 /*!
  * \ingroup OnePNCModel
- * \ingroup PorousMediumFlowVolumeVariables
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the one-phase, n-component model.
  *
