@@ -33,7 +33,7 @@
 #include <dumux/common/properties/grid.hh>
 #include <dumux/common/boundarytypes.hh>
 
-#include <dumux/implicit/gridvariables.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 
 namespace Dumux
 {
@@ -43,7 +43,7 @@ namespace Properties
 NEW_TYPE_TAG(FiniteVolumeModel, INHERITS_FROM(GridProperties));
 
 //! The grid variables
-SET_TYPE_PROP(FiniteVolumeModel, GridVariables, GridVariables<TypeTag>);
+SET_TYPE_PROP(FiniteVolumeModel, GridVariables, FVGridVariables<TypeTag>);
 
 //! The type of a solution for a whole element
 SET_TYPE_PROP(FiniteVolumeModel, ElementSolutionVector, Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, PrimaryVariables)>);

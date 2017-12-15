@@ -23,7 +23,8 @@
 #ifndef DUMUX_STAGGERED_GRID_VARIABLES_HH
 #define DUMUX_STAGGERED_GRID_VARIABLES_HH
 
-#include <dumux/implicit/gridvariables.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 
 namespace Dumux
 {
@@ -33,9 +34,9 @@ namespace Dumux
  * \brief Class storing scv and scvf variables
  */
 template<class TypeTag>
-class StaggeredGridVariables : public GridVariables<TypeTag>
+class StaggeredGridVariables : public FVGridVariables<TypeTag>
 {
-    using ParentType = GridVariables<TypeTag>;
+    using ParentType = FVGridVariables<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GlobalVolumeVariables);
@@ -45,7 +46,8 @@ class StaggeredGridVariables : public GridVariables<TypeTag>
 
 public:
     //! Constructor
-    StaggeredGridVariables(std::shared_ptr<Problem> problem, std::shared_ptr<FVGridGeometry> fvGridGeometry)
+    StaggeredGridVariables(std::shared_ptr<const Problem> problem,
+                           std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(problem, fvGridGeometry)
     , fvGridGeometry_(fvGridGeometry)
     , curGridFaceVariables_(*problem)
@@ -103,13 +105,12 @@ public:
 
 private:
 
-    std::shared_ptr<FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
 
     GridFaceVariables curGridFaceVariables_;
     GridFaceVariables prevGridFaceVariables_;
-
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

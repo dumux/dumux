@@ -20,18 +20,20 @@
  * \file
  * \brief Class storing scv and scvf variables
  */
-#ifndef DUMUX_GRID_VARIABLES_HH
-#define DUMUX_GRID_VARIABLES_HH
+#ifndef DUMUX_FV_GRID_VARIABLES_HH
+#define DUMUX_FV_GRID_VARIABLES_HH
+
+#include <memory>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
  * \brief Class storing scv and scvf variables
  */
 template<class TypeTag>
-class GridVariables
+class FVGridVariables
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -41,7 +43,8 @@ class GridVariables
 
 public:
     //! Constructor
-    GridVariables(std::shared_ptr<Problem> problem, std::shared_ptr<FVGridGeometry> fvGridGeometry)
+    FVGridVariables(std::shared_ptr<const Problem> problem,
+                    std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
     , curGridVolVars_(*problem)
@@ -118,8 +121,8 @@ public:
     { return prevGridVolVars_; }
 
 private:
-    std::shared_ptr<Problem> problem_;
-    std::shared_ptr<FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const Problem> problem_;
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
 
     // the current and previous variables (primary and secondary variables)
     GridVolumeVariables curGridVolVars_;
@@ -129,6 +132,6 @@ private:
     GridFluxVariablesCache gridFluxVarsCache_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
