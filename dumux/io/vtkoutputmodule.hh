@@ -240,23 +240,6 @@ class VtkOutputModule
     struct VolVarScalarDataInfo { std::function<Scalar(const VolumeVariables&)> get; std::string name; };
     using Field = Vtk::template Field<GridView>;
 
-    //! Auxiliary struct that checks if a given type has a size() method. Uses Expression SFINAE.
-    //! See https://dev.krzaq.cc/post/checking-whether-a-class-has-a-member-function-with-a-given-signature/ for details.
-    template<typename T>
-    struct hasSizeMethod
-    {
-    private:
-        using yes = std::true_type;
-        using no = std::false_type;
-
-        template<typename U> static auto test(int) -> decltype(std::declval<U>().size() == 1, yes());
-
-        template<typename> static no test(...);
-
-    public:
-        static constexpr bool value = std::is_same<decltype(test<T>(0)),yes>::value;
-    };
-
 public:
 
     enum class FieldType : unsigned int
@@ -304,7 +287,7 @@ public:
     }
 
     //! Add a scalar or vector valued vtk field
-    //! \param v The field to be added.
+    //! \param v The field to be added. Can be any indexable container. Its value type can be a number or itself an indexable container.
     //! \param name The name of the field
     //! \param fieldType The type of the field.
     //!        This determines whether the values are associated with vertices or elements.
@@ -312,15 +295,8 @@ public:
     template<typename Vector>
     void addField(const Vector& v, const std::string& name, FieldType fieldType = FieldType::automatic)
     {
-        // Assume that v holds scalar values by default.
-        int nComp = 1;
-
-        // Check if the values of v have a size() method. If yes, v contains vector values, so we change nComp accordingly.
-        Dune::Hybrid::ifElse(std::integral_constant<bool, hasSizeMethod<std::decay_t<decltype(v[0])>>::value>(),
-        [&](auto IF)
-        {
-            nComp = v[0].size();
-        });
+        // Deduce the number of components from the given vector type
+        const auto nComp = getNumberOfComponents_(v);
 
         const auto numElements = gridGeom_.gridView().size(0);
         const auto numVertices = gridGeom_.gridView().size(dim);
@@ -519,6 +495,15 @@ public:
     }
 
 private:
+    //! Deduces the number of components of the value type of a vector of values
+    template<class Vector, typename std::enable_if_t<Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
+    std::size_t getNumberOfComponents_(const Vector& v)
+    { return v[0].size(); }
+
+    //! Deduces the number of components of the value type of a vector of values
+    template<class Vector, typename std::enable_if_t<!Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
+    std::size_t getNumberOfComponents_(const Vector& v)
+    { return 1; }
 
     template<typename Writer, typename... Args>
     void addDofDataForWriter_(Writer& writer,
