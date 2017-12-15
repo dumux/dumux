@@ -25,28 +25,24 @@
 #ifndef DUMUX_2P2C_VOLUME_VARIABLES_HH
 #define DUMUX_2P2C_VOLUME_VARIABLES_HH
 
-//#include <dumux/implicit/model.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-#include <dumux/discretization/volumevariables.hh>
+#include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/discretization/methods.hh>
-#include "properties.hh"
-#include "indices.hh"
 
 namespace Dumux
 {
 
 /*!
  * \ingroup TwoPTwoCModel
- * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase two-component model.
  */
 template <class TypeTag>
-class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class TwoPTwoCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -106,9 +102,6 @@ class TwoPTwoCVolumeVariables : public ImplicitVolumeVariables<TypeTag>
     static constexpr int dim = GridView::dimension;
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
-    enum { dofCodim = isBox ? dim : 0 };
-
 public:
     //! The type of the object returned by the fluidState() method
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -118,7 +111,7 @@ public:
     using ParentType::enthalpy;
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \copydoc PorousMediumFlowVolumeVariables::update
      */
     void update(const ElementSolution &elemSol,
                 const Problem &problem,
