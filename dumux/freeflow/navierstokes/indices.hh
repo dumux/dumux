@@ -55,11 +55,15 @@ struct NavierStokesCommonIndices
     static constexpr int momentumXBalanceIdx = momentumBalanceIdx; //!< Index of the momentum balance equation
     static constexpr int momentumYBalanceIdx = momentumBalanceIdx + 1; //!< Index of the momentum balance equation
     static constexpr int momentumZBalanceIdx = momentumBalanceIdx + 2; //!< Index of the momentum balance equation
-    static constexpr int velocityIdx = momentumBalanceIdx; //!< Index of the velocity in a solution vector
-    static constexpr int velocityXIdx = velocityIdx; //!< Index of the velocity in a solution vector
-    static constexpr int velocityYIdx = velocityIdx + 1; //!< Index of the velocity in a solution vector
-    static constexpr int velocityZIdx = velocityIdx + 2; //!< Index of the velocity in a solution vector
 
+    static constexpr int velocityXIdx = momentumBalanceIdx; //!< Index of the velocity in a solution vector
+    static constexpr int velocityYIdx = momentumBalanceIdx + 1; //!< Index of the velocity in a solution vector
+    static constexpr int velocityZIdx = momentumBalanceIdx + 2; //!< Index of the velocity in a solution vector
+
+    static constexpr int velocity(int dirIdx) //!< Index of the velocity in a solution vector given a certain dimension
+    {
+        return dirIdx + momentumBalanceIdx;
+    }
 };
 
 // \}
