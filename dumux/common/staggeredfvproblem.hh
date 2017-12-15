@@ -23,7 +23,7 @@
 #ifndef DUMUX_STAGGERD_FV_PROBLEM_HH
 #define DUMUX_STAGGERD_FV_PROBLEM_HH
 
-#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
 
 namespace Dumux
@@ -43,36 +43,21 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using ParentType = FVProblem<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
-    using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     enum {
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
-
-
-    // using GridAdaptModel = ImplicitGridAdapt<TypeTag, adaptiveGrid>;
 
 public:
     /*!
@@ -108,7 +93,6 @@ public:
     template<class Entity>
     PrimaryVariables initial(const Entity& entity) const
     {
-        // static_assert(int(Entity::codimension) == 0 || int(Entity::codimension) == dim, "Entity must be element or vertex");
         return asImp_().initialAtPos(entity.center());
     }
 
