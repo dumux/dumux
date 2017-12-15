@@ -25,7 +25,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dune/common/hybridutilities.hh>
 
 namespace Dumux
@@ -52,7 +52,8 @@ NEW_PROP_TAG(ElementFaceVariables);
 
 
 template<class TypeTag>
-class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered> : public Dumux::StaggeredLocalResidual<TypeTag>
+class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
+: public StaggeredLocalResidual<TypeTag>
 {
     using ParentType = StaggeredLocalResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;

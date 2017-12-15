@@ -9,4 +9,5 @@ fvassembler.hh
 fvlocalresidual.hh
 staggeredfvassembler.hh
 staggeredlocalassembler.hh
+staggeredlocalresidual.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/assembly)

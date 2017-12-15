@@ -39,7 +39,7 @@
 #include "fluxvariables.hh"
 #include "vtkoutputfields.hh"
 
-#include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 

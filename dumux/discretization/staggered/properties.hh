@@ -32,7 +32,7 @@
 #include <dumux/discretization/fvproperties.hh>
 
 #include <dumux/implicit/cellcentered/elementboundarytypes.hh>
-#include <dumux/implicit/staggered/localresidual.hh>
+#include <dumux/assembly/staggeredlocalresidual.hh>
 #include <dumux/implicit/staggered/primaryvariables.hh>
 #include <dumux/implicit/staggered/gridvariables.hh>
 

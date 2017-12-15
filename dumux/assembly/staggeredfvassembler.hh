@@ -30,11 +30,11 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/implicit/staggered/localresidual.hh>
 #include <dumux/discretization/methods.hh>
 
 #include "diffmethod.hh"
 #include "staggeredlocalassembler.hh"
+#include "staggeredlocalresidual.hh"
 
 namespace Dumux {
 
