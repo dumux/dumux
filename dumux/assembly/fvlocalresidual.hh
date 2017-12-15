@@ -25,10 +25,8 @@
 
 #include <dune/istl/matrix.hh>
 
-#include <dumux/common/valgrind.hh>
-#include <dumux/common/capabilities.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
-
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
