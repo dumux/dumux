@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include <dune/common/typetraits.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/dynmatrix.hh>
