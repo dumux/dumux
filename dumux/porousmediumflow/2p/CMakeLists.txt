@@ -9,4 +9,4 @@ incompressiblelocalresidual.hh
 model.hh
 volumevariables.hh
 vtkoutputfields.hh
-DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p/implicit)
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/2p)
