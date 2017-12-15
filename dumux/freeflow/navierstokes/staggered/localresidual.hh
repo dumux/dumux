@@ -92,7 +92,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
         dimWorld = GridView::dimensionworld,
 
         pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
 
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx
@@ -214,7 +213,7 @@ public:
         const auto& insideVolVars = elemVolVars[insideScvIdx];
         source += problem.gravity()[scvf.directionIndex()] * insideVolVars.density();
 
-        source += problem.sourceAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
+        source += problem.sourceAtPos(scvf.center())[Indices::velocity(scvf.directionIndex())];
 
         return source;
     }
@@ -289,7 +288,7 @@ protected:
                         if(bcTypes.isNeumann(eqIdx))
                         {
                             const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
-                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, scvf)[cellCenterIdx][eqIdx]
+                            boundaryFlux[eqIdx] = problem.neumann(element, fvGeometry, elemVolVars, scvf)[eqIdx]
                                                    * extrusionFactor * scvf.area();
                         }
                 }
@@ -319,7 +318,7 @@ protected:
         if(bcTypes.isDirichletCell(massBalanceIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
-            residual[pressureIdx] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
+            residual[pressureIdx] = insideVolVars.pressure() - problem.dirichletAtPos(insideScv.center())[pressureIdx];
         }
     }
 
@@ -344,9 +343,8 @@ protected:
             // set a fixed value for the velocity for Dirichlet boundary conditions
             if(bcTypes.isDirichlet(momentumBalanceIdx))
             {
-                // const Scalar velocity = faceVars.faceVars(scvf.dofIndex()).velocity();
                 const Scalar velocity = elementFaceVars[scvf].velocitySelf();
-                const Scalar dirichletValue = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
+                const Scalar dirichletValue = problem.dirichlet(element, scvf)[Indices::velocity(scvf.directionIndex())];
                 residual = velocity - dirichletValue;
             }
 
@@ -393,14 +391,14 @@ private:
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
 
-        const Scalar deltaP = normalizePressure ? problem.initialAtPos(scvf.center())[cellCenterIdx][pressureIdx] : 0.0;
+        const Scalar deltaP = normalizePressure ? problem.initialAtPos(scvf.center())[pressureIdx] : 0.0;
 
         Scalar result = (insideVolVars.pressure() - deltaP) * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
 
         // treat outflow BCs
         if(scvf.boundary())
         {
-            const Scalar pressure = problem.dirichlet(element, scvf)[cellCenterIdx][pressureIdx] - deltaP;
+            const Scalar pressure = problem.dirichlet(element, scvf)[pressureIdx] - deltaP;
             result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
         }
         return result;
