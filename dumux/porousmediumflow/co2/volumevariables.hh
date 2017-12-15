@@ -26,7 +26,7 @@
 #define DUMUX_CO2_VOLUME_VARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/2p2c/implicit/volumevariables.hh>
+#include <dumux/porousmediumflow/2p2c/volumevariables.hh>
 
 namespace Dumux
 {

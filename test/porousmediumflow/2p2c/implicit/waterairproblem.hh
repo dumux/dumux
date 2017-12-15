@@ -31,7 +31,7 @@
 
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
+#include <dumux/porousmediumflow/2p2c/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 
 #include "waterairspatialparams.hh"

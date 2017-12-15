@@ -25,7 +25,7 @@
 #define DUMUX_TWOP_TWOC_CO2_MODEL_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/porousmediumflow/2p2c/implicit/model.hh>
+#include <dumux/porousmediumflow/2p2c/model.hh>
 #include "primaryvariableswitch.hh"
 #include "volumevariables.hh"
 
