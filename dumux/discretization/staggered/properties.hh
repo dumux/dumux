@@ -250,25 +250,7 @@ public:
     using type = BoundaryTypes<numEqCellCenter + numEqFace>;
 };
 
-//! A container class used to specify values for boundary/initial conditions
-SET_PROP(StaggeredModel, PrimaryVariables)
-{
-private:
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-public:
-    using type = StaggeredPrimaryVariables<TypeTag, CellCenterPrimaryVariables, FacePrimaryVariables>;
-};
 
-//! A container class used to specify values for sources and Neumann BCs
-SET_PROP(StaggeredModel, NumEqVector)
-{
-private:
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
-public:
-    using type = StaggeredPrimaryVariables<TypeTag, CellCenterPrimaryVariables, FacePrimaryVariables>;
-};
 
 SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
 
