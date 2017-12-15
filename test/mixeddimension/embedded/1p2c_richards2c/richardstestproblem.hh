@@ -28,7 +28,7 @@
 
 #include <dumux/implicit/cellcentered/tpfa/properties.hh>
 #include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/porousmediumflow/richardsnc/implicit/model.hh>
+#include <dumux/porousmediumflow/richardsnc/model.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase2c.hh>

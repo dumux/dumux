@@ -32,7 +32,7 @@
 #include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/richards/implicit/model.hh>
+#include <dumux/porousmediumflow/richards/model.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include "richardsnispatialparams.hh"

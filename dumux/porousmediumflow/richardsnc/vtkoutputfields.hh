@@ -23,7 +23,7 @@
 #ifndef DUMUX_RICHARDSNC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_RICHARDSNC_VTK_OUTPUT_FIELDS_HH
 
-#include <dumux/porousmediumflow/richards/implicit/vtkoutputfields.hh>
+#include <dumux/porousmediumflow/richards/vtkoutputfields.hh>
 namespace Dumux
 {
 

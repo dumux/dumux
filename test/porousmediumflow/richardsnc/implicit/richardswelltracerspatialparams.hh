@@ -28,7 +28,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/vangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/porousmediumflow/richards/implicit/model.hh>
+#include <dumux/porousmediumflow/richards/model.hh>
 
 #include <dumux/io/gnuplotinterface.hh>
 #include <dumux/io/plotmateriallaw.hh>

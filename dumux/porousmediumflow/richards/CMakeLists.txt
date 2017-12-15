@@ -1,1 +1,11 @@
-add_subdirectory("implicit")
+
+#install headers
+install(FILES
+indices.hh
+localresidual.hh
+model.hh
+newtoncontroller.hh
+primaryvariableswitch.hh
+volumevariables.hh
+vtkoutputfields.hh
+DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/porousmediumflow/richards)

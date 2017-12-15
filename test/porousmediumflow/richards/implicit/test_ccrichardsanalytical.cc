@@ -43,7 +43,7 @@
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
-#include <dumux/porousmediumflow/richards/implicit/newtoncontroller.hh>
+#include <dumux/porousmediumflow/richards/newtoncontroller.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 

@@ -29,7 +29,7 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/richardsnc/implicit/model.hh>
+#include <dumux/porousmediumflow/richardsnc/model.hh>
 
 #include "richardswelltracerspatialparams.hh"
 
