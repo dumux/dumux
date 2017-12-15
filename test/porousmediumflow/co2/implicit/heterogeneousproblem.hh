@@ -28,7 +28,7 @@
 #include <dumux/discretization/box/properties.hh>
 
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/porousmediumflow/co2/implicit/model.hh>
+#include <dumux/porousmediumflow/co2/model.hh>
 
 #include <dumux/material/fluidsystems/brineco2.hh>
 #include <dumux/discretization/box/scvftoscvboundarytypes.hh>
