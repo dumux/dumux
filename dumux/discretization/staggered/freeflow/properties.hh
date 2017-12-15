@@ -103,28 +103,10 @@ public:
 //! The variables living on the faces
 SET_TYPE_PROP(StaggeredFreeFlowModel, FaceVariables, StaggeredFaceVariables<TypeTag>);
 
-//! A container class used to specify values for boundary/initial conditions
-SET_PROP(StaggeredFreeFlowModel, PrimaryVariables)
-{
-private:
-    using CellCenterBoundaryValues = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FaceBoundaryValues = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                 GridView::dimension>;
-public:
-    using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
-};
-
 //! A container class used to specify values for sources and Neumann BCs
 SET_PROP(StaggeredFreeFlowModel, NumEqVector)
 {
-private:
-    using CellCenterBoundaryValues = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FaceBoundaryValues = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                 GridView::dimension>;
-public:
-    using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
+    using type = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_VALUE(TypeTag, NumEq)>;
 };
 
 //! Boundary types at a single degree of freedom
