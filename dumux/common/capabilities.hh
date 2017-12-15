@@ -26,6 +26,8 @@
 #ifndef DUMUX_CAPABILITIES_HH
 #define DUMUX_CAPABILITIES_HH
 
+#include <dune/common/deprecated.hh>
+
 namespace Dumux
 {
 
@@ -34,7 +36,7 @@ namespace Capabilities
 
 //! If a problem is stationary (not time-dependent)
 template <class Problem>
-struct isStationary
+struct DUNE_DEPRECATED_MSG("isStationary is deprecated and will be removed!") isStationary
 {
     //! by default all problems are instationary
     static const bool value = false;
