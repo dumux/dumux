@@ -217,6 +217,14 @@ public:
         P2PoreVol_ = 0.0;
         P3PoreVol_ = 0.0;
         P4PoreVol_ = 0.0;
+
+        xMin_[0] = 0;
+        xMin_[1] = 0;
+        xMin_[2] = 0;
+
+        xMax_[0] = 365.76;
+        xMax_[1] = 670.56;
+        xMax_[2] = 51.816;
     }
 
     /*!
@@ -538,11 +546,8 @@ public:
         Scalar y = globalPos[1];
         Scalar z = globalPos[2];
 
-        auto xMax = this->bBoxMax();
-        auto xMin = this->bBoxMin();
-
-        if((std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY && std::abs(xMin[2]-z) > 1.0e-3) ||
-           (std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY && std::abs(xMax[2]-z) > 1.0e-3))
+        if((std::abs(xMin_[0]-x) < hX && std::abs(xMin_[1]-y) < hY && std::abs(xMin_[2]-z) > 1.0e-3) ||
+           (std::abs(xMax_[0]-x) < hX && std::abs(xMax_[1]-y) < hY && std::abs(xMax_[2]-z) > 1.0e-3))
         {
             values.setAllDirichlet();
         }
@@ -568,15 +573,12 @@ public:
         Scalar y = globalPos[1];
         Scalar z = globalPos[2];
 
-        auto xMax = this->bBoxMax();
-        auto xMin = this->bBoxMin();
-
-        if(std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY && std::abs(xMin[2]-z) > 1.0e-3)
+        if(std::abs(xMin_[0]-x) < hX && std::abs(xMin_[1]-y) < hY && std::abs(xMin_[2]-z) > 1.0e-3)
         {
             values[pwIdx] = pbhI;
             values[snIdx] = 0.0;
         }
-        else if(std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY && std::abs(xMax[2]-z) > 1.0e-3)
+        else if(std::abs(xMax_[0]-x) < hX && std::abs(xMax_[1]-y) < hY && std::abs(xMax_[2]-z) > 1.0e-3)
         {
             values[pwIdx] = pbhP;
             values[snIdx] = 1.0;
@@ -735,10 +737,7 @@ public:
                 Scalar x = globalPos[0];
                 Scalar y = globalPos[1];
 
-                auto xMax = this->bBoxMax();
-                auto xMin = this->bBoxMin();
-
-                if(std::abs(xMin[0]-x) < hX && std::abs(xMin[1]-y) < hY)
+                if(std::abs(xMin_[0]-x) < hX && std::abs(xMin_[1]-y) < hY)
                 {
                     int eIdx = this->elementMapper().index(element);
                     Scalar Sn = 0.0;
@@ -766,7 +765,7 @@ public:
                     fileInj << Sn <<  "\n";
                     fileInj << pw <<  "\n";
                 }
-                else if(std::abs(xMax[0]-x) < hX && std::abs(xMax[1]-y) < hY)
+                else if(std::abs(xMax_[0]-x) < hX && std::abs(xMax_[1]-y) < hY)
                 {
                     int eIdx = this->elementMapper().index(element);
                     Scalar Sn = 0.0;
@@ -839,27 +838,6 @@ public:
     }
 
 private:
-
-    bool onLeftBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[0] < this->bBoxMin()[0] + eps_;
-    }
-
-    bool onRightBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[0] > this->bBoxMax()[0] - eps_;
-    }
-
-    bool onLowerBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[1] < this->bBoxMin()[1] + eps_;
-    }
-
-    bool onUpperBoundary_(const GlobalPosition &globalPos) const
-    {
-        return globalPos[1] > this->bBoxMax()[1] - eps_;
-    }
-
     Scalar temperature_;
     static constexpr Scalar eps_ = 3e-6;
     std::string name_;
@@ -872,6 +850,8 @@ private:
     Scalar P2PoreVol_;
     Scalar P3PoreVol_;
     Scalar P4PoreVol_;
+    GlobalPosition xMax_;
+    GlobalPosition xMin_;
 };
 } //end namespace
 
