@@ -28,7 +28,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/discretization/volumevariables.hh>
 
 namespace Dumux
 {
