@@ -40,13 +40,13 @@ namespace Dumux
 template<class TypeTag, typename IdType>
 class IntegrationPointSource : public Dumux::IdPointSource<TypeTag, IdType>
 {
-    typedef typename Dumux::IdPointSource<TypeTag, IdType> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using ParentType = Dumux::IdPointSource<TypeTag, IdType>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     static const int dimworld = GridView::dimensionworld;
-    typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
     //! Constructor for integration point sources
@@ -109,15 +109,15 @@ private:
 template<class TypeTag>
 class IntegrationPointSourceHelper
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PointSource) PointSource;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
 
     static const int dim = GridView::dimension;
     static const int dimworld = GridView::dimensionworld;
 
-    typedef Dumux::BoundingBoxTree<GridView> BoundingBoxTree;
+    using BoundingBoxTree = Dumux::BoundingBoxTree<GridView>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };

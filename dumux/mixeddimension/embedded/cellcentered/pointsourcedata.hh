@@ -46,18 +46,18 @@ NEW_PROP_TAG(PrimaryVariables);
 template<class TypeTag>
 class PointSourceData
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename std::vector<Dune::FieldVector<Scalar, 1> > ShapeValues;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
     // obtain the type tags of the sub problems
-    typedef typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag) BulkProblemTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag) LowDimProblemTypeTag;
+    using BulkProblemTypeTag = typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag);
+    using LowDimProblemTypeTag = typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, PrimaryVariables) BulkPrimaryVariables;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables) LowDimPrimaryVariables;
+    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, PrimaryVariables);
+    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector) BulkSolutionVector;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector) LowDimSolutionVector;
+    using BulkSolutionVector = typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector);
+    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector);
 
     enum {
         bulkIsBox = GET_PROP_VALUE(BulkProblemTypeTag, ImplicitIsBox),
@@ -153,18 +153,18 @@ template<class TypeTag>
 class PointSourceDataCircleAverage : public PointSourceData<TypeTag>
 {
     using ParentType = PointSourceData<TypeTag>;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename std::vector<Dune::FieldVector<Scalar, 1> > ShapeValues;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
     // obtain the type tags of the sub problems
-    typedef typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag) BulkProblemTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag) LowDimProblemTypeTag;
+    using BulkProblemTypeTag = typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag);
+    using LowDimProblemTypeTag = typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, PrimaryVariables) BulkPrimaryVariables;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables) LowDimPrimaryVariables;
+    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, PrimaryVariables);
+    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector) BulkSolutionVector;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector) LowDimSolutionVector;
+    using BulkSolutionVector = typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector);
+    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector);
 
     enum {
         bulkIsBox = GET_PROP_VALUE(BulkProblemTypeTag, ImplicitIsBox),
