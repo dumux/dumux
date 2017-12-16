@@ -23,6 +23,8 @@
 #ifndef VTK_MULTI_WRITER_HH
 #define VTK_MULTI_WRITER_HH
 
+#warning "This header is deprecated. Use the new vtkoutputmodule."
+
 #include <iostream>
 #include <limits>
 #include <list>
@@ -39,6 +41,7 @@
 #include <dumux/common/valgrind.hh>
 
 #include <dune/common/version.hh>
+#include <dune/common/deprecated.hh>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -54,13 +57,16 @@ namespace Dumux {
  * \todo This class can most likely be replaced by Dune::VTKSequenceWriter
  */
 template<class GridView, Dune::VTK::OutputType OutputValue = Dune::VTK::ascii >
-class VtkMultiWriter
+class DUNE_DEPRECATED_MSG("Use VtkOutputModule instead!") VtkMultiWriter
 {
     enum { dim = GridView::dimension };
-
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView> ElementMapper;
+#else
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
-
+#endif
 public:
     typedef Dune::VTKWriter<GridView> VtkWriter;
     VtkMultiWriter(const GridView &gridView,
