@@ -41,10 +41,10 @@ template<class TypeTag>
 class GridAdaptInitializationIndicatorDefault
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using AdaptionIndicator = typename GET_PROP_TYPE(TypeTag, AdaptionIndicator);
 
 public:
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.

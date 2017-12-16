@@ -79,7 +79,7 @@ class ThreePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
 public:
     //! The type of the object returned by the fluidState() method
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 
     /*!

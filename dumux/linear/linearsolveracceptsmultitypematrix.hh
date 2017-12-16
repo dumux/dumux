@@ -32,7 +32,7 @@ template<typename TypeTag, typename LinearSolver>
 struct LinearSolverAcceptsMultiTypeMatrixImpl
 { static constexpr bool value = true; };
 
-//! Convenience typedef
+//! Convenience using declaration
 template <typename TypeTag>
 using LinearSolverAcceptsMultiTypeMatrix = LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, typename GET_PROP_TYPE(TypeTag, LinearSolver)>;
 

@@ -46,21 +46,21 @@ namespace Dumux
 template<class TypeTag>
 class FVVelocity1P
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid Fluid;
+    using Fluid = typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid;
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
     enum
     {
@@ -72,8 +72,8 @@ class FVVelocity1P
         pressEqIdx = Indices::pressureEqIdx // only one equation!
     };
 
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
     //! Constructs a FVVelocity1P object
@@ -121,7 +121,7 @@ public:
 
             const typename Element::Geometry& geometry = element.geometry();
             // get corresponding reference element
-            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
             const Dune::ReferenceElement< Scalar , dim > & refElement =
                     ReferenceElements::general( geometry.type() );
             const int numberOfFaces=refElement.size(1);

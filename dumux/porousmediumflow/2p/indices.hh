@@ -52,7 +52,7 @@ struct TwoPFormulation
 template <class TypeTag, int PVOffset = 0>
 struct TwoPCommonIndices
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     // Phase indices
     static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase

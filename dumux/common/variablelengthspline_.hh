@@ -43,9 +43,9 @@ class VariableLengthSpline_
 {
     friend class SplineCommon_<ScalarT, VariableLengthSpline_<ScalarT> >;
 
-    typedef ScalarT Scalar;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > Vector;
-    typedef Dune::BTDMatrix<Dune::FieldMatrix<Scalar, 1, 1> > BTDMatrix;
+    using Scalar = ScalarT;
+    using Vector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
+    using BTDMatrix = Dune::BTDMatrix<Dune::FieldMatrix<Scalar, 1, 1> >;
 
 public:
     /*!

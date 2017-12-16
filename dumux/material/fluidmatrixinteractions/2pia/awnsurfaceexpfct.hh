@@ -45,8 +45,8 @@ template <class ParamsT>
 class AwnSurfaceExpFct
 {
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The interfacial area surface

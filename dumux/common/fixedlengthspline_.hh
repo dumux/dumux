@@ -42,10 +42,10 @@ class FixedLengthSpline_
 {
     friend class SplineCommon_<ScalarT, FixedLengthSpline_<ScalarT, nSamples> >;
 
-    typedef ScalarT Scalar;
-    typedef Dune::FieldVector<Scalar, nSamples> Vector;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
-    typedef Dune::BTDMatrix<Dune::FieldMatrix<Scalar, 1, 1> > BTDMatrix;
+    using Scalar = ScalarT;
+    using Vector = Dune::FieldVector<Scalar, nSamples>;
+    using BlockVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
+    using BTDMatrix = Dune::BTDMatrix<Dune::FieldMatrix<Scalar, 1, 1> >;
 
 protected:
     FixedLengthSpline_()

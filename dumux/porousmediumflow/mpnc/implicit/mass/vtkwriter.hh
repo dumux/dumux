@@ -45,21 +45,21 @@ class MPNCVtkWriterMass : public MPNCVtkWriterModule<TypeTag>
                   "No kinetic mass transfer module included, "
                   "but kinetic mass transfer enabled.");
 
-    typedef MPNCVtkWriterModule<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using ParentType = MPNCVtkWriterModule<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
-    typedef typename ParentType::ComponentVector ComponentVector;
+    using ComponentVector = typename ParentType::ComponentVector;
     bool fugacityOutput_;
 
 public:

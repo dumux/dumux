@@ -47,10 +47,10 @@ SET_TYPE_PROP(Test2P2CSpatialParams, SpatialParams, Test2P2CSpatialParams<TypeTa
 SET_PROP(Test2P2CSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef LinearMaterial<Scalar>         RawMaterialLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using RawMaterialLaw = LinearMaterial<Scalar>;
 public:
-    typedef EffToAbsLaw<RawMaterialLaw> type;
+    using type = EffToAbsLaw<RawMaterialLaw>;
 };
 }
 
@@ -61,19 +61,19 @@ public:
 template<class TypeTag>
 class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Grid)     Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum
         {dim=Grid::dimension};
-    typedef    typename Grid::Traits::template Codim<0>::Entity Element;
+    using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     const FieldMatrix& intrinsicPermeability (const Element& element) const
     {

@@ -42,19 +42,19 @@ namespace Dumux
 template<class TypeTag>
 class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
 {
-    typedef IMPESProblem2P<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = IMPESProblem2P<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid                         Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams)    SpatialParams;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
     enum
     {
@@ -64,7 +64,7 @@ class IMPETProblem2P2C : public IMPESProblem2P<TypeTag>
         dimWorld = Grid::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!

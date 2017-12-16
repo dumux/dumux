@@ -71,11 +71,11 @@ namespace Dumux
 template <class ScalarT, class ParamsT = RegularizedVanGenuchtenParams<ScalarT> >
 class RegularizedVanGenuchten
 {
-    typedef Dumux::VanGenuchten<ScalarT, ParamsT> VanGenuchten;
+    using VanGenuchten = Dumux::VanGenuchten<ScalarT, ParamsT>;
 
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief A regularized van Genuchten capillary pressure-saturation
@@ -316,7 +316,7 @@ public:
         else if (swe > 1 - std::numeric_limits<Scalar>::epsilon())
             return 1;
         else if (swe > swThHigh) {
-            typedef Dumux::Spline<Scalar> Spline;
+            using Spline = Dumux::Spline<Scalar>;
             Spline sp(swThHigh, 1.0, // x1, x2
                       VanGenuchten::krw(params, swThHigh), 1.0, // y1, y2
                       VanGenuchten::dkrw_dswe(params, swThHigh), 0); // m1, m2
@@ -350,7 +350,7 @@ public:
             return 0.0;
         }
         else if (swe > swThHigh) {
-            typedef Dumux::Spline<Scalar> Spline;
+            using Spline = Dumux::Spline<Scalar>;
             Spline sp(swThHigh, 1.0, // x1, x2
                       VanGenuchten::krw(params, swThHigh), 1.0, // y1, y2
                       VanGenuchten::dkrw_dswe(params, swThHigh), 0); // m1, m2
@@ -386,7 +386,7 @@ public:
         else if (swe >= 1)
             return 0;
         else if (swe < swThLow) {
-            typedef Dumux::Spline<Scalar> Spline;
+            using Spline = Dumux::Spline<Scalar>;
             Spline sp(0.0, swThLow, // x1, x2
                       1.0, VanGenuchten::krn(params, swThLow), // y1, y2
                       0.0, VanGenuchten::dkrn_dswe(params, swThLow)); // m1, m2
@@ -415,7 +415,7 @@ public:
         else if (swe >= 1)
             return 0.0;
         else if (swe < swThLow) {
-            typedef Dumux::Spline<Scalar> Spline;
+            using Spline = Dumux::Spline<Scalar>;
             Spline sp(0.0, swThLow, // x1, x2
                       1.0, VanGenuchten::krn(params, swThLow), // y1, y2
                       0.0, VanGenuchten::dkrn_dswe(params, swThLow)); // m1, m2

@@ -84,17 +84,17 @@ SET_INT_PROP(TransportTestProblem, VelocityFormulation, SequentialTwoPCommonIndi
 template<class TypeTag>
 class TestTransportProblem: public TransportProblem2P<TypeTag>
 {
-    typedef TransportProblem2P<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using ParentType = TransportProblem2P<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
     enum
     {
@@ -106,9 +106,9 @@ class TestTransportProblem: public TransportProblem2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     TestTransportProblem(TimeManager &timeManager, const GridView &gridView) :

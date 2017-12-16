@@ -32,7 +32,7 @@ template<class ScalarT>
 class AwnSurfacePolynomial2ndOrderParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     AwnSurfacePolynomial2ndOrderParams()
     {}

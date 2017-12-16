@@ -40,11 +40,11 @@ namespace Dumux
 template<class TypeTag>
 class FVVelocityDefault
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GridView::Intersection Intersection;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using Intersection = typename GridView::Intersection;
 
 
 public:

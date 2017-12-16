@@ -34,7 +34,7 @@ namespace Properties
 // Set the model properties
 SET_PROP(TransportTwoP, Model)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) type;
+    using type = typename GET_PROP_TYPE(TypeTag, TransportModel);
 };
 //this Property should be set by the pressure model, only for a pure transport it is set here for the transportproblem!
 SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
@@ -50,24 +50,24 @@ SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
 template<class TypeTag>
 class TransportProblem2P : public OneModelProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef OneModelProblem<TypeTag> ParentType;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParentType = OneModelProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ScalarSolution Solution;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using Solution = typename SolutionTypes::ScalarSolution;
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
         dim = Grid::dimension,
@@ -78,7 +78,7 @@ class TransportProblem2P : public OneModelProblem<TypeTag>
         transportEqIdx = Indices::transportEqIdx
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     // private!! copy constructor
     TransportProblem2P(const TransportProblem2P&)

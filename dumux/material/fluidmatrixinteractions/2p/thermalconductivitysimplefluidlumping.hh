@@ -38,8 +38,8 @@ namespace Dumux
 template<class TypeTag>
 class ThermalConductivitySimpleFluidLumping
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
 
 

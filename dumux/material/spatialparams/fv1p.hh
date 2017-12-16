@@ -26,6 +26,7 @@
 #ifndef DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 #define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
@@ -52,24 +53,17 @@ class FVSpatialParamsOneP
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-
     using Element = typename GridView::template Codim<0>::Entity;
-    using CoordScalar = typename GridView::ctype;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    enum { dim = GridView::dimension };
+    enum { dimWorld = GridView::dimensionworld };
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
 
 public:
     FVSpatialParamsOneP(const Problem& problem)
     : problemPtr_(&problem)
     {}
-
-    /*!
-     * \brief Called by the Problem to initialize the spatial params.
-     */
-    void init() {}
 
     /*!
      * \brief Harmonic average of a discontinuous scalar field at discontinuity interface

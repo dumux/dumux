@@ -40,7 +40,7 @@ template<class ScalarT>
 class ParkerVanGen3PParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     ParkerVanGen3PParams()
     {betaGw_ = betaNw_ = betaGn_ = 1.0;}

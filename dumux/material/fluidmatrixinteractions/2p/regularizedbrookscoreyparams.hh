@@ -38,10 +38,10 @@ namespace Dumux
 template <class ScalarT>
 class RegularizedBrooksCoreyParams : public BrooksCoreyParams<ScalarT>
 {
-    typedef Dumux::BrooksCoreyParams<ScalarT> BrooksCoreyParams;
+    using BrooksCoreyParams = Dumux::BrooksCoreyParams<ScalarT>;
 
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     RegularizedBrooksCoreyParams()
         : BrooksCoreyParams()

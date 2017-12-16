@@ -45,12 +45,12 @@ namespace Dumux
 template<class TypeTag>
 class MPNCLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
 protected:
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, BaseLocalResidual) ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
@@ -60,17 +60,17 @@ protected:
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyResid;
-    typedef MPNCLocalResidualMass<TypeTag, enableKinetic> MassResid;
+    using EnergyResid = MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations>;
+    using MassResid = MPNCLocalResidualMass<TypeTag, enableKinetic>;
 
 public:
     /*!

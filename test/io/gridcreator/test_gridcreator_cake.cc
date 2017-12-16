@@ -56,7 +56,7 @@ int main(int argc, char** argv) try
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
 
-    // Some typedefs
+    // using declarations
     using TypeTag = TTAG(GridCreatorCakeTest);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridCreator = typename Dumux::CakeGridCreator<Grid>;

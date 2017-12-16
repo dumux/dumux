@@ -82,8 +82,8 @@ namespace Dumux
 template<class TypeTag>
 class OnePNCMinModel: public OnePNCModel<TypeTag>
 {
-    typedef Dumux::OnePNCMinModel<TypeTag> ThisType;
-    typedef Dumux::OnePNCModel<TypeTag> ParentType;
+    using ThisType = Dumux::OnePNCMinModel<TypeTag>;
+    using ParentType = Dumux::OnePNCModel<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

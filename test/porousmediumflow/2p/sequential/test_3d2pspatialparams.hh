@@ -47,11 +47,11 @@ SET_TYPE_PROP(Test3d2pSpatialParams, SpatialParams, Test3d2pSpatialParams<TypeTa
 SET_PROP(Test3d2pSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
-//    typedef LinearMaterial<Scalar> RawMaterialLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
+//    using RawMaterialLaw = LinearMaterial<Scalar>;
 public:
-    typedef EffToAbsLaw<RawMaterialLaw> type;
+    using type = EffToAbsLaw<RawMaterialLaw>;
 };
 }
 
@@ -63,23 +63,23 @@ public:
 template<class TypeTag>
 class Test3d2pSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
-    typedef SequentialFVSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = SequentialFVSpatialParams<TypeTag>;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CoordScalar = typename Grid::ctype;
 
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar, dim> LocalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using LocalPosition = Dune::FieldVector<CoordScalar, dim>;
+    using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     void update (Scalar saturationW, const Element& element)
     {

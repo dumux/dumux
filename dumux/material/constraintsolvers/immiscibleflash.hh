@@ -69,15 +69,15 @@ class ImmiscibleFlash
                   "Immiscibility assumes that the number of phases"
                   " is equal to the number of components");
 
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
     static constexpr int numEq = numPhases;
 
-    typedef Dune::FieldMatrix<Scalar, numEq, numEq> Matrix;
-    typedef Dune::FieldVector<Scalar, numEq> Vector;
+    using Matrix = Dune::FieldMatrix<Scalar, numEq, numEq>;
+    using Vector = Dune::FieldVector<Scalar, numEq>;
 
 public:
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     /*!
      * \brief Guess initial values for all quantities.

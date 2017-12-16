@@ -50,19 +50,19 @@ class MPNCVolumeVariables
     , public MPNCVolumeVariablesDiffusion<TypeTag, GET_PROP_VALUE(TypeTag, EnableDiffusion) || GET_PROP_VALUE(TypeTag, EnableKinetic)>
     , public MPNCVolumeVariablesEnergy<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergy), GET_PROP_VALUE(TypeTag, NumEnergyEquations)>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
 
     // formulations
@@ -81,11 +81,11 @@ class MPNCVolumeVariables
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef MPNCVolumeVariablesMass<TypeTag, enableKinetic> MassVolumeVariables;
-    typedef MPNCVolumeVariablesEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyVolumeVariables;
-    typedef MPNCVolumeVariablesIA<TypeTag, enableKinetic, numEnergyEquations> IAVolumeVariables;
-    typedef MPNCVolumeVariablesDiffusion<TypeTag, enableDiffusion> DiffusionVolumeVariables;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using MassVolumeVariables = MPNCVolumeVariablesMass<TypeTag, enableKinetic>;
+    using EnergyVolumeVariables = MPNCVolumeVariablesEnergy<TypeTag, enableEnergy, numEnergyEquations>;
+    using IAVolumeVariables = MPNCVolumeVariablesIA<TypeTag, enableKinetic, numEnergyEquations>;
+    using DiffusionVolumeVariables = MPNCVolumeVariablesDiffusion<TypeTag, enableDiffusion>;
 
 public:
     MPNCVolumeVariables()

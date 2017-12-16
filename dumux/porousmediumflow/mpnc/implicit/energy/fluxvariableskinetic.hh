@@ -39,23 +39,23 @@ namespace Dumux
 template <class TypeTag>
 class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/3>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices)  Indices;
-    typedef typename GridView::ctype CoordScalar;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum {dim = GridView::dimension};
     enum {dimWorld = GridView::dimensionworld};
     enum {numEnergyEqs             = Indices::numPrimaryEnergyVars};
 
-    typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
-    typedef Dune::FieldVector<CoordScalar, dimWorld>  GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    using DimVector = Dune::FieldVector<CoordScalar, dim>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SCV = typename FVElementGeometry::SubControlVolume;
+    using SCVFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
     /*!
@@ -126,16 +126,16 @@ private:
 template <class TypeTag>
 class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/2>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices)  Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)  Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GridView::ctype CoordScalar;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum {dim = GridView::dimension};
     enum {dimWorld = GridView::dimensionworld};
@@ -144,11 +144,11 @@ class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquatio
     enum {nPhaseIdx             = FluidSystem::nPhaseIdx};
 
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld>  GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SCV = typename FVElementGeometry::SubControlVolume;
+    using SCVFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
 
 public:

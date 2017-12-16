@@ -43,22 +43,22 @@ template<class TypeTag>
 class OneModelProblem
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
+    using VtkMultiWriter = Dumux::VtkMultiWriter<GridView>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
+    using Variables = typename GET_PROP_TYPE(TypeTag, Variables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::VertexMapper VertexMapper;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using VertexMapper = typename SolutionTypes::VertexMapper;
+    using ElementMapper = typename SolutionTypes::ElementMapper;
 
     enum
     {
@@ -70,12 +70,12 @@ private:
         wetting = 0, nonwetting = 1
     };
 
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
     // private!! copy constructor
     OneModelProblem(const OneModelProblem&)
@@ -596,7 +596,7 @@ public:
      */
     void serialize()
     {
-        typedef Restart Restarter;
+        using Restarter = Restart;
 
         Restarter res;
         res.serializeBegin(asImp_());
@@ -617,7 +617,7 @@ public:
      */
     void restart(double tRestart)
     {
-        typedef Restart Restarter;
+        using Restarter = Restart;
 
         Restarter res;
         res.deserializeBegin(asImp_(), tRestart);

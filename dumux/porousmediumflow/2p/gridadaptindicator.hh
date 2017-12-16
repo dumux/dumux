@@ -173,7 +173,7 @@ public:
 // TODO: fix adaptive simulations in parallel
 //#if HAVE_MPI
 //    // communicate updated values
-//    typedef VectorExchange<ElementMapper, ScalarSolutionType> DataHandle;
+//    using DataHandle = VectorExchange<ElementMapper, ScalarSolutionType>;
 //    DataHandle dataHandle(problem_.elementMapper(), maxSaturationDelta_);
 //    problem_.gridView().template communicate<DataHandle>(dataHandle,
 //                                                         Dune::InteriorBorder_All_Interface,

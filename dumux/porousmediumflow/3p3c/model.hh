@@ -143,10 +143,10 @@ SET_INT_PROP(ThreePThreeC, ReplaceCompEqIdx, GET_PROP_VALUE(TypeTag, NumComponen
  */
 SET_PROP(ThreePThreeC, FluidState){
     private:
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     public:
-        typedef CompositionalFluidState<Scalar, FluidSystem> type;
+        using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 3
@@ -185,9 +185,9 @@ SET_TYPE_PROP(ThreePThreeC, SpatialParams, FVSpatialParams<TypeTag>);
 //! The model after Millington (1961) is used for the effective diffusivity
 SET_PROP(ThreePThreeC, EffectiveDiffusivityModel)
 { private :
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
  public:
-    typedef DiffusivityMillingtonQuirk<Scalar> type;
+    using type = DiffusivityMillingtonQuirk<Scalar>;
 };
 
 //! Set the vtk output fields specific to the ThreeP model
@@ -200,10 +200,10 @@ SET_BOOL_PROP(ThreePThreeC, UseMoles, true);
 SET_PROP(ThreePThreeCNI, ThermalConductivityModel)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+    using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
 
 //////////////////////////////////////////////////////////////////

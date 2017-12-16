@@ -47,17 +47,17 @@ class PointSourceHelper;
 template<class TypeTag>
 class PointSource
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SubControlVolume) SubControlVolume;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dimworld = GridView::dimensionworld;
-    typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
     //! Constructor for constant point sources
@@ -161,13 +161,13 @@ private:
 template<class TypeTag, typename IdType>
 class IdPointSource : public PointSource<TypeTag>
 {
-    typedef PointSource<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using ParentType = PointSource<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     static const int dimworld = GridView::dimensionworld;
-    typedef typename Dune::FieldVector<Scalar, dimworld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 public:
     //! Constructor for constant point sources

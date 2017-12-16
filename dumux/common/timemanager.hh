@@ -65,8 +65,8 @@ NEW_PROP_TAG(Problem);
 template <class TypeTag>
 class TimeManager
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     TimeManager(const TimeManager&)
     {}

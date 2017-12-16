@@ -45,19 +45,19 @@ namespace Dumux
 template<class TypeTag>
 class MPNCModelKinetic : public MPNCModel<TypeTag>
 {
-    typedef MPNCModel<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-    typedef Dumux::MPNCVtkWriter<TypeTag> MPNCVtkWriter;
+    using ParentType = MPNCModel<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ScalarField = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
+    using MPNCVtkWriter = Dumux::MPNCVtkWriter<TypeTag>;
 
     enum { enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum { enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
@@ -70,15 +70,15 @@ class MPNCModelKinetic : public MPNCModel<TypeTag>
     enum { dimWorld = GridView::dimensionworld};
     enum { dim = GridView::dimension};
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::BlockVector<GlobalPosition>                GlobalPositionField;
-    typedef std::array<GlobalPositionField, numPhases>      PhaseGlobalPositionField;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPositionField = Dune::BlockVector<GlobalPosition>;
+    using PhaseGlobalPositionField = std::array<GlobalPositionField, numPhases>;
 
-    typedef std::vector<Dune::FieldVector<Scalar, 1> >  ScalarVector;
-    typedef std::array<ScalarVector, numPhases>         PhaseVector;
-    typedef Dune::FieldVector<Scalar, dim>              DimVector;
-    typedef Dune::BlockVector<DimVector>                DimVectorField;
-    typedef std::array<DimVectorField, numPhases>       PhaseDimVectorField;
+    using ScalarVector = std::vector<Dune::FieldVector<Scalar, 1>>;
+    using PhaseVector = std::array<ScalarVector, numPhases>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using DimVectorField = Dune::BlockVector<DimVector>;
+    using PhaseDimVectorField = std::array<DimVectorField, numPhases>;
 
 public:
     /*!

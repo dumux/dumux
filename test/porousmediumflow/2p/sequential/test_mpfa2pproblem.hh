@@ -125,20 +125,20 @@ NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FvMpfaL2dPressureTwoPAd
 template<class TypeTag>
 class MPFATwoPTestProblem: public IMPESProblem2P<TypeTag>
 {
-typedef IMPESProblem2P<TypeTag> ParentType;
-typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+using ParentType = IMPESProblem2P<TypeTag>;
+using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
 using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
-typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
+using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 enum
 {
@@ -158,10 +158,10 @@ enum
     eqIdxSat = Indices::satEqIdx
 };
 
-typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+using Element = typename GridView::Traits::template Codim<0>::Entity;
+using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 MPFATwoPTestProblem(TimeManager &timeManager,const GridView &gridView) :

@@ -65,23 +65,23 @@ SET_INT_PROP(SequentialModel, TimeManagerSubTimestepVerbosity, 0);
 template<class TypeTag>
 class FVTransport2P2C
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) Implementation;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, TransportModel);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
 
     enum
     {
@@ -101,19 +101,19 @@ class FVTransport2P2C
         NumComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, NumPhases> PhaseVector;
-    typedef Dune::FieldVector<Scalar, NumComponents> ComponentVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using PhaseVector = Dune::FieldVector<Scalar, NumPhases>;
+    using ComponentVector = Dune::FieldVector<Scalar, NumComponents>;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
 public:
     //! @copydoc FVPressure::EntryType
-    typedef Dune::FieldVector<Scalar, 2> EntryType;
-    typedef Dune::FieldVector<Scalar, 2> TimeStepFluxType;
+    using EntryType = Dune::FieldVector<Scalar, 2>;
+    using TimeStepFluxType = Dune::FieldVector<Scalar, 2>;
 
 protected:
     struct LocalTimesteppingData
@@ -173,7 +173,7 @@ public:
     {
         if(problem().vtkOutputLevel()>3)
         {
-            typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+            using ScalarSolutionType = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
             int size = problem_.gridView().size(0);
             ScalarSolutionType *totalC1PV = writer.allocateManagedBuffer(size);
             ScalarSolutionType *totalC2PV = writer.allocateManagedBuffer(size);
@@ -474,9 +474,9 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);
@@ -487,7 +487,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
 
     if (localTimeStepping_)
     {
-        typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+        using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
 
         TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
         problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
@@ -1210,7 +1210,7 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
         LocalTimesteppingData& localDataI = timeStepData_[eIdxGlobalI];
 
 
-        typedef std::unordered_map<int, Scalar > FaceDt;
+        using FaceDt = std::unordered_map<int, Scalar>;
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
@@ -1302,9 +1302,9 @@ void FVTransport2P2C<TypeTag>::updatedTargetDt_(Scalar &dt)
 
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
 
     TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
     problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,

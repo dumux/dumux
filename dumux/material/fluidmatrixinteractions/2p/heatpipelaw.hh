@@ -49,8 +49,8 @@ template <class ScalarT, class ParamsT = HeatPipeLawParams<ScalarT> >
 class HeatPipeLaw
 {
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The capillary pressure-saturation curve.
@@ -155,7 +155,7 @@ private:
             return 0;
         else if (S > eps) {
             // regularize
-            typedef Dumux::Spline<Scalar> Spline;
+            using Spline = Dumux::Spline<Scalar>;
             Spline sp(eps, 1.0, // x1, x2
                       eps*eps*eps, 1, // y1, y2
                       3*eps*eps, 0); // m1, m2

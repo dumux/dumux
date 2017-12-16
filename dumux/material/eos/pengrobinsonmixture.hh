@@ -41,7 +41,7 @@ template <class Scalar, class StaticParameters>
 class PengRobinsonMixture
 {
     enum { numComponents = StaticParameters::numComponents };
-    typedef Dumux::PengRobinson<Scalar> PengRobinson;
+    using PengRobinson = Dumux::PengRobinson<Scalar>;
 
     // this class cannot be instantiated!
     PengRobinsonMixture() {};

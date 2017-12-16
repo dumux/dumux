@@ -84,27 +84,26 @@ SET_INT_PROP(TestDecTwoPTwoCProblem, BoundaryMobility, GET_PROP_TYPE(TypeTag, In
 template<class TypeTag>
 class TestDecTwoPTwoCProblem: public IMPETProblem2P2C<TypeTag>
 {
-typedef IMPETProblem2P2C<TypeTag> ParentType;
-typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+using ParentType = IMPETProblem2P2C<TypeTag>;
+using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-// boundary typedefs
-typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
 enum
 {
     dim = GridView::dimension, dimWorld = GridView::dimensionworld
 };
 
-typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename GridView::Intersection Intersection;
-typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+using Element = typename GridView::Traits::template Codim<0>::Entity;
+using Intersection = typename GridView::Intersection;
+using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
 TestDecTwoPTwoCProblem(TimeManager &timeManager, const GridView &gridView) :

@@ -88,7 +88,7 @@ void checkImmiscibleFlash(const FluidState &fsRef,
 {
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     // calculate the total amount of stuff in the reference fluid
     // phase
@@ -101,7 +101,7 @@ void checkImmiscibleFlash(const FluidState &fsRef,
     }
 
     // initialize the fluid state for the flash calculation
-    typedef Dumux::ImmiscibleFlash<Scalar, FluidSystem> ImmiscibleFlash;
+    using ImmiscibleFlash = Dumux::ImmiscibleFlash<Scalar, FluidSystem>;
     FluidState fsFlash;
 
     fsFlash.setTemperature(fsRef.temperature(/*phaseIdx=*/0));
@@ -123,7 +123,7 @@ void completeReferenceFluidState(FluidState &fs,
 {
     enum { numPhases = FluidSystem::numPhases };
 
-    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
     int otherPhaseIdx = 1 - refPhaseIdx;
 
@@ -149,19 +149,19 @@ void completeReferenceFluidState(FluidState &fs,
 
 int main()
 {
-    typedef double Scalar;
-    typedef Dumux::FluidSystems::H2ON2<Scalar> FluidSystem;
-    typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> ImmiscibleFluidState;
+    using Scalar = double;
+    using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar>;
+    using ImmiscibleFluidState = Dumux::ImmiscibleFluidState<Scalar, FluidSystem>;
 
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
 
-    typedef Dumux::RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-    typedef Dumux::EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
-    typedef Dumux::TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> MaterialLaw;
-    typedef MaterialLaw::Params MaterialLawParams;
+    using EffMaterialLaw = Dumux::RegularizedBrooksCorey<Scalar>;
+    using TwoPMaterialLaw = Dumux::EffToAbsLaw<EffMaterialLaw>;
+    using MaterialLaw = Dumux::TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
+    using MaterialLawParams = MaterialLaw::Params;
 
     Scalar T = 273.15 + 25;
 

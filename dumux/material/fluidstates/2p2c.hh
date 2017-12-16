@@ -47,7 +47,7 @@ public:
 
     enum {  numPhases = FluidSystem::numPhases,
             numComponents = FluidSystem::numComponents};
-    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
 public:
     /*!

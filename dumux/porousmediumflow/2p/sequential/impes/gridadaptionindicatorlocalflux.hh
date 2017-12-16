@@ -60,22 +60,22 @@ template<class TypeTag>
 class GridAdaptionIndicator2PLocalFlux
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename Grid::LevelGridView::IndexSet IndexSet;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using IndexSet = typename Grid::LevelGridView::IndexSet;
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -95,11 +95,11 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar,2> SetVector;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using SetVector = Dune::FieldVector<Scalar, 2>;
 
     struct SetField {
         Scalar indicator;
@@ -115,7 +115,7 @@ private:
         {return lhs.indicator<rhs.indicator;}
     };
 
-    typedef std::set<SetField, Comparison> RangeSet;
+    using RangeSet = std::set<SetField, Comparison>;
 
 public:
     /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
@@ -209,7 +209,7 @@ public:
 
             const typename Element::Geometry& geometry = element.geometry();
             // get corresponding reference element
-            typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
             const Dune::ReferenceElement< Scalar , dim > & refElement =
                     ReferenceElements::general( geometry.type() );
             const int numberOfFaces=refElement.size(1);

@@ -40,11 +40,11 @@ template<class TypeTag>
 class EvalCflFluxDefault: public EvalCflFlux<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+      using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-      typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+      using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -56,8 +56,8 @@ private:
         vt = Indices::velocityTotal
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
 public:
 

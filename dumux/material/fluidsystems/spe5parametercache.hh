@@ -44,10 +44,10 @@ template <class Scalar, class FluidSystem>
 class Spe5ParameterCache
     : public ParameterCacheBase<Spe5ParameterCache<Scalar, FluidSystem> >
 {
-    typedef Spe5ParameterCache<Scalar, FluidSystem> ThisType;
-    typedef ParameterCacheBase<ThisType> ParentType;
+    using ThisType = Spe5ParameterCache<Scalar, FluidSystem>;
+    using ParentType = ParameterCacheBase<ThisType>;
 
-    typedef Dumux::PengRobinson<Scalar> PengRobinson;
+    using PengRobinson = Dumux::PengRobinson<Scalar>;
 
     enum { numPhases = FluidSystem::numPhases };
 
@@ -57,8 +57,8 @@ class Spe5ParameterCache
 
 public:
     // types of the parameter objects for each phase
-    typedef PengRobinsonParamsMixture<Scalar, FluidSystem, oPhaseIdx, /*useSpe5=*/true> OilPhaseParams;
-    typedef PengRobinsonParamsMixture<Scalar, FluidSystem, gPhaseIdx, /*useSpe5=*/true> GasPhaseParams;
+    using OilPhaseParams = PengRobinsonParamsMixture<Scalar, FluidSystem, oPhaseIdx, /*useSpe5=*/true>;
+    using GasPhaseParams = PengRobinsonParamsMixture<Scalar, FluidSystem, gPhaseIdx, /*useSpe5=*/true>;
 
     /*!
      * \brief The constructor

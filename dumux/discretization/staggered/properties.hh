@@ -196,7 +196,7 @@ private:
     using CellCenterSolutionVector = typename GET_PROP_TYPE(TypeTag, CellCenterSolutionVector);
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
 public:
-    typedef typename Dune::MultiTypeBlockVector<CellCenterSolutionVector, FaceSolutionVector> type;
+    using type = Dune::MultiTypeBlockVector<CellCenterSolutionVector, FaceSolutionVector>;
 };
 
 //! Set the type of a global jacobian matrix from the solution types TODO: move to LinearAlgebra traits

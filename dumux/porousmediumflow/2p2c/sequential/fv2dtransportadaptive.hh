@@ -55,15 +55,15 @@ namespace Dumux
 template<class TypeTag>
 class FV2dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
 
     enum
     {
@@ -82,19 +82,19 @@ class FV2dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
         contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx
     };
 
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    using IntersectionIterator = typename GridView::IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
-    typedef Dune::FieldVector<Scalar, NumPhases> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using TransmissivityMatrix = Dune::FieldVector<Scalar,dim+1>;
+    using PhaseVector = Dune::FieldVector<Scalar, NumPhases>;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     //! Acess function for the current problem
     Problem& problem()
     { return problem_; }
 
-    typedef typename FVTransport2P2C<TypeTag>::LocalTimesteppingData LocalTimesteppingData;
+    using LocalTimesteppingData = typename FVTransport2P2C<TypeTag>::LocalTimesteppingData;
 
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impes = false);
@@ -302,9 +302,9 @@ void FV2dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt, Tran
 
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem_.variables().elementMapper(), updateVec[i]);

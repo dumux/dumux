@@ -46,8 +46,8 @@ class ParkerVanGen3P
 {
 
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The capillary pressure-saturation curve.

@@ -56,15 +56,15 @@ NEW_PROP_TAG(GridCreator);
 template <class TypeTag>
 class ArtGridCreator
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
-    typedef Grid* GridPointer;
-    typedef Dune::FieldVector<double, 3> Coordinates;
-    typedef std::vector<Coordinates> VerticesVector;
-    typedef Dune::FieldVector<int, 3> EdgePoints;
-    typedef std::vector<EdgePoints> EdgesVector;
-    typedef Dune::FieldVector<int, 4> Faces;
-    typedef std::vector<Faces> FacesVector;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridPointer = Grid*;
+    using Coordinates = Dune::FieldVector<double, 3>;
+    using VerticesVector = std::vector<Coordinates>;
+    using EdgePoints = Dune::FieldVector<int, 3>;
+    using EdgesVector = std::vector<EdgePoints>;
+    using Faces = Dune::FieldVector<int, 4>;
+    using FacesVector = std::vector<Faces>;
 
 public:
     /*!
@@ -497,8 +497,8 @@ int ArtGridCreator<TypeTag>::elementNumber_;
 template<class TypeTag>
 class FractureMapper
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView)  GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator)  GridCreator;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 public:
     // mapper: one data element in every entity
     template<int dim>
@@ -509,10 +509,10 @@ public:
             return geomType.dim() == dim-1;
         }
     };
-    typedef typename GridView::ctype DT;
+    using DT = typename GridView::ctype;
     enum {dim = GridView::dimension};
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout> FaceMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
+    using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout>;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
 
 public:
     /*!

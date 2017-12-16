@@ -79,21 +79,21 @@ namespace Dumux
 template<class TypeTag>
 class CROperatorAssemblerTwoPAdaptive
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     enum {dim=GridView::dimension};
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::IndexSet IS;
-    typedef Dune::FieldMatrix<Scalar,1,1> BlockType;
-    typedef Dune::BCRSMatrix<BlockType> MatrixType;
-    typedef typename MatrixType::block_type MBlockType;
-    typedef typename MatrixType::RowIterator rowiterator;
-    typedef typename MatrixType::ColIterator coliterator;
-    typedef std::array<BoundaryConditions::Flags,1> BCBlockType;     // componentwise boundary conditions
-    typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType;
-    typedef Dumux::IntersectionMapper<GridView> IntersectionMapper;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using IS = typename GridView::IndexSet;
+    using BlockType = Dune::FieldMatrix<Scalar, 1, 1>;
+    using MatrixType = Dune::BCRSMatrix<BlockType>;
+    using MBlockType = typename MatrixType::block_type;
+    using rowiterator = typename MatrixType::RowIterator;
+    using coliterator = typename MatrixType::ColIterator;
+    using BCBlockType = std::array<BoundaryConditions::Flags, 1>;     // componentwise boundary conditions
+    using SatType = Dune::BlockVector< Dune::FieldVector<double, 1> >;
+    using IntersectionMapper = Dumux::IntersectionMapper<GridView>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -107,7 +107,7 @@ class CROperatorAssemblerTwoPAdaptive
     }
 
 public:
-    typedef MatrixType RepresentationType;
+    using RepresentationType = MatrixType;
 
     CROperatorAssemblerTwoPAdaptive (const GridView& gridview)
     : gridView_(gridview), is_(gridView_.indexSet()), intersectionMapper_(gridView_)

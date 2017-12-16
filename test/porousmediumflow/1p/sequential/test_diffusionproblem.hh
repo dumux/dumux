@@ -149,14 +149,14 @@ SET_PROP(MimeticPressure2PTestProblem, FluidSystem)
 template<class TypeTag>
 class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
 {
-    typedef DiffusionProblem2P<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using ParentType = DiffusionProblem2P<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     using WettingPhase = typename GET_PROP(TypeTag, FluidSystem)::WettingPhase;
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
     enum
     {
@@ -170,16 +170,16 @@ class TestDiffusionProblem: public DiffusionProblem2P<TypeTag>
         swIdx = Indices::swIdx
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
 public:
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename SolutionTypes::ScalarSolution ScalarSolution;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using ScalarSolution = typename SolutionTypes::ScalarSolution;
 
     TestDiffusionProblem(const GridView &gridView) :
         ParentType(gridView), velocity_(*this)

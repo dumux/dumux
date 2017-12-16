@@ -71,7 +71,7 @@ class ParallelISTLHelper
           public Dune::CommDataHandleIF<ConsistencyBoxGatherScatter<V>,typename V::block_type>
     {
     public:
-        typedef typename V::block_type DataType;
+        using DataType = typename V::block_type;
 
         ConsistencyBoxGatherScatter(V& container, const DofMapper& mapper)
         : BaseGatherScatter(mapper), container_(container)
@@ -122,7 +122,7 @@ class ParallelISTLHelper
           public Dune::CommDataHandleIF<GhostGatherScatter,std::size_t>
     {
     public:
-        typedef std::size_t DataType;
+        using DataType = std::size_t;
 
         GhostGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
         : BaseGatherScatter(mapper), ranks_(ranks)
@@ -178,7 +178,7 @@ class ParallelISTLHelper
           public Dune::CommDataHandleIF<InteriorBorderGatherScatter,std::size_t>
     {
     public:
-        typedef std::size_t DataType;
+        using DataType = std::size_t;
 
         InteriorBorderGatherScatter(std::vector<std::size_t>& ranks, const DofMapper& mapper)
         : BaseGatherScatter(mapper), ranks_(ranks)
@@ -236,7 +236,7 @@ class ParallelISTLHelper
         : public BaseGatherScatter,
           public Dune::CommDataHandleIF<NeighbourGatherScatter,int>
     {
-        typedef int DataType;
+        using DataType = int;
 
         NeighbourGatherScatter(const DofMapper& mapper, int rank_, std::set<int>& neighbours_)
         : BaseGatherScatter(mapper), myrank(rank_), neighbours(neighbours_)
@@ -285,7 +285,7 @@ class ParallelISTLHelper
         : public BaseGatherScatter,
           public Dune::CommDataHandleIF<SharedGatherScatter,int>
     {
-        typedef int DataType;
+        using DataType = int;
 
         SharedGatherScatter(std::vector<int>& shared, const DofMapper& mapper)
         : BaseGatherScatter(mapper), shared_(shared)
@@ -336,7 +336,7 @@ class ParallelISTLHelper
         : public BaseGatherScatter,
           public Dune::CommDataHandleIF<GlobalIndexGatherScatter<GI>, GI>
     {
-        typedef GI DataType;
+        using DataType = GI;
         GlobalIndexGatherScatter(std::vector<GI>& gindices, const DofMapper& mapper)
         : BaseGatherScatter(mapper), gindices_(gindices)
         {}
@@ -783,10 +783,10 @@ public:
             A.setSize(tmp.N(), tmp.N(), nnz);
             A.setBuildMode(Matrix::row_wise);
             typename Matrix::CreateIterator citer = A.createbegin();
-            typedef typename std::vector<std::set<int> >::const_iterator Iter;
+            using Iter = typename std::vector<std::set<int> >::const_iterator;
             for (Iter i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer)
             {
-                typedef typename std::set<int>::const_iterator SIter;
+                using SIter = typename std::set<int>::const_iterator;
                 for (SIter si = i->begin(), send = i->end(); si!=send; ++si)
                     citer.insert(*si);
             }
@@ -857,9 +857,9 @@ void EntityExchanger<TypeTag>::getExtendedMatrix (Matrix& A) const
         A.setSize(tmp.N(), tmp.N(), nnz);
         A.setBuildMode(Matrix::row_wise);
         typename Matrix::CreateIterator citer = A.createbegin();
-        typedef typename std::vector<std::set<int> >::const_iterator Iter;
+        using Iter = typename std::vector<std::set<int> >::const_iterator;
         for (Iter i = sparsity.begin(), end = sparsity.end(); i!=end; ++i, ++citer){
-            typedef typename std::set<int>::const_iterator SIter;
+            using SIter = typename std::set<int>::const_iterator;
             for (SIter si = i->begin(), send = i->end(); si!=send; ++si)
                 citer.insert(*si);
         }

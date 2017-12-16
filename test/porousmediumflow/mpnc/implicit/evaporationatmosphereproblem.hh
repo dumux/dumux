@@ -86,8 +86,8 @@ SET_TYPE_PROP(EvaporationAtmosphereProblem,
 // Set fluid configuration
 SET_PROP(EvaporationAtmosphereProblem, FluidSystem)
 {
-private: typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-public:  typedef FluidSystems::H2ON2Kinetic<Scalar, /*useComplexRelations=*/false> type;
+private: using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+public:  using type = FluidSystems::H2ON2Kinetic<Scalar, /*useComplexRelations=*/false>;
 };
 
 // Set the newton controller
@@ -130,12 +130,12 @@ SET_BOOL_PROP(EvaporationAtmosphereProblem, EnableKinetic, true);
  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
  */
 SET_PROP(EvaporationAtmosphereProblem, FluidState){
-    private:    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    private:    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-//    public: typedef NonEquilibriumEnergyFluidState<Scalar, FluidSystem> type;
-//    public: typedef NonEquilibriumMassFluidState<Scalar, FluidSystem> type;
-    public: typedef NonEquilibriumFluidState<Scalar, FluidSystem> type;
-//    public: typedef CompositionalFluidState<Scalar, FluidSystem> type;
+    private:    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    private:    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+//    public: using type = NonEquilibriumEnergyFluidState<Scalar, FluidSystem>;
+//    public: using type = NonEquilibriumMassFluidState<Scalar, FluidSystem>;
+    public: using type = NonEquilibriumFluidState<Scalar, FluidSystem>;
+//    public: using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 SET_BOOL_PROP(EvaporationAtmosphereProblem, UseMaxwellDiffusion, false);
@@ -164,21 +164,21 @@ template <class TypeTag>
 class EvaporationAtmosphereProblem
     : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     /*!
      * \brief The fluid state which is used by the volume variables to
      *        store the thermodynamic state. This should be chosen
      *        appropriately for the model ((non-)isothermal, equilibrium, ...).
      *        This can be done in the problem.
      */
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
     enum { dim = GridView::dimension}; // Grid and world dimension
     enum { dimWorld = GridView::dimensionworld};
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
@@ -206,21 +206,21 @@ class EvaporationAtmosphereProblem
         leastWettingFirst   = MpNcPressureFormulation::leastWettingFirst
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
 
-    typedef std::vector<Dune::FieldVector<Scalar, 1> >  ScalarBuffer;
-    typedef std::array<ScalarBuffer, numPhases>         PhaseBuffer;
-    typedef Dune::FieldVector<Scalar, dim>              DimVector;
-    typedef Dune::BlockVector<DimVector>           VelocityField;
-    typedef std::array<VelocityField, numPhases>        PhaseVelocityField;
+    using ScalarBuffer = std::vector<Dune::FieldVector<Scalar, 1>>;
+    using PhaseBuffer = std::array<ScalarBuffer, numPhases>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using VelocityField = Dune::BlockVector<DimVector>;
+    using PhaseVelocityField = std::array<VelocityField, numPhases>;
 
 public:
     /*!

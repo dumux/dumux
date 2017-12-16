@@ -45,16 +45,16 @@ template<class TypeTag>
 class VariableClassAdaptive: public VariableClass<TypeTag>
 {
 private:
-    typedef VariableClass<TypeTag> ParentType;
+    using ParentType = VariableClass<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename CellData::AdaptedValues AdaptedValues;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using AdaptedValues = typename CellData::AdaptedValues;
 
-    typedef typename GridView::Grid Grid;
-    typedef typename Grid::LevelGridView LevelGridView;
-    typedef Dune::PersistentContainer<Grid, AdaptedValues> PersistentContainer;
+    using Grid = typename GridView::Grid;
+    using LevelGridView = typename Grid::LevelGridView;
+    using PersistentContainer = Dune::PersistentContainer<Grid, AdaptedValues>;
 
 private:
     const Grid& grid_;
@@ -197,9 +197,9 @@ public:
 
 #if HAVE_MPI
         // communicate ghost data
-        typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-        typedef typename SolutionTypes::ElementMapper ElementMapper;
-        typedef VectorExchange<ElementMapper, std::vector<CellData> > DataHandle;
+        using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+        using ElementMapper = typename SolutionTypes::ElementMapper;
+        using DataHandle = VectorExchange<ElementMapper, std::vector<CellData> >;
         DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());
         problem.gridView().template communicate<DataHandle>(dataHandle,
                                                             Dune::InteriorBorder_All_Interface,

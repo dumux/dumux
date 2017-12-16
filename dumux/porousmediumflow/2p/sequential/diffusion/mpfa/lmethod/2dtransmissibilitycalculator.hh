@@ -42,25 +42,25 @@ namespace Dumux
 template<class TypeTag>
 class FvMpfaL2dTransmissibilityCalculator
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    typedef FVMPFALInteractionVolume<TypeTag> InteractionVolume;
+    using InteractionVolume = FVMPFALInteractionVolume<TypeTag>;
 
 public:
-    typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;//!< Type of the transmissibility matrix
+    using TransmissibilityType = Dune::FieldMatrix<Scalar, dim, 2*dim - dim + 1>;//!< Type of the transmissibility matrix
 
     //! return values for the transmissibility functions
     enum

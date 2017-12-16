@@ -45,8 +45,8 @@ template <class ParamsT>
 class AwnSurfacePolynomialEdgeZero2ndOrder
 {
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The awn surface

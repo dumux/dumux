@@ -56,21 +56,21 @@ template <class Scalar,
 class BrineAir
 : public BaseFluidSystem<Scalar, BrineAir<Scalar, H2Otype, useComplexRelations>>
 {
-    typedef BrineAir<Scalar, H2Otype, useComplexRelations> ThisType;
-    typedef BaseFluidSystem <Scalar, ThisType> Base;
-    typedef Dumux::IdealGas<Scalar> IdealGas;
+    using ThisType = BrineAir<Scalar, H2Otype, useComplexRelations>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
 
-    typedef H2Otype H2O;
-    typedef BinaryCoeff::H2O_Air H2O_Air;
-    typedef Dumux::Air<Scalar> Air;
-    typedef BinaryCoeff::Brine_Air<Scalar, Air> Brine_Air;
-    typedef Dumux::Brine<Scalar, H2Otype> Brine;
-    typedef Dumux::NaCl<Scalar> NaCl;
+    using H2O = H2Otype;
+    using H2O_Air = BinaryCoeff::H2O_Air;
+    using Air = Dumux::Air<Scalar>;
+    using Brine_Air = BinaryCoeff::Brine_Air<Scalar, Air>;
+    using Brine = Dumux::Brine<Scalar,H2Otype>;
+    using NaCl = Dumux::NaCl<Scalar>;
 
     // the type of parameter cache objects. this fluid system does not
-    typedef NullParameterCache ParameterCache;
+    using ParameterCache = NullParameterCache;
 
     /****************************************
      * Fluid phase related static parameters

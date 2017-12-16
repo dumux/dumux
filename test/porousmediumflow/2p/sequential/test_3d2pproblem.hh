@@ -81,11 +81,11 @@ SET_INT_PROP(ThreeDTwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pn
 SET_PROP(ThreeDTwoPTestProblem, SpatialParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 public:
-    typedef Test3d2pSpatialParams<TypeTag> type;
+    using type = Test3d2pSpatialParams<TypeTag>;
 };
 
 #if PROBLEM == 1
@@ -119,19 +119,19 @@ NEW_TYPE_TAG(MimeticAdaptiveTwoPTestProblem, INHERITS_FROM(MimeticPressureTwoPAd
 template<class TypeTag>
 class Test3D2PProblem: public IMPESProblem2P<TypeTag>
 {
-typedef Test3D2PProblem<TypeTag> ThisType;
-typedef IMPESProblem2P<TypeTag> ParentType;
-typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+using ThisType = Test3D2PProblem<TypeTag>;
+using ParentType = IMPESProblem2P<TypeTag>;
+using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-typedef typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables PrimaryVariables;
+using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+using PrimaryVariables = typename GET_PROP(TypeTag, SolutionTypes)::PrimaryVariables;
 
 enum
 {
@@ -152,14 +152,14 @@ enum
     satEqIdx = Indices::satEqIdx
 };
 
-typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-typedef typename GridView::Traits::template Codim<0>::Entity Element;
-typedef typename GridView::Intersection Intersection;
-typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+using Element = typename GridView::Traits::template Codim<0>::Entity;
+using Intersection = typename GridView::Intersection;
+using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
-typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
+using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 public:
 

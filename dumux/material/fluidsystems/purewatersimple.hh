@@ -49,13 +49,13 @@ template <class Scalar, bool useComplexRelations = false>
 class PureWaterSimpleFluidSystem
     : public BaseFluidSystem<Scalar, PureWaterSimpleFluidSystem<Scalar, useComplexRelations> >
 {
-    typedef PureWaterSimpleFluidSystem<Scalar, useComplexRelations> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
+    using ThisType = PureWaterSimpleFluidSystem<Scalar, useComplexRelations>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
-    // convenience typedefs
-    typedef Dumux::IdealGas<Scalar> IdealGas;
-    typedef Dumux::SimpleH2O<Scalar> SimpleH2O;
-    typedef Dumux::N2<Scalar> SimpleN2;
+    // convenience using declarations
+    using IdealGas = Dumux::IdealGas<Scalar>;
+    using SimpleH2O = Dumux::SimpleH2O<Scalar>;
+    using SimpleN2 = Dumux::N2<Scalar>;
 
 public:
     /****************************************
@@ -172,10 +172,10 @@ public:
     static constexpr int N2Idx = nCompIdx;
 
     //! The components for pure water
-    typedef SimpleH2O H2O;
+    using H2O = SimpleH2O;
 
     //! The components for pure nitrogen
-    typedef SimpleN2 N2;
+    using N2 = SimpleN2;
 
     /*!
      * \brief Return the human readable name of a component

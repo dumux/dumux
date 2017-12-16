@@ -53,13 +53,13 @@ template <class Scalar,
 class H2OAirMesitylene
     : public BaseFluidSystem<Scalar, H2OAirMesitylene<Scalar, H2OType> >
 {
-    typedef H2OAirMesitylene<Scalar, H2OType> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
+    using ThisType = H2OAirMesitylene<Scalar, H2OType>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:
-    typedef Mesitylene<Scalar> NAPL;
-    typedef Dumux::Air<Scalar> Air;
-    typedef H2OType H2O;
+    using NAPL = Mesitylene<Scalar>;
+    using Air = Dumux::Air<Scalar>;
+    using H2O = H2OType;
 
 
     static const int numPhases = 3;

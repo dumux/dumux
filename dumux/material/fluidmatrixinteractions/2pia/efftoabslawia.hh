@@ -63,12 +63,12 @@ template <class EffLawIAT,
           class InterfacialAreaAbsParamsT = typename EffLawIAT::Params>
 class EffToAbsLawIA
 {
-    typedef EffLawIAT EffLawIA;
-    typedef MaterialAbsParamsT MaterialParams;
+    using EffLawIA = EffLawIAT;
+    using MaterialParams = MaterialAbsParamsT;
 
 public:
-    typedef InterfacialAreaAbsParamsT Params;
-    typedef typename MaterialParams::Scalar Scalar;
+    using Params = InterfacialAreaAbsParamsT;
+    using Scalar = typename MaterialParams::Scalar;
 
     /*!
      * \brief The interfacial area relation

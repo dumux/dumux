@@ -72,28 +72,28 @@ SET_TYPE_PROP(TestProblemOneP, Problem, TestProblemOneP<TypeTag>);
 template<class TypeTag>
 class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 {
-    typedef DiffusionProblem1P<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using ParentType = DiffusionProblem1P<TypeTag>;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid Fluid;
+    using Fluid = typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using LocalPosition = Dune::FieldVector<Scalar, dim>;
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 
 public:

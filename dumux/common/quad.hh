@@ -33,7 +33,7 @@ extern "C" {
 #include <quadmath.h>
 }
 
-typedef __float128 quad;
+using quad = __float128;
 
 namespace std
 {

@@ -61,10 +61,10 @@ SET_TYPE_PROP(BoxMPNCKinetic, Model, MPNCModelKinetic<TypeTag>);
 SET_PROP(BoxMPNCKinetic, AwnSurfaceParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, AwnSurface) AwnSurface;
+    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
 
 public:
-    typedef typename AwnSurface::Params type;
+    using type = typename AwnSurface::Params;
 };
 
 /*!
@@ -74,10 +74,10 @@ public:
 SET_PROP(BoxMPNCKinetic, AwsSurfaceParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, AwsSurface) AwsSurface;
+    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
 
 public:
-    typedef typename AwsSurface::Params type;
+    using type = typename AwsSurface::Params;
 };
 
 /*!
@@ -87,10 +87,10 @@ public:
 SET_PROP(BoxMPNCKinetic, AnsSurfaceParams)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, AnsSurface) AnsSurface;
+    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
 
 public:
-    typedef typename AnsSurface::Params type;
+    using type = typename AnsSurface::Params;
 };
 
 SET_BOOL_PROP(BoxMPNCKinetic, VelocityAveragingInModel, true);
@@ -101,8 +101,8 @@ SET_BOOL_PROP(BoxMPNCKinetic, VelocityAveragingInModel, true);
  */
 SET_PROP(BoxMPNCKinetic, NusseltFormulation ){
     private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef  DimensionlessNumbers<Scalar> DimLessNum;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using DimLessNum = DimensionlessNumbers<Scalar>;
     public:
     static constexpr int value = DimLessNum::NusseltFormulation::WakaoKaguei;};
 
@@ -112,8 +112,8 @@ SET_PROP(BoxMPNCKinetic, NusseltFormulation ){
  */
 SET_PROP(BoxMPNCKinetic, SherwoodFormulation ){
     private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef  DimensionlessNumbers<Scalar> DimLessNum;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using DimLessNum = DimensionlessNumbers<Scalar>;
     public:
     static constexpr int value = DimLessNum::SherwoodFormulation::WakaoKaguei;};
 

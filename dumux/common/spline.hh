@@ -272,8 +272,8 @@ template<class Scalar>
 class Spline<Scalar, 2> : public SplineCommon_<Scalar, Spline<Scalar, 2> >
 {
     friend class  SplineCommon_<Scalar, Spline<Scalar, 2> >;
-    typedef Dune::FieldVector<Scalar, 2> Vector;
-    typedef Dune::FieldMatrix<Scalar, 2, 2> Matrix;
+    using Vector = Dune::FieldVector<Scalar, 2>;
+    using Matrix = Dune::FieldMatrix<Scalar, 2, 2>;
 
 public:
     Spline()

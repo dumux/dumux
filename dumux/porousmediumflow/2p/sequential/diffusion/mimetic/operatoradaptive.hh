@@ -47,30 +47,30 @@ namespace Dumux
 template<class TypeTag>
 class MimeticOperatorAssemblerTwoPAdaptive : public CROperatorAssemblerTwoPAdaptive<TypeTag>
 {
-    typedef CROperatorAssemblerTwoPAdaptive<TypeTag> ParentType;
+    using ParentType = CROperatorAssemblerTwoPAdaptive<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     enum
     {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
-    typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
+    using LocalStiffness = typename GET_PROP_TYPE(TypeTag, LocalStiffness);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Element = typename GridView::template Codim<0>::Entity;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -83,7 +83,7 @@ class MimeticOperatorAssemblerTwoPAdaptive : public CROperatorAssemblerTwoPAdapt
         satEqIdx = Indices::satEqIdx
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> FieldVector;
+    using FieldVector = Dune::FieldVector<Scalar, dimWorld>;
 public:
 
     MimeticOperatorAssemblerTwoPAdaptive (const GridView& gridView)

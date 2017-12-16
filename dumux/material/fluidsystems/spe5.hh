@@ -55,13 +55,13 @@ namespace FluidSystems
 template <class Scalar>
 class Spe5
 {
-    typedef FluidSystems::Spe5<Scalar> ThisType;
+    using ThisType = FluidSystems::Spe5<Scalar>;
 
-    typedef Dumux::PengRobinsonMixture<Scalar, ThisType> PengRobinsonMixture;
-    typedef Dumux::PengRobinson<Scalar> PengRobinson;
+    using PengRobinsonMixture = Dumux::PengRobinsonMixture<Scalar, ThisType>;
+    using PengRobinson = Dumux::PengRobinson<Scalar>;
 
 public:
-    typedef Spe5ParameterCache<Scalar, ThisType> ParameterCache;
+    using ParameterCache = Spe5ParameterCache<Scalar, ThisType>;
 
     /****************************************
      * Fluid phase parameters
@@ -78,7 +78,7 @@ public:
     static const int oPhaseIdx = 2;
 
     //! The component for pure water to be used
-    typedef Dumux::H2O<Scalar> H2O;
+    using H2O = Dumux::H2O<Scalar>;
 
     /*!
      * \brief Return the human readable name of a fluid phase

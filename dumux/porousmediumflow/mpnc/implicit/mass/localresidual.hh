@@ -43,9 +43,9 @@ template<class TypeTag>
 class MPNCLocalResidualMassCommon
 {
 protected:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -53,9 +53,9 @@ protected:
     enum { enableEnergy     = GET_PROP_VALUE(TypeTag, EnableEnergy) };
     enum { numEnergyEquations     = GET_PROP_VALUE(TypeTag, NumEnergyEquations) };
 
-    typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef MPNCDiffusion<TypeTag, enableDiffusion> Diffusion;
-    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyResid;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
+    using Diffusion = MPNCDiffusion<TypeTag, enableDiffusion>;
+    using EnergyResid = MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations>;
 
 public:
     /*!
@@ -246,13 +246,13 @@ class MPNCLocalResidualMass
                   "No kinetic mass transfer module included, "
                   "but kinetic mass transfer enabled.");
 
-    typedef MPNCLocalResidualMassCommon<TypeTag> MassCommon;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    using MassCommon = MPNCLocalResidualMassCommon<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -260,8 +260,8 @@ class MPNCLocalResidualMass
     enum { enableEnergy     = GET_PROP_VALUE(TypeTag, EnableEnergy) };
     enum { numEnergyEquations     = GET_PROP_VALUE(TypeTag, NumEnergyEquations) };
 
-    typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyResid;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
+    using EnergyResid = MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations>;
 
 public:
     /*!

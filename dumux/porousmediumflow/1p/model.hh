@@ -86,10 +86,10 @@ SET_TYPE_PROP(OneP, VtkOutputFields, OnePVtkOutputFields<TypeTag>);   //! Set th
 SET_PROP(OneP, FluidState)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+    using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
 ///////////////////////////////////////////////////////////////////////////

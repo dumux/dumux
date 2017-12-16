@@ -81,8 +81,8 @@ class ComputeFromReferencePhase
 {
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
-    typedef Dumux::CompositionFromFugacities<Scalar, FluidSystem> CompositionFromFugacities;
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using CompositionFromFugacities = Dumux::CompositionFromFugacities<Scalar, FluidSystem>;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
     /*!

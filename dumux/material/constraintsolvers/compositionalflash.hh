@@ -54,8 +54,8 @@ class CompositionalFlash
     };
 
 public:
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 /*!
  * \name Concentration flash for a given feed fraction
  */

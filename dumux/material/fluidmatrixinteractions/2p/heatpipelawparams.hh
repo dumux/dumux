@@ -35,7 +35,7 @@ template<class ScalarT>
 class HeatPipeLawParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     HeatPipeLawParams()
     {}

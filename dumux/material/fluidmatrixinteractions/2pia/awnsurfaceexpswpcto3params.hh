@@ -32,7 +32,7 @@ template<class ScalarT>
 class AwnSurfaceExpSwPcTo3Params
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     AwnSurfaceExpSwPcTo3Params()
     {}

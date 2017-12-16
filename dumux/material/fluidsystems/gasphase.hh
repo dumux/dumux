@@ -45,12 +45,12 @@ template <class Scalar, class ComponentT>
 class GasPhase
 : public BaseFluidSystem<Scalar, GasPhase<Scalar, ComponentT> >
 {
-    typedef GasPhase<Scalar, ComponentT> ThisType;
-    typedef BaseFluidSystem <Scalar, ThisType> Base;
+    using ThisType = GasPhase<Scalar, ComponentT>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:
-    typedef ComponentT Component;
-    typedef NullParameterCache ParameterCache;
+    using Component = ComponentT;
+    using ParameterCache = NullParameterCache;
 
     /****************************************
      * Fluid phase related static parameters

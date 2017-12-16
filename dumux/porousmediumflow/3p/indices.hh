@@ -39,7 +39,7 @@ namespace Dumux
 template <class TypeTag, int PVOffset = 0>
 class ThreePIndices
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 public:
     // Phase indices

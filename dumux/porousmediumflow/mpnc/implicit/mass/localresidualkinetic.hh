@@ -37,15 +37,15 @@ namespace Dumux
 template<class TypeTag>
 class MPNCLocalResidualMass<TypeTag, /*enableKinetic=*/true>
 {
-    typedef MPNCLocalResidualMassCommon<TypeTag> MassCommon;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using MassCommon = MPNCLocalResidualMassCommon<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -58,8 +58,8 @@ class MPNCLocalResidualMass<TypeTag, /*enableKinetic=*/true>
     enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations) };
     enum { enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy) };
 
-    typedef MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations> EnergyResid;
-    typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using EnergyResid = MPNCLocalResidualEnergy<TypeTag, enableEnergy, numEnergyEquations>;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
 

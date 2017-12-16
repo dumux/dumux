@@ -357,9 +357,9 @@ public:
 //! TODO: fix adaptive simulations in parallel
 //#if HAVE_MPI
 //        // communicate ghost data
-//        typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-//        typedef typename SolutionTypes::ElementMapper ElementMapper;
-//        typedef VectorExchange<ElementMapper, std::vector<CellData> > DataHandle;
+//        using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+//        using ElementMapper = typename SolutionTypes::ElementMapper;
+//        using DataHandle = VectorExchange<ElementMapper, std::vector<CellData> >;
 //        DataHandle dataHandle(problem.elementMapper(), this->cellDataGlobal());
 //        problem.gridView().template communicate<DataHandle>(dataHandle,
 //                                                            Dune::InteriorBorder_All_Interface,

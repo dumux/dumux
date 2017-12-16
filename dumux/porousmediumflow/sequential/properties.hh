@@ -115,17 +115,17 @@ SET_INT_PROP(SequentialModel, LinearSolverPreconditionerBlockLevel, 1);
 SET_PROP(SequentialModel, GridView)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
 
 public:
-    typedef typename Grid::LeafGridView type;
+    using type = typename Grid::LeafGridView;
 };
 
 //! Default number of intersections for quadrilaterals
 SET_PROP(SequentialModel, MaxIntersections)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     enum
     {
         dim = GridView::dimension
@@ -141,10 +141,10 @@ public:
  */
 SET_PROP(SequentialModel, SolutionTypes)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
+    using Variables = typename GET_PROP_TYPE(TypeTag, Variables);
 
     enum
     {
@@ -162,7 +162,7 @@ public:
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 #else
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
 #endif
 
     /*!
@@ -171,7 +171,7 @@ public:
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 #else
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
 #endif
 
     /*!
@@ -179,19 +179,19 @@ public:
      *
      * This defines the primary and secondary variable vectors at each degree of freedom.
      */
-    typedef Dune::FieldVector<Scalar, numEq> PrimaryVariables;
+    using PrimaryVariables = Dune::FieldVector<Scalar, numEq>;
     //! type for vector of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarSolution;
+    using ScalarSolution = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
     //! type for vector of phase properties
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents> ComponentProperty;
+    using ComponentProperty = Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numComponents>;
     //! type for vector of phase properties
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> PhaseProperty;
+    using PhaseProperty = Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases>;
     //! type for vector of fluid properties: Vector[element][phase]
-    typedef Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases> FluidProperty;
+    using FluidProperty = Dune::FieldVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> >, numPhases>;
     //! type for vector of vectors (of size 2 x dimension) of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, maxIntersections > > PhasePropertyElemFace;
+    using PhasePropertyElemFace = Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, numPhases>, maxIntersections> >;
     //! type for vector of vectors (of size 2 x dimension) of vector (of size dimension) of scalars
-    typedef Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections > > DimVecElemFace;
+    using DimVecElemFace = Dune::BlockVector<Dune::FieldVector<Dune::FieldVector<Scalar, dim>, maxIntersections> >;
 };
 
 SET_TYPE_PROP(SequentialModel,  Variables, VariableClass<TypeTag>);
@@ -208,7 +208,7 @@ SET_PROP(SequentialModel, BoundaryTypes)
 { private:
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 public:
-    typedef BoundaryTypes<numEq>  type;
+    using type = BoundaryTypes<numEq>;
 };
 
 //! do not specific any model-specific default parameters here

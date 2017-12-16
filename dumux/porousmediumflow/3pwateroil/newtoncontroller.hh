@@ -43,9 +43,9 @@ namespace Dumux {
 template <class TypeTag>
 class ThreePWaterOilNewtonController : public NewtonController<TypeTag>
 {
-    typedef NewtonController<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using ParentType = NewtonController<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
 public:
     ThreePWaterOilNewtonController(const Problem &problem)

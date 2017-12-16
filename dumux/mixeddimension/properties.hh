@@ -122,21 +122,21 @@ SET_BOOL_PROP(MixedDimension, MixedDimensionUseIterativeSolver, false);
 SET_PROP(MixedDimension, SolutionVector)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag) BulkProblemTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag) LowDimProblemTypeTag;
+    using BulkProblemTypeTag = typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag);
+    using LowDimProblemTypeTag = typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag);
 public:
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector) SolutionVectorBulk;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector) SolutionVectorLowDim;
-    typedef typename Dune::MultiTypeBlockVector<SolutionVectorBulk, SolutionVectorLowDim> type;
+    using SolutionVectorBulk = typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector);
+    using SolutionVectorLowDim = typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector);
+    using type = Dune::MultiTypeBlockVector<SolutionVectorBulk, SolutionVectorLowDim>;
 };
 
 //! Set the type of a global jacobian matrix from the solution types
 SET_PROP(MixedDimension, JacobianMatrix)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag) BulkProblemTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag) LowDimProblemTypeTag;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using BulkProblemTypeTag = typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag);
+    using LowDimProblemTypeTag = typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag);
     enum {
         numEqBulk = GET_PROP_VALUE(BulkProblemTypeTag, NumEq),
         numEqLowDim = GET_PROP_VALUE(LowDimProblemTypeTag, NumEq)
@@ -144,23 +144,23 @@ private:
 
 public:
     // the sub-blocks
-    typedef typename Dune::FieldMatrix<Scalar, numEqBulk, numEqBulk> MatrixLittleBlockBulk;
-    typedef typename Dune::FieldMatrix<Scalar, numEqBulk, numEqLowDim> MatrixLittleBlockBulkCoupling;
-    typedef typename Dune::FieldMatrix<Scalar, numEqLowDim, numEqLowDim> MatrixLittleBlockLowDim;
-    typedef typename Dune::FieldMatrix<Scalar, numEqLowDim, numEqBulk> MatrixLittleBlockLowDimCoupling;
+    using MatrixLittleBlockBulk = Dune::FieldMatrix<Scalar, numEqBulk, numEqBulk>;
+    using MatrixLittleBlockBulkCoupling = Dune::FieldMatrix<Scalar, numEqBulk, numEqLowDim>;
+    using MatrixLittleBlockLowDim = Dune::FieldMatrix<Scalar, numEqLowDim, numEqLowDim>;
+    using MatrixLittleBlockLowDimCoupling = Dune::FieldMatrix<Scalar, numEqLowDim, numEqBulk>;
 
     // the BCRS matrices of the subproblems as big blocks
-    typedef typename Dune::BCRSMatrix<MatrixLittleBlockBulk> MatrixBlockBulk;
-    typedef typename Dune::BCRSMatrix<MatrixLittleBlockBulkCoupling> MatrixBlockBulkCoupling;
-    typedef typename Dune::BCRSMatrix<MatrixLittleBlockLowDim> MatrixBlockLowDim;
-    typedef typename Dune::BCRSMatrix<MatrixLittleBlockLowDimCoupling> MatrixBlockLowDimCoupling;
+    using MatrixBlockBulk = Dune::BCRSMatrix<MatrixLittleBlockBulk>;
+    using MatrixBlockBulkCoupling = Dune::BCRSMatrix<MatrixLittleBlockBulkCoupling>;
+    using MatrixBlockLowDim = Dune::BCRSMatrix<MatrixLittleBlockLowDim>;
+    using MatrixBlockLowDimCoupling = Dune::BCRSMatrix<MatrixLittleBlockLowDimCoupling>;
 
     // the row types
-    typedef typename Dune::MultiTypeBlockVector<MatrixBlockBulk, MatrixBlockBulkCoupling> RowBulk;
-    typedef typename Dune::MultiTypeBlockVector<MatrixBlockLowDimCoupling, MatrixBlockLowDim> RowLowDim;
+    using RowBulk = Dune::MultiTypeBlockVector<MatrixBlockBulk, MatrixBlockBulkCoupling>;
+    using RowLowDim = Dune::MultiTypeBlockVector<MatrixBlockLowDimCoupling, MatrixBlockLowDim>;
 
     // the jacobian matrix
-    typedef typename Dune::MultiTypeBlockMatrix<RowBulk, RowLowDim> type;
+    using type = Dune::MultiTypeBlockMatrix<RowBulk, RowLowDim>;
 };
 
 //! Definition of the indices of the subproblems in the global solution vector

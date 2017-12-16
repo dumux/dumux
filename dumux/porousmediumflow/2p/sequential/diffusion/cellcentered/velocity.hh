@@ -58,35 +58,35 @@ namespace Dumux
 template<class TypeTag>
 class FVVelocity2P
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView)GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename Element::Geometry Geometry;
-    typedef typename Geometry::JacobianTransposed JacobianTransposed;
+    using Geometry = typename Element::Geometry;
+    using JacobianTransposed = typename Geometry::JacobianTransposed;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
     enum
     {
@@ -108,8 +108,8 @@ class FVVelocity2P
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
     /*! \brief Constructs a FVVelocity2P object
@@ -198,7 +198,7 @@ public:
 
                 const typename Element::Geometry& geometry = element.geometry();
                 // get corresponding reference element
-                typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+                using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
                 const Dune::ReferenceElement< Scalar , dim > & refElement =
                         ReferenceElements::general( geometry.type() );
                 const int numberOfFaces=refElement.size(1);

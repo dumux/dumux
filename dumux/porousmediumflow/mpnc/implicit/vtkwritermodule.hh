@@ -48,24 +48,24 @@ namespace Dumux
 template<class TypeTag>
 class MPNCVtkWriterModule
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { dim             = GridView::dimension };
 
 public:
-    typedef std::vector<Dune::FieldVector<Scalar, 1> > ScalarVector;
-    typedef std::array<ScalarVector, numPhases> PhaseVector;
-    typedef std::array<ScalarVector, numComponents> ComponentVector;
-    typedef std::array<ComponentVector,  numPhases> PhaseComponentMatrix;
+    using ScalarVector = std::vector<Dune::FieldVector<Scalar, 1>>;
+    using PhaseVector = std::array<ScalarVector, numPhases>;
+    using ComponentVector = std::array<ScalarVector, numComponents>;
+    using PhaseComponentMatrix = std::array<ComponentVector, numPhases>;
 
     MPNCVtkWriterModule(const Problem &problem)
         : problem_(problem)

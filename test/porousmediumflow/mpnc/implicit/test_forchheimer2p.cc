@@ -54,6 +54,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(Forchheimer2pProblem) ProblemTypeTag;
+    using ProblemTypeTag = TTAG(Forchheimer2pProblem);
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

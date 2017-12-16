@@ -37,28 +37,28 @@ namespace Dumux
 template<class TypeTag>
 class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
 {
-    typedef FVVelocity2P<TypeTag> ParentType;
+    using ParentType = FVVelocity2P<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-     typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
 
-     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-     typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GridView::Intersection Intersection;
+    using Intersection = typename GridView::Intersection;
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
     enum
     {
@@ -74,8 +74,8 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
     /*! \brief Constructs a FVVelocity2PAdaptive object

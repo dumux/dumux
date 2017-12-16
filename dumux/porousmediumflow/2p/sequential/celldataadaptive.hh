@@ -45,14 +45,14 @@ template<class TypeTag, bool enableCompressibility = GET_PROP_VALUE(TypeTag, Ena
 class CellData2PAdaptive: public CellData2P<TypeTag, enableCompressibility>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -88,7 +88,7 @@ public:
         }
     };
 
-    typedef AdaptedValues LoadBalanceData;
+    using LoadBalanceData = AdaptedValues;
 
     //! Constructs an adaptive CellData object
     CellData2PAdaptive()

@@ -213,7 +213,7 @@ void plot()
 {
     const int numSamples = 5;
     const int n = numSamples - 1;
-    typedef Dune::FieldVector<double, numSamples> FV;
+    using FV = Dune::FieldVector<double, numSamples>;
 
     double x_[] = { 0, 5, 7.5, 8.75, 9.375 };
     double y_[] = { 10, 0, 10, 0, 10 };

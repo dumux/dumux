@@ -54,11 +54,11 @@ SET_PROP(SagdSpatialParams, MaterialLaw)
  private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedParkerVanGen3P<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffectiveLaw = RegularizedParkerVanGen3P<Scalar>;
  public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<EffectiveLaw>;
 };
 }
 
@@ -70,39 +70,39 @@ SET_PROP(SagdSpatialParams, MaterialLaw)
 template<class TypeTag>
 class SagdSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
+    using ParentType = FVSpatialParams<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CoordScalar = typename Grid::ctype;
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> DimVector;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using DimVector = Dune::FieldVector<CoordScalar, dimWorld>;
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Element = typename GridView::template Codim<0>::Entity;
 
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     /*!
      * \brief The constructor

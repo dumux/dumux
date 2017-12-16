@@ -42,33 +42,33 @@ namespace Dumux
 template <class TypeTag>
 class MPNCVolumeVariablesMass<TypeTag, /*bool enableKinetic=*/true>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { moleFrac00Idx = Indices::moleFrac00Idx };
 
-    typedef typename Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     //     here,  we need a constraint solver, which gives me the composition of a phase, if the other one is given
-    typedef FluidSystemComputeFromReferencePhase<Scalar, FluidSystem> ConstraintReferencePhaseSolver;
+    using ConstraintReferencePhaseSolver = FluidSystemComputeFromReferencePhase<Scalar, FluidSystem>;
 
     //     here,  we need a constraint solver, which gives me the composition of all phases if p,T is given
-    typedef FluidSystemConstraintSolver<Scalar, FluidSystem> ConstraintSolver;
+    using ConstraintSolver = FluidSystemConstraintSolver<Scalar, FluidSystem>;
 
     //     this is the constraint solver that applies "fugacities"
-//    typedef MiscibleMultiPhaseComposition<Scalar, FluidSystem> ConstraintSolver;
+//    using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 public:
 
     /*!

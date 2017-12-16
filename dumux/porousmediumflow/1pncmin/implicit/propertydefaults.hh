@@ -50,7 +50,7 @@ namespace Properties {
 SET_PROP(OnePNCMin, NumSComponents)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 public:
     static const int value = FluidSystem::numSComponents;
 };
@@ -63,7 +63,7 @@ public:
 SET_PROP(OnePNCMin, NumSPhases)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 
 public:
     static const int value = FluidSystem::numSPhases;
@@ -77,7 +77,7 @@ public:
 SET_PROP(OnePNCMin, NumEq)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 
 public:
     static const int value = FluidSystem::numComponents + FluidSystem::numSComponents; //steamaircao2h2 has 2 components in the fluidphase
@@ -91,10 +91,10 @@ public:
  */
 SET_PROP(OnePNCMin, FluidState){
     private:
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     public:
-        typedef CompositionalFluidState<Scalar, FluidSystem> type;
+        using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Use the 2pncmin local residual operator
@@ -118,10 +118,10 @@ SET_TYPE_PROP(OnePNCMin, IsothermalVolumeVariables, OnePNCMinVolumeVariables<Typ
 SET_PROP(OnePNCMinNI, ThermalConductivityModel)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    typedef ThermalConductivityAverage<Scalar> type;
+    using type = ThermalConductivityAverage<Scalar>;
 };
 
 
@@ -147,7 +147,7 @@ SET_TYPE_PROP(OnePNCMinNI, IsothermalIndices, OnePNCMinIndices<TypeTag, /*PVOffs
 SET_PROP(OnePNCMinNI, IsothermalNumEq)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 
 public:
     static const int value = FluidSystem::numComponents +FluidSystem::numSComponents;// in NonIsothermal 1 is substracted by default

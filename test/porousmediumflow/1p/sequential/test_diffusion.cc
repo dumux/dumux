@@ -51,7 +51,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(FVVelocity2PTestProblem) TypeTag;
+        using TypeTag = TTAG(FVVelocity2PTestProblem);
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
         Dune::Timer timer;
         bool consecutiveNumbering = true;
 
-        typedef GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem) FVProblem;
+        using FVProblem = GET_PROP_TYPE(TTAG(FVVelocity2PTestProblem), Problem);
         FVProblem fvProblem(grid.leafGridView());
         fvProblem.setName("fvdiffusion");
         timer.reset();
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
         Dumux::ResultEvaluation fvResult;
         fvResult.evaluate(grid.leafGridView(), fvProblem, consecutiveNumbering);
 
-        typedef GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem) MPFAOProblem;
+        using MPFAOProblem = GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestProblem), Problem);
         MPFAOProblem mpfaProblem(grid.leafGridView());
         mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
         Dumux::ResultEvaluation mpfaResult;
         mpfaResult.evaluate(grid.leafGridView(), mpfaProblem, consecutiveNumbering);
 
-        typedef GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem) MimeticProblem;
+        using MimeticProblem = GET_PROP_TYPE(TTAG(MimeticPressure2PTestProblem), Problem);
         MimeticProblem mimeticProblem(grid.leafGridView());
         mimeticProblem.setName("mimeticdiffusion");
         timer.reset();

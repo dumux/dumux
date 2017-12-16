@@ -47,9 +47,9 @@ template <class Scalar, class ComponentType>
 class TwoPLiquidVaporFluidsystem
     : public BaseFluidSystem<Scalar, TwoPLiquidVaporFluidsystem<Scalar, ComponentType> >
 {
-    typedef TwoPLiquidVaporFluidsystem<Scalar, ComponentType> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
-    typedef ComponentType Component;
+    using ThisType = TwoPLiquidVaporFluidsystem<Scalar, ComponentType>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using Component = ComponentType;
 
 public:
     /****************************************

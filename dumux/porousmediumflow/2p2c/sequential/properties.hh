@@ -101,7 +101,7 @@ SET_PROP(SequentialTwoPTwoC, NumPhases) //!< The number of phases in the 2p2c mo
 {
     // the property is declared in dumux/porousmediumflow/sequential/properties.hh
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 public:
     static const int value = FluidSystem::numPhases;
@@ -112,7 +112,7 @@ public:
 SET_PROP(SequentialTwoPTwoC, NumComponents) //!< The number of components in the 2p2c model is 2
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 public:
     static const int value = FluidSystem::numComponents;
@@ -135,9 +135,9 @@ SET_INT_PROP(SequentialTwoPTwoC,
 
 SET_PROP(SequentialTwoPTwoC, TransportSolutionType)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     //! type for vector of vector (of scalars)
-    typedef typename Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> > > type;
+    using type = Dune::BlockVector<Dune::BlockVector<Dune::FieldVector<Scalar,1> > >;
 
 };
 
@@ -179,7 +179,7 @@ template <class TypeTag>
 struct SequentialTwoPTwoCIndices : public SequentialTwoPCommonIndices
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 public:
     // Component indices

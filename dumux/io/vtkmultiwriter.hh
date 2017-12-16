@@ -61,14 +61,14 @@ class DUNE_DEPRECATED_MSG("Use VtkOutputModule instead!") VtkMultiWriter
 {
     enum { dim = GridView::dimension };
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView> VertexMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView> ElementMapper;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 #else
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout> VertexMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
 #endif
 public:
-    typedef Dune::VTKWriter<GridView> VtkWriter;
+    using VtkWriter = Dune::VTKWriter<GridView>;
     VtkMultiWriter(const GridView &gridView,
                    const std::string &simName = "",
                    std::string multiFileName = "")
@@ -149,7 +149,7 @@ public:
     template <class Scalar, int nComp>
     Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > *allocateManagedBuffer(int nEntities)
     {
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > VectorField;
+        using VectorField = Dune::BlockVector<Dune::FieldVector<Scalar, nComp> >;
 
         std::shared_ptr<ManagedVectorField_<VectorField> > vfs =
             std::make_shared<ManagedVectorField_<VectorField> >(nEntities);
@@ -186,7 +186,7 @@ public:
         sanitizeBuffer_(buf, nComps);
 
         using FunctionPtr = std::shared_ptr<const typename VtkWriter::VTKFunction>;
-        typedef VtkNestedFunction<GridView, VertexMapper, DataBuffer> VtkFn;
+        using VtkFn = VtkNestedFunction<GridView, VertexMapper, DataBuffer>;
         FunctionPtr fnPtr(new VtkFn(name,
                                     gridView_,
                                     vertexMapper_,
@@ -217,7 +217,7 @@ public:
         sanitizeBuffer_(buf, nComps);
 
         using FunctionPtr = std::shared_ptr<const typename VtkWriter::VTKFunction>;
-        typedef VtkNestedFunction<GridView, ElementMapper, DataBuffer> VtkFn;
+        using VtkFn = VtkNestedFunction<GridView, ElementMapper, DataBuffer>;
         FunctionPtr fnPtr(new VtkFn(name,
                                     gridView_,
                                     elementMapper_,

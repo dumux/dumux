@@ -48,12 +48,12 @@ template <class Scalar,
 class H2OHeavyOil
     : public BaseFluidSystem<Scalar, H2OHeavyOil<Scalar, H2OType> >
 {
-    typedef H2OHeavyOil<Scalar, H2OType> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
+    using ThisType = H2OHeavyOil<Scalar, H2OType>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:
-    typedef Dumux::HeavyOil<Scalar> HeavyOil;
-    typedef H2OType H2O;
+    using HeavyOil = Dumux::HeavyOil<Scalar>;
+    using H2O = H2OType;
 
 
     static const int numPhases = 3;

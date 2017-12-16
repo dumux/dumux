@@ -44,32 +44,32 @@ namespace Dumux
 template<class TypeTag>
 class MixedDimensionModel
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, BulkLocalJacobian) BulkLocalJacobian;
-    typedef typename GET_PROP_TYPE(TypeTag, LowDimLocalJacobian) LowDimLocalJacobian;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
-    typedef typename GET_PROP(TypeTag, SubProblemBlockIndices) SubProblemBlockIndices;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
+    using BulkLocalJacobian = typename GET_PROP_TYPE(TypeTag, BulkLocalJacobian);
+    using LowDimLocalJacobian = typename GET_PROP_TYPE(TypeTag, LowDimLocalJacobian);
+    using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using SubProblemBlockIndices = typename GET_PROP(TypeTag, SubProblemBlockIndices);
 
     // obtain the type tags of the sub problems
-    typedef typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag) BulkProblemTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag) LowDimProblemTypeTag;
+    using BulkProblemTypeTag = typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag);
+    using LowDimProblemTypeTag = typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, GridView) BulkGridView;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, GridView) LowDimGridView;
+    using BulkGridView = typename GET_PROP_TYPE(BulkProblemTypeTag, GridView);
+    using LowDimGridView = typename GET_PROP_TYPE(LowDimProblemTypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, LocalResidual) BulkLocalResidual;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, LocalResidual) LowDimLocalResidual;
+    using BulkLocalResidual = typename GET_PROP_TYPE(BulkProblemTypeTag, LocalResidual);
+    using LowDimLocalResidual = typename GET_PROP_TYPE(LowDimProblemTypeTag, LocalResidual);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, VertexMapper) BulkVertexMapper;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, VertexMapper) LowDimVertexMapper;
+    using BulkVertexMapper = typename GET_PROP_TYPE(BulkProblemTypeTag, VertexMapper);
+    using LowDimVertexMapper = typename GET_PROP_TYPE(LowDimProblemTypeTag, VertexMapper);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, ElementMapper) BulkElementMapper;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, ElementMapper) LowDimElementMapper;
+    using BulkElementMapper = typename GET_PROP_TYPE(BulkProblemTypeTag, ElementMapper);
+    using LowDimElementMapper = typename GET_PROP_TYPE(LowDimProblemTypeTag, ElementMapper);
 
     enum {
         bulkDim = BulkGridView::dimension,
@@ -87,11 +87,11 @@ class MixedDimensionModel
     typename SubProblemBlockIndices::BulkIdx bulkIdx;
     typename SubProblemBlockIndices::LowDimIdx lowDimIdx;
 
-    typedef typename BulkGridView::template Codim<0>::Entity BulkElement;
-    typedef typename LowDimGridView::template Codim<0>::Entity LowDimElement;
+    using BulkElement = typename BulkGridView::template Codim<0>::Entity;
+    using LowDimElement = typename LowDimGridView::template Codim<0>::Entity;
 
-    typedef typename Dune::ReferenceElements<Scalar, bulkDim> BulkReferenceElements;
-    typedef typename Dune::ReferenceElements<Scalar, lowDimDim> LowDimReferenceElements;
+    using BulkReferenceElements = Dune::ReferenceElements<Scalar, bulkDim>;
+    using LowDimReferenceElements = Dune::ReferenceElements<Scalar, lowDimDim>;
 
 public:
      // copying a model is not a good idea

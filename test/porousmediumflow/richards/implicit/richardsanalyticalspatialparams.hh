@@ -52,10 +52,10 @@ SET_TYPE_PROP(RichardsAnalyticalSpatialParams, SpatialParams, RichardsAnalytical
 SET_PROP(RichardsAnalyticalSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef LinearMaterial<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffectiveLaw = LinearMaterial<Scalar>;
 public:
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<EffectiveLaw>;
 };
 }
 

@@ -51,7 +51,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-        typedef TTAG(TestIMPESAdaptiveRestartProblem) ProblemTypeTag;
+        using ProblemTypeTag = TTAG(TestIMPESAdaptiveRestartProblem);
         return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 #else

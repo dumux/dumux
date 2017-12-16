@@ -47,10 +47,10 @@ NEW_PROP_TAG(Grid);
 template <class TypeTag>
 class CpGridCreator
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid)  Grid;
-    typedef std::shared_ptr<Grid> GridPointer;
-    typedef Opm::Deck Deck;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridPointer = std::shared_ptr<Grid>;
+    using Deck = Opm::Deck;
 
 public:
     /*!

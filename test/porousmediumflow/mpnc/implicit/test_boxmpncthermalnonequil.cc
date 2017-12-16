@@ -55,7 +55,7 @@ void usage(const char *progName, const std::string &errorMsg)
 int main(int argc, char** argv)
 {
 #if HAVE_SUPERLU
-  typedef TTAG(CombustionProblemOneComponent) ProblemTypeTag;
+  using ProblemTypeTag = TTAG(CombustionProblemOneComponent);
   return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 #else
 #warning CombustionProblemOneComponent skipped, needs SuperLU!

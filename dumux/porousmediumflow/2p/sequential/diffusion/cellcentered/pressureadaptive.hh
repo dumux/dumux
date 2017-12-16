@@ -43,20 +43,20 @@ namespace Dumux
  */
 template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
 {
-    typedef FVPressure2P<TypeTag> ParentType;
+    using ParentType = FVPressure2P<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
     enum
     {
@@ -75,14 +75,14 @@ template<class TypeTag> class FVPressure2PAdaptive: public FVPressure2P<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx, nPhaseIdx = Indices::nPhaseIdx, numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GridView::Intersection Intersection;
+    using Intersection = typename GridView::Intersection;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> FieldMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 protected:
     //! \cond \private
-    typedef typename ParentType::EntryType EntryType;
+    using EntryType = typename ParentType::EntryType;
     enum
     {
         rhs = ParentType::rhs, matrix = ParentType::matrix

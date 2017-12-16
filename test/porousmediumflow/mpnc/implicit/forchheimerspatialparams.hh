@@ -53,14 +53,14 @@ SET_TYPE_PROP(ForchheimerSpatialParams, SpatialParams, ForchheimerSpatialParams<
 SET_PROP(ForchheimerSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     // define the material law
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedLinearMaterial<Scalar> EffMaterialLaw;
-    typedef EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffMaterialLaw = RegularizedLinearMaterial<Scalar>;
+    using TwoPMaterialLaw = EffToAbsLaw<EffMaterialLaw>;
 public:
-    typedef TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> type;
+    using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
 };
 }
 
@@ -73,24 +73,24 @@ public:
 template<class TypeTag>
 class ForchheimerSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = FVSpatialParams<TypeTag>;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using CoordScalar = typename Grid::ctype;
 
     enum {dimWorld=GridView::dimensionworld};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     ForchheimerSpatialParams(const GridView &gridView)
         : ParentType(gridView)

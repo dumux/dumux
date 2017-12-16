@@ -38,7 +38,7 @@ template<class ScalarT>
 class AwnSurfacePolynomialEdgeZero2ndOrderParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     AwnSurfacePolynomialEdgeZero2ndOrderParams()
     {}

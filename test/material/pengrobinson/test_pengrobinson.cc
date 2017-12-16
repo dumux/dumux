@@ -41,10 +41,10 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
         numComponents = FluidSystem::numComponents
     };
 
-    typedef Dumux::NcpFlash<Scalar, FluidSystem> Flash;
-    typedef Dumux::MpLinearMaterial<numPhases, Scalar> MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using Flash = Dumux::NcpFlash<Scalar, FluidSystem>;
+    using MaterialLaw = Dumux::MpLinearMaterial<numPhases, Scalar>;
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     const Scalar refPressure = 1.0135e5; // [Pa]
 
@@ -121,8 +121,8 @@ Scalar bringOilToSurface(FluidState &surfaceFluidState, Scalar alpha, const Flui
 
 int main(int argc, char** argv)
 {
-    typedef double Scalar;
-    typedef Dumux::FluidSystems::Spe5<Scalar> FluidSystem;
+    using Scalar = double;
+    using FluidSystem = Dumux::FluidSystems::Spe5<Scalar>;
 
     enum {
         numPhases = FluidSystem::numPhases,
@@ -140,14 +140,14 @@ int main(int argc, char** argv)
         C20Idx = FluidSystem::C20Idx
     };
 
-    typedef Dumux::NcpFlash<Scalar, FluidSystem> Flash;
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
+    using Flash = Dumux::NcpFlash<Scalar, FluidSystem>;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
+    using FluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
 
-    typedef Dumux::MpLinearMaterial<numPhases, Scalar> MaterialLaw;
-    typedef MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = Dumux::MpLinearMaterial<numPhases, Scalar>;
+    using MaterialLawParams = MaterialLaw::Params;
 
-    typedef FluidSystem::ParameterCache ParameterCache;
+    using ParameterCache = FluidSystem::ParameterCache;
 
     ////////////
     // Initialize the fluid system and create the capillary pressure

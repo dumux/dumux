@@ -61,11 +61,11 @@ namespace Dumux
 template<class TypeTag>
 class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     // grid types
     enum
@@ -97,16 +97,16 @@ class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
         saturationType = GET_PROP_VALUE(TypeTag, SaturationFormulation)
     };
 
-    typedef typename GridView::Grid Grid;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Grid = typename GridView::Grid;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
 
 public:
     // define the number of components of your system, this is used outside
@@ -202,7 +202,7 @@ public:
     // the local stiffness matrix is independend of the current
     // solution. We need to implement this properly, but this
     // should at least make the thing compile...
-    typedef Dune::FieldVector<Scalar, m> VBlockType;
+    using VBlockType = Dune::FieldVector<Scalar, m>;
     void assemble(const Element &cell, const Dune::BlockVector<VBlockType>& localSolution, int orderOfShapeFns = 1)
     {
         assemble(cell, orderOfShapeFns);

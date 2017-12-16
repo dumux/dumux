@@ -47,7 +47,7 @@ class TwoPAdapter
     enum { nPhaseIdx = (wPhaseIdx == 0)?1:0 };
 
 public:
-    typedef typename TwoPLaw::Params Params;
+    using Params = typename TwoPLaw::Params;
     enum { numPhases = 2 };
 
     /*!

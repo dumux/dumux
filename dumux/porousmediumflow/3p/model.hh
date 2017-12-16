@@ -89,7 +89,7 @@ NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
 SET_PROP(ThreeP, NumPhases)
 {
  private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
  public:
     static const int value = FluidSystem::numPhases;
@@ -100,7 +100,7 @@ SET_PROP(ThreeP, NumPhases)
 SET_PROP(ThreeP, NumComponents)
 {
  private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
  public:
     static const int value = FluidSystem::numComponents;
@@ -135,10 +135,10 @@ SET_TYPE_PROP(ThreeP, SpatialParams, FVSpatialParams<TypeTag>);
 SET_PROP(ThreeP, FluidState)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+    using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
 //! Set the vtk output fields specific to the ThreeP model
@@ -153,10 +153,10 @@ SET_TYPE_PROP(ThreeP, VtkOutputFields, ThreePVtkOutputFields<TypeTag>);
 SET_PROP(ThreePNI, ThermalConductivityModel)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+    using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
 
 //////////////////////////////////////////////////////////////////

@@ -98,10 +98,10 @@
   */
  SET_PROP(NavierStokes, FluidState){
      private:
-         typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-         typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+         using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+         using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
      public:
-         typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
+         using type = Dumux::ImmiscibleFluidState<Scalar, FluidSystem>;
  };
 
  //! The local residual function

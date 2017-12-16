@@ -54,17 +54,17 @@ template<class Scalar,
 class BrineCO2
 : public BaseFluidSystem<Scalar, BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> >
 {
-    typedef BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype> ThisType;
-    typedef BaseFluidSystem <Scalar, ThisType> Base;
+    using ThisType = BrineCO2<Scalar, CO2Table, H2Otype, BrineRawComponent, Brinetype>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
 
-    typedef BinaryCoeff::Brine_CO2<Scalar, CO2Table> Brine_CO2;
+    using Brine_CO2 = BinaryCoeff::Brine_CO2<Scalar, CO2Table>;
 
 public:
-    typedef NullParameterCache ParameterCache;
-    typedef H2Otype H2O;
-    typedef Brinetype Brine;
-    typedef Dumux::CO2<Scalar, CO2Table> CO2;
+    using ParameterCache = NullParameterCache;
+    using H2O = H2Otype;
+    using Brine = Brinetype;
+    using CO2 = Dumux::CO2<Scalar, CO2Table>;
 
     static const int numComponents = 2;
     static const int numPhases = 2;

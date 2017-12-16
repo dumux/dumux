@@ -98,7 +98,7 @@ public:
     template <class Params>
     static Scalar computeVaporPressure(const Params &params, Scalar T)
     {
-        typedef typename Params::Component Component;
+        using Component = typename Params::Component;
         if (T >= Component::criticalTemperature())
             return Component::criticalPressure();
 
@@ -457,7 +457,7 @@ protected:
     template <class Params>
     static Scalar ambroseWalton_(const Params &params, Scalar T)
     {
-        typedef typename Params::Component Component;
+        using Component = typename Params::Component;
 
         Scalar Tr = T / Component::criticalTemperature();
         Scalar tau = 1 - Tr;

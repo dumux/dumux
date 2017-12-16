@@ -45,26 +45,26 @@ SET_TYPE_PROP(PressureOneP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel
 template<class TypeTag>
 class DiffusionProblem1P: public OneModelProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef OneModelProblem<TypeTag> ParentType;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParentType = OneModelProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     enum
     {
         dim = Grid::dimension, dimWorld = Grid::dimensionworld
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!

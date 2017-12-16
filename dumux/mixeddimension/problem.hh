@@ -41,30 +41,30 @@ namespace Dumux
 template<class TypeTag>
 class MixedDimensionProblem
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, CouplingManager) CouplingManager;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Model;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
+    using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using Model = typename GET_PROP_TYPE(TypeTag, Model);
 
     // obtain the type tags of the sub problems
-    typedef typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag) BulkProblemTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag) LowDimProblemTypeTag;
+    using BulkProblemTypeTag = typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag);
+    using LowDimProblemTypeTag = typename GET_PROP_TYPE(TypeTag, LowDimProblemTypeTag);
 
     // obtain types from the sub problem type tags
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, Problem) BulkProblem;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, Problem) LowDimProblem;
+    using BulkProblem = typename GET_PROP_TYPE(BulkProblemTypeTag, Problem);
+    using LowDimProblem = typename GET_PROP_TYPE(LowDimProblemTypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, TimeManager) BulkTimeManager;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, TimeManager) LowDimTimeManager;
+    using BulkTimeManager = typename GET_PROP_TYPE(BulkProblemTypeTag, TimeManager);
+    using LowDimTimeManager = typename GET_PROP_TYPE(LowDimProblemTypeTag, TimeManager);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, GridView) BulkGridView;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, GridView) LowDimGridView;
+    using BulkGridView = typename GET_PROP_TYPE(BulkProblemTypeTag, GridView);
+    using LowDimGridView = typename GET_PROP_TYPE(LowDimProblemTypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector) BulkSolutionVector;
-    typedef typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector) LowDimSolutionVector;
+    using BulkSolutionVector = typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector);
+    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector);
 
 public:
     MixedDimensionProblem(TimeManager &timeManager,

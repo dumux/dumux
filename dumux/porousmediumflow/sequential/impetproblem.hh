@@ -45,26 +45,26 @@ template<class TypeTag>
 class IMPETProblem
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef Dumux::VtkMultiWriter<GridView>  VtkMultiWriter;
+    using VtkMultiWriter = Dumux::VtkMultiWriter<GridView>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Variables) Variables;
+    using Variables = typename GET_PROP_TYPE(TypeTag, Variables);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::VertexMapper VertexMapper;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using VertexMapper = typename SolutionTypes::VertexMapper;
+    using ElementMapper = typename SolutionTypes::ElementMapper;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Model) IMPETModel;
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) PressureModel;
-    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) TransportModel;
+    using IMPETModel = typename GET_PROP_TYPE(TypeTag, Model);
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using PressureModel = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using TransportModel = typename GET_PROP_TYPE(TypeTag, TransportModel);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum
         {
@@ -77,14 +77,14 @@ private:
             adaptiveGrid = GET_PROP_VALUE(TypeTag, AdaptiveGrid)
         };
 
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
     // The module to adapt grid. If adaptiveGrid is false, this model does nothing.
-    typedef typename GET_PROP_TYPE(TypeTag, GridAdaptModel) GridAdaptModel;
+    using GridAdaptModel = typename GET_PROP_TYPE(TypeTag, GridAdaptModel);
 
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)
@@ -721,7 +721,7 @@ public:
      */
     void serialize()
     {
-        typedef Restart Restarter;
+        using Restarter = Restart;
 
         Restarter res;
         res.serializeBegin(asImp_());
@@ -758,7 +758,7 @@ public:
             model().initialize();
         }
 
-        typedef Restart Restarter;
+        using Restarter = Restart;
 
         Restarter res;
         res.deserializeBegin(asImp_(), tRestart);

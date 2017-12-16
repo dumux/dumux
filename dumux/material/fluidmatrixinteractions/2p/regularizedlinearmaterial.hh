@@ -59,11 +59,11 @@ namespace Dumux
 template <class ScalarT, class ParamsT = RegularizedLinearMaterialParams<ScalarT> >
 class RegularizedLinearMaterial
 {
-    typedef Dumux::LinearMaterial<ScalarT, ParamsT> LinearMaterial;
+    using LinearMaterial = Dumux::LinearMaterial<ScalarT, ParamsT>;
 
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The linear capillary pressure-saturation curve.
@@ -188,14 +188,14 @@ private:
             return 0;
         // check wether the permeability needs to be regularized
         else if (S < lowS) {
-            typedef Dumux::Spline<Scalar> Spline;
+            using Spline = Dumux::Spline<Scalar>;
             Spline sp(0, lowS,
                       0, lowS/2,
                       0, m);
             return sp.eval(S);
         }
         else if (S > highS) {
-            typedef Dumux::Spline<Scalar> Spline;
+            using Spline = Dumux::Spline<Scalar>;
             Spline sp(highS, 1,
                       1 - (1 - highS)/2, 1,
                       m, 0);

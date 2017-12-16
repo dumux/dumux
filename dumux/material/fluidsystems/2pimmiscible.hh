@@ -58,8 +58,8 @@ template <class Scalar, class WettingPhase, class NonwettingPhase>
 class TwoPImmiscible
 : public BaseFluidSystem<Scalar, TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase> >
 {
-    typedef TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
+    using ThisType = TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 public:
     /****************************************
      * Fluid phase related static parameters

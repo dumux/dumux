@@ -60,11 +60,11 @@ namespace Dumux
 template <class ScalarT, class ParamsT = RegularizedParkerVanGen3PParams<ScalarT> >
 class RegularizedParkerVanGen3P
 {
-    typedef Dumux::ParkerVanGen3P<ScalarT, ParamsT> ParkerVanGen3P;
+    using ParkerVanGen3P = Dumux::ParkerVanGen3P<ScalarT, ParamsT>;
 
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief A regularized Parker- van Genuchten capillary pressure-saturation

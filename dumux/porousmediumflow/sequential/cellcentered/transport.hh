@@ -57,27 +57,27 @@ SET_INT_PROP(SequentialModel, TimeManagerSubTimestepVerbosity, 0);
 template<class TypeTag>
 class FVTransport
 {
-    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) Implementation;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, TransportModel);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GET_PROP_TYPE(TypeTag, EvalCflFluxFunction) EvalCflFluxFunction;
+    using EvalCflFluxFunction = typename GET_PROP_TYPE(TypeTag, EvalCflFluxFunction);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     struct LocalTimesteppingData
     {
@@ -421,9 +421,9 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
 
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     DataHandle dataHandle(problem_.elementMapper(), updateVec);
     problem_.gridView().template communicate<DataHandle>(dataHandle,
                                                          Dune::InteriorBorder_All_Interface,
@@ -431,7 +431,7 @@ void FVTransport<TypeTag>::update(const Scalar t, Scalar& dt, TransportSolutionT
 
     if (localTimeStepping_)
     {
-    typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+    using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
 
     TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
     problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,
@@ -464,7 +464,7 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
         LocalTimesteppingData& localDataI = timeStepData_[globalIdxI];
 
 
-        typedef std::unordered_map<int, Scalar > FaceDt;
+        using FaceDt = std::unordered_map<int, Scalar>;
         FaceDt faceDt;
 
         // run through all intersections with neighbors and boundary
@@ -554,9 +554,9 @@ void FVTransport<TypeTag>::updatedTargetDt_(Scalar &dt)
 
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> > TimeDataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using TimeDataHandle = VectorExchange<ElementMapper, std::vector<LocalTimesteppingData> >;
 
     TimeDataHandle timeDataHandle(problem_.elementMapper(), timeStepData_);
     problem_.gridView().template communicate<TimeDataHandle>(timeDataHandle,

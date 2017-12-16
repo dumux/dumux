@@ -49,8 +49,8 @@ template <class ScalarT, class ParamsT = BrooksCoreyParams<ScalarT> >
 class BrooksCorey
 {
 public:
-    typedef ParamsT     Params;
-    typedef typename    Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The capillary pressure-saturation curve according to Brooks & Corey.

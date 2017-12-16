@@ -45,8 +45,8 @@ template <class ScalarT, class ParamsT =AwnSurfaceExpSwPcTo3Params<ScalarT> >
 class AwnSurfaceExpSwPcTo3
 {
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The awn surface

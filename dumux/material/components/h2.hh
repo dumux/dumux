@@ -45,7 +45,7 @@ namespace Dumux
 template <class Scalar>
 class H2 : public Component<Scalar, H2<Scalar> >
 {
-    typedef Dumux::IdealGas<Scalar> IdealGas;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
     /*!

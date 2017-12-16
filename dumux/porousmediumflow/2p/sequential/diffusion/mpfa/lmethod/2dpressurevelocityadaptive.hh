@@ -47,41 +47,41 @@ namespace Dumux
  */
 template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfaL2dPressure2pAdaptive<TypeTag>
 {
-    typedef FvMpfaL2dPressure2pAdaptive<TypeTag> ParentType;
+    using ParentType = FvMpfaL2dPressure2pAdaptive<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GridView::Grid Grid;
-    typedef typename GridView::IndexSet IndexSet;
-    typedef typename GridView::Intersection Intersection;
+    using Grid = typename GridView::Grid;
+    using IndexSet = typename GridView::IndexSet;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename Grid::template Codim<0>::Entity::Geometry Geometry;
-    typedef typename Geometry::JacobianTransposed JacobianTransposed;
+    using Geometry = typename Grid::template Codim<0>::Entity::Geometry;
+    using JacobianTransposed = typename Geometry::JacobianTransposed ;
 
-    typedef typename ParentType::InteractionVolume InteractionVolume;
+    using InteractionVolume = typename ParentType::InteractionVolume;
 
     enum
     {
@@ -101,9 +101,9 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
 public:
     //! Constructs a FvMpfaL2dPressureVelocity2pAdaptive object

@@ -43,7 +43,7 @@ template <class ScalarT>
 class BrooksCoreyParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     BrooksCoreyParams()
     {

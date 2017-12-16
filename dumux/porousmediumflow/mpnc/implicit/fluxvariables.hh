@@ -52,14 +52,14 @@ class MPNCFluxVariables
     : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 {
     friend typename GET_PROP_TYPE(TypeTag, BaseFluxVariables); // be friends with base class
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
+    using BaseFluxVariables = typename GET_PROP_TYPE(TypeTag, BaseFluxVariables);
 
     enum {dim= GridView::dimension};
     enum {dimWorld= GridView::dimensionworld};
@@ -68,11 +68,11 @@ class MPNCFluxVariables
     enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
     enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef MPNCFluxVariablesDiffusion<TypeTag, enableDiffusion> FluxVariablesDiffusion;
-    typedef MPNCFluxVariablesEnergy<TypeTag, enableEnergy, numEnergyEquations> FluxVariablesEnergy;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluxVariablesDiffusion = MPNCFluxVariablesDiffusion<TypeTag, enableDiffusion>;
+    using FluxVariablesEnergy = MPNCFluxVariablesEnergy<TypeTag, enableEnergy, numEnergyEquations>;
 
 public:
     /*!

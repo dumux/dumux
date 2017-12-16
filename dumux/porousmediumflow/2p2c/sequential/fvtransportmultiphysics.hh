@@ -54,15 +54,15 @@ namespace Dumux
 template<class TypeTag>
 class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
 
     enum
     {
@@ -74,14 +74,14 @@ class FVTransport2P2CMultiPhysics : public FVTransport2P2C<TypeTag>
         wCompIdx = Indices::wPhaseIdx, nCompIdx = Indices::nPhaseIdx
     };
 
-    typedef Dune::FieldVector<Scalar, 2> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using PhaseVector = Dune::FieldVector<Scalar, 2>;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     //! Acess function for the current problem
     Problem& problem()
     { return this->problem_; }
 
-    typedef typename FVTransport2P2C<TypeTag>::LocalTimesteppingData LocalTimesteppingData;
+    using LocalTimesteppingData = typename FVTransport2P2C<TypeTag>::LocalTimesteppingData;
 
 public:
     virtual void update(const Scalar t, Scalar& dt, TransportSolutionType& updateVec, bool impet = false);
@@ -233,9 +233,9 @@ void FVTransport2P2CMultiPhysics<TypeTag>::update(const Scalar t, Scalar& dt, Tr
 
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem().variables().elementMapper(), updateVec[i]);

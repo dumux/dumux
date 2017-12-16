@@ -40,6 +40,6 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-    typedef TTAG(OnePTwoCNIFacetCoupling) ProblemTypeTag;
+    using ProblemTypeTag = TTAG(OnePTwoCNIFacetCoupling);
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

@@ -51,7 +51,7 @@ template <class Scalar, class CO2Tables>
 class CO2 : public Component<Scalar, CO2<Scalar, CO2Tables> >
 {
     static const Scalar R;
-    typedef Dumux::IdealGas<Scalar> IdealGas;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
     static bool warningThrown;
 

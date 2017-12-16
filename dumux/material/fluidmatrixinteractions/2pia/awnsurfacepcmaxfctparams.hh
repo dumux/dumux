@@ -32,7 +32,7 @@ template<class ScalarT>
 class AwnSurfacePcMaxFctParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     AwnSurfacePcMaxFctParams()
     {}

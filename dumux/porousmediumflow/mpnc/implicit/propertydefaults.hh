@@ -60,7 +60,7 @@ namespace Properties
 SET_PROP(MPNC, NumComponents)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 public:
     static const unsigned int value = FluidSystem::numComponents;
@@ -72,7 +72,7 @@ public:
 SET_PROP(MPNC, NumPhases)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 public:
     static const unsigned int value = FluidSystem::numPhases;
@@ -84,7 +84,7 @@ public:
 SET_PROP(MPNC, NumEq)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
 public:
     static const unsigned int value = Indices::numPrimaryVars;
@@ -97,11 +97,11 @@ public:
 SET_PROP(MPNC, ConstraintSolver)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
 public:
-    typedef CompositionFromFugacities<Scalar, FluidSystem> type;
+    using type = CompositionFromFugacities<Scalar, FluidSystem>;
 };
 
 
@@ -113,7 +113,7 @@ SET_TYPE_PROP(MPNC,
 //! Use the MpNc specific newton controller for the MpNc model
 SET_PROP(MPNC, NewtonController)
 {public:
-    typedef MPNCNewtonController<TypeTag> type;
+    using type = MPNCNewtonController<TypeTag>;
 };
 
 //! the Model property
@@ -165,7 +165,7 @@ SET_TYPE_PROP(MPNC, SpatialParams, FVSpatialParams<TypeTag>);
 //! The VTK writer module for common quantities
 SET_PROP(MPNC, MPNCVtkCommonModule)
 {
-    typedef MPNCVtkWriterCommon<TypeTag> type;
+    using type = MPNCVtkWriterCommon<TypeTag>;
 };
 
 //! The VTK writer module for quantities which are specific for each
@@ -173,7 +173,7 @@ SET_PROP(MPNC, MPNCVtkCommonModule)
 SET_PROP(MPNC, MPNCVtkMassModule)
 {
 private: enum { enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic) };
-public: typedef MPNCVtkWriterMass<TypeTag, enableKinetic> type;
+public: using type = MPNCVtkWriterMass<TypeTag, enableKinetic>;
 };
 
 //! The VTK writer module for quantities which are specific for each
@@ -184,20 +184,20 @@ private:
     enum { enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy) };
     enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations) };
 public:
-    typedef MPNCVtkWriterEnergy<TypeTag, enableEnergy, numEnergyEquations> type;
+    using type = MPNCVtkWriterEnergy<TypeTag, enableEnergy, numEnergyEquations>;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(MPNC, ThermalConductivityModel)
 { private :
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
   public:
-    typedef ThermalConductivitySomerton<Scalar> type;
+    using type = ThermalConductivitySomerton<Scalar>;
 };
 
 //! The VTK writer for user specified data (does nothing by default)
 SET_PROP(MPNC, MPNCVtkCustomModule)
-{ typedef MPNCVtkWriterModule<TypeTag> type; };
+{ using type = MPNCVtkWriterModule<TypeTag>; };
 
 /*!
  * \brief The fluid state which is used by the volume variables to
@@ -207,10 +207,10 @@ SET_PROP(MPNC, MPNCVtkCustomModule)
  */
 SET_PROP(MPNC, FluidState){
     private:
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-        typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+        using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     public:
-        typedef CompositionalFluidState<Scalar, FluidSystem> type;
+        using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 //! Set the default pressure formulation to the pressure of the (most) wetting phase

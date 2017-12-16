@@ -69,10 +69,10 @@ SET_BOOL_PROP(Transport, ImpetSwitchNormals, false);
 SET_PROP(Transport, TransportSolutionType)
 {
  private:
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionType;
+    using SolutionType = typename GET_PROP(TypeTag, SolutionTypes);
 
  public:
-    typedef typename SolutionType::ScalarSolution type;//!<type for vector of scalar properties
+    using type = typename SolutionType::ScalarSolution;//!<type for vector of scalar properties
 };
 SET_SCALAR_PROP(Transport, ImpetDtVariationRestrictionFactor, std::numeric_limits<double>::max());
 SET_SCALAR_PROP(Transport, ImpetPorosityThreshold, 1e-6);

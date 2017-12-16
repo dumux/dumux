@@ -60,8 +60,8 @@ public:
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        typedef Dumux::Air<Scalar> Air;
-        typedef Dumux::Mesitylene<Scalar> Mesitylene;
+        using Air = Dumux::Air<Scalar>;
+        using Mesitylene = Dumux::Mesitylene<Scalar>;
 
         using std::min;
         using std::max;
