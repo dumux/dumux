@@ -63,14 +63,14 @@ SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, EvaporationAtmo
 // Set the material Law
 SET_PROP(EvaporationAtmosphereSpatialParams, MaterialLaw)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {wPhaseIdx   = FluidSystem::wPhaseIdx};
 
 private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     // select appropriate parametrization
 #define linear      0 // pc(S_w)
 #define RegVG       0 // pc(S_w)
@@ -80,29 +80,29 @@ private:
 
     // define the material law
     #if linear
-        typedef LinearMaterial<Scalar>          EffectiveLaw;
+        using EffectiveLaw = LinearMaterial<Scalar>;
     #endif
 
     #if RegVG
-        typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+        using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
     #endif
 
     #if RegBC
-        typedef RegularizedBrooksCorey<Scalar> EffectiveLaw;
+        using EffectiveLaw = RegularizedBrooksCorey<Scalar>;
     #endif
 
     #if RegVGofT
-        typedef RegularizedVanGenuchtenOfTemperature<Scalar> EffectiveLaw;
+        using EffectiveLaw = RegularizedVanGenuchtenOfTemperature<Scalar>;
     #endif
 
     #if VG
-        typedef VanGenuchten<Scalar> EffectiveLaw;
+        using EffectiveLaw = VanGenuchten<Scalar>;
     #endif
 
-    typedef EffToAbsLaw<EffectiveLaw>       TwoPMaterialLaw;
+    using TwoPMaterialLaw = EffToAbsLaw<EffectiveLaw>;
     public:
-//        typedef TwoPOfTAdapter<wPhaseIdx, TwoPMaterialLaw> type; // adapter for incorporating temperature effects on pc-S
-        typedef TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> type;
+//        using type = TwoPOfTAdapter<wPhaseIdx, TwoPMaterialLaw>; // adapter for incorporating temperature effects on pc-S
+        using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
 };
 
 
@@ -110,33 +110,33 @@ private:
 // Set the interfacial area relation: wetting -- non-wetting
 SET_PROP(EvaporationAtmosphereSpatialParams, AwnSurface)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef AwnSurfacePcMaxFct<Scalar>     EffectiveIALaw;
-    //    typedef AwnSurfacePolynomial2ndOrder<Scalar>      EffectiveIALaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
+    //    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
 public:
-    typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
 };
 
 
 // Set the interfacial area relation: wetting -- solid
 SET_PROP(EvaporationAtmosphereSpatialParams, AwsSurface)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef AwnSurfacePolynomial2ndOrder<Scalar>  EffectiveIALaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
 public:
-    typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
 };
 
 // Set the interfacial area relation: non-wetting -- solid
 SET_PROP(EvaporationAtmosphereSpatialParams, AnsSurface)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef AwnSurfaceExpSwPcTo3<Scalar>      EffectiveIALaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
 public:
-    typedef EffToAbsLawIA<EffectiveIALaw, MaterialLawParams> type;
+    using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
 };
 
 } // end namespace properties
@@ -147,10 +147,10 @@ public:
 template<class TypeTag>
 class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using ParentType = FVSpatialParams<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {dim=GridView::dimension };
     enum {dimWorld=GridView::dimensionworld};
@@ -161,30 +161,30 @@ class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy)};
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
-    typedef Dune::FieldVector<Scalar,dim> DimVector;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AwnSurface) AwnSurface;
-    typedef typename AwnSurface::Params AwnSurfaceParams;
+    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
+    using AwnSurfaceParams = typename AwnSurface::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AwsSurface) AwsSurface;
-    typedef typename AwsSurface::Params AwsSurfaceParams;
+    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
+    using AwsSurfaceParams = typename AwsSurface::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AnsSurface) AnsSurface;
-    typedef typename AnsSurface::Params AnsSurfaceParams;
+    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
+    using AnsSurfaceParams = typename AnsSurface::Params;
 
 
     EvaporationAtmosphereSpatialParams(const GridView &gridView)

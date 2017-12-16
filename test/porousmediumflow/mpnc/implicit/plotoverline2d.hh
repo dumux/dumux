@@ -59,19 +59,19 @@ namespace Properties
 template<class TypeTag>
 class PlotOverLine2D
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)               Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem)              Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView)             GridView;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry)    FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, DofMapper)            DofMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementSolutionVector) ElementSolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector)       SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)          MaterialLaw;
-    typedef typename MaterialLaw::Params                          aterialLawParams;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using DofMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using aterialLawParams = typename MaterialLaw::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem)          FluidSystem;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {
         wPhaseIdx = FluidSystem::wPhaseIdx,
@@ -85,7 +85,7 @@ class PlotOverLine2D
         dimWorld    = GridView::dimensionworld,
     };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!

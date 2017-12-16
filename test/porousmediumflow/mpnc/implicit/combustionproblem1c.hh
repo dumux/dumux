@@ -82,9 +82,9 @@ SET_TYPE_PROP(CombustionProblemOneComponent,
 // Set fluid configuration
 SET_PROP(CombustionProblemOneComponent, FluidSystem){
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false> type;
+    using type = FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false>;
 };
 
 // Set the newton controller
@@ -134,11 +134,11 @@ SET_BOOL_PROP(CombustionProblemOneComponent, EnableKinetic, false);
 SET_PROP(CombustionProblemOneComponent, FluidState)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef CompositionalFluidState<Scalar, FluidSystem> type;
+    using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
 SET_BOOL_PROP(CombustionProblemOneComponent, UseMaxwellDiffusion, false);
@@ -165,22 +165,22 @@ SET_BOOL_PROP(CombustionProblemOneComponent, VelocityAveragingInModel, true);
 template<class TypeTag>
 class CombustionProblemOneComponent: public ImplicitPorousMediaProblem<TypeTag> {
 
-    typedef CombustionProblemOneComponent<TypeTag> ThisType;
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices)Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using ThisType = CombustionProblemOneComponent<TypeTag>;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     /*!
      * \brief The fluid state which is used by the volume variables to
      *        store the thermodynamic state. This should be chosen
      *        appropriately for the model ((non-)isothermal, equilibrium, ...).
      *        This can be done in the problem.
      */
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
     enum {dim = GridView::dimension}; // Grid and world dimension
     enum {dimWorld = GridView::dimensionworld};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
@@ -210,26 +210,26 @@ class CombustionProblemOneComponent: public ImplicitPorousMediaProblem<TypeTag> 
         leastWettingFirst = MpNcPressureFormulation::leastWettingFirst
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dim> DimVector;
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
+    using DimVector = Dune::FieldVector<typename GridView::Grid::ctype, dim>;
+    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
 
-    typedef std::vector<Dune::FieldVector<Scalar, 1> > ScalarBuffer;
-    typedef std::array<ScalarBuffer, numPhases> PhaseBuffer;
-    typedef Dune::FieldVector<Scalar, dimWorld> VelocityVector;
-    typedef Dune::BlockVector<VelocityVector> VelocityField;
-    typedef std::array<VelocityField, numPhases> PhaseVelocityField;
+    using ScalarBuffer = std::vector<Dune::FieldVector<Scalar, 1>>;
+    using PhaseBuffer = std::array<ScalarBuffer, numPhases>;
+    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
+    using VelocityField = Dune::BlockVector<VelocityVector>;
+    using PhaseVelocityField = std::array<VelocityField, numPhases>;
 
 public:
     CombustionProblemOneComponent(TimeManager &timeManager,
@@ -670,7 +670,7 @@ private:
             }
 
             // obtain fugacities
-            typedef ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+            using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
             ParameterCache paramCache;
             ComputeFromReferencePhase::solve(fluidState,
                     paramCache,

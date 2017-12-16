@@ -104,8 +104,8 @@ SET_BOOL_PROP(RichardsTestProblem, UseMoles, true);
  * <tt>./test_cc1p -parameterFile test_cc1p.input</tt>
  *
  * The same parameter file can be also used for 3d simulation but you need to change line
- * <tt>typedef Dune::SGrid<2,2> type;</tt> to
- * <tt>typedef Dune::SGrid<3,3> type;</tt> in the problem file
+ * <tt>using type = Dune::SGrid<2, 2>;</tt> to
+ * <tt>using type = Dune::SGrid<3, 3>;</tt> in the problem file
  * and use <tt>1p_3d.dgf</tt> in the parameter file.
  */
 template <class TypeTag>

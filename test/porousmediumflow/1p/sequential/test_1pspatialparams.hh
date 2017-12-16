@@ -36,19 +36,19 @@ namespace Dumux
 template<class TypeTag>
 class TestOnePSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 {
-    typedef SequentialFVSpatialParamsOneP<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::IndexSet IndexSet;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename Grid::ctype CoordScalar;
+    using ParentType = SequentialFVSpatialParamsOneP<TypeTag>;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using IndexSet = typename GridView::IndexSet;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using CoordScalar = typename Grid::ctype;
 
     enum
         {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
 

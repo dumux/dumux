@@ -48,11 +48,11 @@ SET_TYPE_PROP(InjectionProblemSpatialParams, SpatialParams, Dumux::InjectionProb
 SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
 {
  private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedVanGenuchten<Scalar> EffMaterialLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffMaterialLaw = RegularizedVanGenuchten<Scalar>;
  public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffMaterialLaw> type;
+    using type = EffToAbsLaw<EffMaterialLaw>;
 };
 }
 

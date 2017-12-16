@@ -58,11 +58,11 @@ SET_PROP(RichardsNISpatialParams, MaterialLaw)
 private:
     // define the material law which is parameterized by effective
     // saturations
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedVanGenuchten<Scalar> EffectiveLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using EffectiveLaw = RegularizedVanGenuchten<Scalar>;
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<EffectiveLaw> type;
+    using type = EffToAbsLaw<EffectiveLaw>;
 };
 }
 
@@ -87,7 +87,7 @@ class RichardsNISpatialParams : public FVSpatialParams<TypeTag>
     using CoordScalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
-    //typedef LinearMaterial<Scalar> EffMaterialLaw;
+    //using EffMaterialLaw = LinearMaterial<Scalar>;
 public:
         // export permeability type
     using PermeabilityType = Scalar;

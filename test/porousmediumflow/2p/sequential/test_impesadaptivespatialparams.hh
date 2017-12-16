@@ -48,10 +48,10 @@ SET_TYPE_PROP(TestIMPESAdaptiveSpatialParams, SpatialParams, TestIMPESAdaptiveSp
 SET_PROP(TestIMPESAdaptiveSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef RegularizedBrooksCorey<Scalar> RawMaterialLaw;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using RawMaterialLaw = RegularizedBrooksCorey<Scalar>;
 public:
-    typedef EffToAbsLaw<RawMaterialLaw> type;
+    using type = EffToAbsLaw<RawMaterialLaw>;
 };
 }
 
@@ -63,21 +63,21 @@ public:
 template<class TypeTag>
 class TestIMPESAdaptiveSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef SequentialFVSpatialParams<TypeTag> ParentType;
-    typedef typename Grid::ctype CoordScalar;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ParentType = SequentialFVSpatialParams<TypeTag>;
+    using CoordScalar = typename Grid::ctype;
 
     enum
         {dimWorld=Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    using Element = typename Grid::Traits::template Codim<0>::Entity;
 
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
 
     Scalar intrinsicPermeability (const Element& element) const

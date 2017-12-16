@@ -45,10 +45,10 @@ void usage(const char *progname, const std::string &errorMsg = "")
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(TestMultTwoPTwoCProblem) TypeTag;
-        typedef GET_PROP_TYPE(TypeTag, Grid)    Grid;
-        typedef GET_PROP_TYPE(TypeTag, Problem) Problem;
-        typedef GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+        using TypeTag = TTAG(TestMultTwoPTwoCProblem);
+        using Grid = GET_PROP_TYPE(TypeTag, Grid);
+        using Problem = GET_PROP_TYPE(TypeTag, Problem);
+        using TimeManager = GET_PROP_TYPE(TypeTag, TimeManager);
 
         static const int dim = Grid::dimension;
 

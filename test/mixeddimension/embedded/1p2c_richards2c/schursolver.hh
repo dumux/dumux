@@ -49,10 +49,10 @@ class SchurComplement : public Dune::LinearOperator<X,Y>
 {
 public:
     // export types
-    // typedef DType matrix_type;
-    typedef X domain_type;
-    typedef Y range_type;
-    typedef typename X::field_type field_type;
+    // using matrix_type = DType;
+    using domain_type = X;
+    using range_type = Y;
+    using field_type = typename X::field_type;
 
     //! constructor: just store a reference to a matrix
     explicit SchurComplement (const AType& A, const BType& B,
@@ -116,13 +116,13 @@ class SchurComplementPreconditioner : public Dune::Preconditioner<X, Y>
 {
 public:
     //! \brief The matrix type the preconditioner is for.
-    // typedef M matrix_type;
+    // using matrix_type = M;
     //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
+    using domain_type = X;
     //! \brief The range type of the preconditioner.
-    typedef Y range_type;
+    using range_type = Y;
     //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
+    using field_type = typename X::field_type;
 
     using BulkVector = typename GET_PROP(TypeTag, SolutionVector)::SolutionVectorBulk;
     using EmbeddedVector = typename GET_PROP(TypeTag, SolutionVector)::SolutionVectorLowDim;
@@ -254,13 +254,13 @@ class BlockILU0Preconditioner : public Dune::Preconditioner<X, Y>
 {
 public:
     //! \brief The matrix type the preconditioner is for.
-    // typedef typename std::remove_const<M>::type matrix_type;
+    // using matrix_type = typename std::remove_const<M>::type;
     //! \brief The domain type of the preconditioner.
-    typedef X domain_type;
+    using domain_type = X;
     //! \brief The range type of the preconditioner.
-    typedef Y range_type;
+    using range_type = Y;
     //! \brief The field type of the preconditioner.
-    typedef typename X::field_type field_type;
+    using field_type = typename X::field_type;
 
     /*! \brief Constructor.
 

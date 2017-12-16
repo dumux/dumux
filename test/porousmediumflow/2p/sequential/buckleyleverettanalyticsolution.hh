@@ -64,18 +64,18 @@ struct CheckMaterialLaw<Scalar, EffToAbsLaw< LinearMaterial<Scalar> > >
 
 template<class TypeTag> class BuckleyLeverettAnalytic
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
+    using MaterialLawParams = typename MaterialLaw::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -87,8 +87,8 @@ template<class TypeTag> class BuckleyLeverettAnalytic
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > BlockVector;
-    typedef Dune::FieldVector<Scalar, dimworld> GlobalPosition;
+    using BlockVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimworld>;
 
 private:
 

@@ -88,7 +88,7 @@ void checkNcpFlash(const FluidState &fsRef,
 {
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     // calculate the total amount of stuff in the reference fluid
     // phase
@@ -101,7 +101,7 @@ void checkNcpFlash(const FluidState &fsRef,
     }
 
     // initialize the fluid state for the flash calculation
-    typedef Dumux::NcpFlash<Scalar, FluidSystem> NcpFlash;
+    using NcpFlash = Dumux::NcpFlash<Scalar, FluidSystem>;
     FluidState fsFlash;
 
     fsFlash.setTemperature(fsRef.temperature(/*phaseIdx=*/0));
@@ -123,8 +123,8 @@ void completeReferenceFluidState(FluidState &fs,
 {
     enum { numPhases = FluidSystem::numPhases };
 
-    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
-    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
 
     int otherPhaseIdx = 1 - refPhaseIdx;
 
@@ -151,9 +151,9 @@ void completeReferenceFluidState(FluidState &fs,
 
 int main()
 {
-    typedef double Scalar;
-    typedef Dumux::FluidSystems::H2ON2<Scalar, false> FluidSystem;
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> CompositionalFluidState;
+    using Scalar = double;
+    using FluidSystem = Dumux::FluidSystems::H2ON2<Scalar, false>;
+    using CompositionalFluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
 
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
@@ -163,10 +163,10 @@ int main()
     enum { H2OIdx = FluidSystem::H2OIdx };
     enum { N2Idx = FluidSystem::N2Idx };
 
-    typedef Dumux::RegularizedBrooksCorey<Scalar> EffMaterialLaw;
-    typedef Dumux::EffToAbsLaw<EffMaterialLaw> TwoPMaterialLaw;
-    typedef Dumux::TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> MaterialLaw;
-    typedef MaterialLaw::Params MaterialLawParams;
+    using EffMaterialLaw = Dumux::RegularizedBrooksCorey<Scalar>;
+    using TwoPMaterialLaw = Dumux::EffToAbsLaw<EffMaterialLaw>;
+    using MaterialLaw = Dumux::TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
+    using MaterialLawParams = MaterialLaw::Params;
 
     Scalar T = 273.15 + 25;
 
@@ -250,7 +250,7 @@ int main()
     fsRef.setPressure(nPhaseIdx, 1e6);
 
     FluidSystem::ParameterCache paramCache;
-    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
     MiscibleMultiPhaseComposition::solve(fsRef, paramCache,
                                          /*setViscosity=*/false,
                                          /*setEnthalpy=*/false);
@@ -276,14 +276,14 @@ int main()
     fsRef.setPressure(wPhaseIdx, 1e6);
 
     // calulate the capillary pressure
-    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
     PhaseVector pc;
     MaterialLaw::capillaryPressures(pc, matParams2, fsRef);
     fsRef.setPressure(nPhaseIdx,
                       fsRef.pressure(wPhaseIdx)
                       + (pc[nPhaseIdx] - pc[wPhaseIdx]));
 
-    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
     MiscibleMultiPhaseComposition::solve(fsRef, paramCache,
                                          /*setViscosity=*/false,
                                          /*setEnthalpy=*/false);

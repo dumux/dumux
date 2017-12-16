@@ -56,9 +56,9 @@ SET_TYPE_PROP(Forchheimer2pProblem,
 // Set fluid configuration
 SET_PROP(Forchheimer2pProblem, FluidSystem)
 { private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    typedef FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false> type;
+    using type = FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false>;
 };
 
 
@@ -109,17 +109,17 @@ template <class TypeTag>
 class Forchheimer2pProblem
     : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     // Grid and world dimension
     enum {dim = GridView::dimension};
@@ -134,13 +134,13 @@ class Forchheimer2pProblem
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
 public:
     /*!
@@ -395,7 +395,7 @@ private:
 
         // make the fluid state consistent with local thermodynamic
         // equilibrium
-        typedef ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
 
         ParameterCache paramCache;
         ComputeFromReferencePhase::solve(fs,

@@ -58,17 +58,17 @@ SET_TYPE_PROP(CombustionSpatialParams, SpatialParams, CombustionSpatialParams<Ty
 SET_PROP(CombustionSpatialParams, MaterialLaw)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {wPhaseIdx   = FluidSystem::wPhaseIdx};
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 //    actually other people call this Leverett
-    typedef HeatPipeLaw<Scalar> EffectiveLaw;
+    using EffectiveLaw = HeatPipeLaw<Scalar>;
 
-    typedef EffToAbsLaw<EffectiveLaw>       TwoPMaterialLaw;
+    using TwoPMaterialLaw = EffToAbsLaw<EffectiveLaw>;
     public:
-        typedef TwoPAdapter<wPhaseIdx, TwoPMaterialLaw> type;
+        using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
 };
 
 
@@ -81,10 +81,10 @@ private:
 template<class TypeTag>
 class CombustionSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using ParentType = FVSpatialParams<TypeTag>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {dim=GridView::dimension };
     enum {dimWorld=GridView::dimensionworld};
@@ -95,19 +95,19 @@ class CombustionSpatialParams : public FVSpatialParams<TypeTag>
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {enableEnergy          = GET_PROP_VALUE(TypeTag, EnableEnergy)};
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar,dimWorld> DimVector;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 public:
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename MaterialLaw::Params MaterialLawParams;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
 
     CombustionSpatialParams(const GridView &gv)
         : ParentType(gv)

@@ -79,14 +79,14 @@ SET_BOOL_PROP(SagdProblem, UseMoles, false);
 template <class TypeTag >
 class SagdProblem : public ImplicitPorousMediaProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
 
-    typedef ImplicitPorousMediaProblem<TypeTag> ParentType;
+    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
@@ -115,19 +115,19 @@ class SagdProblem : public ImplicitPorousMediaProblem<TypeTag>
     };
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 

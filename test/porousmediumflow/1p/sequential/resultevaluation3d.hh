@@ -82,18 +82,18 @@ public:
     void evaluate(const Grid& grid, ProblemType& problem,
                   SolutionType& solution, bool pureNeumann = false)
     {
-        typedef typename Grid::Traits::template Codim<0>::Entity Entity;
-        typedef typename Entity::Geometry Geometry;
-        typedef typename Grid::LevelGridView GV;
-        typedef typename GV::IndexSet IS;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,Dune::MCMGElementLayout> ElementMapper;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FaceMapper;
-        typedef typename Grid::ctype ct;
+        using Entity = typename Grid::Traits::template Codim<0>::Entity;
+        using Geometry = typename Entity::Geometry;
+        using GV = typename Grid::LevelGridView;
+        using IS = typename GV::IndexSet;
+        using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GV, Dune::MCMGElementLayout>;
+        using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GV, FaceLayout>;
+        using ct = typename Grid::ctype;
 
         enum{dim = Grid::dimension};
 
-        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-        typedef typename Dune::ReferenceElements<ct, dim> ReferenceElements;
+        using JacobianInverseTransposed = typename Geometry::JacobianInverseTransposed;
+        using ReferenceElements = Dune::ReferenceElements<ct, dim>;
         const GV& gridview(grid.levelGridView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
         ElementMapper elementMapper(gridview);
@@ -418,15 +418,15 @@ public:
     void evaluate(const GridView& gridView,
             Problem& problem, bool consecutiveNumbering = false)
     {
-        typedef typename GridView::Grid Grid;
-        typedef typename Grid::ctype Scalar;
+        using Grid = typename GridView::Grid;
+        using Scalar = typename Grid::ctype;
         enum {dim=Grid::dimension};
-        typedef typename Grid::template Codim<0>::Entity Element;
-        typedef typename Element::Geometry Geometry;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
-        typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > SolVector;
-        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
-        typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+        using Element = typename Grid::template Codim<0>::Entity;
+        using Geometry = typename Element::Geometry;
+        using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
+        using SolVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
+        using JacobianInverseTransposed = typename Geometry::JacobianInverseTransposed;
+        using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
         ElementMapper elementMapper(gridView);
         SolVector exactSol(gridView.size(0));
@@ -704,14 +704,14 @@ public:
     void evaluateCP(const GridView& gridView, Problem& problem,
             const SolVector& solution, const VelVector& velocity, bool switchNormals = false)
     {
-        typedef typename GridView::Grid Grid;
-        typedef typename Grid::ctype Scalar;
+        using Grid = typename GridView::Grid;
+        using Scalar = typename Grid::ctype;
         enum {dim=Grid::dimension, maxIntersections = 12};
-        typedef typename Grid::template Codim<0>::Entity Element;
-        typedef typename Element::Geometry Geometry;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout> ElementMapper;
-        typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-        typedef typename Dune::ReferenceElements<Scalar, dim-1> ReferenceFaces;
+        using Element = typename Grid::template Codim<0>::Entity;
+        using Geometry = typename Element::Geometry;
+        using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
+        using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+        using ReferenceFaces = Dune::ReferenceElements<Scalar, dim-1>;
 
         ElementMapper elementMapper(gridView);
 

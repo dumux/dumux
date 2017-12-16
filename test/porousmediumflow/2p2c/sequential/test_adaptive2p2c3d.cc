@@ -55,7 +55,7 @@ void usage(const char *progName, const std::string &errorMsg)
 // The main function using the standard start procedure
 int main(int argc, char** argv)
 {
-        typedef TTAG(Adaptive2p2c3d) ProblemTypeTag;
+        using ProblemTypeTag = TTAG(Adaptive2p2c3d);
         return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 

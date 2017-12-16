@@ -153,7 +153,7 @@ public:
                 continue;
             hMax = std::max(geometryDiameter(geometry), hMax);
 
-            typedef Dune::QuadratureRule<Scalar, GridView::dimension> Quad;
+            using Quad = Dune::QuadratureRule<Scalar, GridView::dimension>;
             const Quad &quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
             for(auto&& qp : quad)
             {
@@ -192,7 +192,7 @@ public:
             if (int(GridView::dimension) == 3 && excludeInnerBulk_ &&
                 std::sqrt(center[0]*center[0] + center[1]*center[1]) < GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, Radius))
                 continue;
-            typedef Dune::QuadratureRule<Scalar, GridView::dimension> Quad;
+            using Quad = Dune::QuadratureRule<Scalar, GridView::dimension>;
             const Quad &quad = Dune::QuadratureRules<Scalar, GridView::dimension>::rule(geometry.type(), order);
             for(auto&& qp : quad)
             {

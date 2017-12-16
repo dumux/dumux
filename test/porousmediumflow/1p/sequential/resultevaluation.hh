@@ -71,12 +71,12 @@ public:
     void evaluate(const GridView& gridView,
             Problem& problem, bool consecutiveNumbering = false)
     {
-        typedef typename GridView::Grid Grid;
-        typedef typename Grid::ctype Scalar;
+        using Grid = typename GridView::Grid;
+        using Scalar = typename Grid::ctype;
         enum {dim=Grid::dimension};
-        typedef typename Grid::template Codim<0>::Entity Element;
-        typedef typename Element::Geometry Geometry;
-        typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
+        using Element = typename Grid::template Codim<0>::Entity;
+        using Geometry = typename Element::Geometry;
+        using JacobianInverseTransposed = typename Geometry::JacobianInverseTransposed;
 
         uMin = 1e100;
         uMax = -1e100;
@@ -103,7 +103,7 @@ public:
             // element geometry
             const Geometry& geometry = element.geometry();
             Dune::GeometryType geomType = geometry.type();
-            typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+            using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
             const Dune::FieldVector<Scalar,dim>& local = ReferenceElements::general(geomType).position(0, 0);
             Dune::FieldVector<Scalar,dim> globalPos = geometry.global(local);
 

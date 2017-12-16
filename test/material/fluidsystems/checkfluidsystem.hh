@@ -425,7 +425,7 @@ int checkFluidSystem()
     fs.restrictToPhase(-1);
 
     // check whether the parameter cache adheres to the API
-    typedef typename FluidSystem::ParameterCache PC;
+    using PC = typename FluidSystem::ParameterCache;
     PC paramCache;
     try
     {

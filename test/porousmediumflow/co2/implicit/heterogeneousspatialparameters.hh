@@ -57,7 +57,7 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
     // define the material law parameterized by absolute saturations
-    typedef EffToAbsLaw<RegularizedBrooksCorey<Scalar>> type;
+    using type = EffToAbsLaw<RegularizedBrooksCorey<Scalar>>;
 };
 }
 

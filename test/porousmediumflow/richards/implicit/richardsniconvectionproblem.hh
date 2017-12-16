@@ -111,7 +111,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using IapwsH2O = H2O<Scalar>;
 
     // copy some indices for convenience
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         // world dimension
         dimWorld = GridView::dimensionworld
@@ -128,10 +128,10 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     RichardsNIConvectionProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
