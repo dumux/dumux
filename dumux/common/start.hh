@@ -39,6 +39,11 @@
 namespace Dumux
 {
 
+namespace Properties
+{
+NEW_PROP_TAG(TimeManager);
+}
+
 /*!
  * \ingroup Start
  *
