@@ -24,6 +24,7 @@
 #ifndef DUMUX_BRINE_CO2_SYSTEM_HH
 #define DUMUX_BRINE_CO2_SYSTEM_HH
 
+#include <dumux/common/parameters.hh>
 #include <dumux/material/idealgas.hh>
 #include <dumux/material/fluidsystems/base.hh>
 
