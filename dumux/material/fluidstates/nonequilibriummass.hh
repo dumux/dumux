@@ -51,7 +51,7 @@ class NonEquilibriumMassFluidState
 : public NonEquilibriumFluidState<Scalar, FluidSystem>
 {
     public:
-        typedef NonEquilibriumFluidState<Scalar, FluidSystem> ParentType;
+        using ParentType = NonEquilibriumFluidState<Scalar, FluidSystem>;
 
         enum { numPhases       = FluidSystem::numPhases };
         enum { numComponents   = FluidSystem::numComponents };

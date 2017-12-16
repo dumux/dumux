@@ -35,7 +35,7 @@ template<int numPhasesV, class ScalarT>
 class MpLinearMaterialParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
     enum { numPhases = numPhasesV };
 
     MpLinearMaterialParams()

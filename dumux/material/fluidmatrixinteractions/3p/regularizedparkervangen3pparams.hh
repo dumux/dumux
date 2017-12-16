@@ -38,10 +38,10 @@ namespace Dumux
 template <class ScalarT>
 class RegularizedParkerVanGen3PParams : public ParkerVanGen3PParams<ScalarT>
 {
-    typedef Dumux::ParkerVanGen3PParams<ScalarT> ParkerVanGen3PParams;
+    using ParkerVanGen3PParams = Dumux::ParkerVanGen3PParams<ScalarT>;
 
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     RegularizedParkerVanGen3PParams()
         : ParkerVanGen3PParams(), constRegularization_(false)

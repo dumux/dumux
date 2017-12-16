@@ -65,7 +65,7 @@ class PengRobinsonParamsMixture
     enum { numComponents = FluidSystem::numComponents };
 
     // Peng-Robinson parameters for pure substances
-    typedef PengRobinsonParams<Scalar> PureParams;
+    using PureParams = PengRobinsonParams<Scalar>;
 
 public:
     /*!

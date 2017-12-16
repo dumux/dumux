@@ -58,13 +58,13 @@ template <class Scalar,
 class H2OAir
 : public BaseFluidSystem<Scalar, H2OAir<Scalar, H2Otype, useComplexRelations> >
 {
-    typedef H2OAir<Scalar,H2Otype, useComplexRelations > ThisType;
-    typedef BaseFluidSystem <Scalar, ThisType> Base;
-    typedef Dumux::IdealGas<Scalar> IdealGas;
+    using ThisType = H2OAir<Scalar,H2Otype, useComplexRelations>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
-    typedef H2Otype H2O;
-    typedef Dumux::Air<Scalar> Air;
+    using H2O = H2Otype;
+    using Air = Dumux::Air<Scalar>;
 
     static constexpr int numPhases = 2;
 

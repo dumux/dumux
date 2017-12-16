@@ -49,19 +49,19 @@ enum ElectroChemistryModel { Ochs, Acosta };
 template <class TypeTag, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistry
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) SourceValues;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
-    typedef Constants<Scalar> Constant;
+    using Constant = Constants<Scalar>;
 
-    typedef ElectroChemistry<TypeTag, electroChemistryModel> ThisType;
+    using ThisType = ElectroChemistry<TypeTag, electroChemistryModel>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
         //indices of the phases

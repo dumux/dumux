@@ -42,12 +42,12 @@ namespace Dumux
 template <class ScalarT, class ParamsT = RegularizedVanGenuchtenParams<ScalarT> >
 class RegularizedVanGenuchtenOfTemperature : public RegularizedVanGenuchten<ScalarT, ParamsT>
 {
-    typedef Dumux::RegularizedVanGenuchten<ScalarT, ParamsT> RegularizedVanGenuchten;
+    using RegularizedVanGenuchten = Dumux::RegularizedVanGenuchten<ScalarT, ParamsT>;
     // Data is in /home/pnuske/paper/pcOfT/
 
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief A regularized van Genuchten capillary pressure-saturation

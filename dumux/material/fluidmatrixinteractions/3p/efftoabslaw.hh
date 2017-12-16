@@ -61,11 +61,11 @@ namespace Dumux
 template <class EffLawT, class AbsParamsT = EffToAbsLawParams<typename EffLawT::Params> >
 class EffToAbsLaw
 {
-    typedef EffLawT EffLaw;
+    using EffLaw = EffLawT;
 
 public:
-    typedef AbsParamsT Params;
-    typedef typename EffLaw::Scalar Scalar;
+    using Params = AbsParamsT;
+    using Scalar = typename EffLaw::Scalar;
 
     /*!
      * \brief The capillary pressure-saturation curve.

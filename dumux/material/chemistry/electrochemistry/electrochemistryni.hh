@@ -41,17 +41,17 @@ namespace Dumux
 template <class TypeTag, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryModel>
 {
-    typedef ElectroChemistry<TypeTag, electroChemistryModel> ParentType;
+    using ParentType = ElectroChemistry<TypeTag, electroChemistryModel>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, NumEqVector) SourceValues;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
-    typedef Constants<Scalar> Constant;
+    using Constant = Constants<Scalar>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         //indices of the components
         wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase

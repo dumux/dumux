@@ -49,8 +49,8 @@ template <class ScalarT, class ParamsT = VanGenuchtenParams<ScalarT> >
 class VanGenuchten
 {
 public:
-    typedef ParamsT     Params;
-    typedef typename    Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The capillary pressure-saturation curve according to van Genuchten.

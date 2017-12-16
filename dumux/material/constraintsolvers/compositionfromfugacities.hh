@@ -54,10 +54,10 @@ class CompositionFromFugacities
 {
     enum { numComponents = FluidSystem::numComponents };
 
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
 public:
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     /*!
      * \brief Guess an initial value for the composition of the phase.

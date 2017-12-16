@@ -48,8 +48,8 @@ template <class ScalarT, class ParamsT = LinearMaterialParams<ScalarT> >
 class LinearMaterial
 {
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The linear capillary pressure-saturation curve.

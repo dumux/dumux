@@ -40,7 +40,7 @@ template<class ScalarT>
 class RegularizedLinearMaterialParams : public LinearMaterialParams<ScalarT>
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     RegularizedLinearMaterialParams()
     {

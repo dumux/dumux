@@ -42,8 +42,8 @@ template<class ScalarT>
 class RegularizedVanGenuchtenParams : public VanGenuchtenParams<ScalarT>
 {
 public:
-    typedef ScalarT Scalar;
-    typedef VanGenuchtenParams<Scalar> Parent;
+    using Scalar = ScalarT;
+    using Parent = VanGenuchtenParams<Scalar>;
 
     RegularizedVanGenuchtenParams()
     {

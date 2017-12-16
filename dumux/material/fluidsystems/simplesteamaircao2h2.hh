@@ -55,22 +55,22 @@ template <class Scalar, bool useComplexRelations=true>
 class SteamAirCaO2H2
 : public BaseFluidSystem<Scalar, SteamAirCaO2H2<Scalar, /*H2Otype,*/ useComplexRelations> >
 {
-    typedef SteamAirCaO2H2<Scalar, /*H2Otype,*/ useComplexRelations> ThisType;
-    typedef BaseFluidSystem <Scalar, ThisType> Base;
+    using ThisType = SteamAirCaO2H2<Scalar, /*H2Otype,*/ useComplexRelations>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
-    typedef Dumux::IdealGas<Scalar> IdealGas;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
-    typedef Dumux::SimpleH2O<Scalar> H2O;
-//     typedef H2Otype H2O;
-    typedef Dumux::BinaryCoeff::H2O_Air H2O_Air;
-    typedef Dumux::Air<Scalar> Air;
+    using H2O = Dumux::SimpleH2O<Scalar>;
+//     using H2O = H2Otype;
+    using H2O_Air = Dumux::BinaryCoeff::H2O_Air;
+    using Air = Dumux::Air<Scalar>;
 
-    typedef Dumux::CaO<Scalar> CaO;
-    typedef Dumux::CaO2H2<Scalar> CaO2H2;
+    using CaO = Dumux::CaO<Scalar>;
+    using CaO2H2 = Dumux::CaO2H2<Scalar>;
 
     // the type of parameter cache objects. this fluid system does not
-    typedef Dumux::NullParameterCache ParameterCache;
+    using ParameterCache = Dumux::NullParameterCache;
 
     /****************************************
      * Fluid phase related static parameters

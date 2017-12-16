@@ -46,8 +46,8 @@ template <class ScalarT, class ParamsT = AwnSurfacePolynomial2ndOrderParams<Scal
 class AwnSurfacePolynomial2ndOrder
 {
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
 
     /*!
      * \brief The awn surface

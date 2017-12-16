@@ -53,10 +53,10 @@ template <class Scalar, bool useComplexRelations = true>
 class H2ON2
     : public BaseFluidSystem<Scalar, H2ON2<Scalar, useComplexRelations> >
 {
-    typedef H2ON2<Scalar, useComplexRelations> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
+    using ThisType = H2ON2<Scalar, useComplexRelations>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
-    // convenience typedefs
+    // convenience using declarations
     using IdealGas = Dumux::IdealGas<Scalar>;
     using TabulatedH2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
     using SimpleN2 = Dumux::N2<Scalar>;

@@ -37,7 +37,7 @@ template<class ScalarT>
 class LinearMaterialParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     LinearMaterialParams()
     {}

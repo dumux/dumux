@@ -36,7 +36,7 @@ namespace Dumux {
 template <class Traits>
 class TabulatedCO2Properties
 {
-    typedef typename Traits::Scalar Scalar;
+    using Scalar = typename Traits::Scalar;
     enum { numTempSteps = Traits::numTempSteps, numPressSteps = Traits::numPressSteps };
 
 public:

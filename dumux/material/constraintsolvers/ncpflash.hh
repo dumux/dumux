@@ -80,15 +80,15 @@ class NcpFlash
     enum { numPhases = FluidSystem::numPhases };
     enum { numComponents = FluidSystem::numComponents };
 
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
     static constexpr int numEq = numPhases*(numComponents + 1);
 
-    typedef Dune::FieldMatrix<Scalar, numEq, numEq> Matrix;
-    typedef Dune::FieldVector<Scalar, numEq> Vector;
+    using Matrix = Dune::FieldMatrix<Scalar, numEq, numEq>;
+    using Vector = Dune::FieldVector<Scalar, numEq>;
 
 public:
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
     /*!
      * \brief Guess initial values for all quantities.

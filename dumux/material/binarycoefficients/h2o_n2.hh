@@ -67,8 +67,8 @@ public:
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        typedef Dumux::H2O<Scalar> H2O;
-        typedef Dumux::N2<Scalar> N2;
+        using H2O = Dumux::H2O<Scalar>;
+        using N2 = Dumux::N2<Scalar>;
 
         // atomic diffusion volumes
         const Scalar SigmaNu[2] = { 13.1 /* H2O */,  18.5 /* N2 */ };

@@ -51,12 +51,12 @@ class H2ON2Kinetic :
     public FluidSystems::H2ON2<Scalar, useComplexRelations>
 {
 private:
-    typedef FluidSystems::H2ON2<Scalar, useComplexRelations> ParentType;
+    using ParentType = FluidSystems::H2ON2<Scalar, useComplexRelations>;
 
-    typedef Dumux::IdealGas<Scalar> IdealGas;
+    using IdealGas = Dumux::IdealGas<Scalar>;
 public:
     //! The type of parameter cache objects
-    typedef NullParameterCache ParameterCache;
+    using ParameterCache = NullParameterCache;
 
     //! Index of the solid phase
     static constexpr int sPhaseIdx = 2;

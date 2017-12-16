@@ -42,7 +42,7 @@ namespace Dumux
 template <class Scalar>
 class HeavyOil : public Component<Scalar, HeavyOil<Scalar> >
 {
-    typedef Dumux::Constants<Scalar> Consts;
+    using Consts = Dumux::Constants<Scalar>;
 
 public:
     /*!

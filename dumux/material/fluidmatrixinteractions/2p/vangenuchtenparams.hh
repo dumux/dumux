@@ -41,7 +41,7 @@ template<class ScalarT>
 class VanGenuchtenParams
 {
 public:
-    typedef ScalarT Scalar;
+    using Scalar = ScalarT;
 
     VanGenuchtenParams()
     {}

@@ -47,8 +47,8 @@ template <int numPhasesV, class ScalarT, class ParamsT = MpLinearMaterialParams<
 class MpLinearMaterial
 {
 public:
-    typedef ParamsT Params;
-    typedef typename Params::Scalar Scalar;
+    using Params = ParamsT;
+    using Scalar = typename Params::Scalar;
     enum { numPhases = numPhasesV };
 
     /*!

@@ -63,20 +63,20 @@ template <class Scalar, bool useComplexRelations = true>
 class H2ON2O2
     : public BaseFluidSystem<Scalar, H2ON2O2<Scalar, useComplexRelations> >
 {
-    typedef H2ON2O2<Scalar, useComplexRelations> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
+    using ThisType = H2ON2O2<Scalar, useComplexRelations>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
-    typedef Dumux::IdealGas<Scalar> IdealGas;
-    typedef Dumux::Constants<Scalar> Constants;
-    typedef TabulatedComponent<Scalar, Dumux::H2O<Scalar> > TabulatedH2O;
-    typedef Dumux::N2<Scalar> SimpleN2;
-    typedef Dumux::O2<Scalar> O2;
+    using IdealGas = Dumux::IdealGas<Scalar>;
+    using Constants = Dumux::Constants<Scalar>;
+    using TabulatedH2O = TabulatedComponent<Scalar, Dumux::H2O<Scalar> >;
+    using SimpleN2 = Dumux::N2<Scalar>;
+    using O2 = Dumux::O2<Scalar>;
 
     //! The components for pure water
-    typedef TabulatedH2O H2O;
+    using H2O = TabulatedH2O;
 
     //! The components for pure nitrogen
-    typedef SimpleN2 N2;
+    using N2 = SimpleN2;
 
 public:
     /****************************************

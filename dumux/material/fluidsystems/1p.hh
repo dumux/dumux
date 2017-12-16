@@ -47,8 +47,8 @@ template <class Scalar, class FluidType>
 class OneP
     : public BaseFluidSystem<Scalar, OneP<Scalar, FluidType> >
 {
-    typedef OneP<Scalar, FluidType> ThisType;
-    typedef BaseFluidSystem<Scalar, ThisType> Base;
+    using ThisType = OneP<Scalar, FluidType>;
+    using Base = BaseFluidSystem<Scalar, ThisType>;
 
 public:
     using Fluid = FluidType;
