@@ -28,7 +28,7 @@
 #include <dumux/io/ploteffectivediffusivitymodel.hh>
 #include <dumux/io/plotmateriallaw.hh>
 #include <dumux/io/plotthermalconductivitymodel.hh>
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -60,9 +60,9 @@ SET_TYPE_PROP(WaterAirSpatialParams,
  * \brief Definition of the spatial parameters for the water-air problem
  */
 template<class TypeTag>
-class WaterAirSpatialParams : public ImplicitSpatialParams<TypeTag>
+class WaterAirSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

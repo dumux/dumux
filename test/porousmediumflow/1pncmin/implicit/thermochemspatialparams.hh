@@ -26,7 +26,7 @@
 #ifndef DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 #define DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/porousmediumflow/1pncmin/implicit/indices.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityreactivebed.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
@@ -55,10 +55,10 @@ SET_TYPE_PROP(ThermoChemSpatialParams, SpatialParams, Dumux::ThermoChemSpatialPa
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class ThermoChemSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
     using ThisType = ThermoChemSpatialParams<TypeTag>;
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

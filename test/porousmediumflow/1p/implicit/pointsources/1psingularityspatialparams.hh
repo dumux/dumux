@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P_SINGULARITY_SPATIALPARAMS_HH
 #define DUMUX_1P_SINGULARITY_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {
@@ -38,9 +38,9 @@ namespace Dumux
  *        1p model with point sources
  */
 template<class TypeTag>
-class OnePSingularitySpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePSingularitySpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

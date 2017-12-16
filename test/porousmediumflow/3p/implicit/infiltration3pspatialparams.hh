@@ -25,7 +25,7 @@
 #ifndef DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 #define DUMUX_INFILTRATION_THREEP_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
@@ -68,9 +68,9 @@ SET_PROP(InfiltrationThreePSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the infiltration problem
  */
 template<class TypeTag>
-class InfiltrationThreePSpatialParams : public ImplicitSpatialParams<TypeTag>
+class InfiltrationThreePSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
 
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

@@ -98,7 +98,7 @@
 #include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/h2oair.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
@@ -182,8 +182,8 @@ SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSw
 //SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 
 //! The spatial parameters to be employed.
-//! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
+//! Use FVSpatialParams by default.
+SET_TYPE_PROP(Richards, SpatialParams, FVSpatialParams<TypeTag>);
 
 /*!
  *\brief The fluid system used by the model.

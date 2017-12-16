@@ -30,7 +30,7 @@
 
 //Dumux-includes
 #include <dumux/porousmediumflow/sequential/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/material/spatialparams/sequentialfv1p.hh>
 
 namespace Dumux
 {
@@ -97,7 +97,7 @@ SET_TYPE_PROP(SequentialOneP, Variables, VariableClass<TypeTag>);
 SET_TYPE_PROP(SequentialOneP, CellData, CellData1P<TypeTag>);
 
 //! The spatial parameters to be employed. Use BoxSpatialParams by default.
-SET_TYPE_PROP(SequentialOneP, SpatialParams, FVSpatialParamsOneP<TypeTag>);
+SET_TYPE_PROP(SequentialOneP, SpatialParams, SequentialFVSpatialParamsOneP<TypeTag>);
 }
 }
 #endif

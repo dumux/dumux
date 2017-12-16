@@ -62,7 +62,7 @@
 
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidstates/immiscible.hh>
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 
 #include <dumux/porousmediumflow/properties.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
@@ -101,7 +101,7 @@ SET_BOOL_PROP(TwoP, EnableMolecularDiffusion, false);                         //
 SET_BOOL_PROP(TwoP, EnableEnergyBalance, false);                              //! Isothermal model (non-isothermal type tag is below)
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //! Use the immiscible local residual operator for the 2p model
 SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);           //! the VolumeVariables property
-SET_TYPE_PROP(TwoP, SpatialParams, ImplicitSpatialParams<TypeTag>);           //! The spatial parameters. Use ImplicitSpatialParams by default.
+SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);           //! The spatial parameters. Use FVSpatialParams by default.
 SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<TypeTag>);           //! Set the vtk output fields specific to the twop model
 
 SET_TYPE_PROP(TwoP,

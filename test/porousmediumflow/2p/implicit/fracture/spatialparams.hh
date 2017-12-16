@@ -25,7 +25,7 @@
 #ifndef DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 #define DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -67,9 +67,9 @@ public:
  *        two-phase fully implicit model
  */
 template<class TypeTag>
-class FractureSpatialParams : public ImplicitSpatialParams<TypeTag>
+class FractureSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

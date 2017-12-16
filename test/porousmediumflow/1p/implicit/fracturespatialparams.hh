@@ -25,7 +25,7 @@
 #ifndef DUMUX_ONEP_FRACTURE_TEST_SPATIALPARAMS_HH
 #define DUMUX_ONEP_FRACTURE_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {
@@ -50,9 +50,9 @@ SET_TYPE_PROP(FractureSpatialParams, SpatialParams, Dumux::FractureSpatialParams
  *        two-phase fully implicit model
  */
 template<class TypeTag>
-class FractureSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class FractureSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

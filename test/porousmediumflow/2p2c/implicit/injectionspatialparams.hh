@@ -27,7 +27,7 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -60,9 +60,9 @@ SET_TYPE_PROP(InjectionSpatialParams,
  *        fully implicit model.
  */
 template<class TypeTag>
-class InjectionSpatialParams : public ImplicitSpatialParams<TypeTag>
+class InjectionSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

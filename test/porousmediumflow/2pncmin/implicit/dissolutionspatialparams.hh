@@ -19,7 +19,7 @@
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -58,10 +58,10 @@ public:
  *
  */
 template<class TypeTag>
-class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
+class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
 {
     using ThisType = DissolutionSpatialparams<TypeTag>;
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

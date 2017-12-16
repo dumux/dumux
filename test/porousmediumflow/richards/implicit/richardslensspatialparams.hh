@@ -24,7 +24,7 @@
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 #define DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -64,9 +64,9 @@ public:
  * \brief The spatial parameters for the RichardsLensProblem
  */
 template<class TypeTag>
-class RichardsLensSpatialParams : public ImplicitSpatialParams<TypeTag>
+class RichardsLensSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

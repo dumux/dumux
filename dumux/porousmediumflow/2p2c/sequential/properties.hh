@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/sequentialfv.hh>
 
 namespace Dumux
 {
@@ -156,7 +156,7 @@ SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, TwoPTwoCFluidState<typename GET_PR
 
 
 //! The spatial parameters to be employed.
-SET_TYPE_PROP(SequentialTwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, SpatialParams, SequentialFVSpatialParams<TypeTag>);
 //! Switch off permeability regularization at Dirichlet boundaries by default.
 SET_BOOL_PROP(SequentialTwoPTwoC, RegulateBoundaryPermeability, false);
 

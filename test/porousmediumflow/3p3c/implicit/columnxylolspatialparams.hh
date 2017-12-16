@@ -24,7 +24,7 @@
 #ifndef DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 #define DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3p.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/regularizedparkervangen3pparams.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/efftoabslaw.hh>
@@ -62,9 +62,9 @@ SET_PROP(ColumnSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the column problem
  */
 template<class TypeTag>
-class ColumnSpatialParams : public ImplicitSpatialParams<TypeTag>
+class ColumnSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     enum {

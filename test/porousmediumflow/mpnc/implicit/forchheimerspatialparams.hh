@@ -26,7 +26,7 @@
 #ifndef DUMUX_FORCHHEIMER_SPATIAL_PARAMS_HH
 #define DUMUX_FORCHHEIMER_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -71,9 +71,9 @@ public:
  *
  */
 template<class TypeTag>
-class ForchheimerSpatialParams : public ImplicitSpatialParams<TypeTag>
+class ForchheimerSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    typedef FVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

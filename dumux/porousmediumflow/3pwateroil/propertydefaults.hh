@@ -29,7 +29,7 @@
 #define DUMUX_3P2CNI_PROPERTY_DEFAULTS_HH
 
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
@@ -101,8 +101,8 @@ SET_SCALAR_PROP(ThreePWaterOilNI, ImplicitMobilityUpwindWeight, 1.0);
 SET_BOOL_PROP(ThreePWaterOilNI, UseSimpleModel, true);
 
 //! The spatial parameters to be employed.
-//! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, ImplicitSpatialParams<TypeTag>);
+//! Use FVSpatialParams by default.
+SET_TYPE_PROP(ThreePWaterOilNI, SpatialParams, FVSpatialParams<TypeTag>);
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(ThreePWaterOilNI, EffectiveDiffusivityModel,

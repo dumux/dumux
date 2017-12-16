@@ -25,7 +25,7 @@
 #ifndef DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 #define DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -62,9 +62,9 @@ SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for various steam injection problems
  */
 template<class TypeTag>
-class InjectionProblemSpatialParams : public ImplicitSpatialParams<TypeTag>
+class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

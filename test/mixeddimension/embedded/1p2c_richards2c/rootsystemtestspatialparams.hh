@@ -24,7 +24,7 @@
 #ifndef DUMUX_ROOTSYSTEM_TEST_SPATIALPARAMS_HH
 #define DUMUX_ROOTSYSTEM_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
 namespace Dumux
@@ -37,9 +37,9 @@ namespace Dumux
  * \brief Definition of the spatial parameters for the root system test problem
  */
 template<class TypeTag>
-class RootsystemTestSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
+class RootsystemTestSpatialParams: public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

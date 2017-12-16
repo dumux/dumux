@@ -27,7 +27,7 @@
 
 #include <dumux/common/properties.hh>
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
 #include <dumux/material/fluidstates/immiscible.hh>

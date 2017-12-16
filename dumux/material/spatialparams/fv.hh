@@ -20,62 +20,61 @@
  * \file
  *
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters of problems using the
- *        fv method.
+ * \brief The base class for spatial parameters of multi-phase problems
+ * using a fully implicit discretization method.
  */
 #ifndef DUMUX_FV_SPATIAL_PARAMS_HH
 #define DUMUX_FV_SPATIAL_PARAMS_HH
 
+#include <dumux/common/properties.hh>
 #include "fv1p.hh"
 
-namespace Dumux
-{
-// forward declation of property tags
-namespace Properties {
-NEW_PROP_TAG(MaterialLaw);
-}
+namespace Dumux {
 
 /*!
  * \ingroup SpatialParameters
  */
 
+
 /**
- * \brief The base class for spatial parameters of a multi-phase problem using the
- *        fv method.
+ * \brief The base class for spatial parameters of multi-phase problems
+ * using a fully implicit discretization method.
  */
 template<class TypeTag>
 class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
-    enum
-    {
-        dimWorld = GridView::dimensionworld
-    };
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    /// @cond false
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
-    /// @endcond
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    static const int dimWorld = GridView::dimensionworld;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
-    FVSpatialParams(const GridView &gridView)
-    :FVSpatialParamsOneP<TypeTag>(gridView)
-    {
-    }
+    FVSpatialParams(const Problem& problem)
+    : FVSpatialParamsOneP<TypeTag>(problem)
+    {}
 
     /*!
      * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
      *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
      * \return the material parameters object
-     * \param element The element
      */
-    const MaterialLawParams& materialLawParams(const Element &element) const
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolutionVector& elemSol) const
     {
-            return asImp_().materialLawParamsAtPos(element.geometry().center());
+        return this->asImp_().materialLawParamsAtPos(scv.center());
     }
 
     /*!
@@ -89,17 +88,6 @@ public:
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
                    "a materialLawParamsAtPos() method.");
-    }
-
-private:
-    Implementation &asImp_()
-    {
-        return *static_cast<Implementation*> (this);
-    }
-
-    const Implementation &asImp_() const
-    {
-        return *static_cast<const Implementation*> (this);
     }
 };
 

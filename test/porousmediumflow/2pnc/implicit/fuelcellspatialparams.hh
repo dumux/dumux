@@ -26,7 +26,7 @@
 #ifndef DUMUX_FUELCELL_SPATIAL_PARAMS_HH
 #define DUMUX_FUELCELL_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
@@ -70,9 +70,9 @@ SET_PROP(FuelCellSpatialParams, MaterialLaw)
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class FuelCellSpatialParams : public ImplicitSpatialParams<TypeTag>
+class FuelCellSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

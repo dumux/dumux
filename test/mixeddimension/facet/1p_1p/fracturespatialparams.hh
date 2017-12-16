@@ -24,7 +24,7 @@
 #ifndef DUMUX_1P_FRACTURE_SPATIALPARAMS_HH
 #define DUMUX_1P_FRACTURE_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {
@@ -36,9 +36,9 @@ namespace Dumux
  * \brief The spatial parameters class for the fracture problem
  */
 template<class TypeTag>
-class OnePFractureSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePFractureSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

@@ -33,7 +33,7 @@
 //Dumux-includes
 #include <dumux/porousmediumflow/sequential/properties.hh>
 #include "indices.hh"
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/sequentialfv.hh>
 
 namespace Dumux
 {
@@ -143,8 +143,8 @@ public:
     typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
-//! The spatial parameters to be employed. Use FVSpatialParams by default.
-SET_TYPE_PROP(SequentialTwoP, SpatialParams, FVSpatialParams<TypeTag>);
+//! The spatial parameters to be employed. Use SequentialFVSpatialParams by default.
+SET_TYPE_PROP(SequentialTwoP, SpatialParams, SequentialFVSpatialParams<TypeTag>);
 
 //! Default error term factor
 SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermFactor, 0.5);

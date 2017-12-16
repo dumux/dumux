@@ -24,7 +24,7 @@
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {
@@ -36,9 +36,9 @@ namespace Dumux
  * \brief Definition of the spatial parameters for the tracer problem
  */
 template<class TypeTag>
-class TracerTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class TracerTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

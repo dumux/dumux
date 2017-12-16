@@ -20,170 +20,160 @@
  * \file
  *
  * \ingroup SpatialParameters
- * \brief The base class for spatial parameters of problems using the
- *        fv method.
+ * \brief The base class for spatial parameters of one-phase problems
+ * using a fully implicit discretization method.
  */
 #ifndef DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 #define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/common/math.hh>
 
 #include <dune/common/fmatrix.hh>
 
-namespace Dumux
-{
-// forward declation of property tags
-namespace Properties
-{
-NEW_PROP_TAG(SpatialParams);
-}
-
+namespace Dumux {
 
 /*!
  * \ingroup SpatialParameters
  */
 
 /**
- * \brief The base class for spatial parameters of problems using the
- *        fv method.
+ * \brief The base class for spatial parameters of one-phase problems
+ * using a fully implicit discretization method.
  */
 template<class TypeTag>
 class FVSpatialParamsOneP
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    enum
-    {
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    using Element = typename GridView::template Codim<0>::Entity;
+    using CoordScalar = typename GridView::ctype;
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
+    static const int dim = GridView::dimension;
+    static const int dimWorld = GridView::dimensionworld;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
-    FVSpatialParamsOneP(const GridView &gridView)
-    {
-    }
-    /*!
-     * \brief Averages the intrinsic permeability (Scalar).
-     * \param K1 intrinsic permeability of the first element
-     * \param K2 intrinsic permeability of the second element
-     */
-    Scalar meanK(Scalar K1, Scalar K2) const
-    {
-        const Scalar K = harmonicMean(K1, K2);
-        return K;
-    }
+    FVSpatialParamsOneP(const Problem& problem)
+    : problemPtr_(&problem)
+    {}
 
     /*!
-     * \brief Averages the intrinsic permeability (Scalar).
-     * \param result averaged intrinsic permeability
-     * \param K1 intrinsic permeability of the first element
-     * \param K2 intrinsic permeability of the second element
+     * \brief Called by the Problem to initialize the spatial params.
      */
-    void meanK(DimWorldMatrix &result, Scalar K1, Scalar K2) const
-    {
-        const Scalar K = harmonicMean(K1, K2);
-        for (int i = 0; i < dimWorld; ++i)
-        {
-            for (int j = 0; j < dimWorld; ++j)
-                result[i][j] = 0;
-            result[i][i] = K;
-        }
-    }
+    void init() {}
 
     /*!
-     * \brief Averages the intrinsic permeability (Tensor).
-     * \param result averaged intrinsic permeability
-     * \param K1 intrinsic permeability of the first element
-     * \param K2 intrinsic permeability of the second element
+     * \brief Harmonic average of a discontinuous scalar field at discontinuity interface
+     *        (for compatibility reasons with the function below)
+     * \return the averaged scalar
+     * \param T1 first scalar parameter
+     * \param T2 second scalar parameter
+     * \param normal The unit normal vector of the interface
      */
-    void meanK(DimWorldMatrix &result, const DimWorldMatrix &K1, const DimWorldMatrix &K2) const
+    Scalar harmonicMean(const Scalar T1,
+                        const Scalar T2,
+                        const GlobalPosition& normal) const
+    { return Dumux::harmonicMean(T1, T2); }
+
+    /*!
+     * \brief Harmonic average of a discontinuous tensorial field at discontinuity interface
+     * \note We do a harmonic average of the part normal to the interface (alpha*I) and
+     *       an arithmetic average of the tangential part (T - alpha*I).
+     * \return the averaged tensor
+     * \param T1 first tensor
+     * \param T2 second tensor
+     * \param normal The unit normal vector of the interface
+     */
+    DimWorldMatrix harmonicMean(const DimWorldMatrix& T1,
+                                const DimWorldMatrix& T2,
+                                const GlobalPosition& normal) const
     {
-        // entry-wise harmonic mean at the main diagonal and arithmetic mean at the off-diagonal
+        // determine nT*k*n
+        GlobalPosition tmp;
+        GlobalPosition tmp2;
+        T1.mv(normal, tmp);
+        T2.mv(normal, tmp2);
+        const Scalar alpha1 = tmp*normal;
+        const Scalar alpha2 = tmp2*normal;
+
+        const Scalar alphaHarmonic = Dumux::harmonicMean(alpha1, alpha2);
+        const Scalar alphaAverage = 0.5*(alpha1 + alpha2);
+
+        DimWorldMatrix T(0.0);
         for (int i = 0; i < dimWorld; ++i)
         {
-            result[i][i] = harmonicMean(K1[i][i], K2[i][i]);
             for (int j = 0; j < dimWorld; ++j)
             {
-                if (i != j)
-                {
-                    result[i][j] = 0.5 * (K1[i][j] + K2[i][j]);
-                }
+                T[i][j] += 0.5*(T1[i][j] + T2[i][j]);
+                if (i == j)
+                    T[i][j] += alphaHarmonic - alphaAverage;
             }
         }
+
+        return T;
     }
 
     /*!
-     * \brief Dummy function that can be used if only one value exist (boundaries).
-     * \param result intrinsic permeability
-     * \param K intrinsic permeability of the element
-     */
-    void meanK(DimWorldMatrix &result, Scalar K) const
-    {
-        for (int i = 0; i < dimWorld; ++i)
-        {
-            for (int j = 0; j < dimWorld; ++j)
-                result[i][j] = 0;
-            result[i][i] = K;
-        }
-    }
-
-    /*!
-     * \brief Dummy function that can be used if only one value exist (boundaries).
-     * \param result intrinsic permeability
-     * \param K intrinsic permeability of the element
-     */
-    void meanK(DimWorldMatrix &result, const DimWorldMatrix &K) const
-    {
-        result = K;
-    }
-
-    /*!
-     * \brief Function for defining the intrinsic (absolute) permeability.
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+     * \note  It is possibly solution dependent.
      *
-     * \return intrinsic (absolute) permeability
-     * \param element The element
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return permeability
      */
-    const DimWorldMatrix& intrinsicPermeability (const Element& element) const
+    decltype(auto)
+    permeability(const Element& element,
+                 const SubControlVolume& scv,
+                 const ElementSolutionVector& elemSol) const
     {
-        return asImp_().intrinsicPermeabilityAtPos(element.geometry().center());
+        return asImp_().permeabilityAtPos(scv.center());
     }
 
     /*!
-     * \brief Function for defining the intrinsic (absolute) permeability.
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+     * \note  It is possibly solution dependent.
      *
-     * \return intrinsic (absolute) permeability
-     * \param globalPos The position of the center of the element
+     * \return permeability
+     * \param globalPos The position of the center of the scv
      */
-    const DimWorldMatrix& intrinsicPermeabilityAtPos (const GlobalPosition& globalPos) const
+    Scalar permeabilityAtPos(const GlobalPosition& globalPos) const
     {
         DUNE_THROW(Dune::InvalidStateException,
                    "The spatial parameters do not provide "
-                   "a intrinsicPermeabilityAtPos() method.");
+                   "a permeability() or permeabilityAtPos() method.");
     }
 
     /*!
      * \brief Function for defining the porosity.
+     *        That is possibly solution dependent.
      *
-     * \return porosity
-     * \param element The element
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the porosity
      */
-    Scalar porosity(const Element& element) const
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
     {
-        return asImp_().porosityAtPos(element.geometry().center());
+        return asImp_().porosityAtPos(scv.center());
     }
 
     /*!
      * \brief Function for defining the porosity.
      *
      * \return porosity
-     * \param globalPos The position of the center of the element
+     * \param globalPos The position of the center of the scv
      */
     Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
@@ -192,16 +182,138 @@ public:
                    "a porosityAtPos() method.");
     }
 
-private:
-    Implementation &asImp_()
+    /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    Scalar solidHeatCapacity(const Element &element,
+                             const SubControlVolume& scv,
+                             const ElementSolutionVector& elemSol) const
     {
-        return *static_cast<Implementation*> (this);
+        return asImp_().solidHeatCapacityAtPos(scv.center());
     }
 
-    const Implementation &asImp_() const
+    /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The position of the center of the element
+     */
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
     {
-        return *static_cast<const Implementation*> (this);
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a solidHeatCapacityAtPos() method.");
     }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    Scalar solidDensity(const Element &element,
+                        const SubControlVolume& scv,
+                        const ElementSolutionVector& elemSol) const
+    {
+        return asImp_().solidDensityAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The position of the center of the element
+     */
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a solidDensityAtPos() method.");
+    }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     */
+    Scalar solidThermalConductivity(const Element &element,
+                                    const SubControlVolume& scv,
+                                    const ElementSolutionVector& elemSol) const
+    {
+        return asImp_().solidThermalConductivityAtPos(scv.center());
+    }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     *
+     * \param globalPos The position of the center of the element
+     */
+    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide "
+                   "a solidThermalConductivityAtPos() method.");
+    }
+
+    /*!
+     * \brief Function for defining the Beavers-Joseph coefficient for multidomain
+     *        problems\f$\mathrm{[-]}\f$.
+     *
+     * \return Beavers-Joseph coefficient \f$\mathrm{[-]}\f$
+     * \param globalPos The global position
+     */
+    Scalar beaversJosephCoeffAtPos(const GlobalPosition& globalPos) const
+    {
+        DUNE_THROW(Dune::InvalidStateException,
+                   "The spatial parameters do not provide a beaversJosephCoeffAtPos() method.");
+    }
+
+    /*!
+     * \brief Apply the Forchheimer coefficient for inertial forces
+     *        calculation.
+     *
+     *        Source: Ward, J.C. 1964 Turbulent flow in porous media. ASCE J. Hydraul. Div 90 \cite ward1964 .
+     *        Actually the Forchheimer coefficient is also a function of the dimensions of the
+     *        porous medium. Taking it as a constant is only a first approximation
+     *        (Nield, Bejan, Convection in porous media, 2006, p. 10 \cite nield2006 )
+     *
+     * \param scv The sub-control volume face where the
+     *           intrinsic velocity ought to be calculated.
+     */
+    Scalar forchCoeff(const SubControlVolumeFace &scvf) const
+    {
+        static Scalar forchCoeff = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "SpatialParams.ForchCoeff", 0.55);
+        return forchCoeff;
+    }
+
+    //! The problem we are associated with
+    const Problem& problem() const
+    {
+        return *problemPtr_;
+    }
+
+protected:
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
+
+private:
+    const Problem *problemPtr_;
 };
 
 } // namespace Dumux

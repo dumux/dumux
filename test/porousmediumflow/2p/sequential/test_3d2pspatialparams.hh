@@ -22,7 +22,7 @@
 #ifndef TEST_3D2P_SPATIALPARAMETERS_HH
 #define TEST_3D2P_SPATIALPARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
@@ -61,9 +61,9 @@ public:
  * \brief spatial parameters for the 2p test using MPFAL 3D method
  */
 template<class TypeTag>
-class Test3d2pSpatialParams: public FVSpatialParams<TypeTag>
+class Test3d2pSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
+    typedef SequentialFVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

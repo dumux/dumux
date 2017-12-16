@@ -25,7 +25,7 @@
 #ifndef DUMUX_1P_TEST_SPATIALPARAMS_HH
 #define DUMUX_1P_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/spatialparams/gstatrandomfield.hh>
 
 namespace Dumux
@@ -49,9 +49,9 @@ NEW_TYPE_TAG(OnePTestSpatialParams);
  *        1p box model
  */
 template<class TypeTag>
-class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

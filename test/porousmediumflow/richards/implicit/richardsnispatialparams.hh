@@ -28,7 +28,7 @@
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 
 namespace Dumux
 {
@@ -68,9 +68,9 @@ public:
 
 
 template<class TypeTag>
-class RichardsNISpatialParams : public ImplicitSpatialParams<TypeTag>
+class RichardsNISpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

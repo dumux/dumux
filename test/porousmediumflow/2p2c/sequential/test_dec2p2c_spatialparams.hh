@@ -25,7 +25,7 @@
 #define TEST_2P2C_SPATIALPARAMS_HH
 
 #include <dumux/porousmediumflow/2p2c/sequential/properties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
@@ -59,7 +59,7 @@ public:
  * \brief spatial parameters for the sequential 2p2c test
  */
 template<class TypeTag>
-class Test2P2CSpatialParams : public FVSpatialParams<TypeTag>
+class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid)     Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -93,7 +93,7 @@ public:
     }
 
 
-    Test2P2CSpatialParams(const GridView& gridView) : FVSpatialParams<TypeTag>(gridView),
+    Test2P2CSpatialParams(const GridView& gridView) : SequentialFVSpatialParams<TypeTag>(gridView),
             constPermeability_(0)
     {
         // residual saturations
