@@ -24,6 +24,7 @@
 #ifndef DUMUX_CC_LOCAL_ASSEMBLER_HH
 #define DUMUX_CC_LOCAL_ASSEMBLER_HH
 
+#include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dune/istl/matrixindexset.hh>
 #include <dune/istl/bvector.hh>
 
