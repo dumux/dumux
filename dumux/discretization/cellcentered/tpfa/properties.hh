@@ -132,7 +132,7 @@ private:
         using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
     };
 public:
-    typedef Dumux::CCTpfaSubControlVolumeFace<ScvfGeometryTraits> type;
+    using type = Dumux::CCTpfaSubControlVolumeFace<ScvfGeometryTraits>;
 };
 
 //! Set the solution vector type for an element

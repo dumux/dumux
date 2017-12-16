@@ -37,7 +37,7 @@ namespace Dumux
  * \brief Base class for the interaction volume traits. The types stated here
  *        have to be defined in interaction volume traits. It is recommended
  *        that different implementations inherit from this class and overwrite the
- *        desired types or publicly state the typedef of this base class.
+ *        desired types or publicly state the types of this base class.
  */
 template<class TypeTag>
 class CCMpfaInteractionVolumeTraitsBase
