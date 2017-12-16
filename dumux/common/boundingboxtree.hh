@@ -48,7 +48,7 @@ class BoundingBoxTreeHelper<3>
 {
     // An epsilon for floating point operations
     static constexpr double eps_ = 1.0e-7;
-    typedef Dune::FieldVector<double, 3> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<double, 3>;
 
 public:
     //! Check whether a point is inside a given three-dimensional geometry
@@ -449,7 +449,7 @@ class BoundingBoxTreeHelper<2>
 {
     // An epsilon for floating point operations
     static constexpr double eps_ = 1.0e-7;
-    typedef Dune::FieldVector<double, 2> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<double, 2>;
 
 public:
     // Check whether a point is inside a given geometry
@@ -663,7 +663,7 @@ class BoundingBoxTreeHelper<1>
 {
     // An epsilon for floating point operations
     static constexpr double eps_ = 1.0e-7;
-    typedef Dune::FieldVector<double, 1> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<double, 1>;
 
 public:
     // Check whether a point is inside a given geometry
@@ -832,8 +832,8 @@ template <class GridView>
 class IndexToElementMap
   : public std::vector<typename GridView::Traits::Grid::template Codim<0>::EntitySeed>
 {
-    typedef typename GridView::Traits::Grid Grid;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Grid = typename GridView::Traits::Grid;
+    using Element = typename GridView::template Codim<0>::Entity;
 public:
     IndexToElementMap(const GridView& gridView)
       : grid_(gridView.grid()) {}

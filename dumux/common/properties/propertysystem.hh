@@ -213,7 +213,7 @@ namespace Properties
  *    // property is defined on. Note that blabbProb does not need to
  *    // be defined on FooTypeTag, but can also be defined for some
  *    // derived type tag.
- *    typedef typename GET_PROP(TypeTag, blabbProp) blabb;
+ *    using blabb = typename GET_PROP(TypeTag, blabbProp);
  *
  *    static int calculateInternal_(int arg)
  *    { return arg * blabb::value; };
@@ -272,7 +272,7 @@ namespace Properties
               PropTagName,                                      \
               /*value=*/__VA_ARGS__)                            \
     {                                                           \
-        typedef int type;                                       \
+        using type = int;                                       \
         static constexpr int value = __VA_ARGS__;               \
     }
 
@@ -287,7 +287,7 @@ namespace Properties
               PropTagName,                                          \
               /*value=*/__VA_ARGS__)                                \
     {                                                               \
-        typedef bool type;                                          \
+        using type = bool;                                          \
         static constexpr bool value = __VA_ARGS__;                  \
     }
 
@@ -302,7 +302,7 @@ namespace Properties
               PropTagName,                                        \
               /*value=*/__VA_ARGS__)                              \
     {                                                             \
-        typedef __VA_ARGS__ type;                                 \
+        using type = __VA_ARGS__;                                 \
     }
 
 /*!
@@ -318,9 +318,9 @@ namespace Properties
               PropTagName,                                              \
               /*value=*/__VA_ARGS__)                                    \
     {                                                                   \
-        typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;         \
+        using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);         \
     public:                                                             \
-        typedef Scalar type;                                            \
+        using type = Scalar;                                            \
         static const Scalar value;                                      \
     };                                                                  \
     template <class TypeTag>                                            \
@@ -340,7 +340,7 @@ namespace Properties
               /*value=*/__VA_ARGS__)                                    \
     {                                                                   \
     public:                                                             \
-        typedef std::string type;                                       \
+        using type = std::string;                                       \
         static const std::string value;                                 \
     };                                                                  \
     template <class TypeTag>                                            \
@@ -503,8 +503,8 @@ private:
 class PropertyRegistry
 {
 public:
-    typedef std::map<std::string, PropertyRegistryKey> KeyList;
-    typedef std::map<std::string, KeyList> KeyListMap;
+    using KeyList = std::map<std::string, PropertyRegistryKey>;
+    using KeyListMap = std::map<std::string, KeyList>;
 
     static void addKey(const PropertyRegistryKey &key)
     {
@@ -530,8 +530,8 @@ PropertyRegistry::KeyListMap PropertyRegistry::keys_;
 class TypeTagRegistry
 {
 public:
-    typedef std::list<std::string> ChildrenList;
-    typedef std::map<std::string, ChildrenList> ChildrenListMap;
+    using ChildrenList = std::list<std::string>;
+    using ChildrenListMap = std::map<std::string, ChildrenList>;
 
     template <class TypeTag, class Child1, class Child2, class Child3, class Child4, class Child5, class Dummy>
     static void addChildren()
@@ -812,7 +812,7 @@ public:
 template <class RealTypeTag, class Tree, class PropertyTag>
 class propertyTagIndex
 {
-    typedef propertyDefined<RealTypeTag, Tree, PropertyTag> definedWhere;
+    using definedWhere = propertyDefined<RealTypeTag, Tree, PropertyTag>;
 
 public:
     static const int value =
@@ -837,13 +837,13 @@ template <class SelfT,
 class TypeTag
 {
 public:
-    typedef SelfT SelfType;
+    using SelfType = SelfT;
 
-    typedef Child1T Child1;
-    typedef Child2T Child2;
-    typedef Child3T Child3;
-    typedef Child4T Child4;
-    typedef Child5T Child5;
+    using Child1 = Child1T;
+    using Child2 = Child2T;
+    using Child3 = Child3T;
+    using Child4 = Child4T;
+    using Child5 = Child5T;
 };
 
 NEW_TYPE_TAG(__Default);
@@ -862,7 +862,7 @@ struct GetProperty
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, -1>
 {
-    typedef DefaultProperty<RealTypeTag, PropertyTag>  p;
+    using p = DefaultProperty<RealTypeTag, PropertyTag>;
 };
 
 // property defined on self
@@ -870,42 +870,42 @@ struct GetProperty<TypeTag, PropertyTag, RealTypeTag, -1>
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 0>
 {
-    typedef Property<RealTypeTag, TypeTag, PropertyTag>   p;
+    using p = Property<RealTypeTag, TypeTag, PropertyTag>;
 };
 
 //! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 1>
 {
-    typedef typename GetProperty<typename TypeTag::Child1, PropertyTag, RealTypeTag>::p p;
+    using p = typename GetProperty<typename TypeTag::Child1, PropertyTag, RealTypeTag>::p;
 };
 
 //! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 2>
 {
-    typedef typename GetProperty<typename TypeTag::Child2, PropertyTag, RealTypeTag>::p p;
+    using p = typename GetProperty<typename TypeTag::Child2, PropertyTag, RealTypeTag>::p;
 };
 
 //! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 3>
 {
-    typedef typename GetProperty<typename TypeTag::Child3, PropertyTag, RealTypeTag>::p p;
+    using p = typename GetProperty<typename TypeTag::Child3, PropertyTag, RealTypeTag>::p;
 };
 
 //! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 4>
 {
-    typedef typename GetProperty<typename TypeTag::Child4, PropertyTag, RealTypeTag>::p p;
+    using p = typename GetProperty<typename TypeTag::Child4, PropertyTag, RealTypeTag>::p;
 };
 
 //! \internal
 template <class TypeTag, class PropertyTag, class RealTypeTag>
 struct GetProperty<TypeTag, PropertyTag, RealTypeTag, 5>
 {
-    typedef typename GetProperty<typename TypeTag::Child5, PropertyTag, RealTypeTag>::p p;
+    using p = typename GetProperty<typename TypeTag::Child5, PropertyTag, RealTypeTag>::p;
 };
 
 #if !defined NO_PROPERTY_INTROSPECTION
@@ -945,7 +945,7 @@ inline bool getDiagnostic_(const std::string &typeTagName,
     }
 
     // print properties defined on children
-    typedef TypeTagRegistry::ChildrenList ChildrenList;
+    using ChildrenList = TypeTagRegistry::ChildrenList;
     const ChildrenList &children = TypeTagRegistry::children(typeTagName);
     ChildrenList::const_iterator ttagIt = children.begin();
     std::string newIndent = indent + "  ";
@@ -1027,7 +1027,7 @@ inline void print_(const std::string &typeTagName,
     if (!somethingPrinted)
         os << " (none)\n";
     // print properties defined on children
-    typedef TypeTagRegistry::ChildrenList ChildrenList;
+    using ChildrenList = TypeTagRegistry::ChildrenList;
     const ChildrenList &children = TypeTagRegistry::children(typeTagName);
     ChildrenList::const_iterator ttagIt = children.begin();
     std::string newIndent = indent + "  ";
@@ -1089,7 +1089,7 @@ template <class TypeTag>
 class TypeTagAncestors
 {
 public:
-    typedef std::vector<std::vector<std::string>> AncestorMatrix;
+    using AncestorMatrix = std::vector<std::vector<std::string> >;
 
     static void addAncestors()
     {

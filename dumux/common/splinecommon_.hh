@@ -41,8 +41,8 @@ namespace Dumux
 template<class ScalarT, class ImplementationT>
 class SplineCommon_
 {
-    typedef ScalarT Scalar;
-    typedef ImplementationT Implementation;
+    using Scalar = ScalarT;
+    using Implementation = ImplementationT;
 
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }

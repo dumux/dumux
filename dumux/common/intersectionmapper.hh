@@ -183,10 +183,10 @@ private:
 template<class GridView>
 class IntersectionMapper
 {
-    typedef typename GridView::Grid Grid;
+    using Grid = typename GridView::Grid;
     enum {dim=Grid::dimension};
-    typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename Grid::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
 #else

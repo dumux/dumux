@@ -581,7 +581,7 @@ public:
      */
     // void serialize()
     // {
-    //     typedef Restart Restarter;
+    //     using Restarter = Restart;
     //     Restarter res;
     //     res.serializeBegin(asImp_());
     //     if (gridView().comm().rank() == 0)
@@ -621,7 +621,7 @@ public:
      */
     // void restart(const Scalar tRestart)
     // {
-    //     typedef Restart Restarter;
+    //     using Restarter = Restart;
 
     //     Restarter res;
 
