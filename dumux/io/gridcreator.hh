@@ -1049,7 +1049,7 @@ class GridCreatorImpl<Dune::ALUGrid<dim, dimworld, elType, refinementType>, Disc
           : public GridCreatorBase<Dune::ALUGrid<dim, dimworld, elType, refinementType> >
 {
 public:
-    typedef typename Dune::ALUGrid<dim, dimworld, elType, refinementType> Grid;
+    using Grid = Dune::ALUGrid<dim, dimworld, elType, refinementType>;
     using ParentType = GridCreatorBase<Grid>;
 
     /*!
@@ -1126,7 +1126,7 @@ class GridCreatorImpl<Dune::FoamGrid<dim, dimworld>, DiscMethod>
           : public GridCreatorBase<Dune::FoamGrid<dim, dimworld> >
 {
 public:
-    typedef typename Dune::FoamGrid<dim, dimworld> Grid;
+    using Grid = Dune::FoamGrid<dim, dimworld>;
     using ParentType = GridCreatorBase<Grid>;
 
     /*!
@@ -1180,7 +1180,7 @@ class GridCreatorImpl<Dune::FoamGrid<1, dimworld>, DiscMethod>
           : public GridCreatorBase<Dune::FoamGrid<1, dimworld> >
 {
 public:
-    typedef typename Dune::FoamGrid<1, dimworld> Grid;
+    using Grid = Dune::FoamGrid<1, dimworld>;
     using ParentType = GridCreatorBase<Grid>;
 
     /*!

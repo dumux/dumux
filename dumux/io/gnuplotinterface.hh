@@ -56,10 +56,10 @@ template<class Scalar>
 class GnuplotInterface
 {
 public:
-    typedef std::vector<std::string> StringVector;
+    using StringVector = std::vector<std::string>;
     enum class CurveType
     { function, file, data };
-    typedef std::vector<CurveType> CurveTypeVector;
+    using CurveTypeVector = std::vector<CurveType>;
 
     //! \brief The constructor
     GnuplotInterface(bool persist = true) :

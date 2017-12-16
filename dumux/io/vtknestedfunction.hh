@@ -40,9 +40,9 @@ template <class GridView, class Mapper, class Buffer>
 class VtkNestedFunction : public Dune::VTKFunction<GridView>
 {
     enum { dim = GridView::dimension };
-    typedef typename GridView::ctype ctype;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename Dune::ReferenceElements<ctype, dim> ReferenceElements;
+    using ctype = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ReferenceElements = Dune::ReferenceElements<ctype, dim>;
 
 public:
     VtkNestedFunction(std::string name,
