@@ -1,6 +1,7 @@
 add_subdirectory("omethod")
 
 install(FILES
+computetransmissibility
 connectivitymap.hh
 darcyslaw.hh
 dualgridindexset.hh
@@ -18,6 +19,8 @@ helper.hh
 interactionvolumebase.hh
 interactionvolumedatahandle.hh
 interactionvolume.hh
+localassembler.hh
+localfacedata.hh
 methods.hh
 properties.hh
 subcontrolvolumeface.hh

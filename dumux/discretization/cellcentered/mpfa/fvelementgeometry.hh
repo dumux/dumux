@@ -18,13 +18,15 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a local finite volume geometry for cell-centered MPFA models
+ * \ingroup CCMpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered mpfa models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
  */
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 
+#include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -35,30 +37,35 @@
 namespace Dumux
 {
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the finite volume geometry vector for cell-centered MPFA models
+ * \ingroup CCMpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered mpfa models
  *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ *        for each element in the local scope we are restricting to, e.g. stencil or element.
+ * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
 template<class TypeTag, bool EnableFVGridGeometryCache>
-class CCMpfaFVElementGeometry
-{};
+class CCMpfaFVElementGeometry;
 
-//! specialization in case the FVElementGeometries are stored globally
-//! In this case we just forward internally to the global object
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered mpfa models
+ *        Specialization for grid caching enabled
+ * \note The finite volume geometries are stored in the corresponding FVGridGeometry
+ */
 template<class TypeTag>
 class CCMpfaFVElementGeometry<TypeTag, true>
 {
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using GridIndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
+    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<GridIndexType>, ThisType>;
+    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
 
 public:
     //! Constructor
@@ -66,20 +73,20 @@ public:
     : fvGridGeometryPtr_(&fvGridGeometry) {}
 
     //! Get an element sub control volume with a global scv index
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(GridIndexType scvIdx) const
     {
         return fvGridGeometry().scv(scvIdx);
     }
 
     //! Get an element sub control volume face with a global scvf index
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
         return fvGridGeometry().scvf(scvfIdx);
     }
 
-    //! Get an element sub control volume face with a global scvf index
-    //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
         return fvGridGeometry().flipScvf(scvfIdx, outsideScvIdx);
     }
@@ -131,7 +138,7 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element)
     {
-        scvIndices_ = std::vector<IndexType>({fvGridGeometry().elementMapper().index(element)});
+        scvIndices_ = std::vector<GridIndexType>({fvGridGeometry().elementMapper().index(element)});
     }
 
     //! The global finite volume geometry we are a restriction of
@@ -140,11 +147,15 @@ public:
 
 private:
 
-    std::vector<IndexType> scvIndices_;
+    std::vector<GridIndexType> scvIndices_;
     const FVGridGeometry* fvGridGeometryPtr_;
 };
 
-//! specialization in case the FVElementGeometries are not stored
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
+ *        Specialization for grid caching disabled
+ */
 template<class TypeTag>
 class CCMpfaFVElementGeometry<TypeTag, false>
 {
@@ -152,15 +163,16 @@ class CCMpfaFVElementGeometry<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
+
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
+    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<GridIndexType>, ThisType>;
+    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -175,7 +187,7 @@ public:
 
     //! Get an elment sub control volume with a global scv index
     //! We separate element and neighbor scvs to speed up mapping
-    const SubControlVolume& scv(IndexType scvIdx) const
+    const SubControlVolume& scv(GridIndexType scvIdx) const
     {
         if (scvIdx == scvIndices_[0])
             return scvs_[0];
@@ -185,7 +197,7 @@ public:
 
     //! Get an element sub control volume face with a global scvf index
     //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const
     {
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
         if (it != scvfIndices_.end())
@@ -194,9 +206,9 @@ public:
             return neighborScvfs_[findLocalIndex(scvfIdx, neighborScvfIndices_)];
     }
 
-    //! Get an element sub control volume face with a global scvf index
-    //! We separate element and neighbor scvfs to speed up mapping
-    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvIdx = 0) const
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
         auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
         if (it != scvfIndices_.end())
@@ -207,7 +219,7 @@ public:
         else
         {
             const auto neighborScvfIdxLocal = findLocalIndex(scvfIdx, neighborScvfIndices_);
-            auto&& scvf = neighborScvfs_[neighborScvfIdxLocal];
+            const auto& scvf = neighborScvfs_[neighborScvfIdxLocal];
 
             if (scvf.outsideScvIdx(outsideScvIdx) == scvIndices_[0])
                 return scvfs_[neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx]];
@@ -252,6 +264,7 @@ public:
     //! called by the local assembler to prepare element assembly
     void bind(const Element& element)
     {
+        // make inside geometries
         bindElement(element);
 
         // get some references for convenience
@@ -308,11 +321,11 @@ public:
 private:
 
     //! Computes the number of neighboring scvfs that have to be prepared
-    template<class DataJ>
-    unsigned int numNeighborScvfs_(const std::vector<DataJ>& dataJVector)
+    template<class DataJContainer>
+    std::size_t numNeighborScvfs_(const DataJContainer& dataJContainer)
     {
-        unsigned int numNeighborScvfs = 0;
-        for (const auto& dataJ : dataJVector)
+        std::size_t numNeighborScvfs = 0;
+        for (const auto& dataJ : dataJContainer)
             numNeighborScvfs += dataJ.scvfsJ.size() + dataJ.additionalScvfs.size();
         return numNeighborScvfs;
     }
@@ -329,7 +342,7 @@ private:
         const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
 
-        // the quadrature point to be used on the scvf
+        // the quadrature point parameterizaion to be used on scvfs
         static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
         // reserve memory for the scv faces
@@ -402,7 +415,7 @@ private:
     //! create the scv and necessary scvfs of a neighboring element
     template<typename IndexVector>
     void makeNeighborGeometries(const Element& element,
-                                IndexType eIdxGlobal,
+                                GridIndexType eIdxGlobal,
                                 const IndexVector& scvfIndices,
                                 const IndexVector& additionalScvfs)
     {
@@ -414,7 +427,7 @@ private:
         const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdxGlobal);
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdxGlobal);
 
-        // the quadrature point to be used on the scvf
+        // the quadrature point parameterizaion to be used on scvfs
         static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
         // for network grids we only want to do one scvf per half facet
@@ -583,14 +596,16 @@ private:
         }
     }
 
-    const IndexType findLocalIndex(const IndexType idx,
-                                   const std::vector<IndexType>& indices) const
+    //! map a global index to the local storage index
+    const unsigned int findLocalIndex(const GridIndexType idx,
+                                      const std::vector<GridIndexType>& indices) const
     {
         auto it = std::find(indices.begin(), indices.end(), idx);
         assert(it != indices.end() && "Could not find the scv/scvf! Make sure to properly bind this class!");
         return std::distance(indices.begin(), it);
     }
 
+    //! clear all containers
     void clear()
     {
         scvIndices_.clear();
@@ -602,24 +617,27 @@ private:
         neighborScvfIndices_.clear();
         neighborScvs_.clear();
         neighborScvfs_.clear();
+
+        flipScvfIndices_.clear();
+        neighborFlipScvfIndices_.clear();
     }
 
     const FVGridGeometry* fvGridGeometryPtr_;
 
     // local storage after binding an element
-    std::vector<IndexType> scvIndices_;
-    std::vector<IndexType> scvfIndices_;
+    std::vector<GridIndexType> scvIndices_;
+    std::vector<GridIndexType> scvfIndices_;
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
 
-    std::vector<IndexType> neighborScvIndices_;
-    std::vector<IndexType> neighborScvfIndices_;
+    std::vector<GridIndexType> neighborScvIndices_;
+    std::vector<GridIndexType> neighborScvfIndices_;
     std::vector<SubControlVolume> neighborScvs_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
 
-    // flip index sets
-    std::vector< std::vector<IndexType> > flipScvfIndices_;
-    std::vector< std::vector<IndexType> > neighborFlipScvfIndices_;
+    // flip scvf index sets
+    std::vector< std::vector<GridIndexType> > flipScvfIndices_;
+    std::vector< std::vector<GridIndexType> > neighborFlipScvfIndices_;
 };
 
 } // end namespace

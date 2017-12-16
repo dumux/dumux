@@ -18,39 +18,40 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the index sets of the dual grid in mpfa schemes.
+ * \ingroup CCMpfaDiscretization
+ * \brief Class for the index sets of the dual grid in mpfa schemes.
  */
 #ifndef DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEXSET_BASE_HH
 #define DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEXSET_BASE_HH
-
-#include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 
 namespace Dumux
 {
 
 /*!
- * \ingroup Mpfa
- * \brief Nodal index set for the dual grid of mpfa schemes.
+ * \ingroup CCMpfaDiscretization
+ * \brief Nodal index set for mpfa schemes, constructed
+ *        around grid vertices.
+ *
+ * \tparam GI The type used for indices on the grid
+ * \tparam LI The type used for indexing in interaction volumes
+ * \tparam dim The dimension of the grid
  */
-template<class TypeTag>
+template< class GI, class LI, int dim >
 class DualGridNodalIndexSet
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using LocalIndexType = typename PrimaryInteractionVolume::Traits::LocalIndexType;
-    using LocalIndexContainer = typename PrimaryInteractionVolume::Traits::DynamicLocalIndexContainer;
-    using GlobalIndexContainer = typename PrimaryInteractionVolume::Traits::DynamicGlobalIndexContainer;
-
-    static const int dim = GridView::dimension;
-
 public:
-    //! constructor
+    using GridIndexType = GI;
+    using LocalIndexType = LI;
+
+    // we use dynamic containers to store indices here
+    using GridIndexContainer = std::vector<GridIndexType>;
+    using LocalIndexContainer = std::vector<LocalIndexType>;
+
+    //! Constructor
     DualGridNodalIndexSet() : numBoundaryScvfs_(0) {}
 
-    // Inserts data for a given scvf. This should only called once per scvf!
+    //! Inserts data for a given scvf
+    template<typename SubControlVolumeFace>
     void insert(const SubControlVolumeFace& scvf)
     {
         insert(scvf.boundary(),
@@ -59,20 +60,21 @@ public:
                scvf.outsideScvIndices());
     }
 
-    // Inserts data for a given scvf. This should only called once per scvf!
+    //! Inserts scvf data
     void insert(const bool boundary,
-                const IndexType scvfIdx,
-                const IndexType insideScvIdx,
-                const std::vector<IndexType>& outsideScvIndices)
+                const GridIndexType scvfIdx,
+                const GridIndexType insideScvIdx,
+                const std::vector<GridIndexType>& outsideScvIndices)
     {
-        // this should always be called only once
-        assert( std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx ) == scvfIndices_.end() && "scvf has already been inserted!");
+        // this should always be called only once per scvf
+        assert(std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx ) == scvfIndices_.end()
+               && "scvf has already been inserted!");
 
         // the local index of the scvf data about to be inserted
         const LocalIndexType curScvfLocalIdx = scvfIndices_.size();
 
-        // add global scvf data
-        GlobalIndexContainer scvIndices;
+        // add grid scvf data
+        GridIndexContainer scvIndices;
         scvIndices.reserve(outsideScvIndices.size()+1);
         scvIndices.push_back(insideScvIdx);
         scvIndices.insert(scvIndices.end(), outsideScvIndices.begin(), outsideScvIndices.end());
@@ -86,7 +88,7 @@ public:
         scvfIsOnBoundary_.push_back(boundary);
         scvfNeighborScvIndices_.emplace_back( std::move(scvIndices) );
 
-        // if entry for the inside scv exists append scvf local index, create otherwise
+        // if entry for the inside scv exists, append scvf local index, create otherwise
         auto it = std::find( scvIndices_.begin(), scvIndices_.end(), insideScvIdx );
         if (it != scvIndices_.end())
             localScvfIndicesInScv_[ std::distance(scvIndices_.begin(), it) ].push_back(curScvfLocalIdx);
@@ -100,105 +102,96 @@ public:
         }
     }
 
-    //! returns the number of scvs
+    //! returns the number of scvs around the node
     std::size_t numScvs() const { return scvIndices_.size(); }
 
-    //! returns the number of scvfs
+    //! returns the number of scvfs around the node
     std::size_t numScvfs() const { return scvfIndices_.size(); }
 
-    //! returns the number of boundary scvfs
+    //! returns the number of boundary scvfs around the node
     std::size_t numBoundaryScvfs() const { return numBoundaryScvfs_; }
 
     //! returns the global scv indices connected to this dual grid node
-    const GlobalIndexContainer& globalScvIndices() const { return scvIndices_; }
+    const GridIndexContainer& globalScvIndices() const { return scvIndices_; }
 
     //! returns the global scvf indices connected to this dual grid node
-    const GlobalIndexContainer& globalScvfIndices() const { return scvfIndices_; }
+    const GridIndexContainer& globalScvfIndices() const { return scvfIndices_; }
+
+    //! returns whether or not the i-th scvf is on a domain boundary
+    bool scvfIsOnBoundary(unsigned int i) const { return scvfIsOnBoundary_[i]; }
 
     //! returns the global scv idx of the i-th scv
-    IndexType scvIdxGlobal(unsigned int i) const { return scvIndices_[i]; }
+    GridIndexType scvIdxGlobal(unsigned int i) const { return scvIndices_[i]; }
 
     //! returns the index of the i-th scvf
-    IndexType scvfIdxGlobal(unsigned int i) const { return scvfIndices_[i]; }
+    GridIndexType scvfIdxGlobal(unsigned int i) const { return scvfIndices_[i]; }
 
     //! returns the global index of the j-th scvf embedded in the i-th scv
-    IndexType scvfIdxGlobal(unsigned int i, unsigned int j) const
+    GridIndexType scvfIdxGlobal(unsigned int i, unsigned int j) const
     {
         assert(j < dim); // only dim faces can be embedded in an scv
         return scvfIndices_[ localScvfIndicesInScv_[i][j] ];
     }
 
-    //! returns the nodel-local index of the j-th scvf embedded in the i-th scv
-    IndexType scvfIdxLocal(unsigned int i, unsigned int j) const
+    //! returns the node-local index of the j-th scvf embedded in the i-th scv
+    LocalIndexType scvfIdxLocal(unsigned int i, unsigned int j) const
     {
         assert(j < dim); // only dim faces can be embedded in an scv
         return localScvfIndicesInScv_[i][j];
     }
 
-    //! returns whether or not the i-th scvf touches the boundary
-    bool scvfIsOnBoundary(unsigned int i) const { return scvfIsOnBoundary_[i]; }
-
     //! returns the indices of the neighboring scvs of the i-th scvf
-    const GlobalIndexContainer& neighboringScvIndices(unsigned int i) const
+    const GridIndexContainer& neighboringScvIndices(unsigned int i) const
     { return scvfNeighborScvIndices_[i]; }
 
 private:
-    //! the indices of the scvs around a dual grid node
-    GlobalIndexContainer scvIndices_;
-    //! maps to each scv a list of scvf indices embedded in it
-    std::vector<LocalIndexContainer> localScvfIndicesInScv_;
+    GridIndexContainer scvIndices_;                          //!< The indices of the scvs around a dual grid node
+    std::vector<LocalIndexContainer> localScvfIndicesInScv_; //!< Maps to each scv a list of scvf indices embedded in it
 
-    //! the indices of the scvfs around a dual grid node
-    GlobalIndexContainer scvfIndices_;
-    //! maps to each scvf a boolean to indicate if it is on the boundary
-    std::vector<bool> scvfIsOnBoundary_;
-    //! maps to each scvf a list of neighbouring scv indices
-    //! ordering: 0 - inside scv idx; 1..n - outside scv indices
-    std::vector<GlobalIndexContainer> scvfNeighborScvIndices_;
-    //! stores how many boundary scvfs are embedded in this dual grid node
-    std::size_t numBoundaryScvfs_;
+    GridIndexContainer scvfIndices_;                         //!< the indices of the scvfs around a dual grid node
+    std::vector<bool> scvfIsOnBoundary_;                     //!< Maps to each scvf a boolean to indicate if it is on the boundary
+    std::vector<GridIndexContainer> scvfNeighborScvIndices_; //!< The neighboring scvs for the scvfs (order: 0 - inside, 1..n - outside)
+    std::size_t numBoundaryScvfs_;                           //!< stores how many boundary scvfs are embedded in this dual grid node
 };
 
 /*!
- * \ingroup Mpfa
+ * \ingroup CCMpfaDiscretization
  * \brief Class for the index sets of the dual grid in mpfa schemes.
+ *
+ * \tparam GridIndexType The type used for indices on the grid
+ * \tparam LocalIndexType The type used for indexing in interaction volumes
+ * \tparam dim The dimension of the grid
  */
-template<class TypeTag>
+template< class GridIndexType, class LocalIndexType, int dim >
 class CCMpfaDualGridIndexSet
 {
-    using ParentType = std::vector<DualGridNodalIndexSet<TypeTag>>;
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-
-    static const int dim = GridView::dimension;
-
 public:
-    using NodalIndexSet = DualGridNodalIndexSet<TypeTag>;
+    using NodalIndexSet = DualGridNodalIndexSet< GridIndexType, LocalIndexType, dim >;
 
-    //! default constructor
+    //! Default constructor should not be used
     CCMpfaDualGridIndexSet() = delete;
 
-    //! constructor
-    explicit CCMpfaDualGridIndexSet(const GridView& gridView) : nodalIndexSets_(gridView.size(dim)) {}
+    //! Constructor taking a grid view
+    template< class GridView >
+    CCMpfaDualGridIndexSet(const GridView& gridView) : nodalIndexSets_(gridView.size(dim)) {}
 
-    //! access with an scvf
+    //! Access with an scvf
+    template< class SubControlVolumeFace >
     const NodalIndexSet& operator[] (const SubControlVolumeFace& scvf) const
     { return nodalIndexSets_[scvf.vertexIndex()]; }
+
+    template< class SubControlVolumeFace >
     NodalIndexSet& operator[] (const SubControlVolumeFace& scvf)
     { return nodalIndexSets_[scvf.vertexIndex()]; }
 
-    //! access with an index
-    const NodalIndexSet& operator[] (IndexType i) const
-    { return nodalIndexSets_[i]; }
-    NodalIndexSet& operator[] (IndexType i)
-    { return nodalIndexSets_[i]; }
+    //! Access with an index
+    const NodalIndexSet& operator[] (GridIndexType i) const { return nodalIndexSets_[i]; }
+    NodalIndexSet& operator[] (GridIndexType i) { return nodalIndexSets_[i]; }
 
 private:
     std::vector<NodalIndexSet> nodalIndexSets_;
 };
-} // end namespace
 
+} // end namespace Dumux
 
 #endif

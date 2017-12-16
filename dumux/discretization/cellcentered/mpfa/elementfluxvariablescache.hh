@@ -18,14 +18,17 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The local object of flux var caches
+ * \ingroup CCMpfaDiscretization
+ * \brief The element-local object of flux variables caches
  */
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_FLUXVARSCACHE_HH
 
 #include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+
 #include "fluxvariablescachefiller.hh"
 #include "methods.hh"
 
@@ -33,56 +36,61 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the local flux variables cache.
- *        Prepares the cache on all the faces in the stencil.
+ * \ingroup CCMpfaDiscretization
+ * \brief The flux variables caches for an element
+ * \note The class is specialized for a version with and without caching.
+ *       If grid caching is enabled the flux caches are stored for the whole
+ *       gridview in the corresponding GridFluxVariablesCache. This is memory
+ *       intensive but faster. For caching disabled, the flux caches are locally
+ *       computed for each element whenever needed.
  */
 template<class TypeTag, bool EnableGridFluxVariablesCache>
 class CCMpfaElementFluxVariablesCache;
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when caching globally
+ * \ingroup CCMpfaDiscretization
+ * \brief The flux variables caches for an element with caching enabled
  */
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, true>
 {
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
+
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+
 
 public:
+    //! The constructor
     CCMpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void update(const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars) {}
 
-    // access operators in the case of caching
+    //! access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return (*gridFluxVarsCachePtr_)[scvf]; }
 
@@ -95,54 +103,55 @@ private:
 };
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when not using global caching
+ * \ingroup CCMpfaDiscretization
+ * \brief The flux variables caches for an element with caching disabled
  */
 template<class TypeTag>
 class CCMpfaElementFluxVariablesCache<TypeTag, false>
 {
-    // the flux variables cache filler needs to be friend to fill
-    // the interaction volumes and data handles
-    friend CCMpfaFluxVariablesCacheFiller<TypeTag>;
-
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
+
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-    using DataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
 
-    static constexpr int dim = GridView::dimension;
+    using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
+    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+    using SecondaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
 
 public:
     CCMpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // This function has to be called prior to flux calculations on the element.
-    // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
     {
-        // TODO
+        // For mpfa schemes we will have to prepare the caches of all scvfs that are
+        // embedded in the interaction volumes in which the element-local scvfs are embedded
         DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes");
     }
 
-    // This function is called by the CCLocalResidual before flux calculations during assembly.
-    // Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in the stencil of an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
     {
-        // clear data
         clear_();
 
         // some references for convenience
@@ -202,22 +211,31 @@ public:
         }
     }
 
+    /*!
+     * \brief Prepares the transmissibilities of a single scv face
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on this scvf.
+     */
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf)
     {
-        // TODO
-        DUNE_THROW(Dune::NotImplemented, "Local element binding of the flux variables cache in mpfa schemes");
+        // For mpfa schemes we will have to prepare the caches of all
+        // scvfs that are embedded in the interaction volumes this scvf is embedded
+        DUNE_THROW(Dune::NotImplemented, "Scvf-local binding of the flux variables cache in mpfa schemes");
     }
 
-    // This function is used to update the transmissibilities if the volume variables have changed
-    // Results in undefined behaviour if called before bind() or with a different element
+    /*!
+     * \brief Update the transmissibilities if the volume variables have changed
+     * \note Results in undefined behaviour if called before bind() or with a different element
+     */
     void update(const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
     {
-        // update only if transmissibilities are solution-dependent
+        // Update only if the filler puts
+        // solution-dependent stuff into the caches
         if (FluxVariablesCacheFiller::isSolDependent)
         {
             const auto& problem = gridFluxVarsCache().problem();
@@ -253,18 +271,53 @@ public:
         }
     }
 
-    // access operators in the case of no caching
+    //! access operators in the case of no caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
-    const FluxVariablesCache& operator [](const IndexType scvfIdx) const
+    //! access operators in the case of no caching
+    const FluxVariablesCache& operator [](const GridIndexType scvfIdx) const
     { return fluxVarsCache_[getLocalScvfIdx_(scvfIdx)]; }
 
+    //! access operators in the case of no caching
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
-    FluxVariablesCache& operator [](const IndexType scvfIdx)
+    //! access operators in the case of no caching
+    FluxVariablesCache& operator [](const GridIndexType scvfIdx)
     { return fluxVarsCache_[getLocalScvfIdx_(scvfIdx)]; }
+
+    //! access to the stored interaction volumes
+    const std::vector<PrimaryInteractionVolume>& primaryInteractionVolumes() const
+    { return primaryInteractionVolumes_; }
+
+    //! access to the stored interaction volumes
+    std::vector<PrimaryInteractionVolume>& primaryInteractionVolumes()
+    { return primaryInteractionVolumes_; }
+
+    //! access to the stored data handles
+    const std::vector<PrimaryIvDataHandle>& primaryDataHandles() const
+    { return primaryIvDataHandles_; }
+
+    //! access to the stored data handles
+    std::vector<PrimaryIvDataHandle>& primaryDataHandles()
+    { return primaryIvDataHandles_; }
+
+    //! access to the stored interaction volumes
+    const std::vector<SecondaryInteractionVolume>& secondaryInteractionVolumes() const
+    { return secondaryInteractionVolumes_; }
+
+    //! access to the stored interaction volumes
+    std::vector<SecondaryInteractionVolume>& secondaryInteractionVolumes()
+    { return secondaryInteractionVolumes_; }
+
+    //! access to the stored data handles
+    const std::vector<SecondaryIvDataHandle>& secondaryDataHandles() const
+    { return secondaryIvDataHandles_; }
+
+    //! access to the stored data handles
+    std::vector<SecondaryIvDataHandle>& secondaryDataHandles()
+    { return secondaryIvDataHandles_; }
 
     //! The global object we are a restriction of
     const GridFluxVariablesCache& gridFluxVarsCache() const
@@ -273,6 +326,7 @@ public:
 private:
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 
+    //! clears all containers
     void clear_()
     {
         fluxVarsCache_.clear();
@@ -283,35 +337,27 @@ private:
         secondaryIvDataHandles_.clear();
     }
 
-    // get number of interaction volumes that are going to be required
+    //! get estimate of interaction volumes that are going to be required
     template<class AssemblyMap>
     std::size_t getNoInteractionVolumesEstimate_(const Element& element, const AssemblyMap& assemblyMap)
     {
-        // TODO: uncomment as soon as methods are re-implemented
         // if statements are optimized away by the compiler
-        if (GET_PROP_VALUE(TypeTag, MpfaMethod) == MpfaMethods::oMethod /*|| method == MpfaMethods::oMethodFps*/)
+        if (GET_PROP_VALUE(TypeTag, MpfaMethod) == MpfaMethods::oMethod)
         {
-            //! Reserve memory for the case of each facet having neighbors being 4 levels higher. Memory limitations
-            //! do not play an important role here as global caching is disabled. In the unlikely case you want
-            //! to use higher local differences in element levels set a higher value for the parameter below
-            //! in your input file (note that some grids might only support levels differences of one anyway)
+            // Reserve memory for the case of each facet having neighbors being 4 levels higher. Memory limitations
+            // do not play an important role here as global caching is disabled. In the unlikely case you want
+            // to use higher local differences in element levels set a higher value for the parameter below
+            // in your input file (note that some grids might only support levels differences of one anyway)
             static const unsigned int maxDiff = getParamFromGroup<unsigned int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
                                                                                 "Grid.MaxLocalElementLevelDifference",
                                                                                 4);
-            return element.subEntities(dim)*maxDiff;
+            return element.subEntities(GridView::dimension)*maxDiff;
         }
-      /*  else if (method == MpfaMethods::lMethod)
-        {
-            std::size_t numInsideScvfs = MpfaHelper::getNumLocalScvfs(element.geometry().type());
-            std::size_t numOutsideScvf = 0;
-            for (const auto& dataJ : assemblyMap) numOutsideScvf += dataJ.scvfsJ.size();
-            return numOutsideScvf - numInsideScvfs;
-        }*/
         else
             DUNE_THROW(Dune::NotImplemented, "number of interaction volumes estimate for chosen mpfa scheme");
     }
 
-    // get index of an scvf in the local container
+    //! get index of an scvf in the local container
     unsigned int getLocalScvfIdx_(const int scvfIdx) const
     {
         auto it = std::find(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
@@ -320,15 +366,15 @@ private:
     }
 
 
-    // the local flux vars caches and the index set
+    // the local flux vars caches and corresponding indices
     std::vector<FluxVariablesCache> fluxVarsCache_;
-    std::vector<IndexType> globalScvfIndices_;
+    std::vector<GridIndexType> globalScvfIndices_;
 
-    // store the interaction volumes and handles
+    // stored interaction volumes and handles
     std::vector<PrimaryInteractionVolume> primaryInteractionVolumes_;
     std::vector<SecondaryInteractionVolume> secondaryInteractionVolumes_;
-    std::vector<DataHandle> primaryIvDataHandles_;
-    std::vector<DataHandle> secondaryIvDataHandles_;
+    std::vector<PrimaryIvDataHandle> primaryIvDataHandles_;
+    std::vector<SecondaryIvDataHandle> secondaryIvDataHandles_;
 };
 
 } // end namespace

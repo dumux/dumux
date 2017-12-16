@@ -18,17 +18,23 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Available implemented mpfa schemes
+ * \ingroup CCMpfaDiscretization
+ * \brief The available mpfa schemes in Dumux
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_METHODS_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_METHODS_HH
 
 namespace Dumux
 {
+    /*!
+     * \brief The available mpfa schemes in Dumux
+     * \ingroup CCMpfaDiscretization
+     */
     enum class MpfaMethods : unsigned int
     {
         oMethod
     };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif

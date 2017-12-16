@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Helper class to get information required for mpfa scheme.
+ * \ingroup CCMpfaDiscretization
+ * \brief Helper class to get data required for mpfa scheme.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
@@ -37,19 +38,16 @@
 namespace Dumux {
 
 /*!
- * \brief Mpfa method-specific implementation of the helper class (dimension-dependent)
- */
-template<class TypeTag, MpfaMethods Method, int dim, int dimWorld>
-class MpfaMethodHelper;
-
-/*!
- * \brief Dimension-specific implementation of the helper class (common for all methods)
+ * \ingroup CCMpfaDiscretization
+ * \brief Dimension-specific helper class to get data required for mpfa scheme.
  */
 template<class TypeTag, int dim, int dimWorld>
 class MpfaDimensionHelper;
 
 /*!
- * \brief Specialization for dim == 2 & dimWorld == 2
+ * \ingroup CCMpfaDiscretization
+ * \brief  Dimension-specific helper class to get data required for mpfa scheme.
+ *         Specialization for dim == 2 & dimWorld == 2
  */
 template<class TypeTag>
 class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
@@ -60,19 +58,20 @@ class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
+    using LocalScvType = typename InteractionVolume::Traits::LocalScvType;
+    using ScvBasis = typename LocalScvType::LocalBasis;
 
-    //! We know that dim = 2 & dimworld = 2. However, the specialization for
-    //! dim = 2 & dimWorld = 3 reuses some methods of this class, thus, we
-    //! obtain the world dimension from the grid view here to get the
-    //! GlobalPosition vector right. Be picky about the dimension though.
+    // We know that dim = 2 & dimworld = 2. However, the specialization for
+    // dim = 2 & dimWorld = 3 reuses some methods of this class, thus, we
+    // obtain the world dimension from the grid view here to get the
+    // GlobalPosition vector right. Be picky about the dimension though.
     static_assert(GridView::dimension == 2, "The chosen mpfa helper expects a grid view with dim = 2");
     static const int dim = 2;
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
-    //! Container to store the positions of intersections required for scvf
-    //! corner computation. In 2d, these are the center plus the two corners
+    // Container to store the positions of intersections required for scvf
+    // corner computation. In 2d, these are the center plus the two corners
     using ScvfPositionsOnIntersection = std::array<GlobalPosition, 3>;
 
 public:
@@ -104,7 +103,7 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
-    static Scalar calculateDetX(const ScvBasis& scvBasis)
+    static typename LocalScvType::ctype calculateDetX(const ScvBasis& scvBasis)
     {
         using std::abs;
         return abs(crossProduct<Scalar>(scvBasis[0], scvBasis[1]));
@@ -227,15 +226,19 @@ public:
 };
 
 /*!
- * \brief Specialization for dim == 2 & dimWorld == 2. Reuses some
- *        functionality of the specialization for dim = dimWorld = 2
+ * \ingroup CCMpfaDiscretization
+ * \brief  Dimension-specific helper class to get data required for mpfa scheme.
+ *         Specialization for dim == 2 & dimWorld == 2. Reuses some functionality
+ *         of the specialization for dim = dimWorld = 2
  */
 template<class TypeTag>
-class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/3> : public MpfaDimensionHelper<TypeTag, 2, 2>
+class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/3>
+                : public MpfaDimensionHelper<TypeTag, 2, 2>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
+    using LocalScvType = typename InteractionVolume::Traits::LocalScvType;
+    using ScvBasis = typename LocalScvType::LocalBasis;
 
 public:
 
@@ -269,7 +272,7 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
-    static Scalar calculateDetX(const ScvBasis& scvBasis)
+    static typename LocalScvType::ctype calculateDetX(const ScvBasis& scvBasis)
     {
         using std::abs;
         return abs(crossProduct<Scalar>(scvBasis[0], scvBasis[1]).two_norm());
@@ -285,9 +288,10 @@ public:
     static bool isRightHandSystem(const ScvBasis& scvBasis)
     { return true; }
 };
-
 /*!
- * \brief Specialization for dim == 3 & dimWorld == 3.
+ * \ingroup CCMpfaDiscretization
+ * \brief  Dimension-specific helper class to get data required for mpfa scheme.
+ *         Specialization for dim == 3 & dimWorld == 3.
  */
 template<class TypeTag>
 class MpfaDimensionHelper<TypeTag, /*dim*/3, /*dimWorld*/3>
@@ -298,7 +302,8 @@ class MpfaDimensionHelper<TypeTag, /*dim*/3, /*dimWorld*/3>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
+    using LocalScvType = typename InteractionVolume::Traits::LocalScvType;
+    using ScvBasis = typename LocalScvType::LocalBasis;
 
     // Be picky about the dimensions
     static_assert(GridView::dimension == 3 && GridView::dimensionworld == 3,
@@ -343,7 +348,7 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
-    static Scalar calculateDetX(const ScvBasis& scvBasis)
+    static typename LocalScvType::ctype calculateDetX(const ScvBasis& scvBasis)
     {
         using std::abs;
         return abs(tripleProduct<Scalar>(scvBasis[0], scvBasis[1], scvBasis[2]));
@@ -542,13 +547,12 @@ public:
 };
 
 /*!
- * \ingroup Mpfa
+ * \ingroup CCMpfaDiscretization
  * \brief Helper class to get the required information on an interaction volume.
  *        Specializations depending on the method and dimension are provided.
  */
 template<class TypeTag, MpfaMethods Method, int dim, int dimWorld>
-class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimWorld>,
-                                   public MpfaMethodHelper<TypeTag, Method, dim, dimWorld>
+class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimWorld>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
@@ -560,12 +564,11 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
+
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
-    using ScvBasis = typename InteractionVolume::Traits::ScvBasis;
+    using GlobalPosition = typename InteractionVolume::Traits::GlobalPosition;
 
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using CoordScalar = typename GridView::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
@@ -628,25 +631,11 @@ public:
     template<typename V1, typename V2>
     static bool vectorContainsValue(const std::vector<V1>& vector, const V2 value)
     { return std::find(vector.begin(), vector.end(), value) != vector.end(); }
-
-    // calculates the product of a transposed vector n, a Matrix M and another vector v (n^T M v)
-    static Scalar nT_M_v(const GlobalPosition& n, const DimWorldMatrix& M, const GlobalPosition& v)
-    {
-        GlobalPosition tmp;
-        M.mv(v, tmp);
-        return n*tmp;
-    }
-
-    // calculates the product of a transposed vector n, a Scalar M and another vector v (n^T M v)
-    static Scalar nT_M_v(const GlobalPosition& n, const Scalar M, const GlobalPosition& v)
-    {
-        return M*(n*v);
-    }
 };
 
 /*!
- * \ingroup Mpfa
- * \brief Helper class for the mpfa methods for the construction of the interaction regions etc.
+ * \ingroup CCMpfaDiscretization
+ * \brief Helper class to obtain data required for mpfa methods.
  *        It inherits from dimension-, dimensionworld- and method-specific implementations.
  */
 template<class TypeTag>
@@ -656,8 +645,5 @@ using CCMpfaHelper = CCMpfaHelperImplementation<TypeTag,
                                                 GET_PROP_TYPE(TypeTag, GridView)::dimensionworld>;
 
 } // end namespace Dumux
-
-// The implemented helper classes need to be included here
-#include <dumux/discretization/cellcentered/mpfa/omethod/helper.hh>
 
 #endif
