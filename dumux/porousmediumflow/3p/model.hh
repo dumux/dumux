@@ -129,8 +129,8 @@ SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
 SET_TYPE_PROP(ThreeP, Indices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
 
 //! The spatial parameters to be employed.
-//! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(ThreeP, SpatialParams, ImplicitSpatialParams<TypeTag>);
+//! Use FVSpatialParams by default.
+SET_TYPE_PROP(ThreeP, SpatialParams, FVSpatialParams<TypeTag>);
 
 SET_PROP(ThreeP, FluidState)
 {

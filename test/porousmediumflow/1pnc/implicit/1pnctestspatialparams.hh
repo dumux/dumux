@@ -38,9 +38,9 @@ namespace Dumux
  *        test problem.
  */
 template<class TypeTag>
-class OnePNCTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePNCTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

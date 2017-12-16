@@ -36,9 +36,9 @@ namespace Dumux
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
 template<class TypeTag>
-class OnePNISpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePNISpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

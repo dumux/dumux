@@ -63,9 +63,9 @@ SET_PROP(RichardsWellTracerSpatialParams, MaterialLaw)
  * \brief The spatial parameters for the RichardsWellTracerProblem
  */
 template<class TypeTag>
-class RichardsWellTracerSpatialParams : public ImplicitSpatialParams<TypeTag>
+class RichardsWellTracerSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

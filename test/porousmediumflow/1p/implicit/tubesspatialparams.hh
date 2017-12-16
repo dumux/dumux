@@ -38,9 +38,9 @@ namespace Dumux
  *        and a branching point embedded in a three-dimensional world
  */
 template<class TypeTag>
-class TubesTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class TubesTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

@@ -29,9 +29,9 @@ namespace Dumux
 {
 
 template<class TypeTag>
-class OnePTestSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

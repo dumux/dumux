@@ -43,7 +43,7 @@ namespace Dumux {
  * using a fully implicit discretization method.
  */
 template<class TypeTag>
-class ImplicitSpatialParamsOneP
+class FVSpatialParamsOneP
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -62,7 +62,7 @@ class ImplicitSpatialParamsOneP
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
 
 public:
-    ImplicitSpatialParamsOneP(const Problem& problem)
+    FVSpatialParamsOneP(const Problem& problem)
     : problemPtr_(&problem)
     {}
 

@@ -182,8 +182,8 @@ SET_TYPE_PROP(Richards, PrimaryVariableSwitch, ExtendedRichardsPrimaryVariableSw
 //SET_BOOL_PROP(Richards, ProblemUsePrimaryVariableSwitch, false);
 
 //! The spatial parameters to be employed.
-//! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(Richards, SpatialParams, ImplicitSpatialParams<TypeTag>);
+//! Use FVSpatialParams by default.
+SET_TYPE_PROP(Richards, SpatialParams, FVSpatialParams<TypeTag>);
 
 /*!
  *\brief The fluid system used by the model.

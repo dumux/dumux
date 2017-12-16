@@ -70,9 +70,9 @@ SET_PROP(FuelCellSpatialParams, MaterialLaw)
  *        problem which uses the isothermal 2p2c box model
  */
 template<class TypeTag>
-class FuelCellSpatialParams : public ImplicitSpatialParams<TypeTag>
+class FuelCellSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

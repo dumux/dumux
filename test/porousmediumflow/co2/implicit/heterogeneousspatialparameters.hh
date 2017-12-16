@@ -69,9 +69,9 @@ public:
  *        fully implicit model.
  */
 template<class TypeTag>
-class HeterogeneousSpatialParams : public ImplicitSpatialParams<TypeTag>
+class HeterogeneousSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

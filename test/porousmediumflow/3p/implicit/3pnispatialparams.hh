@@ -67,9 +67,9 @@ SET_PROP(ThreePNISpatialParams, MaterialLaw)
 
 
 template<class TypeTag>
-class ThreePNISpatialParams : public ImplicitSpatialParams<TypeTag>
+class ThreePNISpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

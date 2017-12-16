@@ -37,9 +37,9 @@ namespace Dumux
  * \brief Definition of the spatial parameters for the root system test problem
  */
 template<class TypeTag>
-class RootsystemTestSpatialParams: public ImplicitSpatialParamsOneP<TypeTag>
+class RootsystemTestSpatialParams: public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

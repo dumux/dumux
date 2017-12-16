@@ -79,9 +79,9 @@ private:
  *
  */
 template<class TypeTag>
-class CombustionSpatialParams : public ImplicitSpatialParams<TypeTag>
+class CombustionSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    typedef FVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;

@@ -58,10 +58,10 @@ public:
  *
  */
 template<class TypeTag>
-class DissolutionSpatialparams : public ImplicitSpatialParams<TypeTag>
+class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
 {
     using ThisType = DissolutionSpatialparams<TypeTag>;
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

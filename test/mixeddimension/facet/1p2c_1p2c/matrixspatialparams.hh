@@ -36,9 +36,9 @@ namespace Dumux
  * \brief The spatial parameters class for the matrix problem
  */
 template<class TypeTag>
-class OnePMatrixSpatialParams : public ImplicitSpatialParamsOneP<TypeTag>
+class OnePMatrixSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ParentType = ImplicitSpatialParamsOneP<TypeTag>;
+    using ParentType = FVSpatialParamsOneP<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

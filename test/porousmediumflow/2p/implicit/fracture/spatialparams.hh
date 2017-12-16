@@ -67,9 +67,9 @@ public:
  *        two-phase fully implicit model
  */
 template<class TypeTag>
-class FractureSpatialParams : public ImplicitSpatialParams<TypeTag>
+class FractureSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

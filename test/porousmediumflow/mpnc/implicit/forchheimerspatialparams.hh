@@ -71,9 +71,9 @@ public:
  *
  */
 template<class TypeTag>
-class ForchheimerSpatialParams : public ImplicitSpatialParams<TypeTag>
+class ForchheimerSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    typedef FVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

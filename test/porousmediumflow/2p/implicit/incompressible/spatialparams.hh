@@ -58,9 +58,9 @@ public:
 }
 
 template<class TypeTag>
-class TwoPTestSpatialParams : public ImplicitSpatialParams<TypeTag>
+class TwoPTestSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

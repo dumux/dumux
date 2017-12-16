@@ -60,9 +60,9 @@ SET_TYPE_PROP(InjectionSpatialParams,
  *        fully implicit model.
  */
 template<class TypeTag>
-class InjectionSpatialParams : public ImplicitSpatialParams<TypeTag>
+class InjectionSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

@@ -65,9 +65,9 @@ SET_PROP(KuevetteSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the kuevette problem
  */
 template<class TypeTag>
-class KuevetteSpatialParams : public ImplicitSpatialParams<TypeTag>
+class KuevetteSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

@@ -65,9 +65,9 @@ public:
  * \brief The spatial parameters for the RichardsAnalyticalProblem
  */
 template<class TypeTag>
-class RichardsAnalyticalSpatialParams : public ImplicitSpatialParams<TypeTag>
+class RichardsAnalyticalSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

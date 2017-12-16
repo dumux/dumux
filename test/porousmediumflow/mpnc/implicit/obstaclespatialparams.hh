@@ -70,9 +70,9 @@ public:
  *
  */
 template<class TypeTag>
-class ObstacleSpatialParams : public ImplicitSpatialParams<TypeTag>
+class ObstacleSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    typedef FVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

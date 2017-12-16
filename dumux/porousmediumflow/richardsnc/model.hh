@@ -123,8 +123,8 @@ SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields<TypeTag>); 
 //! Set the indices used
 SET_TYPE_PROP(RichardsNC, Indices, RichardsNCIndices<TypeTag>);
 //! The spatial parameters to be employed.
-//! Use ImplicitSpatialParamsOneP by default.
-SET_TYPE_PROP(RichardsNC, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
+//! Use FVSpatialParamsOneP by default.
+SET_TYPE_PROP(RichardsNC, SpatialParams, FVSpatialParamsOneP<TypeTag>);
 
 //! The model after Millington (1961) is used for the effective diffusivity
 SET_PROP(RichardsNC, EffectiveDiffusivityModel)

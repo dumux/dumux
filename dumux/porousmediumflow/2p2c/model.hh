@@ -187,8 +187,8 @@ SET_TYPE_PROP(TwoPTwoC, VolumeVariables, TwoPTwoCVolumeVariables<TypeTag>);
 //! Set the indices required by the isothermal 2p2c
 SET_TYPE_PROP(TwoPTwoC, Indices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
 
-//! Use the ImplicitSpatialParams by default
-SET_TYPE_PROP(TwoPTwoC, SpatialParams, ImplicitSpatialParams<TypeTag>);
+//! Use the FVSpatialParams by default
+SET_TYPE_PROP(TwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(TwoPTwoC, EffectiveDiffusivityModel,

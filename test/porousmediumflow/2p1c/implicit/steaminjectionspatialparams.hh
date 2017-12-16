@@ -62,9 +62,9 @@ SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for various steam injection problems
  */
 template<class TypeTag>
-class InjectionProblemSpatialParams : public ImplicitSpatialParams<TypeTag>
+class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

@@ -68,9 +68,9 @@ public:
 
 
 template<class TypeTag>
-class RichardsNISpatialParams : public ImplicitSpatialParams<TypeTag>
+class RichardsNISpatialParams : public FVSpatialParams<TypeTag>
 {
-    using ParentType = ImplicitSpatialParams<TypeTag>;
+    using ParentType = FVSpatialParams<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

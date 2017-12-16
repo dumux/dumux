@@ -68,9 +68,9 @@ SET_PROP(SagdSpatialParams, MaterialLaw)
  * \brief Definition of the spatial parameters for the SAGD problem
  */
 template<class TypeTag>
-class SagdSpatialParams : public ImplicitSpatialParams<TypeTag>
+class SagdSpatialParams : public FVSpatialParams<TypeTag>
 {
-    typedef ImplicitSpatialParams<TypeTag> ParentType;
+    typedef FVSpatialParams<TypeTag> ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;

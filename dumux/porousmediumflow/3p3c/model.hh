@@ -179,8 +179,8 @@ SET_BOOL_PROP(ThreePThreeC, UseConstraintSolver, false);
 SET_TYPE_PROP(ThreePThreeC, Indices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 
 //! The spatial parameters to be employed.
-//! Use ImplicitSpatialParams by default.
-SET_TYPE_PROP(ThreePThreeC, SpatialParams, ImplicitSpatialParams<TypeTag>);
+//! Use FVSpatialParams by default.
+SET_TYPE_PROP(ThreePThreeC, SpatialParams, FVSpatialParams<TypeTag>);
 
 //! The model after Millington (1961) is used for the effective diffusivity
 SET_PROP(ThreePThreeC, EffectiveDiffusivityModel)

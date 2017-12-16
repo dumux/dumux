@@ -109,8 +109,8 @@ SET_TYPE_PROP(Tracer, AdvectionType, StationaryVelocityField<TypeTag>);
 //! Set the indices used by the tracer model
 SET_TYPE_PROP(Tracer, Indices, TracerIndices<TypeTag>);
 
-//! Use ImplicitSpatialParamsOneP by default.
-SET_TYPE_PROP(Tracer, SpatialParams, ImplicitSpatialParamsOneP<TypeTag>);
+//! Use FVSpatialParamsOneP by default.
+SET_TYPE_PROP(Tracer, SpatialParams, FVSpatialParamsOneP<TypeTag>);
 
 //! Use simple model with constant tortuosity as pm diffusivity model
 SET_TYPE_PROP(Tracer, EffectiveDiffusivityModel, DiffusivityConstantTortuosity<typename GET_PROP_TYPE(TypeTag, Scalar)>);
