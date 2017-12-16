@@ -45,8 +45,8 @@ template<class TypeTag>
 class CellData1P
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef FluxData1P<TypeTag> FluxData;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluxData = FluxData1P<TypeTag>;
 
 private:
     Scalar pressure_;

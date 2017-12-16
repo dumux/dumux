@@ -50,36 +50,36 @@ bool sort_compare(const std::vector<int>& entryI, const std::vector<int>& entryJ
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainer
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) Implementation;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer);
 
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename Element::Geometry ElementGeometry;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
+    using ElementGeometry = typename Element::Geometry;
 
-    typedef typename GridView::Intersection Intersection;
-    typedef typename Intersection::Geometry IntersectionGeometry;
+    using Intersection = typename GridView::Intersection;
+    using IntersectionGeometry = typename Intersection::Geometry;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
     enum
         {
@@ -97,11 +97,11 @@ class FvMpfaL3dInteractionVolumeContainer
 
 public:
     //! Type for storing an MPFA-interaction-volume. (Usually of type FvMpfaL3dInteractionVolume or FvMpfaL3dInteractionVolumeAdaptive)
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
 
 private:
-    typedef std::vector<InteractionVolume> GlobalInteractionVolumeVector;
-    typedef std::vector<Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 2 * dim> > FaceAreaVector;
+    using GlobalInteractionVolumeVector = std::vector<InteractionVolume>;
+    using FaceAreaVector = std::vector<Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 2*dim> >;
 protected:
     void storeSubVolumeElements(const Element& element, std::vector < std::vector<int> >& elemVertMap);
     void storeIntersectionInfo(const Element& element, std::vector < std::vector<int> >& elemVertMap);

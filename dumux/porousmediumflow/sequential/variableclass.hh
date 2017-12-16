@@ -49,23 +49,23 @@ template<class TypeTag>
 class VariableClass
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
     enum
     {
         dim = GridView::dimension,
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
 
-    typedef typename SolutionTypes::VertexMapper VertexMapper;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    using VertexMapper = typename SolutionTypes::VertexMapper;
+    using ElementMapper = typename SolutionTypes::ElementMapper;
 
 public:
-    typedef typename std::vector <CellData> CellDataVector;
+    using CellDataVector = typename std::vector<CellData>;
 
 private:
     const GridView gridView_;

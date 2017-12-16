@@ -183,17 +183,17 @@ SET_TYPE_PROP(TwoPNCNI, IsothermalVtkOutputFields, TwoPNCVtkOutputFields<TypeTag
 SET_PROP(TwoPNCNI, ThermalConductivityModel)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+    using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
 
 //! set isothermal NumEq
 SET_PROP(TwoPNCNI, IsothermalNumEq)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem));
 
 public:
     static const int value = FluidSystem::numComponents;

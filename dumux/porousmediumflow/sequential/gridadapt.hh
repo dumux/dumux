@@ -43,20 +43,20 @@ namespace Dumux
 template<class TypeTag, bool adaptive>
 class GridAdapt
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem)  Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GridView::Grid Grid;
-    typedef typename Grid::LeafGridView LeafGridView;
-    typedef typename Grid::template Codim<0>::Entity Element;
+    using Grid = typename GridView::Grid;
+    using LeafGridView = typename Grid::LeafGridView;
+    using Element = typename Grid::template Codim<0>::Entity;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionIndicator) AdaptionIndicator;
-    typedef typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator) AdaptionInitializationIndicator;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using AdaptionIndicator = typename GET_PROP_TYPE(TypeTag, AdaptionIndicator);
+    using AdaptionInitializationIndicator = typename GET_PROP_TYPE(TypeTag, AdaptionInitializationIndicator);
 
-    typedef typename Grid::Traits::LocalIdSet IdSet;
-    typedef typename IdSet::IdType IdType;
+    using IdSet = typename Grid::Traits::LocalIdSet;
+    using IdType = typename IdSet::IdType;
 
 public:
     /*!
@@ -209,7 +209,7 @@ public:
     template<class Indicator>
     void markElements(Indicator& indicator)
     {
-        typedef std::unordered_map<IdType, IdType> CoarsenMarkerType;
+        using CoarsenMarkerType = std::unordered_map<IdType, IdType>;
         CoarsenMarkerType coarsenMarker;
         const IdSet& idSet(problem_.grid().localIdSet());
 
@@ -456,10 +456,10 @@ private:
 template<class TypeTag>
 class GridAdapt<TypeTag, false>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar)   Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem)     Problem;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
 public:
     void init()

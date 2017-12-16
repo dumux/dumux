@@ -52,22 +52,22 @@ namespace Dumux
 template<class TypeTag>
 class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
 
     enum
     {
@@ -88,16 +88,16 @@ class FV3dTransport2P2CAdaptive : public FVTransport2P2C<TypeTag>
         contiWEqIdx=Indices::contiWEqIdx, contiNEqIdx=Indices::contiNEqIdx
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Grid Grid;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Grid = typename GridView::Grid;
+    using Intersection = typename GridView::Intersection;
+    using IntersectionIterator = typename GridView::IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar,dim,dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, NumPhases> PhaseVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using TransmissivityMatrix = Dune::FieldVector<Scalar,dim+1>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using PhaseVector = Dune::FieldVector<Scalar, NumPhases>;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     //! Acess function for the current problem
     Problem& problem()
@@ -299,9 +299,9 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
 
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > > DataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using DataHandle = VectorExchange<ElementMapper, Dune::BlockVector<Dune::FieldVector<Scalar, 1> > >;
     for (int i = 0; i < updateVec.size(); i++)
     {
         DataHandle dataHandle(problem().variables().elementMapper(), updateVec[i]);

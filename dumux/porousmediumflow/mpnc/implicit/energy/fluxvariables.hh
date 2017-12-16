@@ -46,14 +46,14 @@ class MPNCFluxVariablesEnergy
                   "No kinetic energy transfer module included, "
                   "but kinetic energy transfer enabled.");
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using SCVFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
     /*!
@@ -84,28 +84,28 @@ public:
 template <class TypeTag>
 class MPNCFluxVariablesEnergy<TypeTag, /*enableEnergy=*/true,  /*numEnergyEquations=*/1>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GridView::ctype CoordScalar;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using CoordScalar = typename GridView::ctype;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum{dimWorld = GridView::dimensionworld};
     enum{dim = GridView::dimension};
     enum{nPhaseIdx = FluidSystem::nPhaseIdx};
     enum{wPhaseIdx = FluidSystem::wPhaseIdx};
 
-    typedef Dune::FieldVector<CoordScalar, dim>  DimVector;
-    typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
-    typedef typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel) ThermalConductivityModel;
+    using DimVector = Dune::FieldVector<CoordScalar, dim>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SCVFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
 public:
     /*!

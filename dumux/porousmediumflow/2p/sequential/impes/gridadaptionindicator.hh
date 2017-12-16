@@ -38,16 +38,16 @@ template<class TypeTag>
 class GridAdaptionIndicator2P
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
+    using ElementMapper = typename SolutionTypes::ElementMapper;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -141,7 +141,7 @@ public:
 
 #if HAVE_MPI
     // communicate updated values
-    typedef VectorExchange<ElementMapper, ScalarSolutionType> DataHandle;
+    using DataHandle = VectorExchange<ElementMapper, ScalarSolutionType>;
     DataHandle dataHandle(problem_.elementMapper(), indicatorVector_);
     problem_.gridView().template communicate<DataHandle>(dataHandle,
                                                          Dune::InteriorBorder_All_Interface,

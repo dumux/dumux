@@ -40,17 +40,17 @@ namespace Dumux {
 template <class TypeTag, bool enableDiffusion>
 class MPNCDiffusion
 {
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
     enum { nCompIdx = FluidSystem::nCompIdx };
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef Dune::FieldMatrix<Scalar, numComponents, numComponents> ComponentMatrix;
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ComponentMatrix = Dune::FieldMatrix<Scalar, numComponents, numComponents>;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
 
@@ -183,9 +183,9 @@ class MPNCDiffusion<TypeTag, false>
 {
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
-    typedef Dune::FieldVector<Scalar, numComponents>        ComponentVector;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
     static void flux(ComponentVector &fluxes,

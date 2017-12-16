@@ -45,12 +45,12 @@ template<class TypeTag>
 class CellData2P2CMultiPhysics : public CellData2P2C<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef PseudoOnePTwoCFluidState<Scalar, FluidSystem> SimpleFluidState;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SimpleFluidState = PseudoOnePTwoCFluidState<Scalar, FluidSystem>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {

@@ -47,20 +47,20 @@ class MPNCVolumeVariablesEnergy
                   "No kinetic energy transfer module included, "
                   "but kinetic energy transfer enabled.");
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
     enum {dimWorld=GridView::dimensionworld};
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 
 public:
@@ -125,25 +125,25 @@ public:
 template <class TypeTag>
 class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/ 1 >
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { temperatureIdx   = Indices::temperatureIdx };
     enum { numEnergyEqs     = Indices::numPrimaryEnergyVars};
     enum { temperature0Idx = Indices::temperatureIdx };
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState)  FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
     enum { dimWorld = GridView::dimensionworld};
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
 
 public:
     /*!

@@ -75,16 +75,16 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
 : public FVPressure2P2C<TypeTag>
 {
     //the model implementation
-    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
-    typedef FVPressure<TypeTag> BaseType;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using BaseType = FVPressure<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -104,20 +104,20 @@ template<class TypeTag> class FV2dPressure2P2CAdaptive
         rhs = BaseType::rhs, matrix = BaseType::matrix,
     };
 
-    // typedefs to abbreviate several dune classes...
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    // using declarations to abbreviate several dune classes...
+    using Intersection = typename GridView::Intersection;
+    using IntersectionIterator = typename GridView::IntersectionIterator;
 
     // convenience shortcuts for Vectors/Matrices
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)> PhaseVector;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using TransmissivityMatrix = Dune::FieldVector<Scalar,dim+1>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using PhaseVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)>;
 
     // the typenames used for the stiffness matrix and solution vector
-    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
+    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
 
-    typedef FvMpfaL2dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
+    using TransmissibilityCalculator = FvMpfaL2dTransmissibilityCalculator<TypeTag>;
 protected:
     Problem& problem()
     {

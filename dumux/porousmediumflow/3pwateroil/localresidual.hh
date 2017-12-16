@@ -42,14 +42,14 @@ template<class TypeTag>
 class ThreePWaterOilLocalResidual: public ThreePThreeCLocalResidual<TypeTag>
 {
 protected:
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
 
 
     enum {
@@ -67,12 +67,12 @@ protected:
         nCompIdx = Indices::nCompIdx,
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluxVariables) FluxVariables;
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);

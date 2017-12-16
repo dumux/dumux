@@ -42,9 +42,9 @@ namespace Dumux {
 template <class TypeTag, bool enableKinetic /* = false */>
 class MpNcNewtonChop
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents =  GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -100,9 +100,9 @@ private:
 template <class TypeTag>
 class MpNcNewtonChop<TypeTag, /*enableKinetic=*/true>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
     enum { numPhases =  GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents =  GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -178,11 +178,11 @@ private:
 template <class TypeTag>
 class MPNCNewtonController : public NewtonController<TypeTag>
 {
-    typedef NewtonController<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using ParentType = NewtonController<TypeTag>;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {    numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
@@ -190,7 +190,7 @@ class MPNCNewtonController : public NewtonController<TypeTag>
     enum {p0Idx = Indices::p0Idx};
     enum {s0Idx = Indices::s0Idx};
 
-    typedef MpNcNewtonChop<TypeTag, enableKinetic> NewtonChop;
+    using NewtonChop = MpNcNewtonChop<TypeTag, enableKinetic>;
 
 public:
     MPNCNewtonController(const Problem &problem)

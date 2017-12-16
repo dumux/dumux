@@ -63,17 +63,17 @@ template<class TypeTag>
 class CellData2P<TypeTag, false>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef FluxData2P<TypeTag> FluxData;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxData = FluxData2P<TypeTag>;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
@@ -387,17 +387,17 @@ template<class TypeTag>
 class CellData2P<TypeTag, true>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef FluxData2P<TypeTag> FluxData;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FluxData = FluxData2P<TypeTag>;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {

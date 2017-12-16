@@ -36,7 +36,7 @@ namespace Dumux
 template<class TypeTag>
 class RichardsLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, LocalResidual) Implementation;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
 
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

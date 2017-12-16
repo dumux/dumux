@@ -46,26 +46,26 @@ namespace Dumux
 template<class TypeTag> class FVPressure
 {
     //the model implementation
-    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    // typedefs to abbreviate several dune classes...
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    // using declarations to abbreviate several dune classes...
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
     // the typenames used for the stiffness matrix and solution vector
-    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureSolutionVector) PressureSolution;
+    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
+    using RHSVector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
+    using PressureSolution = typename GET_PROP_TYPE(TypeTag, PressureSolutionVector);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
 protected:
 
@@ -73,7 +73,7 @@ protected:
      *
      * Contains the return values of the get*()-functions (matrix or right-hand side entry).
      */
-    typedef Dune::FieldVector<Scalar, 2> EntryType;
+    using EntryType = Dune::FieldVector<Scalar, 2>;
 
     //! Indices of matrix and rhs entries
     /**
@@ -514,7 +514,7 @@ getSolver(const Problem& problem)
 template<class TypeTag>
 void FVPressure<TypeTag>::solve()
 {
-    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
+    using Solver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
 
     int verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
 

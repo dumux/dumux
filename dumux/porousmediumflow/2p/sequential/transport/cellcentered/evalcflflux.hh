@@ -51,10 +51,10 @@ template<class TypeTag>
 class EvalCflFlux
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Intersection = typename GridView::Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
 public:
 

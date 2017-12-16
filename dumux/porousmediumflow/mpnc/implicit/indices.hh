@@ -60,14 +60,14 @@ struct MPNCIndices :
                                  GET_PROP_VALUE(TypeTag, NumEnergyEquations)>
 {
 private:
-            typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+            using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
             enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy) };
             enum { enableKinetic        = GET_PROP_VALUE(TypeTag, EnableKinetic) }; //mass transfer
             enum { numEnergyEquations  = GET_PROP_VALUE(TypeTag, NumEnergyEquations) }; // energy transfer
             enum { numPhases = FluidSystem::numPhases };
 
-            typedef MPNCMassIndices<BasePVOffset, TypeTag, enableKinetic> MassIndices;
-            typedef MPNCEnergyIndices<BasePVOffset + MassIndices::numPrimaryVars, enableEnergy, numEnergyEquations> EnergyIndices;
+            using MassIndices = MPNCMassIndices<BasePVOffset, TypeTag, enableKinetic>;
+            using EnergyIndices = MPNCEnergyIndices<BasePVOffset + MassIndices::numPrimaryVars, enableEnergy, numEnergyEquations>;
 
 public:
     /*!

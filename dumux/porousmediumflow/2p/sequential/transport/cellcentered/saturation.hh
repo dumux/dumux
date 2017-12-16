@@ -72,37 +72,37 @@ namespace Dumux
 template<class TypeTag>
 class FVSaturation2P: public FVTransport<TypeTag>
 {
-    typedef FVTransport<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, TransportModel) Implementation;
+    using ParentType = FVTransport<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, TransportModel);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Velocity) Velocity;
-    typedef typename GET_PROP_TYPE(TypeTag, CapillaryFlux) CapillaryFlux;
-    typedef typename GET_PROP_TYPE(TypeTag, GravityFlux) GravityFlux;
+    using Velocity = typename GET_PROP_TYPE(TypeTag, Velocity);
+    using CapillaryFlux = typename GET_PROP_TYPE(TypeTag, CapillaryFlux);
+    using GravityFlux = typename GET_PROP_TYPE(TypeTag, GravityFlux);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
     enum
     {
@@ -124,13 +124,13 @@ class FVSaturation2P: public FVTransport<TypeTag>
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
 protected:
     CapillaryFlux& capillaryFlux()

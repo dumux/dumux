@@ -40,28 +40,28 @@ template<class TypeTag>
 class FVMPFALInteractionVolume
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, GridCreator) GridCreator;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
     enum
         {
             dim = GridView::dimension
         };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntitySeed ElementSeed;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementSeed = typename Grid::template Codim<0>::EntitySeed;
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
-    typedef Dune::FieldVector<DimVector, dim> FieldVectorVector;
-    typedef Dune::FieldVector<int, dim> IndexVector;
-    typedef std::vector<BoundaryTypes> BCTypeVector;
-    typedef std::vector<PrimaryVariables> BCVector;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using FieldVectorVector = Dune::FieldVector<DimVector, dim>;
+    using IndexVector = Dune::FieldVector<int, dim>;
+    using BCTypeVector = std::vector<BoundaryTypes>;
+    using BCVector = std::vector<PrimaryVariables>;
 
 public:
     enum FaceTypes

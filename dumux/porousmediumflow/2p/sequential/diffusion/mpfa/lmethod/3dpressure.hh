@@ -70,35 +70,35 @@ namespace Dumux
 template<class TypeTag>
 class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
 {
-    typedef FVPressure<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using ParentType = FVPressure<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
         {
             dim = GridView::dimension, dimWorld = GridView::dimensionworld
         };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
-    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+    using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
     enum
         {
@@ -136,24 +136,24 @@ class FvMpfaL3dPressure2p: public FVPressure<TypeTag>
             innerSideFace = 1
         };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Grid Grid;
-    typedef typename Element::Geometry Geometry;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Grid = typename GridView::Grid;
+    using Geometry = typename Element::Geometry;
+    using IntersectionIterator = typename GridView::IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using LocalPosition = Dune::FieldVector<Scalar, dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
-    typedef  FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
+    using InteractionVolumeContainer = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer);
+    using TransmissibilityCalculator = FvMpfaL3dTransmissibilityCalculator<TypeTag>;
 public:
     //! Type including methods for calculation of MPFA transmissibilities
-    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
+    using TransmissibilityType = typename TransmissibilityCalculator::TransmissibilityType;
     //! Type for storing interaction volume information
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
 protected:
     //initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;

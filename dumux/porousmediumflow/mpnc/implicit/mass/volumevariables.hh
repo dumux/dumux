@@ -41,26 +41,26 @@ class MPNCVolumeVariablesMass
                   "No kinetic mass transfer module included, "
                   "but kinetic mass transfer enabled.");
 
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, ConstraintSolver) ConstraintSolver;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ConstraintSolver = typename GET_PROP_TYPE(TypeTag, ConstraintSolver);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { fug0Idx = Indices::fug0Idx };
     enum { dimWorld = GridView::dimensionworld};
-    typedef Dune::FieldVector<typename GridView::Grid::ctype, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
 
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
     /*!

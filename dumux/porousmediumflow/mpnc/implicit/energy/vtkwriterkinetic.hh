@@ -44,17 +44,17 @@ template<class TypeTag>
 class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquations = */ 3 >
     : public MPNCVtkWriterModule<TypeTag>
 {
-    typedef MPNCVtkWriterModule<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using ParentType = MPNCVtkWriterModule<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
@@ -68,14 +68,14 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     enum { interfacialAreaOutput= GET_PROP_VALUE(TypeTag, VtkAddInterfacialArea) };
     enum { velocityOutput       = GET_PROP_VALUE(TypeTag, VtkAddVelocities) };
 
-    typedef typename ParentType::ScalarVector ScalarVector;
-    typedef typename ParentType::PhaseVector PhaseVector;
-    typedef typename ParentType::ComponentVector ComponentVector;
-    typedef std::array<ScalarVector, numEnergyEqs> EnergyEqVector;
+    using ScalarVector = typename ParentType::ScalarVector;
+    using PhaseVector = typename ParentType::PhaseVector;
+    using ComponentVector = typename ParentType::ComponentVector;
+    using EnergyEqVector = std::array<ScalarVector, numEnergyEqs>;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
-    typedef Dune::BlockVector<DimWorldVector> DimWorldField;
-    typedef std::array<DimWorldField, numPhases> PhaseDimWorldField;
+    using DimWorldVector = Dune::FieldVector<Scalar, dimWorld>;
+    using DimWorldField = Dune::BlockVector<DimWorldVector>;
+    using PhaseDimWorldField = std::array<DimWorldField, numPhases>;
 
 
 public:
@@ -289,18 +289,18 @@ template<class TypeTag>
 class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquations = */ 2 >
     : public MPNCVtkWriterModule<TypeTag>
 {
-    typedef MPNCVtkWriterModule<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/2> LocalResidual;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using ParentType = MPNCVtkWriterModule<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using LocalResidual = MPNCLocalResidualEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/2>;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
@@ -316,14 +316,14 @@ class MPNCVtkWriterEnergy<TypeTag, /*enableEnergy = */ true, /* numEnergyEquatio
     enum { interfacialAreaOutput= GET_PROP_VALUE(TypeTag, VtkAddInterfacialArea) };
     enum { velocityOutput       = GET_PROP_VALUE(TypeTag, VtkAddVelocities) };
 
-    typedef typename ParentType::ScalarVector ScalarVector;
-    typedef typename ParentType::PhaseVector PhaseVector;
-    typedef typename ParentType::ComponentVector ComponentVector;
-    typedef std::array<ScalarVector, numEnergyEqs> EnergyEqVector;
+    using ScalarVector = typename ParentType::ScalarVector;
+    using PhaseVector = typename ParentType::PhaseVector;
+    using ComponentVector = typename ParentType::ComponentVector;
+    using EnergyEqVector = std::array<ScalarVector, numEnergyEqs>;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> DimWorldVector;
-    typedef Dune::BlockVector<DimWorldVector> DimWorldField;
-    typedef std::array<DimWorldField, numPhases> PhaseDimWorldField;
+    using DimWorldVector = Dune::FieldVector<Scalar, dimWorld>;
+    using DimWorldField = Dune::BlockVector<DimWorldVector>;
+    using PhaseDimWorldField = std::array<DimWorldField, numPhases>;
 
 
 public:

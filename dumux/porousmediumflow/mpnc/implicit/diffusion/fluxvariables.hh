@@ -38,14 +38,14 @@ namespace Dumux {
 template<class TypeTag, bool enableDiffusion>
 class MPNCFluxVariablesDiffusion
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SCVFace = typename FVElementGeometry::SubControlVolumeFace;
 
     enum{dim = GridView::dimension};
     enum{dimWorld = GridView::dimensionworld};
@@ -54,8 +54,8 @@ class MPNCFluxVariablesDiffusion
     enum{wPhaseIdx = FluidSystem::wPhaseIdx};
     enum{nPhaseIdx = FluidSystem::nPhaseIdx};
 
-    typedef Dune::FieldVector<Scalar, dim>  DimVector;
-    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     /*!
@@ -222,12 +222,12 @@ protected:
 template<class TypeTag>
 class MPNCFluxVariablesDiffusion<TypeTag, false>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SCVFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
     /*!

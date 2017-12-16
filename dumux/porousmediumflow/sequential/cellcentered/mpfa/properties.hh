@@ -114,7 +114,7 @@ namespace Properties
 SET_PROP(MPFAProperties, GridImplementation)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
+    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
 public:
     static const int value = GridImp<Grid, Grid::dimension>::imp;
 };

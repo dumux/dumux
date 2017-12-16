@@ -66,23 +66,23 @@ template<class TypeTag> class FVPressureCompositional
 : public FVPressure<TypeTag>
 {
     //the model implementation
-    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
-    typedef FVPressure<TypeTag> ParentType;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using ParentType = FVPressure<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, TransportSolutionType) TransportSolutionType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using TransportSolutionType = typename GET_PROP_TYPE(TypeTag, TransportSolutionType);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     ///@cond false
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw MaterialLaw;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, SpatialParams)::MaterialLaw;
     ///@endcond
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -104,13 +104,13 @@ template<class TypeTag> class FVPressureCompositional
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
-    // typedefs to abbreviate several dune classes...
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    // using declarations to abbreviate a dune class...
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     // convenience shortcuts for Vectors/Matrices
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, numPhases> PhaseVector;
-    typedef Dune::FieldVector<Scalar, numComponents> ComponentVector;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
+    using ComponentVector = Dune::FieldVector<Scalar, numComponents>;
 
 public:
     //the variables object is initialized, non-compositional before and compositional after first pressure calculation
@@ -167,7 +167,7 @@ public:
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
-        typedef typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution ScalarSolutionType;
+        using ScalarSolutionType = typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution;
         int size = problem_.gridView().size(0);
         ScalarSolutionType *pressureW = writer.allocateManagedBuffer(size);
         ScalarSolutionType *pressureN = writer.allocateManagedBuffer(size);

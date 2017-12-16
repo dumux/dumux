@@ -39,21 +39,21 @@ template<class TypeTag>
 class EvalCflFluxCoats: public EvalCflFlux<TypeTag>
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
     enum
         {
@@ -76,12 +76,12 @@ private:
             sn = Indices::saturationNw
         };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Intersection Intersection;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
     //! \brief Initializes the cfl-flux-model

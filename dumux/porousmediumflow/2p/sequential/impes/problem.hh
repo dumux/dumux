@@ -41,17 +41,17 @@ namespace Dumux
 template<class TypeTag>
 class IMPESProblem2P : public IMPETProblem<TypeTag>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Implementation;
-    typedef IMPETProblem<TypeTag> ParentType;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
+    using ParentType = IMPETProblem<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::Grid Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
 
     enum {
@@ -59,9 +59,9 @@ class IMPESProblem2P : public IMPETProblem<TypeTag>
         dimWorld = Grid::dimensionworld
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
-    typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     //Copy constructor
     IMPESProblem2P(const IMPESProblem2P &)

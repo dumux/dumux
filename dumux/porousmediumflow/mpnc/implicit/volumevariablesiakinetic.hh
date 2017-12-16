@@ -43,18 +43,18 @@ namespace Dumux
 template <class TypeTag, bool enableKinetic >
 class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*numEnergyEqs=*/3>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
 
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -72,19 +72,19 @@ class MPNCVolumeVariablesIA<TypeTag, enableKinetic, /*numEnergyEqs=*/3>
     enum { enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)} ;
 
 
-    typedef DimensionlessNumbers<Scalar> DimLessNum ;
+    using DimLessNum = DimensionlessNumbers<Scalar>;
 
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 
-    typedef typename GET_PROP_TYPE(TypeTag, AwnSurface) AwnSurface;
-    typedef typename AwnSurface::Params AwnSurfaceParams;
+    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
+    using AwnSurfaceParams = typename AwnSurface::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AwsSurface) AwsSurface;
-    typedef typename AwsSurface::Params AwsSurfaceParams;
+    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
+    using AwsSurfaceParams = typename AwsSurface::Params;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AnsSurface) AnsSurface;
-    typedef typename AnsSurface::Params AnsSurfaceParams;
+    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
+    using AnsSurfaceParams = typename AnsSurface::Params;
 
 
 public:
@@ -335,17 +335,17 @@ private:
 template <class TypeTag>
 class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/false, /*numEnergyEqs=*/2>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { dim = GridView::dimension};
@@ -353,7 +353,7 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/false, /*numEnergyEqs=*/2
     enum { numEnergyEqs = Indices::numPrimaryEnergyVars};
     enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
 
-    typedef DimensionlessNumbers<Scalar> DimLessNum ;
+    using DimLessNum = DimensionlessNumbers<Scalar>;
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
@@ -474,20 +474,20 @@ private:
 template <class TypeTag>
 class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*numEnergyEqs=*/0>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef DimensionlessNumbers<Scalar> DimLessNum;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using DimLessNum = DimensionlessNumbers<Scalar>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, AwnSurface) AwnSurface;
-    typedef typename AwnSurface::Params AwnSurfaceParams;
+    using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
+    using AwnSurfaceParams = typename AwnSurface::Params;
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
@@ -498,8 +498,8 @@ class MPNCVolumeVariablesIA<TypeTag, /*enableKinetic=*/true, /*numEnergyEqs=*/0>
     enum { dimWorld  = GridView::dimensionworld};
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
 
 
 public:

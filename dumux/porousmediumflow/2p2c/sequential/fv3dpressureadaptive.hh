@@ -78,25 +78,25 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
 : public FVPressure2P2CMultiPhysics<TypeTag>
 {
     //the model implementation
-    typedef typename GET_PROP_TYPE(TypeTag, PressureModel) Implementation;
-    typedef FVPressure2P2CMultiPhysics<TypeTag> ParentType;
-    typedef FVPressure<TypeTag> BaseType;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, PressureModel);
+    using ParentType = FVPressure2P2CMultiPhysics<TypeTag>;
+    using BaseType = FVPressure<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld,
@@ -121,31 +121,31 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
         rhs = BaseType::rhs, matrix = BaseType::matrix,
     };
 
-    // typedefs to abbreviate several dune classes...
-    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef Dune::ReferenceElements<Scalar, dim> ReferenceElementContainer;
-    typedef Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    // using declarations to abbreviate several dune classes...
+    using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using ReferenceElementContainer = Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
-    typedef typename GridView::Grid Grid;
-    typedef typename GridView::Intersection Intersection;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    using Grid = typename GridView::Grid;
+    using Intersection = typename GridView::Intersection;
+    using IntersectionIterator = typename GridView::IntersectionIterator;
 
     // convenience shortcuts for Vectors/Matrices
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)> PhaseVector;
-    typedef Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumComponents)> ComponentVector;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using TransmissivityMatrix = Dune::FieldVector<Scalar,dim+1>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using PhaseVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumPhases)>;
+    using ComponentVector = Dune::FieldVector<Scalar, GET_PROP_VALUE(TypeTag, NumComponents)>;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
     // the typenames used for the stiffness matrix and solution vector
-    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) RHSVector;
+    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
+    using RHSVector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
 
-    // Dumux MPFA typedefs
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
-    typedef typename InteractionVolumeContainer::InteractionVolume InteractionVolume;
+    // Dumux MPFA types
+    using InteractionVolumeContainer = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer);
+    using InteractionVolume = typename InteractionVolumeContainer::InteractionVolume;
 
 protected:
     //! \cond \private
@@ -230,10 +230,10 @@ public:
         }
 #if HAVE_MPI
     // communicate updated values
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ElementMapper ElementMapper;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureSolutionVector) PressureSolution;
-    typedef VectorExchange<ElementMapper, PressureSolution> DataHandle;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ElementMapper = typename SolutionTypes::ElementMapper;
+    using PressureSolution = typename GET_PROP_TYPE(TypeTag, PressureSolutionVector);
+    using DataHandle = VectorExchange<ElementMapper, PressureSolution>;
 
         DataHandle dataHandle(problem().variables().elementMapper(), this->pressure());
         problem().gridView().template communicate<DataHandle>(dataHandle,
@@ -379,7 +379,7 @@ void FV3dPressure2P2CAdaptive<TypeTag>::initializeMatrixRowSize()
     {
         //prepare map for additional cell-connection through mpfa
         std::multimap<int, int> addionalRelations;
-        typedef std::pair<int,int> IntPair;
+        using IntPair = std::pair<int,int>;
         std::pair<std::multimap<int,int>::iterator,std::multimap<int,int>::iterator> range;
         std::multimap<int,int>::iterator rangeIt;
 

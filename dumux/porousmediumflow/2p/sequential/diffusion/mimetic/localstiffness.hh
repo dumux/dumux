@@ -66,18 +66,18 @@ namespace Dumux
   template<class TypeTag, int m>
   class LocalStiffness
   {
-      typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+      using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     // grid types
-      typedef typename GridView::template Codim<0>::Entity Entity;
+      using Entity = typename GridView::template Codim<0>::Entity;
     enum {n=GridView::dimension};
 
   public:
     // types for matrics, vectors and boundary conditions
-    typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
-    typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-        typedef std::array<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
-        typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using MBlockType = Dune::FieldMatrix<Scalar, m, m>;                      // one entry in the stiffness matrix
+    using VBlockType = Dune::FieldVector<Scalar, m>;                        // one entry in the global vectors
+        using BCBlockType = std::array<BoundaryConditions::Flags, m>; // componentwise boundary conditions
+        using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
     virtual ~LocalStiffness ()
     {
@@ -245,18 +245,18 @@ namespace Dumux
   template<class TypeTag, int m>
   class LinearLocalStiffness : public LocalStiffness<TypeTag,m>
   {
-      typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+      using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     // grid types
-      typedef typename GridView::template Codim<0>::Entity Entity;
+      using Entity = typename GridView::template Codim<0>::Entity;
     enum {n=GridView::dimension};
 
   public:
     // types for matrics, vectors and boundary conditions
-      typedef Dune::FieldMatrix<Scalar,m,m> MBlockType;                      // one entry in the stiffness matrix
-      typedef Dune::FieldVector<Scalar,m> VBlockType;                        // one entry in the global vectors
-      typedef std::array<BoundaryConditions::Flags,m> BCBlockType;    // componentwise boundary conditions
+      using MBlockType = Dune::FieldMatrix<Scalar, m, m>;                      // one entry in the stiffness matrix
+      using VBlockType = Dune::FieldVector<Scalar, m>;                        // one entry in the global vectors
+      using BCBlockType = std::array<BoundaryConditions::Flags, m>;    // componentwise boundary conditions
 
     /*! initialize local stiffness matrix */
       LinearLocalStiffness ()

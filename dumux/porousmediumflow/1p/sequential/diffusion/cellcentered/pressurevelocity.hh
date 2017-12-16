@@ -54,8 +54,8 @@ namespace Dumux
  */
 template<class TypeTag> class FVPressureVelocity1P: public FVPressure1P<TypeTag>
 {
-    typedef FVPressure1P<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using ParentType = FVPressure1P<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 public:
     /*! \brief Initializes the pressure model
      *

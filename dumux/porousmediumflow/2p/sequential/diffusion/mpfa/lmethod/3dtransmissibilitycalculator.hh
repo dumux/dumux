@@ -48,7 +48,7 @@ namespace Dumux
 template<class TypeTag>
 class FvMpfaL3dTransmissibilityCalculator
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
         {
@@ -60,19 +60,19 @@ class FvMpfaL3dTransmissibilityCalculator
             sDiff = 0, sSum = 1
         };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
 
 
 public:
-    typedef Dune::FieldMatrix<Scalar, dim, 2 * dim - dim + 1> TransmissibilityType;//!< Type of the transmissibility matrix
+    using TransmissibilityType = Dune::FieldMatrix<Scalar, dim, 2*dim - dim + 1>;//!< Type of the transmissibility matrix
 
     int chooseTransmissibility(TransmissibilityType& transmissibilityOne,
                                TransmissibilityType& transmissibilityTwo, int lTypeOne, int lTypeTwo);

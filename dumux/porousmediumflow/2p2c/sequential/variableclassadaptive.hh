@@ -49,19 +49,19 @@ template<class TypeTag>
 class VariableClass2P2CAdaptive: public VariableClassAdaptive<TypeTag>
 {
 private:
-    typedef VariableClassAdaptive<TypeTag> ParentType;
-    typedef VariableClass<TypeTag> BaseType;
+    using ParentType = VariableClassAdaptive<TypeTag>;
+    using BaseType = VariableClass<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename CellData::AdaptedValues AdaptedValues;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using AdaptedValues = typename CellData::AdaptedValues;
 
-    typedef typename GridView::Grid Grid;
-    typedef typename Grid::LocalIdSet::IdType IdType;
-    typedef typename GridView::IntersectionIterator IntersectionIterator;
-    typedef typename GridView::Intersection Intersection;
+    using Grid = typename GridView::Grid;
+    using IdType = typename Grid::LocalIdSet::IdType;
+    using IntersectionIterator = typename GridView::IntersectionIterator;
+    using Intersection = typename GridView::Intersection;
     enum
     {
         dim = GridView::dimension
@@ -74,8 +74,8 @@ private:
         diagonal2 = 3
     };
     // convenience shortcuts for Vectors/Matrices
-    typedef Dune::FieldVector<Scalar, GridView::dimensionworld> GlobalPosition;
-    typedef Dune::FieldVector<Scalar,dim+1> TransmissivityMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+    using TransmissivityMatrix = Dune::FieldVector<Scalar,dim+1>;
 
 protected:
     /** in the 2D case, we need to store 1 additional cell. In 3D, we store

@@ -62,17 +62,17 @@ namespace Dumux
  */
 template<class TypeTag> class MimeticPressure2PAdaptive
 {
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     enum
     {
@@ -99,27 +99,27 @@ template<class TypeTag> class MimeticPressure2PAdaptive
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Grid Grid;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Grid = typename GridView::Grid;
 
-    typedef typename Element::Geometry Geometry;
-    typedef typename Geometry::JacobianTransposed JacobianTransposed;
+    using Geometry = typename Element::Geometry;
+    using JacobianTransposed = typename Geometry::JacobianTransposed ;
 
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, LocalStiffness) LocalStiffness;
-    typedef Dune::BlockVector< Dune::FieldVector<Scalar, 1> > TraceType;
-    typedef MimeticOperatorAssemblerTwoPAdaptive<TypeTag> OperatorAssembler;
+    using LocalStiffness = typename GET_PROP_TYPE(TypeTag, LocalStiffness);
+    using TraceType = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
+    using OperatorAssembler = MimeticOperatorAssemblerTwoPAdaptive<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::ScalarSolution ScalarSolutionType;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using ScalarSolutionType = typename SolutionTypes::ScalarSolution;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix) Matrix;
-    typedef typename GET_PROP_TYPE(TypeTag, PressureRHSVector) Vector;
+    using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
+    using Vector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     //initializes the matrix to store the system of equations
     void initializeMatrix();
@@ -289,7 +289,7 @@ public:
 
                 const typename Element::Geometry& geometry = element.geometry();
                 // get corresponding reference element
-                typedef Dune::ReferenceElements<Scalar, dim> ReferenceElements;
+                using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
                 const Dune::ReferenceElement< Scalar , dim > & refElement =
                         ReferenceElements::general( geometry.type() );
                 const int numberOfFaces=refElement.size(1);
@@ -478,7 +478,7 @@ private:
 template<class TypeTag>
 void MimeticPressure2PAdaptive<TypeTag>::solve()
 {
-    typedef typename GET_PROP_TYPE(TypeTag, LinearSolver) Solver;
+    using Solver = typename GET_PROP_TYPE(TypeTag, LinearSolver);
 
     int verboseLevelSolver = getParam<int>("LinearSolver.Verbosity");
 

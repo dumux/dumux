@@ -78,19 +78,19 @@ SET_BOOL_PROP(Pressure, VisitFacesOnlyOnce, false);
 SET_PROP(Pressure, PressureCoefficientMatrix)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MB = Dune::FieldMatrix<Scalar, 1, 1>;
 
 public:
-    typedef Dune::BCRSMatrix<MB> type;
+    using type = Dune::BCRSMatrix<MB>;
 };
 SET_PROP(Pressure, PressureRHSVector)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 public:
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > type;
+    using type = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
 };
 
 SET_TYPE_PROP(Pressure, PressureSolutionVector, typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution);

@@ -51,46 +51,46 @@ namespace Dumux
  */
 template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVelocity2p<TypeTag>
 {
-    typedef FvMpfaL3dVelocity2p<TypeTag> ParentType;
+    using ParentType = FvMpfaL3dVelocity2p<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
 
-    typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef typename GridView::Grid Grid;
-    typedef typename GridView::IndexSet IndexSet;
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
+    using Grid = typename GridView::Grid;
+    using IndexSet = typename GridView::IndexSet;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridTypeIndices) GridTypeIndices;
+    using GridTypeIndices = typename GET_PROP_TYPE(TypeTag, GridTypeIndices);
 
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume) InteractionVolume;
-    typedef typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer) InteractionVolumeContainer;
-    typedef  FvMpfaL3dTransmissibilityCalculator<TypeTag> TransmissibilityCalculator;
-    typedef typename TransmissibilityCalculator::TransmissibilityType TransmissibilityType;
+    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
+    using InteractionVolumeContainer = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolumeContainer);
+    using TransmissibilityCalculator = FvMpfaL3dTransmissibilityCalculator<TypeTag>;
+    using TransmissibilityType = typename TransmissibilityCalculator::TransmissibilityType;
 
 
     enum
@@ -128,10 +128,10 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
         innerEdgeFace = 2, innerSideFace = 1
     };
 
-    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using LocalPosition = Dune::FieldVector<Scalar, dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
     InteractionVolumeContainer& interactionVolumes_()
     {

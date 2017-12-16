@@ -36,13 +36,13 @@ template<class TypeTag>
 class DiffusivePart
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-      typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-      typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+      using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     enum{dim = GridView::dimension};
-    typedef typename GridView::Intersection Intersection;
-    typedef Dune::FieldVector<Scalar, dim> DimVector;
+    using Intersection = typename GridView::Intersection;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
 
 public:
 

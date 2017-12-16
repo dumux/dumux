@@ -38,15 +38,15 @@ namespace Dumux
 template<class TypeTag>
 class MPNCVtkWriter
 {
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCVtkCommonModule) MPNCVtkCommonModule;
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCVtkMassModule) MPNCVtkMassModule;
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCVtkEnergyModule) MPNCVtkEnergyModule;
-    typedef typename GET_PROP_TYPE(TypeTag, MPNCVtkCustomModule) MPNCVtkCustomModule;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using MPNCVtkCommonModule = typename GET_PROP_TYPE(TypeTag, MPNCVtkCommonModule);
+    using MPNCVtkMassModule = typename GET_PROP_TYPE(TypeTag, MPNCVtkMassModule);
+    using MPNCVtkEnergyModule = typename GET_PROP_TYPE(TypeTag, MPNCVtkEnergyModule);
+    using MPNCVtkCustomModule = typename GET_PROP_TYPE(TypeTag, MPNCVtkCustomModule);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
 public:
     MPNCVtkWriter(const Problem &problem)

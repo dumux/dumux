@@ -106,7 +106,7 @@ SET_INT_PROP(SequentialTwoP, Formulation, SequentialTwoPCommonIndices::pwsw);
 //! Chose the set of indices depending on the chosen formulation
 SET_PROP(SequentialTwoP, Indices)
 {
-    typedef SequentialTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0> type;
+    using type = SequentialTwoPIndices<GET_PROP_VALUE(TypeTag, Formulation), 0>;
 };
 
 //! Set the default pressure formulation according to the chosen two-phase formulation
@@ -137,10 +137,10 @@ SET_TYPE_PROP(SequentialTwoP, CellData, CellData2P<TypeTag, GET_PROP_VALUE(TypeT
 SET_PROP(SequentialTwoP, FluidState)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
+    using type = IsothermalImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
 //! The spatial parameters to be employed. Use SequentialFVSpatialParams by default.

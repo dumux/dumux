@@ -37,14 +37,14 @@ namespace Dumux
 template <class TypeTag>
 class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/3>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { temperature0Idx = Indices::temperature0Idx };
@@ -60,8 +60,8 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquat
      * If chemical equilibrium is not considered, we use the most
      * generic fluid state.
      */
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
 public:
     /*!
@@ -242,14 +242,14 @@ protected:
 template <class TypeTag>
 class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquations=*/2>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { temperature0Idx = Indices::temperature0Idx };
@@ -265,8 +265,8 @@ class MPNCVolumeVariablesEnergy<TypeTag, /*enableEnergy=*/true, /*numEnergyEquat
      * If chemical equilibrium is not considered, we use the most
      * generic fluid state.
      */
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
 public:
     /*!

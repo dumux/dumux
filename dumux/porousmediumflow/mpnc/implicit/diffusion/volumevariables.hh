@@ -37,12 +37,12 @@ namespace Dumux {
 template<class TypeTag, bool enableDiffusion>
 class MPNCVolumeVariablesDiffusion
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
@@ -148,12 +148,12 @@ protected:
 template<class TypeTag>
 class MPNCVolumeVariablesDiffusion<TypeTag, false>
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename FluidSystem::ParameterCache ParameterCache;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
 public:
     /*!

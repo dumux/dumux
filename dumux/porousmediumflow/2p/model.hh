@@ -112,10 +112,10 @@ SET_TYPE_PROP(TwoP,
 SET_PROP(TwoP, FluidState)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
-    typedef ImmiscibleFluidState<Scalar, FluidSystem> type;
+    using type = ImmiscibleFluidState<Scalar, FluidSystem>;
 };
 
 ////////////////////////////////////////////////////////
@@ -132,17 +132,17 @@ SET_PROP(TwoPNI, IsothermalIndices)
 private:
     enum { Formulation = GET_PROP_VALUE(TypeTag, Formulation) };
 public:
-    typedef TwoPIndices<TypeTag, Formulation, 0> type;
+    using type = TwoPIndices<TypeTag, Formulation, 0>;
 };
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNI, ThermalConductivityModel)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
-    typedef ThermalConductivitySomerton<Scalar, Indices> type;
+    using type = ThermalConductivitySomerton<Scalar, Indices>;
 };
 
 } // end namespace Properties

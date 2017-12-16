@@ -45,14 +45,14 @@ template<class TypeTag>
 class MPNCVtkWriterMass<TypeTag, /* enableKinetic = */ true>
     : public MPNCVtkWriterModule<TypeTag>
 {
-    typedef MPNCVtkWriterModule<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using ParentType = MPNCVtkWriterModule<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
@@ -63,11 +63,11 @@ class MPNCVtkWriterMass<TypeTag, /* enableKinetic = */ true>
 
     enum { xEquilOutput   = GET_PROP_VALUE(TypeTag, VtkAddxEquil) };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename ParentType::ScalarVector ScalarVector;
-    typedef typename ParentType::PhaseVector PhaseVector;
-    typedef typename ParentType::ComponentVector ComponentVector;
-    typedef typename ParentType::PhaseComponentMatrix PhaseComponentMatrix;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ScalarVector = typename ParentType::ScalarVector;
+    using PhaseVector = typename ParentType::PhaseVector;
+    using ComponentVector = typename ParentType::ComponentVector;
+    using PhaseComponentMatrix = typename ParentType::PhaseComponentMatrix;
 
     bool deltaPOutput_;
 public:

@@ -44,11 +44,11 @@ template<class TypeTag>
 class CellData2P2C
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef FluxData2P2C<TypeTag> FluxData;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluxData = FluxData2P2C<TypeTag>;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {

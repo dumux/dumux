@@ -47,16 +47,16 @@ template <class TypeTag>
 class ThreePWaterOilFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariables)
 {
     friend typename GET_PROP_TYPE(TypeTag, BaseFluxVariables); // be friends with base class
-    typedef typename GET_PROP_TYPE(TypeTag, BaseFluxVariables) BaseFluxVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using BaseFluxVariables = typename GET_PROP_TYPE(TypeTag, BaseFluxVariables);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel) EffectiveDiffusivityModel;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using EffectiveDiffusivityModel = typename GET_PROP_TYPE(TypeTag, EffectiveDiffusivityModel);
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     enum {
         dim = GridView::dimension,
@@ -65,14 +65,14 @@ class ThreePWaterOilFluxVariables : public GET_PROP_TYPE(TypeTag, BaseFluxVariab
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SCVFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    typedef Dune::FieldVector<Scalar, dim>  DimVector;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,

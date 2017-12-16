@@ -46,21 +46,21 @@ class MPNCVtkWriterEnergy : public MPNCVtkWriterModule<TypeTag>
                   "If you enable kinetic energy transfer between fluids, you"
                   "also have to enable the energy in general!");
 
-    typedef MPNCVtkWriterModule<TypeTag> ParentType;
+    using ParentType = MPNCVtkWriterModule<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
 
-    typedef typename ParentType::ScalarVector ScalarVector;
-    typedef typename ParentType::PhaseVector PhaseVector;
+    using ScalarVector = typename ParentType::ScalarVector;
+    using PhaseVector = typename ParentType::PhaseVector;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 
@@ -133,21 +133,21 @@ template<class TypeTag>
 class MPNCVtkWriterEnergy<TypeTag, /* enableEnergy = */ true, /* numEnergyEquations = */ 1 >
     : public MPNCVtkWriterModule<TypeTag>
 {
-    typedef MPNCVtkWriterModule<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes) ElementBoundaryTypes;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) VolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using ParentType = MPNCVtkWriterModule<TypeTag>;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
 
     enum { dim = GridView::dimension };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
-    typedef typename ParentType::ScalarVector ScalarVector;
-    typedef typename ParentType::PhaseVector PhaseVector;
+    using ScalarVector = typename ParentType::ScalarVector;
+    using PhaseVector = typename ParentType::PhaseVector;
     enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
     enum { dofCodim = isBox ? dim : 0 };
 

@@ -111,18 +111,18 @@ namespace Dumux
 template<class TypeTag>
 class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
 {
-    typedef typename GET_PROP_TYPE(TypeTag, BaseModel) ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef Dumux::MPNCVtkWriter<TypeTag> MPNCVtkWriter;
-    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
+    using ParentType = typename GET_PROP_TYPE(TypeTag, BaseModel);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using MPNCVtkWriter = Dumux::MPNCVtkWriter<TypeTag>;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
     enum {enableDiffusion = GET_PROP_VALUE(TypeTag, EnableDiffusion)};
@@ -135,7 +135,7 @@ class MPNCModel : public GET_PROP_TYPE(TypeTag, BaseModel)
     enum { dimWorld = GridView::dimensionworld};
     enum { dim = GridView::dimension};
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 
 public:

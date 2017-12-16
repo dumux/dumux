@@ -44,37 +44,37 @@ namespace Dumux
  */
 template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPressure2p<TypeTag>
 {
-    typedef FvMpfaO2dPressure2p<TypeTag> ParentType;
+    using ParentType = FvMpfaO2dPressure2p<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
     enum
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, CellData) CellData;
-    typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
-    typedef typename GET_PROP(TypeTag, SolutionTypes) SolutionTypes;
-    typedef typename SolutionTypes::PrimaryVariables PrimaryVariables;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using CellData = typename GET_PROP_TYPE(TypeTag, CellData);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
+    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) SpatialParams;
-    typedef typename SpatialParams::MaterialLaw MaterialLaw;
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidState) FluidState;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    typedef typename GridView::Traits::template Codim<dim>::Entity Vertex;
-    typedef typename GridView::Intersection Intersection;
+    using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
+    using Intersection = typename GridView::Intersection;
 
-    typedef typename Dune::ReferenceElements<Scalar, dim> ReferenceElements;
-    typedef typename Dune::ReferenceElement<Scalar, dim> ReferenceElement;
+    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
+    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
-    typedef FVMPFAOInteractionVolume<TypeTag> InteractionVolume;
+    using InteractionVolume = FVMPFAOInteractionVolume<TypeTag>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum
         {
             wPhaseIdx = Indices::wPhaseIdx,
@@ -92,8 +92,8 @@ template<class TypeTag> class FvMpfaO2dPressureVelocity2p: public FvMpfaO2dPress
             numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
         };
 
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dim, dim> DimMatrix;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
     //! Constructs a FvMpfaO2dPressureVelocity2p object

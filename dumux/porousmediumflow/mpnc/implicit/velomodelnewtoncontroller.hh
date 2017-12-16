@@ -42,9 +42,9 @@ namespace Dumux {
 template <class TypeTag>
 class VeloModelNewtonController : public MPNCNewtonController<TypeTag>
 {
-    typedef MPNCNewtonController<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
+    using ParentType = MPNCNewtonController<TypeTag>;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     enum {velocityAveragingInModel  = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel)};
 

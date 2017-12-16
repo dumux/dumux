@@ -52,23 +52,23 @@ namespace Dumux
 template <class TypeTag>
 class ThreePWaterOilVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 {
-    typedef ImplicitVolumeVariables<TypeTag> ParentType;
-    typedef typename GET_PROP_TYPE(TypeTag, VolumeVariables) Implementation;
+    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, FVElementGeometry) FVElementGeometry;
-    typedef typename GET_PROP_TYPE(TypeTag, PrimaryVariables) PrimaryVariables;
-    typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw) MaterialLaw;
-    typedef typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params MaterialLawParams;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
 
     // constraint solvers
-    typedef Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem> MiscibleMultiPhaseComposition;
-    typedef Dumux::ComputeFromReferencePhase<Scalar, FluidSystem> ComputeFromReferencePhase;
+    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
+    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
 
-    typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         dim = GridView::dimension,
 
@@ -97,7 +97,7 @@ class ThreePWaterOilVolumeVariables : public ImplicitVolumeVariables<TypeTag>
         wgPhaseOnly = Indices::wgPhaseOnly
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     static const Scalar R; // universial gas constant
 
@@ -106,7 +106,7 @@ class ThreePWaterOilVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
 public:
     //! The type of the object returned by the fluidState() method
-    typedef Dumux::CompositionalFluidState<Scalar, FluidSystem> FluidState;
+    using FluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
 
 
     /*!
