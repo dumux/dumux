@@ -51,14 +51,14 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
     typename Matrix::RowIterator row = matrix.begin();
     for(; row != matrix.end(); ++row)
     {
-        typedef typename Matrix::size_type size_type;
+        using size_type = typename Matrix::size_type;
         size_type rowIdx = row.index();
 
-        typedef typename Matrix::block_type MatrixBlock;
+        using MatrixBlock = typename Matrix::block_type;
         MatrixBlock diagonal = matrix[rowIdx][rowIdx];
         diagonal.invert();
 
-        typedef typename Vector::block_type VectorBlock;
+        using VectorBlock = typename Vector::block_type;
         const VectorBlock b = rhs[rowIdx];
         diagonal.mv(b, rhs[rowIdx]);
 

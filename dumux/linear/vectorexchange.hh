@@ -37,7 +37,7 @@ class VectorExchange
 {
 public:
   //! export type of data for message buffer
-  typedef typename Vector::value_type DataType;
+  using DataType = typename Vector::value_type;
 
   //! returns true if data for this codim should be communicated
   bool contains (int dim, int codim) const
