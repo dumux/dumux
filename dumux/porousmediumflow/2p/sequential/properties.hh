@@ -143,8 +143,8 @@ public:
     typedef IsothermalImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
-//! The spatial parameters to be employed. Use FVSpatialParams by default.
-SET_TYPE_PROP(SequentialTwoP, SpatialParams, FVSpatialParams<TypeTag>);
+//! The spatial parameters to be employed. Use SequentialFVSpatialParams by default.
+SET_TYPE_PROP(SequentialTwoP, SpatialParams, SequentialFVSpatialParams<TypeTag>);
 
 //! Default error term factor
 SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermFactor, 0.5);

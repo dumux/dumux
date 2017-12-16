@@ -59,9 +59,9 @@ public:
  * \brief spatial parameters for the test problem for diffusion models.
  */
 template<class TypeTag>
-class TestDiffusionSpatialParams3d: public FVSpatialParams<TypeTag>
+class TestDiffusionSpatialParams3d: public SequentialFVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
+    typedef SequentialFVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

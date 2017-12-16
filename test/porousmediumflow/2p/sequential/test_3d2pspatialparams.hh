@@ -61,9 +61,9 @@ public:
  * \brief spatial parameters for the 2p test using MPFAL 3D method
  */
 template<class TypeTag>
-class Test3d2pSpatialParams: public FVSpatialParams<TypeTag>
+class Test3d2pSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
+    typedef SequentialFVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

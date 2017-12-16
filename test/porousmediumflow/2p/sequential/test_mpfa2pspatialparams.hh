@@ -56,9 +56,9 @@ public:
 /** \todo Please doc me! */
 
 template<class TypeTag>
-class Test2PSpatialParams: public FVSpatialParams<TypeTag>
+class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
+    typedef SequentialFVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

@@ -59,7 +59,7 @@ public:
  * \brief spatial parameters for the sequential 2p2c test
  */
 template<class TypeTag>
-class Test2P2CSpatialParams : public FVSpatialParams<TypeTag>
+class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid)     Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -93,7 +93,7 @@ public:
     }
 
 
-    Test2P2CSpatialParams(const GridView& gridView) : FVSpatialParams<TypeTag>(gridView),
+    Test2P2CSpatialParams(const GridView& gridView) : SequentialFVSpatialParams<TypeTag>(gridView),
             constPermeability_(0)
     {
         // residual saturations

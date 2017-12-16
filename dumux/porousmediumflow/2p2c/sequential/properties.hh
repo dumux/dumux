@@ -156,7 +156,7 @@ SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, TwoPTwoCFluidState<typename GET_PR
 
 
 //! The spatial parameters to be employed.
-SET_TYPE_PROP(SequentialTwoPTwoC, SpatialParams, FVSpatialParams<TypeTag>);
+SET_TYPE_PROP(SequentialTwoPTwoC, SpatialParams, SequentialFVSpatialParams<TypeTag>);
 //! Switch off permeability regularization at Dirichlet boundaries by default.
 SET_BOOL_PROP(SequentialTwoPTwoC, RegulateBoundaryPermeability, false);
 

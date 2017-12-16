@@ -61,12 +61,12 @@ public:
  * \brief spatial parameters for the sequential 2p test
  */
 template<class TypeTag>
-class TestIMPESAdaptiveSpatialParams: public FVSpatialParams<TypeTag>
+class TestIMPESAdaptiveSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef FVSpatialParams<TypeTag> ParentType;
+    typedef SequentialFVSpatialParams<TypeTag> ParentType;
     typedef typename Grid::ctype CoordScalar;
 
     enum

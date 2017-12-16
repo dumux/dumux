@@ -60,9 +60,9 @@ public:
  * \brief spatial parameters for the explicit transport test
  */
 template<class TypeTag>
-class TestTransportSpatialParams: public FVSpatialParams<TypeTag>
+class TestTransportSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {
-    typedef FVSpatialParams<TypeTag> ParentType;
+    typedef SequentialFVSpatialParams<TypeTag> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, Grid) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;

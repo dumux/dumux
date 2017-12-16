@@ -44,7 +44,7 @@ NEW_PROP_TAG(MaterialLaw);
  *        fv method.
  */
 template<class TypeTag>
-class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
+class SequentialFVSpatialParams: public SequentialFVSpatialParamsOneP<TypeTag>
 {
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
@@ -62,8 +62,8 @@ class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
     /// @endcond
 
 public:
-    FVSpatialParams(const GridView &gridView)
-    :FVSpatialParamsOneP<TypeTag>(gridView)
+    SequentialFVSpatialParams(const GridView &gridView)
+    :SequentialFVSpatialParamsOneP<TypeTag>(gridView)
     {
     }
 
