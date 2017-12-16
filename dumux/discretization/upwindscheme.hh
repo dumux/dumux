@@ -34,6 +34,13 @@ namespace Dumux
 template<class TypeTag, DiscretizationMethods Method>
 class UpwindSchemeImplementation;
 
+/*!
+ * \ingroup Discretization
+ * \brief The upwind scheme used for the advective fluxes.
+ *        This depends on the chosen discretization method.
+ */
+template<class TypeTag>
+using UpwindScheme = UpwindSchemeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
 //! Upwind scheme for the box method
 template<class TypeTag>
@@ -183,15 +190,6 @@ template<class TypeTag>
 class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 : public UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCTpfa> {};
 
-/*!
- * \ingroup Discretization
- * \brief The upwind scheme used for the advective fluxes.
- *        This depends on the chosen discretization method.
- */
-template<class TypeTag>
-using UpwindScheme = UpwindSchemeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
-
-
-} // end namespace
+} // end namespace Dumux
 
 #endif
