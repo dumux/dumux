@@ -30,7 +30,7 @@
 
 //Dumux-includes
 #include <dumux/porousmediumflow/sequential/properties.hh>
-#include <dumux/material/spatialparams/fv1p.hh>
+#include <dumux/material/spatialparams/sequentialfv1p.hh>
 
 namespace Dumux
 {

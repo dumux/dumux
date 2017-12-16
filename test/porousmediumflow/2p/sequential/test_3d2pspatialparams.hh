@@ -22,7 +22,7 @@
 #ifndef TEST_3D2P_SPATIALPARAMETERS_HH
 #define TEST_3D2P_SPATIALPARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedbrookscorey.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

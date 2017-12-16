@@ -24,7 +24,7 @@
 #ifndef TEST1_FVCA6_SPATIALPARAMETERS_HH
 #define TEST1_FVCA6_SPATIALPARAMETERS_HH
 
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/sequentialfv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 

@@ -26,7 +26,7 @@
 #ifndef DUMUX_FV_SPATIAL_PARAMS_HH
 #define DUMUX_FV_SPATIAL_PARAMS_HH
 
-#include "fv1p.hh"
+#include "sequentialfv1p.hh"
 
 namespace Dumux
 {

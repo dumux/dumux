@@ -31,7 +31,7 @@
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/transportproperties.hh>
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
-#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/spatialparams/sequentialfv.hh>
 
 namespace Dumux
 {
