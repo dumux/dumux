@@ -29,7 +29,7 @@
 #ifndef DUMUX_1PNCMIN_PROPERTIES_HH
 #define DUMUX_1PNCMIN_PROPERTIES_HH
 
-#include <dumux/porousmediumflow/1pnc/implicit/properties.hh>
+#include <dumux/porousmediumflow/1pnc/properties.hh>
 
 namespace Dumux
 {

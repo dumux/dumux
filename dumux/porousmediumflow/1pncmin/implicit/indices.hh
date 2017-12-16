@@ -25,7 +25,7 @@
 #ifndef DUMUX_1PNCMIN_INDICES_HH
 #define DUMUX_1PNCMIN_INDICES_HH
 
-#include <dumux/porousmediumflow/1pnc/implicit/indices.hh>
+#include <dumux/porousmediumflow/1pnc/indices.hh>
 
 namespace Dumux
 {

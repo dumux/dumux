@@ -29,7 +29,7 @@
 #include <dumux/common/math.hh>
 #include <dumux/implicit/model.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/porousmediumflow/1pnc/implicit/volumevariables.hh>
+#include <dumux/porousmediumflow/1pnc/volumevariables.hh>
 
 #include "properties.hh"
 #include "indices.hh"
