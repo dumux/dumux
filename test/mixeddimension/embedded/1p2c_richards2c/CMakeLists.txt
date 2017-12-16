@@ -1,5 +1,5 @@
 add_dumux_test(test_rosi2c test_rosi2c test_rosi2c.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/rosi2c-root-reference.vtp
                          ${CMAKE_CURRENT_BINARY_DIR}/rosi2c-root-00010.vtp

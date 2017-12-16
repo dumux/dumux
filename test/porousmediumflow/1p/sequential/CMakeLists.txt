@@ -2,7 +2,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_dec1p
                SOURCES test_1p.cc
-               COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                CMD_ARGS --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/test_1p-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_1p-00000.vtu
@@ -10,7 +10,7 @@ dune_add_test(NAME test_dec1p
 
 dune_add_test(NAME test_diffusion
               SOURCES test_diffusion.cc
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/diffusion-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/mimeticdiffusion-00000.vtu
@@ -18,7 +18,7 @@ dune_add_test(NAME test_diffusion
 
 dune_add_test(NAME test_diffusion3d
               SOURCES test_diffusion3d.cc
-              COMMAND python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/test_diffusion3d_fv-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/test_diffusion3d_fv-00000.vtu

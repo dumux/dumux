@@ -1,14 +1,14 @@
 add_input_file_links()
 
 add_dumux_test(test_boxmpnc test_boxmpnc test_boxmpnc.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/obstaclebox-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/obstaclebox-00009.vtu
                  --command "${CMAKE_CURRENT_BINARY_DIR}/test_boxmpnc")
 
 add_dumux_test(test_ccmpnc test_ccmpnc test_ccmpnc.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/obstaclecc-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/obstaclecc-00009.vtu
@@ -16,7 +16,7 @@ add_dumux_test(test_ccmpnc test_ccmpnc test_ccmpnc.cc
 
 # build target for the one-phase Forchheimer test problem
 add_dumux_test(test_forchheimer1p test_forchheimer1p test_forchheimer1p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/forchheimer1p-reference.vtp
                          ${CMAKE_CURRENT_BINARY_DIR}/test_forchheimer1p-00001.vtp
@@ -24,7 +24,7 @@ add_dumux_test(test_forchheimer1p test_forchheimer1p test_forchheimer1p.cc
 
 # build target for the two-phase Forchheimer test problem
 add_dumux_test(test_forchheimer2p test_forchheimer2p test_forchheimer2p.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/forchheimer2p-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/test_forchheimer2p-00008.vtu
@@ -32,7 +32,7 @@ add_dumux_test(test_forchheimer2p test_forchheimer2p test_forchheimer2p.cc
 
 # build target for the full kinetic test problem
 add_dumux_test(test_boxmpnckinetic test_boxmpnckinetic test_boxmpnckinetic.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/evaporationatmosphere-reference.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/evaporationatmosphere-00005.vtu

@@ -6,7 +6,7 @@ add_input_file_links()
 # add_executable(test_cc1pncmin test_cc1pncmin.cc)
 
 add_dumux_test(test_box1pncmin test_box1pncmin test_box1pncmin.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/box1pncmin-00042.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/box1pncmin-00042.vtu
@@ -14,7 +14,7 @@ add_dumux_test(test_box1pncmin test_box1pncmin test_box1pncmin.cc
                  --zeroThreshold {"temperature":5e-6})
 
 add_dumux_test(test_cc1pncmin test_cc1pncmin test_cc1pncmin.cc
-               python ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
                  --script fuzzy
                  --files ${CMAKE_SOURCE_DIR}/test/references/cc1pncmin-00042.vtu
                          ${CMAKE_CURRENT_BINARY_DIR}/cc1pncmin-00042.vtu
