@@ -23,8 +23,8 @@
  * \brief The base class for spatial parameters of problems using the
  *        fv method.
  */
-#ifndef DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
-#define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
+#ifndef DUMUX_SEQUENTIAL_FV_SPATIAL_PARAMS_ONE_P_HH
+#define DUMUX_SEQUENTIAL_FV_SPATIAL_PARAMS_ONE_P_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>

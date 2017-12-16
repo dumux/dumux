@@ -25,7 +25,7 @@
 #ifndef DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {

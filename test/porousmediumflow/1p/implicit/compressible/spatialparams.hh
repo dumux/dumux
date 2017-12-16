@@ -23,7 +23,7 @@
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {

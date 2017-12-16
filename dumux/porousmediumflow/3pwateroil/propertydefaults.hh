@@ -29,7 +29,7 @@
 #define DUMUX_3P2CNI_PROPERTY_DEFAULTS_HH
 
 #include <dumux/porousmediumflow/implicit/darcyfluxvariables.hh>
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
 #include <dumux/porousmediumflow/nonisothermal/model.hh>
 #include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>

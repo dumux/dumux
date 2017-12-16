@@ -23,11 +23,11 @@
  * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
  */
-#ifndef DUMUX_IMPLICIT_SPATIAL_PARAMS_HH
-#define DUMUX_IMPLICIT_SPATIAL_PARAMS_HH
+#ifndef DUMUX_FV_SPATIAL_PARAMS_HH
+#define DUMUX_FV_SPATIAL_PARAMS_HH
 
 #include <dumux/common/properties.hh>
-#include "implicit1p.hh"
+#include "fv1p.hh"
 
 namespace Dumux {
 

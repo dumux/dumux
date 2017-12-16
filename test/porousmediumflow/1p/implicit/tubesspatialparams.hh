@@ -25,7 +25,7 @@
 #ifndef DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
 #define DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 
 namespace Dumux
 {

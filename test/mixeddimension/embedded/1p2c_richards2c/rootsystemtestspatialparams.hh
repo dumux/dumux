@@ -24,7 +24,7 @@
 #ifndef DUMUX_ROOTSYSTEM_TEST_SPATIALPARAMS_HH
 #define DUMUX_ROOTSYSTEM_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/material/components/simpleh2o.hh>
 
 namespace Dumux

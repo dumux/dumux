@@ -26,7 +26,7 @@
 #ifndef DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 #define DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit1p.hh>
+#include <dumux/material/spatialparams/fv1p.hh>
 #include <dumux/porousmediumflow/1pncmin/implicit/indices.hh>
 #include <dumux/material/fluidmatrixinteractions/porosityreactivebed.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>

@@ -25,7 +25,7 @@
 #ifndef DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 #define DUMUX_TWOP_FRACTURE_TEST_SPATIALPARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>

@@ -23,8 +23,8 @@
  * \brief The base class for spatial parameters of one-phase problems
  * using a fully implicit discretization method.
  */
-#ifndef DUMUX_IMPLICIT_SPATIAL_PARAMS_ONE_P_HH
-#define DUMUX_IMPLICIT_SPATIAL_PARAMS_ONE_P_HH
+#ifndef DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
+#define DUMUX_FV_SPATIAL_PARAMS_ONE_P_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -131,9 +131,10 @@ public:
      * \param elemSol The solution at the dofs connected to the element.
      * \return permeability
      */
-    auto permeability(const Element& element,
-                      const SubControlVolume& scv,
-                      const ElementSolutionVector& elemSol) const
+    decltype(auto)
+    permeability(const Element& element,
+                 const SubControlVolume& scv,
+                 const ElementSolutionVector& elemSol) const
     {
         return asImp_().permeabilityAtPos(scv.center());
     }

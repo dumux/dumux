@@ -25,7 +25,7 @@
 #ifndef DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 #define DUMUX_STEAMINJECTION_SPATIAL_PARAMS_HH
 
-#include <dumux/material/spatialparams/implicit.hh>
+#include <dumux/material/spatialparams/fv.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedvangenuchten.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 

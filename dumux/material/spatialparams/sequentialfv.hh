@@ -23,18 +23,14 @@
  * \brief The base class for spatial parameters of problems using the
  *        fv method.
  */
-#ifndef DUMUX_FV_SPATIAL_PARAMS_HH
-#define DUMUX_FV_SPATIAL_PARAMS_HH
+#ifndef DUMUX_SEQUENTIAL_FV_SPATIAL_PARAMS_HH
+#define DUMUX_SEQUENTIAL_FV_SPATIAL_PARAMS_HH
 
+#include <dumux/common/properties.hh>
 #include "sequentialfv1p.hh"
 
 namespace Dumux
 {
-// forward declation of property tags
-namespace Properties {
-NEW_PROP_TAG(MaterialLaw);
-}
-
 /*!
  * \ingroup SpatialParameters
  */
