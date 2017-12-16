@@ -200,7 +200,7 @@ namespace Vtk
         // can point to anything fulfilling the VTKFunction interface
         std::shared_ptr<Dune::VTKFunction<GridView>> field_;
     };
-}
+} // end namespace Vtk
 
 /*!
  * \ingroup InputOutput
