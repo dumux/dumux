@@ -38,3 +38,8 @@ set(HAVE_VALGRIND ${Valgrind_FOUND})
 if(Valgrind_FOUND)
   dune_register_package_flags(INCLUDE_DIRS "${VALGRIND_INCLUDE_DIR}")
 endif()
+
+# text for feature summary
+set_package_properties("Valgrind" PROPERTIES
+  DESCRIPTION "Memory debugging, memory leak detection, profiling"
+  PURPOSE "Identify undefined variables with Memcheck")

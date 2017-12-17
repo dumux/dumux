@@ -99,3 +99,7 @@ if(NLOPT_FOUND)
                               LIBRARIES "${NLOPT_DUNE_LIBRARIES}"
                               INCLUDE_DIRS "${NLOPT_INCLUDE_DIRS}")
 endif()
+
+# text for feature summary
+set_package_properties("NLOPT" PROPERTIES
+  DESCRIPTION "Library for nonlinear optimization")

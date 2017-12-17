@@ -43,3 +43,8 @@ find_package_handle_standard_args(
 # set macros for config.h
 set(HAVE_PVPYTHON ${PVPYTHON_FOUND})
 set(PVPYTHON_EXECUTABLE ${PVPYTHON_EXECUTABLE})
+
+# text for feature summary
+set_package_properties("PVPython" PROPERTIES
+  DESCRIPTION "ParaView python client"
+  PURPOSE "Extract data over line or time in post-processing")
