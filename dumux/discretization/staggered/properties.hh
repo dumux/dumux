@@ -33,7 +33,6 @@
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 #include <dumux/assembly/staggeredlocalresidual.hh>
-#include <dumux/implicit/staggered/gridvariables.hh>
 
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/staggered/gridvariables.hh>
