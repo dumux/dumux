@@ -40,13 +40,6 @@ namespace Dumux
 template <class TypeTag>
 class DoneaTestProblem;
 
-namespace Capabilities
-{
-    template<class TypeTag>
-    struct isStationary<DoneaTestProblem<TypeTag>>
-    { static const bool value = true; };
-}
-
 namespace Properties
 {
 NEW_TYPE_TAG(DoneaTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
