@@ -63,6 +63,10 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
         dim = Grid::dimension,
@@ -112,6 +116,18 @@ public:
      */
     const GlobalPosition &gravity() const
     { return gravity_; }
+
+    //! Applys the initial face solution. Specialization for staggered grid discretization.
+    template <class T = TypeTag>
+    typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Staggered, void>::type
+    applyInititalFaceSolution(SolutionVector& sol,
+                              const SubControlVolumeFace& scvf,
+                              const PrimaryVariables& initSol) const
+    {
+        typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx faceIdx;
+        const auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+        sol[faceIdx][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
+    }
 
     // \}
 
