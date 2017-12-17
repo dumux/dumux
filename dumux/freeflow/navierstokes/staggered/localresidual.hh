@@ -86,6 +86,8 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
+    static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+
     enum {
          // grid and world dimension
         dim = GridView::dimension,
@@ -151,7 +153,16 @@ public:
                                                           const ElementFaceVariables& elemFaceVars,
                                                           const SubControlVolume &scv) const
     {
-        return problem.sourceAtPos(scv.center())[cellCenterIdx];
+        CellCenterPrimaryVariables result(0.0);
+
+        // get the values from the problem
+        const auto sourceValues = problem.sourceAtPos(scv.center());
+
+        // copy the respective cell center related values to the result
+        for(int i = 0; i < numEqCellCenter; ++i)
+            result[i] = sourceValues[i];
+
+        return result;
     }
 
 
