@@ -400,9 +400,7 @@ private:
                 analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
 
                 for(int dirIdx = 0; dirIdx < dim; ++dirIdx)
-                {
                     analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
-                }
             }
         }
     }
