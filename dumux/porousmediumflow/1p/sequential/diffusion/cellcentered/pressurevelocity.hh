@@ -25,17 +25,18 @@
 #include <dumux/porousmediumflow/1p/sequential/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
 
-/**
+/*!
  * \file
+ * \ingroup SequentialOnePModel
  * \brief  Single Phase Finite Volume Model
  */
 
 namespace Dumux
 {
 
-//! \ingroup FV1p
-//! \brief Single Phase Finite Volume Model
-/*! This model solves equations of the form
+/*! \ingroup SequentialOnePModel
+ * \brief Single Phase Finite Volume Model
+ * This model solves equations of the form
  * \f[
  *  \textbf{div}\, \boldsymbol v = q.
  * \f]
@@ -93,8 +94,8 @@ public:
         velocity_.addOutputVtkFields(writer);
     }
 
-    //! Constructs a FVPressure1P object
-    /**
+    /*! Constructs a FVPressure1P object
+     *
      * \param problem A problem class object
      */
     FVPressureVelocity1P(Problem& problem) :

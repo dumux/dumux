@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup SequentialOnePModel
  * \brief Base class for all single phase diffusion problem
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_1P_HH
@@ -35,9 +36,7 @@ namespace Properties
 SET_TYPE_PROP(PressureOneP, Model, typename GET_PROP_TYPE(TypeTag, PressureModel));
 }
 /*!
- * \ingroup Pressure1P
- * \ingroup IMPETproblems
- *
+ * \ingroup SequentialOnePModel
  * \brief  Base class for all single phase diffusion problem
  *
  * \tparam TypeTag The Type Tag
@@ -81,6 +80,7 @@ public:
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
     }
+
     /*!
      * \brief Constructs a DiffusionProblem1P object
      *
@@ -96,6 +96,7 @@ public:
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
     }
+
     /*!
      * \brief The constructor
      *
@@ -109,6 +110,7 @@ public:
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
     }
+
     /*!
      * \brief The constructor
      *
@@ -233,7 +235,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc IMPETProblem::asImp_()
+    //! \copydoc SequentialOnePModel::asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

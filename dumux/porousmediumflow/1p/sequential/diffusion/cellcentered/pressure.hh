@@ -26,15 +26,16 @@
 
 /**
  * \file
- * \brief  Single Phase Finite Volume Model
+ * \ingroup SequentialOnePModel
+ * \brief Sequential OneP Model solving the equations for pressure and velocity seperately.
  */
 
 namespace Dumux
 {
 
-//! \ingroup FV1p
-//! \brief Single Phase Finite Volume Model
-/*! This model solves equations of the form
+/*! \ingroup SequentialOnePModel
+ * \brief Sequential OneP Model solving the equations for pressure and velocity seperately.
+ * This model solves equations of the form
  * \f[
  *  \text{div}\, \boldsymbol v = q.
  * \f]

@@ -23,11 +23,8 @@
 #include <dumux/porousmediumflow/1p/sequential/properties.hh>
 
 /*!
- * \ingroup Pressure1p
- * \ingroup IMPETProperties
- */
-/*!
  * \file
+ * \ingroup SequentialOnePModel
  * \brief Specifies the properties for 1p pressure models
  */
 namespace Dumux

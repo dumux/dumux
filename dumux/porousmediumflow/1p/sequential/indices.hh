@@ -19,7 +19,7 @@
 
 /*!
  * \file
- *
+ * \ingroup SequentialOnePModel
  * \brief Defines the indices required for the sequential one-phase model.
  */
 #ifndef DUMUX_SEQUENTIAL_1P_INDICES_HH
@@ -28,7 +28,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup OnePhase
+ * \ingroup SequentialOnePModel
  */
 // \{
 
@@ -37,7 +37,7 @@ namespace Dumux
  */
 struct SequentialOnePCommonIndices
 {
-   static const int pressureEqIdx = 0;//!< Index of the pressure equation
+   static const int pressureEqIdx = 0;  //!< Index of the pressure equation
 };
 
 // \}
