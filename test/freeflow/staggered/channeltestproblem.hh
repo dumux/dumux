@@ -38,13 +38,6 @@ namespace Dumux
 template <class TypeTag>
 class ChannelTestProblem;
 
-namespace Capabilities
-{
-    template<class TypeTag>
-    struct isStationary<ChannelTestProblem<TypeTag>>
-    { static const bool value = false; };
-}
-
 namespace Properties
 {
 #if !NONISOTHERMAL
