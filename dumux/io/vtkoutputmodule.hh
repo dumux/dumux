@@ -242,6 +242,11 @@ class VtkOutputModule
 
 public:
 
+    enum class FieldType : unsigned int
+    {
+        element, vertex, automatic
+    };
+
     VtkOutputModule(const Problem& problem,
                     const FVGridGeometry& fvGridGeometry,
                     const GridVariables& gridVariables,
@@ -281,19 +286,51 @@ public:
         volVarScalarDataInfo_.push_back(VolVarScalarDataInfo{f, name});
     }
 
-    //! Add a scalar or vector valued field
-    //! \param v The scalar field to be added
-    //! \param name The name of the vtk field
-    //! \param nComp Number of components of the vector (maximum 3)
+    //! Add a scalar or vector valued vtk field
+    //! \param v The field to be added. Can be any indexable container. Its value type can be a number or itself an indexable container.
+    //! \param name The name of the field
+    //! \param fieldType The type of the field.
+    //!        This determines whether the values are associated with vertices or elements.
+    //!        By default, the method automatically deduces the correct type for the given input.
     template<typename Vector>
-    void addField(const Vector& v, const std::string& name, int nComp = 1)
+    void addField(const Vector& v, const std::string& name, FieldType fieldType = FieldType::automatic)
     {
-        if (v.size() == gridGeom_.gridView().size(0))
-            fields_.emplace_back(gridGeom_.gridView(), gridGeom_.elementMapper(), v, name, nComp, 0);
-        else if (v.size() == gridGeom_.gridView().size(dim))
-            fields_.emplace_back(gridGeom_.gridView(), gridGeom_.vertexMapper(), v, name, nComp, dim);
+        // Deduce the number of components from the given vector type
+        const auto nComp = getNumberOfComponents_(v);
+
+        const auto numElements = gridGeom_.gridView().size(0);
+        const auto numVertices = gridGeom_.gridView().size(dim);
+
+        // Automatically deduce the field type ...
+        if(fieldType == FieldType::automatic)
+        {
+            if(numElements == numVertices)
+                DUNE_THROW(Dune::InvalidStateException, "Automatic deduction of FieldType failed. Please explicitly specify FieldType::element or FieldType::vertex.");
+
+            if(v.size() == numElements)
+                fieldType = FieldType::element;
+            else if(v.size() == numVertices)
+                fieldType = FieldType::vertex;
+            else
+                DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
+        }
+        // ... or check if the user-specified type matches the size of v
         else
-            DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
+        {
+            if(fieldType == FieldType::element)
+                if(v.size() != numElements)
+                    DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
+
+            if(fieldType == FieldType::vertex)
+                if(v.size() != numVertices)
+                    DUNE_THROW(Dune::RangeError, "Size mismatch of added field!");
+        }
+
+        // add the appropriate field
+        if (fieldType == FieldType::element)
+            fields_.emplace_back(gridGeom_.gridView(), gridGeom_.elementMapper(), v, name, nComp, 0);
+        else
+            fields_.emplace_back(gridGeom_.gridView(), gridGeom_.vertexMapper(), v, name, nComp, dim);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -458,6 +495,15 @@ public:
     }
 
 private:
+    //! Deduces the number of components of the value type of a vector of values
+    template<class Vector, typename std::enable_if_t<Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
+    std::size_t getNumberOfComponents_(const Vector& v)
+    { return v[0].size(); }
+
+    //! Deduces the number of components of the value type of a vector of values
+    template<class Vector, typename std::enable_if_t<!Dune::is_indexable<decltype(std::declval<Vector>()[0])>::value, int> = 0>
+    std::size_t getNumberOfComponents_(const Vector& v)
+    { return 1; }
 
     template<typename Writer, typename... Args>
     void addDofDataForWriter_(Writer& writer,

@@ -141,7 +141,6 @@ int main(int argc, char** argv) try
     problem->setTimeLoop(timeLoop);
 
     // the solution vector
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -163,8 +162,8 @@ int main(int argc, char** argv) try
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     StaggeredVtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
-    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact", 1);
-    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact", GridView::dimensionworld);
+    vtkWriter.addField(problem->getAnalyticalPressureSolution(), "pressureExact");
+    vtkWriter.addField(problem->getAnalyticalVelocitySolution(), "velocityExact");
     vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
 
