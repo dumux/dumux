@@ -103,74 +103,6 @@ public:
 
      /*!
      * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero for a stationary problem.
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param prevVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the previous
-     *                   time level
-     * \param curVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the current
-     *                   time level
-     * \param bcTypes The types of the boundary conditions for all
-     *                vertices of the element
-     */
-    auto evalCellCenter(const Problem& problem,
-                        const Element &element,
-                        const FVElementGeometry& fvGeometry,
-                        const ElementVolumeVariables& curElemVolVars,
-                        const ElementFaceVariables& curElemFaceVars,
-                        const ElementBoundaryTypes &bcTypes,
-                        const ElementFluxVariablesCache& elemFluxVarsCache) const
-    {
-        CellCenterResidual residual(0.0);
-
-        asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes);
-        asImp_().evalFluxesForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
-        asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
-
-        return residual;
-    }
-
-     /*!
-     * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero for a stationary problem.
-     *
-     * \param element The DUNE Codim<0> entity for which the residual
-     *                ought to be calculated
-     * \param fvGeometry The finite-volume geometry of the element
-     * \param prevVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the previous
-     *                   time level
-     * \param curVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the current
-     *                   time level
-     * \param bcTypes The types of the boundary conditions for all
-     *                vertices of the element
-     */
-    auto evalFace(const Problem& problem,
-                  const Element &element,
-                  const FVElementGeometry& fvGeometry,
-                  const SubControlVolumeFace& scvf,
-                  const ElementVolumeVariables& curElemVolVars,
-                  const ElementFaceVariables& curElemFaceVars,
-                  const ElementBoundaryTypes &bcTypes,
-                  const ElementFluxVariablesCache& elemFluxVarsCache,
-                  const bool resizeResidual = false) const
-    {
-        FaceResidual residual(0.0);
-
-        asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes);
-        asImp_().evalFluxesForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
-        asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
-
-        return residual;
-    }
-
-     /*!
-     * \brief Compute the local residual, i.e. the deviation of the
      *        equations from zero for a transient problem.
      *
      * \param element The DUNE Codim<0> entity for which the residual
@@ -195,12 +127,16 @@ public:
                         const ElementBoundaryTypes &bcTypes,
                         const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        assert(timeLoop_ && "no time loop set for storage term evaluation");
-        assert(prevSol_ && "no solution set for storage term evaluation");
+        assert( ( (timeLoop_ && !isStationary()) || (!timeLoop_ && isStationary() ) ) && "no time loop set for storage term evaluation");
+        assert( ( (prevSol_ && !isStationary()) || (!prevSol_ && isStationary() ) ) && "no solution set for storage term evaluation");
 
         CellCenterResidual residual(0.0);
 
-        asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+        if(isStationary())
+            asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes);
+        else
+            asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+
         asImp_().evalFluxesForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
         asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
 
@@ -232,15 +168,18 @@ public:
                   const ElementFaceVariables& prevElemFaceVars,
                   const ElementFaceVariables& curElemFaceVars,
                   const ElementBoundaryTypes &bcTypes,
-                  const ElementFluxVariablesCache& elemFluxVarsCache,
-                  const bool resizeResidual = false) const
+                  const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        assert(timeLoop_ && "no time loop set for storage term evaluation");
-        assert(prevSol_ && "no solution set for storage term evaluation");
+        assert( ( (timeLoop_ && !isStationary()) || (!timeLoop_ && isStationary() ) ) && "no time loop set for storage term evaluation");
+        assert( ( (prevSol_ && !isStationary()) || (!prevSol_ && isStationary() ) ) && "no solution set for storage term evaluation");
 
         FaceResidual residual(0.0);
 
-        asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+        if(isStationary())
+            asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes);
+        else
+            asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+
         asImp_().evalFluxesForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
         asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
 
