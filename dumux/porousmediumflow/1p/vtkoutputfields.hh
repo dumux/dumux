@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the onep model
+ * \ingroup OnePModel
+ * \brief Adds vtk output fields specific to the one phase model
  */
 #ifndef DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
@@ -27,8 +28,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OneP, InputOutput
- * \brief Adds vtk output fields specific to the onep model
+ * \ingroup OnePModel, InputOutput
+ * \brief Adds vtk output fields specific to the one phase model
  */
 template<class TypeTag>
 class OnePVtkOutputFields

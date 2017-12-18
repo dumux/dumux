@@ -16,14 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
-/*!
- * \ingroup FV1p
- * \ingroup Properties
- */
 /*!
  * \file
- *
+ * \ingroup SequentialOnePModel
  * \brief Defines the properties required for finite volume pressure models
  */
 

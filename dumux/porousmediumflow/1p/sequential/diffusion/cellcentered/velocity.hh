@@ -21,17 +21,18 @@
 
 #include<dumux/porousmediumflow/1p/sequential/properties.hh>
 
-/**
+/*!
  * \file
+ * \ingroup SequentialOnePModel
  * \brief  Single phase finite volume velocity reconstruction
  */
 
 
 namespace Dumux
 {
-//! \ingroup FV1p
-//! \brief Single phase finite volume velocity reconstruction
-/*! Calculates velocities from a known pressure field applying a finite volume discretization.
+/*! \ingroup SequentialOnePModel
+ * \brief Single phase finite volume velocity reconstruction
+ * Calculates velocities from a known pressure field applying a finite volume discretization.
  * The pressure has to be given as piecewise constant cell values.
  * The velocity is calculated following  Darcy's law as
  * \f[

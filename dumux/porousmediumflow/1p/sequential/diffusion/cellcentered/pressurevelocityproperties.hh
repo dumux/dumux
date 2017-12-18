@@ -18,12 +18,8 @@
  *****************************************************************************/
 
 /*!
- * \ingroup FV1p
- * \ingroup Properties
- */
-/*!
  * \file
- *
+ * \ingroup SequentialOnePModel
  * \brief Defines the properties required for finite volume pressure models
  */
 

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePModel
  * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
  */
 #ifndef DUMUX_1P_VOLUME_VARIABLES_HH

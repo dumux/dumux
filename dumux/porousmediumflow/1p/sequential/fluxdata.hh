@@ -21,22 +21,22 @@
 
 #include "properties.hh"
 
-/**
+/*!
  * \file
- * \brief  Class storing data assigned to a cell-cell interfaces, so-called flux-data
+ * \ingroup SequentialOnePModel
+ * \brief  Class storing data assigned to a cell-cell interfaces, so-called flux-data.
  */
 
 namespace Dumux
 {
 /*!
- * \ingroup OnePhase
+ * \ingroup SequentialOnePModel
+ * Class storing data assigned to a cell-cell interfaces, so-called flux-data.
+ * Stores velocities and potentials at cell-cell interfaces.
+ * Further it provides methods which interpret stored phase potentials for upwind decisions.
+ *
+ * \tparam TypeTag The problem TypeTag
  */
-//! Class storing data assigned to a cell-cell interfaces, so-called flux-data.
-/*! Stores velocities and potentials at cell-cell interfaces.
- *  Further it provides methods which interpret stored phase potentials for upwind decisions.
-*
-* \tparam TypeTag The problem TypeTag
-*/
 template<class TypeTag>
 class FluxData1P
 {
@@ -81,6 +81,7 @@ public:
     {
         return velocity_[indexInInside];
     }
+
     /*! \brief Returns the velocity vector at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
@@ -89,6 +90,7 @@ public:
     {
         return velocity_[indexInInside];
     }
+
     /*! \brief Sets the velocity vector at a cell-cell interface
      *
      * \param indexInInside Index of the cell-cell interface in this cell
@@ -98,6 +100,7 @@ public:
     {
         velocity_[indexInInside] = velocity;
     }
+
     //!Resets velocities and potentials
     void resetVelocity()
     {
@@ -141,6 +144,7 @@ public:
      *
      * \param indexInInside Index of the cell-cell interface in this cell
      */
+
     bool isUpwindCell(int indexInInside)
     {
         return (potential_[indexInInside] >= 0.);

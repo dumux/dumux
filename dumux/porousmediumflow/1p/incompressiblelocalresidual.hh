@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePModel
  * \brief Element-wise calculation of the residual and its derivatives
  *        for a single-phase, incompressible, test problem.
  */
