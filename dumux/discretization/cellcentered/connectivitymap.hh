@@ -26,6 +26,9 @@
 #define DUMUX_CC_CONNECTIVITY_MAP_HH
 
 #include <vector>
+#include <utility>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/fluxstencil.hh>
 
 namespace Dumux
 {
@@ -44,9 +47,9 @@ template<class TypeTag>
 class CCSimpleConnectivityMap
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
+    using FluxStencil = Dumux::FluxStencil<TypeTag>;
 
     struct DataJ
     {
@@ -84,7 +87,7 @@ public:
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
             {
-                const auto& stencil = FluxVariables::computeStencil(element, fvGeometry, scvf);
+                const auto& stencil = FluxStencil::stencil(element, fvGeometry, scvf);
 
                 // insert our index in the neighbor stencils of the elements in the flux stencil
                 for (auto globalI : stencil)

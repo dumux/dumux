@@ -34,26 +34,12 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 
-//! Dummy flux variables class so that we can update the connectivity map
-class MockFluxVariables
-{
-public:
-  template<class Element, class FvGeometry, class Scvf>
-  static std::vector<std::size_t> computeStencil(const Element& element,
-                                                 const FvGeometry& fvGeometry,
-                                                 const Scvf& scvf)
-  {
-      return std::vector<std::size_t>();
-  }
-};
-
 namespace Dumux {
-    namespace Properties {
-        NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel));
-        SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
-        SET_TYPE_PROP(TestFVGeometry, FluxVariables, MockFluxVariables);
-    }
-}
+namespace Properties {
+NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(CCTpfaModel));
+SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
+} // end namespace Properties
+} // end namespace Dumux
 
 template<class T>
 class NoopFunctor {

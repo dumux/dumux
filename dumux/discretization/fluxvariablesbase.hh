@@ -23,14 +23,12 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 
-#include <dumux/discretization/methods.hh>
-#include <dumux/discretization/fluxstencil.hh>
 #include <dumux/discretization/upwindscheme.hh>
 
 namespace Dumux
 {
 
-template<class TypeTag, class UpwindScheme, class FluxStencil>
+template<class TypeTag, class UpwindScheme>
 class FluxVariablesBaseImplementation;
 
 /*!
@@ -39,7 +37,7 @@ class FluxVariablesBaseImplementation;
  *        The upwind scheme is chosen depending on the discretization method
  */
 template<class TypeTag>
-using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>, FluxStencil<TypeTag>>;
+using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>>;
 
 /*!
  * \ingroup Discretization
@@ -48,7 +46,7 @@ using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<
  * \param TypeTag The type tag
  * \param UpwindScheme The type used for the upwinding of the advective fluxes
  */
-template<class TypeTag, class UpwindScheme, class FluxStencil>
+template<class TypeTag, class UpwindScheme>
 class FluxVariablesBaseImplementation
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -103,14 +101,6 @@ public:
     {
         //! Give the upwind scheme access to the cached variables
         return UpwindScheme::apply(*this, upwindTerm, flux, phaseIdx);
-    }
-
-    static Stencil computeStencil(const Element& element,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf)
-    {
-        //! Forward to the discretization specific implementation
-        return FluxStencil::stencil(element, fvGeometry, scvf);
     }
 
 private:
