@@ -99,8 +99,11 @@ public:
      *        to the global matrix. The element residual is written into the right hand side.
      */
     template<class Assembler>
-    static void assembleJacobianAndResidual(Assembler& assembler, JacobianMatrix& jac, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
+    static void assembleJacobianAndResidual(Assembler& assembler,
+                                            JacobianMatrix& jac,
+                                            SolutionVector& res,
+                                            const Element& element,
+                                            const SolutionVector& curSol)
     {
         using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
         typename DofTypeIndices::CellCenterIdx cellCenterIdx;
