@@ -19,19 +19,27 @@ IMAGE_PATH             = @srcdir@/images
 
 EXTRA_PACKAGES        += amsmath,amssymb,units
 
-EXCLUDE_PATTERNS       = 
+LAYOUT_FILE            = @srcdir@/DoxygenDumuxLayout.xml
 
-ALIASES += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
+HTML_EXTRA_STYLESHEET  = @srcdir@/customdoxygendumux.css
+
+HTML_COLORSTYLE_HUE    = 37
+
+HTML_COLORSTYLE_SAT    = 206
+
+EXCLUDE_PATTERNS       =
+
+ALIASES               += "warning=\xrefitem warning \"Warning List\" \"Warning List\""
 
 # enable client side searching
 SEARCHENGINE           = YES
 SERVER_BASED_SEARCH    = NO
 
 # the bibliography file used for the doxygen documentation
-CITE_BIB_FILES = @top_srcdir@/doc/handbook/dumux-handbook.bib
+CITE_BIB_FILES         = @top_srcdir@/doc/handbook/dumux-handbook.bib
 
 # enable macro expansion only for specified macros
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
-PREDEFINED             += "DUNE_DEPRECATED:=/** \deprecated */" \
+PREDEFINED            += "DUNE_DEPRECATED:=/** \deprecated */" \
                          "DUNE_DEPRECATED_MSG(A):=/** \deprecated A */"

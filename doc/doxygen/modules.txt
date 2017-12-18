@@ -5,345 +5,257 @@
  *
  */
 
-/* ***************** Porousmediaflow ******************/
+/* ***************** Porousmediumflow ******************/
 /*!
- * \defgroup Porousmediaflow Porous-Medium Flow (fully implicit if not denoted otherwise)
+ * \defgroup PorousmediumflowModels Porous-Medium Flow Models
  */
     /*!
-     * \ingroup Porousmediaflow
-     * \defgroup OnePModels 1p (one-phase Darcy flow)
+     * \ingroup PorousmediumflowModels
+     * \defgroup OnePModel 1p (one-phase Darcy flow)
+     * \copydetails ./porousmediumflow/1p/model.hh
      */
-        /*!
-         * \ingroup OnePModels
-         * \defgroup OnePModel Implicit
-         *
-         * \copydetails Dumux::OnePModel
-         */
-        /*!
-         * \ingroup OnePModels
-         * \defgroup OnePhase Sequential
-         *
-         * \copydetails Dumux::FVPressure1P
-         */
+       /*!
+        * \ingroup OnePModel
+        * \defgroup SequentialOnePModel Sequential
+        * # Pressure
+        * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/pressure.hh
+        * 
+        * # Velocity
+        * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/velocity.hh
+        */
     /*!
-     * \ingroup Porousmediaflow
-     * \defgroup OnePTwoCModel 1p2c (one-phase, two-component Darcy flow)
+     * \ingroup PorousmediumflowModels
+     * \defgroup OnePNCModel 1pnc (one-phase, n-component Darcy flow)
      *
-     * \copydetails Dumux::OnePTwoCModel
+     * \copydetails ./porousmediumflow/1pnc/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
-     * \defgroup TwoPModels 2p (two-phase Darcy flow)
+     * \ingroup PorousmediumflowModels
+     * \defgroup OnePNCMinModel 1pncmin (one-phase, n-component Darcy flow with mineralization)
+     *
+     * \copydetails ./porousmediumflow/1pncmin/model.hh
+     */
+    /*!
+     * \ingroup PorousmediumflowModels
+     * \defgroup TwoPModel 2p (two-phase Darcy flow)
+     * \copydetails ./porousmediumflow/2p/model.hh
      */
         /*!
-         * \ingroup TwoPModels
-         * \defgroup TwoPModel Implicit
-         *
-         * \copydetails Dumux::TwoPModel
+         * \ingroup TwoPModel
+         * \defgroup SequentialTwoPModel Sequential
+         * # Pressure
+         * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/pressure.hh
+         * 
+         * # Velocity
+         * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/velocity.hh
          */
     /*!
-         * \ingroup TwoPModels
-         * \defgroup IMPES Sequential
-     *
-     * # Pressure
-     * \copydetails Dumux::FVPressure2P
-     * <br>
-     * # Velocity
-     * \copydetails Dumux::FVVelocity2P
-     * <br>
-     * # Saturation
-     * \copydetails Dumux::FVSaturation2P
-         */
-     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup TwoPOneCModel 2p1c (two-phase, one-component Darcy flow)
      *
-     * \copydetails Dumux::TwoPOneCModel
+     * \copydetails ./porousmediumflow/2p1c/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
-     * \defgroup TwoPOneCModel 2p1c (two-phase, one-component Darcy flow)
-     *
-     * \copydetails Dumux::TwoPOneCModel
-     */
-    /*!
-     * \ingroup Porousmediaflow
-     * \defgroup TwoPTwoCModels 2p2c (two-phase, two-component Darcy flow)
+     * \ingroup PorousmediumflowModels
+     * \defgroup TwoPTwoCModel 2p2c (two-phase, two-component Darcy flow)
+     * \copydetails ./porousmediumflow/2p2c/model.hh
      */
         /*!
-         * \ingroup TwoPTwoCModels
-         * \defgroup TwoPTwoCModel Implicit
-         *
-         * \copydetails Dumux::TwoPTwoCModel
+         * \ingroup TwoPTwoCModel
+         * \defgroup SequentialTwoPTwoCModel Sequential
+         * # Pressure
+         * \copydetails ./porousmediumflow/2p2c/sequential/fvpressure.hh
+         * 
+         * # Velocity
+         * \copydetails ./porousmediumflow/2p2c/sequential/fvtransport.hh
          */
     /*!
-         * \ingroup TwoPTwoCModels
-         * \defgroup IMPEC Sequential
-     *
-     * # Pressure
-     * \copydetails Dumux::FVPressure2P2C
-     * <br>
-     * # Transport
-     * \copydetails Dumux::FVTransport2P2C
-         */
-    /*!
-     * \ingroup Porousmediaflow
-     * \defgroup TwoPDFMModel 2pdfm (two-phase Darcy flow in discrete fracture-matrix)
-     *
-     * \copydetails Dumux::TwoPDFMModel
-     */
-    /*!
-     * \ingroup Porousmediaflow
-     * \defgroup TwoPMincModel 2pminc (two-phase Darcy flow dual continuum)
-     *
-     * \copydetails Dumux::TwoPMincModel
-     */
-    /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup TwoPNCModel 2pnc (two-phase, n-component Darcy flow)
      *
-     * \copydetails Dumux::TwoPNCModel
+     * \copydetails ./porousmediumflow/2pnc/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup TwoPNCMinModel 2pncmin (two-phase, n-component Darcy flow with mineralization)
      *
-     * \copydetails Dumux::TwoPNCMinModel
+     * \copydetails ./porousmediumflow/2pncmin/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup ThreePModel 3p (three-phase Darcy flow)
      *
-     * \copydetails Dumux::ThreePModel
+     * \copydetails ./porousmediumflow/3p/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup ThreePThreeCModel 3p3c (three-phase, three-component Darcy flow)
      *
-     * \copydetails Dumux::ThreePThreeCModel
+     * \copydetails ./porousmediumflow/3p3c/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup ThreePWaterOilModel 3pwateroil (three-phase, two-component Darcy flow)
      *
-     * \copydetails Dumux::ThreePWaterOilModel
+     * \copydetails ./porousmediumflow/3pwateroil/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup CO2Model CO2 (two-phase, two-component Darcy flow)
      *
-     * \copydetails Dumux::CO2Model
+     * \copydetails ./porousmediumflow/co2/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
+     * \defgroup MineralizationModel Mineralization (equation adding solid/mineralization-phases to a standard Darcy flow model)
+     *
+     * \copydetails ./porousmediumflow/mineralization/model.hh
+     */
+    /*!
+     * \ingroup PorousmediumflowModels
      * \defgroup MPNCModel MpNc (m-phase, n-component Darcy flow)
      *
-     * \copydetails Dumux::MPNCModel
+     * \copydetails ./porousmediumflow/mpnc/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup NIModel Non-isothermal (energy equation, to be added to an isothermal model)
      *
-     * \copydetails Dumux::NIModel
+     * \copydetails ./porousmediumflow/non-isothermal/model.hh
      */
     /*!
-     * \ingroup Porousmediaflow
+     * \ingroup PorousmediumflowModels
      * \defgroup RichardsModel Richards (Richards flow)
      *
-     * \copydetails Dumux::RichardsModel
+     * \copydetails ./porousmediumflow/richards/model.hh
+     */
+    /*!
+     * \ingroup PorousmediumflowModels
+     * \defgroup RichardsNCModel RichardsNC (n-component Richards flow)
+     *
+     * \copydetails ./porousmediumflow/richardsnc/model.hh
+     */
+    /*!
+     * \ingroup PorousmediumflowModels
+     * \defgroup TracerModel Tracer (adds tracer transport to a model)
+     *
+     * \copydetails ./porousmediumflow/tracer/model.hh
      */
 
-/* ***************** Geomechanics ******************/
+/* ***************** FreeflowModels ******************/
 /*!
- * \defgroup Geomechanics Geomechanics (fully implicit)
+ * \defgroup FreeflowModels Free Flow Models
  */
     /*!
-     * \ingroup Geomechanics
-     * \defgroup ElOnePTwoCBoxModel El1p2c (one-phase, two-component Darcy flow, linear elastic deformation model)
+     * \ingroup FreeflowModels
+     * \defgroup NavierStokesModel NavierStokes (one-phase Navier-Stokes flow)
      *
-     * \copydetails Dumux::ElOnePTwoCModel
+     * \copydetails ./freeflow/navierstokes/model.hh
      */
     /*!
-     * \ingroup Geomechanics
-     * \defgroup ElTwoPBoxModel El2p (two-phase Darcy flow, linear elastic deformation model)
+     * \ingroup FreeflowModels
+     * \defgroup NavierStokesNCModel NavierStokesnc (one-phase, n-component Navier-Stokes flow)
      *
-     * \copydetails Dumux::ElTwoPModel
+     * \copydetails ./freeflow/navierstokesnc/model.hh
      */
     /*!
-     * \ingroup Geomechanics
-     * \defgroup ElasticBoxModel Elastic (linear elastic deformation model)
+     * \ingroup FreeflowModels
+     * \defgroup NavierStokesNIModel Non-isothermal (energy equation, to be added to a isothermal NavierStokes model)
      *
-     * \copydetails Dumux::ElasticModel
+     * \copydetails ./freeflow/non-isothermal/model.hh
      */
 
-/* ***************** Freeflow ******************/
+/* ***************** Benchmarks and Tests ******************/
 /*!
- * \defgroup Freeflow Free Flow (fully implicit)
+ * \defgroup BenchmarksAndTests Benchmarks and Tests
+ *  TODO: Doc me in modules.txt!
  */
-    /*!
-     * \ingroup Freeflow
-     * \defgroup BoxStokesModel Stokes (one-phase Stokes flow)
-     *
-     * \copydetails Dumux::StokesModel
-     */
-    /*!
-     * \ingroup Freeflow
-     * \defgroup BoxStokesncModel Stokesnc (one-phase, n-component Stokes flow)
-     *
-     * \copydetails Dumux::StokesncModel
-     */
-    /*!
-     * \ingroup Freeflow
-     * \defgroup BoxStokesncniModel Stokesncni (one-phase, n-component, non-isothermal Stokes flow)
-     *
-     * \copydetails Dumux::StokesncniModel
-     */
-    /*!
-     * \ingroup Freeflow
-     * \defgroup BoxZeroEqModel Zeroeq (one-phase Stokes flow with zero-eq turbulence model)
-     *
-     * \copydetails Dumux::ZeroEqModel
-     */
-    /*!
-     * \ingroup Freeflow
-     * \defgroup BoxZeroEqncModel Zeroeqnc (one-phase, n-component Stokes flow with zero-eq turbulence model)
-     *
-     * \copydetails Dumux::ZeroEqncModel
-     */
-    /*!
-     * \ingroup Freeflow
-     * \defgroup BoxZeroEqncniModel Zeroeqncni (one-phase, n-component, non-isothermal Stokes flow with zero-eq turbulence model)
-     *
-     * \copydetails Dumux::ZeroEqncniModel
-     */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup OnePTests 1p (one phase) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup OnePNCTests 1pnc (one phase, n-component) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup OnePNCMinTests 1pncmin (one phase, n-component mineralization) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup TwoPTests 2p (two phase) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup TwoPOneCTests 2p1c (two phase, one component) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup TwoPTwoCTests 2p2c (two phase, two component) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup TwoPNCTests 2pnc (two phase, n-component) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup TwoPNCMinTests 2pncmin (two phase, n-component mineralization) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup ThreePTests 3p (three phase) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup ThreePThreeCTests 3p3c (three phase, three component) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
+ 	 */   
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
+ 	 */  	
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
+ 	 */  	  
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
+ 	 */
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup RichardsTests Richards benchmarks and tests
+ 	 */  	 
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup RichardsNCTests Richards n-component benchmarks and tests
+ 	 */   
+ 	/*! \ingroup BenchmarksAndTests
+ 	 * \defgroup TracerTests Tracer benchmarks and tests
+ 	 */  
 
-/* ***************** Multidomain ******************/
+/* ***************** Discretization ******************/
 /*!
- * \defgroup Multidomain Multidomain (fully implicit)
+ * \defgroup Discretization Discretization schemes
  */
     /*!
-     * \ingroup Multidomain
-     * \defgroup MultidomainModel Multidomain
-     */
-    /*!
-     * \ingroup Multidomain
-     * \defgroup TwoPTwoCStokesTwoCModel 2cstokes2p2c (1p2c Stokes flow coupled to 2p2c Darcy flow)
+     * \ingroup Discretization
+     * \defgroup BoxDiscretization Box finite volume scheme
      *
-     * # Coupling Conditions
-     * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
-     * <br>
-     * # Darcy 2p2c
-     * \copydetails Dumux::TwoPTwoCModel
-     * <br>
-     * # Stokes nc
-     * \copydetails Dumux::StokesncModel
+     * \copydetails ./discretization/box/properties.hh
      */
     /*!
-     * \ingroup Multidomain
-     * \defgroup TwoPTwoCNIStokesTwoCNIModel 2cnistokes2p2cni (1p2cni Stokes flow coupled to 2p2cni Darcy flow)
-     *
-     * # Coupling Conditions
-     * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
-     * <br>
-     * # Darcy 2p2c
-     * \copydetails Dumux::TwoPTwoCModel
-     * <br>
-     * # Darcy non-isothermal extension
-     * \copydetails Dumux::NIModel
-     * <br>
-     * # Stokes nc
-     * \copydetails Dumux::StokesncniModel
-     */
-    /*!
-     * \ingroup Multidomain
-     * \defgroup TwoPTwoCZeroEqTwoCModel 2czeroeq2p2c (1p2c Stokes flow with zero-eq turbulence model coupled to 2p2c Darcy flow)
-     *
-     * # Coupling Conditions
-     * \copydetails Dumux::TwoCStokesTwoPTwoCLocalOperator
-     * <br>
-     * # Darcy 2p2c
-     * \copydetails Dumux::TwoPTwoCModel
-     * <br>
-     * # Stokes nc
-     * \copydetails Dumux::ZeroEqncModel
-     */
-    /*!
-     * \ingroup Multidomain
-     * \defgroup TwoPTwoCNIZeroEqTwoCNIModel 2cnizeroeq2p2cni (1p2cni Stokes flow with zero-eq turbulence model coupled to 2p2cni Darcy flow)
-     *
-     * # Coupling Conditions
-     * \copydetails Dumux::TwoCNIStokesTwoPTwoCNILocalOperator
-     * <br>
-     * # Darcy 2p2c
-     * \copydetails Dumux::TwoPTwoCModel
-     * <br>
-     * # Darcy non-isothermal extension
-     * \copydetails Dumux::NIModel
-     * <br>
-     * # Stokes nc
-     * \copydetails Dumux::ZeroEqncniModel
-     */
-
-/* ***************** Fully Implicit ******************/
-/*!
- * \defgroup ImplicitModel Fully-Coupled Fully-Implicit Scheme
- */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitBaseProblems Base Problems
-     */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup Discretizations Discretizations
+     * \ingroup Discretization
+     * \defgroup CCDiscretization Cell-centered finite volume scheme
+     * # Tpfa
+     * \copybrief ./discretization/cellcentered/tpfa/properties.hh
+     * # Mpfa
+     * \copybrief ./discretization/cellcentered/mpfa/properties.hh
      */
          /*!
-         * \ingroup Discretizations
-         * \defgroup CCModel Fully-implicit cell-centered discretization
+         * \ingroup CCDiscretization
+         * \defgroup CCTpfaDiscretization Cell-centered finite volume scheme with two-point flux-approximuation (Tpfa)
+         *
+         * \copydetails ./discretization/cellcentered/tpfa/properties.hh
          */
          /*!
-         * \ingroup Discretizations
-         * \defgroup BoxModel Fully-implicit box discretization
+         * \ingroup CCDiscretization
+         * \defgroup CCMpfaDiscretization Cell-centered finite volume scheme with multi-point flux-approximuation (Mpfa)
+         *
+         * \copydetails ./discretization/cellcentered/mpfa/properties.hh
          */
     /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitBoundaryTypes Boundary Types
-     */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitFluxVariables Flux Variables
-     */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitIndices Indices
-     */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitLocalJacobian Local Jacobian
-     */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitLocalResidual Local Residual
-     */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitProperties Properties
-     */
-    /*!
-     * \ingroup ImplicitModel
-     * \defgroup ImplicitVolumeVariables Volume Variables
-     */
-
-/* ***************** Sequential ******************/
-/*!
- * \defgroup Sequential Sequential Scheme (Implicit Pressure, Explicit Transport)
- */
-    /*!
-     * \ingroup Sequential
-     * \defgroup IMPETproblems Base Problems
-     */
-    /*!
-     * \ingroup Sequential
-     * \defgroup IMPETProperties Properties
+     * \ingroup Discretization
+     * \defgroup StaggeredDiscretization Staggered finite volume scheme
+     * \copydetails ./discretization/staggered/properties.hh
      */
 
 /* ***************** Material ******************/
@@ -351,31 +263,15 @@
  * \defgroup Material Material and Fluid Framework
  * Short description of the most important concepts of the material and fluid framework:
  *
- *  - __Binary coefficient:__  @copydoc Binarycoefficients
- *
- *
- *  - __Component:__ @copydoc Components
- *
- *
- *  - __Constraint solver:__ @copydoc ConstraintSolver
- *
- *
- *  - __Equation of state:__ @copydoc EOS
- *
- *
- *  - __Fluid state:__ @copydoc FluidStates
- *
- *
- *  - __Fluid system:__ @copydoc Fluidsystems
- *
- *
- *  - __Fluid-Matrix Interactions:__ @copydoc fluidmatrixinteractions
- *
- *
- *  - __Parameter cache:__ @copydoc ParameterCache
- *
- *
- *  - __Spatial Parameters:__ @copydoc SpatialParameters
+ *  - __Binary coefficient:__ <br>  @copydoc Binarycoefficients
+ *  - __Chemistry:__ <br> @copydoc Chemistry
+ *  - __Component:__ <br> @copydoc Components
+ *  - __Constraint solver:__ <br> @copydoc ConstraintSolver
+ *  - __Equation of state:__ <br> @copydoc EOS
+ *  - __Fluid-Matrix Interactions:__ <br> @copydoc fluidmatrixinteractions
+ *  - __Fluid state:__ <br> @copydoc FluidStates
+ *  - __Fluid system:__ <br> @copydoc Fluidsystems
+ *  - __Spatial Parameters:__ <br> @copydoc SpatialParameters
  */
     /*!
      * \ingroup Material
@@ -385,6 +281,14 @@
      *  Henry coefficients or binary molecular diffusion
      *  coefficients. So far, the programming interface for accessing binary
      *  coefficients has not been standardized in Dumux.
+     */
+    /*!
+     * \ingroup Material
+     * \defgroup Chemistry Chemistry
+     * Chemical reactions can be relevant for all thermodynamic relations
+     * for the liquid and gas phase of multiple chemical species
+     * The main purpose is to provide a convenient way to access these
+     * relationships via source or sink terms.
      */
     /*!
      * \ingroup Material
@@ -417,35 +321,11 @@
     /*!
      * \ingroup Material
      * \defgroup EOS Equation of State
-     *
      * Equations of state (EOS) are auxiliary
      * classes which provide relations between a fluid phase's temperature,
      * pressure, composition and density. Since these classes are only used
      * internally in fluid systems, their programming interface is
      * currently ad-hoc.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup FluidStates Fluid States
-     * Fluid states are responsible for representing the
-     * complete thermodynamic configuration of a system at a given spatial
-     * and temporal position. A fluid state always provides access methods
-     * to __all__ thermodynamic quantities, but the concept of a fluid state does not
-     * mandate what assumptions are made to store these thermodynamic
-     * quantities. What fluid states also do __not__ do is to make sure
-     * that the thermodynamic state which they represent is physically
-     * possible.
-     */
-    /*!
-     * \ingroup Material
-     * \defgroup Fluidsystems Fluid Systems
-     * Fluid systems express the thermodynamic relations 
-    *  Strictly speaking, these relations are
-    *  functions, mathematically.} between quantities. Since functions do
-    *  not exhibit any internal state, fluid systems are stateless classes,
-    *  i.e. all member functions are static. This is a conscious
-    *  decision since the thermodynamic state of the system is expressed by
-    *  a fluid state!
      */
     /*!
      * \ingroup Material
@@ -465,34 +345,26 @@
          */
     /*!
      * \ingroup Material
-     * \defgroup ParameterCache Parameter Cache
-     * Fluid systems sometimes require
-     * computationally expensive parameters for multiple relations. Such
-     * parameters can be cached using a so-called parameter
-     * cache. Parameter cache objects are specific for each fluid system
-     * but they must provide a common interface to update the internal
-     * parameters depending on the quantities which changed since the last
-     * update.
-     * All fluid systems must export a type for their __ParameterCache__
-     * objects. Parameter caches can be used to cache parameter that are
-     * expensive to compute and are required in multiple thermodynamic
-     * relations. For fluid systems which do need to cache parameters,
-     * Dumux provides a __NullParameterCache__ class.
-     * The actual quantities stored by parameter cache objects are specific
-     * to the fluid system and no assumptions on what they provide should be
-     * made outside of their fluid system. Parameter cache objects provide a
-     * well-defined set of methods to make them coherent with a given fluid
-     * state, though.
-     * Note, that the parameter cache interface only guarantees that if a
-     * more specialized <tt>update()</tt> method is called, it is not slower
-     * than the next more-general method (e.g. calling <tt>updateSingleMoleFraction()</tt>
-     * may be as expensive as <tt>updateAll()}</tt>. It is thus advisable to
-     * rather use a more general <tt>update()</tt> method once than multiple
-     * calls to specialized <tt>update()</tt> methods.
-     * To make usage of parameter caches easier for the case where all cached
-     * quantities ought to be re-calculated if a quantity of a phase was changed,
-     * it is possible to only define the <tt>updatePhase()</tt> method and
-     * derive the parameter cache from <tt>Dumux::ParameterCacheBase</tt>.
+     * \defgroup FluidStates Fluid States
+     * Fluid states are responsible for representing the
+     * complete thermodynamic configuration of a system at a given spatial
+     * and temporal position. A fluid state always provides access methods
+     * to __all__ thermodynamic quantities, but the concept of a fluid state does not
+     * mandate what assumptions are made to store these thermodynamic
+     * quantities. What fluid states also do __not__ do is to make sure
+     * that the thermodynamic state which they represent is physically
+     * possible.
+     */
+    /*!
+     * \ingroup Material
+     * \defgroup Fluidsystems Fluid Systems
+     * Fluid systems express the thermodynamic relations
+    *  Strictly speaking, these relations are
+    *  functions, mathematically.} between quantities. Since functions do
+    *  not exhibit any internal state, fluid systems are stateless classes,
+    *  i.e. all member functions are static. This is a conscious
+    *  decision since the thermodynamic state of the system is expressed by
+    *  a fluid state!
      */
     /*!
      * \ingroup Material
@@ -502,53 +374,50 @@
      * parameters. For example permeability, porosity etc.
      *
      */
-
+ 
+/* ***************** Adaptive ******************/
+/*!
+ * \defgroup Adaptive Adaptive
+ *  TODO: Doc me in modules.txt!
+ */
+ 
+/* ***************** Assembly ******************/
+/*!
+ * \defgroup Assembly Assembly
+ *  TODO: Doc me in modules.txt!
+ */
+ 
 /* ***************** Common ******************/
 /*!
- * \defgroup Common Common Infrastucture
+ * \defgroup Common Common
+ *  TODO: Doc me in modules.txt!
  */
-    /*!
-     * \ingroup Common
-     * \defgroup BC Boundary Conditions
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Math Elementary Math Functions
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Exception Exceptions
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Linear Linear Solver Backends
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Newton Newton Solver
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Parameter Parameters
-     * See the file parameterlist for available parameters.
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Properties Property System
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Spline Splines
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Start Starting the Simulation
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup SimControl Time Manager
-     */
-    /*!
-     * \ingroup Common
-     * \defgroup Valgrind Valgrind
-     */
+ 	/*! 
+  	 * \ingroup Common
+  	 * \defgroup Properties Properties
+  	 * TODO: Doc me in modules.txt!
+  	 */
+  	  
+/* ***************** InputOutput ******************/
+/*!
+ * \defgroup InputOutput Input Output
+ *  TODO: Doc me in modules.txt!
+ */
+
+/* ***************** Linear ******************/
+/*!
+ * \defgroup Linear Linear
+ *  TODO: Doc me in modules.txt!
+ */
+
+/* ***************** Nonlinear ******************/
+/*!
+ * \defgroup Nonlinear Nonlinear
+ *  TODO: Doc me in modules.txt!
+ */
+
+/* ***************** Parallel ******************/
+/*!
+ * \defgroup Parallel Parallel
+ *  TODO: Doc me in modules.txt!
+ */
