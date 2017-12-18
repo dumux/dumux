@@ -51,9 +51,9 @@ NEW_PROP_TAG(SpatialParams);
 template<class TypeTag>
 class SequentialFVSpatialParamsOneP
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, GridView) GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, SpatialParams) Implementation;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Implementation = typename GET_PROP_TYPE(TypeTag, SpatialParams);
 
     enum
     {
@@ -61,9 +61,9 @@ class SequentialFVSpatialParamsOneP
         dimWorld = GridView::dimensionworld
     };
 
-    typedef typename GridView::template Codim<0>::Entity Element;
-    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-    typedef Dune::FieldMatrix<Scalar, dimWorld, dimWorld> DimWorldMatrix;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
 public:
     SequentialFVSpatialParamsOneP(const GridView &gridView)
