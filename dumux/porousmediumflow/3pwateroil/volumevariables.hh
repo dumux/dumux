@@ -25,21 +25,19 @@
 #ifndef DUMUX_3P2CNI_VOLUME_VARIABLES_HH
 #define DUMUX_3P2CNI_VOLUME_VARIABLES_HH
 
-#include <dumux/implicit/model.hh>
 #include <dumux/common/math.hh>
 
 #include <dune/common/parallel/collectivecommunication.hh>
 #include <vector>
 #include <iostream>
 
+#include <dumux/porousmediumflow/volumevariables.hh>
+
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-
 #include <dune/common/deprecated.hh>
-
-#include "properties.hh"
 
 namespace Dumux
 {
@@ -50,25 +48,24 @@ namespace Dumux
  *        finite volume in the two-phase, two-component model.
  */
 template <class TypeTag>
-class ThreePWaterOilVolumeVariables : public ImplicitVolumeVariables<TypeTag>
+class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
-    using ParentType = ImplicitVolumeVariables<TypeTag>;
+    using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     // constraint solvers
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
-
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         dim = GridView::dimension,
 
@@ -77,6 +74,7 @@ class ThreePWaterOilVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
         wCompIdx = Indices::wCompIdx,
         nCompIdx = Indices::nCompIdx,
+        gCompIdx = Indices::gCompIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
@@ -101,42 +99,33 @@ class ThreePWaterOilVolumeVariables : public ImplicitVolumeVariables<TypeTag>
 
     static const Scalar R; // universial gas constant
 
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+     enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
     //! The type of the object returned by the fluidState() method
-    using FluidState = Dumux::CompositionalFluidState<Scalar, FluidSystem>;
+    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using ParentType::enthalpy;
 
 
     /*!
      * \copydoc ImplicitVolumeVariables::update
      */
-    void update(const PrimaryVariables &priVars,
+    void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const int scvIdx,
-                bool isOldSol)
+                const SubControlVolume& scv)
     {
-        ParentType::update(priVars,
-                           problem,
-                           element,
-                           fvGeometry,
-                           scvIdx,
-                           isOldSol);
+        ParentType::update(elemSol, problem, element, scv);
+        const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
+        const auto phasePresence = priVars.state();
 
-        bool useSimpleModel = GET_PROP_VALUE(TypeTag, UseSimpleModel);
+        bool onlyGasPhaseCanDisappear = GET_PROP_VALUE(TypeTag, OnlyGasPhaseCanDisappear);
 
         // capillary pressure parameters
-        const MaterialLawParams &materialParams =
-            problem.spatialParams().materialLawParams(element, fvGeometry, scvIdx);
+        const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
-        int globalIdx = problem.model().dofMapper().subIndex(element, scvIdx, dofCodim);
-
-        int phasePresence = problem.model().phasePresence(globalIdx, isOldSol);
-
-        if(!useSimpleModel)
+        if(!onlyGasPhaseCanDisappear)
         {
             /* first the saturations */
             if (phasePresence == threePhases)
@@ -650,8 +639,7 @@ public:
                 fluidState_.setDensity(gPhaseIdx, rhoG);
                 fluidState_.setDensity(nPhaseIdx, rhoN);
             }
-            else
-                assert(false); // unhandled phase state
+            else DUNE_THROW(Dune::InvalidStateException, "phasePresence: " << phasePresence << " is invalid.");
             }
 
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -678,37 +666,27 @@ public:
          *            for the porous media happens at another place!
          */
 
-        // diffusivity coefficients
         diffusionCoefficient_[gPhaseIdx] = FluidSystem::diffusionCoefficient(fluidState_, gPhaseIdx);
-
         diffusionCoefficient_[wPhaseIdx] = FluidSystem::diffusionCoefficient(fluidState_, wPhaseIdx);
-
         /* no diffusion in NAPL phase considered  at the moment, dummy values */
         diffusionCoefficient_[nPhaseIdx] = 1.e-10;
 
-        Valgrind::CheckDefined(diffusionCoefficient_);
 
         // porosity
-        porosity_ = problem.spatialParams().porosity(element,
-                                                         fvGeometry,
-                                                         scvIdx);
+        porosity_ = problem.spatialParams().porosity(element, scv, elemSol);
         Valgrind::CheckDefined(porosity_);
 
         // permeability
-        permeability_ = problem.spatialParams().intrinsicPermeability(element,
-                                                                          fvGeometry,
-                                                                          scvIdx);
+        permeability_ =  problem.spatialParams().permeability(element, scv, elemSol);
         Valgrind::CheckDefined(permeability_);
 
+//         fluidState_.setTemperature(temp_);
         // the enthalpies (internal energies are directly calculated in the fluidstate
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             Scalar h = FluidSystem::enthalpy(fluidState_, phaseIdx);
             fluidState_.setEnthalpy(phaseIdx, h);
+
         }
-
-
-        // energy related quantities not contained in the fluid state
-        asImp_().updateEnergy_(priVars, problem, element, fvGeometry, scvIdx, isOldSol);
     }
 
     /*!
@@ -790,9 +768,10 @@ public:
      * \param phaseIdx The phase index
      */
     Scalar mobility(const int phaseIdx) const
-    {
-        return mobility_[phaseIdx];
-    }
+    { return mobility_[phaseIdx]; }
+
+    Scalar viscosity(const int phaseIdx) const
+    { return fluidState_.viscosity(phaseIdx); }
 
     /*!
      * \brief Returns the effective capillary pressure within the control volume.
@@ -815,17 +794,19 @@ public:
     /*!
      * \brief Returns the diffusivity coefficient matrix
      */
-    DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffCoeff(int phaseIdx) instead.")
+    DUNE_DEPRECATED_MSG("diffusionCoefficient() is deprecated. Use diffusionCoefficient(int phaseIdx) instead.")
     Dune::FieldVector<Scalar, numPhases> diffusionCoefficient() const
     {
         return diffusionCoefficient_;
     }
 
     /*!
-     * \brief Returns the diffusivity coefficient
+     * \brief Returns the diffusion coeffiecient
      */
-    Scalar diffCoeff(int phaseIdx) const
-    { return diffusionCoefficient_[phaseIdx]; }
+    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
+    {
+        return diffusionCoefficient_[phaseIdx];
+    }
 
     /*!
      * \brief Returns the adsorption information
@@ -853,17 +834,6 @@ public:
 
 protected:
 
-    /*!
-     * \brief Called by update() to compute the energy related quantities
-     */
-    void updateEnergy_(const PrimaryVariables &priVars,
-                       const Problem &problem,
-                       const Element &element,
-                       const FVElementGeometry &fvGeometry,
-                       const int scvIdx,
-                       bool isOldSol)
-    { }
-
     Scalar sw_, sg_, sn_, pg_, pw_, pn_, temp_;
 
     Scalar moleFrac_[numPhases][numComponents];
@@ -879,6 +849,8 @@ protected:
     FluidState fluidState_;
 
 private:
+    std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
+
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
 

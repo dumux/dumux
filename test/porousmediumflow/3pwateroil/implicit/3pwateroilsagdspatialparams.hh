@@ -74,11 +74,15 @@ template<class TypeTag>
 class SagdSpatialParams : public FVSpatialParams<TypeTag>
 {
     using ParentType = FVSpatialParams<TypeTag>;
-
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename Grid::ctype;
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld
@@ -90,30 +94,21 @@ class SagdSpatialParams : public FVSpatialParams<TypeTag>
         nPhaseIdx = Indices::nPhaseIdx
     };
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
-    using DimVector = Dune::FieldVector<CoordScalar, dimWorld>;
-
-
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using CoordScalar = typename Grid::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
-
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using PermeabilityType = Scalar;
 
     /*!
      * \brief The constructor
      *
      * \param gridView The grid view
      */
-    SagdSpatialParams(const GridView &gridView)
-        : ParentType(gridView), eps_(1e-6)
+    SagdSpatialParams(const Problem& problem)
+    : ParentType(problem), eps_(1e-6)
     {
         layerBottom_ = 35.0;
 
@@ -152,60 +147,69 @@ public:
         fineMaterialParams_.setKrRegardsSnr(false);
     }
 
-    ~SagdSpatialParams()
-    {}
+    /*!
+     * \brief Function for defining the (intrinsic) permeability \f$[m^2]\f$
+     * \note  It is possibly solution dependent.
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return permeability
+     */
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
+    {  return permeabilityAtPos(scv.dofPosition());}
 
     /*!
-     * \brief Apply the intrinsic permeability tensor to a pressure
-     *        potential gradient.
+     * \brief Returns the intrinsic permeability tensor \f$[m^2]\f$
      *
-     * \param element The current finite element
-     * \param fvElemGeom The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const Scalar intrinsicPermeability(const Element &element,
-                                       const FVElementGeometry &fvElemGeom,
-                                       int scvIdx) const
+    PermeabilityType permeabilityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &pos = fvElemGeom.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        if (isFineMaterial_(globalPos))
             return fineK_;
         return coarseK_;
     }
 
     /*!
-     * \brief Define the porosity \f$[-]\f$ of the spatial parameters
+     * \brief Returns the porosity \f$[-]\f$
      *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume where
-     *                    the porosity needs to be defined
+     * \param globalPos The global position
      */
-    Scalar porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const int scvIdx) const
+    Scalar porosityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        if (isFineMaterial_(globalPos))
             return finePorosity_;
         else
             return coarsePorosity_;
     }
 
+    /*!
+     * \brief Function for defining the parameters needed by constitutive relationships (kr-sw, pc-sw, etc.).
+     *
+     * \param element The current element
+     * \param scv The sub-control volume inside the element.
+     * \param elemSol The solution at the dofs connected to the element.
+     * \return the material parameters object
+     */
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolutionVector& elemSol) const
+    {
+        return materialLawParamsAtPos(scv.dofPosition());
+    }
 
     /*!
-     * \brief return the parameter object for the Brooks-Corey material law which depends on the position
+     * \brief Returns the parameter object for the capillary-pressure/
+     *        saturation material law
      *
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index of the sub-control volume
+     * \param globalPos The global position
      */
-    const MaterialLawParams& materialLawParams(const Element &element,
-                                               const FVElementGeometry &fvGeometry,
-                                               const int scvIdx) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
@@ -220,12 +224,9 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar solidHeatCapacity(const Element &element,
-                             const FVElementGeometry &fvGeometry,
-                             const int scvIdx) const
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
     {
-        const GlobalPosition &pos = fvGeometry.subContVol[scvIdx].global;
-        if (isFineMaterial_(pos))
+        if (isFineMaterial_(globalPos))
             return fineHeatCap_ ;
         else
             return coarseHeatCap_;
@@ -240,9 +241,7 @@ public:
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume
      */
-    Scalar solidDensity(const Element &element,
-                        const FVElementGeometry &fvGeometry,
-                        const int scvIdx) const
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
     {
         return 2650; // density of sand [kg/m^3]
     }
@@ -255,9 +254,7 @@ public:
      * \param scvIdx The local index of the sub-control volume where
      *                    the heat capacity needs to be defined
      */
-    Scalar solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const int scvIdx) const
+    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
     {
         return lambdaSolid_;
     }

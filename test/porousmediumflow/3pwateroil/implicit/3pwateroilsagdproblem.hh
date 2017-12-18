@@ -24,8 +24,9 @@
 #ifndef DUMUX_SAGDPROBLEM_HH
 #define DUMUX_SAGDPROBLEM_HH
 
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
+#include <dumux/discretization/box/properties.hh>
 #include <dumux/porousmediumflow/3pwateroil/model.hh>
 #include <dumux/material/fluidsystems/h2oheavyoilfluidsystem.hh>
 #include "3pwateroilsagdspatialparams.hh"
@@ -56,19 +57,9 @@ SET_TYPE_PROP(SagdProblem,
               FluidSystem,
               Dumux::FluidSystems::H2OHeavyOil<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
+SET_BOOL_PROP(SagdProblem, OnlyGasPhaseCanDisappear, true);
 
-// Enable gravity
-SET_BOOL_PROP(SagdProblem, ProblemEnableGravity, true);
-
-// Use forward differences instead of central differences
-SET_INT_PROP(SagdProblem, ImplicitNumericDifferenceMethod, +1);
-
-// Write newton convergence
-SET_BOOL_PROP(SagdProblem, NewtonWriteConvergence, false);
-
-SET_BOOL_PROP(SagdProblem, UseSimpleModel, true);
-
-SET_BOOL_PROP(SagdProblem, UseMoles, false);
+SET_BOOL_PROP(SagdProblem, UseMoles, true);
 }
 
 
@@ -81,15 +72,13 @@ SET_BOOL_PROP(SagdProblem, UseMoles, false);
  *
  *  */
 template <class TypeTag >
-class SagdProblem : public ImplicitPorousMediaProblem<TypeTag>
+class SagdProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;
-
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
-
-    // copy some indices for convenience
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         pressureIdx = Indices::pressureIdx,
@@ -97,6 +86,7 @@ class SagdProblem : public ImplicitPorousMediaProblem<TypeTag>
         switch2Idx = Indices::switch2Idx,
 
         energyEqIdx = Indices::energyEqIdx,
+        temperatureIdx = Indices::temperatureIdx,
 
         // phase and component indices
         wPhaseIdx = Indices::wPhaseIdx,
@@ -111,29 +101,20 @@ class SagdProblem : public ImplicitPorousMediaProblem<TypeTag>
         wgPhaseOnly = Indices::wgPhaseOnly,
         threePhases = Indices::threePhases,
 
-        //contiWEqIdx = Indices::contiWEqIdx,
-        //contiNEqIdx = Indices::contiNEqIdx,
         // Grid and world dimension
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 
-
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
-
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
 
 public:
 
@@ -144,8 +125,8 @@ public:
      * \param gridView The grid view
      */
 
-    SagdProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView), pOut_(4e6)
+    SagdProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+    : ParentType(fvGridGeometry), pOut_(4e6)
     {
 
         maxDepth_ = 400.0; // [m]
@@ -153,72 +134,9 @@ public:
         totalMassProducedOil_ =0;
         totalMassProducedWater_ =0;
 
-        this->timeManager().startNextEpisode(86400);
-
-        name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+        name_ = getParam<std::string>("Problem.Name");
     }
 
-    bool shouldWriteRestartFile() const
-    {
-        return 0;
-    }
-
-
-    /*!
-     * \brief Called directly after the time integration.
-     */
-    void postTimeStep()
-    {
-        double time = this->timeManager().time();
-        double dt = this->timeManager().timeStepSize();
-
-        // Calculate storage terms
-        PrimaryVariables storage;
-        this->model().globalStorage(storage);
-
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0)
-        {
-            std::cout<<"Storage: " << storage << "Time: " << time+dt << std::endl;
-            massBalance.open ("massBalance.txt", std::ios::out | std::ios::app );
-                        massBalance << "         Storage       " << storage
-                                    << "         Time           " << time+dt
-                                    << std::endl;
-                        massBalance.close();
-
-        }
-
-            // Calculate storage terms
-        PrimaryVariables storageW, storageN;
-        //Dune::FieldVector<Scalar, 2> flux(0.0);
-        this->model().globalPhaseStorage(storageW, wPhaseIdx);
-        this->model().globalPhaseStorage(storageN, nPhaseIdx);
-
-        //mass of Oil
-        const Scalar newMassProducedOil_ = massProducedOil_;
-        std::cout<<" newMassProducedOil_ : "<< newMassProducedOil_ << " Time: " << time+dt << std::endl;
-
-        totalMassProducedOil_ += newMassProducedOil_;
-        std::cout<<" totalMassProducedOil_ : "<< totalMassProducedOil_ << " Time: " << time+dt << std::endl;
-        //mass of Water
-        const Scalar newMassProducedWater_ = massProducedWater_;
-        //std::cout<<" newMassProducedWater_ : "<< newMassProducedWater_ << " Time: " << time+dt << std::endl;
-
-        totalMassProducedWater_ += newMassProducedWater_;
-        //std::cout<<" totalMassProducedWater_ : "<< totalMassProducedWater_ << " Time: " << time+dt << std::endl;
-
-
-        const int timeStepIndex = this->timeManager().timeStepIndex();
-
-        if (timeStepIndex == 0 ||
-            timeStepIndex % 100 == 0 ||   //after every 1000000 secs
-            this->timeManager().episodeWillBeFinished() ||
-            this->timeManager().willBeFinished())
-        {
-            std::cout<<" totalMassProducedOil_ : "<< totalMassProducedOil_ << " Time: " << time+dt << std::endl;
-            std::cout<<" totalMassProducedWater_ : "<< totalMassProducedWater_ << " Time: " << time+dt << std::endl;
-        }
-    }
 
     void episodeEnd()
     {
@@ -241,13 +159,6 @@ public:
     const std::string name() const
     { return name_; }
 
-
-    void sourceAtPos(PrimaryVariables &values,
-                     const GlobalPosition &globalPos) const
-    {
-        values = 0.0;
-    }
-
     // \}
 
     /*!
@@ -262,9 +173,9 @@ public:
      * \param bcTypes The boundary types for the conservation equations
      * \param globalPos The position for which the bc type should be evaluated
      */
-   void boundaryTypesAtPos(BoundaryTypes &bcTypes,
-            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes bcTypes;
         // on bottom
         if (globalPos[1] <  eps_)
             bcTypes.setAllNeumann();
@@ -280,6 +191,7 @@ public:
         // on Left
         else
             bcTypes.setAllNeumann();
+        return bcTypes;
     }
 
     /*!
@@ -291,9 +203,9 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+       return initial_(globalPos);
     }
 
     /*!
@@ -311,22 +223,14 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    void solDependentNeumann(PrimaryVariables &values,
-                      const Element &element,
-                      const FVElementGeometry &fvGeometry,
-                      const Intersection &is,
-                      const int scvIdx,
-                      const int boundaryFaceIdx,
-                      const ElementVolumeVariables &elemVolVars) const
+    NeumannFluxes neumann(const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const ElementVolumeVariables& elemVolVars,
+                          const SubControlVolumeFace& scvf) const
     {
-        values = 0;
+        NeumannFluxes values(0.0);
 
-        GlobalPosition globalPos;
-        if (isBox)
-           globalPos = element.geometry().corner(scvIdx);
-        else
-           globalPos = is.geometry().center();
-
+         const auto& globalPos = scvf.ipGlobal();
         // negative values for injection at injection well
         if (globalPos[1] > 8.5 - eps_ && globalPos[1] < 9.5 + eps_)
         {
@@ -337,17 +241,17 @@ public:
         else if (globalPos[1] > 2.5 - eps_ && globalPos[1] < 3.5 + eps_) // production well
         {
 
-            const Scalar elemPressW = elemVolVars[scvIdx].pressure(wPhaseIdx);            //Pressures
-            const Scalar elemPressN = elemVolVars[scvIdx].pressure(nPhaseIdx);
+            const Scalar elemPressW = elemVolVars[scvf.insideScvIdx()].pressure(wPhaseIdx);            //Pressures
+            const Scalar elemPressN = elemVolVars[scvf.insideScvIdx()].pressure(nPhaseIdx);
 
-            const Scalar densityW = elemVolVars[scvIdx].fluidState().density(wPhaseIdx);  //Densities
-            const Scalar densityN = elemVolVars[scvIdx].fluidState().density(nPhaseIdx);
+            const Scalar densityW = elemVolVars[scvf.insideScvIdx()].fluidState().density(wPhaseIdx);  //Densities
+            const Scalar densityN = elemVolVars[scvf.insideScvIdx()].fluidState().density(nPhaseIdx);
 
-            const Scalar elemMobW = elemVolVars[scvIdx].mobility(wPhaseIdx);      //Mobilities
-            const Scalar elemMobN = elemVolVars[scvIdx].mobility(nPhaseIdx);
+            const Scalar elemMobW = elemVolVars[scvf.insideScvIdx()].mobility(wPhaseIdx);      //Mobilities
+            const Scalar elemMobN = elemVolVars[scvf.insideScvIdx()].mobility(nPhaseIdx);
 
-            const Scalar enthW = elemVolVars[scvIdx].enthalpy(wPhaseIdx);      //Enthalpies
-            const Scalar enthN = elemVolVars[scvIdx].enthalpy(nPhaseIdx);
+            const Scalar enthW = elemVolVars[scvf.insideScvIdx()].enthalpy(wPhaseIdx);      //Enthalpies
+            const Scalar enthN = elemVolVars[scvf.insideScvIdx()].enthalpy(nPhaseIdx);
 
             const Scalar wellRadius = 0.50 * 0.3048; // 0.50 ft as specified by SPE9
 
@@ -368,7 +272,7 @@ public:
             // qE = qW*0.018*enthW + qN*enthN*0.350;
 
             //with cooling: see Diplomarbeit Stefan Roll, Sept. 2015
-            Scalar wT = elemVolVars[scvIdx].temperature(); // well temperature
+            Scalar wT = elemVolVars[scvf.insideScvIdx()].temperature(); // well temperature
             if ( wT > 495. )
             {
               qE = qW*0.018*enthW + qN*enthN*0.350 + (wT-495.)*5000.; // ~3x injected enthalpy
@@ -384,6 +288,7 @@ public:
             massProducedOil_ = qN;
             massProducedWater_ = qW;
         }
+        return values;
     }
 
     // \}
@@ -402,36 +307,24 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
-    }
-
-    /*!
-     * \brief Return the initial phase state inside a control volume.
-     *
-     * \param vert The vertex
-     * \param globalIdx The index of the global vertex
-     * \param globalPos The global position
-     */
-    int initialPhasePresence(const Vertex &vert,
-                             int &globalIdx,
-                             const GlobalPosition &globalPos) const
-    {
-        return wnPhaseOnly;
+        return initial_(globalPos);
     }
 
 private:
     // internal method for the initial condition (reused for the
     // dirichlet conditions!)
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0.0);
+        values.setState(Indices::wnPhaseOnly);
         Scalar densityW = 1000.0;
         values[pressureIdx] = 101300.0 + (maxDepth_ - globalPos[1])*densityW*9.81;
 
         values[switch1Idx] = 295.13;   // temperature
         values[switch2Idx] = 0.3;   //NAPL saturation
+        return values;
     }
 
     Scalar maxDepth_;

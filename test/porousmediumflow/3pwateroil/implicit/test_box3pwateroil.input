@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 1800 # [s]
 TEnd = 60000 # [s]
 
@@ -13,6 +13,5 @@ Name = sagd # name passed to the output routines
 MaxTimeStepDivisions = 100
 
 [Newton]
-RelTolerance = 1e-02
 MaxSteps = 8
 WriteConvergence = 0
