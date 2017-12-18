@@ -24,7 +24,6 @@
 #define DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/valgrind.hh>
-#include <dumux/common/capabilities.hh>
 #include <dumux/common/timeloop.hh>
 
 namespace Dumux
