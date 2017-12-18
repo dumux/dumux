@@ -44,10 +44,6 @@ namespace Properties
 //! Type tag for the staggered scheme specialized for free flow.
 NEW_TYPE_TAG(StaggeredFreeFlowModel, INHERITS_FROM(StaggeredModel));
 
-// TODO: Ugly hack. How can this be improved? This is needed, because otherwise the physical model overwrites the properties set here.
-//       This requires to include the physical model before the discretization, otherwise the type tag FreeFlow is undefined.
-UNSET_PROP(FreeFlow, NumEqVector);
-
 /*!
  * \brief  Set the number of equations on the faces to 1. We only consider scalar values because the velocity vector
  *         is normal to the face.
@@ -102,12 +98,6 @@ public:
 
 //! The variables living on the faces
 SET_TYPE_PROP(StaggeredFreeFlowModel, FaceVariables, StaggeredFaceVariables<TypeTag>);
-
-//! A container class used to specify values for sources and Neumann BCs
-SET_PROP(StaggeredFreeFlowModel, NumEqVector)
-{
-    using type = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar), GET_PROP_VALUE(TypeTag, NumEq)>;
-};
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)
