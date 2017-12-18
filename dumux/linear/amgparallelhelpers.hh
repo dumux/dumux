@@ -30,6 +30,7 @@
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/linear/amgtraits.hh>
 
 namespace Dumux
 {
