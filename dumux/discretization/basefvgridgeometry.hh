@@ -27,7 +27,9 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/boundingboxtree.hh>
+#include <dumux/common/entitymap.hh>
+#include <dumux/common/geometry/boundingboxtree.hh>
+#include <dumux/common/geometry/geometricentityset.hh>
 
 namespace Dumux
 {
@@ -44,7 +46,9 @@ class BaseFVGridGeometry
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
-    using BoundingBoxTree = Dumux::BoundingBoxTree<GridView>;
+    using ElementMap = EntityMap<GridView, 0>;
+    using ElementSet = GridViewGeometricEntitySet<GridView, 0>;
+    using BoundingBoxTree = Dumux::BoundingBoxTree<ElementSet>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -89,8 +93,9 @@ public:
         //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
         computeGlobalBoundingBox_();
 
-        //! reset bounding box tree until requested the next time
-        boundingBoxTree_.reset(nullptr);
+        //! reset bounding box tree and the element map until requested the next time
+        boundingBoxTree_.release();
+        elementMap_.reset();
     }
 
     /*!
@@ -126,23 +131,27 @@ public:
     /*!
      * \brief Returns the bounding box tree of the grid
      */
-    BoundingBoxTree& boundingBoxTree()
+    const BoundingBoxTree& boundingBoxTree() const
     {
         if(!boundingBoxTree_)
-            boundingBoxTree_ = std::make_unique<BoundingBoxTree>(gridView_);
+        {
+            elementMap(); // make sure the element map is built
+            boundingBoxTree_ = std::make_unique<BoundingBoxTree>
+                                    ( std::make_shared<ElementSet>(gridView_, elementMapper(), elementMap_) );
+        }
 
         return *boundingBoxTree_;
     }
 
     /*!
-     * \brief Returns the bounding box tree of the grid
+     * \brief Returns the element index to element map
      */
-    const BoundingBoxTree& boundingBoxTree() const
+    const ElementMap& elementMap() const
     {
-        if(!boundingBoxTree_)
-            boundingBoxTree_ = std::make_unique<BoundingBoxTree>(gridView_);
+        if(!elementMap_)
+            elementMap_ = std::make_shared<ElementMap>(gridView_.grid(), elementMapper_);
 
-        return *boundingBoxTree_;
+        return *elementMap_;
     }
 
     /*!
@@ -196,6 +205,9 @@ private:
 
     // the bounding box tree of the grid view for effecient element intersections
     mutable std::unique_ptr<BoundingBoxTree> boundingBoxTree_;
+
+    // a map from element index to elements (needed in the bounding box tree and for assembling cell-centered discretization)
+    mutable std::shared_ptr<ElementMap> elementMap_;
 
     // the bounding box of the whole domain
     GlobalPosition bBoxMin_;

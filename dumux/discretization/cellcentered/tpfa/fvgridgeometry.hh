@@ -27,9 +27,6 @@
 
 #include <dune/common/version.hh>
 
-#include <dumux/common/elementmap.hh>
-#include <dumux/common/boundingboxtree.hh>
-
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
@@ -74,7 +71,6 @@ public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    , elementMap_(gridView)
     {}
 
     //! the element mapper is the dofMapper
@@ -106,11 +102,11 @@ public:
 
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.elementIndex()); }
+    { return this->elementMap()[scv.elementIndex()]; }
 
     // Get an element from a global element index
     Element element(IndexType eIdx) const
-    { return elementMap_.element(eIdx); }
+    { return this->elementMap()[eIdx]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -122,7 +118,6 @@ public:
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
         flipScvfIndices_.clear();
-        elementMap_.clear();
 
         // determine size of containers
         IndexType numScvs = numDofs();
@@ -131,7 +126,6 @@ public:
             numScvf += element.subEntities(1);
 
         // reserve memory
-        elementMap_.resize(numScvs);
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
@@ -143,9 +137,6 @@ public:
         {
             const auto eIdx = this->elementMapper().index(element);
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
-
-            // fill the element map with seeds
-            elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
             std::vector<IndexType> scvfsIndexSet;
@@ -294,9 +285,8 @@ private:
         DUNE_THROW(Dune::InvalidStateException, "No flipped version of this scvf found!");
     }
 
-    // mappers
+    // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
-    Dumux::ElementMap<GridView> elementMap_;
 
     // containers storing the global data
     std::vector<SubControlVolume> scvs_;
@@ -332,7 +322,6 @@ public:
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
-    , elementMap_(gridView)
     {}
 
     //! the element mapper is the dofMapper
@@ -364,11 +353,11 @@ public:
 
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.elementIndex()); }
+    { return this->elementMap()[scv.elementIndex()]; }
 
     // Get an element from a global element index
     Element element(IndexType eIdx) const
-    { return elementMap_.element(eIdx); }
+    { return this->elementMap()[eIdx]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -376,7 +365,6 @@ public:
         ParentType::update();
 
         // clear local data
-        elementMap_.clear();
         scvfIndicesOfScv_.clear();
         neighborVolVarIndices_.clear();
 
@@ -384,7 +372,6 @@ public:
         numScvs_ = numDofs();
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
-        elementMap_.resize(numScvs_);
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
 
@@ -392,9 +379,6 @@ public:
         for (const auto& element : elements(this->gridView()))
         {
             const auto eIdx = this->elementMapper().index(element);
-
-            // fill the element map with seeds
-            elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
             auto numLocalFaces = element.subEntities(1);
@@ -489,8 +473,7 @@ private:
     IndexType numScvf_;
     IndexType numBoundaryScvf_;
 
-    // mappers
-    Dumux::ElementMap<GridView> elementMap_;
+    // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
     // vectors that store the global data

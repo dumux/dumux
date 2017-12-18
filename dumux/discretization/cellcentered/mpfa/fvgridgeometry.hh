@@ -22,13 +22,11 @@
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_BASE_HH
-#define DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_BASE_HH
+#ifndef DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
+#define DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
-
-#include <dumux/common/elementmap.hh>
 
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
@@ -81,7 +79,6 @@ public:
     //! Per default, we use the secondary IVs at branching points & boundaries
     explicit CCMpfaFVGridGeometry(const GridView& gridView)
              : ParentType(gridView)
-             , elementMap_(gridView)
              , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
                                         { return is.boundary() || isBranching; } )
              {}
@@ -89,7 +86,6 @@ public:
      //! Constructor with user-defined indicator function for secondary interaction volumes
      explicit CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
               : ParentType(gridView)
-              , elementMap_(gridView)
               , secondaryIvIndicator_(indicator)
               {}
 
@@ -126,13 +122,13 @@ public:
      * \brief Gets an element from a global element index.
      */
     Element element(IndexType eIdx) const
-    { return elementMap_.element(eIdx); }
+    { return this->elementMap()[eIdx]; }
 
     /*!
      * \brief Gets an element from a sub control volume contained in it.
      */
     Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.elementIndex()); }
+    { return this->elementMap()[scv.elementIndex()]; }
 
     /*!
      * \brief Returns true if primary interaction volumes are used around a given vertex,
@@ -183,7 +179,6 @@ public:
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
-        elementMap_.resize(numScvs);
 
         // Some methods require to use a second type of interaction volume, e.g.
         // around vertices on the boundary or branching points (surface grids)
@@ -205,9 +200,6 @@ public:
 
             // the element geometry
             auto elementGeometry = element.geometry();
-
-            // fill the element map with seeds
-            elementMap_[eIdx] = element.seed();
 
             // The local scvf index set
             std::vector<IndexType> scvfIndexSet;
@@ -415,8 +407,7 @@ public:
     { return ivIndexSets_; }
 
 private:
-    // mappers
-    Dumux::ElementMap<GridView> elementMap_;
+    // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
     // the finite volume grid geometries
@@ -472,7 +463,6 @@ public:
     //! Per default, we use the secondary IVs at branching points & boundaries
     explicit CCMpfaFVGridGeometry(const GridView& gridView)
              : ParentType(gridView)
-             , elementMap_(gridView)
              , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
                                         { return is.boundary() || isBranching; } )
              {}
@@ -480,7 +470,6 @@ public:
      //! Constructor with user-defined indicator function for secondary interaction volumes
      explicit CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
               : ParentType(gridView)
-              , elementMap_(gridView)
               , secondaryIvIndicator_(indicator)
               {}
 
@@ -517,13 +506,13 @@ public:
      * \brief Gets an element from a global element index.
      */
     Element element(IndexType eIdx) const
-    { return elementMap_.element(eIdx); }
+    { return this->elementMap()[eIdx]; }
 
     /*!
      * \brief Gets an element from a sub control volume contained in it.
      */
     Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.elementIndex()); }
+    { return this->elementMap()[scv.elementIndex()]; }
 
     /*!
      * \brief Returns true if primary interaction volumes are used around a given vertex,
@@ -579,7 +568,6 @@ public:
         numScvs_ = numDofs();
         scvfIndicesOfScv_.resize(numScvs_);
         neighborVolVarIndices_.resize(numScvs_);
-        elementMap_.resize(numScvs_);
 
         // Some methods require to use a second type of interaction volume, e.g.
         // around vertices on the boundary or branching points (surface grids)
@@ -602,9 +590,6 @@ public:
 
             // the element geometry
             auto elementGeometry = element.geometry();
-
-            // fill the element map with seeds
-            elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
             const auto numLocalFaces = MpfaHelper::getNumLocalScvfs(elementGeometry.type());
@@ -746,8 +731,7 @@ public:
     { return ivIndexSets_; }
 
 private:
-    // mappers
-    Dumux::ElementMap<GridView> elementMap_;
+    // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
     // containers storing the global data

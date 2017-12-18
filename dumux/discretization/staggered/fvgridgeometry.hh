@@ -26,9 +26,7 @@
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FVGEOMETRY_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/common/elementmap.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
-#include <dumux/common/boundingboxtree.hh>
 #include <dumux/discretization/staggered/connectivitymap.hh>
 
 namespace Dumux
@@ -72,7 +70,8 @@ class StaggeredFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag
 public:
     //! Constructor
     StaggeredFVGridGeometry(const GridView& gridView)
-    : ParentType(gridView), elementMap_(gridView), intersectionMapper_(gridView) {}
+    : ParentType(gridView)
+    , intersectionMapper_(gridView) {}
 
     //! The total number of sub control volumes
     std::size_t numScv() const
@@ -110,11 +109,11 @@ public:
 
     // Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
-    { return elementMap_.element(scv.elementIndex()); }
+    { return this->elementMap()[scv.elementIndex()]; }
 
     // Get an element from a global element index
     Element element(IndexType eIdx) const
-    { return elementMap_.element(eIdx); }
+    { return this->elementMap()[eIdx]; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -123,7 +122,6 @@ public:
         scvs_.clear();
         scvfs_.clear();
         scvfIndicesOfScv_.clear();
-        elementMap_.clear();
         intersectionMapper_.update();
 
         // determine size of containers
@@ -133,7 +131,6 @@ public:
             numScvf += element.subEntities(1);
 
         // reserve memory
-        elementMap_.resize(numScvs);
         scvs_.resize(numScvs);
         scvfs_.reserve(numScvf);
         scvfIndicesOfScv_.resize(numScvs);
@@ -151,9 +148,6 @@ public:
             localToGlobalScvfIndices_[eIdx].resize(numLocalFaces);
 
             scvs_[eIdx] = SubControlVolume(element.geometry(), eIdx);
-
-            // fill the element map with seeds
-            elementMap_[eIdx] = element.seed();
 
             // the element-wise index sets for finite volume geometry
             std::vector<IndexType> scvfsIndexSet;
@@ -243,7 +237,6 @@ private:
 
     // mappers
     ConnectivityMap connectivityMap_;
-    Dumux::ElementMap<GridView> elementMap_;
     IntersectionMapper intersectionMapper_;
 
     std::vector<SubControlVolume> scvs_;
