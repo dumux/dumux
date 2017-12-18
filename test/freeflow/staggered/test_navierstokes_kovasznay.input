@@ -1,7 +1,3 @@
-[TimeLoop]
-DtInitial = 1 # [s]
-TEnd = 2 # [s]
-
 [Grid]
 LowerLeft = -0.5 -0.5
 UpperRight = 2 1.5
