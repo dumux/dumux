@@ -32,11 +32,5 @@ add_subdirectory(dumux)
 add_subdirectory(test EXCLUDE_FROM_ALL)
 add_subdirectory(tutorial EXCLUDE_FROM_ALL)
 
-if(DUNE_COMMON_VERSION VERSION_LESS 2.5)
-  # de-activate testing the DUNE way
-  # now ctest (aka make test) does not build the tests
-  set(DUNE_TEST_MAGIC OFF)
-endif()
-
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)

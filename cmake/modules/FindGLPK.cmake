@@ -98,3 +98,7 @@ if(GLPK_FOUND)
                               LIBRARIES "${GLPK_DUNE_LIBRARIES}"
                               INCLUDE_DIRS "${GLPK_INCLUDE_DIRS}")
 endif()
+
+# text for feature summary
+set_package_properties("GLPK" PROPERTIES
+  DESCRIPTION "GNU Linear Programming Kit")
