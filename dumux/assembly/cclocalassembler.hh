@@ -153,17 +153,14 @@ private:
         auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
-        const bool isStationary = localResidual.isStationary();
         auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        if (!isStationary)
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
 
         // for compatibility with box models
         ElementBoundaryTypes elemBcTypes;
 
         // the actual element's current residual
         NumEqVector residual(0.0);
-        if (isStationary)
+        if (localResidual.isStationary())
         {
             residual = localResidual.eval(problem,
                                           element,
@@ -174,6 +171,7 @@ private:
         }
         else
         {
+            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
             residual = localResidual.eval(problem,
                                           element,
                                           fvGeometry,
@@ -213,10 +211,7 @@ private:
         auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
-        const bool isStationary = localResidual.isStationary();
         auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        if (!isStationary)
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
 
         // the global dof of the actual element
         const auto globalI = fvGridGeometry.elementMapper().index(element);
@@ -228,6 +223,8 @@ private:
 
         // is the actual element a ghost element?
         const bool isGhost = (element.partitionType() == Dune::GhostEntity);
+        // is the local residual stationary?
+        const bool isStationary = localResidual.isStationary();
 
         // the actual element's current residual
         NumEqVector residual(0.0);
@@ -244,6 +241,7 @@ private:
             }
             else
             {
+                prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
                 residual = localResidual.eval(problem,
                                               element,
                                               fvGeometry,
@@ -1023,10 +1021,8 @@ private:
         elemBcTypes.update(problem, element, fvGeometry);
 
         NumEqVector residual(0.0);
-        if (!localResidual.isStationary())
+        if (localResidual.isStationary())
         {
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-
             residual = localResidual.eval(problem,
                                           element,
                                           fvGeometry,
@@ -1036,6 +1032,7 @@ private:
         }
         else
         {
+            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
             residual = localResidual.eval(problem,
                                           element,
                                           fvGeometry,
@@ -1074,10 +1071,7 @@ private:
         auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
         elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
-        const bool isStationary = localResidual.isStationary();
         auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        if (!isStationary)
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
 
         // the global dof of the actual element
         const auto globalI = fvGridGeometry.elementMapper().index(element);
@@ -1089,6 +1083,8 @@ private:
 
         // is the actual element a ghost element?
         const bool isGhost = (element.partitionType() == Dune::GhostEntity);
+        // is this a stationary simulation?
+        const bool isStationary = localResidual.isStationary();
 
         // the actual element's current residual (will be returned by this function)
         NumEqVector residual(0.0);
@@ -1105,6 +1101,7 @@ private:
             }
             else
             {
+                prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
                 residual = localResidual.eval(problem,
                                               element,
                                               fvGeometry,
