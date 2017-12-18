@@ -150,7 +150,7 @@ protected:
             {
                 const auto& insideVolVars = elemVolVars[insideScv];
                 const Scalar massOrMoleFraction = useMoles ? insideVolVars.moleFraction(phaseIdx, compIdx) : insideVolVars.massFraction(phaseIdx, compIdx);
-                residual[eqIdx] = massOrMoleFraction - problem.dirichletAtPos(insideScv.center())[cellCenterIdx][eqIdx];
+                residual[eqIdx] = massOrMoleFraction - problem.dirichletAtPos(insideScv.center())[eqIdx];
             }
         }
 
