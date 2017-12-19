@@ -103,10 +103,10 @@ namespace Dumux
 
     private:
         // advection-related variables
-        const GlobalIndexContainer* advectionVolVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
-        Matrix advectionT_;                                    //! The transmissibilities
-        Matrix advectionAB_;                                   //! Coefficients for gradient reconstruction
-        Matrix advectionTout_;                                 //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+        const GlobalIndexContainer* advectionVolVarsStencil_;  //!< Pointer to the global volvar indices (stored in the interaction volume)
+        Matrix advectionT_;                                    //!< The transmissibilities
+        Matrix advectionAB_;                                   //!< Coefficients for gradient reconstruction
+        Matrix advectionTout_;                                 //!< The transmissibilities associated with "outside" faces (only necessary on surface grids)
     };
 
     //! Data handle for quantities related to diffusion
@@ -174,8 +174,8 @@ namespace Dumux
 
     private:
         // diffusion-related variables (see comments in AdvectionDataHandle)
-        unsigned int contextPhaseIdx_;                         //! The phase index set for the context
-        unsigned int contextCompIdx_;                          //! The component index set for the context
+        unsigned int contextPhaseIdx_;                         //!< The phase index set for the context
+        unsigned int contextCompIdx_;                          //!< The component index set for the context
         std::array<std::array<const GlobalIndexContainer*, numComponents>, numPhases> diffusionVolVarsStencil_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionT_;
         std::array<std::array<Matrix, numComponents>, numPhases> diffusionAB_;
@@ -216,10 +216,10 @@ namespace Dumux
 
     private:
         // heat conduction-related variables
-        const GlobalIndexContainer* heatConductionVolVarsStencil_;  //! Pointer to the global volvar indices (stored in the interaction volume)
-        Matrix heatConductionT_;                                    //! The transmissibilities
-        Matrix heatConductionAB_;                                   //! Coefficients for gradient reconstruction
-        Matrix heatConductionTout_;                                 //! The transmissibilities associated with "outside" faces (only necessary on surface grids)
+        const GlobalIndexContainer* heatConductionVolVarsStencil_;  //!< Pointer to the global volvar indices (stored in the interaction volume)
+        Matrix heatConductionT_;                                    //!< The transmissibilities
+        Matrix heatConductionAB_;                                   //!< Coefficients for gradient reconstruction
+        Matrix heatConductionTout_;                                 //!< The transmissibilities associated with "outside" faces (only necessary on surface grids)
     };
 
     //! Process-dependet data handle when related process is disabled
@@ -397,8 +397,8 @@ namespace Dumux
         }
 
     private:
-        Contexts context_;                     //! The context variable
-        DirichletDataContainer dirichletData_; //! The dirichlet data container of this iv
+        Contexts context_;                     //!< The context variable
+        DirichletDataContainer dirichletData_; //!< The dirichlet data container of this iv
     };
 
 } // end namespace Dumux

@@ -116,24 +116,24 @@ NEW_TYPE_TAG(TwoPNCNI, INHERITS_FROM(TwoPNC, NonIsothermal));
 //////////////////////////////////////////////////////////////////
 // Properties for the isothermal 2pnc model
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);          //! The primary variables vector for the 2pnc model
-SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //! The primary variable switch for the 2pnc model
-SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //! the VolumeVariables property
-SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);                    //! The indices required by the isothermal 2pnc model
-SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                       //! Use the FVSpatialParams by default
-SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);                     //! Set the vtk output fields specific to the TwoPNC model
-SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //! Use the compositional local residual
+SET_TYPE_PROP(TwoPNC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);          //!< The primary variables vector for the 2pnc model
+SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
+SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //!< the VolumeVariables property
+SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);                    //!< The indices required by the isothermal 2pnc model
+SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                       //!< Use the FVSpatialParams by default
+SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);                     //!< Set the vtk output fields specific to the TwoPNC model
+SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 
-SET_INT_PROP(TwoPNC, NumComponents, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);    //! Use the number of components of the fluid system
-SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //! Per default, no component mass balance is replaced
-SET_INT_PROP(TwoPNC, NumEq, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);            //! We solve one equation per component
-SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::pwsn);                                 //! Default formulation is pw-Sn, overwrite if necessary
+SET_INT_PROP(TwoPNC, NumComponents, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);    //!< Use the number of components of the fluid system
+SET_INT_PROP(TwoPNC, ReplaceCompEqIdx, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents); //!< Per default, no component mass balance is replaced
+SET_INT_PROP(TwoPNC, NumEq, GET_PROP_TYPE(TypeTag, FluidSystem)::numComponents);            //!< We solve one equation per component
+SET_INT_PROP(TwoPNC, Formulation, TwoPNCFormulation::pwsn);                                 //!< Default formulation is pw-Sn, overwrite if necessary
 
-SET_BOOL_PROP(TwoPNC, SetMoleFractionsForWettingPhase, true);  //! Set the primary variables mole fractions for the wetting or non-wetting phase
-SET_BOOL_PROP(TwoPNC, EnableAdvection, true);                  //! Enable advection
-SET_BOOL_PROP(TwoPNC, EnableMolecularDiffusion, true);         //! Enable molecular diffusion
-SET_BOOL_PROP(TwoPNC, EnableEnergyBalance, false);             //! This is the isothermal variant of the model
-SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //! Use mole fractions in the balance equations by default
+SET_BOOL_PROP(TwoPNC, SetMoleFractionsForWettingPhase, true);  //!< Set the primary variables mole fractions for the wetting or non-wetting phase
+SET_BOOL_PROP(TwoPNC, EnableAdvection, true);                  //!< Enable advection
+SET_BOOL_PROP(TwoPNC, EnableMolecularDiffusion, true);         //!< Enable molecular diffusion
+SET_BOOL_PROP(TwoPNC, EnableEnergyBalance, false);             //!< This is the isothermal variant of the model
+SET_BOOL_PROP(TwoPNC, UseMoles, true);                         //!< Use mole fractions in the balance equations by default
 
 
 //! Use the model after Millington (1961) for the effective diffusivity
@@ -174,10 +174,10 @@ public:
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 2pnc model
 /////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //! set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);  //! set isothermal LocalResidual
-SET_TYPE_PROP(TwoPNCNI, IsothermalIndices, TwoPNCIndices<TypeTag, /*PVOffset=*/0>);     //! set isothermal Indices
-SET_TYPE_PROP(TwoPNCNI, IsothermalVtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);     //! set isothermal output fields
+SET_TYPE_PROP(TwoPNCNI, IsothermalVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< set isothermal VolumeVariables
+SET_TYPE_PROP(TwoPNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);  //!< set isothermal LocalResidual
+SET_TYPE_PROP(TwoPNCNI, IsothermalIndices, TwoPNCIndices<TypeTag, /*PVOffset=*/0>);     //!< set isothermal Indices
+SET_TYPE_PROP(TwoPNCNI, IsothermalVtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);     //!< set isothermal output fields
 
 //! Somerton is used as default model to compute the effective thermal heat conductivity
 SET_PROP(TwoPNCNI, ThermalConductivityModel)

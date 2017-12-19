@@ -59,15 +59,15 @@ NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extra
 
 NEW_PROP_TAG(ProblemEnableGravity); //!< Returns whether gravity is considered in the problem
 
-NEW_PROP_TAG(UseMoles); //!Defines whether mole (true) or mass (false) fractions are used
+NEW_PROP_TAG(UseMoles); //!< Defines whether mole (true) or mass (false) fractions are used
 
-NEW_PROP_TAG(UseMassOutput); //!Defines whether mole or mass are used for phaseStorage output
+NEW_PROP_TAG(UseMassOutput); //!< Defines whether mole or mass are used for phaseStorage output
 NEW_PROP_TAG(EffectiveDiffusivityModel); //!< The employed model for the computation of the effective diffusivity
 
 NEW_PROP_TAG(ImplicitMassUpwindWeight); //!< The value of the upwind parameter for the mobility
 NEW_PROP_TAG(ImplicitMobilityUpwindWeight); //!< Weight for the upwind mobility in the velocity calculation
 NEW_PROP_TAG(UseSimpleModel); //!< Determines whether a simple model with only two phase states (wng) and (wn) should be used
-NEW_PROP_TAG(BaseFluxVariables); //! The base flux variables
+NEW_PROP_TAG(BaseFluxVariables); //!< The base flux variables
 NEW_PROP_TAG(SpatialParamsForchCoeff); //!< Property for the forchheimer coefficient
 }
 }

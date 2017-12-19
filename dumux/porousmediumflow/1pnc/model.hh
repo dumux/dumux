@@ -142,15 +142,15 @@ SET_TYPE_PROP(OnePNC, EffectiveDiffusivityModel,
              DiffusivityMillingtonQuirk<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
 
-SET_INT_PROP(OnePNC, NumPhases, 1); //! The number of phases in the 1pnc model is 1
-SET_INT_PROP(OnePNC, PhaseIdx, 0); //! The default phase index
-SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>); //! The local residual function
-SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);   //! the VolumeVariables property
-SET_BOOL_PROP(OnePNC, EnableAdvection, true);                           //! The one-phase model considers advection
-SET_BOOL_PROP(OnePNC, EnableMolecularDiffusion, true);                 //! The one-phase model has no molecular diffusion
-SET_BOOL_PROP(OnePNC, EnableEnergyBalance, false);                      //! Isothermal model by default
-SET_TYPE_PROP(OnePNC, Indices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);                            //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(OnePNC, VtkOutputFields, OnePNCVtkOutputFields<TypeTag>);   //! Set the vtk output fields specific to this model
+SET_INT_PROP(OnePNC, NumPhases, 1); //!< The number of phases in the 1pnc model is 1
+SET_INT_PROP(OnePNC, PhaseIdx, 0); //!< The default phase index
+SET_TYPE_PROP(OnePNC, LocalResidual, CompositionalLocalResidual<TypeTag>); //!< The local residual function
+SET_TYPE_PROP(OnePNC, VolumeVariables, OnePNCVolumeVariables<TypeTag>);   //!< the VolumeVariables property
+SET_BOOL_PROP(OnePNC, EnableAdvection, true);                           //!< The one-phase model considers advection
+SET_BOOL_PROP(OnePNC, EnableMolecularDiffusion, true);                 //!< The one-phase model has no molecular diffusion
+SET_BOOL_PROP(OnePNC, EnableEnergyBalance, false);                      //!< Isothermal model by default
+SET_TYPE_PROP(OnePNC, Indices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);                            //!< The indices required by the isothermal single-phase model
+SET_TYPE_PROP(OnePNC, VtkOutputFields, OnePNCVtkOutputFields<TypeTag>);   //!< Set the vtk output fields specific to this model
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -167,14 +167,14 @@ private:
 public:
     static constexpr auto value = FluidSystem::numComponents;
 };
-SET_BOOL_PROP(OnePNCNI, EnableEnergyBalance, true);                                   //! we do solve for the energy balance here
-SET_TYPE_PROP(OnePNCNI, IsothermalVtkOutputFields, OnePNCVtkOutputFields<TypeTag>);     //! the isothermal vtk output fields
-SET_TYPE_PROP(OnePNCNI, IsothermalVolumeVariables, OnePNCVolumeVariables<TypeTag>);     //! Vol vars of the isothermal model
-SET_TYPE_PROP(OnePNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);   //! Local residual of the isothermal model
-SET_TYPE_PROP(OnePNCNI, IsothermalIndices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);                              //! Indices of the isothermal model
+SET_BOOL_PROP(OnePNCNI, EnableEnergyBalance, true);                                   //!< we do solve for the energy balance here
+SET_TYPE_PROP(OnePNCNI, IsothermalVtkOutputFields, OnePNCVtkOutputFields<TypeTag>);     //!< the isothermal vtk output fields
+SET_TYPE_PROP(OnePNCNI, IsothermalVolumeVariables, OnePNCVolumeVariables<TypeTag>);     //!< Vol vars of the isothermal model
+SET_TYPE_PROP(OnePNCNI, IsothermalLocalResidual, CompositionalLocalResidual<TypeTag>);   //!< Local residual of the isothermal model
+SET_TYPE_PROP(OnePNCNI, IsothermalIndices, OnePNCIndices <TypeTag, /*PVOffset=*/0>);                              //!< Indices of the isothermal model
 SET_TYPE_PROP(OnePNCNI,
               ThermalConductivityModel,
-              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>); //! Use the average for effective conductivities
+              ThermalConductivityAverage<typename GET_PROP_TYPE(TypeTag, Scalar)>); //!< Use the average for effective conductivities
 
 } // end namespace Properties
 } // end namespace Dumux

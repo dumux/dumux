@@ -108,14 +108,14 @@ NEW_TYPE_TAG(TwoPNCMinNI, INHERITS_FROM(TwoPNCMin, NonIsothermal));
 //////////////////////////////////////////////////////////////////
 // Property tags for the isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNCMin, NonMineralizationVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //! the VolumeVariables property
-SET_TYPE_PROP(TwoPNCMin, NonMineralizationVtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);     //! Set the vtk output fields specific to the TwoPNCMin model
+SET_TYPE_PROP(TwoPNCMin, NonMineralizationVolumeVariables, TwoPNCVolumeVariables<TypeTag>);     //!< the VolumeVariables property
+SET_TYPE_PROP(TwoPNCMin, NonMineralizationVtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);     //!< Set the vtk output fields specific to the TwoPNCMin model
 
 //////////////////////////////////////////////////////////////////
 // Properties for the non-isothermal 2pncmin model
 //////////////////////////////////////////////////////////////////
-SET_TYPE_PROP(TwoPNCMinNI, IsothermalVolumeVariables, MineralizationVolumeVariables<TypeTag>);  //! set isothermal VolumeVariables
-SET_TYPE_PROP(TwoPNCMinNI, IsothermalVtkOutputFields, MineralizationVtkOutputFields<TypeTag>);  //! set isothermal output fields
+SET_TYPE_PROP(TwoPNCMinNI, IsothermalVolumeVariables, MineralizationVolumeVariables<TypeTag>);  //!< set isothermal VolumeVariables
+SET_TYPE_PROP(TwoPNCMinNI, IsothermalVtkOutputFields, MineralizationVtkOutputFields<TypeTag>);  //!< set isothermal output fields
 } // end namespace Properties
 } // end namespace Dumux
 

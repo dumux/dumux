@@ -148,7 +148,7 @@ public:
             if (element.level() < minLevel_)
             {
                 indicatorVector_[eIdx] = true;
-                continue; //! proceed to the next element
+                continue; //!< proceed to the next element
             }
 
             //! If refinement at sources/BCs etc is deactivated, skip the rest
@@ -175,7 +175,7 @@ public:
                     if (source.infinity_norm() > eps_)
                     {
                         indicatorVector_[eIdx] = true;
-                        break; //! element is marked, escape scv loop
+                        break; //!< element is marked, escape scv loop
                     }
                 }
             }
@@ -199,7 +199,7 @@ public:
                         if(bcTypes.hasOnlyDirichlet() && refineAtDirichletBC_)
                         {
                             indicatorVector_[eIdx] = true;
-                            break; //! element is marked, escape scvf loop
+                            break; //!< element is marked, escape scvf loop
                         }
 
                         //! we are on a pure Neumann boundary
@@ -209,7 +209,7 @@ public:
                             if (fluxes.infinity_norm() > eps_)
                             {
                                 indicatorVector_[eIdx] = true;
-                                break; //! element is marked, escape scvf loop
+                                break; //!< element is marked, escape scvf loop
                             }
                         }
                     }
@@ -227,7 +227,7 @@ public:
                         if (refineAtDirichletBC_ && bcTypes[scv.indexInElement()].hasDirichlet())
                         {
                             indicatorVector_[eIdx] = true;
-                            break; //! element is marked, escape scv loop
+                            break; //!< element is marked, escape scv loop
                         }
                     }
 
@@ -243,7 +243,7 @@ public:
                                 if (fluxes.infinity_norm() > eps_)
                                 {
                                     indicatorVector_[eIdx] = true;
-                                    break; //! element is marked, escape scvf loop
+                                    break; //!< element is marked, escape scvf loop
                                 }
                             }
                         }
@@ -272,17 +272,17 @@ public:
     }
 
 private:
-    std::shared_ptr<const Problem> problem_;               //! The problem to be solved
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_; //! The finite volume grid geometry
-    std::shared_ptr<const GridVariables> gridVariables_;   //! The secondary variables on the grid
-    std::vector<bool> indicatorVector_;                    //! Indicator for BCs/sources
+    std::shared_ptr<const Problem> problem_;               //!< The problem to be solved
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_; //!< The finite volume grid geometry
+    std::shared_ptr<const GridVariables> gridVariables_;   //!< The secondary variables on the grid
+    std::vector<bool> indicatorVector_;                    //!< Indicator for BCs/sources
 
-    int minLevel_;             //! The minimum allowed level
-    int maxLevel_;             //! The maximum allowed level
-    bool refineAtDirichletBC_; //! Specifies if it should be refined at Dirichlet BCs
-    bool refineAtFluxBC_;      //! Specifies if it should be refined at non-zero Neumann BCs
-    bool refineAtSource_;      //! Specifies if it should be refined at sources
-    Scalar eps_;               //! Threshold for refinement at sources/BCS
+    int minLevel_;             //!< The minimum allowed level
+    int maxLevel_;             //!< The maximum allowed level
+    bool refineAtDirichletBC_; //!< Specifies if it should be refined at Dirichlet BCs
+    bool refineAtFluxBC_;      //!< Specifies if it should be refined at non-zero Neumann BCs
+    bool refineAtSource_;      //!< Specifies if it should be refined at sources
+    Scalar eps_;               //!< Threshold for refinement at sources/BCS
 };
 
 }

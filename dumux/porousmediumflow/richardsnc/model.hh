@@ -118,7 +118,7 @@ SET_PROP(RichardsNC, FluidState)
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
-SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields<TypeTag>);           //! Set the vtk output fields specific to the twop model
+SET_TYPE_PROP(RichardsNC, VtkOutputFields, RichardsNCVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
 
 //! Set the indices used
 SET_TYPE_PROP(RichardsNC, Indices, RichardsNCIndices<TypeTag>);

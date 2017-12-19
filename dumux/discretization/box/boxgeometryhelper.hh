@@ -108,7 +108,7 @@ public:
     }
 
 private:
-    const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
+    const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
 };
@@ -161,8 +161,8 @@ public:
         case 3: // triangle
         {
             //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t fo = 4; //! face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
+            static const std::uint8_t fo = 4; //!< face offset in point vector p
             static const std::uint8_t map[3][4] =
             {
                 {vo+0, fo+0, fo+1, 0},
@@ -178,8 +178,8 @@ public:
         case 4: // quadrilateral
         {
             //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t fo = 5; //! face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
+            static const std::uint8_t fo = 5; //!< face offset in point vector p
             static const std::uint8_t map[4][4] =
             {
                 {vo+0, fo+2, fo+0, 0},
@@ -210,7 +210,7 @@ public:
         case 3: // triangle
         {
             //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t fo = 4; //! face offset in point vector p
+            static const std::uint8_t fo = 4; //!< face offset in point vector p
             static const std::uint8_t map[3][2] =
             {
                 {0, fo+0},
@@ -224,7 +224,7 @@ public:
         case 4: // quadrilateral
         {
             //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t fo = 5; //! face offset in point vector p
+            static const std::uint8_t fo = 5; //!< face offset in point vector p
             static const std::uint8_t map[4][2] =
             {
                 {fo+0, 0},
@@ -323,7 +323,7 @@ public:
     }
 
 private:
-    const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
+    const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
 };
@@ -380,9 +380,9 @@ public:
         case 4: // tetrahedron
         {
             //! Only build the maps the first time we encounter a tetrahedron
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t eo = 5; //! edge offset in point vector p
-            static const std::uint8_t fo = 11; //! face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
+            static const std::uint8_t eo = 5; //!< edge offset in point vector p
+            static const std::uint8_t fo = 11; //!< face offset in point vector p
             static const std::uint8_t map[4][8] =
             {
                 {vo+0, eo+0, eo+1, fo+0, eo+3, fo+1, fo+2,    0},
@@ -403,9 +403,9 @@ public:
         case 8: // hexahedron
         {
             //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t eo = 9; //! edge offset in point vector p
-            static const std::uint8_t fo = 21; //! face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
+            static const std::uint8_t eo = 9; //!< edge offset in point vector p
+            static const std::uint8_t fo = 21; //!< face offset in point vector p
             static const std::uint8_t map[8][8] =
             {
                 {vo+0, eo+6, eo+4, fo+4, eo+0, fo+2, fo+0,    0},
@@ -443,8 +443,8 @@ public:
         case 4: // tetrahedron
         {
             //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t eo = 5; //! edge offset in point vector p
-            static const std::uint8_t fo = 11; //! face offset in point vector p
+            static const std::uint8_t eo = 5; //!< edge offset in point vector p
+            static const std::uint8_t fo = 11; //!< face offset in point vector p
             static const std::uint8_t map[6][4] =
             {
                 {eo+0, fo+0, fo+1,    0},
@@ -463,8 +463,8 @@ public:
         case 8: // hexahedron
         {
             //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t eo = 9; //! edge offset in point vector p
-            static const std::uint8_t fo = 21; //! face offset in point vector p
+            static const std::uint8_t eo = 9; //!< edge offset in point vector p
+            static const std::uint8_t fo = 21; //!< face offset in point vector p
             static const std::uint8_t map[12][4] =
             {
                 {fo+0, eo+0,    0, fo+2},
@@ -520,8 +520,8 @@ public:
         case 3: // triangle
         {
             //! Only build the maps the first time we encounter a triangle
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t fo = 4; //! face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
+            static const std::uint8_t fo = 4; //!< face offset in point vector p
             static const std::uint8_t map[3][4] =
             {
                 {vo+0, fo+0, fo+1, 0},
@@ -537,8 +537,8 @@ public:
         case 4: // quadrilateral
         {
             //! Only build the maps the first time we encounter a quadrilateral
-            static const std::uint8_t vo = 1; //! vertex offset in point vector p
-            static const std::uint8_t fo = 5; //! face offset in point vector p
+            static const std::uint8_t vo = 1; //!< vertex offset in point vector p
+            static const std::uint8_t fo = 5; //!< face offset in point vector p
             static const std::uint8_t map[4][4] =
             {
                 {vo+0, fo+2, fo+0, 0},
@@ -592,7 +592,7 @@ public:
     }
 
 private:
-    const typename Element::Geometry& elementGeometry_; //! Reference to the element geometry
+    const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
     GlobalPosition p[maxPoints]; // the points needed for construction of the scv/scvf geometries
 };

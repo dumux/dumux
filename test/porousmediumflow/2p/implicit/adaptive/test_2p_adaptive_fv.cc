@@ -147,9 +147,9 @@ int main(int argc, char** argv) try
         // update grid data after adaption
         if (wasAdapted)
         {
-            xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
-            gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
-            problem->computePointSourceMap(); //! Update the point source map
+            xOld = x;                         //!< Overwrite the old solution with the new (resized & interpolated) one
+            gridVariables->init(x, xOld);     //!< Initialize the secondary variables to the new (and "new old") solution
+            problem->computePointSourceMap(); //!< Update the point source map
         }
     }
 
@@ -164,9 +164,9 @@ int main(int argc, char** argv) try
     // update grid data after adaption
     if (wasAdapted)
     {
-        xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
-        gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
-        problem->computePointSourceMap(); //! Update the point source map
+        xOld = x;                         //!< Overwrite the old solution with the new (resized & interpolated) one
+        gridVariables->init(x, xOld);     //!< Initialize the secondary variables to the new (and "new old") solution
+        problem->computePointSourceMap(); //!< Update the point source map
     }
 
     // get some time loop parameters
@@ -184,7 +184,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
-    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
     // instantiate time loop
@@ -222,11 +222,11 @@ int main(int argc, char** argv) try
             if (wasAdapted)
             {
                 // Note that if we were using point sources, we would have to update the map here as well
-                xOld = x;                         //! Overwrite the old solution with the new (resized & interpolated) one
-                assembler->setJacobianPattern();  //! Tell the assembler to resize the matrix and set pattern
-                assembler->setResidualSize();     //! Tell the assembler to resize the residual
-                gridVariables->init(x, xOld);     //! Initialize the secondary variables to the new (and "new old") solution
-                problem->computePointSourceMap(); //! Update the point source map
+                xOld = x;                         //!< Overwrite the old solution with the new (resized & interpolated) one
+                assembler->setJacobianPattern();  //!< Tell the assembler to resize the matrix and set pattern
+                assembler->setResidualSize();     //!< Tell the assembler to resize the residual
+                gridVariables->init(x, xOld);     //!< Initialize the secondary variables to the new (and "new old") solution
+                problem->computePointSourceMap(); //!< Update the point source map
             }
         }
 

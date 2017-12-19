@@ -451,11 +451,11 @@ private:
     }
 
     // TODO: check whether to use references here or not
-    Intersection intersection_; //! The intersection of interest
-    const Element element_; //! The respective element
-    const typename Element::Geometry elementGeometry_; //! Reference to the element geometry
+    Intersection intersection_; //!< The intersection of interest
+    const Element element_; //!< The respective element
+    const typename Element::Geometry elementGeometry_; //!< Reference to the element geometry
     const GridView gridView_;
-    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //! collection of pair information
+    std::array<PairData<Scalar, GlobalPosition>, numPairs> pairData_; //!< collection of pair information
     std::vector<GlobalPosition> innerNormalFacePos_;
 };
 

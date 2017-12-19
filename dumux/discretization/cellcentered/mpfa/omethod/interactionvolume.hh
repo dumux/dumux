@@ -206,7 +206,7 @@ public:
                                                         outsideLocalScvIdx, //! iv-local scv index
                                                         numOutsideFaces_++, //! iv-local index in outside faces
                                                         i-1,                //! scvf-local index in outside faces
-                                                        flipScvf.index());  //! global scvf index
+                                                        flipScvf.index());  //!< global scvf index
                         }
                     }
                 }

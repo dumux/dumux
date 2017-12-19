@@ -77,8 +77,8 @@ public:
    }
 
 private:
-   Intersection intersection_; //! The intersection of interest
-   const Element element_; //! The respective element
+   Intersection intersection_; //!< The intersection of interest
+   const Element element_; //!< The respective element
    const GridView gridView_;
 };
 

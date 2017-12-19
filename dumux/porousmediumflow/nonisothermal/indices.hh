@@ -40,8 +40,8 @@ class EnergyIndices : public GET_PROP_TYPE(TypeTag, IsothermalIndices)
 {
 public:
     static const int numEq = GET_PROP_VALUE(TypeTag, NumEq);
-    static const int temperatureIdx = PVOffset + numEq -1; //! The index for temperature in primary variable vectors.
-    static const int energyEqIdx = PVOffset + numEq -1; //! The index for energy in equation vectors.
+    static const int temperatureIdx = PVOffset + numEq -1; //!< The index for temperature in primary variable vectors.
+    static const int energyEqIdx = PVOffset + numEq -1; //!< The index for energy in equation vectors.
 
 };
 
