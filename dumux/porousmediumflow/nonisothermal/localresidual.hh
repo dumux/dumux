@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup NIModel
  * \brief Element-wise calculation of the local residual for non-isothermal
  *        fully implicit models.
  */
@@ -40,7 +40,6 @@ class EnergyLocalResidualImplementation;
 
 /*!
  * \ingroup NIModel
- * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the energy residual for non-isothermal problems.
  */
 template<class TypeTag>
@@ -56,26 +55,50 @@ class EnergyLocalResidualImplementation<TypeTag, false>
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
 public:
-    //! The energy storage in the fluid phase with index phaseIdx
+    /*!
+     * \brief The energy storage in the fluid phase with index phaseIdx
+     *
+     * \param storage The mass of the component within the sub-control volume
+     * \param scv The sub-control volume
+     * \param volVars The volume variables
+     * \param phaseIdx The phase index
+     */
     static void fluidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
                                   int phaseIdx)
     {}
 
-    //! The energy storage in the solid matrix
+    /*!
+     * \brief The energy storage in the solid matrix
+     *
+     * \param storage The mass of the component within the sub-control volume
+     * \param scv The sub-control volume
+     * \param volVars The volume variables
+     */
     static void solidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {}
 
-    //! The advective phase energy fluxes
+    /*!
+     * \brief The advective phase energy fluxes
+     *
+     * \param flux TODO docme!
+     * \param fluxVars The flux variables.
+     * \param phaseIdx The phase index
+     */
     static void heatConvectionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
     {}
 
-    //! The diffusive energy fluxes
+    /*!
+     * \brief The diffusive energy fluxes
+     *
+     * \param flux TODO docme!
+     * \param fluxVars The flux variables.
+     */
     static void heatConductionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars)
     {}
@@ -95,7 +118,14 @@ class EnergyLocalResidualImplementation<TypeTag, true>
 
 public:
 
-    //! The energy storage in the fluid phase with index phaseIdx
+    /*!
+     * \brief The energy storage in the fluid phase with index phaseIdx
+     *
+     * \param storage The mass of the component within the sub-control volume
+     * \param scv The sub-control volume
+     * \param volVars The volume variables
+     * \param phaseIdx The phase index
+     */
     static void fluidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars,
@@ -107,7 +137,13 @@ public:
                                 * volVars.saturation(phaseIdx);
     }
 
-    //! The energy storage in the solid matrix
+    /*!
+     * \brief The energy storage in the solid matrix
+     *
+     * \param storage The mass of the component within the sub-control volume
+     * \param scv The sub-control volume
+     * \param volVars The volume variables
+     */
     static void solidPhaseStorage(ResidualVector& storage,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
@@ -118,7 +154,13 @@ public:
                                 * (1.0 - volVars.porosity());
     }
 
-    //! The advective phase energy fluxes
+    /*!
+     * \brief The advective phase energy fluxes
+     *
+     * \param flux TODO docme!
+     * \param fluxVars The flux variables.
+     * \param phaseIdx The phase index
+     */
     static void heatConvectionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars,
                                    int phaseIdx)
@@ -129,7 +171,12 @@ public:
         flux[energyEqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
     }
 
-    //! The diffusive energy fluxes
+    /*!
+     * \brief The diffusive energy fluxes
+     *
+     * \param flux TODO docme!
+     * \param fluxVars The flux variables.
+     */
     static void heatConductionFlux(ResidualVector& flux,
                                    FluxVariables& fluxVars)
     {
