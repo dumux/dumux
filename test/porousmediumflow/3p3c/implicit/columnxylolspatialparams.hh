@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the column problem.
  */
 #ifndef DUMUX_COLUMNXYLOL_SPATIAL_PARAMS_HH
@@ -31,7 +31,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup ThreePThreeCTests
+ * \brief Definition of the spatial parameters for the column problem.
+ */
 //forward declaration
 template<class TypeTag>
 class ColumnSpatialParams;

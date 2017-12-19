@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePWaterOilTests
  * \brief Definition of the spatial parameters for the SAGD problem.
  */
 
@@ -35,7 +35,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup ThreePWaterOilTests
+ * \brief Definition of the spatial parameters for the SAGD problem.
+ */
 //forward declaration
 template<class TypeTag>
 class SagdSpatialParams;

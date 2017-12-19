@@ -202,12 +202,15 @@
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePTests 3p (three phase) benchmarks and tests
+ 	 * ThreePTests contain various tests using a ThreePModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePThreeCTests 3p3c (three phase, three component) benchmarks and tests
+ 	 * ThreePThreeCTests contain various tests using a ThreePThreeCModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
+ 	 * ThreePWaterOilTests contain a SAGD test problem using the ThreePWaterOilModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests

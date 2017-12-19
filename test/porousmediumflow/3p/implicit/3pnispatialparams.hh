@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
 #ifndef DUMUX_THREEPNI_SPATIAL_PARAMS_HH
@@ -33,9 +33,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ThreePNIModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the 3pni problems.
  */
 

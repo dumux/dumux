@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem.
  */
 #ifndef DUMUX_KUEVETTE3P3CNI_SPATIAL_PARAMS_HH
@@ -33,7 +33,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup ThreePThreeCTests
+ * \brief Definition of the spatial parameters for the kuevette problem.
+ */
 //forward declaration
 template<class TypeTag>
 class KuevetteSpatialParams;
