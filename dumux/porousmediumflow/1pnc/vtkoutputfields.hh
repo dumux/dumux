@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup OnePNCModel
  * \brief Adds vtk output fields specific to the OnePNC model
  */
 #ifndef DUMUX_ONEPNC_VTK_OUTPUT_FIELDS_HH
@@ -27,7 +28,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePNC, InputOutput
+ * \ingroup OnePNCModel
  * \brief Adds vtk output fields specific to the OnePNC model
  */
 template<class TypeTag>

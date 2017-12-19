@@ -19,6 +19,7 @@
 
 /*!
  * \file
+ * \ingroup OnePNCModel
  * \brief Defines the primary variable and equation indices used by
  *        the 1pnc model
  */
@@ -31,7 +32,6 @@ namespace Dumux
 {
 /*!
  * \ingroup OnePNCModel
- * \ingroup ImplicitIndices
  * \brief The indices for the isothermal one-phase n-component model.
  *
  * \tparam PVOffset The first index in a primary variable vector.

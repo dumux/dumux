@@ -17,20 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
-* \file
-*
-* \brief  Base class for all models which use the single-phase, n-component fully implicit model.
-*         Adaption of the fully implicit model to the one-phase n-component flow model.
-*/
-
-#ifndef DUMUX_1PNC_MODEL_HH
-#define DUMUX_1PNC_MODEL_HH
-
-
-/*!
+ * \file
  * \ingroup OnePNCModel
- * \brief Adaption of the fully implicit scheme to the
- *        one-phase n-component flow model.
+ * \brief  Base class for all models which use the single-phase, n-component fully implicit model.
+ *         Adaption of the fully implicit model to the one-phase n-component flow model.
  *
  * This model implements a one-phase flow of a compressible fluid, that consists
  * of n components, using a standard Darcy approach as the equation for the
@@ -64,6 +54,9 @@
  *
  * The primary variables are the pressure \f$p\f$ and the mole fraction of dissolved components \f$x^\kappa\f$.
  */
+
+#ifndef DUMUX_1PNC_MODEL_HH
+#define DUMUX_1PNC_MODEL_HH
 
 #include <dumux/common/properties.hh>
 

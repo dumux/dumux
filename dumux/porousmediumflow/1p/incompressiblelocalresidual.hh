@@ -31,6 +31,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup OnePModel
+ * \brief Element-wise calculation of the residual and its derivatives
+ *        for a single-phase, incompressible, test problem.
+ */
 template<class TypeTag>
 class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
@@ -223,6 +228,7 @@ public:
         }
     }
 
+    //! Robin-type flux derivatives
     template<class PartialDerivativeMatrices>
     void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                  const Problem& problem,

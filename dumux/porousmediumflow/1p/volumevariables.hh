@@ -58,7 +58,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -74,7 +80,14 @@ public:
     };
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Set complete fluid state
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
+     * \param fluidState A container with the current (physical) state of the fluid
      */
     static void completeFluidState(const ElementSolutionVector &elemSol,
                                    const Problem& problem,
