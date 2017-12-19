@@ -24,7 +24,6 @@
 #define DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/valgrind.hh>
-#include <dumux/common/capabilities.hh>
 #include <dumux/common/timeloop.hh>
 
 namespace Dumux
@@ -53,7 +52,6 @@ class StaggeredLocalResidual
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GridView::template Codim<0>::Entity;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -104,7 +102,7 @@ public:
 
      /*!
      * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero.
+     *        equations from zero for a transient problem.
      *
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
@@ -128,12 +126,16 @@ public:
                         const ElementBoundaryTypes &bcTypes,
                         const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        // reset all terms
-        CellCenterResidual residual;
-        residual = 0.0;
-        // ccStorageTerm_ = 0.0;
+        assert( ( (timeLoop_ && !isStationary()) || (!timeLoop_ && isStationary() ) ) && "no time loop set for storage term evaluation");
+        assert( ( (prevSol_ && !isStationary()) || (!prevSol_ && isStationary() ) ) && "no solution set for storage term evaluation");
 
-        asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+        CellCenterResidual residual(0.0);
+
+        if(isStationary())
+            asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes);
+        else
+            asImp_().evalVolumeTermForCellCenter_(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+
         asImp_().evalFluxesForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
         asImp_().evalBoundaryForCellCenter_(residual, problem, element, fvGeometry, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
 
@@ -142,7 +144,7 @@ public:
 
      /*!
      * \brief Compute the local residual, i.e. the deviation of the
-     *        equations from zero.
+     *        equations from zero for a transient problem.
      *
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
@@ -165,12 +167,18 @@ public:
                   const ElementFaceVariables& prevElemFaceVars,
                   const ElementFaceVariables& curElemFaceVars,
                   const ElementBoundaryTypes &bcTypes,
-                  const ElementFluxVariablesCache& elemFluxVarsCache,
-                  const bool resizeResidual = false) const
+                  const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        FaceResidual residual;
+        assert( ( (timeLoop_ && !isStationary()) || (!timeLoop_ && isStationary() ) ) && "no time loop set for storage term evaluation");
+        assert( ( (prevSol_ && !isStationary()) || (!prevSol_ && isStationary() ) ) && "no solution set for storage term evaluation");
 
-        asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+        FaceResidual residual(0.0);
+
+        if(isStationary())
+            asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes);
+        else
+            asImp_().evalVolumeTermForFace_(residual, problem, element, fvGeometry, scvf, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, bcTypes);
+
         asImp_().evalFluxesForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
         asImp_().evalBoundaryForFace_(residual, problem, element, fvGeometry, scvf, curElemVolVars, curElemFaceVars, bcTypes, elemFluxVarsCache);
 
@@ -202,9 +210,9 @@ public:
 
 protected:
 
-     /*!
-     * \brief Evaluate the flux terms for cell center dofs
-     */
+    /*!
+    * \brief Evaluate the flux terms for cell center dofs
+    */
     void evalFluxesForCellCenter_(CellCenterResidual& residual,
                                   const Problem& problem,
                                   const Element& element,
@@ -221,9 +229,9 @@ protected:
         }
     }
 
-     /*!
-     * \brief Evaluate the flux terms for face dofs
-     */
+    /*!
+    * \brief Evaluate the flux terms for face dofs
+    */
     void evalFluxesForFace_(FaceResidual& residual,
                             const Problem& problem,
                             const Element& element,
@@ -238,9 +246,9 @@ protected:
             residual += asImp_().computeFluxForFace(problem, element, scvf, fvGeometry, elemVolVars, elemFaceVars, elemFluxVarsCache);
     }
 
-     /*!
-     * \brief Evaluate boundary conditions
-     */
+    /*!
+    * \brief Evaluate boundary conditions
+    */
     void evalBoundary_(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -254,20 +262,16 @@ protected:
            "a evalBoundary_() method.");
     }
 
-     /*!
-     * \brief Evaluate the volume term for a cell center dof for a stationary problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForCellCenter_(CellCenterResidual& residual,
-                                 const Problem& problem,
-                                 const Element &element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& prevElemVolVars,
-                                 const ElementVolumeVariables& curElemVolVars,
-                                 const ElementFaceVariables& prevFaceVars,
-                                 const ElementFaceVariables& curFaceVars,
-                                 const ElementBoundaryTypes &bcTypes) const
+    /*!
+    * \brief Evaluate the volume term for a cell center dof for a stationary problem
+    */
+    void evalVolumeTermForCellCenter_(CellCenterResidual& residual,
+                                      const Problem& problem,
+                                      const Element &element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& curElemVolVars,
+                                      const ElementFaceVariables& curFaceVars,
+                                      const ElementBoundaryTypes &bcTypes) const
     {
         for(auto&& scv : scvs(fvGeometry))
         {
@@ -280,21 +284,17 @@ protected:
         }
     }
 
-     /*!
-     * \brief Evaluate the volume term for a face dof for a stationary problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForFace_(FaceResidual& residual,
-                           const Problem& problem,
-                           const Element &element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf,
-                           const ElementVolumeVariables& prevElemVolVars,
-                           const ElementVolumeVariables& curElemVolVars,
-                           const ElementFaceVariables& prevFaceVars,
-                           const ElementFaceVariables& curFaceVars,
-                           const ElementBoundaryTypes &bcTypes) const
+    /*!
+    * \brief Evaluate the volume term for a face dof for a stationary problem
+    */
+    void evalVolumeTermForFace_(FaceResidual& residual,
+                                const Problem& problem,
+                                const Element &element,
+                                const FVElementGeometry& fvGeometry,
+                                const SubControlVolumeFace& scvf,
+                                const ElementVolumeVariables& curElemVolVars,
+                                const ElementFaceVariables& curFaceVars,
+                                const ElementBoundaryTypes &bcTypes) const
     {
         // the source term:
         auto faceSource = asImp_().computeSourceForFace(problem, scvf, curElemVolVars, curFaceVars);
@@ -304,21 +304,22 @@ protected:
         residual -= faceSource;
     }
 
-     /*!
-     * \brief Evaluate the volume term for a cell center dof for a transient problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForCellCenter_(CellCenterResidual& residual,
-                                 const Problem& problem,
-                                 const Element &element,
-                                 const FVElementGeometry& fvGeometry,
-                                 const ElementVolumeVariables& prevElemVolVars,
-                                 const ElementVolumeVariables& curElemVolVars,
-                                 const ElementFaceVariables& prevFaceVars,
-                                 const ElementFaceVariables& curFaceVars,
-                                 const ElementBoundaryTypes &bcTypes) const
+    /*!
+    * \brief Evaluate the volume term for a cell center dof for a transient problem
+    */
+    void evalVolumeTermForCellCenter_(CellCenterResidual& residual,
+                                      const Problem& problem,
+                                      const Element &element,
+                                      const FVElementGeometry& fvGeometry,
+                                      const ElementVolumeVariables& prevElemVolVars,
+                                      const ElementVolumeVariables& curElemVolVars,
+                                      const ElementFaceVariables& prevFaceVars,
+                                      const ElementFaceVariables& curFaceVars,
+                                      const ElementBoundaryTypes &bcTypes) const
     {
+        assert(timeLoop_ && "no time loop set for storage term evaluation");
+        assert(prevSol_ && "no solution set for storage term evaluation");
+
         for(auto&& scv : scvs(fvGeometry))
         {
             const auto& curVolVars = curElemVolVars[scv];
@@ -354,22 +355,23 @@ protected:
         }
     }
 
-     /*!
-     * \brief Evaluate the volume term for a face dof for a transient problem
-     */
-    template<class P = Problem>
-    typename std::enable_if<!Dumux::Capabilities::isStationary<P>::value, void>::type
-    evalVolumeTermForFace_(FaceResidual& residual,
-                           const Problem& problem,
-                           const Element &element,
-                           const FVElementGeometry& fvGeometry,
-                           const SubControlVolumeFace& scvf,
-                           const ElementVolumeVariables& prevElemVolVars,
-                           const ElementVolumeVariables& curElemVolVars,
-                           const ElementFaceVariables& prevFaceVars,
-                           const ElementFaceVariables& curFaceVars,
-                           const ElementBoundaryTypes &bcTypes) const
+    /*!
+    * \brief Evaluate the volume term for a face dof for a transient problem
+    */
+    void evalVolumeTermForFace_(FaceResidual& residual,
+                                const Problem& problem,
+                                const Element &element,
+                                const FVElementGeometry& fvGeometry,
+                                const SubControlVolumeFace& scvf,
+                                const ElementVolumeVariables& prevElemVolVars,
+                                const ElementVolumeVariables& curElemVolVars,
+                                const ElementFaceVariables& prevFaceVars,
+                                const ElementFaceVariables& curFaceVars,
+                                const ElementBoundaryTypes &bcTypes) const
     {
+        assert(timeLoop_ && "no time loop set for storage term evaluation");
+        assert(prevSol_ && "no solution set for storage term evaluation");
+
         const auto& scv = fvGeometry.scv(scvf.insideScvIdx());
         const auto& curVolVars = curElemVolVars[scv];
         const auto& prevVolVars = prevElemVolVars[scv];

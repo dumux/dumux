@@ -68,7 +68,7 @@ dune_add_test(NAME test_stokes_donea
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokes-donea-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_donea-00002.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_donea-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_donea")
 
 dune_add_test(NAME test_navierstokes_kovasznay
@@ -77,7 +77,7 @@ dune_add_test(NAME test_navierstokes_kovasznay
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/test_kovasznay-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay-00002.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_kovasznay-00001.vtu
                              --command "${CMAKE_CURRENT_BINARY_DIR}/test_navierstokes_kovasznay")
 
 dune_add_test(NAME test_navierstokes_angeli

@@ -39,13 +39,6 @@ namespace Dumux
 template <class TypeTag>
 class ChannelNCTestProblem;
 
-namespace Capabilities
-{
-    template<class TypeTag>
-    struct isStationary<ChannelNCTestProblem<TypeTag>>
-    { static const bool value = false; };
-}
-
 namespace Properties
 {
 

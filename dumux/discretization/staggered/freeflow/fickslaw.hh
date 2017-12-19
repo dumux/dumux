@@ -61,21 +61,16 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Staggered >
     static constexpr int dimWorld = GridView::dimensionworld;
 
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     static_assert(GET_PROP_VALUE(TypeTag, NumPhases) == 1, "Only one phase allowed supported!");
 
     enum {
-
         pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
         conti0EqIdx = Indices::conti0EqIdx,
         mainCompIdx = Indices::mainCompIdx,
         replaceCompEqIdx = Indices::replaceCompEqIdx,
-        phaseIdx = Indices::phaseIdx
     };
 
 public:

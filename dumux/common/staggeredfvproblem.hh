@@ -46,6 +46,11 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     enum {
         dim = GridView::dimension,
@@ -112,18 +117,36 @@ public:
             {
                 // let the problem do the dirty work of nailing down
                 // the initial solution.
-                auto initPriVars = asImp_().initial(scv)[cellCenterIdx];
-                auto dofIdxGlobal = scv.dofIndex();
-                sol[cellCenterIdx][dofIdxGlobal] += initPriVars;
+                auto initPriVars = asImp_().initial(scv);
+                asImp_().applyInititalCellCenterSolution(sol, scv, initPriVars);
             }
 
             // loop over faces
             for(auto&& scvf : scvfs(fvGeometry))
             {
-                auto initPriVars = asImp_().initial(scvf)[faceIdx][scvf.directionIndex()];
-                sol[faceIdx][scvf.dofIndex()] = initPriVars;
+                auto initPriVars = asImp_().initial(scvf);
+                asImp_().applyInititalFaceSolution(sol, scvf, initPriVars);
             }
         }
+    }
+
+
+    //! Applys the initial cell center solution
+    void applyInititalCellCenterSolution(SolutionVector& sol,
+                                         const SubControlVolume& scv,
+                                         const PrimaryVariables& initSol) const
+    {
+        for(auto&& i : priVarIndices_(cellCenterIdx))
+            sol[cellCenterIdx][scv.dofIndex()][i] = initSol[i];
+    }
+
+    //! Applys the initial face solution
+    void applyInititalFaceSolution(SolutionVector& sol,
+                                   const SubControlVolumeFace& scvf,
+                                   const PrimaryVariables& initSol) const
+    {
+        for(auto&& i : priVarIndices_(faceIdx))
+            sol[faceIdx][scvf.dofIndex()][i] = initSol[i];
     }
 
 protected:
@@ -134,6 +157,32 @@ protected:
     //! \copydoc asImp_()
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
+
+    //! Helper function that returns an iterable range of primary variable indices.
+    //! Specialization for cell center dofs.
+    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
+    {
+        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        return Dune::range(0, numEqCellCenter);
+#else
+        return IntRange(0, numEqCellCenter);
+#endif
+    }
+
+    //! Helper function that returns an iterable range of primary variable indices.
+    //! Specialization for face dofs.
+    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
+    {
+        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+        constexpr auto numEq = GET_PROP_VALUE(TypeTag, NumEq);
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        return Dune::range(numEqCellCenter, numEq);
+#else
+        return IntRange(numEqCellCenter, numEq);
+#endif
+    }
 
 };
 

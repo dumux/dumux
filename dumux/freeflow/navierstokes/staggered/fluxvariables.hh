@@ -76,11 +76,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
         dim = GridView::dimension,
         dimWorld = GridView::dimensionworld,
 
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-
         massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

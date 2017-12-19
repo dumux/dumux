@@ -48,7 +48,6 @@ class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
@@ -68,15 +67,7 @@ class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 
     using ParentType = NavierStokesFluxVariables<TypeTag>;
 
-    enum {
-
-        pressureIdx = Indices::pressureIdx,
-        velocityIdx = Indices::velocityIdx,
-
-        massBalanceIdx = Indices::massBalanceIdx,
-        momentumBalanceIdx = Indices::momentumBalanceIdx,
-        conti0EqIdx = Indices::conti0EqIdx,
-    };
+    enum { conti0EqIdx = Indices::conti0EqIdx };
 
 public:
 

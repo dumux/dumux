@@ -120,7 +120,7 @@ int main(int argc, char** argv) try
     auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
     fvGridGeometry->update();
 
-    // the problem (initial and boundary conditions)
+    // the problem (boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
 
@@ -134,25 +134,11 @@ int main(int argc, char** argv) try
     SolutionVector x;
     x[cellCenterIdx].resize(numDofsCellCenter);
     x[faceIdx].resize(numDofsFace);
-    problem->applyInitialSolution(x);
-    auto xOld = x;
 
     // the grid variables
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
-    gridVariables->init(x, xOld);
-
-    // get some time loop parameters
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    const auto tEnd = getParam<Scalar>("TimeLoop.TEnd");
-    const auto maxDivisions = getParam<int>("TimeLoop.MaxTimeStepDivisions");
-    const auto maxDt = getParam<Scalar>("TimeLoop.MaxTimeStepSize");
-    auto dt = getParam<Scalar>("TimeLoop.DtInitial");
-
-    // check if we are about to restart a previously interrupted simulation
-    Scalar restartTime = 0;
-    if (Parameters::getTree().hasKey("Restart") || Parameters::getTree().hasKey("TimeLoop.Restart"))
-        restartTime = getParam<Scalar>("TimeLoop.Restart");
+    gridVariables->init(x);
 
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
@@ -163,13 +149,9 @@ int main(int argc, char** argv) try
     vtkWriter.addFaceField(problem->getAnalyticalVelocitySolutionOnFace(), "faceVelocityExact");
     vtkWriter.write(0.0);
 
-    // instantiate time loop
-    auto timeLoop = std::make_shared<TimeLoop<Scalar>>(restartTime, dt, tEnd);
-    timeLoop->setMaxTimeStepSize(maxDt);
-
     // the assembler with time loop for instationary problem
     using Assembler = StaggeredFVAssembler<TypeTag, DiffMethod::numeric>;
-    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
 
     // the linear solver
     using LinearSolver = Dumux::UMFPackBackend<TypeTag>;
@@ -178,55 +160,22 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonController = StaggeredNewtonController<TypeTag>;
     using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
-    // time loop
-    timeLoop->start(); do
-    {
-        // set previous solution for storage evaluations
-        assembler->setPreviousSolution(xOld);
+    // linearize & solve
+    Dune::Timer timer;
+    nonLinearSolver.solve(x);
 
-        // try solving the non-linear system
-        for (int i = 0; i < maxDivisions; ++i)
-        {
-            // linearize & solve
-            auto converged = nonLinearSolver.solve(x);
+    // write vtk output
+    vtkWriter.write(1.0);
 
-            if (converged)
-                break;
+    timer.stop();
 
-            if (!converged && i == maxDivisions-1)
-                DUNE_THROW(Dune::MathError,
-                           "Newton solver didn't converge after "
-                           << maxDivisions
-                           << " time-step divisions. dt="
-                           << timeLoop->timeStepSize()
-                           << ".\nThe solutions of the current and the previous time steps "
-                           << "have been saved to restart files.");
-        }
-
-        // make the new solution the old solution
-        xOld = x;
-        gridVariables->advanceTimeStep();
-
-        // advance to the time loop to the next step
-        timeLoop->advanceTimeStep();
-
-        problem->postTimeStep(x);
-
-        // write vtk output
-        vtkWriter.write(timeLoop->time());
-
-        // report statistics of this time step
-        timeLoop->reportTimeStep();
-
-        // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
-
-    } while (!timeLoop->finished());
-
-    timeLoop->finalize(leafGridView.comm());
+    const auto& comm = Dune::MPIHelper::getCollectiveCommunication();
+    std::cout << "Simulation took " << timer.elapsed() << " seconds on "
+              << comm.size() << " processes.\n"
+              << "The cumulative CPU time was " << timer.elapsed()*comm.size() << " seconds.\n";
 
     ////////////////////////////////////////////////////////////
     // finalize, print dumux message to say goodbye

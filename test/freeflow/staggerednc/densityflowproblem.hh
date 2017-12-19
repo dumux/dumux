@@ -39,13 +39,6 @@ namespace Dumux
 template <class TypeTag>
 class DensityDrivenFlowProblem;
 
-namespace Capabilities
-{
-    template<class TypeTag>
-    struct isStationary<DensityDrivenFlowProblem<TypeTag>>
-    { static const bool value = false; };
-}
-
 namespace Properties
 {
 NEW_TYPE_TAG(DensityDrivenFlowProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));

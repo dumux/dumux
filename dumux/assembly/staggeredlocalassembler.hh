@@ -30,8 +30,15 @@
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/diffmethod.hh>
 
-#include <dumux/implicit/staggered/primaryvariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
+
+#include <dune/common/version.hh>
+
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    #include <dune/common/hybridutilities.hh>
+#else
+    #include <dumux/common/intrange.hh>
+#endif
 
 namespace Dumux {
 
@@ -75,7 +82,6 @@ class StaggeredLocalAssembler<TypeTag,
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using PriVarIndices = typename Dumux::PriVarIndices<TypeTag>;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -93,8 +99,11 @@ public:
      *        to the global matrix. The element residual is written into the right hand side.
      */
     template<class Assembler>
-    static void assembleJacobianAndResidual(Assembler& assembler, JacobianMatrix& jac, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
+    static void assembleJacobianAndResidual(Assembler& assembler,
+                                            JacobianMatrix& jac,
+                                            SolutionVector& res,
+                                            const Element& element,
+                                            const SolutionVector& curSol)
     {
         using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
         typename DofTypeIndices::CellCenterIdx cellCenterIdx;
@@ -324,7 +333,7 @@ static void dCCdCC_(Assembler& assembler,
        auto& curVolVars =  getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
        VolumeVariables origVolVars(curVolVars);
 
-       for(auto pvIdx : PriVarIndices(cellCenterIdx))
+       for(auto pvIdx : priVarIndices_(cellCenterIdx))
        {
            CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
 
@@ -386,7 +395,7 @@ static void dCCdFace_(Assembler& assembler,
        auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvfJ);
        const auto origFaceVars(faceVars);
 
-       for(auto pvIdx : PriVarIndices(faceIdx))
+       for(auto pvIdx : priVarIndices_(faceIdx))
        {
            FacePrimaryVariables facePriVars(curSol[faceIdx][globalJ]);
            const Scalar eps = numericEpsilon(facePriVars[pvIdx], cellCenterIdx, faceIdx);
@@ -451,7 +460,7 @@ static void dFacedCC_(Assembler& assembler,
            auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
            VolumeVariables origVolVars(curVolVars);
 
-           for(auto pvIdx : PriVarIndices(cellCenterIdx))
+           for(auto pvIdx : priVarIndices_(cellCenterIdx))
            {
                CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
 
@@ -515,7 +524,7 @@ static void dFacedFace_(Assembler& assembler,
         auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvf);
         const auto origFaceVars(faceVars);
 
-           for(auto pvIdx : PriVarIndices(faceIdx))
+           for(auto pvIdx : priVarIndices_(faceIdx))
            {
                auto faceSolution = FaceSolution(scvf, curSol[faceIdx], assembler.fvGridGeometry());
 
@@ -593,9 +602,31 @@ static void updateGlobalJacobian_(SubMatrix& matrix,
     }
 }
 
+//! Helper function that returns an iterable range of primary variable indices.
+//! Specialization for cell center dofs.
+static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
+{
+    constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    return Dune::range(0, numEqCellCenter);
+#else
+    return IntRange(0, numEqCellCenter);
+#endif
+}
 
-
+//! Helper function that returns an iterable range of primary variable indices.
+//! Specialization for face dofs.
+static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
+{
+    constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    return Dune::range(numEqCellCenter, numEqCellCenter + numEqFace);
+#else
+    return IntRange(numEqCellCenter, numEqCellCenter + numEqFace);
+#endif
+}
 
 private:
     template<class T = TypeTag>

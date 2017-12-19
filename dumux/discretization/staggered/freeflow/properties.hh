@@ -44,10 +44,6 @@ namespace Properties
 //! Type tag for the staggered scheme specialized for free flow.
 NEW_TYPE_TAG(StaggeredFreeFlowModel, INHERITS_FROM(StaggeredModel));
 
-// TODO: Ugly hack. How can this be improved? This is needed, because otherwise the physical model overwrites the properties set here.
-//       This requires to include the physical model before the discretization, otherwise the type tag FreeFlow is undefined.
-UNSET_PROP(FreeFlow, NumEqVector);
-
 /*!
  * \brief  Set the number of equations on the faces to 1. We only consider scalar values because the velocity vector
  *         is normal to the face.
@@ -102,30 +98,6 @@ public:
 
 //! The variables living on the faces
 SET_TYPE_PROP(StaggeredFreeFlowModel, FaceVariables, StaggeredFaceVariables<TypeTag>);
-
-//! A container class used to specify values for boundary/initial conditions
-SET_PROP(StaggeredFreeFlowModel, PrimaryVariables)
-{
-private:
-    using CellCenterBoundaryValues = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FaceBoundaryValues = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                 GridView::dimension>;
-public:
-    using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
-};
-
-//! A container class used to specify values for sources and Neumann BCs
-SET_PROP(StaggeredFreeFlowModel, NumEqVector)
-{
-private:
-    using CellCenterBoundaryValues = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FaceBoundaryValues = Dune::FieldVector<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                 GridView::dimension>;
-public:
-    using type = StaggeredPrimaryVariables<TypeTag, CellCenterBoundaryValues, FaceBoundaryValues>;
-};
 
 //! Boundary types at a single degree of freedom
 SET_PROP(StaggeredFreeFlowModel, BoundaryTypes)

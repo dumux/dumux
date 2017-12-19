@@ -1,7 +1,3 @@
-[TimeLoop]
-DtInitial = 1 # [s]
-TEnd = 2 # [s]
-
 [Grid]
 UpperRight = 1 1
 Cells = 40 40

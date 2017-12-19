@@ -32,21 +32,10 @@
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 #include <dumux/freeflow/navierstokes/model.hh>
 
-// solve Navier-Stokes equations
-#define ENABLE_NAVIERSTOKES 1
-
-
 namespace Dumux
 {
 template <class TypeTag>
 class KovasznayTestProblem;
-
-namespace Capabilities
-{
-    template<class TypeTag>
-    struct isStationary<KovasznayTestProblem<TypeTag>>
-    { static const bool value = true; };
-}
 
 namespace Properties
 {
@@ -70,11 +59,7 @@ SET_BOOL_PROP(KovasznayTestProblem, EnableFVGridGeometryCache, true);
 SET_BOOL_PROP(KovasznayTestProblem, EnableGridFluxVariablesCache, true);
 SET_BOOL_PROP(KovasznayTestProblem, EnableGridVolumeVariablesCache, true);
 
-#if ENABLE_NAVIERSTOKES
 SET_BOOL_PROP(KovasznayTestProblem, EnableInertiaTerms, true);
-#else
-SET_BOOL_PROP(KovasznayTestProblem, EnableInertiaTerms, false);
-#endif
 }
 
 /*!
@@ -299,10 +284,10 @@ public:
                 // treat cell-center dofs
                 const auto dofIdxCellCenter = scv.dofIndex();
                 const auto& posCellCenter = scv.dofPosition();
-                const auto analyticalSolutionCellCenter = dirichletAtPos(posCellCenter)[cellCenterIdx];
-                const auto numericalSolutionCellCenter = curSol[cellCenterIdx][dofIdxCellCenter];
-                sumError[cellCenterIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
-                sumReference[cellCenterIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
+                const auto analyticalSolutionCellCenter = dirichletAtPos(posCellCenter)[pressureIdx];
+                const auto numericalSolutionCellCenter = curSol[cellCenterIdx][dofIdxCellCenter][pressureIdx];
+                sumError[pressureIdx] += squaredDiff_(analyticalSolutionCellCenter, numericalSolutionCellCenter) * scv.volume();
+                sumReference[pressureIdx] += analyticalSolutionCellCenter * analyticalSolutionCellCenter * scv.volume();
                 totalVolume += scv.volume();
 
                 // treat face dofs
@@ -310,7 +295,7 @@ public:
                 {
                     const int dofIdxFace = scvf.dofIndex();
                     const int dirIdx = scvf.directionIndex();
-                    const auto analyticalSolutionFace = dirichletAtPos(scvf.center())[faceIdx][dirIdx];
+                    const auto analyticalSolutionFace = dirichletAtPos(scvf.center())[Indices::velocity(dirIdx)];
                     const auto numericalSolutionFace = curSol[faceIdx][dofIdxFace][momentumBalanceIdx];
                     directionIndex[dofIdxFace] = dirIdx;
                     errorVelocity[dofIdxFace] = squaredDiff_(analyticalSolutionFace, numericalSolutionFace);
@@ -322,8 +307,8 @@ public:
         }
 
         // get the absolute and relative discrete L2-error for cell-center dofs
-        l2NormAbs[cellCenterIdx] = std::sqrt(sumError[cellCenterIdx] / totalVolume);
-        l2NormRel[cellCenterIdx] = std::sqrt(sumError[cellCenterIdx] / sumReference[cellCenterIdx]);
+        l2NormAbs[pressureIdx] = std::sqrt(sumError[pressureIdx] / totalVolume);
+        l2NormRel[pressureIdx] = std::sqrt(sumError[pressureIdx] / sumReference[pressureIdx]);
 
         // get the absolute and relative discrete L2-error for face dofs
         for(int i = 0; i < numFaceDofs; ++i)
@@ -332,14 +317,14 @@ public:
             const auto error = errorVelocity[i];
             const auto ref = velocityReference[i];
             const auto volume = staggeredVolume[i];
-            sumError[faceIdx][dirIdx] += error * volume;
-            sumReference[faceIdx][dirIdx] += ref * volume;
+            sumError[Indices::velocity(dirIdx)] += error * volume;
+            sumReference[Indices::velocity(dirIdx)] += ref * volume;
         }
 
         for(int dirIdx = 0; dirIdx < dimWorld; ++dirIdx)
         {
-            l2NormAbs[faceIdx][dirIdx] = std::sqrt(sumError[faceIdx][dirIdx] / totalVolume);
-            l2NormRel[faceIdx][dirIdx] = std::sqrt(sumError[faceIdx][dirIdx] / sumReference[faceIdx][dirIdx]);
+            l2NormAbs[Indices::velocity(dirIdx)] = std::sqrt(sumError[Indices::velocity(dirIdx)] / totalVolume);
+            l2NormRel[Indices::velocity(dirIdx)] = std::sqrt(sumError[Indices::velocity(dirIdx)] / sumReference[Indices::velocity(dirIdx)]);
         }
         return std::make_pair(l2NormAbs, l2NormRel);
     }
@@ -396,11 +381,13 @@ private:
                     const auto faceDofPosition = scvf.center();
                     const auto dirIdx = scvf.directionIndex();
                     const auto analyticalSolutionAtFace = analyticalSolution(faceDofPosition);
-                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[faceIdx][dirIdx];
+                    analyticalVelocityOnFace_[faceDofIdx][dirIdx] = analyticalSolutionAtFace[Indices::velocity(dirIdx)];
                 }
 
                 analyticalPressure_[ccDofIdx] = analyticalSolutionAtCc[pressureIdx];
-                analyticalVelocity_[ccDofIdx] = analyticalSolutionAtCc[faceIdx];
+
+                for(int dirIdx = 0; dirIdx < dim; ++dirIdx)
+                    analyticalVelocity_[ccDofIdx][dirIdx] = analyticalSolutionAtCc[Indices::velocity(dirIdx)];
             }
         }
     }

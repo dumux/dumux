@@ -37,13 +37,6 @@ namespace Dumux
 template <class TypeTag>
 class ClosedSystemTestProblem;
 
-namespace Capabilities
-{
-    template<class TypeTag>
-    struct isStationary<ClosedSystemTestProblem<TypeTag>>
-    { static const bool value = false; };
-}
-
 namespace Properties
 {
 NEW_TYPE_TAG(ClosedSystemTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
