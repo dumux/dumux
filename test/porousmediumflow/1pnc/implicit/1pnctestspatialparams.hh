@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePNCTests
  * \brief Definition of the spatial parameters for the 1pnc
- *        outlfow problem.
+ *        problems.
  */
 #ifndef DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_1PNC_TEST_SPATIAL_PARAMS_HH
@@ -31,11 +31,9 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePNCModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePNCTests
  * \brief Definition of the spatial parameters for the 1pnc
- *        test problem.
+ *        test problems.
  */
 template<class TypeTag>
 class OnePNCTestSpatialParams : public FVSpatialParamsOneP<TypeTag>

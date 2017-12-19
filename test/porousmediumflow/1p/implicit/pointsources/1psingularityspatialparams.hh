@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p model with point sources
  */
@@ -31,9 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p model with point sources
  */

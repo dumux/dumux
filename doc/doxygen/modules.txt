@@ -19,7 +19,7 @@
         * \defgroup SequentialOnePModel Sequential
         * # Pressure
         * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/pressure.hh
-        * 
+        *
         * # Velocity
         * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/velocity.hh
         */
@@ -45,7 +45,7 @@
          * \defgroup SequentialTwoPModel Sequential
          * # Pressure
          * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/pressure.hh
-         * 
+         *
          * # Velocity
          * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/velocity.hh
          */
@@ -65,7 +65,7 @@
          * \defgroup SequentialTwoPTwoCModel Sequential
          * # Pressure
          * \copydetails ./porousmediumflow/2p2c/sequential/fvpressure.hh
-         * 
+         *
          * # Velocity
          * \copydetails ./porousmediumflow/2p2c/sequential/fvtransport.hh
          */
@@ -172,9 +172,11 @@
  */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup OnePTests 1p (one phase) benchmarks and tests
+ 	 * OnePTests contain various tests using a OnePModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup OnePNCTests 1pnc (one phase, n-component) benchmarks and tests
+ 	 * OnePNCTests contain various tests using a OneNCPModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup OnePNCMinTests 1pncmin (one phase, n-component mineralization) benchmarks and tests
@@ -202,25 +204,25 @@
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
- 	 */   
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
- 	 */  	
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
- 	 */  	  
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup RichardsTests Richards benchmarks and tests
- 	 */  	 
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup RichardsNCTests Richards n-component benchmarks and tests
- 	 */   
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TracerTests Tracer benchmarks and tests
- 	 */  
+ 	 */
 
 /* ***************** Discretization ******************/
 /*!
@@ -374,30 +376,30 @@
      * parameters. For example permeability, porosity etc.
      *
      */
- 
+
 /* ***************** Adaptive ******************/
 /*!
  * \defgroup Adaptive Adaptive
  *  TODO: Doc me in modules.txt!
  */
- 
+
 /* ***************** Assembly ******************/
 /*!
  * \defgroup Assembly Assembly
  *  TODO: Doc me in modules.txt!
  */
- 
+
 /* ***************** Common ******************/
 /*!
  * \defgroup Common Common
  *  TODO: Doc me in modules.txt!
  */
- 	/*! 
+ 	/*!
   	 * \ingroup Common
   	 * \defgroup Properties Properties
   	 * TODO: Doc me in modules.txt!
   	 */
-  	  
+
 /* ***************** InputOutput ******************/
 /*!
  * \defgroup InputOutput Input Output

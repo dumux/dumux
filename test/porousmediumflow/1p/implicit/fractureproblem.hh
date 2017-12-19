@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief A discrete fracture network embedded in an impermeable matrix.
  *        The fracture is a 2D network embedded in 3D.
  */
@@ -71,8 +71,7 @@ SET_PROP(FractureProblem, FluidSystem)
 } // end namespace Properties
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
+ * \ingroup OnePTests
  * \brief A discrete fracture network embedded in an impermeable matrix.
  *        The fracture is a 2D network embedded in 3D.
  *

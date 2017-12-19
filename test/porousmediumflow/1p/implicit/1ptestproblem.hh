@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief A test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  */
@@ -68,8 +68,7 @@ SET_TYPE_PROP(OnePTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag> );
 }
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
+ * \ingroup OnePTests
  * \brief  Test problem for the one-phase model:
  * water is flowing from bottom to top through and around a low permeable lens.
  *
