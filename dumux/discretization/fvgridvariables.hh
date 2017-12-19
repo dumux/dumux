@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class storing scv and scvf variables
+ * \ingroup Discretization
+ * \brief The grid variable class for finite volume schemes storing variables on scv and scvf (volume and flux variables)
  */
 #ifndef DUMUX_FV_GRID_VARIABLES_HH
 #define DUMUX_FV_GRID_VARIABLES_HH
@@ -30,7 +31,8 @@ namespace Dumux
 {
 
 /*!
- * \brief Class storing scv and scvf variables
+ * \ingroup Discretization
+ * \brief The grid variable class for finite volume schemes storing variables on scv and scvf (volume and flux variables)
  */
 template<class TypeTag>
 class FVGridVariables
@@ -42,7 +44,6 @@ class FVGridVariables
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
 public:
-    //! Constructor
     FVGridVariables(std::shared_ptr<const Problem> problem,
                     std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : problem_(problem)
@@ -85,8 +86,10 @@ public:
         prevGridVolVars_.update(*fvGridGeometry_, initSol);
     }
 
-    //! Sets the current state as the previous for next time step
-    //! this has to be called at the end of each time step
+    /*!
+     * \brief Sets the current state as the previous for next time step
+     * \note this has to be called at the end of each time step
+     */
     void advanceTimeStep()
     {
         prevGridVolVars_ = curGridVolVars_;
@@ -102,34 +105,38 @@ public:
         gridFluxVarsCache_.update(*fvGridGeometry_, curGridVolVars_, solution);
     }
 
+    //! return the flux variables cache
     const GridFluxVariablesCache& gridFluxVarsCache() const
     { return gridFluxVarsCache_; }
 
-    const GridVolumeVariables& curGridVolVars() const
-    { return curGridVolVars_; }
-
-    const GridVolumeVariables& prevGridVolVars() const
-    { return prevGridVolVars_; }
-
+    //! return the flux variables cache
     GridFluxVariablesCache& gridFluxVarsCache()
     { return gridFluxVarsCache_; }
 
+    //! return the current volume variables
+    const GridVolumeVariables& curGridVolVars() const
+    { return curGridVolVars_; }
+
+    //! return the current volume variables
     GridVolumeVariables& curGridVolVars()
     { return curGridVolVars_; }
 
+    //! return the volume variables of the previous time step (for instationary problems)
+    const GridVolumeVariables& prevGridVolVars() const
+    { return prevGridVolVars_; }
+
+    //! return the volume variables of the previous time step (for instationary problems)
     GridVolumeVariables& prevGridVolVars()
     { return prevGridVolVars_; }
 
 private:
-    std::shared_ptr<const Problem> problem_;
-    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const Problem> problem_; //!< pointer to the constant problem definition
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_; //!< pointer to the constant grid geometry
 
-    // the current and previous variables (primary and secondary variables)
-    GridVolumeVariables curGridVolVars_;
-    GridVolumeVariables prevGridVolVars_;
+    GridVolumeVariables curGridVolVars_; //!< the current volume variables (primary and secondary variables)
+    GridVolumeVariables prevGridVolVars_; //!< the previous time step's volume variables (primary and secondary variables)
 
-    // the flux variables cache vector vector
-    GridFluxVariablesCache gridFluxVarsCache_;
+    GridFluxVariablesCache gridFluxVarsCache_; //!< the flux variables cache
 };
 
 } // end namespace Dumux

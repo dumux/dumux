@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class the flux stencil
+ * \ingroup Discretization
+ * \brief The flux stencil specialized for different discretization schemes
  */
 #ifndef DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 #define DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
@@ -35,7 +36,7 @@ class FluxStencilImplementation;
 
 /*!
  * \ingroup Discretization
- * \brief The flux stencil specialized for each discretization method
+ * \brief The flux stencil specialized for different discretization schemes
  * \note There might be different stencils used for e.g. advection and diffusion for schemes
  *       where the stencil depends on variables. Also schemes might even have solution dependent
  *       stencil. However, we always reserve the stencil or all DOFs that are possibly involved
@@ -45,7 +46,10 @@ class FluxStencilImplementation;
 template<class TypeTag>
 using FluxStencil = FluxStencilImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-//! Flux stencil for the cell-centered TPFA scheme
+/*
+ * \ingroup Discretization
+ * \brief Flux stencil specialization for the cell-centered tpfa scheme
+ */
 template<class TypeTag>
 class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
@@ -75,7 +79,10 @@ public:
     }
 };
 
-//! Specialization for cell-centered MPFA schemes
+/*
+ * \ingroup Discretization
+ * \brief Flux stencil specialization for the cell-centered mpfa scheme
+ */
 template<class TypeTag>
 class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {

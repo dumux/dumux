@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Discretization
  * \brief The available discretization methods in Dumux
  */
 #ifndef DUMUX_DISCRETIZARION_METHODS_HH
@@ -26,10 +26,13 @@
 
 namespace Dumux
 {
-    //! The discretization methods
-    //! \note Use none if specifying a discretization method is required but
-    //!       the class in question is not specific to a a discretization method
-    //!       or the classification is non-applicable
+    /*!
+     * \brief The available discretization methods in Dumux
+     * \ingroup Discretization
+     * \note Use none if specifying a discretization method is required but
+     *       the class in question is not specific to a a discretization method
+     *       or the classification is non-applicable
+     */
     enum class DiscretizationMethods : unsigned int
     {
         None, Box, CCTpfa, CCMpfa, Staggered

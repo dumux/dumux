@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
+ * \ingroup Discretization
+ * \brief Fourier's law specialized for different discretization schemes
+ *        This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
  */
 #ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_HH
@@ -27,15 +29,15 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template <class TypeTag, DiscretizationMethods Method>
 class FouriersLawImplementation
 {};
 
 /*!
- * \ingroup FouriersLaw
+ * \ingroup Discretization
  * \brief Evaluates the heat conduction flux according to Fouriers's law
  */
 template <class TypeTag>
