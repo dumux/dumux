@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ConstraintSolver
  * \brief Determines the phase compositions, pressures and saturations
  *        given the total mass of all components.
  */
@@ -95,7 +95,6 @@ public:
      * \param fluidState Thermodynamic state of the fluids
      * \param paramCache  Container for cache parameters
      * \param globalMolarities
-     *
      */
     template <class FluidState>
     static void guessInitial(FluidState &fluidState,

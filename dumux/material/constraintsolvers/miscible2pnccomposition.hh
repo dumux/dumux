@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ConstraintSolver
  * \brief Computes the composition of all phases of a N-phase,
  *        N-component fluid system assuming that all N phases are
  *        present

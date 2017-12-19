@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ConstraintSolver
  * \brief Determines the pressures and saturations of all fluid phases
  *        given the total mass of all components.
  */
@@ -60,8 +60,8 @@ public:
  * \name Concentration flash for a given feed fraction
  */
 //@{
-    //! 2p2c Flash for constant p & t if concentrations (feed mass fraction) is given.
-    /*!
+    /*! 2p2c Flash for constant p & t if concentrations (feed mass fraction) is given.
+     *
      * Routine goes as follows:
      * - determination of the equilibrium constants from the fluid system
      * - determination of maximum solubilities (mole fractions) according to phase pressures
@@ -171,8 +171,8 @@ public:
         fluidState.setSaturation(wPhaseIdx, sw);
     }
 
-    //! The simplest possible update routine for 1p2c "flash" calculations
-    /*!
+    /*! The simplest possible update routine for 1p2c "flash" calculations
+     *
      * Routine goes as follows:
      * - Check if we are in single phase condition
      * - Assign total concentration to the present phase
@@ -242,8 +242,8 @@ public:
  * \name Saturation flash for a given saturation (e.g. at boundary)
  */
 //@{
-    //! a flash routine for 2p2c systems if the saturation instead of total concentration is known.
-    /*!
+    /*! a flash routine for 2p2c systems if the saturation instead of total concentration is known.
+     *
      * Routine goes as follows:
      * - determination of the equilibrium constants from the fluid system
      * - determination of maximum solubilities (mole fractions) according to phase pressures
