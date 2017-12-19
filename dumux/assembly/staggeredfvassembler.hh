@@ -151,49 +151,6 @@ public:
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
-    /*!
-     * \brief Assembles only the global Jacobian of the residual.
-     */
-    void assembleJacobian(const SolutionVector& curSol)
-    {
-        if (!stationary_ && localResidual_.isStationary())
-            DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
-
-        if(!jacobian_)
-        {
-            jacobian_ = std::make_shared<JacobianMatrix>();
-            jacobian_->setBuildMode(JacobianMatrix::random);
-            setJacobianPattern();
-        }
-
-        resetJacobian_();
-
-        bool succeeded;
-        // try assembling the global linear system
-        try
-        {
-            // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
-                LocalAssembler::assemble(*this, *jacobian_, element, curSol);
-
-            // if we get here, everything worked well
-            succeeded = true;
-            if (gridView().comm().size() > 1)
-                succeeded = gridView().comm().min(succeeded);
-        }
-        // throw exception if a problem ocurred
-        catch (NumericalProblem &e)
-        {
-            std::cout << "rank " << gridView().comm().rank()
-                      << " caught an exception while assembling:" << e.what()
-                      << "\n";
-            succeeded = false;
-            if (gridView().comm().size() > 1)
-                succeeded = gridView().comm().min(succeeded);
-        }
-        if (!succeeded)
-            DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
-    }
 
     //! compute the residuals
     void assembleResidual(const SolutionVector& curSol)
@@ -215,7 +172,7 @@ public:
 
         // let the local assembler add the element contributions
         for (const auto element : elements(gridView()))
-            LocalAssembler::assemble(*this, r, element, curSol);
+            LocalAssembler::assembleResidual(*this, r, element, curSol);
     }
 
     //! computes the residual norm

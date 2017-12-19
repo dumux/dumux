@@ -95,6 +95,77 @@ class StaggeredLocalAssembler<TypeTag,
 public:
 
     /*!
+     * \brief Assemble the residual only
+     */
+    template<class Assembler>
+    static void assembleResidual(Assembler& assembler,
+                                SolutionVector& res,
+                                const Element& element,
+                                const SolutionVector& curSol)
+    {
+        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+        typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+        typename DofTypeIndices::FaceIdx faceIdx;
+
+        // get some references for convenience
+        const auto& problem = assembler.problem();
+        auto& localResidual = assembler.localResidual();
+        auto& gridVariables = assembler.gridVariables();
+
+        // prepare the local views
+        auto fvGeometry = localView(assembler.fvGridGeometry());
+        fvGeometry.bind(element);
+
+        auto curElemVolVars = localView(gridVariables.curGridVolVars());
+        curElemVolVars.bind(element, fvGeometry, curSol);
+
+        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
+        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+
+        auto curElemFaceVars = localView(gridVariables.curGridFaceVars());
+        curElemFaceVars.bind(element, fvGeometry, curSol);
+
+        const bool isStationary = localResidual.isStationary();
+        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
+        auto prevElemFaceVars = localView(gridVariables.prevGridFaceVars());
+        if (!isStationary)
+        {
+            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
+            prevElemFaceVars.bindElement(element, fvGeometry, localResidual.prevSol());
+        }
+
+        // for compatibility with box models
+        ElementBoundaryTypes elemBcTypes;
+
+        const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
+        res[cellCenterIdx][cellCenterGlobalI] = localResidual.evalCellCenter(problem,
+                                                                             element,
+                                                                             fvGeometry,
+                                                                             prevElemVolVars,
+                                                                             curElemVolVars,
+                                                                             prevElemFaceVars,
+                                                                             curElemFaceVars,
+                                                                             elemBcTypes,
+                                                                             elemFluxVarsCache);
+
+        // treat the local residua of the face dofs:
+        for(auto&& scvf : scvfs(fvGeometry))
+        {
+            res[faceIdx][scvf.dofIndex()] += localResidual.evalFace(problem,
+                                                                    element,
+                                                                    fvGeometry,
+                                                                    scvf,
+                                                                    prevElemVolVars,
+                                                                    curElemVolVars,
+                                                                    prevElemFaceVars,
+                                                                    curElemFaceVars,
+                                                                    elemBcTypes,
+                                                                    elemFluxVarsCache);
+
+        }
+    }
+
+    /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
      */
@@ -188,60 +259,6 @@ public:
                                 res[cellCenterIdx][cellCenterGlobalI],
                                 faceResidualCache);
 
-    }
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        std::cout << "calling wrong \n";
-        assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Assemble the residual only
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        std::cout << "calling wrong \n";
-        // using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-        // typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-        // typename DofTypeIndices::FaceIdx faceIdx;
-
-        // const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
-        // res[cellCenterIdx][cellCenterGlobalI] = localResidual.evalCellCenter(problem,
-        //                                                                      element,
-        //                                                                      fvGeometry,
-        //                                                                      prevElemVolVars,
-        //                                                                      curElemVolVars,
-        //                                                                      curGlobalFaceVars,
-        //                                                                      prevGlobalFaceVars,
-        //                                                                      elemBcTypes,
-        //                                                                      elemFluxVarsCache)[0];
-
-
-
-        // treat the local residua of the face dofs:
-        // create a cache to reuse some results for the calculation of the derivatives
-        // FaceSolutionVector faceResidualCache;
-        // faceResidualCache.resize(assembler.fvGridGeometry().numScvf());
-        // faceResidualCache = 0.0;
-        //
-        // auto fvGeometry = localView(assembler.fvGridGeometry());
-        // fvGeometry.bind(element);
-        // auto faceResiduals = assembleFace_(assembler, element, curSol);
-        //
-        // for(auto&& scvf : scvfs(fvGeometry))
-        // {
-        //     res[faceIdx][scvf.dofIndex()] += faceResiduals[scvf.localFaceIdx()];
-        //     faceResidualCache[scvf.localFaceIdx()] = faceResiduals[scvf.localFaceIdx()];
-        // }
     }
 
     /*!
