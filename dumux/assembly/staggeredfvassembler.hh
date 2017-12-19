@@ -131,11 +131,6 @@ public:
             succeeded = true;
             if (gridView().comm().size() > 1)
                 succeeded = gridView().comm().min(succeeded);
-
-            // printmatrix(std::cout, (*jacobian_)[cellCenterIdx][cellCenterIdx], "A11", "");
-            // printmatrix(std::cout, (*jacobian_)[cellCenterIdx][faceIdx], "A12", "");
-            // printmatrix(std::cout, (*jacobian_)[faceIdx][cellCenterIdx], "A21", "");
-            // printmatrix(std::cout, (*jacobian_)[faceIdx][faceIdx], "A22", "");
         }
         // throw exception if a problem ocurred
         catch (NumericalProblem &e)
@@ -151,49 +146,6 @@ public:
             DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
     }
 
-    /*!
-     * \brief Assembles only the global Jacobian of the residual.
-     */
-    void assembleJacobian(const SolutionVector& curSol)
-    {
-        if (!stationary_ && localResidual_.isStationary())
-            DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
-
-        if(!jacobian_)
-        {
-            jacobian_ = std::make_shared<JacobianMatrix>();
-            jacobian_->setBuildMode(JacobianMatrix::random);
-            setJacobianPattern();
-        }
-
-        resetJacobian_();
-
-        bool succeeded;
-        // try assembling the global linear system
-        try
-        {
-            // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
-                LocalAssembler::assemble(*this, *jacobian_, element, curSol);
-
-            // if we get here, everything worked well
-            succeeded = true;
-            if (gridView().comm().size() > 1)
-                succeeded = gridView().comm().min(succeeded);
-        }
-        // throw exception if a problem ocurred
-        catch (NumericalProblem &e)
-        {
-            std::cout << "rank " << gridView().comm().rank()
-                      << " caught an exception while assembling:" << e.what()
-                      << "\n";
-            succeeded = false;
-            if (gridView().comm().size() > 1)
-                succeeded = gridView().comm().min(succeeded);
-        }
-        if (!succeeded)
-            DUNE_THROW(NumericalProblem, "A process did not succeed in linearizing the system");
-    }
 
     //! compute the residuals
     void assembleResidual(const SolutionVector& curSol)
@@ -215,7 +167,7 @@ public:
 
         // let the local assembler add the element contributions
         for (const auto element : elements(gridView()))
-            LocalAssembler::assemble(*this, r, element, curSol);
+            LocalAssembler::assembleResidual(*this, r, element, curSol);
     }
 
     //! computes the residual norm
@@ -245,8 +197,8 @@ public:
     {
         jacobian_ = A;
         residual_ = r;
-        //
-        // check and/or set the BCRS matrix's build mode
+
+        // set the BCRS matrix's build mode
         // convenience references
         CCToCCMatrixBlock& A11 = (*jacobian_)[cellCenterIdx][cellCenterIdx];
         CCToFaceMatrixBlock& A12 = (*jacobian_)[cellCenterIdx][faceIdx];
@@ -260,13 +212,6 @@ public:
 
         setJacobianPattern();
         setResidualSize();
-        // if (jacobian_->buildMode() == JacobianMatrix::BuildMode::unknown)
-        //     jacobian_->setBuildMode(JacobianMatrix::random);
-        // else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)
-        //     DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
-        //
-        // setJacobianPattern();
-        // setResidualSize();
     }
 
     /*!
