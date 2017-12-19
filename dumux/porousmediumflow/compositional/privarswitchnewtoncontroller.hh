@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Newton
  * \brief Reference implementation of a controller class for the Newton solver.
  *
  * Usually this controller should be sufficient.

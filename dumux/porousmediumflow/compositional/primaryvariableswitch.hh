@@ -97,8 +97,11 @@ public:
 
     /*!
      * \brief Update the variable switch / phase presence
-     * \param problem The problem
+     *
      * \param curSol The current solution to be updated / modified
+     * \param gridVariables The secondary variables on the grid
+     * \param problem The problem
+     * \param fvGridGeometry The finite-volume grid geometry
      */
     bool update(SolutionVector& curSol,
                 GridVariables& gridVariables,

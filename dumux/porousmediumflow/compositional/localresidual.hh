@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Implicit
  * \brief Element-wise calculation of the local residual for problems
  *        using compositional fully implicit model.
  */
@@ -35,7 +35,6 @@ NEW_PROP_TAG(ReplaceCompEqIdx);
 
 /*!
  * \ingroup Implicit
- * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the local residual for problems
  *        using compositional fully implicit model.
  *
@@ -84,9 +83,9 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     * \param problem The problem
+     * \param scv The sub control volume
+     * \param volVars The current or previous volVars
      */
     ResidualVector computeStorage(const Problem& problem,
                                   const SubControlVolume& scv,
@@ -133,10 +132,12 @@ public:
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a sub-control volume.
      *
-     * \param flux The flux over the SCV (sub-control-volume) face for each component
-     * \param fIdx The index of the SCV face
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
+     * \param problem The problem
+     * \param element The current element.
+     * \param fvGeometry The finite-volume geometry
+     * \param elemVolVars The volume variables of the current element
+     * \param scvf The sub control volume face to compute the flux on
+     * \param elemFluxVarsCache The cache related to flux compuation
      */
     ResidualVector computeFlux(const Problem& problem,
                                const Element& element,
