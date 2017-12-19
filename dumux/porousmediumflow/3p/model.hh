@@ -18,17 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Adaption of the fully implicit scheme to the three-phase flow model.
- *
- * The model is designed for simulating three fluid phases with water, gas, and
- * a liquid contaminant (NAPL - non-aqueous phase liquid)
- */
-#ifndef DUMUX_3P_MODEL_HH
-#define DUMUX_3P_MODEL_HH
-
-/*!
- * \file
  * \ingroup ThreePModel
  * \brief Adaption of the fully implicit scheme to the three-phase flow model.
  *
@@ -53,6 +42,8 @@
  * The used primary variables are gas phase pressure \f$p_g\f$,
  * water saturation \f$S_w\f$ and NAPL saturation \f$S_n\f$.
  */
+#ifndef DUMUX_3P_MODEL_HH
+#define DUMUX_3P_MODEL_HH
 
 #include <dumux/common/properties.hh>
 
@@ -74,7 +65,9 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////
+//! The type tags for the isothermal three-phase model
 NEW_TYPE_TAG(ThreeP, INHERITS_FROM(PorousMediumFlow));
+//! The type tags for the non-isothermal three-phase model
 NEW_TYPE_TAG(ThreePNI, INHERITS_FROM(ThreeP, NonIsothermal));
 
 //////////////////////////////////////////////////////////////////
@@ -97,6 +90,12 @@ SET_PROP(ThreeP, NumPhases)
                   "Only fluid systems with 3 phases are supported by the 3p model!");
 };
 
+/*!
+ * \brief Set the property for the number of components.
+ *
+ *  We just forward the number from the fluid system and use an static
+ *  assert to make sure it is 3.
+ */
 SET_PROP(ThreeP, NumComponents)
 {
  private:
@@ -108,7 +107,8 @@ SET_PROP(ThreeP, NumComponents)
                   "Only fluid systems with 3 components are supported by the 3p model!");
 };
 
-SET_INT_PROP(ThreeP, NumEq, 3); //!< set the number of equations to 3
+//! Set the number of equations to 3
+SET_INT_PROP(ThreeP, NumEq, 3);
 
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
@@ -116,13 +116,13 @@ SET_TYPE_PROP(ThreeP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);
 //! Enable advection
 SET_BOOL_PROP(ThreeP, EnableAdvection, true);
 
-//! disable molecular diffusion for the 3p model
+//! Disable molecular diffusion for the 3p model
 SET_BOOL_PROP(ThreeP, EnableMolecularDiffusion, false);
 
 //! Isothermal model by default
 SET_BOOL_PROP(ThreeP, EnableEnergyBalance, false);
 
-//! the VolumeVariables property
+//! The VolumeVariables property
 SET_TYPE_PROP(ThreeP, VolumeVariables, ThreePVolumeVariables<TypeTag>);
 
 //! The indices required by the isothermal 3p model
@@ -132,6 +132,13 @@ SET_TYPE_PROP(ThreeP, Indices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
 //! Use FVSpatialParams by default.
 SET_TYPE_PROP(ThreeP, SpatialParams, FVSpatialParams<TypeTag>);
 
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state.
+ *
+ *  The fluid state should be chosen appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *  This can be done in the problem.
+ */
 SET_PROP(ThreeP, FluidState)
 {
 private:
@@ -143,7 +150,6 @@ public:
 
 //! Set the vtk output fields specific to the ThreeP model
 SET_TYPE_PROP(ThreeP, VtkOutputFields, ThreePVtkOutputFields<TypeTag>);
-
 
 /////////////////////////////////////////////////
 // Properties for the non-isothermal 3p model
@@ -163,19 +169,19 @@ public:
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//set isothermal VolumeVariables
+//! Set isothermal VolumeVariables
 SET_TYPE_PROP(ThreePNI, IsothermalVolumeVariables, ThreePVolumeVariables<TypeTag>);
 
-//set isothermal LocalResidual
+//! Set isothermal LocalResidual
 SET_TYPE_PROP(ThreePNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
-//set isothermal output fields
+//! Set isothermal output fields
 SET_TYPE_PROP(ThreePNI, IsothermalVtkOutputFields, ThreePVtkOutputFields<TypeTag>);
 
-//set isothermal Indices
+//! Set isothermal Indices
 SET_TYPE_PROP(ThreePNI, IsothermalIndices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
 
-//set isothermal NumEq
+// Set isothermal NumEq
 SET_INT_PROP(ThreePNI, IsothermalNumEq, 3);
 
 } // end namespace Properties

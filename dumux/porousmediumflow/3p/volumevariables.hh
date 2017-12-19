@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Contains the quantities which are constant within a
- *        finite volume in the three-phase model.
+ * \ingroup ThreePModel
+ * \brief Contains the quantities which are constant within a finite volume in the three-phase model.
  */
 #ifndef DUMUX_3P_VOLUME_VARIABLES_HH
 #define DUMUX_3P_VOLUME_VARIABLES_HH
@@ -36,8 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePModel
- * \brief Contains the quantities which are are constant within a
- *        finite volume in three-phase model.
+ * \brief Contains the quantities which are constant within a finite volume in the three-phase model.
  */
 template <class TypeTag>
 class ThreePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
@@ -78,7 +76,7 @@ class ThreePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     enum { dofCodim = isBox ? dim : 0 };
 
 public:
-    //! The type of the object returned by the fluidState() method
+
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 
@@ -251,10 +249,9 @@ public:
     { return permeability_; }
 
 protected:
-
-    Scalar porosity_;        //!< Effective porosity within the control volume
+    Scalar porosity_;
     PermeabilityType permeability_;
-    Scalar mobility_[numPhases];  //!< Effective mobility within the control volume
+    Scalar mobility_[numPhases];
     FluidState fluidState_;
 
 private:
@@ -265,6 +262,7 @@ private:
     { return *static_cast<const Implementation*>(this); }
 };
 
+// TODO doc me!
 template <class TypeTag>
 const typename ThreePVolumeVariables<TypeTag>::Scalar ThreePVolumeVariables<TypeTag>::R = Constants<typename GET_PROP_TYPE(TypeTag, Scalar)>::R;
 
