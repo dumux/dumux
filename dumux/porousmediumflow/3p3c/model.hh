@@ -96,17 +96,14 @@
 
 namespace Dumux {
 namespace Properties {
-
-//! The type tags for the implicit three-phase three-component problems
+//! The type tags for the isothermal three-phase three-component model
 NEW_TYPE_TAG(ThreePThreeC, INHERITS_FROM(PorousMediumFlow));
-
-//! The type tags for the corresponding non-isothermal problems
+//! The type tags for the non-isothermal three-phase three-component model
 NEW_TYPE_TAG(ThreePThreeCNI, INHERITS_FROM(ThreePThreeC, NonIsothermal));
 
 //////////////////////////////////////////////////////////////////
 // Property values
 //////////////////////////////////////////////////////////////////
-
 /*!
  * \brief Set the property for the number of components.
  *
@@ -149,7 +146,8 @@ SET_PROP(ThreePThreeC, FluidState){
         using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
 
-SET_INT_PROP(ThreePThreeC, NumEq, 3); //!< set the number of equations to 3
+//! Set the number of equations to 3
+SET_INT_PROP(ThreePThreeC, NumEq, 3);
 
 //! The local residual function of the conservation equations
 SET_TYPE_PROP(ThreePThreeC, LocalResidual, ThreePThreeCLocalResidual<TypeTag>);
@@ -210,16 +208,16 @@ public:
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//set isothermal VolumeVariables
+//! Set isothermal VolumeVariables
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalVolumeVariables, ThreePThreeCVolumeVariables<TypeTag>);
 
-//set isothermal LocalResidual
+//! Set isothermal LocalResidual
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalLocalResidual, ThreePThreeCLocalResidual<TypeTag>);
 
-//set isothermal Indices
+//! Set isothermal Indices
 SET_TYPE_PROP(ThreePThreeCNI, IsothermalIndices, ThreePThreeCIndices<TypeTag, /*PVOffset=*/0>);
 
-//set isothermal NumEq
+//! Set isothermal NumEq
 SET_INT_PROP(ThreePThreeCNI, IsothermalNumEq, 3);
 
 //! Set the vtk output fields specific to the ThreeP model

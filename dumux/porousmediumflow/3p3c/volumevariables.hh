@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePThreeCModel
  * \brief Contains the quantities which are constant within a
  *        finite volume in the three-phase three-component model.
  */
@@ -102,8 +102,14 @@ public:
    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
-     */
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub control volume
+    */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,

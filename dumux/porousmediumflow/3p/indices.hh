@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Defines the indices required for the two-phase model.
+ * \ingroup ThreePModel
+ * \brief Defines the indices for the three-phase model.
  */
 #ifndef DUMUX_3P_INDICES_HH
 #define DUMUX_3P_INDICES_HH
@@ -30,10 +31,8 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePModel
- * \ingroup ImplicitIndices
  * \brief The common indices for the isothermal three-phase model.
  *
- * \tparam formulation The formulation, only pgSwSn is available.
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
@@ -49,15 +48,15 @@ public:
 
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for gas phase pressure in a solution vector
-    static const int swIdx = PVOffset + 1; //!< Index of water (more wetting than the other liquid) saturation
-    static const int snIdx = PVOffset + 2; //!< Index of (e.g.) NAPL saturation
+    static const int pressureIdx = PVOffset + 0; //!< index for gas phase pressure in a solution vector
+    static const int swIdx = PVOffset + 1; //!< index of water (more wetting than the other liquid) saturation
+    static const int snIdx = PVOffset + 2; //!< index of (e.g.) NAPL saturation
 
 
     // equation indices
-    static const int conti0EqIdx = PVOffset    + wPhaseIdx; //!< Index of the mass conservation equation for the water component
-    static const int conti1EqIdx = conti0EqIdx + nPhaseIdx; //!< Index of the mass conservation equation for the contaminant component
-    static const int conti2EqIdx = conti0EqIdx + gPhaseIdx; //!< Index of the mass conservation equation for the air component
+    static const int conti0EqIdx = PVOffset    + wPhaseIdx; //!< index of the mass conservation equation for the water component
+    static const int conti1EqIdx = conti0EqIdx + nPhaseIdx; //!< index of the mass conservation equation for the contaminant component
+    static const int conti2EqIdx = conti0EqIdx + gPhaseIdx; //!< index of the mass conservation equation for the air component
 
     static const int contiWEqIdx = conti0EqIdx + wPhaseIdx; //!< index of the mass conservation equation for the water component
     static const int contiNEqIdx = conti0EqIdx + nPhaseIdx; //!< index of the mass conservation equation for the contaminant component

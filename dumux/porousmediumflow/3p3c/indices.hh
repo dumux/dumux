@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Defines the indices required for the three-phase three-component
- *        fully implicit model.
+ * \ingroup ThreePThreeCModel
+ * \brief Defines the indices required for the three-phase three-component fully implicit model.
  */
 #ifndef DUMUX_3P3C_INDICES_HH
 #define DUMUX_3P3C_INDICES_HH
@@ -31,10 +31,8 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePThreeCModel
- * \ingroup ImplicitIndices
  * \brief The indices for the isothermal three-phase three-component model.
  *
- * \tparam formulation The formulation, only pgSwSn is available.
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
@@ -64,21 +62,21 @@ public:
     static const int wgPhaseOnly = 6; //!< Only water and gas phases are present
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for gas phase pressure in a solution vector
-    static const int switch1Idx = PVOffset + 1; //!< Index 1 of saturation or mole fraction
-    static const int switch2Idx = PVOffset + 2; //!< Index 2 of saturation or mole fraction
+    static const int pressureIdx = PVOffset + 0; //!< index for gas phase pressure in a solution vector
+    static const int switch1Idx = PVOffset + 1; //!< index 1 of saturation or mole fraction
+    static const int switch2Idx = PVOffset + 2; //!< index 2 of saturation or mole fraction
 
-    //! Index for gas phase pressure in a solution vector
+    //! index for gas phase pressure in a solution vector
     static const int pgIdx = pressureIdx;
-    //! Index of either the saturation of the wetting phase or the mole fraction secondary component if a phase is not present
+    //! index of either the saturation of the wetting phase or the mole fraction secondary component if a phase is not present
     static const int sOrX1Idx = switch1Idx;
-    //! Index of either the saturation of the nonwetting phase or the mole fraction secondary component if a phase is not present
+    //! index of either the saturation of the nonwetting phase or the mole fraction secondary component if a phase is not present
     static const int sOrX2Idx = switch2Idx;
 
     // equation indices
-    static const int conti0EqIdx = PVOffset    + wCompIdx; //!< Index of the mass conservation equation for the water component
-    static const int conti1EqIdx = conti0EqIdx + nCompIdx; //!< Index of the mass conservation equation for the contaminant component
-    static const int conti2EqIdx = conti0EqIdx + gCompIdx; //!< Index of the mass conservation equation for the gas component
+    static const int conti0EqIdx = PVOffset    + wCompIdx; //!< index of the mass conservation equation for the water component
+    static const int conti1EqIdx = conti0EqIdx + nCompIdx; //!< index of the mass conservation equation for the contaminant component
+    static const int conti2EqIdx = conti0EqIdx + gCompIdx; //!< index of the mass conservation equation for the gas component
 
     static const int contiWEqIdx = conti0EqIdx + wCompIdx; //!< index of the mass conservation equation for the water component
     static const int contiNEqIdx = conti0EqIdx + nCompIdx; //!< index of the mass conservation equation for the contaminant component
