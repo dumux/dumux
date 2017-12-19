@@ -192,7 +192,7 @@ SET_TYPE_PROP(ThreePNI, IsothermalVtkOutputFields, ThreePVtkOutputFields<TypeTag
 //! Set isothermal Indices
 SET_TYPE_PROP(ThreePNI, IsothermalIndices, ThreePIndices<TypeTag,/*PVOffset=*/0>);
 
-// Set isothermal NumEq
+//! Set isothermal NumEq
 SET_INT_PROP(ThreePNI, IsothermalNumEq, 3);
 
 } // end namespace Properties
