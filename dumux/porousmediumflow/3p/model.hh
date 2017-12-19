@@ -22,12 +22,23 @@
  * \brief Adaption of the fully implicit scheme to the three-phase flow model.
  *
  * This model implements three-phase flow of three fluid phases
- * \f$\alpha \in \{ water, gas, NAPL \}\f$
+ * \f$\alpha \in \{ water, gas, NAPL \}\f$.
  * The standard multiphase Darcy
- * approach is used as the equation for the conservation of momentum.
+ * approach is used as the equation for the conservation of momentum, i.e.
+ \f[
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} \textbf{K}
+ \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} {\textbf g} \right)
+ \f]
  *
- * By inserting this into the equations for the conservation of the
- * components, the well-known multiphase flow equation is obtained.
+ * By inserting this into the equations for the conservation
+ * of the phase mass, one gets
+ \f[
+ \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
+ -
+ \text{div} \left\{
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left(\textbf{grad}\, p_\alpha - \varrho_{\alpha} \mbox{\bf g} \right)
+ \right\} - q_\alpha = 0 \;.
+ \f]
  *
  * All equations are discretized using a vertex-centered finite volume (box)
  * or cell-centered finite volume scheme as spatial
