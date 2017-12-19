@@ -19,8 +19,7 @@
 /*!
  * \file
  * \ingroup OnePNCModel
- * \brief  Base class for all models which use the single-phase, n-component fully implicit model.
- *         Adaption of the fully implicit model to the one-phase n-component flow model.
+ * \brief  Adaption of the fully implicit model to the one-phase n-component flow model.
  *
  * This model implements a one-phase flow of a compressible fluid, that consists
  * of n components, using a standard Darcy approach as the equation for the
