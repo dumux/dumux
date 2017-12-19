@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPNCTests
  * \brief Definition of a problem for water management in PEM fuel cells.
  */
 #ifndef DUMUX_FUELCELL_PROBLEM_HH
@@ -35,7 +35,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup TwoPNCTests
+ * \brief Definition of a problem for water management in PEM fuel cells.
+ */
 template <class TypeTag>
 class FuelCellProblem;
 

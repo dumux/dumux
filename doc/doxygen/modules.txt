@@ -194,9 +194,11 @@
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPNCTests 2pnc (two phase, n-component) benchmarks and tests
+ 	 * TwoPNCTests contain a fuel cell test problem using the TwoPNCModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPNCMinTests 2pncmin (two phase, n-component mineralization) benchmarks and tests
+ 	 * TwoPNCMinTests contain a salt dissolution test problem using the TwoPNCMinModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePTests 3p (three phase) benchmarks and tests
