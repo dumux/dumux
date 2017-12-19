@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the Richards fully implicit models.
  */
@@ -29,7 +29,6 @@ namespace Dumux
 {
 /*!
  * \ingroup RichardsModel
- * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the Richards fully implicit models.
  */

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsNCModel
  * \brief Base class for all models which use the Richards,
  *        n-component fully implicit model.
  */

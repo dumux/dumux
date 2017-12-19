@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup RichardsModel
  * \brief Index names for the Richards model.
  */
 #ifndef DUMUX_RICHARDS_INDICES_HH
@@ -29,7 +30,6 @@ namespace Dumux
 
 /*!
  * \ingroup RichardsModel
- * \ingroup ImplicitIndices
  * \brief Index names for the Richards model.
  */
 
@@ -52,13 +52,13 @@ struct RichardsIndices
     //////////
     // phase indices
     //////////
-    static constexpr int wPhaseIdx = 0; //!< Index of the wetting phase;
-    static constexpr int nPhaseIdx = 1; //!< Index of the non-wetting phase;
+    static constexpr int wPhaseIdx = 0; //! Index of the wetting phase;
+    static constexpr int nPhaseIdx = 1; //! Index of the non-wetting phase;
 
     // present phases (-> 'pseudo' primary variable)
-    static constexpr int wPhaseOnly = 1; //!< Only the non-wetting phase is present
-    static constexpr int nPhaseOnly = 2; //!< Only the wetting phase is present
-    static constexpr int bothPhases = 3; //!< Both phases are present
+    static constexpr int wPhaseOnly = 1; //! Only the non-wetting phase is present
+    static constexpr int nPhaseOnly = 2; //! Only the wetting phase is present
+    static constexpr int bothPhases = 3; //! Both phases are present
 };
 // \}
 

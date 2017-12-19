@@ -20,8 +20,7 @@
 /*!
  * \file
  * \ingroup RichardsModel
- *
- * \brief This model which implements a variant of the Richards'
+ * \brief This model implements a variant of the Richards'
  *        equation for quasi-twophase flow.
  *
  * In the unsaturated zone, Richards' equation
@@ -117,7 +116,7 @@ namespace Dumux
 {
 // \{
 ///////////////////////////////////////////////////////////////////////////
-// properties for the isothermal richards model
+// properties for the isothermal Richards model.
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 

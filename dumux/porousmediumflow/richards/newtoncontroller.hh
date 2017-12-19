@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A newton solver specific to the Richards problem.
+ * \ingroup RichardsModel
+ * \brief A Richards model specific controller for the newton solver.
  */
 #ifndef DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 #define DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
@@ -28,7 +29,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup Newton
+ * \ingroup RichardsModel
  * \brief A Richards model specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
