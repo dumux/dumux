@@ -30,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ThreePThreeCModel, InputOutput
+ * \ingroup ThreePThreeCModel
  * \brief Adds vtk output fields specific to the three-phase three-component model
  */
 template<class TypeTag>
