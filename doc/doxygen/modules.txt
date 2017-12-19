@@ -190,6 +190,7 @@
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPTwoCTests 2p2c (two phase, two component) benchmarks and tests
+ 	 * TwoPTwoCTests contain various tests using a TwoPTwoCModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPNCTests 2pnc (two phase, n-component) benchmarks and tests

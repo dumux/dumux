@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTwoCTests
  * \brief test problem for the sequential 2p2c model
  */
 #ifndef DUMUX_TEST_2P2C_PROBLEM_HH
@@ -35,7 +35,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup SequentialTwoPTwoCTests
+ * \brief test problem for the sequential 2p2c model
+ */
 template<class TypeTag>
 class TestDecTwoPTwoCProblem;
 

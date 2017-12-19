@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTwoCTests
  * \brief spatial parameters for the sequential 2p2c test
  */
 #ifndef TEST_2P2C_SPATIALPARAMS_HH
@@ -55,7 +55,7 @@ public:
 }
 
 /*!
- * \ingroup IMPETtests
+ * \ingroup SequentialTwoPTwoCTests
  * \brief spatial parameters for the sequential 2p2c test
  */
 template<class TypeTag>

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the water-air problem.
  */
 #ifndef DUMUX_WATER_AIR_SPATIAL_PARAMS_HH
@@ -35,6 +35,10 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup TwoPTwoCTests
+ * \brief Definition of the spatial parameters for the water-air problem.
+ */
 //forward declaration
 template<class TypeTag>
 class WaterAirSpatialParams;

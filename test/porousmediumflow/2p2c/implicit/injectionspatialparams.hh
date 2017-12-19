@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the injection problem
  *        which uses the isothermal two-phase two-component
  *        fully implicit model.
@@ -53,8 +53,7 @@ SET_TYPE_PROP(InjectionSpatialParams,
 }
 
 /*!
- * \ingroup TwoPTwoCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TwoPTwoCTests
  * \brief Definition of the spatial parameters for the injection problem
  *        which uses the isothermal two-phase two-component
  *        fully implicit model.

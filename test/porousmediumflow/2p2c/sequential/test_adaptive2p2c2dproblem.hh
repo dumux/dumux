@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTwoCTests
  * \brief Test problem for the adaptive sequential 2p2c model in 2D
  */
 #ifndef DUMUX_TEST_ADAPTIVE2D_2P2C_PROBLEM_HH
@@ -36,7 +36,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup SequentialTwoPTwoCTests
+ * \brief Test problem for the adaptive sequential 2p2c model in 2D
+ */
 template<class TypeTag>
 class Adaptive2p2c2d;
 

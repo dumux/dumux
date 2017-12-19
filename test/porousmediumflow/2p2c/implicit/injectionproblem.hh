@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTwoCTests
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  */
 #ifndef DUMUX_INJECTION_PROBLEM_HH
@@ -64,8 +64,7 @@ SET_BOOL_PROP(InjectionTypeTag, UseMoles, true);
 
 
 /*!
- * \ingroup TwoPTwoCModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TwoPTwoCTests
  * \brief Problem where air is injected under a low permeable layer in a depth of 2700m.
  *
  * The domain is sized 60m times 40m and consists of two layers, a moderately
