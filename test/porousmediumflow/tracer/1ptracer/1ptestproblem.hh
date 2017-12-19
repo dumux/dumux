@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup TracerTests
  * \brief The properties for the incompressible test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
@@ -35,6 +36,10 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup TracerTests
+ * \brief The properties for the incompressible test
+ */
 // forward declarations
 template<class TypeTag>
 class OnePTestProblem;

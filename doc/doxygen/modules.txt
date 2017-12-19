@@ -229,6 +229,7 @@
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TracerTests Tracer benchmarks and tests
+ 	 * TracerTests contain various tests using a TracerModel. The files are listed below, with hopefully self-explanatory names.
  	 */
 
 /* ***************** Discretization ******************/

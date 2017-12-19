@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup TracerTests
  * \brief The spatial params the incompressible test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
@@ -28,7 +29,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup TracerTests
+ * \brief The spatial params the incompressible test
+ */
 template<class TypeTag>
 class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {

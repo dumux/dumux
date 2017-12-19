@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem
  */
 #ifndef DUMUX_TRACER_TEST_SPATIAL_PARAMS_HH
@@ -28,11 +28,8 @@
 
 namespace Dumux
 {
-
 /*!
- * \ingroup TracerModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup TracerTests
  * \brief Definition of the spatial parameters for the tracer problem
  */
 template<class TypeTag>
