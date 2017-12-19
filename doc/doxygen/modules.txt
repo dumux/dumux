@@ -220,13 +220,12 @@
  	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
  	 */
  	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
- 	 */
- 	/*! \ingroup BenchmarksAndTests
  	 * \defgroup RichardsTests Richards benchmarks and tests
+ 	 * RichardsTests contain various tests using a RichardsModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup RichardsNCTests Richards n-component benchmarks and tests
+ 	 * RichardsNCTests contain a n-component transport problem in the unsaturated zone using the RichardsNCModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TracerTests Tracer benchmarks and tests

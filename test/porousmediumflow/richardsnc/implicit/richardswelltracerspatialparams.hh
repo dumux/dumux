@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsNCTests
  * \brief spatial parameters for the RichardsWellTracerProblem
  */
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
@@ -35,7 +35,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup RichardsNCTests
+ * \brief spatial parameters for the RichardsWellTracerProblem
+ */
 // forward declaration
 template<class TypeTag>
 class RichardsWellTracerSpatialParams;

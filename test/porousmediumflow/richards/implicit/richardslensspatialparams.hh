@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsTests
  * \brief spatial parameters for the RichardsLensProblem
  */
 #ifndef DUMUX_RICHARDS_LENS_SPATIAL_PARAMETERS_HH
@@ -32,7 +32,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup RichardsTests
+ * \brief spatial parameters for the RichardsLensProblem
+ */
 // forward declaration
 template<class TypeTag>
 class RichardsLensSpatialParams;

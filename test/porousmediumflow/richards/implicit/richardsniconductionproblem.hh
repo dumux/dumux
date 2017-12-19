@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- *
+ * \ingroup RichardsTests
  * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
  * The simulation domain is a tube where with an elevated temperature on the left hand side.
  */
@@ -38,7 +38,11 @@
 
 namespace Dumux
 {
-
+/**
+ * \ingroup RichardsTests
+ * \brief Test for the RichardsModel in combination with the NI model for a conduction problem:
+ * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ */
 template <class TypeTag>
 class RichardsNIConductionProblem;
 
