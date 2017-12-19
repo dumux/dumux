@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
 #ifndef THERMALCONDUCTIVITY_JOHANSEN_HH
@@ -37,7 +37,6 @@ struct JohansenIndices
 
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief Relation for the saturation-dependent effective thermal conductivity
  *
  * The Johansen method (Johansen 1975 \cite johansen1977 ) computes the thermal conductivity of dry and the

@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief Specification of the parameters for a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization uses a maximum value of capillary pressure.
  */
@@ -26,6 +26,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup fluidmatrixinteractionsparams
  * \brief implementation of interfacial area surface params
  */
 template<class ScalarT>
@@ -37,7 +38,7 @@ public:
     AwnSurfacePcMaxFctParams()
     {}
 
-    /*!
+   /*!
     * \brief Return the \f$\mathrm{a_{1}}\f$ shape parameter of awn surface.
     */
    const Scalar a1() const

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief   Implementation of the capillary pressure and
  *          relative permeability <-> saturation relations according to van Genuchten.
  */
@@ -35,7 +35,6 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief Implementation of the van Genuchten capillary pressure <->
  *        saturation relation. This class bundles the "raw" curves
  *        as static members and doesn't concern itself converting

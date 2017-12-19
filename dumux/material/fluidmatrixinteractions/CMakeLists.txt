@@ -8,5 +8,10 @@ add_subdirectory("mp")
 install(FILES
 diffusivityconstant.hh
 diffusivityconstanttau.hh
+diffusivityconstanttortuosity.hh
 diffusivitymillingtonquirk.hh
+permeabilitykozenycarman.hh
+permeabilityrutqvisttsang.hh
+porosityprecipitation.hh
+porosityreactivebed.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidmatrixinteractions)

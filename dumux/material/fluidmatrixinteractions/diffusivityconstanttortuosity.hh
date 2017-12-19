@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief   Relation for the saturation-dependent effective diffusion coefficient
  */
 #ifndef DIFFUSIVITY_CONSTANT_TORTUOSITY_HH
@@ -30,7 +30,6 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief Relation for the saturation-dependent effective diffusion coefficient
  *
  * The material law is:
@@ -52,7 +51,6 @@ public:
     /*!
      * \brief Returns the effective diffusion coefficient \f$\mathrm{[m^2/s]}\f$ based
      *        on a constant tortuosity value
-     *
      * \param porosity The porosity
      * \param saturation The saturation of the wetting phase
      * \param diffCoeff The diffusion coefficient of the phase in \f$\mathrm{[m^2/s]}\f$
@@ -60,7 +58,6 @@ public:
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
-
     {
         static const Scalar tau = getParam<Scalar>("SpatialParams.Tortuosity", 0.5);
 

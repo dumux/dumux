@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of a regularized version of van Genuchten's capillary
  *        pressure-saturation relation for three phases.
  */
@@ -84,7 +84,7 @@ public:
         return ParkerVanGen3P::pc(params, sw);
     }
 
-     /*!
+    /*!
      * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
      * \param swe Effective wetting phase saturation
@@ -140,7 +140,7 @@ public:
         return ParkerVanGen3P::pcgw(params, swe);
     }
 
-  /*!
+    /*!
      * \brief The capillary pressure-saturation curve for the non-wettigng and wetting phase
      * \param params Array of parameters
      * \param swe Effective wetting phase saturation
@@ -250,7 +250,7 @@ public:
     }
 
     /*!
-     * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
+     * \brief This function ensures a continuous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
      * \param sne Effective non-wetting liquid saturation
      */
@@ -275,7 +275,7 @@ public:
      *        pressure to the effective saturation.
      * \param params Array of parameters
      * \param swe Effective wetting liquid saturation
-    */
+     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         return ParkerVanGen3P::dpc_dswe(params, swe);

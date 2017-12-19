@@ -18,10 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Makes the twophase capillary pressure-saturation relations
  *        available under the M-phase API for material laws.
- *
  * Also use the temperature dependent version of the material laws.
  */
 #ifndef DUMUX_MP_2P_OFT_ADAPTER_HH
@@ -32,11 +31,9 @@
 namespace Dumux
 {
 /*!
- * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Adapts the interface of the MpNc material law to the standard-Dumux material law.
- *
- *        Also use the temperature dependent version of the material laws.
+ * Also use the temperature dependent version of the material laws.
  */
 template <int wPhaseIdx, class TwoPLaw>
 class TwoPOfTAdapter

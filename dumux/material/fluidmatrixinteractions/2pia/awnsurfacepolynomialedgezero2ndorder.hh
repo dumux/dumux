@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization is a second order polynomial which is zero for saturations of zero and one.
  */
@@ -28,18 +28,15 @@
 #include <dune/common/exceptions.hh>
 
 #include <algorithm>
-
 #include <math.h>
 #include <assert.h>
 
 namespace Dumux
 {
 /*!
- * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the polynomial of second order relating
  *             specific interfacial  area to wetting phase saturation and capillary pressure.
- *
  */
 template <class ParamsT>
 class AwnSurfacePolynomialEdgeZero2ndOrder
@@ -50,7 +47,6 @@ public:
 
     /*!
      * \brief The awn surface
-     *
      * the suggested (as estimated from pore network models) awn surface:
      * \f$[
      a_{wn} = a_{1} (S_{wr}-S_{w})(1.-S_{w}) + a_2 (S_{wr}-S_{w})(1.-S_{w}) p_{c} + a_{3} (S_{wr}-S_{w})(1.-S_{w}) p_{c}^2

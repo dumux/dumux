@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief   Parameters that are necessary for the \em regularization of
  *          the linear constitutive relations.
  */
@@ -30,11 +30,9 @@
 namespace Dumux
 {
 /*!
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief   Parameters that are necessary for the \em regularization of
  *          the linear constitutive relations.
- *
- * \ingroup fluidmatrixinteractionsparams
  */
 template<class ScalarT>
 class RegularizedLinearMaterialParams : public LinearMaterialParams<ScalarT>

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief   Linear capillary pressure and
  *          relative permeability <-> saturation relations
  */
@@ -33,7 +33,6 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief Linear capillary pressure and
  * relative permeability <-> saturation relations
  *
@@ -113,7 +112,7 @@ public:
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen, and then the params container
      *                  is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to linear material relation.
-    */
+     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         return - (params.maxPc() - params.entryPc());

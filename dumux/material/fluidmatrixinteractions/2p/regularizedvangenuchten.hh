@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the regularized version of the van Genuchten's
  *        capillary pressure / relative permeability  <-> saturation relation.
  */
@@ -35,9 +35,8 @@
 
 namespace Dumux
 {
-/*!\ingroup fluidmatrixinteractionslaws
-
-
+/*!
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the regularized  van Genuchten's
  *        capillary pressure / relative permeability  <-> saturation relation.
  *
@@ -88,7 +87,7 @@ public:
      *
      *  For not-regularized part:
      *
-         \copydetails VanGenuchten::pc()
+     *   \copydetails VanGenuchten::pc()
      */
     static Scalar pc(const Params &params, Scalar swe)
     {
@@ -141,7 +140,7 @@ public:
      *
      *  For not-regularized part:
      *
-         \copydetails VanGenuchten::sw()
+     *    \copydetails VanGenuchten::sw()
      *
      */
     static Scalar sw(const Params &params, Scalar pc)
@@ -215,8 +214,7 @@ public:
     *
     *        For not-regularized part:
     *
-      \copydetails VanGenuchten::dpc_dswe()
-    *
+    * \copydetails VanGenuchten::dpc_dswe()
     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
@@ -263,7 +261,7 @@ public:
      *                       by a straight line and use that slope (yes, there is a kink :-( ).
      *
      *        For not-regularized part:
-        \copydetails VanGenuchten::dswe_dpc()
+     * \copydetails VanGenuchten::dswe_dpc()
      */
     static Scalar dswe_dpc(const Params &params, Scalar pc)
     {
@@ -302,7 +300,7 @@ public:
      *    - between \f$\mathrm{0.95 \leq \overline{S}_w \leq 1}\f$:  use a spline as interpolation
      *
      *  For not-regularized part:
-        \copydetails VanGenuchten::krw()
+     * \copydetails VanGenuchten::krw()
      */
     static Scalar krw(const Params &params, Scalar swe)
     {
@@ -331,7 +329,7 @@ public:
      *        permeability for the wetting phase in regard to the wetting
      *        saturation of the medium implied by the van Genuchten parameterization.
      *
-       \copydetails VanGenuchten::dkrw_dswe()
+     * \copydetails VanGenuchten::dkrw_dswe()
      */
     static Scalar dkrw_dswe(const Params &params, Scalar swe)
     {
@@ -371,7 +369,7 @@ public:
      *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
      *    - for \f$\mathrm{0 \leq \overline{S}_w \leq 0.05}\f$:     use a spline as interpolation
      *
-         \copydetails VanGenuchten::krn()
+     * \copydetails VanGenuchten::krn()
      *
      */
     static Scalar krn(const Params &params, Scalar swe)
@@ -401,7 +399,7 @@ public:
      *        for the non-wetting phase in regard to the wetting saturation of
      *        the medium as implied by the van Genuchten parameterization.
      *
-       \copydetails VanGenuchten::dkrw_dswe()
+     * \copydetails VanGenuchten::dkrw_dswe()
      */
     static Scalar dkrn_dswe(const Params &params, Scalar swe)
     {

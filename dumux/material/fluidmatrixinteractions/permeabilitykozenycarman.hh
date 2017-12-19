@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief The Kozeny-Carman relationship for the calculation of a porosity-dependent permeability.
  */
 #ifndef DUMUX_PERMEABILITY_KOZENY_CARMAN_HH
@@ -29,9 +29,6 @@ namespace Dumux
 
 /*!
  * \ingroup fluidmatrixinteractionslaws
- */
-
-/**
  * \brief The Kozeny-Carman relationship for the calculation of a porosity-dependent permeability.
  *        When the porosity is implemented as solution-independent, using this relationship for the
  *        permeability leads to unnecessary overhead.
@@ -56,13 +53,21 @@ class PermeabilityKozenyCarman
 
 public:
 
-    // the initial parameter distribution
+    /*!
+     * \brief The initial parameter distribution.
+     * \param spatialParams the spatial parameters
+     */
     void init(const SpatialParams& spatialParams)
     {
         spatialParamsPtr_ = &spatialParams;
     }
 
-    // calculate permeability for a given scv
+    /*!
+     * \brief calculates the permeability for a given sub-control volume
+     * \param element element
+     * \param elemSol the element solution
+     * \param scv sub control volume
+     */
     PermType evaluatePermeability(const Element& element,
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const

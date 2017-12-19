@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Class for the evaluation of the porosity subject to precipitation.
  */
 #ifndef DUMUX_POROSITY_REACTIVE_BED_HH
@@ -31,9 +31,6 @@ namespace Dumux
 
 /*!
  * \ingroup fluidmatrixinteractionslaws
- */
-
-/**
  * \brief Calculates the porosity depeding on the volume fractions of different solid species.
  */
 template<class TypeTag>
@@ -60,7 +57,13 @@ public:
         spatialParamsPtr_ = &spatialParams;
     }
 
-    // calculates the porosity in a sub-control volume
+    /*!
+     * \brief Calculates the porosity in a sub-control volume.
+     *
+     * \param element element
+     * \param elemSol the element solution
+     * \param scv sub control volume
+     */
     Scalar evaluatePorosity(const Element& element,
                             const SubControlVolume& scv,
                             const ElementSolution& elemSol) const

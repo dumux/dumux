@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This function is of third order in pc.
  */
@@ -27,9 +27,7 @@
 
 #include <dune/common/exceptions.hh>
 
-
 #include <algorithm>
-
 #include <cmath>
 #include <assert.h>
 
@@ -37,9 +35,9 @@ namespace Dumux
 {
 /*!
  * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of a exponential function relating
- *             specific interfacial  area to wetting phase saturation and capillary pressure.
+ * specific interfacial  area to wetting phase saturation and capillary pressure.
  */
 template <class ScalarT, class ParamsT =AwnSurfaceExpSwPcTo3Params<ScalarT> >
 class AwnSurfaceExpSwPcTo3

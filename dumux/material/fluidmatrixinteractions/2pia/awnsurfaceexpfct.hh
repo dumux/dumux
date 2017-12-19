@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This function is exponential.
  */
@@ -27,17 +27,14 @@
 
 #include <dune/common/exceptions.hh>
 
-
 #include <algorithm>
-
 #include <cmath>
 #include <assert.h>
 
 namespace Dumux
 {
 /*!
- * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the exponential function relating
  *             specific interfacial area to wetting phase saturation and capillary pressure as suggested by Nuske(2009) (Diploma thesis) \cite nuske2009 .
  */

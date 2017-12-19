@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief simple effective thermal conductivity
+ * \ingroup fluidmatrixinteractionslaws
+ * \brief Reation for a simple effective thermal conductivity
  */
 #ifndef THERMALCONDUCTIVITY_AVERAGE_HH
 #define THERMALCONDUCTIVITY_AVERAGE_HH
@@ -31,7 +31,6 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief Relation for a simple effective thermal conductivity
  */
 template<class Scalar>
@@ -39,7 +38,7 @@ class ThermalConductivityAverage
 {
 public:
     /*!
-     * \brief simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
+     * \brief Relation for a simple effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      *
      * \param volVars volume variables
      * \param spatialParams spatial parameters

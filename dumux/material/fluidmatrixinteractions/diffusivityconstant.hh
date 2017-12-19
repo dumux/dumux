@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief   Relation for the saturation-dependent effective diffusion coefficient
  */
 #ifndef DIFFUSIVITY_CONSTANT_HH

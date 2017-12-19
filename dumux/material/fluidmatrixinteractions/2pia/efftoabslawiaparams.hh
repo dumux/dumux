@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief A default implementation of the parameters for the adapter
  *        class to convert material laws -- in this case the interfacial area surfaces --
  *        from effective to absolute saturations.
@@ -30,7 +30,6 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionsparams
- *
  * \brief A default implementation of the parameters for the adapter
  *        class to convert material laws -- in this case the interfacial area surfaces --
  *        from effective to absolute saturations.

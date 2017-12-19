@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief   Relation for the saturation-dependent effective diffusion coefficient
  */
 #ifndef DIFFUSIVITY_MILLINGTON_QUIRK_HH
@@ -30,9 +30,7 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief Relation for the saturation-dependent effective diffusion coefficient
- *
  *
  * The material law is:
  * \f[
@@ -62,7 +60,6 @@ public:
     static Scalar effectiveDiffusivity(const Scalar porosity,
                                        const Scalar saturation,
                                        const Scalar diffCoeff)
-
     {
         // instead of D_eff,pm = phi * Sw * 1/phi^2 * (phi * Sw)^(7/3) * D
         // we calculate the more efficient
