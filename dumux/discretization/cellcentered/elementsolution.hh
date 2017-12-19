@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCDiscretization
  * \brief The local element solution class for cell-centered methods
  */
 #ifndef DUMUX_CC_ELEMENT_SOLUTION_HH
@@ -30,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup CCModel
+ * \ingroup CCDiscretization
  * \brief The element solution vector
  */
 template<class TypeTag>
@@ -46,7 +47,6 @@ class CCElementSolution
 public:
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    //! Default constructors
     CCElementSolution() = default;
 
     //! Constructor with element and solution

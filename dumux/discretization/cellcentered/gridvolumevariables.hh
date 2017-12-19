@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCDiscretization
  * \brief The grid volume variables class for cell centered models
  */
 #ifndef DUMUX_DISCRETIZATION_CC_GRID_VOLUMEVARIABLES_HH
@@ -29,8 +30,11 @@ namespace Dumux
 {
 
 /*!
- * \ingroup CCModel
+ * \ingroup CCDiscretization
  * \brief Base class for the grid volume variables
+ * \note This class has a cached version and a non-cached version
+ * \tparam TypeTag the TypeTag
+ * \tparam enableGridVolVarsCache if the cache is enabled
  */
 template<class TypeTag, bool enableGridVolVarsCache>
 class CCGridVolumeVariables

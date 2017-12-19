@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a sub control volume
+ * \ingroup CCDiscretization
+ * \brief Sub control volumes for cell-centered discretization schemes
  */
 #ifndef DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
@@ -28,6 +29,10 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup CCDiscretization
+ * \brief Sub control volumes for cell-centered discretization schemes
+ */
 template<class ScvGeometryTraits>
 class CCSubControlVolume : public SubControlVolumeBase<CCSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>
 {
@@ -42,7 +47,6 @@ public:
     //! state the traits public and thus export all types
     using Traits = ScvGeometryTraits;
 
-    // the default constructor
     CCSubControlVolume() = default;
 
     // the contructor in the cc case
