@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Element-wise calculation of the Jacobian matrix for problems
+ * \ingroup ThreePThreeCModel
+  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the three-phase three-component fully implicit model.
  */
 #ifndef DUMUX_3P3C_LOCAL_RESIDUAL_HH
@@ -31,7 +31,6 @@ namespace Dumux
 {
 /*!
  * \ingroup ThreePThreeCModel
- * \ingroup ImplicitLocalResidual
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the three-phase three-component fully implicit model.
  *
@@ -63,9 +62,9 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
-        conti0EqIdx = Indices::conti0EqIdx,//!< Index of the mass conservation equation for the water component
-        conti1EqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
-        conti2EqIdx = Indices::conti2EqIdx,//!< Index of the mass conservation equation for the gas component
+        conti0EqIdx = Indices::conti0EqIdx,//!< index of the mass conservation equation for the water component
+        conti1EqIdx = Indices::conti1EqIdx,//!< index of the mass conservation equation for the contaminant component
+        conti2EqIdx = Indices::conti2EqIdx,//!< index of the mass conservation equation for the gas component
 
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
@@ -87,9 +86,9 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     * \param problem The problem
+     * \param scv The sub control volume
+     * \param volVars The volume variables
      */
     ResidualVector computeStorage(const Problem& problem,
                                   const SubControlVolume& scv,
@@ -109,11 +108,11 @@ public:
                                   * volVars.moleFraction(phaseIdx, compIdx);
             }
 
-            //! The energy storage in the fluid phase with index phaseIdx
+            // The energy storage in the fluid phase with index phaseIdx
             EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
         }
 
-        //! The energy storage in the solid matrix
+        // The energy storage in the solid matrix
         EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
@@ -123,10 +122,12 @@ public:
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a sub-control volume.
      *
-     * \param flux The flux over the SCV (sub-control-volume) face for each component
-     * \param fIdx The index of the SCV face
-     * \param onBoundary A boolean variable to specify whether the flux variables
-     *        are calculated for interior SCV faces or boundary faces, default=false
+     * \param problem The problem
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param elemVolVars The element volume variables
+     * \param scvf The sub control volume face
+     * \param elemFluxVarsCache The element flux variables cache
      */
     ResidualVector computeFlux(const Problem& problem,
                                const Element& element,
@@ -154,11 +155,11 @@ public:
                 flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
             }
 
-            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            // Add advective phase energy fluxes. For isothermal model the contribution is zero.
             EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
         }
 
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        // Add diffusive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
         const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);

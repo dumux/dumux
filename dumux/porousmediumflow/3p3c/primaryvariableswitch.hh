@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePThreeCModel
  * \brief The primary variable switch for the 3p3c model
  */
 #ifndef DUMUX_3P3C_PRIMARY_VARIABLE_SWITCH_HH

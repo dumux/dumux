@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the twop model
+ * \ingroup ThreePThreeCModel
+ * \brief Adds vtk output fields specific to the three-phase three-component model
  */
 #ifndef DUMUX_THREEPTHREEC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_THREEPTHREEC_VTK_OUTPUT_FIELDS_HH
@@ -29,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ThreePThreeC, InputOutput
+ * \ingroup ThreePThreeCModel, InputOutput
  * \brief Adds vtk output fields specific to the three-phase three-component model
  */
 template<class TypeTag>

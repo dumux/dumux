@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePThreeCModel
  * \brief Contains the quantities which are constant within a
  *        finite volume in the three-phase three-component model.
  */
