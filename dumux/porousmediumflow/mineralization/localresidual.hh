@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup MineralizationModel
  * \brief Element-wise calculation of the local residual for problems using a
- *        compositional fully implicit model that also considers solid phases.
+ *        compositional model that also considers mineralization of solid phases.
  */
 #ifndef DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
 #define DUMUX_COMPOSITIONAL_MINERALIZATION_LOCAL_RESIDUAL_HH
@@ -30,10 +30,9 @@
 namespace Dumux
 {
 /*!
- * \ingroup Mineralization
- * \ingroup LocalResidual
+ * \ingroup MineralizationModel
  * \brief Element-wise calculation of the local residual for problems
- *        using a one/two-phase n-component mineralization fully implicit model.
+ *        using a one/two-phase n-component mineralization model.
  */
 template<class TypeTag>
 class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
@@ -59,12 +58,15 @@ public:
      * \brief Evaluate the amount of all conservation quantities
      *        (e.g. phase mass) within a sub-control volume.
      *
-     * The result should be averaged over the volume (e.g. phase mass
-     * inside a sub control volume divided by the volume)
+     * We consider the volume-average here (e.g. phase mass inside a
+     * sub control volume divided by the volume). The volume is multiplied
+     * onto it afterwards in the local residual of the respective spatial
+     * discretization scheme.
      *
-     *  \param storage The mass of the component within the sub-control volume
-     *  \param scvIdx The SCV (sub-control-volume) index
-     *  \param usePrevSol Evaluate function with solution of current or previous time step
+     * \param problem The problem (Initial/Boundary conditions...) to be solved
+     * \param scv The sub-control volume of the finite volume grid
+     * \param volVars The volume variables (primary/secondary variables) in the scv
+     * \return Amount per volume of the conserved quantities
      */
     ResidualVector computeStorage(const Problem& problem,
                                   const SubControlVolume& scv,

@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Contains the quantities which are constant within a
- *        finite volume in the two-phase, n-component mineralization model.
+ * \ingroup MineralizationModel
+ * \brief Contains the quantities which are constant within a sub-control volume
+ *        of the finite volume grid in the two-phase, n-component mineralization model.
  */
 #ifndef DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
 #define DUMUX_MINERALIZATION_VOLUME_VARIABLES_HH
@@ -34,9 +34,8 @@ namespace Dumux
 
 /*!
  * \ingroup Mineralization
- * \ingroup ImplicitVolumeVariables
- * \brief Contains the quantities which are are constant within a
- *        finite volume in a mineralization n-component model.
+ * \brief Contains the quantities which are are constant within a sub-control volume
+ *        of the finite volume grid in an m-phase, n-component, mineralization model.
  */
 template <class TypeTag>
 class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineralizationVolumeVariables)
@@ -63,9 +62,7 @@ class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineraliz
 public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
-    /*!
-     * \copydoc ImplicitVolumeVariables::update
-     */
+    //! updates all required quantities inside the given scv
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
@@ -74,9 +71,7 @@ public:
         // Update parent type (also completes the fluid state)
         ParentType::update(elemSol, problem, element, scv);
 
-        /////////////
         // calculate the remaining quantities
-        /////////////
         auto&& priVars = elemSol[scv.indexInElement()];
 
         sumPrecipitates_ = 0.0;
@@ -89,7 +84,7 @@ public:
 
     /*!
      * \brief Returns the volume fraction of the precipitate (solid phase)
-     * for the given phaseIdx
+     *        for the given phaseIdx
      *
      * \param phaseIdx the index of the solid phase
      */
@@ -128,10 +123,12 @@ public:
      *
      * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
-     * \f$\mathrm{molality}=\frac{n_\mathrm{component}}{m_\mathrm{solvent}}
-     * =\frac{n_\mathrm{component}}{n_\mathrm{solvent}*M_\mathrm{solvent}}\f$
-     * compIdx of the main component (solvent) in the
-     * phase is equal to the phaseIdx
+     * \f$\mathrm{molality}
+     *  = \frac{n_\mathrm{component}}{m_\mathrm{solvent}}
+     *  = \frac{n_\mathrm{component}}{n_\mathrm{solvent}*M_\mathrm{solvent}}\f$
+     *
+     * \note compIdx of the main component (solvent) in the
+     *       phase is equal to the phaseIdx
      */
     Scalar molality(int phaseIdx, int compIdx) const // [moles/Kg]
     {

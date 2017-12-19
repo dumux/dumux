@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the twop-nc-min model
+ * \brief Adds vtk output fields specific to the models considering
+ *        mineralization processes.
  */
 #ifndef DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_MINERALIZATION_VTK_OUTPUT_FIELDS_HH
@@ -46,9 +47,10 @@ public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {
+        // output of the model without mineralization
         NonMineralizationVtkOutputFields::init(vtk);
 
-        //additional output
+        // additional output
         for (int i = 0; i < numSPhases; ++i)
         {
             vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipVolFrac_"+ FluidSystem::phaseName(numPhases + i));
