@@ -1,2 +1,2 @@
-add_subdirectory("staggered")
-add_subdirectory("staggerednc")
+add_subdirectory("navierstokes")
+add_subdirectory("navierstokesnc")
