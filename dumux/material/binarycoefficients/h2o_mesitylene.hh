@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and mesitylene.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_MESITYLENE_HH
@@ -33,6 +33,7 @@ namespace BinaryCoeff
 {
 
 /*!
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and mesitylene.
  */
 class H2O_Mesitylene
@@ -42,8 +43,7 @@ public:
      * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for mesitylene in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * See:
-     *
-     *  R. Sander (1999) \cite sander1999
+     * R. Sander (1999) \cite sander1999
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)
@@ -60,7 +60,6 @@ public:
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and mesitylene.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the pressure \f$\mathrm{[Pa]}\f$
-     *
      */
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)

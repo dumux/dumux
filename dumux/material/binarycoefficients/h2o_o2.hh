@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and oxygen.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_O2_HH
@@ -58,7 +58,7 @@ public:
     }
 
     /*!
-     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and nitrogen.
+     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular water and oxygen.
      *
      * Uses fullerMethod to determine the diffusion of water in nitrogen.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
@@ -79,7 +79,7 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid water.
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      *

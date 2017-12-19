@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Binarycoefficients
  * \brief Binary coefficients for CO2 and brine.
  */
@@ -33,6 +32,7 @@
 namespace Dumux {
 namespace BinaryCoeff {
 /*!
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for brine and CO2.
  */
 template<class Scalar, class CO2Tables, bool verbose = true>
@@ -92,7 +92,6 @@ public:
      * \param xlCO2 mole fraction of CO2 in brine \f$\mathrm{[mol/mol]}\f$
      * \param ygH2O mole fraction of water in the gas phase \f$\mathrm{[mol/mol]}\f$
      */
-
     static void calculateMoleFractions(const Scalar temperature,
                                        const Scalar pg,
                                        const Scalar salinity,
@@ -442,10 +441,10 @@ public:
 
 private:
     /*!
-    * \brief computation of \f$\mathrm{[mu_{CO2}^{l(0)}/RT]}\f$
+     * \brief computation of \f$\mathrm{[mu_{CO2}^{l(0)}/RT]}\f$
      * \param T the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
-    */
+     */
     static Scalar computeA_(Scalar T, Scalar pg)
     {
         static const Scalar c[10] = {
@@ -504,6 +503,7 @@ private:
             c9*pg_bar/(630.0-T) +
             c11*T*log(pg_bar);
     }
+
     /*!
      * \brief computation of C
      *
@@ -525,6 +525,7 @@ private:
             c8*pg_bar/T +
             c9*pg_bar/(630.0-T);
     }
+
     /*!
      * \brief computation of partial pressure CO2
      *
@@ -547,7 +548,6 @@ private:
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
      * \param rhoCO2 the density of CO2 for the critical volume \f$\mathrm{[kg/m^3]}\f$
      */
-
     static Scalar fugacityCoeffCO2_(Scalar temperature,
                                     Scalar pg,
                                     Scalar rhoCO2)

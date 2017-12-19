@@ -7,6 +7,8 @@ brine_air.hh
 brine_co2.hh
 fullermethod.hh
 h2o_air.hh
+h2o_constant.hh
+h2o_heavyoil.hh
 h2o_mesitylene.hh
 h2o_n2.hh
 h2o_o2.hh

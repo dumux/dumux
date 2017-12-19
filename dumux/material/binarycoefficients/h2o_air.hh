@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Binary coefficients for water and nitrogen.
+ * \ingroup Binarycoefficients
+ * \brief Binary coefficients for water and air.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_AIR_HH
 #define DUMUX_BINARY_COEFF_H2O_AIR_HH
@@ -34,7 +34,7 @@ namespace BinaryCoeff
 
 /*!
  * \ingroup Binarycoefficients
- * \brief Binary coefficients for water and nitrogen.
+ * \brief Binary coefficients for water and air.
  */
 class H2O_Air
 {

@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Binarycoefficients
- * \brief Binary coefficients for Air and brine.
+ * \brief Binary coefficients for Brine and Air.
  */
 #ifndef DUMUX_BINARY_COEFF_BRINE_Air_HH
 #define DUMUX_BINARY_COEFF_BRINE_Air_HH
@@ -33,7 +32,8 @@
 namespace Dumux {
 namespace BinaryCoeff {
 /*!
- * \brief Binary coefficients for brine and Air.
+ * \ingroup Binarycoefficients
+ * \brief Binary coefficients for Brine and Air.
  */
 template<class Scalar, class Air, bool verbose = true>
 class Brine_Air {
@@ -41,12 +41,12 @@ class Brine_Air {
    // using Air = Dumux::Air<Scalar>;
     using Brine = Dumux::Brine<Scalar,H2O>;
     using IdealGas = Dumux::IdealGas<Scalar>;
-    static const int lPhaseIdx = 0; // index of the liquid phase
-    static const int gPhaseIdx = 1; // index of the gas phase
+    static const int wPhaseIdx = 0; // index of the liquid phase
+    static const int nPhaseIdx = 1; // index of the gas phase
 
 public:
     /*!
-     * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of water in the Air phase.
+     *  \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ of water in the Air phase.
      *
      * According to B. Xu et al. (2003) \cite xu2003 <BR>
      * \param temperature the temperature \f$\mathrm{[K]}\f$
@@ -65,24 +65,24 @@ public:
     ;
 
     /*!
-        * Lacking better data on water-air diffusion in liquids, we use at the
-        * moment the diffusion coefficient of the air's main component nitrogen!!
-        * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
-        *
-        * The empirical equations for estimating the diffusion coefficient in
-        * infinite solution which are presented in Reid, 1987 all show a
-        * linear dependency on temperature. We thus simply scale the
-        * experimentally obtained diffusion coefficient of Ferrell and
-        * Himmelblau by the temperature.
-        * \param temperature The temperature \f$\mathrm{[K]}\f$
-        * \param pressure The pressure \f$\mathrm{[Pa]}\f$
-        *
-        * See:
-        *
-        * R. Reid et al. (1987, pp. 599) \cite reid1987 <BR>
-        *
-        * R. Ferrell, D. Himmelblau (1967, pp. 111-115) \cite ferrell1967
-        */
+     * Lacking better data on water-air diffusion in liquids, we use at the
+     * moment the diffusion coefficient of the air's main component nitrogen!!
+     * \brief Diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular nitrogen in liquid water.
+     *
+     * The empirical equations for estimating the diffusion coefficient in
+     * infinite solution which are presented in Reid, 1987 all show a
+     * linear dependency on temperature. We thus simply scale the
+     * experimentally obtained diffusion coefficient of Ferrell and
+     * Himmelblau by the temperature.
+     * \param temperature The temperature \f$\mathrm{[K]}\f$
+     * \param pressure The pressure \f$\mathrm{[Pa]}\f$
+     *
+     * See:
+     *
+     * R. Reid et al. (1987, pp. 599) \cite reid1987 <BR>
+     *
+     * R. Ferrell, D. Himmelblau (1967, pp. 111-115) \cite ferrell1967
+     */
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure) {
         //Diffusion coefficient of Air in the H2O phase
         const Scalar Texp = 273.15 + 25; // [K]
@@ -94,7 +94,7 @@ public:
      * \brief Returns the _mol_ (!) fraction of Air in the liquid
      *        phase and the mol_ (!) fraction of H2O in the gas phase
      *        for a given temperature, pressure, Air density and brine
-     *        XlNaCl.
+     *        XwNaCl.
      *
      *        Implemented according to Spycher and Pruess (2005) \cite spycher2005 <BR>
      *        applying the activity coefficient expression of Duan and Sun (2003) \cite duan2003 <BR>
@@ -102,52 +102,52 @@ public:
      *
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pg the gas phase pressure \f$\mathrm{[Pa]}\f$
-     * \param XlNaCl the XlNaCl \f$\mathrm{[kg NaCl / kg solution]}\f$
+     * \param XwNaCl the XwNaCl \f$\mathrm{[kg NaCl / kg solution]}\f$
      * \param knownPhaseIdx indicates which phases are present
-     * \param xlAir mole fraction of Air in brine \f$\mathrm{[mol/mol]}\f$
-     * \param ygH2O mole fraction of water in the gas phase \f$\mathrm{[mol/mol]}\f$
-     * \param xlNaCl the xlNaCl
+     * \param xwAir mole fraction of Air in brine \f$\mathrm{[mol/mol]}\f$
+     * \param xnH2O mole fraction of water in the gas phase \f$\mathrm{[mol/mol]}\f$
+     * \param xwNaCl the xwNaCl
      */
     static void calculateMoleFractions(const Scalar temperature,
                                        const Scalar pg,
-                                       const Scalar XlNaCl,
+                                       const Scalar XwNaCl,
                                        const int knownPhaseIdx,
-                                       Scalar &xlAir,
-                                       Scalar &ygH2O,
-                                     Scalar &xlNaCl) {
+                                       Scalar &xwAir,
+                                       Scalar &xnH2O,
+                                     Scalar &xwNaCl) {
         DUNE_THROW(Dune::InvalidStateException, "Function: " << "calculateMoleFractions" << " is invalid.");
 //        Scalar A = computeA_(temperature, pg);
 //
-//        /* XlNaCl: conversion from mass fraction to mol fraction */
-//        xlNaCl = massTomoleFrac_(XlNaCl);
+//        /* XwNaCl: conversion from mass fraction to mol fraction */
+//        xwNaCl = massTomoleFrac_(XwNaCl);
 //
 //        // if both phases are present the mole fractions in each phase can be calculate
 //        // with the mutual solubility function
 //        if (knownPhaseIdx < 0) {
-//            Scalar molalityNaCl = molFracToMolality_(xlNaCl); // molality of NaCl //CHANGED
+//            Scalar molalityNaCl = molFracToMolality_(xwNaCl); // molality of NaCl //CHANGED
 //            Scalar m0_Air = molalityAirinPureWater_(temperature, pg); // molality of Air in pure water
 //            Scalar gammaStar = activityCoefficient_(temperature, pg, molalityNaCl);// activity coefficient of Air in brine
 //            Scalar m_Air = m0_Air / gammaStar; // molality of Air in brine
-//            xlAir = m_Air / (molalityNaCl + 55.508 + m_Air); // mole fraction of Air in brine
-//            ygH2O = A * (1 - xlAir - xlNaCl); // mole fraction of water in the gas phase
+//            xwAir = m_Air / (molalityNaCl + 55.508 + m_Air); // mole fraction of Air in brine
+//            xnH2O = A * (1 - xwAir - xwNaCl); // mole fraction of water in the gas phase
 //        }
 //
 //        // if only liquid phase is present the mole fraction of Air in brine is given and
 //        // and the virtual equilibrium mole fraction of water in the non-existing gas phase can be estimated
 //        // with the mutual solubility function
-//        if (knownPhaseIdx == lPhaseIdx) {
-////            ygH2O = A * (1 - xlAir - xlNaCl);
-//          DUNE_THROW(Dune::InvalidStateException, "phase index: " << "lPhaseIdx" << " is invalid.");
+//        if (knownPhaseIdx == wPhaseIdx) {
+////            xnH2O = A * (1 - xwAir - xwNaCl);
+//          DUNE_THROW(Dune::InvalidStateException, "phase index: " << "wPhaseIdx" << " is invalid.");
 //
 //        }
 //
 //        // if only gas phase is present the mole fraction of water in the gas phase is given and
 //        // and the virtual equilibrium mole fraction of Air in the non-existing liquid phase can be estimated
 //        // with the mutual solubility function
-//        if (knownPhaseIdx == gPhaseIdx) {
+//        if (knownPhaseIdx == nPhaseIdx) {
 //            //y_H2o = fluidstate.
-////            xlAir = 1 - xlNaCl - ygH2O / A;
-//          DUNE_THROW(Dune::InvalidStateException, "phase index: " << "gPhaseIdx" << " is invalid.");
+////            xwAir = 1 - xwNaCl - xnH2O / A;
+//          DUNE_THROW(Dune::InvalidStateException, "phase index: " << "nPhaseIdx" << " is invalid.");
 //        }
     }
 
@@ -212,12 +212,12 @@ public:
     /*!
      * \brief Returns the molality of NaCl \f$\mathrm{(mol NaCl / kg water)}\f$ for a given mole fraction \f$\mathrm{(mol NaCl / mol solution)}\f$
      *
-     * \param XlNaCl mole fraction of NaCL in brine \f$\mathrm{[mol/mol]}\f$
+     * \param XwNaCl mole fraction of NaCL in brine \f$\mathrm{[mol/mol]}\f$
      */
-    static Scalar molalityNaCl(Scalar XlNaCl) {
+    static Scalar molalityNaCl(Scalar XwNaCl) {
 
         // conversion from mol fraction to molality
-        const Scalar mol_NaCl = XlNaCl / 58.4428e-3;
+        const Scalar mol_NaCl = XwNaCl / 58.4428e-3;
 
         return mol_NaCl;
     }
@@ -226,19 +226,19 @@ private:
     /*!
      * \brief Returns the molality of NaCl \f$\mathrm{(mol NaCl / kg water)}\f$ for a given mole fraction
      *
-     * \param XlNaCl the XlNaCl \f$\mathrm{[kg NaCl / kg solution]}\f$
+     * \param XwNaCl the XwNaCl \f$\mathrm{[kg NaCl / kg solution]}\f$
      */
-    static Scalar massTomoleFrac_(Scalar XlNaCl) {
+    static Scalar massTomoleFrac_(Scalar XwNaCl) {
 
         DUNE_THROW(Dune::InvalidStateException, "Function: " << "massTomoleFrac_" << " is invalid.");
 
 //        const Scalar Mw = H2O::molarMass(); /* molecular weight of water [kg/mol] */
 //        const Scalar Ms = 58.8e-3; /* molecular weight of NaCl  [kg/mol] */
 //
-//        const Scalar X_NaCl = XlNaCl;
-//        /* XlNaCl: conversion from mass fraction to mol fraction */
-//        const Scalar xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
-//        return xlNaCl;
+//        const Scalar X_NaCl = XwNaCl;
+//        /* XwNaCl: conversion from mass fraction to mol fraction */
+//        const Scalar xwNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
+//        return xwNaCl;
     }
 
     /*!
@@ -431,12 +431,12 @@ public:
         const Scalar Mw = H2O::molarMass(); /* molecular weight of water [kg/mol] */
         const Scalar Ms = 58.8e-3; /* molecular weight of NaCl  [kg/mol] */
 
-        const Scalar X_NaCl = Brine::XlNaCl;
-        /* XlNaCl: conversion from mass fraction to mole fraction */
-        const Scalar xlNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
+        const Scalar X_NaCl = Brine::XwNaCl;
+        /* XwNaCl: conversion from mass fraction to mole fraction */
+        const Scalar xwNaCl = -Mw * X_NaCl / ((Ms - Mw) * X_NaCl - Ms);
 
-        // XlNaCl: conversion from mole fraction to molality
-        const Scalar mol_NaCl = -55.56 * xlNaCl / (xlNaCl - 1);
+        // XwNaCl: conversion from mole fraction to molality
+        const Scalar mol_NaCl = -55.56 * xwNaCl / (xwNaCl - 1);
 
         const Scalar A = computeA_(temperature, pg); /* mu_{Air}^{l(0)}/RT */
         const Scalar B = computeB_(temperature, pg); /* lambda_{Air-Na+} */
@@ -459,10 +459,10 @@ public:
 
 private:
     /*!
-    * \brief computation of mu_{Air}^{l(0)}/RT
-    * \param T the temperature [K]
-    * \param pg the gas phase pressure [Pa]
-    */
+     * \brief computation of mu_{Air}^{l(0)}/RT
+     * \param T the temperature [K]
+     * \param pg the gas phase pressure [Pa]
+     */
     static Scalar computeA_(Scalar T, Scalar pg)
     {
         static const Scalar c[10] = {
@@ -564,7 +564,6 @@ private:
      * \param pg the gas phase pressure [Pa]
      * \param rhoAir the density of Air for the critical volume [kg/m^3]
      */
-
     static Scalar fugacityCoeffAir_(Scalar temperature,
                                     Scalar pg,
                                     Scalar rhoAir)

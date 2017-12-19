@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and nitrogen.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_N2_HH
