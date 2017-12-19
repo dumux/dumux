@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup EOS
  * \brief Base class for Peng-Robinson parameters of a
  *        single-component fluid or a mixture
  *
@@ -75,6 +75,7 @@ public:
     /*!
      * \brief Set the attractive parameter 'a' of the Peng-Robinson
      *        fluid.
+     * \param value value of the attractive parameter
      */
     void setA(Scalar value)
     { a_ = value; }
@@ -82,6 +83,7 @@ public:
     /*!
      * \brief Set the repulsive parameter 'b' of the Peng-Robinson
      *        fluid.
+     * \param value value of the repulsive parameter
      */
     void setB(Scalar value)
     { b_ = value; }

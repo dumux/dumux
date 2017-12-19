@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup EOS
  * \brief Implements the Peng-Robinson equation of state for liquids
  *        and gases.
  *
