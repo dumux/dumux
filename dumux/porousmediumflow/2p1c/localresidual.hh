@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup TwoPOneCModel
  *
- * \brief Element-wise calculation of the residual for problems
- *        using the two-phase one-component fully implicit models.
+ * \copydoc Dumux::TwoPOneCLocalResidual
  */
 #ifndef DUMUX_2P1C_LOCAL_RESIDUAL_HH
 #define DUMUX_2P1C_LOCAL_RESIDUAL_HH
@@ -30,18 +30,15 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPOneC
- * \ingroup ImplicitLocalResidual
- * \brief Element-wise calculation of the residual for problems
- *        using the two-phase one-component fully implicit models.
+ * \ingroup TwoPOneCModel
+ *
+ * \brief Element-wise calculation of the residual for the fully implicit two-phase one-component flow model.
  */
 template<class TypeTag>
 class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
     using ParentType = ImmiscibleLocalResidual<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -60,24 +57,17 @@ class TwoPOneCLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
 public:
+    //! Use the parent type's constructor
     using ParentType::ParentType;
 
-    /*!
-     * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub-control
-     *        volume of a finite volume element for the immiscible models.
-     * \param scv The sub control volume
-     * \param volVars The current or previous volVars
-     * \note This function should not include the source and sink terms.
-     * \note The volVars can be different to allow computing
-     *       the implicit euler time derivative here
-     */
+
+    //! Evaluate the storage term within a given scv
     ResidualVector computeStorage(const Problem& problem,
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars) const
     {
         ResidualVector storage(0.0);
-        // compute storage term of all components within all phases
+        // Compute storage term of all components within all phases
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             storage[conti0EqIdx] +=
@@ -87,16 +77,13 @@ public:
             EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
         }
 
-        //! The energy storage in the solid matrix
+        // The energy storage in the solid matrix
         EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
 
         return storage;
     }
 
-    /*!
-     * \brief Evaluate the mass flux over a face of a sub control volume
-     * \param scvf The sub control volume face to compute the flux on
-     */
+    //! Evaluate the fluxes over a face of a sub control volume
     ResidualVector computeFlux(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
@@ -110,17 +97,17 @@ public:
         ResidualVector flux;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
-            // the physical quantities for which we perform upwinding
+            // The physical quantities for which we perform upwinding
             auto upwindTerm = [phaseIdx](const auto& volVars)
                               { return volVars.density(phaseIdx)*volVars.mobility(phaseIdx); };
 
             flux[conti0EqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
 
-            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            // Add advective phase energy fluxes. For isothermal model the contribution is zero.
             EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
         }
 
-        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        // Add diffusive energy fluxes. For isothermal model the contribution is zero.
         EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
 
         return flux;

@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation. Specializations are provided for the different discretization methods.
+ * \ingroup TwoPOneCModel
+ * \copydoc Dumux::TwoPOneCDarcysLaw
  */
 #ifndef DUMUX_2P1C_SPURIOUS_FLUX_BLOCKING_DARCYS_LAW_HH
 #define DUMUX_2P1C_SPURIOUS_FLUX_BLOCKING_DARCYS_LAW_HH
@@ -36,12 +35,14 @@ namespace Dumux
 
 namespace Properties
 {
-     NEW_PROP_TAG(UseBlockingOfSpuriousFlow); //!< Determines whether Blocking ofspurious flow is used
+     NEW_PROP_TAG(UseBlockingOfSpuriousFlow); //!< Determines whether blocking of spurious flow is used or not.
 }
 
 /*!
- * \ingroup DarcysLaw
- * \brief Specialization of Darcy's Law for the box method.
+ * \ingroup TwoPOneCModel
+ * \brief Specialization of Darcy's Law for the two-phase one-component model, including a the possibility <BR>
+ *        to block spurious fluxes of cold water into the steam zone, which can improve the model's convergence
+ *        behavior (Gudbjerg et al., 2005) \cite gudbjerg2004.
  */
 template <class TypeTag>
 class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
@@ -77,6 +78,7 @@ class TwoPOneCDarcysLaw : public DarcysLaw<TypeTag>
 
 public:
 
+    //! Compute the Darcy flux and use a blocking factor, if specified.
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -86,6 +88,8 @@ public:
                        const ElemFluxVarCache& elemFluxVarCache)
     {
         const Scalar flux = ParentType::flux(problem, element, fvGeometry, elemVolVars, scvf, phaseIdx, elemFluxVarCache);
+
+        // only block wetting-phase (i.e. liquid water) fluxes
         if((!GET_PROP_VALUE(TypeTag, UseBlockingOfSpuriousFlow)) || phaseIdx != wPhaseIdx)
             return flux;
 
@@ -108,47 +112,39 @@ private:
      */
     static Scalar factor_(const VolumeVariables &up, const VolumeVariables &dn,const  int phaseIdx)
     {
-
-
         Scalar factor = 1.0;
 
-        Scalar tDn = dn.temperature(); //temperature of the downstream SCV (where the cold water is potentially intruding into a steam zone)
-        Scalar tUp = up.temperature(); //temperature of the upstream SCV
+        const Scalar tDn = dn.temperature(); //temperature of the downstream SCV (where the cold water is potentially intruding into a steam zone)
+        const Scalar tUp = up.temperature(); //temperature of the upstream SCV
 
-        Scalar sgDn = dn.saturation(nPhaseIdx); //gas phase saturation of the downstream SCV
-        Scalar sgUp = up.saturation(nPhaseIdx); //gas phase saturation of the upstream SCV
+        const Scalar sgDn = dn.saturation(nPhaseIdx); //gas phase saturation of the downstream SCV
+        const Scalar sgUp = up.saturation(nPhaseIdx); //gas phase saturation of the upstream SCV
 
         bool upIsNotSteam = false;
         bool downIsSteam = false;
         bool spuriousFlow = false;
 
         if(sgUp <= 1e-5)
-        {upIsNotSteam = true;}
+            upIsNotSteam = true;
 
         if(sgDn > 1e-5)
-        {downIsSteam = true;}
+            downIsSteam = true;
 
         if(upIsNotSteam && downIsSteam  && tDn > tUp && phaseIdx == wPhaseIdx)
-        {
           spuriousFlow = true;
-        //   spuriousFlowDetected_ = true;
-        }
 
         if(spuriousFlow)
         {
           Scalar deltaT = tDn - tUp;
 
           if((deltaT) > 15 )
-          {factor = 0.0 ;}
+            factor = 0.0 ;
 
           else
-          { factor = 1-(deltaT/15); }
-
+            factor = 1-(deltaT/15);
         }
         return factor;
     }
-
-
 };
 
 } // end namespace Dumux

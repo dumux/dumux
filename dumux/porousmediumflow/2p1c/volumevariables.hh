@@ -18,11 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Contains the quantities which are constant within a
- *        finite volume in the two-phase, one-component model.
- *
- * \note The 2p1c model requires the use of the non-isothermal extension found in dumux/implicit/nonisothermal
+ * \ingroup TwoPOneCModel
+ * \copydoc Dumux::TwoPOneCVolumeVariables
  */
 #ifndef DUMUX_2P1C_VOLUME_VARIABLES_HH
 #define DUMUX_2P1C_VOLUME_VARIABLES_HH
@@ -36,8 +33,7 @@ namespace Dumux
 
 /*!
  * \ingroup TwoPOneCModel
- * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, two-component model.
+ * \brief The volume variables (i.e. secondary variables) for the two-phase one-component model.
  */
 template <class TypeTag>
 class TwoPOneCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
@@ -84,7 +80,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -123,9 +125,7 @@ public:
         permeability_ = problem.spatialParams().permeability(element, scv, elemSol);
     }
 
-    /*!
-     * \copydoc ImplicitModel::completeFluidState
-     */
+    //! Update the fluidstate
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
                                    const Element& element,
@@ -133,7 +133,7 @@ public:
                                    FluidState& fluidState)
     {
 
-        // // capillary pressure parameters
+        // capillary pressure parameters
         const auto& materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         const auto& priVars = ParentType::extractDofPriVars(elemSol, scv);
@@ -215,7 +215,7 @@ public:
     }
 
     /*!
-     * \brief Returns the phase state for the control-volume.
+     * \brief Returns the fluid state for the control-volume.
      */
     const FluidState &fluidState() const
     { return fluidState_; }
@@ -297,7 +297,7 @@ public:
     { return permeability_; }
 
     /*!
-     * \brief Returns the vapor temperature (T_{vap}(p_g) of the fluid within the control volume.
+     * \brief Returns the vapor temperature \f$T_{vap}(p_n)\f$ of the fluid within the control volume.
      */
     Scalar vaporTemperature() const
     { return FluidSystem::vaporTemperature(fluidState_, wPhaseIdx);}

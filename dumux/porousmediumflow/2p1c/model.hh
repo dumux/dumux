@@ -18,43 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Adaption of the fully implicit scheme to the two-phase one-component flow model.
- *
- */
-#ifndef DUMUX_2P1C_MODEL_HH
-#define DUMUX_2P1C_MODEL_HH
-
-#include <dumux/common/properties.hh>
-
-#include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
-#include <dumux/material/fluidstates/immiscible.hh>
-#include <dumux/material/fluidstates/compositional.hh>
-
-
-#include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/immiscible/localresidual.hh>
-#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
-#include <dumux/porousmediumflow/nonisothermal/model.hh>
-
-#include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
-
-#include "darcyslaw.hh"
-#include "vtkoutputfields.hh"
-#include "localresidual.hh"
-#include "indices.hh"
-#include "volumevariables.hh"
-#include "primaryvariableswitch.hh"
-
-namespace Dumux
-{
-/*!
  * \ingroup TwoPOneCModel
- * \brief Adaption of the fully implicit scheme to the two-phase one-component flow model.
+ * \brief A two-phase one-component flow model using the fully implicit scheme.
  *
- * \note The 2p1c model requires the use of the non-isothermal extension found in dumux/implicit/nonisothermal.
+ * \note The 2p1c model requires the use of the non-isothermal extension found in dumux/porousmediumflow/nonisothermal.
  *
  * This model is designed for simulating two fluid phases with water as the only component.
  * It is particularly suitable for the simulation of steam injection in saturated conditions.
@@ -83,117 +50,143 @@ namespace Dumux
  * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
  * advantage of the fact that \f$S_w + S_n = 1\f$, the number of
  * unknowns can be reduced to two. The model features a primary variable switch.
- * If only one phase is present, \f$p_g\f$ and \f$T\f$ are the primary variables.
- * In the presence of two phases, \f$p_g\f$ and \f$S_w\f$ become the new primary variables.
+ * If only one phase is present, \f$p_n\f$ and \f$T\f$ are the primary variables.
+ * In the presence of two phases, \f$p_n\f$ and \f$S_w\f$ become the new primary variables.
  */
+
+#ifndef DUMUX_2P1C_MODEL_HH
+#define DUMUX_2P1C_MODEL_HH
+
+#include <dumux/common/properties.hh>
+
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysomerton.hh>
+#include <dumux/material/fluidstates/compositional.hh>
+
+#include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
+#include <dumux/porousmediumflow/nonisothermal/model.hh>
+
+#include "darcyslaw.hh"
+#include "vtkoutputfields.hh"
+#include "localresidual.hh"
+#include "indices.hh"
+#include "volumevariables.hh"
+#include "primaryvariableswitch.hh"
+
+namespace Dumux
+{
 
 namespace Properties
 {
- //////////////////////////////////////////////////////////////////
- // Type tags
- //////////////////////////////////////////////////////////////////
- NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
+//! The type tag for the non-isothermal two-phase one-component model.
+NEW_TYPE_TAG(TwoPOneCNI, INHERITS_FROM(PorousMediumFlow, NonIsothermal));
 
- //////////////////////////////////////////////////////////////////
- // Property tags
- //////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+// Properties
+//////////////////////////////////////////////////////////////////
 
- NEW_PROP_TAG(UseBlockingOfSpuriousFlow); //!< Determines whether Blocking ofspurious flow is used
+//! Determines whether Blocking ofspurious flow is used.
+NEW_PROP_TAG(UseBlockingOfSpuriousFlow);
 
- /*!
-  * \brief Set the property for the number of components.
-  *
-  * We just forward the number from the fluid system and use an static
-  * assert to make sure it is 1.
-  */
- SET_PROP(TwoPOneCNI, NumComponents)
- {
-  private:
+/*!
+ * \brief Set the property for the number of components.
+ *
+ * We just forward the number from the fluid system and use an static
+ * assert to make sure it is 1.
+ */
+SET_PROP(TwoPOneCNI, NumComponents)
+{
+ private:
      using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-  public:
+ public:
      static constexpr auto value = FluidSystem::numComponents;
 
      static_assert(value == 1,
                    "Only fluid systems with 1 component are supported by the 2p1cni model!");
- };
+};
 
- /*!
-  * \brief Set the property for the number of fluid phases.
-  *
-  * We just forward the number from the fluid system and use an static
-  * assert to make sure it is 2.
-  */
- SET_PROP(TwoPOneCNI, NumPhases)
- {
-  private:
+/*!
+ * \brief Set the property for the number of fluid phases.
+ *
+ * We just forward the number from the fluid system and use an static
+ * assert to make sure it is 2.
+ */
+SET_PROP(TwoPOneCNI, NumPhases)
+{
+ private:
      using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-  public:
+ public:
      static constexpr auto value = FluidSystem::numPhases;
      static_assert(value == 2,
                    "Only fluid systems with 2 phases are supported by the 2p1cni model!");
- };
+};
 
-SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>); //!< The local residual function
-
-SET_BOOL_PROP(TwoPOneCNI, EnableAdvection, true);                           //!< The one-phase model considers advection
-SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);                 //!< The one-phase model has no molecular diffusion
-
- /*!
-  * \brief The fluid state which is used by the volume variables to
-  *        store the thermodynamic state. This should be chosen
-  *        appropriately for the model ((non-)isothermal, equilibrium, ...).
-  *        This can be done in the problem.
-  */
- SET_PROP(TwoPOneCNI, FluidState)
- {
- private:
+/*!
+ * \brief The fluid state which is used by the volume variables to
+ *        store the thermodynamic state. This should be chosen
+ *        appropriately for the model ((non-)isothermal, equilibrium, ...).
+ *        This can be done in the problem.
+ */
+SET_PROP(TwoPOneCNI, FluidState)
+{
+private:
      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
      using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
- public:
+public:
      using type = CompositionalFluidState<Scalar, FluidSystem>;
-    //  using type = ImmiscibleFluidState<Scalar, FluidSystem>;
- };
+};
 
- //! Determines whether Blocking ofspurious flow is used
- SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
+//! The two-phase one-component model considers advection.
+SET_BOOL_PROP(TwoPOneCNI, EnableAdvection, true);
 
- SET_TYPE_PROP(TwoPOneCNI, AdvectionType, TwoPOneCDarcysLaw<TypeTag>);
+ //! The two-phase one-component model has no molecular diffusion.
+SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);
 
-  SET_TYPE_PROP(TwoPOneCNI, VolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
+//! Do not block spurious flows by default.
+SET_BOOL_PROP(TwoPOneCNI, UseBlockingOfSpuriousFlow, false);
 
- //! The primary variable switch for the 2p1c model
- SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch<TypeTag>);
+//! The specific local residual (i.e. balance equations).
+SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>);
 
- //! The primary variables vector for the 2p1c model
- SET_TYPE_PROP(TwoPOneCNI, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+//! Use a modified version of Darcy's law which allows for blocking of spurious flows.
+SET_TYPE_PROP(TwoPOneCNI, AdvectionType, TwoPOneCDarcysLaw<TypeTag>);
 
- //! Somerton is used as default model to compute the effective thermal heat conductivity
- SET_PROP(TwoPOneCNI, ThermalConductivityModel)
- {
- private:
+//! The specific volume variable (i.e. secondary variables).
+SET_TYPE_PROP(TwoPOneCNI, VolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
+
+//! The primary variable switch for the 2p1cni model.
+SET_TYPE_PROP(TwoPOneCNI, PrimaryVariableSwitch, TwoPOneCPrimaryVariableSwitch<TypeTag>);
+
+//! The primary variables vector for the 2p1cni model.
+SET_TYPE_PROP(TwoPOneCNI, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>);
+
+//! Somerton is used as default model to compute the effective thermal heat conductivity.
+SET_PROP(TwoPOneCNI, ThermalConductivityModel)
+{
+private:
      using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
      using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
- public:
+public:
      using type = ThermalConductivitySomerton<Scalar>;
- };
+};
 
- //////////////////////////////////////////////////////////////////
- // Property values for isothermal model required for the general non-isothermal model
- //////////////////////////////////////////////////////////////////
- //set isothermal VolumeVariables
- SET_TYPE_PROP(TwoPOneCNI, IsothermalVolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
+//////////////////////////////////////////////////////////////////
+// Property values for isothermal model required for the general non-isothermal model
+//////////////////////////////////////////////////////////////////
+//! Set isothermal VolumeVariables.
+SET_TYPE_PROP(TwoPOneCNI, IsothermalVolumeVariables, TwoPOneCVolumeVariables<TypeTag>);
 
- //set isothermal LocalResidual
- SET_TYPE_PROP(TwoPOneCNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
+//! Set isothermal LocalResidual.
+SET_TYPE_PROP(TwoPOneCNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>);
 
- //set isothermal Indices
- SET_TYPE_PROP(TwoPOneCNI, IsothermalIndices, TwoPOneCIndices<TypeTag, 0>);
+//! Set isothermal Indices.
+SET_TYPE_PROP(TwoPOneCNI, IsothermalIndices, TwoPOneCIndices<TypeTag, 0>);
 
-//! the isothermal vtk output fields
- SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<TypeTag>);
+//! The isothermal vtk output fields.
+SET_TYPE_PROP(TwoPOneCNI, IsothermalVtkOutputFields, TwoPOneCVtkOutputFields<TypeTag>);
 
- //set isothermal NumEq
- SET_INT_PROP(TwoPOneCNI, IsothermalNumEq, 1);
+//! Set isothermal NumEq.
+SET_INT_PROP(TwoPOneCNI, IsothermalNumEq, 1);
 
 } // end namespace Properties
 } // end namespace Dumux
