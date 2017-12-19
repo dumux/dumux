@@ -131,11 +131,6 @@ public:
             succeeded = true;
             if (gridView().comm().size() > 1)
                 succeeded = gridView().comm().min(succeeded);
-
-            // printmatrix(std::cout, (*jacobian_)[cellCenterIdx][cellCenterIdx], "A11", "");
-            // printmatrix(std::cout, (*jacobian_)[cellCenterIdx][faceIdx], "A12", "");
-            // printmatrix(std::cout, (*jacobian_)[faceIdx][cellCenterIdx], "A21", "");
-            // printmatrix(std::cout, (*jacobian_)[faceIdx][faceIdx], "A22", "");
         }
         // throw exception if a problem ocurred
         catch (NumericalProblem &e)
@@ -202,8 +197,8 @@ public:
     {
         jacobian_ = A;
         residual_ = r;
-        //
-        // check and/or set the BCRS matrix's build mode
+
+        // set the BCRS matrix's build mode
         // convenience references
         CCToCCMatrixBlock& A11 = (*jacobian_)[cellCenterIdx][cellCenterIdx];
         CCToFaceMatrixBlock& A12 = (*jacobian_)[cellCenterIdx][faceIdx];
@@ -217,13 +212,6 @@ public:
 
         setJacobianPattern();
         setResidualSize();
-        // if (jacobian_->buildMode() == JacobianMatrix::BuildMode::unknown)
-        //     jacobian_->setBuildMode(JacobianMatrix::random);
-        // else if (jacobian_->buildMode() != JacobianMatrix::BuildMode::random)
-        //     DUNE_THROW(Dune::NotImplemented, "Only BCRS matrices with random build mode are supported at the moment");
-        //
-        // setJacobianPattern();
-        // setResidualSize();
     }
 
     /*!

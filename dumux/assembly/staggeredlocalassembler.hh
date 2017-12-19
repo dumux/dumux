@@ -261,29 +261,6 @@ public:
 
     }
 
-    /*!
-     * \brief Computes the epsilon used for numeric differentiation
-     *        for a given value of a primary variable.
-     *
-     * \param priVar The value of the primary variable
-     */
-    static Scalar numericEpsilon(const Scalar priVar)
-    {
-        // define the base epsilon as the geometric mean of 1 and the
-        // resolution of the scalar type. E.g. for standard 64 bit
-        // floating point values, the resolution is about 10^-16 and
-        // the base epsilon is thus approximately 10^-8.
-        /*
-        static const Scalar baseEps
-            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
-        */
-        static const Scalar baseEps = 1e-10;
-        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
-        // the epsilon value used for the numeric differentiation is
-        // now scaled by the absolute value of the primary variable...
-        return baseEps*(std::abs(priVar) + 1.0);
-    }
-
 protected:
     template<class Assembler>
     static void evalPartialDerivatives_(Assembler& assembler,
@@ -299,163 +276,100 @@ protected:
                                         JacobianMatrix& matrix,
                                         const NumCellCenterEqVector& ccResidual,
                                         const FaceSolutionVector& faceResidualCache)
-{
-    // compute the derivatives of the cell center residuals with respect to cell center dofs
-    dCCdCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
+    {
+        // compute the derivatives of the cell center residuals with respect to cell center dofs
+        dCCdCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
-    // compute the derivatives of the cell center residuals with respect to face dofs
-    dCCdFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
+        // compute the derivatives of the cell center residuals with respect to face dofs
+        dCCdFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, ccResidual);
 
-    // compute the derivatives of the face residuals with respect to cell center dofs
-    dFacedCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
+        // compute the derivatives of the face residuals with respect to cell center dofs
+        dFacedCC_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
 
-    // compute the derivatives of the face residuals with respect to face dofs
-    dFacedFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
-}
+        // compute the derivatives of the face residuals with respect to face dofs
+        dFacedFace_(assembler, element, fvGeometry, curSol, prevElemVolVars, curElemVolVars, prevElemFaceVars, curElemFaceVars, elemFluxVarsCache, elemBcTypes, matrix, faceResidualCache);
+    }
 
-/*!
-* \brief Computes the derivatives of the cell center residuals with respect to cell center dofs
-*/
-template<class Assembler>
-static void dCCdCC_(Assembler& assembler,
-             const Element& element,
-             const FVElementGeometry& fvGeometry,
-             const SolutionVector& curSol,
-             const ElementVolumeVariables& prevElemVolVars,
-             ElementVolumeVariables& curElemVolVars,
-             const ElementFaceVariables& prevElemFaceVars,
-             const ElementFaceVariables& curElemFaceVars,
-             ElementFluxVariablesCache& elemFluxVarsCache,
-             const ElementBoundaryTypes& elemBcTypes,
-             JacobianMatrix& matrix,
-             const NumCellCenterEqVector& ccResidual)
-{
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+    /*!
+     * \brief Computes the derivatives of the cell center residuals with respect to cell center dofs
+     */
+    template<class Assembler>
+    static void dCCdCC_(Assembler& assembler,
+                 const Element& element,
+                 const FVElementGeometry& fvGeometry,
+                 const SolutionVector& curSol,
+                 const ElementVolumeVariables& prevElemVolVars,
+                 ElementVolumeVariables& curElemVolVars,
+                 const ElementFaceVariables& prevElemFaceVars,
+                 const ElementFaceVariables& curElemFaceVars,
+                 ElementFluxVariablesCache& elemFluxVarsCache,
+                 const ElementBoundaryTypes& elemBcTypes,
+                 JacobianMatrix& matrix,
+                 const NumCellCenterEqVector& ccResidual)
+    {
+        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+        typename DofTypeIndices::CellCenterIdx cellCenterIdx;
 
-    const auto& problem = assembler.problem();
-    auto& localResidual = assembler.localResidual();
-    auto& gridVariables = assembler.gridVariables();
+        const auto& problem = assembler.problem();
+        auto& localResidual = assembler.localResidual();
+        auto& gridVariables = assembler.gridVariables();
 
-   // build derivatives with for cell center dofs w.r.t. cell center dofs
-   const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
+       // build derivatives with for cell center dofs w.r.t. cell center dofs
+       const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
 
-   const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+       const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
 
-   for(const auto& globalJ : connectivityMap(cellCenterIdx, cellCenterIdx, cellCenterGlobalI))
-   {
-       // get the volVars of the element with respect to which we are going to build the derivative
-       auto&& scvJ = fvGeometry.scv(globalJ);
-       const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
-       auto& curVolVars =  getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
-       VolumeVariables origVolVars(curVolVars);
-
-       for(auto pvIdx : priVarIndices_(cellCenterIdx))
+       for(const auto& globalJ : connectivityMap(cellCenterIdx, cellCenterIdx, cellCenterGlobalI))
        {
-           CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
+           // get the volVars of the element with respect to which we are going to build the derivative
+           auto&& scvJ = fvGeometry.scv(globalJ);
+           const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+           auto& curVolVars =  getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+           VolumeVariables origVolVars(curVolVars);
 
-           const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
-           priVars[pvIdx] += eps;
-           ElementSolutionVector elemSol{std::move(priVars)};
-           curVolVars.update(elemSol, problem, elementJ, scvJ);
+           for(auto pvIdx : priVarIndices_(cellCenterIdx))
+           {
+               CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
 
-           const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
-                                          prevElemFaceVars, curElemFaceVars,
-                                          elemBcTypes, elemFluxVarsCache);
+               const Scalar eps = numericEpsilon(priVars[pvIdx], cellCenterIdx, cellCenterIdx);
+               priVars[pvIdx] += eps;
+               ElementSolutionVector elemSol{std::move(priVars)};
+               curVolVars.update(elemSol, problem, elementJ, scvJ);
 
-           auto partialDeriv = (deflectedResidual - ccResidual);
-           partialDeriv /= eps;
+               const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry, prevElemVolVars, curElemVolVars,
+                                              prevElemFaceVars, curElemFaceVars,
+                                              elemBcTypes, elemFluxVarsCache);
 
-           // update the global jacobian matrix with the current partial derivatives
-           updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
+               auto partialDeriv = (deflectedResidual - ccResidual);
+               partialDeriv /= eps;
 
-           // restore the original volVars
-           curVolVars = origVolVars;
+               // update the global jacobian matrix with the current partial derivatives
+               updateGlobalJacobian_(matrix[cellCenterIdx][cellCenterIdx], cellCenterGlobalI, globalJ, pvIdx, partialDeriv);
+
+               // restore the original volVars
+               curVolVars = origVolVars;
+           }
        }
-   }
-}
+    }
 
-/*!
-* \brief Computes the derivatives of the cell center residuals with respect to face dofs
-*/
-template<class Assembler>
-static void dCCdFace_(Assembler& assembler,
-                      const Element& element,
-                      const FVElementGeometry& fvGeometry,
-                      const SolutionVector& curSol,
-                      const ElementVolumeVariables& prevElemVolVars,
-                      const ElementVolumeVariables& curElemVolVars,
-                      const ElementFaceVariables& prevElemFaceVars,
-                      ElementFaceVariables& curElemFaceVars,
-                      ElementFluxVariablesCache& elemFluxVarsCache,
-                      const ElementBoundaryTypes& elemBcTypes,
-                      JacobianMatrix& matrix,
-                      const NumCellCenterEqVector& ccResidual)
-{
-   // build derivatives with for cell center dofs w.r.t. face dofs
-   using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-   typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-   typename DofTypeIndices::FaceIdx faceIdx;
-
-   const auto& problem = assembler.problem();
-   auto& localResidual = assembler.localResidual();
-   auto& gridVariables = assembler.gridVariables();
-
-   // build derivatives with for cell center dofs w.r.t. cell center dofs
-   const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
-
-   for(const auto& scvfJ : scvfs(fvGeometry))
-   {
-        const auto globalJ = scvfJ.dofIndex();
-
-       // get the faceVars of the face with respect to which we are going to build the derivative
-       auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvfJ);
-       const auto origFaceVars(faceVars);
-
-       for(auto pvIdx : priVarIndices_(faceIdx))
-       {
-           FacePrimaryVariables facePriVars(curSol[faceIdx][globalJ]);
-           const Scalar eps = numericEpsilon(facePriVars[pvIdx], cellCenterIdx, faceIdx);
-           facePriVars[pvIdx] += eps;
-
-           faceVars.updateOwnFaceOnly(facePriVars);
-
-           const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
-                                          prevElemVolVars, curElemVolVars,
-                                          prevElemFaceVars, curElemFaceVars,
-                                          elemBcTypes, elemFluxVarsCache);
-
-           auto partialDeriv = (deflectedResidual - ccResidual);
-           partialDeriv /= eps;
-
-           // update the global jacobian matrix with the current partial derivatives
-           updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
-
-           // restore the original faceVars
-           faceVars = origFaceVars;
-       }
-   }
-}
-
-/*!
-* \brief Computes the derivatives of the face residuals with respect to cell center dofs
-*/
-template<class Assembler>
-static void dFacedCC_(Assembler& assembler,
-                      const Element& element,
-                      const FVElementGeometry& fvGeometry,
-                      const SolutionVector& curSol,
-                      const ElementVolumeVariables& prevElemVolVars,
-                      ElementVolumeVariables& curElemVolVars,
-                      const ElementFaceVariables& prevElemFaceVars,
-                      const ElementFaceVariables& curElemFaceVars,
-                      ElementFluxVariablesCache& elemFluxVarsCache,
-                      const ElementBoundaryTypes& elemBcTypes,
-                      JacobianMatrix& matrix,
-                      const FaceSolutionVector& cachedResidual)
-{
-   for(auto&& scvf : scvfs(fvGeometry))
-   {
+    /*!
+     * \brief Computes the derivatives of the cell center residuals with respect to face dofs
+     */
+    template<class Assembler>
+    static void dCCdFace_(Assembler& assembler,
+                          const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const SolutionVector& curSol,
+                          const ElementVolumeVariables& prevElemVolVars,
+                          const ElementVolumeVariables& curElemVolVars,
+                          const ElementFaceVariables& prevElemFaceVars,
+                          ElementFaceVariables& curElemFaceVars,
+                          ElementFluxVariablesCache& elemFluxVarsCache,
+                          const ElementBoundaryTypes& elemBcTypes,
+                          JacobianMatrix& matrix,
+                          const NumCellCenterEqVector& ccResidual)
+    {
+       // build derivatives with for cell center dofs w.r.t. face dofs
        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
        typename DofTypeIndices::CellCenterIdx cellCenterIdx;
        typename DofTypeIndices::FaceIdx faceIdx;
@@ -463,187 +377,255 @@ static void dFacedCC_(Assembler& assembler,
        const auto& problem = assembler.problem();
        auto& localResidual = assembler.localResidual();
        auto& gridVariables = assembler.gridVariables();
-       const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
 
-       // set the actual dof index
-       const auto faceGlobalI = scvf.dofIndex();
+       // build derivatives with for cell center dofs w.r.t. cell center dofs
+       const auto cellCenterGlobalI = assembler.fvGridGeometry().elementMapper().index(element);
 
-       // build derivatives with for face dofs w.r.t. cell center dofs
-       for(const auto& globalJ : connectivityMap(faceIdx, cellCenterIdx, scvf.index()))
+       for(const auto& scvfJ : scvfs(fvGeometry))
        {
-           // get the volVars of the element with respect to which we are going to build the derivative
-           auto&& scvJ = fvGeometry.scv(globalJ);
-           const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
-           auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
-           VolumeVariables origVolVars(curVolVars);
+            const auto globalJ = scvfJ.dofIndex();
 
-           for(auto pvIdx : priVarIndices_(cellCenterIdx))
-           {
-               CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
-
-               const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
-               priVars[pvIdx] += eps;
-               ElementSolutionVector elemSol{std::move(priVars)};
-               curVolVars.update(elemSol, problem, elementJ, scvJ);
-
-               const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
-                                              prevElemVolVars, curElemVolVars,
-                                              prevElemFaceVars, curElemFaceVars,
-                                              elemBcTypes, elemFluxVarsCache);
-
-               auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
-               partialDeriv /= eps;
-
-               // update the global jacobian matrix with the current partial derivatives
-               updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
-
-               // restore the original volVars
-               curVolVars = origVolVars;
-           }
-       }
-   }
-}
-
-/*!
-* \brief Computes the derivatives of the face residuals with respect to cell center dofs
-*/
-template<class Assembler>
-static void dFacedFace_(Assembler& assembler,
-                        const Element& element,
-                        const FVElementGeometry& fvGeometry,
-                        const SolutionVector& curSol,
-                        const ElementVolumeVariables& prevElemVolVars,
-                        const ElementVolumeVariables& curElemVolVars,
-                        const ElementFaceVariables& prevElemFaceVars,
-                        ElementFaceVariables& curElemFaceVars,
-                        ElementFluxVariablesCache& elemFluxVarsCache,
-                        const ElementBoundaryTypes& elemBcTypes,
-                        JacobianMatrix& matrix,
-                        const FaceSolutionVector& cachedResidual)
-{
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    const auto& problem = assembler.problem();
-    auto& localResidual = assembler.localResidual();
-    const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
-    auto& gridVariables = assembler.gridVariables();
-
-   for(auto&& scvf : scvfs(fvGeometry))
-   {
-       // set the actual dof index
-       const auto faceGlobalI = scvf.dofIndex();
-
-       // build derivatives with for face dofs w.r.t. cell center dofs
-       for(const auto& globalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
-       {
            // get the faceVars of the face with respect to which we are going to build the derivative
-        auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvf);
-        const auto origFaceVars(faceVars);
+           auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvfJ);
+           const auto origFaceVars(faceVars);
 
            for(auto pvIdx : priVarIndices_(faceIdx))
            {
-               auto faceSolution = FaceSolution(scvf, curSol[faceIdx], assembler.fvGridGeometry());
+               FacePrimaryVariables facePriVars(curSol[faceIdx][globalJ]);
+               const Scalar eps = numericEpsilon(facePriVars[pvIdx], cellCenterIdx, faceIdx);
+               facePriVars[pvIdx] += eps;
 
-               const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
+               faceVars.updateOwnFaceOnly(facePriVars);
 
-               faceSolution[globalJ][pvIdx] += eps;
-               faceVars.update(faceSolution, problem, element, fvGeometry, scvf);
-
-               const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
+               const auto deflectedResidual = localResidual.evalCellCenter(problem, element, fvGeometry,
                                               prevElemVolVars, curElemVolVars,
                                               prevElemFaceVars, curElemFaceVars,
                                               elemBcTypes, elemFluxVarsCache);
 
-               auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
+               auto partialDeriv = (deflectedResidual - ccResidual);
                partialDeriv /= eps;
 
                // update the global jacobian matrix with the current partial derivatives
-               updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
+               updateGlobalJacobian_(matrix[cellCenterIdx][faceIdx], cellCenterGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
 
                // restore the original faceVars
                faceVars = origFaceVars;
            }
        }
-   }
-}
-
-
-
-static Scalar numericEpsilon(const Scalar priVar, const int idx1, const int idx2)
-{
-    // define the base epsilon as the geometric mean of 1 and the
-    // resolution of the scalar type. E.g. for standard 64 bit
-    // floating point values, the resolution is about 10^-16 and
-    // the base epsilon is thus approximately 10^-8.
-    /*
-    static const Scalar baseEps
-        = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
-    */
-    using BaseEpsilon = typename GET_PROP(TypeTag, BaseEpsilon);
-    const std::array<std::array<Scalar, 2>, 2> baseEps_ = BaseEpsilon::getEps();
-
-
-    static const Scalar baseEps = baseEps_[idx1][idx2];
-    assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
-    // the epsilon value used for the numeric differentiation is
-    // now scaled by the absolute value of the primary variable...
-    return baseEps*(std::abs(priVar) + 1.0);
-}
-
-
-/*!
- * \brief Updates the current global Jacobian matrix with the
- *        partial derivatives of all equations in regard to the
- *        primary variable 'pvIdx' at dof 'col'. Specialization for cc methods.
- */
-template<class SubMatrix, class CCOrFacePrimaryVariables>
-static void updateGlobalJacobian_(SubMatrix& matrix,
-                      const int globalI,
-                      const int globalJ,
-                      const int pvIdx,
-                      const CCOrFacePrimaryVariables &partialDeriv)
-{
-    for (int eqIdx = 0; eqIdx < partialDeriv.size(); eqIdx++)
-    {
-        // A[i][col][eqIdx][pvIdx] is the rate of change of
-        // the residual of equation 'eqIdx' at dof 'i'
-        // depending on the primary variable 'pvIdx' at dof
-        // 'col'.
-
-        assert(pvIdx >= 0);
-        assert(eqIdx < matrix[globalI][globalJ].size());
-        assert(pvIdx < matrix[globalI][globalJ][eqIdx].size());
-        matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
-        Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
     }
-}
 
-//! Helper function that returns an iterable range of primary variable indices.
-//! Specialization for cell center dofs.
-static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
-{
-    constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+    /*!
+     * \brief Computes the derivatives of the face residuals with respect to cell center dofs
+     */
+    template<class Assembler>
+    static void dFacedCC_(Assembler& assembler,
+                          const Element& element,
+                          const FVElementGeometry& fvGeometry,
+                          const SolutionVector& curSol,
+                          const ElementVolumeVariables& prevElemVolVars,
+                          ElementVolumeVariables& curElemVolVars,
+                          const ElementFaceVariables& prevElemFaceVars,
+                          const ElementFaceVariables& curElemFaceVars,
+                          ElementFluxVariablesCache& elemFluxVarsCache,
+                          const ElementBoundaryTypes& elemBcTypes,
+                          JacobianMatrix& matrix,
+                          const FaceSolutionVector& cachedResidual)
+    {
+       for(auto&& scvf : scvfs(fvGeometry))
+       {
+           using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+           typename DofTypeIndices::CellCenterIdx cellCenterIdx;
+           typename DofTypeIndices::FaceIdx faceIdx;
 
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    return Dune::range(0, numEqCellCenter);
-#else
-    return IntRange(0, numEqCellCenter);
-#endif
-}
+           const auto& problem = assembler.problem();
+           auto& localResidual = assembler.localResidual();
+           auto& gridVariables = assembler.gridVariables();
+           const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
 
-//! Helper function that returns an iterable range of primary variable indices.
-//! Specialization for face dofs.
-static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
-{
-    constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
-    constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    return Dune::range(numEqCellCenter, numEqCellCenter + numEqFace);
-#else
-    return IntRange(numEqCellCenter, numEqCellCenter + numEqFace);
-#endif
-}
+           // set the actual dof index
+           const auto faceGlobalI = scvf.dofIndex();
+
+           // build derivatives with for face dofs w.r.t. cell center dofs
+           for(const auto& globalJ : connectivityMap(faceIdx, cellCenterIdx, scvf.index()))
+           {
+               // get the volVars of the element with respect to which we are going to build the derivative
+               auto&& scvJ = fvGeometry.scv(globalJ);
+               const auto elementJ = fvGeometry.fvGridGeometry().element(globalJ);
+               auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+               VolumeVariables origVolVars(curVolVars);
+
+               for(auto pvIdx : priVarIndices_(cellCenterIdx))
+               {
+                   CellCenterPrimaryVariables priVars(curSol[cellCenterIdx][globalJ]);
+
+                   const Scalar eps = numericEpsilon(priVars[pvIdx], faceIdx, cellCenterIdx);
+                   priVars[pvIdx] += eps;
+                   ElementSolutionVector elemSol{std::move(priVars)};
+                   curVolVars.update(elemSol, problem, elementJ, scvJ);
+
+                   const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
+                                                  prevElemVolVars, curElemVolVars,
+                                                  prevElemFaceVars, curElemFaceVars,
+                                                  elemBcTypes, elemFluxVarsCache);
+
+                   auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
+                   partialDeriv /= eps;
+
+                   // update the global jacobian matrix with the current partial derivatives
+                   updateGlobalJacobian_(matrix[faceIdx][cellCenterIdx], faceGlobalI, globalJ, pvIdx, partialDeriv);
+
+                   // restore the original volVars
+                   curVolVars = origVolVars;
+               }
+           }
+       }
+    }
+
+    /*!
+     * \brief Computes the derivatives of the face residuals with respect to cell center dofs
+     */
+    template<class Assembler>
+    static void dFacedFace_(Assembler& assembler,
+                            const Element& element,
+                            const FVElementGeometry& fvGeometry,
+                            const SolutionVector& curSol,
+                            const ElementVolumeVariables& prevElemVolVars,
+                            const ElementVolumeVariables& curElemVolVars,
+                            const ElementFaceVariables& prevElemFaceVars,
+                            ElementFaceVariables& curElemFaceVars,
+                            ElementFluxVariablesCache& elemFluxVarsCache,
+                            const ElementBoundaryTypes& elemBcTypes,
+                            JacobianMatrix& matrix,
+                            const FaceSolutionVector& cachedResidual)
+    {
+        using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+        typename DofTypeIndices::FaceIdx faceIdx;
+
+        const auto& problem = assembler.problem();
+        auto& localResidual = assembler.localResidual();
+        const auto& connectivityMap = assembler.fvGridGeometry().connectivityMap();
+        auto& gridVariables = assembler.gridVariables();
+
+       for(auto&& scvf : scvfs(fvGeometry))
+       {
+           // set the actual dof index
+           const auto faceGlobalI = scvf.dofIndex();
+
+           // build derivatives with for face dofs w.r.t. cell center dofs
+           for(const auto& globalJ : connectivityMap(faceIdx, faceIdx, scvf.index()))
+           {
+               // get the faceVars of the face with respect to which we are going to build the derivative
+            auto& faceVars = getFaceVarAccess(gridVariables.curGridFaceVars(), curElemFaceVars, scvf);
+            const auto origFaceVars(faceVars);
+
+               for(auto pvIdx : priVarIndices_(faceIdx))
+               {
+                   auto faceSolution = FaceSolution(scvf, curSol[faceIdx], assembler.fvGridGeometry());
+
+                   const Scalar eps = numericEpsilon(faceSolution[globalJ][pvIdx], faceIdx, faceIdx);
+
+                   faceSolution[globalJ][pvIdx] += eps;
+                   faceVars.update(faceSolution, problem, element, fvGeometry, scvf);
+
+                   const auto deflectedResidual = localResidual.evalFace(problem, element, fvGeometry, scvf,
+                                                  prevElemVolVars, curElemVolVars,
+                                                  prevElemFaceVars, curElemFaceVars,
+                                                  elemBcTypes, elemFluxVarsCache);
+
+                   auto partialDeriv = (deflectedResidual - cachedResidual[scvf.localFaceIdx()]);
+                   partialDeriv /= eps;
+
+                   // update the global jacobian matrix with the current partial derivatives
+                   updateGlobalJacobian_(matrix[faceIdx][faceIdx], faceGlobalI, globalJ, pvIdx - faceOffset, partialDeriv);
+
+                   // restore the original faceVars
+                   faceVars = origFaceVars;
+               }
+           }
+       }
+    }
+
+
+    /*!
+     * \brief Computes the epsilon used for numeric differentiation
+     *        for a given value of a primary variable.
+     *
+     * \param priVar The value of the primary variable
+     */
+    static Scalar numericEpsilon(const Scalar priVar, const int idx1, const int idx2)
+    {
+        // define the base epsilon as the geometric mean of 1 and the
+        // resolution of the scalar type. E.g. for standard 64 bit
+        // floating point values, the resolution is about 10^-16 and
+        // the base epsilon is thus approximately 10^-8.
+        /*
+        static const Scalar baseEps
+            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
+        */
+        using BaseEpsilon = typename GET_PROP(TypeTag, BaseEpsilon);
+        const std::array<std::array<Scalar, 2>, 2> baseEps_ = BaseEpsilon::getEps();
+
+
+        static const Scalar baseEps = baseEps_[idx1][idx2];
+        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
+        // the epsilon value used for the numeric differentiation is
+        // now scaled by the absolute value of the primary variable...
+        return baseEps*(std::abs(priVar) + 1.0);
+    }
+
+
+    /*!
+     * \brief Updates the current global Jacobian matrix with the
+     *        partial derivatives of all equations in regard to the
+     *        primary variable 'pvIdx' at dof 'col'. Specialization for cc methods.
+     */
+    template<class SubMatrix, class CCOrFacePrimaryVariables>
+    static void updateGlobalJacobian_(SubMatrix& matrix,
+                          const int globalI,
+                          const int globalJ,
+                          const int pvIdx,
+                          const CCOrFacePrimaryVariables &partialDeriv)
+    {
+        for (int eqIdx = 0; eqIdx < partialDeriv.size(); eqIdx++)
+        {
+            // A[i][col][eqIdx][pvIdx] is the rate of change of
+            // the residual of equation 'eqIdx' at dof 'i'
+            // depending on the primary variable 'pvIdx' at dof
+            // 'col'.
+
+            assert(pvIdx >= 0);
+            assert(eqIdx < matrix[globalI][globalJ].size());
+            assert(pvIdx < matrix[globalI][globalJ][eqIdx].size());
+            matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+            Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
+        }
+    }
+
+    //! Helper function that returns an iterable range of primary variable indices.
+    //! Specialization for cell center dofs.
+    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::CellCenterIdx)
+    {
+        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+
+    #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        return Dune::range(0, numEqCellCenter);
+    #else
+        return IntRange(0, numEqCellCenter);
+    #endif
+    }
+
+    //! Helper function that returns an iterable range of primary variable indices.
+    //! Specialization for face dofs.
+    static auto priVarIndices_(typename GET_PROP(TypeTag, DofTypeIndices)::FaceIdx)
+    {
+        constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
+        constexpr auto numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace);
+    #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        return Dune::range(numEqCellCenter, numEqCellCenter + numEqFace);
+    #else
+        return IntRange(numEqCellCenter, numEqCellCenter + numEqFace);
+    #endif
+    }
 
 private:
     template<class T = TypeTag>
