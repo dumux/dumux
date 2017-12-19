@@ -214,6 +214,7 @@
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
+ 	 * CO2Tests contain a CO2 injection test problem using the TwoPTwoCModel and heterogeneous spatial parameters. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
