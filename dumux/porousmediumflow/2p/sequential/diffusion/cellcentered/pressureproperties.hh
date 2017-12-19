@@ -16,14 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
-/*!
- * \ingroup FVPressure2p
- * \ingroup IMPETProperties
- */
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for finite volume pressure models in a two-phase sequential model.
  */
 

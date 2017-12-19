@@ -16,21 +16,23 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Velocity Field from a finite volume solution of a pressure equation.
+ */
+
 #ifndef DUMUX_FVVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVVELOCITY2P_ADAPTIVE_HH
-
-/**
- * @file
- * @brief  Velocity Field from a finite volume solution of a pressure equation.
- */
 
 #include <dune/common/float_cmp.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/velocity.hh>
 
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
+/*!
+ * \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
+ * \ingroup SequentialTwoPModel
  *
  * Details see FVVelocity2P
  */
@@ -78,7 +80,8 @@ class FVVelocity2PAdaptive: public FVVelocity2P<TypeTag>
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    /*! \brief Constructs a FVVelocity2PAdaptive object
+    /*!
+     * \brief Constructs a FVVelocity2PAdaptive object
      * \param problem A problem class object
      */
     FVVelocity2PAdaptive(Problem& problem)
@@ -99,7 +102,7 @@ public:
         viscosity_[nPhaseIdx] = 0.;
     }
 
-    //!For initialization
+    // For initialization
     void initialize()
     {
         ParentType::initialize();
@@ -120,10 +123,11 @@ public:
         }
     }
 
-    //Calculates the velocity at a cell-cell interface.
+    //! Calculates the velocity at a cell-cell interface.
     void calculateVelocity(const Intersection& intersection, CellData& cellData);
 
-    /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
+    /*!
+     * \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
      *
      * Returns false (In the adaptive finite volume scheme the velocity has to be calculated separately
      * to make sure the hanging nodes are treated correctly.)
@@ -148,7 +152,8 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
-/*! \brief Calculates the velocity at a cell-cell interface.
+/*!
+ * \brief Calculates the velocity at a cell-cell interface.
 *
 * \copydetails FVVelocity2P::calculateVelocity(const Intersection&,CellData&)
 *

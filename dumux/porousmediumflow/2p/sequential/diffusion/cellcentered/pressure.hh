@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Finite Volume discretization of a two-phase flow pressure equation.
+ */
 #ifndef DUMUX_FVPRESSURE2P_HH
 #define DUMUX_FVPRESSURE2P_HH
 
@@ -25,14 +30,9 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
-/**
- * \file
- * \brief  Finite Volume discretization of a two-phase flow pressure equation.
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
+//! \ingroup SequentialTwoPModel
 /*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
  *
  * This model implements two-phase flow of two immiscible fluids \f$\alpha \in \{ w, n \}\f$ using
@@ -173,20 +173,20 @@ protected:
     //! \endcond
 
 public:
-    // Function which calculates the source entry
+    //! Function which calculates the source entry
     void getSource(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
-    // Function which calculates the storage entry
+    //! Function which calculates the storage entry
     void getStorage(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
-    // Function which calculates the flux entry
+    //! Function which calculates the flux entry
     void getFlux(EntryType& entry, const Intersection& intersection, const CellData& cellData, const bool first);
 
-    // Function which calculates the boundary flux entry
+    //! Function which calculates the boundary flux entry
     void getFluxOnBoundary(EntryType& entry,
     const Intersection& intersection, const CellData& cellData, const bool first);
 
-    // updates and stores constitutive relations
+    //! updates and stores constitutive relations
     void updateMaterialLaws();
 
     /*! \brief Initializes the pressure model
@@ -532,8 +532,8 @@ public:
         }
     }
 
-    //! Constructs a FVPressure2P object
-    /**
+    /*!
+     * \brief Constructs a FVPressure2P object
      * \param problem A problem class object
      */
     FVPressure2P(Problem& problem) :
@@ -623,7 +623,7 @@ void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
     entry[rhs] = volume * (sourcePhase[wPhaseIdx] + sourcePhase[nPhaseIdx]);
 }
 
-/** \brief Function which calculates the storage entry
+/*! \brief Function which calculates the storage entry
  *
  * \copydetails FVPressure::getStorage(EntryType&,const Element&,const CellData&,const bool)
  *
@@ -1075,6 +1075,8 @@ const Intersection& intersection, const CellData& cellData, const bool first)
  *
  * Stores mobility, fractional flow function and capillary pressure for all grid cells.
  * In the compressible case additionally the densities and viscosities are stored.
+ *
+ * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()
