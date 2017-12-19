@@ -18,11 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- *\ingroup IAPWS
- *
+ * \ingroup IAPWS
  * \brief Implements the equations for region 1 of the IAPWS '97 formulation.
- *
  * See:
  *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation
@@ -42,11 +39,8 @@ namespace IAPWS
 {
 /*!
  * \ingroup IAPWS
- *
  * \brief Implements the equations for region 1 of the IAPWS '97 formulation.
- *
  * \tparam Scalar The type used for scalar values
- *
  * See:
  *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation

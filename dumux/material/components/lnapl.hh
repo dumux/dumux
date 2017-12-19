@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *\ingroup Components
+ * \ingroup Components
  * \brief  A simple implementation of a LNAPL.
  */
 #ifndef DUMUX_LNAPL_HH
@@ -31,7 +31,6 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- *
  * \brief A simple implementation of a LNAPL, e.g. a kind of oil
  *
  * \tparam Scalar The type used for scalar values
@@ -54,7 +53,7 @@ public:
     { return false; }
 
     /*!
-     * \brief Rough estimate of the density of oil \f$\mathrm{[kg/m^3]}\f$.
+     * \brief Rough estimate of the liquid density of oil \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -65,7 +64,7 @@ public:
     }
 
     /*!
-     * \brief Rough estimate of the viscosity of oil in \f$\mathrm{[Pa*s]}\f$.
+     * \brief Rough estimate of the liquid viscosity of oil in \f$\mathrm{[Pa*s]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

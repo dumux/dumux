@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Material properties of pure Calcium-Oxide \f$CaO\f$.
  */
 #ifndef DUMUX_CAO_HH
@@ -36,6 +34,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup Components
  * \brief A class for the CaO properties
  */
 template <class Scalar>

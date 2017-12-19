@@ -18,12 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup IAPWS
- *
  * \brief Implements relations common for all regions of the IAPWS '97
  *        formulation.
- *
  * See:
  *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation
@@ -46,7 +43,6 @@ namespace IAPWS
 /*!
  *
  *  \ingroup IAPWS
- *
  * \brief Implements relations which are common for all regions of the IAPWS '97
  *        formulation.
  *
@@ -152,18 +148,18 @@ public:
     }
 
     /*!
-    * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ water (IAPWS) .
-    *
-    * Implementation taken from:
-    * freesteam - IAPWS-IF97 steam tables library
-    * copyright (C) 2004-2009  John Pye
-    *
-    * Appendix B: Recommended Interpolating equation for Industrial Use
-    * see http://www.iapws.org/relguide/thcond.pdf
-    *
-    * \param T absolute temperature in \f$\mathrm{[K]}\f$
-    * \param rho density of water in \f$\mathrm{[kg/m^3]}\f$
-    */
+     * \brief Thermal conductivity \f$\mathrm{[[W/(m*K)]}\f$ water (IAPWS) .
+     *
+     * Implementation taken from:
+     * freesteam - IAPWS-IF97 steam tables library
+     * copyright (C) 2004-2009  John Pye
+     *
+     * Appendix B: Recommended Interpolating equation for Industrial Use
+     * see http://www.iapws.org/relguide/thcond.pdf
+     *
+     * \param T absolute temperature in \f$\mathrm{[K]}\f$
+     * \param rho density of water in \f$\mathrm{[kg/m^3]}\f$
+     */
     static Scalar thermalConductivityIAPWS(const Scalar T, const Scalar rho)
     {
         Scalar thcond_tstar   = 647.26 ;

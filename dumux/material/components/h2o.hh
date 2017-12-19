@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Material properties of pure water \f$H_2O\f$.
  */
 #ifndef DUMUX_H2O_HH
@@ -44,9 +42,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- *
  * \brief Material properties of pure water \f$H_2O\f$.
- *
  * \tparam Scalar The type used for scalar values
  *
  * See:
@@ -351,7 +347,7 @@ public:
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf  \cite IAPWS1997
-    */
+     */
     static Scalar gasInternalEnergy(Scalar temperature, Scalar pressure)
     {
         Region2::checkValidityRange(temperature, pressure, "Internal energy");
@@ -446,7 +442,7 @@ public:
      * IAPWS: "Revised Release on the IAPWS Industrial Formulation
      * 1997 for the Thermodynamic Properties of Water and Steam",
      * http://www.iapws.org/relguide/IF97-Rev.pdf \cite IAPWS1997
-    */
+     */
     static Scalar gasHeatCapacityConstVolume(Scalar temperature, Scalar pressure)
     {
         Region2::checkValidityRange(temperature, pressure, "Heat capacity for a constant volume");

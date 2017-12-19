@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief A class for the brine fluid properties,.
  */
 #ifndef DUMUX_BRINE_HH
@@ -37,9 +35,7 @@
 namespace Dumux
 {
 /*!
- *
  * \ingroup Components
- *
  * \brief A class for the brine fluid properties.
  *
  * \tparam Scalar The type used for scalar values
@@ -125,9 +121,9 @@ public:
      * \param salinity The mass fraction of salt
      *
      * Equations given in:
-     *                         - Palliser & McKibbin (1998) \cite palliser1998 <BR>
-     *                         - Michaelides (1981) \cite michaelides1981 <BR>
-     *                         - Daubert & Danner (1989) \cite daubert1989
+     * - Palliser & McKibbin (1998) \cite palliser1998 <BR>
+     * - Michaelides (1981) \cite michaelides1981 <BR>
+     * - Daubert & Danner (1989) \cite daubert1989
      *
      */
     static const Scalar liquidEnthalpy(Scalar T,
@@ -179,7 +175,7 @@ public:
     }
 
     /*!
-     * \brief Specific isobaric heat capacity of liquid water \f$\mathrm{[J/kg]}\f$.
+     * \brief Specific isobaric heat capacity of brine \f$\mathrm{[J/kg]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -317,7 +313,7 @@ public:
    { return H2O::gasPressure(temperature, density); }
 
    /*!
-    * \brief The pressure of liquid water in \f$\mathrm{[Pa]}\f$ at a given density and
+    * \brief The pressure of brine in \f$\mathrm{[Pa]}\f$ at a given density and
     *        temperature.
     *
     * \param temperature temperature of component in \f$\mathrm{[K]}\f$

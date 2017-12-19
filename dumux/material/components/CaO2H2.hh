@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Material properties of pure Calciumhydroxide \f$CaO2H2\f$.
  */
 #ifndef DUMUX_CAO2H2_HH
@@ -36,6 +34,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup Components
  * \brief A class for the CaO2H2 properties
  */
 template <class Scalar>

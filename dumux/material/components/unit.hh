@@ -31,7 +31,6 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- *
  * \brief A component using a value of one for all fluid properties.
  *
  * \tparam Scalar The type used for scalar values

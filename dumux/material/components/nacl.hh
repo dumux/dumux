@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Material properties of pure salt \f$NaCl\f$.
  */
 #ifndef DUMUX_NACL_HH
@@ -36,6 +34,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup Components
  * \brief A class for the NaCl properties
  */
 template <class Scalar>
@@ -60,6 +59,8 @@ public:
 
     /*!
      * \brief The diffusion Coefficient \f$\mathrm{[m^2/s]}\f$ of NaCl in water.
+     * \param temperature absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {
