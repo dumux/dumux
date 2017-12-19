@@ -133,10 +133,10 @@ namespace Properties
                    "Only fluid systems with 2 phases are supported by the 2p1cni model!");
  };
 
-SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>); //! The local residual function
+SET_TYPE_PROP(TwoPOneCNI, LocalResidual, TwoPOneCLocalResidual<TypeTag>); //!< The local residual function
 
-SET_BOOL_PROP(TwoPOneCNI, EnableAdvection, true);                           //! The one-phase model considers advection
-SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);                 //! The one-phase model has no molecular diffusion
+SET_BOOL_PROP(TwoPOneCNI, EnableAdvection, true);                           //!< The one-phase model considers advection
+SET_BOOL_PROP(TwoPOneCNI, EnableMolecularDiffusion, false);                 //!< The one-phase model has no molecular diffusion
 
  /*!
   * \brief The fluid state which is used by the volume variables to

@@ -240,7 +240,7 @@ int main(int argc, char** argv)
     //! intialize the vtk output module
     VtkOutputModule<TracerTypeTag> vtkWriter(*tracerProblem, *fvGridGeometry, *gridVariables, x, tracerProblem->name());
     using VtkOutputFields = typename GET_PROP_TYPE(TracerTypeTag, VtkOutputFields);
-    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     vtkWriter.write(0.0);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////

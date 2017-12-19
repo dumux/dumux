@@ -148,11 +148,11 @@
 
  SET_INT_PROP(NavierStokesNC, PhaseIdx, 0); //!< Defines the phaseIdx
 
- SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the vtk output fields
+ SET_TYPE_PROP(NavierStokesNC, VtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //!< the vtk output fields
 
  // non-isothermal properties
- SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>); //! the isothermal indices
- SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //! the isothermal vtk output fields
+ SET_TYPE_PROP(NavierStokesNCNI, IsothermalIndices, NavierStokesNCIndices<TypeTag>); //!< the isothermal indices
+ SET_TYPE_PROP(NavierStokesNCNI, IsothermalVtkOutputFields, NavierStokesNCVtkOutputFields<TypeTag>); //!< the isothermal vtk output fields
 
  //! The number of equations
  SET_PROP(NavierStokesNCNI, IsothermalNumEq)

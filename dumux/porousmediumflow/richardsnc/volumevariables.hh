@@ -268,12 +268,12 @@ public:
     { return saturation(phaseIdx) * porosity_; }
 
 protected:
-    FluidState fluidState_; //! the fluid state
-    Scalar relativePermeabilityWetting_; //! the relative permeability of the wetting phase
-    Scalar porosity_; //! the porosity
-    PermeabilityType permeability_; //! the instrinsic permeability
-    Scalar pn_; //! the reference non-wetting pressure
-    Scalar minPc_; //! the minimum capillary pressure (entry pressure)
+    FluidState fluidState_; //!< the fluid state
+    Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
+    Scalar porosity_; //!< the porosity
+    PermeabilityType permeability_; //!< the instrinsic permeability
+    Scalar pn_; //!< the reference non-wetting pressure
+    Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
 };
 
 /*!

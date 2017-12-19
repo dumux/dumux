@@ -544,8 +544,8 @@ private:
     std::shared_ptr<Dune::VTKWriter<GridView>> writer_;
     Dune::VTKSequenceWriter<GridView> sequenceWriter_;
 
-    std::vector<VolVarScalarDataInfo> volVarScalarDataInfo_; //! Registered volume variables
-    std::vector<Field> fields_; //! Registered scalar and vector fields
+    std::vector<VolVarScalarDataInfo> volVarScalarDataInfo_; //!< Registered volume variables
+    std::vector<Field> fields_; //!< Registered scalar and vector fields
 };
 
 } // end namespace Dumux

@@ -146,7 +146,7 @@ int main(int argc, char** argv) try
     // intialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
-    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
 
     // if we are using a random permeability field with gstat
     bool isRandomField = getParam<bool>("SpatialParams.RandomField", false);

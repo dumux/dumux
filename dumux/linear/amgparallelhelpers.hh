@@ -462,12 +462,12 @@ public:
 #endif
 
 private:
-    const GridView gridView_; //! the grid view
-    const DofMapper& mapper_; //! the dof mapper
-    std::vector<std::size_t> owner_; //! vector to identify unique decomposition
-    std::vector<std::size_t> isGhost_; //! vector to identify ghost dofs
-    int verbose_; //! verbosity
-    bool initialized_; //! whether isGhost and owner arrays are initialized
+    const GridView gridView_; //!< the grid view
+    const DofMapper& mapper_; //!< the dof mapper
+    std::vector<std::size_t> owner_; //!< vector to identify unique decomposition
+    std::vector<std::size_t> isGhost_; //!< vector to identify ghost dofs
+    int verbose_; //!< verbosity
+    bool initialized_; //!< whether isGhost and owner arrays are initialized
 
 }; // class ParallelISTLHelper
 

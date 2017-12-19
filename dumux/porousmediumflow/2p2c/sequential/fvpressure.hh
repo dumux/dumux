@@ -179,8 +179,8 @@ public:
 protected:
     Problem& problem_;
     bool enableVolumeIntegral; //!< Enables the volume integral of the pressure equation
-    bool regulateBoundaryPermeability; //! Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
-    Scalar minimalBoundaryPermeability; //! Minimal limit for the boundary permeability
+    bool regulateBoundaryPermeability; //!< Enables regulation of permeability in the direction of a Dirichlet Boundary Condition
+    Scalar minimalBoundaryPermeability; //!< Minimal limit for the boundary permeability
     Scalar ErrorTermFactor_; //!< Handling of error term: relaxation factor
     Scalar ErrorTermLowerBound_; //!< Handling of error term: lower bound for error dampening
     Scalar ErrorTermUpperBound_; //!< Handling of error term: upper bound for error dampening

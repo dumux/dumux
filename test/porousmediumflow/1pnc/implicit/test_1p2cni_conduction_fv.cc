@@ -114,7 +114,7 @@
      // intialize the vtk output module
      VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
      using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
-     VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
      vtkWriter.addField(problem->getExactTemperature(), "temperatureExact");
      vtkWriter.write(0.0);
      // output every vtkOutputInterval time step

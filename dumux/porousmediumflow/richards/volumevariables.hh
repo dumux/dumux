@@ -405,14 +405,14 @@ public:
     }
 
 protected:
-    FluidState fluidState_; //! the fluid state
-    Scalar relativePermeabilityWetting_; //! the relative permeability of the wetting phase
-    Scalar porosity_; //! the porosity
-    PermeabilityType permeability_; //! the instrinsic permeability
-    Scalar minPc_; //! the minimum capillary pressure (entry pressure)
-    Scalar moleFraction_[numPhases]; //! The water mole fractions in water and air
-    Scalar molarDensity_[numPhases]; //! The molar density of water and air
-    Scalar diffCoeff_; //! The binary diffusion coefficient of water in air
+    FluidState fluidState_; //!< the fluid state
+    Scalar relativePermeabilityWetting_; //!< the relative permeability of the wetting phase
+    Scalar porosity_; //!< the porosity
+    PermeabilityType permeability_; //!< the instrinsic permeability
+    Scalar minPc_; //!< the minimum capillary pressure (entry pressure)
+    Scalar moleFraction_[numPhases]; //!< The water mole fractions in water and air
+    Scalar molarDensity_[numPhases]; //!< The molar density of water and air
+    Scalar diffCoeff_; //!< The binary diffusion coefficient of water in air
 };
 
 } // end namespace Dumux

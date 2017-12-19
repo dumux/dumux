@@ -138,7 +138,7 @@ int main(int argc, char** argv) try
     // initialize the vtk output module
     using VtkOutputFields = typename GET_PROP_TYPE(TypeTag, VtkOutputFields);
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
-    VtkOutputFields::init(vtkWriter); //! Add model specific output fields
+    VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     //add specific output
     vtkWriter.addField(problem->getKxx(), "Kxx");
     vtkWriter.addField(problem->getKyy(), "Kyy");

@@ -150,10 +150,10 @@ public:
     }
 
 protected:
-    PrimaryVariables values_; //! value of the point source for each equation
+    PrimaryVariables values_; //!< value of the point source for each equation
 private:
-    GlobalPosition pos_; //! position of the point source
-    std::size_t embeddings_; //! how many SCVs the point source is associated with
+    GlobalPosition pos_; //!< position of the point source
+    std::size_t embeddings_; //!< how many SCVs the point source is associated with
 };
 
 /*!

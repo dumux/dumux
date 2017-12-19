@@ -144,7 +144,7 @@ SET_INT_PROP(Richards, NumComponents, 1);
 //! The local residual operator
 SET_TYPE_PROP(Richards, LocalResidual, RichardsLocalResidual<TypeTag>);
 
-SET_TYPE_PROP(Richards, VtkOutputFields, RichardsVtkOutputFields<TypeTag>);           //! Set the vtk output fields specific to the twop model
+SET_TYPE_PROP(Richards, VtkOutputFields, RichardsVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
 
 //! The class for the volume averaged quantities
 SET_TYPE_PROP(Richards, VolumeVariables, RichardsVolumeVariables<TypeTag>);

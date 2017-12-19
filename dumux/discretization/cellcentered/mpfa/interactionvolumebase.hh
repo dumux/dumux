@@ -111,12 +111,12 @@ public:
 
     class LocalFaceData
     {
-        LocalIndexType ivLocalScvfIndex_;          //! the iv-local scvf index this scvf maps to
-        LocalIndexType ivLocalInsideScvIndex_;     //! the iv-local index of the scvfs' inside scv
-        LocalIndexType ivLocalOutsideScvfIndex_;   //! the index of this scvf in the iv-local outside faces
-        LocalIndexType scvfLocalOutsideScvfIndex_; //! the index of this scvf in the scvf-local outside faces
-        GlobalIndexType globalScvfIndex_;          //! the index of the corresponding global scvf
-        bool isOutside_;                           //! indicates if this face maps to the iv-local index from "outside"
+        LocalIndexType ivLocalScvfIndex_;          //!< the iv-local scvf index this scvf maps to
+        LocalIndexType ivLocalInsideScvIndex_;     //!< the iv-local index of the scvfs' inside scv
+        LocalIndexType ivLocalOutsideScvfIndex_;   //!< the index of this scvf in the iv-local outside faces
+        LocalIndexType scvfLocalOutsideScvfIndex_; //!< the index of this scvf in the scvf-local outside faces
+        GlobalIndexType globalScvfIndex_;          //!< the index of the corresponding global scvf
+        bool isOutside_;                           //!< indicates if this face maps to the iv-local index from "outside"
 
       public:
         //! Constructor for "inside" faces

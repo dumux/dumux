@@ -384,7 +384,7 @@ public:
         }
     }
 protected:
-    TransportSolutionType updateEstimate_; //! Update estimate for changes in volume for the pressure equation
+    TransportSolutionType updateEstimate_; //!< Update estimate for changes in volume for the pressure equation
     Problem& problem_;
 
     //! output for the initialization procedure

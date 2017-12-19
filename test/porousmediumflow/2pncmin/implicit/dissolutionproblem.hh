@@ -62,7 +62,7 @@ SET_PROP(DissolutionTypeTag, FluidSystem)
 SET_TYPE_PROP(DissolutionTypeTag, SpatialParams, DissolutionSpatialparams<TypeTag>);
 
 //Set properties here to override the default property settings
-SET_INT_PROP(DissolutionTypeTag, ReplaceCompEqIdx, 1); //! Replace gas balance by total mass balance
+SET_INT_PROP(DissolutionTypeTag, ReplaceCompEqIdx, 1); //!< Replace gas balance by total mass balance
 SET_INT_PROP(DissolutionTypeTag, Formulation, TwoPNCFormulation::pnsw);
 }
 
