@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains free functions to evaluate the transmissibilities
+ * \ingroup CCTpfaDiscretization
+ * \brief Free functions to evaluate the transmissibilities
  *        associated with flux evaluations across sub-control volume faces
  *        in the context of the cell-centered TPFA scheme.
  */
@@ -32,10 +33,9 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Tpfa
- *
- * \brief Free function to evaluate the Tpfa transmissibility associated
- *        with the flux (in the form of flux = T*gradU) across a
+ * \ingroup CCTpfaDiscretization
+ * \brief Free function to evaluate the Tpfa transmissibility
+ *        associated with the flux (in the form of flux = T*gradU) across a
  *        sub-control volume face stemming from a given sub-control
  *        volume with corresponding tensor T.
  *
@@ -62,9 +62,11 @@ typename Tensor::field_type computeTpfaTransmissibility(const SubControlVolumeFa
 }
 
 /*!
- * \ingroup Tpfa
- *
- * \brief Specialization of the above function for scalar T.
+ * \ingroup CCTpfaDiscretization
+ * \brief Free function to evaluate the Tpfa transmissibility
+ *        associated with the flux (in the form of flux = T*gradU) across a
+ *        sub-control volume face stemming from a given sub-control
+ *        volume for the case where T is just a scalar
  *
  * \param scvf The sub-control volume face
  * \param scv The neighboring sub-control volume

@@ -17,10 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file
- * \brief This file contains the data which is required to calculate
- *        heat conduction fluxes with Fourier's law.
- */
+* \file
+* \ingroup CCTpfaDiscretization
+* \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
+*/
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FOURIERS_LAW_HH
 
@@ -37,9 +37,9 @@ template<class TypeTag, DiscretizationMethods discMethod>
 class FouriersLawImplementation;
 
 /*!
- * \ingroup FouriersLaw
- * \brief Specialization of Fourier's Law for the CCTpfa method.
- */
+* \ingroup CCTpfaDiscretization
+* \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
+*/
 template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
@@ -106,12 +106,13 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     };
 
 public:
-    // state the discretization method this implementation belongs to
+    //! state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! export the type for the corresponding cache
     using Cache = TpfaFouriersLawCache;
 
+    //! Compute the heat condution flux assuming thermal equilibrium
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -130,6 +131,7 @@ public:
         return tij*(tInside - tOutside);
     }
 
+    //! Compute transmissibilities
     static Scalar calculateTransmissibility(const Problem& problem,
                                             const Element& element,
                                             const FVElementGeometry& fvGeometry,

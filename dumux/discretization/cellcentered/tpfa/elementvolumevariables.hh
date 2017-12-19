@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The local (stencil) volume variables class for cell centered models
+ * \ingroup CCTpfaDiscretization
+ * \brief The local (stencil) volume variables class for cell centered tpfa models
  */
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_VOLUMEVARIABLES_HH
@@ -29,14 +30,19 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the volume variables vector
+ * \ingroup CCTpfaDiscretization
+ * \brief The local (stencil) volume variables class for cell centered tpfa models
+ * \note The class is specilized for versions with and without caching
  */
 template<class TypeTag, bool enableGridVolVarsCache>
 class CCTpfaElementVolumeVariables
 {};
 
-// specialization in case of storing the volume variables globally
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The local (stencil) volume variables class for cell centered tpfa models with caching
+ * \note the volume variables are stored for the whole grid view in the corresponding GridVolumeVariables class
+ */
 template<class TypeTag>
 class CCTpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
@@ -58,22 +64,21 @@ public:
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
+    //! operator for the access with an index
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return gridVolVars().volVars(scv.dofIndex()); }
 
-    // operator for the access with an index
-    // needed for cc methods for the access to the boundary volume variables
+    //! operator for the access with an index
     const VolumeVariables& operator [](const IndexType scvIdx) const
     { return gridVolVars().volVars(scvIdx); }
 
-    // For compatibility reasons with the case of not storing the vol vars.
-    // function to be called before assembling an element, preparing the vol vars within the stencil
+    //! precompute all volume variables in a stencil of an element - do nothing volVars: are cached
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {}
 
-    // function to prepare the vol vars within the element
+    //! precompute the volume variables of an element - do nothing: volVars are cached
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -87,8 +92,10 @@ private:
     const GridVolumeVariables* gridVolVarsPtr_;
 };
 
-
-// Specialization when the current volume variables are not stored
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The local (stencil) volume variables class for cell centered tpfa models with caching
+ */
 template<class TypeTag>
 class CCTpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
@@ -111,8 +118,7 @@ public:
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
-    // Binding of an element, prepares the volume variables within the element stencil
-    // called by the local jacobian to prepare element assembly
+    //! Prepares the volume variables within the element stencil
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -198,8 +204,7 @@ public:
         // }
     }
 
-    // Binding of an element, prepares only the volume variables of the element
-    // specialization for cc models
+    //! Prepares the volume variables of an element
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -219,15 +224,19 @@ public:
         volVarIndices_[0] = scv.dofIndex();
     }
 
+    //! access operator with scv
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
+    //! access operator with scv
     VolumeVariables& operator [](const SubControlVolume& scv)
     { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
+    //! access operator with scv index
     const VolumeVariables& operator [](IndexType scvIdx) const
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 
+    //! access operator with scv index
     VolumeVariables& operator [](IndexType scvIdx)
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 
@@ -244,6 +253,7 @@ public:
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
 
+    //! map a global scv index to the local storage index
     int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(volVarIndices_.begin(), volVarIndices_.end(), volVarIdx);
@@ -255,6 +265,6 @@ private:
     std::vector<VolumeVariables> volumeVariables_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

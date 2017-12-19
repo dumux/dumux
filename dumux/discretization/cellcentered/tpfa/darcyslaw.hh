@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        volume and mass fluxes of fluid phases over a face of a finite volume by means
- *        of the Darcy approximation. Specializations are provided for the different discretization methods.
+ * \ingroup CCTpfaDiscretization
+ * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_DARCYS_LAW_HH
@@ -42,15 +41,19 @@ template<class TypeTag, bool isNetwork>
 class CCTpfaDarcysLaw;
 
 /*!
- * \ingroup DarcysLaw
- * \brief Specialization of Darcy's Law for the CCTpfa method.
+ * \ingroup CCTpfaDiscretization
+ * \brief Darcy's law for cell-centered finite volume schemes with two-point flux approximation
+ * \note Darcy's law is speialized for network and surface grids (i.e. if grid dim < dimWorld)
  */
 template <class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
-    : public CCTpfaDarcysLaw<TypeTag, (GET_PROP_TYPE(TypeTag, Grid)::dimension < GET_PROP_TYPE(TypeTag, Grid)::dimensionworld) >
+: public CCTpfaDarcysLaw<TypeTag, (GET_PROP_TYPE(TypeTag, Grid)::dimension < GET_PROP_TYPE(TypeTag, Grid)::dimensionworld) >
 {};
 
-//! Class that fills the cache corresponding to tpfa Darcy's Law
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief Class that fills the cache corresponding to tpfa Darcy's Law
+ */
 template<class TypeTag>
 class TpfaDarcysLawCacheFiller
 {
@@ -77,7 +80,10 @@ public:
     }
 };
 
-//! the cache corresponding to tpfa Darcy's Law
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The cache corresponding to tpfa Darcy's Law
+ */
 template<class TypeTag>
 class TpfaDarcysLawCache
 {
@@ -108,7 +114,10 @@ private:
     Scalar tij_;
 };
 
-//! Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief Specialization of the CCTpfaDarcysLaw grids where dim=dimWorld
+ */
 template<class TypeTag>
 class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
 {
@@ -133,12 +142,13 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
   public:
-    // state the discretization method this implementation belongs to
+    //! state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    // state the type for the corresponding cache
+    //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<TypeTag>;
 
+    //! Compute the advective flux
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -260,7 +270,10 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ false>
     }
 };
 
-//! Specialization of the CCTpfaDarcysLaw for network/surface grids
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief Specialization of the CCTpfaDarcysLaw grids where dim < dimWorld (network/surface grids)
+ */
 template<class TypeTag>
 class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ true>
 {
@@ -285,12 +298,13 @@ class CCTpfaDarcysLaw<TypeTag, /*isNetwork*/ true>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    // state the discretization method this implementation belongs to
+    //! state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
-    // state the type for the corresponding cache
+    //! state the type for the corresponding cache
     using Cache = TpfaDarcysLawCache<TypeTag>;
 
+    //! Compute the advective flux
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ * \ingroup CCTpfaDiscretization
+ * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_FICKS_LAW_HH
@@ -37,8 +37,8 @@ template<class TypeTag, DiscretizationMethods discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup CCTpfaFicksLaw
- * \brief Specialization of Fick's Law for the CCTpfa method.
+ * \ingroup CCTpfaDiscretization
+ * \brief Fick's law for cell-centered finite volume schemes with two-point flux approximation
  */
 template <class TypeTag>
 class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
@@ -114,12 +114,13 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     };
 
 public:
-    // state the discretization method this implementation belongs to
+    //! state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! state the type for the corresponding cache and its filler
     using Cache = TpfaFicksLawCache;
 
+    //! return diffusive fluxes for all components in a phase
     static ComponentFluxVector flux(const Problem& problem,
                                     const Element& element,
                                     const FVElementGeometry& fvGeometry,
@@ -159,6 +160,7 @@ public:
         return componentFlux;
     }
 
+    //! compute diffusive transmissibilities
     static Scalar calculateTransmissibility(const Problem& problem,
                                             const Element& element,
                                             const FVElementGeometry& fvGeometry,
@@ -257,6 +259,7 @@ private:
         return rho/(scvf.numOutsideScvs()+1);
     }
 };
-} // end namespace
+
+} // end namespace Dumux
 
 #endif
