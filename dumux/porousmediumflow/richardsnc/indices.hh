@@ -38,21 +38,21 @@ template <class TypeTag, int PVOffset = 0>
 struct RichardsNCIndices
 {
 
-    //!< Set the index of the phases for accessing the volvars
+    //! Set the index of the phases for accessing the volvars
     static const int wPhaseIdx = 0;
     static const int nPhaseIdx = 1;
 
-    //!< Component indices
-    static const int compMainIdx = PVOffset + 0; //! main component index
+    //! Component indices
+    static const int compMainIdx = PVOffset + 0; //!< main component index
 
-    //!< primary variable indices
-    static const int pressureIdx = PVOffset + 0; //! pressure
+    //! primary variable indices
+    static const int pressureIdx = PVOffset + 0; //!< pressure
 
     //! \note These indices make sense if the first balance is replaced by the
     //!       total mass balance.
 
-    //!< Equation indices
-    static const int conti0EqIdx = PVOffset + 0; //! continuity equation index
+    //! Equation indices
+    static const int conti0EqIdx = PVOffset + 0; //!< continuity equation index
 };
 
 // \}

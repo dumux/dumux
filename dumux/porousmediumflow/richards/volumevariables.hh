@@ -413,6 +413,9 @@ public:
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     *
+     * \param phaseIdx TODO docme!
+     * \param compIdx TODO docme!
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {

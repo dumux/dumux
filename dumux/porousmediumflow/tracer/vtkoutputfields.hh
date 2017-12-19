@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the onep model
+ * \ingroup TracerModel
+ * \brief Adds vtk output fields specific to the tracer model
  */
 #ifndef DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TRACER_VTK_OUTPUT_FIELDS_HH
@@ -29,8 +30,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Tracer, InputOutput
- * \brief Adds vtk output fields specific to the onep model
+ * \ingroup TracerModel
+ * \brief Adds vtk output fields specific to the tracer model
  */
 template<class TypeTag>
 class TracerVtkOutputFields

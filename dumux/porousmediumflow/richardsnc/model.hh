@@ -21,6 +21,47 @@
  * \ingroup RichardsNCModel
  * \brief Base class for all models which use the Richards,
  *        n-component fully implicit model.
+ *
+ * In the unsaturated zone, Richards' equation
+ *\f{eqnarray}
+ && \frac{\partial (\sum_w \varrho_w X_w^\kappa \phi S_w )}
+ {\partial t}
+ - \sum_w  \text{div} \left\{ \varrho_w X_w^\kappa
+ \frac{k_{rw}}{\mu_w} \mbox{\bf K}
+ (\text{grad}\, p_w - \varrho_{w}  \mbox{\bf g}) \right\}
+ \nonumber \\ \nonumber \\
+    &-& \sum_w \text{div} \left\{{\bf D_{w, pm}^\kappa} \varrho_{w} \text{grad}\, X^\kappa_{w} \right\}
+ - \sum_w q_w^\kappa = 0 \qquad \kappa \in \{w, a,\cdots \} \, ,
+ w \in \{w, g\}
+ \f}
+ * is frequently used to
+ * approximate the water distribution above the groundwater level.
+ *
+ * In contrast to the full two-phase model, the Richards model assumes
+ * gas as the non-wetting fluid and that it exhibits a much lower
+ * viscosity than the (liquid) wetting phase. (For example at
+ * atmospheric pressure and at room temperature, the viscosity of air
+ * is only about \f$1\%\f$ of the viscosity of liquid water.) As a
+ * consequence, the \f$\frac{k_{r\alpha}}{\mu_\alpha}\f$ term
+ * typically is much larger for the gas phase than for the wetting
+ * phase. For this reason, the Richards model assumes that
+ * \f$\frac{k_{rn}}{\mu_n}\f$ is infinitly large. This implies that
+ * the pressure of the gas phase is equivalent to the static pressure
+ * distribution and that therefore, mass conservation only needs to be
+ * considered for the wetting phase.
+ *
+ * The model thus choses the absolute pressure of the wetting phase
+ * \f$p_w\f$ as its only primary variable. The wetting phase
+ * saturation is calculated using the inverse of the capillary
+ * pressure, i.e.
+ \f[
+ S_w = p_c^{-1}(p_n - p_w)
+ \f]
+ * holds, where \f$p_n\f$ is a given reference pressure. Nota bene,
+ * that the last step is assumes that the capillary
+ * pressure-saturation curve can be uniquely inverted, so it is not
+ * possible to set the capillary pressure to zero when using the
+ * Richards model!
  */
 
 #ifndef DUMUX_RICHARDSNC_MODEL_HH
