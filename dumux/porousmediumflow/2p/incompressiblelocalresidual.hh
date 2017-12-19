@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPModel
  * \brief Element-wise calculation of the residual and its derivatives
  *        for a two-phase, incompressible test problem.
  */
@@ -31,6 +31,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup TwoPModel
+ * \brief Element-wise calculation of the residual and its derivatives
+ *        for a two-phase, incompressible test problem.
+ */
 template<class TypeTag>
 class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 {
@@ -66,6 +71,19 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
 public:
     using ParentType::ParentType;
 
+    /*!
+     * \brief Add storage derivatives for wetting and non-wetting phase
+     *
+     * Compute storage derivatives for the wetting and the non-wetting phase with respect to \f$p_w\f$
+     * and \f$S_n\f$.
+     *
+     * \param partialDerivatives The partial derivatives
+     * \param problem The problem
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param curVolVars The current volume variables
+     * \param scv The sub control volume
+     */
     template<class PartialDerivativeMatrix>
     void addStorageDerivatives(PartialDerivativeMatrix& partialDerivatives,
                                const Problem& problem,
@@ -96,6 +114,16 @@ public:
         partialDerivatives[contiNEqIdx][saturationIdx] += volume*phi_rho_n/this->timeLoop().timeStepSize();
     }
 
+    /*!
+     * \brief Add source derivatives for wetting and non-wetting phase
+     *
+     * \param partialDerivatives The partial derivatives
+     * \param problem The problem
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param curVolVars The current volume variables
+     * \param scv The sub control volume
+     */
     template<class PartialDerivativeMatrix>
     void addSourceDerivatives(PartialDerivativeMatrix& partialDerivatives,
                               const Problem& problem,
@@ -105,6 +133,19 @@ public:
                               const SubControlVolume& scv) const
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
+    /*!
+     * \brief Add flux derivatives for wetting and non-wetting phase for cell-centered FVM
+     *
+     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * and \f$S_n\f$.
+     *
+     * \param partialDerivatives The partial derivatives
+     * \param problem The problem
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param curVolVars The current volume variables
+     * \param scv The sub control volume
+     */
     template<class PartialDerivativeMatrices, class T = TypeTag>
     std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
@@ -208,6 +249,19 @@ public:
         dI_dJ[contiNEqIdx][saturationIdx] += tij_up_n*dpc_dSn_outside;
     }
 
+    /*!
+     * \brief Add flux derivatives for wetting and non-wetting phase for box method
+     *
+     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * and \f$S_n\f$.
+     *
+     * \param partialDerivatives The partial derivatives
+     * \param problem The problem
+     * \param element The element
+     * \param fvGeometry The finite volume element geometry
+     * \param curVolVars The current volume variables
+     * \param scv The sub control volume
+     */
     template<class JacobianMatrix, class T = TypeTag>
     std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, void>
     addFluxDerivatives(JacobianMatrix& A,
@@ -353,6 +407,19 @@ public:
         }
     }
 
+    /*!
+     * \brief Add cell-centered Dirichlet flux derivatives for wetting and non-wetting phase
+     *
+     * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
+     * and \f$S_n\f$.
+     *
+     * \param derivativeMatrices The matrices containing the derivatives
+     * \param problem The problem
+     * \param element The element
+     * \param curElemVolVars The current element volume variables
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The sub control volume face
+     */
     template<class PartialDerivativeMatrices>
     void addCCDirichletFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                        const Problem& problem,
@@ -423,6 +490,16 @@ public:
         dI_dI[contiNEqIdx][saturationIdx] += tij*dpc_dSn_inside*up_n;
     }
 
+    /*!
+     * \brief Add Robin flux derivatives for wetting and non-wetting phase
+     *
+     * \param derivativeMatrices The matrices containing the derivatives
+     * \param problem The problem
+     * \param element The element
+     * \param curElemVolVars The current element volume variables
+     * \param elemFluxVarsCache The element flux variables cache
+     * \param scvf The sub control volume face
+     */
     template<class PartialDerivativeMatrices>
     void addRobinFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                                  const Problem& problem,

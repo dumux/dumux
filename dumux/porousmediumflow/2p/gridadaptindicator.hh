@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup TwoPModel
+ * \brief Class defining a standard, saturation dependent indicator for grid adaptation
+ */
+
 #ifndef DUMUX_TWOP_ADAPTION_INDICATOR_HH
 #define DUMUX_TWOP_ADAPTION_INDICATOR_HH
 
@@ -24,10 +30,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/evalsolution.hh>
 
-/**
- * \file
- * \brief Class defining a standard, saturation dependent indicator for grid adaptation
- */
 namespace Dumux
 {
 
@@ -50,7 +52,7 @@ class TwoPGridAdaptIndicator
 public:
     /*! \brief The Constructor
      *
-     *  \param fvGridGeometry The finite volume grid geometry
+     * \param fvGridGeometry The finite volume grid geometry
      *
      *  Note: refineBound_, coarsenBound_ & maxSaturationDelta_ are chosen
      *        in a way such that the indicator returns false for all elements
@@ -68,6 +70,7 @@ public:
     /*!
      * \brief Function to set the minimum allowed level.
      *
+     * \param minLevel The minimum level
      */
     void setMinLevel(std::size_t minLevel)
     {
@@ -77,6 +80,7 @@ public:
     /*!
      * \brief Function to set the maximum allowed level.
      *
+     *\param maxLevel The maximum level
      */
     void setMaxLevel(std::size_t maxLevel)
     {
@@ -86,6 +90,8 @@ public:
     /*!
      * \brief Function to set the minumum/maximum allowed levels.
      *
+     * \param minLevel The minimum level
+     * \param maxLevel The maximum level
      */
     void setLevels(std::size_t minLevel, std::size_t maxLevel)
     {
@@ -95,6 +101,10 @@ public:
 
     /*!
      * \brief Calculates the indicator used for refinement/coarsening for each grid cell.
+     *
+     * \param sol The solution vector
+     * \param refineTol The refinement tolerance
+     * \param coarsenTol The coarsening tolerance
      *
      *  This standard two-phase indicator is based on the saturation gradient.
      */
