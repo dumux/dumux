@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief spatial parameters for the 2p 3d test
  */
 #ifndef TEST_3D2P_SPATIALPARAMETERS_HH
@@ -30,7 +30,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup SequentialTwoPTests
+ * \brief spatial parameters for the 2p 3d test
+ */
 //forward declaration
 template<class TypeTag>
 class Test3d2pSpatialParams;

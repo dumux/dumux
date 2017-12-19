@@ -17,7 +17,7 @@
 
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for sequential 2p models in 3d
  */
 
@@ -46,6 +46,10 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup SequentialTwoPTests
+ * \brief test problem for sequential 2p models in 3d
+ */
 template<class TypeTag>
 class Test3D2PProblem;
 

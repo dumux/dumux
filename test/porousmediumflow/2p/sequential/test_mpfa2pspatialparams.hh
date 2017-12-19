@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief Test problem for the sequential 2p models
  */
 
@@ -53,8 +53,10 @@ public:
 };
 }
 
-/** \todo Please doc me! */
-
+/*!
+ * \ingroup SequentialTwoPTests
+ * \brief Test problem for the sequential 2p models \todo Please doc me!
+ */
 template<class TypeTag>
 class Test2PSpatialParams: public SequentialFVSpatialParams<TypeTag>
 {

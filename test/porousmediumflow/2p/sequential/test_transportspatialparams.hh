@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief spatial parameters for the explicit transport test
  */
 #ifndef TEST_TRANSPORT_SPATIALPARAMS_HH
@@ -31,7 +31,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup SequentialTwoPTests
+ * \brief spatial parameters for the explicit transport test
+ */
 //forward declaration
 template<class TypeTag>
 class TestTransportSpatialParams;
