@@ -183,6 +183,7 @@
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPTests 2p (two phase) benchmarks and tests
+ 	 * TwoPTests contain various tests using a TwoPModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPOneCTests 2p1c (two phase, one component) benchmarks and tests

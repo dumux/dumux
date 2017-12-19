@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully
  *        water saturated medium. During buoyancy driven upward migration the gas
  *        passes a high temperature area.
@@ -61,8 +61,7 @@ SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GE
 } // namespace Properties
 
 /*!
- * \ingroup TwoPModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TwoPTests
  * \brief Non-isothermal gas injection problem where a gas (e.g. air) is injected into a fully
  *        water saturated medium. During buoyancy driven upward migration the gas
  *        passes a high temperature area.

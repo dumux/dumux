@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file
- * \brief The spatial params the incompressible test
+ * \ingroup TwoPTests
+ * \brief The spatial params for the incompressible 2p test
  */
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
 #define DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
@@ -57,6 +57,10 @@ public:
 };
 }
 
+/*!
+ * \ingroup TwoPTests
+ * \brief The spatial params for the incompressible 2p test
+ */
 template<class TypeTag>
 class TwoPTestSpatialParams : public FVSpatialParams<TypeTag>
 {

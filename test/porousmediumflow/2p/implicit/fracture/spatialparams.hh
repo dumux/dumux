@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
@@ -61,8 +61,7 @@ public:
 };
 }
 /*!
- * \ingroup TwoPModel
- * \ingroup ImplicitTestProblems
+ * \ingroup TwoPTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
