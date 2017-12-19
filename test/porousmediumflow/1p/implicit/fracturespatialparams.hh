@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */
@@ -44,8 +44,7 @@ SET_TYPE_PROP(FractureSpatialParams, SpatialParams, Dumux::FractureSpatialParams
 
 }
 /*!
- * \ingroup TwoPModel
- * \ingroup ImplicitTestProblems
+ * \ingroup OnePTests
  * \brief The spatial parameters for the LensProblem which uses the
  *        two-phase fully implicit model
  */

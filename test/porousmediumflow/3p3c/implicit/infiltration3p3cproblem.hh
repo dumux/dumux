@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePThreeCTests
  * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
  *        the unsaturated and the saturated groundwater zone.
  */
@@ -35,6 +35,11 @@
 
 namespace Dumux
 {
+/*!
+ * \ingroup ThreePThreeCTests
+ * \brief Isothermal NAPL infiltration problem: LNAPL contaminates
+ *        the unsaturated and the saturated groundwater zone.
+ */
 template <class TypeTag>
 class InfiltrationThreePThreeCProblem;
 

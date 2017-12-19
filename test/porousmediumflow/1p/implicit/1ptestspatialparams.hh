@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */
@@ -42,9 +42,7 @@ NEW_TYPE_TAG(OnePTestSpatialParams);
 }
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePTests
  * \brief The spatial parameters class for the test problem using the
  *        1p box model
  */

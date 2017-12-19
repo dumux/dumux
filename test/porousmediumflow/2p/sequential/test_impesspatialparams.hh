@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief spatial parameters for the sequential 2p test
  */
 #ifndef TEST_IMPES_SPATIALPARAMS_HH
@@ -56,8 +56,7 @@ public:
 }
 
 /*!
- *
- * \ingroup IMPETtests
+ * \ingroup SequentialTwoPTests
  * \brief spatial parameters for the sequential 2p test
  */
 template<class TypeTag>

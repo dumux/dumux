@@ -19,7 +19,7 @@
         * \defgroup SequentialOnePModel Sequential
         * # Pressure
         * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/pressure.hh
-        * 
+        *
         * # Velocity
         * \copydetails ./porousmediumflow/1p/sequential/diffusion/cellcentered/velocity.hh
         */
@@ -45,7 +45,7 @@
          * \defgroup SequentialTwoPModel Sequential
          * # Pressure
          * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/pressure.hh
-         * 
+         *
          * # Velocity
          * \copydetails ./porousmediumflow/2p/sequential/diffusion/cellcentered/velocity.hh
          */
@@ -65,7 +65,7 @@
          * \defgroup SequentialTwoPTwoCModel Sequential
          * # Pressure
          * \copydetails ./porousmediumflow/2p2c/sequential/fvpressure.hh
-         * 
+         *
          * # Velocity
          * \copydetails ./porousmediumflow/2p2c/sequential/fvtransport.hh
          */
@@ -172,55 +172,65 @@
  */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup OnePTests 1p (one phase) benchmarks and tests
+ 	 * OnePTests contain various tests using a OnePModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup OnePNCTests 1pnc (one phase, n-component) benchmarks and tests
+ 	 * OnePNCTests contain various tests using a OneNCPModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup OnePNCMinTests 1pncmin (one phase, n-component mineralization) benchmarks and tests
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPTests 2p (two phase) benchmarks and tests
+ 	 * TwoPTests contain various tests using a TwoPModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPOneCTests 2p1c (two phase, one component) benchmarks and tests
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPTwoCTests 2p2c (two phase, two component) benchmarks and tests
+ 	 * TwoPTwoCTests contain various tests using a TwoPTwoCModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPNCTests 2pnc (two phase, n-component) benchmarks and tests
+ 	 * TwoPNCTests contain a fuel cell test problem using the TwoPNCModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPNCMinTests 2pncmin (two phase, n-component mineralization) benchmarks and tests
+ 	 * TwoPNCMinTests contain a salt dissolution test problem using the TwoPNCMinModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePTests 3p (three phase) benchmarks and tests
+ 	 * ThreePTests contain various tests using a ThreePModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePThreeCTests 3p3c (three phase, three component) benchmarks and tests
+ 	 * ThreePThreeCTests contain various tests using a ThreePThreeCModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
- 	 */   
+ 	 * ThreePWaterOilTests contain a SAGD test problem using the ThreePWaterOilModel. The files are listed below.
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
- 	 */  	
- 	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
- 	 */  	  
+ 	 * CO2Tests contain a CO2 injection test problem using the TwoPTwoCModel and heterogeneous spatial parameters. The files are listed below.
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup RichardsTests Richards benchmarks and tests
- 	 */  	 
+ 	 * RichardsTests contain various tests using a RichardsModel. The files are listed below, with hopefully self-explanatory names.
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup RichardsNCTests Richards n-component benchmarks and tests
- 	 */   
+ 	 * RichardsNCTests contain a n-component transport problem in the unsaturated zone using the RichardsNCModel. The files are listed below.
+ 	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TracerTests Tracer benchmarks and tests
- 	 */  
+ 	 * TracerTests contain various tests using a TracerModel. The files are listed below, with hopefully self-explanatory names.
+ 	 */
 
 /* ***************** Discretization ******************/
 /*!
@@ -374,30 +384,30 @@
      * parameters. For example permeability, porosity etc.
      *
      */
- 
+
 /* ***************** Adaptive ******************/
 /*!
  * \defgroup Adaptive Adaptive
  *  TODO: Doc me in modules.txt!
  */
- 
+
 /* ***************** Assembly ******************/
 /*!
  * \defgroup Assembly Assembly
  *  TODO: Doc me in modules.txt!
  */
- 
+
 /* ***************** Common ******************/
 /*!
  * \defgroup Common Common
  *  TODO: Doc me in modules.txt!
  */
- 	/*! 
+ 	/*!
   	 * \ingroup Common
   	 * \defgroup Properties Properties
   	 * TODO: Doc me in modules.txt!
   	 */
-  	  
+
 /* ***************** InputOutput ******************/
 /*!
  * \defgroup InputOutput Input Output

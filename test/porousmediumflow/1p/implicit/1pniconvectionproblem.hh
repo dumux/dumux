@@ -18,6 +18,7 @@
  *****************************************************************************/
 /**
  * \file
+ * \ingroup OnePTests
  * \brief Test for the OnePModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.
@@ -73,9 +74,7 @@ SET_STRING_PROP(OnePNIConvectionCCMpfaProblem, ModelParameterGroup, "MpfaTest");
 
 
 /*!
- * \ingroup OnePNIModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePTests
  * \brief Test for the OnePModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /**
  * \file
+ * \ingroup TracerTests
  * \brief Definition of a problem, for the tracer problem:
  * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
  */
@@ -35,7 +36,11 @@
 
 namespace Dumux
 {
-
+/**
+ * \ingroup TracerTests
+ * \brief Definition of a problem, for the tracer problem:
+ * A rotating velocity field mixes a tracer band in a porous groundwater reservoir.
+ */
 template <class TypeTag>
 class TracerTest;
 

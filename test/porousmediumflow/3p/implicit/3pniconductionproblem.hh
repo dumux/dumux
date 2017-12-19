@@ -18,6 +18,7 @@
  *****************************************************************************/
 /**
  * \file
+ * \ingroup ThreePTests
  * \brief Definition of a 3pni problem:
  *        Component transport of nitrogen dissolved in the water phase.
  */
@@ -40,7 +41,11 @@
 
 namespace Dumux
 {
-
+/**
+ * \ingroup ThreePTests
+ * \brief Definition of a 3pni problem:
+ *        Component transport of nitrogen dissolved in the water phase.
+ */
 template <class TypeTag>
 class ThreePNIConductionProblem;
 

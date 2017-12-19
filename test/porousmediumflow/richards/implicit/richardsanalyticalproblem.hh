@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsTests
  * \brief A one-dimensional infiltration problem with a smoth, given solution.
  *
  * The source term is calculated analytically. Thus, this example can be used
@@ -42,7 +42,14 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup RichardsTests
+ * \brief A one-dimensional infiltration problem with a smoth, given solution.
+ *
+ * The source term is calculated analytically. Thus, this example can be used
+ * to calclate the L2 error and to show convergence for grid and time-step
+ * refinement.
+ */
 template <class TypeTag>
 class RichardsAnalyticalProblem;
 

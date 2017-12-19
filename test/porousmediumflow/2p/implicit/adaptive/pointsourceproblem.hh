@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTests
  * \brief Soil contamination problem where DNAPL infiltrates a fully
  *        water saturated medium.
  */
@@ -42,6 +42,7 @@ public:
     using ParentType::ParentType;
 
     /*!
+     * \ingroup TwoPTests
      * \brief Applies a vector of point sources. The point sources
      *        are possibly solution dependent.
      *

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPNCTests
  * \brief Definition of the spatial parameters for the fuel cell
  *        problem which uses the isothermal/non-insothermal 2pnc box model
  */
@@ -34,7 +34,11 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup TwoPNCTests
+ * \brief Definition of the spatial parameters for the fuel cell
+ *        problem which uses the isothermal/non-insothermal 2pnc box model
+ */
 //forward declaration
 template<class TypeTag>
 class FuelCellSpatialParams;

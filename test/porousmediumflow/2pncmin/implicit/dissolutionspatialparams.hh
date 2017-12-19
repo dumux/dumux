@@ -16,6 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup TwoPNCMinTests
+ * \brief Spatial parameters for the dissolution problem
+ * where water is injected in a for flushing precipitated salt clogging a gas reservoir.
+ */
 #ifndef DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 #define DUMUX_INJECTION_SPATIAL_PARAMETERS_HH
 
@@ -53,9 +59,10 @@ public:
 
 } // end namespace Properties
 
-/**
- * \brief Definition of the spatial parameters for the brine-co2 problem
- *
+/*!
+ * \ingroup TwoPNCMinTests
+ * \brief Spatial parameters for the dissolution problem
+ * where water is injected in a for flushing precipitated salt clogging a gas reservoir.
  */
 template<class TypeTag>
 class DissolutionSpatialparams : public FVSpatialParams<TypeTag>

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /**
  * \file
- *
+ * \ingroup CO2Tests
  * \brief Provides the class with the tabulated values of CO2 density
  *        and enthalpy
  */
@@ -28,6 +28,11 @@
 #include <dumux/material/components/co2tablereader.hh>
 
 namespace Dumux {
+/**
+ * \ingroup CO2Tests
+ * \brief Provides the class with the tabulated values of CO2 density
+ *        and enthalpy
+ */
 namespace HeterogeneousCO2Tables {
 
 // the real work is done by some external program which provides

@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePWaterOilTests
  * \brief Non-isothermal SAGD problem
- *
  */
 #ifndef DUMUX_SAGDPROBLEM_HH
 #define DUMUX_SAGDPROBLEM_HH
@@ -33,6 +32,11 @@
 
 namespace Dumux
 {
+/*!
+ * \file
+ * \ingroup ThreePWaterOilTests
+ * \brief Non-isothermal SAGD problem
+ */
 template <class TypeTag>
 class SagdProblem;
 

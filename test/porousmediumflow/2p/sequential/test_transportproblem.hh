@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for the explicit transport model
  */
 #ifndef DUMUX_TEST_TRANSPORT_PROBLEM_HH
@@ -36,7 +36,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup SequentialTwoPTests
+ * \brief test problem for the explicit transport model
+ */
 template<class TypeTag>
 class TestTransportProblem;
 

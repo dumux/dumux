@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup CO2Tests
  * \brief Definition of a problem, where CO2 is injected in a reservoir.
  */
 #ifndef DUMUX_HETEROGENEOUS_PROBLEM_HH
@@ -43,7 +43,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup CO2Tests
+ * \brief Definition of a problem, where CO2 is injected in a reservoir.
+ */
 template <class TypeTag>
 class HeterogeneousProblem;
 

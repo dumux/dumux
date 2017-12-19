@@ -22,16 +22,16 @@
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
 /**
- * @file
- * @brief  Analytic solution of
- * the McWhorter problem
- * @author Markus Wolff, Anneli Schöniger
+ * \file
+ * \ingroup SequentialTwoPTests
+ * \brief  Analytic solution of the McWhorter problem
  */
 
 namespace Dumux
 {
 /**
- * @brief Analytic solution of
+ * \ingroup SequentialTwoPTests
+ * \brief Analytic solution of
  * the McWhorter problem
  *
  * for naming of variables see "An Improved Semi-Analytical Solution for Verification

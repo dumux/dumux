@@ -14,6 +14,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+/**
+ * \file
+ * \ingroup SequentialTwoPTests
+ * \brief  Analytical solution of the buckley-leverett problem
+ */
 #ifndef DUMUX_BUCKLEYLEVERETT_ANALYTICAL_HH
 #define DUMUX_BUCKLEYLEVERETT_ANALYTICAL_HH
 
@@ -21,11 +27,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/linearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-/**
- * @file
- * @brief  Analytical solution of the buckley-leverett problem
- * @author Markus Wolff
- */
 
 namespace Dumux
 {
@@ -62,6 +63,10 @@ struct CheckMaterialLaw<Scalar, EffToAbsLaw< LinearMaterial<Scalar> > >
     }
 };
 
+/**
+ * \file
+ * \brief  Analytical solution of the buckley-leverett problem
+ */
 template<class TypeTag> class BuckleyLeverettAnalytic
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

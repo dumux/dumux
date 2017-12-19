@@ -18,6 +18,7 @@
  *****************************************************************************/
 /**
  * \file
+ * \ingroup OnePNCTests
  * \brief Definition of a problem, for the 1pnc problem:
  * Component transport of nitrogen dissolved in the water phase.
  */
@@ -72,9 +73,7 @@ SET_BOOL_PROP(OnePTwoCTestProblem, UseMoles, true);
 
 
 /*!
- * \ingroup OnePNCModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePNCTests
  * \brief Definition of a problem, for the 1pnc problem:
  * Nitrogen is dissolved in the water phase and
  * is transported with the water flow from the left side to the right.

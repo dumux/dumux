@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsNCTests
  * \brief A water infiltration problem with a low-permeability lens
  *        embedded into a high-permeability domain which uses the
  *        Richards box model.
@@ -35,7 +35,12 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup RichardsNCTests
+ * \brief A water infiltration problem with a low-permeability lens
+ *        embedded into a high-permeability domain which uses the
+ *        Richards box model.
+ */
 template <class TypeTag>
 class RichardsWellTracerProblem;
 

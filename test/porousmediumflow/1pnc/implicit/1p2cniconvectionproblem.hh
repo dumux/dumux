@@ -16,13 +16,12 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*
-  * \file
-  * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
-  * The simulation domain is a tube where water with an elevated temperature is injected
-  * at a constant rate on the left hand side.
-  *
-  */
+/**
+ * \file
+ * \ingroup OnePNCTests
+ * \brief Test for the OnePNCModel in combination with the NI model for a conduction problem:
+ * The simulation domain is a tube where with an elevated temperature on the left hand side.
+ */
 #ifndef DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONVECTION_TEST_PROBLEM_HH
 
@@ -73,9 +72,7 @@ SET_BOOL_PROP(OnePTwoCNIConvectionProblem, UseMoles, true);
 
 
 /*!
- * \ingroup OnePTwoCModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePNCTests
  * \brief Test for the OnePTwoCModel in combination with the NI model for a convection problem:
  * The simulation domain is a tube where water with an elevated temperature is injected
  * at a constant rate on the left hand side.

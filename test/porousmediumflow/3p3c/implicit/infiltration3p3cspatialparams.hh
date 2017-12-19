@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePThreeCTests
  * \brief Definition of the spatial parameters for the kuevette problem
  *        which uses the isothermal two-phase two component
  *        fully implicit model.
@@ -34,7 +34,12 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup ThreePThreeCTests
+ * \brief Definition of the spatial parameters for the kuevette problem
+ *        which uses the isothermal two-phase two component
+ *        fully implicit model.
+ */
 //forward declaration
 template<class TypeTag>
 class InfiltrationThreePThreeCSpatialParams;

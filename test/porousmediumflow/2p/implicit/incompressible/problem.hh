@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file
- * \brief The properties for the incompressible test
+ * \ingroup TwoPTests
+ * \brief The properties for the incompressible 2p test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
 #define DUMUX_INCOMPRESSIBLE_TWOP_TEST_PROBLEM_HH
@@ -74,6 +74,10 @@ SET_BOOL_PROP(TwoPIncompressible, EnableGridFluxVariablesCache, false);
 SET_BOOL_PROP(TwoPIncompressible, EnableFVGridGeometryCache, false);
 } // end namespace Properties
 
+/*!
+ * \ingroup TwoPTests
+ * \brief The incompressible 2p test problem.
+ */
 template<class TypeTag>
 class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
 {

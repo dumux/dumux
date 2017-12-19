@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup OnePTests
  * \brief The spatial params the incompressible test
  */
 #ifndef DUMUX_COMPRESSIBLE_ONEP_TEST_SPATIAL_PARAMS_HH
@@ -28,6 +29,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup OnePTests
+ * \brief The spatial parameters class for the test problem using the
+ *        compressible 1p model
+ */
 template<class TypeTag>
 class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {

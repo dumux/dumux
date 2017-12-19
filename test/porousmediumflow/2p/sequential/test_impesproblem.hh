@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for the sequential 2p model
  */
 #ifndef DUMUX_TEST_IMPES_PROBLEM_HH
@@ -105,8 +105,7 @@ SET_TYPE_PROP(IMPESTestProblemWithAMG, GridCreator, GridCreator<TypeTag>);
 }
 
 /*!
- * \ingroup IMPETtests
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for the sequential 2p model
  *
  * Water is injected from the left side into a rectangular 2D domain also

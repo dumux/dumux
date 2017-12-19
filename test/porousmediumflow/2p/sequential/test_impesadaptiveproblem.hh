@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for the sequential 2p model
  */
 #ifndef DUMUX_TEST_IMPES_ADAPTIVE_PROBLEM_HH
@@ -77,8 +77,7 @@ SET_SCALAR_PROP(TestIMPESAdaptiveProblem, ImpetCFLFactor, 0.95);
 }
 
 /*!
- * \ingroup IMPETtests
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for the sequential 2p model
  *
  * Water is injected from the left side into a rectangular 2D domain also

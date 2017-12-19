@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsTests
  * \brief Definition of the spatial parameters for the non-isothermal Richards problems.
  */
 #ifndef DUMUX_RICHARDSNI_SPATIAL_PARAMS_HH
@@ -34,9 +34,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup RichardsModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup RichardsTests
  * \brief Definition of the spatial parameters for the RichardsNI problems.
  */
 

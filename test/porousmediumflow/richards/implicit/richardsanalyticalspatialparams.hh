@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsTests
  * \brief spatial parameters for the RichardsAnalyticalProblem
  */
 #ifndef DUMUX_RICHARDS_ANALYTICAL_SPATIAL_PARAMETERS_HH
@@ -35,7 +35,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup RichardsTests
+ * \brief spatial parameters for the RichardsAnalyticalProblem
+ */
 // forward declaration
 template<class TypeTag>
 class RichardsAnalyticalSpatialParams;

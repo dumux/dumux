@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
 #ifndef DUMUX_TEST_1PNI_SPATIAL_PARAMS_HH
@@ -30,9 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePNIModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePTests
  * \brief Definition of the spatial parameters for the 1pni problems.
  */
 template<class TypeTag>

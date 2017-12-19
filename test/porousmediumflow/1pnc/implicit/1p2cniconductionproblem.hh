@@ -18,9 +18,9 @@
  *****************************************************************************/
 /**
  * \file
- * \brief Test for the OnePTwoCModel in combination with the NI model for a conduction problem:
+ * \ingroup OnePNCTests
+ * \brief Test for the OnePNCModel in combination with the NI model for a conduction problem:
  * The simulation domain is a tube where with an elevated temperature on the left hand side.
- *
  */
 #ifndef DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
 #define DUMUX_1P2CNI_CONDUCTION_TEST_PROBLEM_HH
@@ -72,9 +72,7 @@ SET_BOOL_PROP(OnePTwoCNIConductionProblem, UseMoles, true);
 
 
 /*!
- * \ingroup OnePNCModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePNCTests
  * \brief Definition of a problem, for the 1pnc problem:
  * Nitrogen is dissolved in the water phase and
  * is transported with the water flow from the left side to the right.

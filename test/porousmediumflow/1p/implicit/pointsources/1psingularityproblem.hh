@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief A test problem for the one-phase model:
  * Water is injected in one single point in the middle of the domain.
  */
@@ -65,8 +65,7 @@ SET_TYPE_PROP(OnePSingularityTypeTag, SpatialParams, OnePSingularitySpatialParam
 }
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
+ * \ingroup OnePTests
  * \brief  Test problem for the one-phase model:
  * Water is injected in a single point in the middle of the domain.
  *

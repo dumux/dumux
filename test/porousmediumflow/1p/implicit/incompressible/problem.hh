@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup OnePTests
  * \brief The properties for the incompressible test
  */
 #ifndef DUMUX_INCOMPRESSIBLE_ONEP_TEST_PROBLEM_HH
@@ -75,7 +76,13 @@ SET_BOOL_PROP(OnePIncompressible, EnableGridFluxVariablesCache, false);
 SET_BOOL_PROP(OnePIncompressible, EnableFVGridGeometryCache, false);
 
 } // end namespace Properties
-
+/*!
+ * \ingroup OnePTests
+ * \brief  Test problem for the incompressible one-phase model:
+ *\todo doc me!
+ * <tt>./test_box1pfv</tt> or
+ * <tt>./test_cc1pfv</tt>
+ */
 template<class TypeTag>
 class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 {

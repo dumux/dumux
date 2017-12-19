@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePTests
  * \brief Definition of the spatial parameters for the kuevette problem, which
  *        uses the three-phase fully implicit model.
  */
@@ -34,7 +34,11 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup ThreePTests
+ * \brief Definition of the spatial parameters for the kuevette problem, which
+ *        uses the three-phase fully implicit model.
+ */
 //forward declaration
 template<class TypeTag>
 class InfiltrationThreePSpatialParams;

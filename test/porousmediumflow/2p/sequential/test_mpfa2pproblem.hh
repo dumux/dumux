@@ -17,7 +17,7 @@
 
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for sequential 2p models
  */
 
@@ -99,8 +99,7 @@ NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FvMpfaL2dPressureTwoPAd
 }
 
 /*!
- * \ingroup IMPETtests
- *
+ * \ingroup SequentialTwoPTests
  * \brief test problem for sequential 2p models
  *
  * A DNAPL is injected from the top into a rectangular 2D domain saturated by water.

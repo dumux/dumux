@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
-  * \brief A test problem for the 1p model. A pipe system with circular cross-section
+ * \ingroup OnePTests
+ * \brief A test problem for the 1p model. A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
 #ifndef DUMUX_ONEP_TUBES_TEST_SPATIALPARAMS_HH
@@ -31,9 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitTestProblems
- *
+ * \ingroup OnePTests
  * \brief A test problem for the 1p model. A pipe system with circular cross-section
  *        and a branching point embedded in a three-dimensional world
  */
