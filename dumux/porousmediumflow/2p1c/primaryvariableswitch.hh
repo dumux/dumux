@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief The primary variable switch for the 2p2c model
+ * \ingroup TwoPOneCModel
+ * \copydoc Dumux::TwoPOneCPrimaryVariableSwitch
  */
 #ifndef DUMUX_2P1C_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_2P1C_PRIMARY_VARIABLE_SWITCH_HH
@@ -29,8 +29,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPTwoCModel
- * \brief The primary variable switch controlling the phase presence state variable
+ * \ingroup TwoPOneCModel
+ * \brief The primary variable switch for the two-phase one-component model
  */
 template<class TypeTag>
 class TwoPOneCPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>
@@ -65,7 +65,14 @@ public:
 
 protected:
 
-    // perform variable switch at a degree of freedom location
+    /*!
+     * \brief Perform variable switch at a degree of freedom location.
+     *
+     * \param priVars The primary variables at the given degree of freedom (dof) location.
+     * \param volVars The volume variables.
+     * \param dofIdxGlobal The respective dof index.
+     * \param globalPos The global position of the dof.
+     */
     bool update_(PrimaryVariables& priVars,
                  const VolumeVariables& volVars,
                  IndexType dofIdxGlobal,

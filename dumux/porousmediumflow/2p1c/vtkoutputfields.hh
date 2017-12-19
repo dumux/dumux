@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the twop-onec model
+ * \ingroup TwoPOneCModel
+ * \copydoc Dumux::TwoPOneCVtkOutputFields
  */
 #ifndef DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TWOP_ONEC_VTK_OUTPUT_FIELDS_HH
@@ -29,8 +30,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPOneC, InputOutput
- * \brief Adds vtk output fields specific to the TwoPOneC model
+ * \ingroup TwoPOneCModel
+ * \brief Adds vtk output fields specific to two-phase one-component model.
  */
 template<class TypeTag>
 class TwoPOneCVtkOutputFields
