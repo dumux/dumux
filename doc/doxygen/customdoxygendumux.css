@@ -1164,6 +1164,7 @@ dl.section dd {
 #projectlogo img
 {
 	border: 0px none;
+  padding-bottom: 10px;
 }
 
 #projectalign
@@ -1173,21 +1174,24 @@ dl.section dd {
 
 #projectname
 {
-	font: 300% Tahoma, Arial,sans-serif;
+  color: #ffffff;
+	font: 100% Tahoma, Arial,sans-serif;
 	margin: 0px;
-	padding: 2px 0px;
+  padding: 7px 0px;
 }
 
 #projectbrief
 {
 	font: 120% Tahoma, Arial,sans-serif;
 	margin: 0px;
-	padding: 0px;
+  padding-left: 13px;
+  padding-bottom: 10px;
 }
 
 #projectnumber
 {
-	font: 50% Tahoma, Arial,sans-serif;
+  color: #000000;
+	font: 150% Tahoma, Arial,sans-serif;
 	margin: 0px;
 	padding: 0px;
 }

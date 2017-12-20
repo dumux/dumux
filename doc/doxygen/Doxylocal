@@ -1,6 +1,11 @@
 # This file contains local changes to the doxygen configuration
 # please us '+=' to add file/directories to the lists
 
+PROJECT_NAME          = "*" # a hack to get a version number but no title (is in the logo already), also see css (under #projectname)
+PROJECT_BRIEF         = "DUNE for Multi-{Phase, Component, Scale, Physics, ...} flow and transport in porous media"
+PROJECT_LOGO          = @top_srcdir@/doc/logo/dumux_logo_small.png
+PROJECT_NUMBER        = @DUNE_MOD_VERSION@
+
 PREDEFINED            += "NEW_PROP_TAG(name)=Property tag name" \
                          "NEW_TYPE_TAG(name)=Type tag name" \
                          HAVE_VALGRIND:=1
