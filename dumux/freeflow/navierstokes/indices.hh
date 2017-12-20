@@ -31,7 +31,7 @@ namespace Dumux
 // \{
 /*!
  * \ingroup NavierStokesModel
- * \brief The common indices for the isothermal Navier-Stoke model.
+ * \brief The common indices for the isothermal Navier-Stokes model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */

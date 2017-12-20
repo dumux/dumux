@@ -38,7 +38,7 @@ class NavierStokesResidualImpl;
 /*!
  * \ingroup NavierStokesModel
  * \brief The local residual class for the Navier-Stokes model (balance equations).
-          This is a convenience alias for that actual,
+          This is a convenience alias for the actual,
           discretization-specific local residual.
  * \note  Not all specializations are currently implemented
  */

@@ -39,14 +39,14 @@ NEW_PROP_TAG(EnableInertiaTerms);
 NEW_PROP_TAG(NormalizePressure);
 }
 
- // forward declaration
- template<class TypeTag, DiscretizationMethods Method>
- class NavierStokesResidualImpl;
+// forward declaration
+template<class TypeTag, DiscretizationMethods Method>
+class NavierStokesResidualImpl;
 
- /*!
-  * \ingroup NavierStokes
-  * \brief Element-wise calculation of the Navier- Stokes residual for models using the staggered discretization
-  */
+/*!
+ * \ingroup NavierStokesModel
+ * \brief Element-wise calculation of the Navier-Stokes residual for models using the staggered discretization
+ */
 template<class TypeTag>
 class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
 : public StaggeredLocalResidual<TypeTag>
