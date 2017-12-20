@@ -16,20 +16,17 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Specifies the properties for immiscible 2p diffusion/pressure models
+ */
 #ifndef DUMUX_DIFFUSION_PROPERTIES_2P_HH
 #define DUMUX_DIFFUSION_PROPERTIES_2P_HH
 
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-/*!
- * \ingroup Pressure2p
- * \ingroup IMPETProperties
- */
-/*!
- * \file
- * \brief Specifies the properties for immiscible 2p diffusion/pressure models
- */
 namespace Dumux
 {
 namespace Properties
