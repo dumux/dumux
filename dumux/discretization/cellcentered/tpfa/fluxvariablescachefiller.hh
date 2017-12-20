@@ -16,9 +16,10 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
+ /*!
  * \file
- * \brief The flux variables cache filler class for the cell-centered TPFA scheme
+ * \ingroup CCTpfaDiscretization
+ * \brief A helper class to fill the flux variable caches used in the flux constitutive laws
  */
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FLUXVARSCACHE_FILLER_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FLUXVARSCACHE_FILLER_HH
@@ -30,9 +31,9 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Helper class to fill the flux var caches
- */
+* \ingroup CCTpfaDiscretization
+* \brief A helper class to fill the flux variable caches used in the flux constitutive laws
+*/
 template<class TypeTag>
 class CCTpfaFluxVariablesCacheFiller
 {
@@ -193,6 +194,6 @@ private:
     const Problem* problemPtr_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

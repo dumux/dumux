@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
+ * \ingroup Discretization
+ * \brief Darcy's law specialized for different discretization schemes
+ *        This file contains the data which is required to calculate
  *        volume and mass fluxes of fluid phases over a face of a finite volume by means
  *        of the Darcy approximation. Specializations are provided for the different discretization methods.
  */
@@ -35,16 +37,15 @@ class DarcysLawImplementation
 {};
 
 /*!
- * \ingroup DarcysLaw
- * \brief Evaluates the normal component of the Darcy velocity
- * on a (sub)control volume face. Specializations are provided
- * for the different discretization methods. These specializations
- * are found in the headers included below.
+ * \ingroup Discretization
+ * \brief Evaluates the normal component of the Darcy velocity on a (sub)control volume face.
+ * \note Specializations are provided for the different discretization methods.
+ * These specializations are found in the headers included below.
  */
 template <class TypeTag>
 using DarcysLaw = DarcysLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-} // end namespace
+} // end namespace Dumux
 
 #include <dumux/discretization/box/darcyslaw.hh>
 #include <dumux/discretization/cellcentered/tpfa/darcyslaw.hh>

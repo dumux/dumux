@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a sub control volume face
+ * \ingroup CCTpfaDiscretization
+ * \brief The sub control volume face
  */
 #ifndef DUMUX_DISCRETIZATION_CC_TPFA_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_CC_TPFA_SUBCONTROLVOLUMEFACE_HH
@@ -31,9 +32,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Discretization
- * \brief Class for a sub control volume face in the box method, i.e a part of the boundary
- *        of a sub control volume we compute fluxes on. We simply use the base class here.
+ * \ingroup CCTpfaDiscretization
+ * \brief The sub control volume face
  */
 template<class ScvfGeometryTraits>
 class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<CCTpfaSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>
@@ -170,6 +170,6 @@ private:
     BoundaryFlag boundaryFlag_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

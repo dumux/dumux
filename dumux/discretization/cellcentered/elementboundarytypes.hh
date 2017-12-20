@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCDiscretization
  * \brief Boundary types gathered on an element
  */
 #ifndef DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
@@ -29,8 +30,9 @@ namespace Dumux
 {
 
 /*!
- * \ingroup CCModel
- * \brief This class exists only for compatibility purposes with the
+ * \ingroup CCDiscretization
+ * \brief Boundary types gathered on an element
+ * \note This class exists only for compatibility purposes with the
  *        box scheme. The cell-centered schemes and the box scheme use
  *        a common base local residual, which passes an ElementBoundaryTypes
  *        object to the implemented interfaces.

@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
+ * \ingroup Discretization
+ * \brief Fick's law specilized for different discretization schemes.
+ *        This file contains the data which is required to calculate
  *        diffusive mass fluxes due to molecular diffusion with Fick's law.
  */
 #ifndef DUMUX_DISCRETIZATION_FICKS_LAW_HH
@@ -34,13 +36,13 @@ template <class TypeTag, DiscretizationMethods Method>
 class FicksLawImplementation;
 
 /*!
- * \ingroup CCTpfaFicksLaw
+ * \ingroup Discretization
  * \brief Evaluates the diffusive mass flux according to Fick's law
  */
 template <class TypeTag>
 using FicksLaw = FicksLawImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-} // end namespace
+} // end namespace Dumux
 
 #include <dumux/discretization/cellcentered/tpfa/fickslaw.hh>
 #include <dumux/discretization/cellcentered/mpfa/fickslaw.hh>

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Discretization
  * \brief Base class for a sub control volume
  */
 #ifndef DUMUX_SUBCONTROLVOLUME_HH
@@ -26,9 +27,11 @@
 namespace Dumux
 {
 /*!
- * \ingroup ImplicitModel
+ * \ingroup Discretization
  * \brief Base class for a sub control volume, i.e a part of the control
  *        volume we are making the balance for. Defines the general interface.
+ * \tparam Imp the implementation
+ * \tparam ScvGeometryTraits traits of this class
  */
 template<class Imp, class ScvGeometryTraits>
 class SubControlVolumeBase
@@ -61,7 +64,7 @@ public:
         return asImp_().dofIndex();
     }
 
-        //! The index of the dof this scv is embedded in (box)
+    //! The index of the dof this scv is embedded in (box)
     LocalIndexType indexInElement() const
     {
         return asImp_().indexInElement();
@@ -87,6 +90,6 @@ private:
     { return *static_cast<Implementation*>(this);}
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

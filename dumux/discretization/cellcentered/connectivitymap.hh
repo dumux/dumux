@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCDiscretization
  * \brief Stores the face indices corresponding to the neighbors of an element
  *        that contribute to the derivative calculation. This is used for
  *        finite-volume schemes with symmetric sparsity pattern in the global matrix.
@@ -34,7 +35,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup CellCentered
+ * \ingroup CCDiscretization
  * \brief A simple version of the connectivity map for cellcentered schemes.
  *        This implementation works for schemes in which for a given cell I only
  *        those cells J have to be prepared in whose stencil the cell I appears.

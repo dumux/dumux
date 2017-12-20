@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class providing iterators over sub control volumes and sub control
- *        volume faces of an element.
+ * \ingroup Discretization
+ * \brief Class providing iterators over sub control volumes and sub control volume faces of an element.
  */
 #ifndef DUMUX_SCV_AND_SCVF_ITERATORS_HH
 #define DUMUX_SCV_AND_SCVF_ITERATORS_HH
@@ -27,12 +27,12 @@
 #include <dune/common/iteratorrange.hh>
 #include <dune/common/iteratorfacades.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Discretization
- * \brief An iterator over sub control volumes
+ * \brief Iterators over sub control volumes
+ * \note usage: for(const auto& scv : scvs(fvGeometry))
  */
 template<class SubControlVolume, class Vector, class FVElementGeometry>
 class ScvIterator : public Dune::ForwardIteratorFacade<ScvIterator<SubControlVolume,
@@ -46,9 +46,9 @@ public:
     ScvIterator(const Iterator& it, const FVElementGeometry& fvGeometry)
     : it_(it), fvGeometryPtr_(&fvGeometry) {}
 
-    //! default constructor
     ScvIterator() : it_(Iterator()), fvGeometryPtr_(nullptr) {}
 
+    //! dereferencing yields a subcontrol volume
     const SubControlVolume& dereference() const
     {
         return fvGeometryPtr_->scv(*it_);
@@ -70,8 +70,9 @@ private:
 };
 
 /*!
- * \ingroup ImplcititModel
- * \brief An iterator over sub control volume faces
+ * \ingroup Discretization
+ * \brief Iterators over sub control volume faces of an fv geometry
+ * \note usage: for(const auto& scvf : scvfs(fvGeometry))
  */
 template<class SubControlVolumeFace, class Vector, class FVElementGeometry>
 class ScvfIterator : public Dune::ForwardIteratorFacade<ScvfIterator<SubControlVolumeFace,
@@ -85,9 +86,9 @@ public:
     ScvfIterator(const Iterator& it, const FVElementGeometry& fvGeometry)
     : it_(it), fvGeometryPtr_(&fvGeometry) {}
 
-    //! default constructor
     ScvfIterator() : it_(Iterator()), fvGeometryPtr_(nullptr) {}
 
+    //! dereferencing yields a subcontrol volume face
     const SubControlVolumeFace& dereference() const
     {
         return fvGeometryPtr_->scvf(*it_);

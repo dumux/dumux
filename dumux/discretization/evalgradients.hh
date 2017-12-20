@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Discretization
  * \brief free functions for the evaluation of primary variable gradients inside elements.
  */
@@ -35,9 +34,10 @@ namespace Dumux
 
 /*!
  * \brief Evaluates the gradient of a given box element solution to a given global position.
+ * \ingroup Discretization
  *
- * \return the interpolated Primary Variables
  * \param element The element
+ * \param geometry The element geometry
  * \param fvGridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
@@ -91,22 +91,23 @@ evalGradients(const Element& element,
 }
 
 /*!
+ * \ingroup Discretization
  * \brief Evaluates the gradient of a given CCElementSolution to a given global position.
  *        This function is only here for (compilation) compatibility reasons with the box scheme.
  *        The solution within the control volumes is constant and thus gradients are zero.
  *        One can compute gradients towards the sub-control volume faces after reconstructing
- *        the solution on the faces. However, this has to be done manually. Here, we simply
- *        throw an exception that this shouldn't be used.
+ *        the solution on the faces.
  *
- * \return throw statement
  * \param element The element
+ * \param geometry The element geometry
  * \param fvGridGeometry The finite volume grid geometry
  * \param elemSol The primary variables at the dofs of the element
  * \param globalPos The global position
+ * \throws Dune::NotImplemented
  */
- template< class Element, class FVGridGeometry, class TypeTag >
- Dune::FieldVector<typename Element::Geometry::GlobalCoordinate,
-                   CCElementSolution<TypeTag>::PrimaryVariables::dimension>
+template< class Element, class FVGridGeometry, class TypeTag >
+Dune::FieldVector<typename Element::Geometry::GlobalCoordinate,
+                  CCElementSolution<TypeTag>::PrimaryVariables::dimension>
 evalGradients(const Element& element,
               const typename Element::Geometry& geometry,
               const FVGridGeometry& fvGridGeometry,

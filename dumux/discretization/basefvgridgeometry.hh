@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Discretization
  * \brief Base class for all finite volume grid geometries
  */
 #ifndef DUMUX_DISCRETIZATION_BASE_FV_GRID_GEOMETRY_HH
@@ -35,7 +36,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup Discretization
  * \brief Base class for all finite volume grid geometries
  */
 template<class TypeTag>
@@ -56,7 +57,7 @@ class BaseFVGridGeometry
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
-    //! Constructor
+    //! Constructor computes the bouding box of the entire domain, for e.g. setting boundary conditions
     BaseFVGridGeometry(const GridView& gridView)
     : gridView_(gridView)
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
@@ -69,13 +70,12 @@ public:
     , bBoxMin_(std::numeric_limits<double>::max())
     , bBoxMax_(-std::numeric_limits<double>::max())
     {
-        //! Compute the bouding box of the entire domain, for e.g. setting boundary conditions
         computeGlobalBoundingBox_();
     }
 
     /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
+     * \brief Return a local restriction of this global object.
+     *        The local object is only functional after calling its bind/bindElement method.
      *        This is a free function that will be found by means of ADL
      */
     friend inline FVElementGeometry localView(const Implementation& fvGridGeometry)
@@ -99,7 +99,7 @@ public:
     }
 
     /*!
-     * \brief Return the gridView this global object lives on
+     * \brief Return the gridView this grid geometry object lives on
      */
     const GridView& gridView() const
     { return gridView_; }
@@ -196,20 +196,20 @@ private:
         }
     }
 
-    // the process grid view
+    //! the process grid view
     const GridView gridView_;
 
-    // entity mappers
+    //! entity mappers
     ElementMapper elementMapper_;
     VertexMapper vertexMapper_;
 
-    // the bounding box tree of the grid view for effecient element intersections
+    //! the bounding box tree of the grid view for effecient element intersections
     mutable std::unique_ptr<BoundingBoxTree> boundingBoxTree_;
 
-    // a map from element index to elements (needed in the bounding box tree and for assembling cell-centered discretization)
+    //! a map from element index to elements (needed in the bounding box tree and for assembling cell-centered discretization)
     mutable std::shared_ptr<ElementMap> elementMap_;
 
-    // the bounding box of the whole domain
+    //! the bounding box of the whole domain
     GlobalPosition bBoxMin_;
     GlobalPosition bBoxMax_;
 };

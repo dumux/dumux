@@ -17,9 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
+ * \ingroup Discretization
  * \brief Declares properties required for finite-volume models models.
  */
 
@@ -77,9 +76,9 @@ public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
 
-// set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
-// Set this to more than one if the matrix to solve is nested multiple times
-// e.g. for Dune::MultiTypeBlockMatrix'es. TODO: move to LinearAlgebra traits
+//! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
+//! Set this to more than one if the matrix to solve is nested multiple times
+//! e.g. for Dune::MultiTypeBlockMatrix'es. TODO: move to LinearAlgebra traits
 SET_INT_PROP(FiniteVolumeModel, LinearSolverPreconditionerBlockLevel, 1);
 
 } // namespace Properties

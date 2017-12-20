@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a local finite volume geometry for cell-centered TPFA models
+ * \ingroup CCTpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
  */
@@ -38,17 +39,22 @@ template<class TypeTag, bool EnableFVGridGeometryCache>
 class CCTpfaFVGridGeometry;
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the finite volume geometry vector for cell-centered TPFA models
+ * \ingroup CCTpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ *        for each element in the local scope we are restricting to, e.g. stencil or element.
+ * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
 template<class TypeTag, bool EnableFVGridGeometryCache>
 class CCTpfaFVElementGeometry
 {};
 
-//! specialization in case the FVElementGeometries are stored globally
-//! In this case we just forward internally to the global object
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
+ *        Specialization for grid caching enabled
+ * \note The finite volume geometries are stored in the corresponding FVGridGeometry
+ */
 template<class TypeTag>
 class CCTpfaFVElementGeometry<TypeTag, true>
 {
@@ -151,7 +157,11 @@ private:
     const FVGridGeometry* fvGridGeometryPtr_;
 };
 
-//! specialization in case the FVElementGeometries are not stored
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
+ *        Specialization for grid caching disabled
+ */
 template<class TypeTag>
 class CCTpfaFVElementGeometry<TypeTag, false>
 {
@@ -526,7 +536,7 @@ private:
         flippedNeighborScvfIndices_.clear();
     }
 
-    // the bound element
+    //! the bound element
     const Element* elementPtr_;
 
     const FVGridGeometry* fvGridGeometryPtr_;
@@ -545,6 +555,6 @@ private:
     std::vector<std::vector<IndexType>> flippedNeighborScvfIndices_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

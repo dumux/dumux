@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Discretization
  * \brief free functions for the evaluation of primary variables inside elements.
  */
@@ -34,10 +33,11 @@ namespace Dumux
 {
 
 /*!
- * \brief Interpolates a given box element solution to a given global position.
+ * \brief Interpolates a given box element solution at a given global position.
  *        Uses the finite element cache of the grid geometry.
+ * \ingroup Discretization
  *
- * \return the interpolated Primary Variables
+ * \return the interpolated primary variables
  * \param element The element
  * \param geometry The element geometry
  * \param fvGridGeometry The finite volume grid geometry
@@ -75,11 +75,12 @@ evalSolution(const Element& element,
 }
 
 /*!
- * \brief Interpolates a given box element solution to a given global position.
+ * \ingroup Discretization
+ * \brief Interpolates a given box element solution at a given global position.
  *        Overload of the above evalSolution() function without a given fvGridGeometry.
  *        The local basis is computed on the fly.
  *
- * \return the interpolated Primary Variables
+ * \return the interpolated primary variables
  * \param element The element
  * \param geometry The element geometry
  * \param elemSol The primary variables at the dofs of the element
@@ -122,9 +123,10 @@ evalSolution(const Element& element,
 }
 
 /*!
- * \brief Interpolates a given CCElementSolution to a given global position.
+ * \brief Interpolates a given cell-centered element solution at a given global position.
+ * \ingroup Discretization
  *
- * \return the (constant over the element) Primary Variables
+ * \return the primary variables (constant over the element)
  * \param element The element
  * \param geometry The element geometry
  * \param fvGridGeometry The finite volume grid geometry
@@ -143,11 +145,12 @@ evalSolution(const Element& element,
 }
 
 /*!
- * \brief Interpolates a given CCElementSolution to a given global position.
+ * \brief Interpolates a given cell-centered element solution at a given global position.
  *        Overload of the above evalSolution() function without a given fvGridGeometry.
  *        For compatibility reasons with the box scheme.
+ * \ingroup Discretization
  *
- * \return the (constant over the element) Primary Variables
+ * \return the primary variables (constant over the element)
  * \param element The element
  * \param geometry The element geometry
  * \param elemSol The primary variables at the dofs of the element

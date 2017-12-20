@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global object of flux var caches
+ * \ingroup CCTpfaDiscretization
+ * \brief Flux variable caches on a gridview
  */
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_GRID_FLUXVARSCACHE_HH
@@ -30,15 +31,17 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup CCTpfaDiscretization
+ * \brief Flux variable caches on a gridview
+ * \note The class is specialized for a version with and without grid caching
  */
 template<class TypeTag, bool EnableGridFluxVariablesCache>
 class CCTpfaGridFluxVariablesCache;
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when caching globally
+ * \ingroup CCTpfaDiscretization
+ * \brief Flux variable caches on a gridview with grid caching enabled
+ * \note The flux caches of the gridview are stored which is memory intensive but faster
  */
 template<class TypeTag>
 class CCTpfaGridFluxVariablesCache<TypeTag, true>
@@ -145,8 +148,8 @@ private:
 };
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when not using global caching
+ * \ingroup CCTpfaDiscretization
+ * \brief Flux variable caches on a gridview with grid caching disabled
  */
 template<class TypeTag>
 class CCTpfaGridFluxVariablesCache<TypeTag, false>
@@ -165,12 +168,13 @@ public:
     // The constructor
     CCTpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
-    // When global flux variables caching is disabled, we don't need to update the cache
+    //! When global flux variables caching is disabled, we don't need to update the cache
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}
 
+    //! When global flux variables caching is disabled, we don't need to update the cache
     void updateElement(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars) {}
@@ -190,6 +194,6 @@ private:
     const Problem* problemPtr_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

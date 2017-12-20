@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the flux variables
+ * \ingroup Discretization
+ * \brief Base class for the flux variables living on a sub control volume face
  */
 #ifndef DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
 #define DUMUX_DISCRETIZATION_FLUXVARIABLESBASE_HH
@@ -28,23 +29,24 @@
 namespace Dumux
 {
 
+// forward declaration
 template<class TypeTag, class UpwindScheme>
 class FluxVariablesBaseImplementation;
 
 /*!
  * \ingroup Discretization
- * \brief The flux variables base class class
- *        The upwind scheme is chosen depending on the discretization method
+ * \brief Base class for the flux variables living on a sub control volume face
+ * \note The upwind scheme is chosen depending on the discretization method
  */
 template<class TypeTag>
 using FluxVariablesBase = FluxVariablesBaseImplementation<TypeTag, UpwindScheme<TypeTag>>;
 
 /*!
  * \ingroup Discretization
- * \brief Implementation of the base class of the flux variables
+ * \brief Base class for the flux variables living on a sub control volume face
  *
- * \param TypeTag The type tag
- * \param UpwindScheme The type used for the upwinding of the advective fluxes
+ * \tparam TypeTag The type tag
+ * \tparam UpwindScheme The type of the upwind scheme used for upwinding of advective fluxes
  */
 template<class TypeTag, class UpwindScheme>
 class FluxVariablesBaseImplementation
@@ -62,6 +64,7 @@ class FluxVariablesBaseImplementation
 
 public:
 
+    //! Initialize the flux variables storing some temporary pointers
     void init(const Problem& problem,
               const Element& element,
               const FVElementGeometry& fvGeometry,

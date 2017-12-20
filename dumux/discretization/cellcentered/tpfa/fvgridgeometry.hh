@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the finite volume geometry vector for cell-centered TPFA models
+ * \ingroup CCTpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered TPFA models on a grid view
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element of the grid partition.
  */
@@ -35,16 +36,21 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the finite volume geometry vector for cell-centered TPFA models
+ * \ingroup CCTpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered TPFA models on a grid view
  *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
 template<class TypeTag, bool EnableFVGridGeometryCache>
 class CCTpfaFVGridGeometry
 {};
 
-// specialization in case the FVElementGeometries are stored globally
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered TPFA models on a grid view
+ *        This builds up the sub control volumes and sub control volume faces
+ * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
+ */
 template<class TypeTag>
 class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
@@ -100,11 +106,11 @@ public:
     std::size_t numDofs() const
     { return this->gridView().size(0); }
 
-    // Get an element from a sub control volume contained in it
+    //! Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const
     { return this->elementMap()[scv.elementIndex()]; }
 
-    // Get an element from a global element index
+    //! Get an element from a global element index
     Element element(IndexType eIdx) const
     { return this->elementMap()[eIdx]; }
 
@@ -285,20 +291,26 @@ private:
         DUNE_THROW(Dune::InvalidStateException, "No flipped version of this scvf found!");
     }
 
-    // connectivity map for efficient assembly
+    //! connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
-    // containers storing the global data
+    //! containers storing the global data
     std::vector<SubControlVolume> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     IndexType numBoundaryScvf_;
 
-    // needed for embedded surface and network grids (dim < dimWorld)
+    //! needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<IndexType>> flipScvfIndices_;
 };
 
-// specialization in case the FVElementGeometries are not stored
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered TPFA models on a grid view
+ *        This builds up the sub control volumes and sub control volume faces
+ * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
+ *       the corresponding FVElementGeometry
+ */
 template<class TypeTag>
 class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
 {
@@ -468,15 +480,15 @@ public:
 
 private:
 
-    // Information on the global number of geometries
+    //! Information on the global number of geometries
     IndexType numScvs_;
     IndexType numScvf_;
     IndexType numBoundaryScvf_;
 
-    // connectivity map for efficient assembly
+    //! connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
-    // vectors that store the global data
+    //! vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
     std::vector<std::vector<std::vector<IndexType>>> neighborVolVarIndices_;
 };

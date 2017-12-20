@@ -19,7 +19,7 @@
 /*!
  * \file
  *
- * \ingroup Material
+ * \ingroup Discretization
  * \brief Class for the evaluation of primary variables and gradients on sub-control volumes.
  */
 #ifndef DUMUX_SUBCONTROL_VOLUME_OPERATOR_HH

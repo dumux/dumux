@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
+ * \ingroup Discretization
+ * \brief Constant velocity advective law for transport models.
+ *        This file contains the data which is required to calculate
  *        volume and mass fluxes of fluid phases over a face of a finite volume.
  *        A stationary velocity field is given by the user for use in tracer models.
  */
@@ -32,7 +34,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup StationaryVelocityField
+ * \ingroup Discretization
  * \brief Evaluates a user given velocity field
  */
 template <class TypeTag>
@@ -48,13 +50,13 @@ class StationaryVelocityField
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    // state the discretization method this implementation belongs to
+    //! state the discretization method this implementation belongs to
     static const DiscretizationMethods myDiscretizationMethod = DiscretizationMethods::None;
 
     //! state the type for the corresponding cache
-    //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyAdvectionCache<TypeTag>;
 
+    //! returns the volume flux given in the spatial params
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,

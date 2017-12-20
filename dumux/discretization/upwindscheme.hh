@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Discretization
  * \brief Base class for the upwind scheme
  */
 #ifndef DUMUX_DISCRETIZATION_UPWINDSCHEME_HH
@@ -71,7 +72,7 @@ public:
     }
 };
 
-//! Upwind scheme for the cell-centered TPFA scheme
+//! Upwind scheme for the cell-centered tpfa scheme
 template<class TypeTag>
 class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCTpfa>
 {
@@ -185,7 +186,7 @@ public:
     }
 };
 
-//! Specialization for cell-centered MPFA schemes
+//! Upwind scheme for cell-centered mpfa schemes
 template<class TypeTag>
 class UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 : public UpwindSchemeImplementation<TypeTag, DiscretizationMethods::CCTpfa> {};

@@ -17,11 +17,10 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
- * \brief Defines a type tag and some properties for models using
- *        a cell-centered scheme with two-point flux approximation.
+ * \ingroup CCTpfaDiscretization
+ * \brief Properties for all models using cell-centered finite volume scheme with TPFA
+ * \note Inherit from these properties to use a cell-centered finite volume scheme with TPFA
  */
 
 #ifndef DUMUX_CC_TPFA_PROPERTIES_HH

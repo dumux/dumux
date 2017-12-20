@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global object of flux var caches
+ * \ingroup CCTpfaDiscretization
+ * \brief The flux variables caches for an element
  */
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_ELEMENT_FLUXVARSCACHE_HH
@@ -31,15 +32,19 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the stencil local flux variables cache
+ * \ingroup CCTpfaDiscretization
+ * \brief The flux variables caches for an element
+ * \note The class is specialized for a version with and without caching
+ * If grid caching is enabled the flux caches are stored for the whole gridview in the corresponding
+ * GridFluxVariablesCache which is memory intensive but faster. For caching disabled the
+ * flux caches are locally computed for each element whenever needed.
  */
 template<class TypeTag, bool EnableGridFluxVariablesCache>
 class CCTpfaElementFluxVariablesCache;
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when caching globally
+ * \ingroup CCTpfaDiscretization
+ * \brief The flux variables caches for an element with caching enabled
  */
 template<class TypeTag>
 class CCTpfaElementFluxVariablesCache<TypeTag, true>
@@ -58,23 +63,23 @@ public:
     CCTpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void update(const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
@@ -82,7 +87,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "In case of enabled caching, the grid flux variables cache has to be updated");
     }
 
-    // access operators in the case of caching
+    //! access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return gridFluxVarsCache()[scvf]; }
 
@@ -95,8 +100,8 @@ private:
 };
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when not using global caching
+ * \ingroup CCTpfaDiscretization
+ * \brief The flux variables caches for an element with caching disabled
  */
 template<class TypeTag>
 class CCTpfaElementFluxVariablesCache<TypeTag, false>
@@ -116,8 +121,11 @@ public:
     CCTpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // This function has to be called prior to flux calculations on the element.
-    // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
@@ -140,8 +148,11 @@ public:
         }
     }
 
-    // This function is called by the CCLocalResidual before flux calculations during assembly.
-    // Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
+    /*!
+     * \brief Prepares the transmissibilities of the scv faces in the stencil of an element
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
@@ -185,6 +196,11 @@ public:
         }
     }
 
+    /*!
+     * \brief Prepares the transmissibilities of a single scv face
+     * \note the fvGeometry is assumed to be bound to the same element
+     * \note this function has to be called prior to flux calculations on the element.
+     */
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
@@ -200,8 +216,10 @@ public:
         globalScvfIndices_[0] = scvf.index();
     }
 
-    // This function is used to update the transmissibilities if the volume variables have changed
-    // Results in undefined behaviour if called before bind() or with a different element
+    /*!
+     * \brief Update the transmissibilities if the volume variables have changed
+     * \note Results in undefined behaviour if called before bind() or with a different element
+     */
     void update(const Element& element,
                 const FVElementGeometry& fvGeometry,
                 const ElementVolumeVariables& elemVolVars)
@@ -229,10 +247,11 @@ public:
         }
     }
 
-    // access operators in the case of no caching
+    //! access operators in the case of no caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
+    //! access operators in the case of no caching
     FluxVariablesCache& operator [](const SubControlVolumeFace& scvf)
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 
@@ -243,7 +262,7 @@ public:
 private:
     const GridFluxVariablesCache* gridFluxVarsCachePtr_;
 
-    // get index of scvf in the local container
+    //! get index of scvf in the local container
     int getLocalScvfIdx_(const int scvfIdx) const
     {
         auto it = std::find(globalScvfIndices_.begin(), globalScvfIndices_.end(), scvfIdx);
@@ -255,6 +274,6 @@ private:
     std::vector<IndexType> globalScvfIndices_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

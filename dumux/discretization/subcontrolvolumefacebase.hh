@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Discretization
  * \brief Base class for a sub control volume face
  */
 #ifndef DUMUX_DISCRETIZATION_SUBCONTROLVOLUMEFACEBASE_HH
@@ -33,6 +34,8 @@ namespace Dumux
  * \ingroup Discretization
  * \brief Base class for a sub control volume face, i.e a part of the boundary
  *        of a sub control volume we computing a flux on.
+ * \tparam Imp the implementation
+ * \tparam ScvGeometryTraits traits of this class
  */
 template<class Imp, class ScvfGeometryTraits>
 class SubControlVolumeFaceBase
@@ -71,6 +74,7 @@ public:
         return asImp_().boundary();
     }
 
+    //! the unit outward pointing normal on the scv face
     GlobalPosition unitOuterNormal() const
     {
         return asImp_().unitOuterNormal();
@@ -105,6 +109,5 @@ private:
 };
 
 } // end namespace Dumux
-
 
 #endif

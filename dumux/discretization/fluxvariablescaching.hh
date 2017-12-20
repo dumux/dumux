@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Discretization
  * \brief Classes related to flux variables caching
  */
 #ifndef DUMUX_DISCRETIZATION_FLUXVAR_CACHING_HH
@@ -25,10 +26,10 @@
 
 #include <dumux/common/properties.hh>
 
-namespace Dumux
-{
-
+namespace Dumux {
 namespace FluxVariablesCaching {
+
+#ifndef DOXYGEN // hide the empty caches from doxygen
 
 //! The empty filler class corresponding to EmptyCache
 template<class TypeTag>
@@ -42,7 +43,7 @@ class EmptyCacheFiller
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 public:
-    //! For advection filler
+    //! Fill, signature for advection filler
     template<class FluxVariablesCacheFiller>
     static void fill(FluxVariablesCache& scvfFluxVarsCache,
                      const Problem& problem,
@@ -53,7 +54,7 @@ public:
                      const FluxVariablesCacheFiller& fluxVarsCacheFiller)
     {}
 
-    //! For diffusion filler
+    //! Fill, signature for diffusion filler
     template<class FluxVariablesCacheFiller>
     static void fill(FluxVariablesCache& scvfFluxVarsCache,
                      unsigned int phaseIdx, unsigned int compIdx,
@@ -67,20 +68,21 @@ public:
 };
 
 // an empty cache filler
+// \note Never use the _EmptyCache directly as it lead to ambiguous definitions
 template<class TypeTag> struct _EmptyCache
 { using Filler = EmptyCacheFiller<TypeTag>; };
 
+#endif // DOXYGEN
+
 /*!
- * \ingroup ImplicitModel
- * \brief Empty caches to use in a law/process, e.g. Darcy's law
- * \note Never use the _EmptyCache directly as it lead to ambiguous definitions
+ * \ingroup Discretization
+ * \brief Empty caches to use in a constitutive flux law/process, e.g. Darcy's law
  */
 template<class TypeTag> class EmptyAdvectionCache : public _EmptyCache<TypeTag> {};
 template<class TypeTag> class EmptyDiffusionCache : public _EmptyCache<TypeTag> {};
 template<class TypeTag> class EmptyHeatConductionCache : public _EmptyCache<TypeTag> {};
 
 } // end namespace FluxVariablesCaching
-
 } // end namespace Dumux
 
 #endif
