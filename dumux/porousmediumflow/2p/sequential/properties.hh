@@ -16,17 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
-/*!
- * \ingroup IMPES
- * \ingroup IMPETProperties
- */
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for (immiscible) two-phase sequential models.
  */
-
 #ifndef DUMUX_2PPROPERTIES_SEQUENTIAL_HH
 #define DUMUX_2PPROPERTIES_SEQUENTIAL_HH
 

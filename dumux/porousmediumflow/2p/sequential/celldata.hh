@@ -16,16 +16,16 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Class including data of one grid cell
+ */
 #ifndef DUMUX_ELEMENTDATA2P_HH
 #define DUMUX_ELEMENTDATA2P_HH
 
 #include "properties.hh"
 #include "fluxdata.hh"
-
-/**
- * \file
- * \brief  Class including data of one grid cell
- */
 
 namespace Dumux
 {
@@ -33,11 +33,11 @@ template<class TypeTag>
 class FluxData2P;
 
 /*!
- * \ingroup IMPES
- */
-//! Class including data of one grid cell.
-/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *! Further, resulting cell values for constitutive relationships like
+ * \brief Class including data of one grid cell.
+ * \ingroup SequentialTwoPModel
+ *
+ * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
+ *Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -48,11 +48,10 @@ template<class TypeTag, bool enableCompressibility>
 class CellData2P;
 
 /*!
- * \ingroup IMPES
- */
-//! Class including the variables and data of discretized data of the constitutive relations for one grid cell.
-/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *! Further, resulting cell values for constitutive relationships like
+ * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
+ * \ingroup SequentialTwoPModel
+ * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
+ *Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -124,13 +123,13 @@ public:
     }
 
     //! \cond \private
-    //fluidstates are not stored for the incompressible model, however the function is needed to avoid compiler errors
+    //! Fluidstates are not stored for the incompressible model, however the function is needed to avoid compiler errors
     FluidState& fluidState()
     {
         DUNE_THROW(Dune::NotImplemented,"fluid states not stored in cell data of incompressible models!");
     }
 
-    //fluidstates are not stored for the incompressible model, however the function is needed to avoid compiler errors
+    //! Fluidstates are not stored for the incompressible model, however the function is needed to avoid compiler errors
     const FluidState& fluidState() const
     {
         DUNE_THROW(Dune::NotImplemented,"fluid states not stored in cell data of incompressible models!");
@@ -141,7 +140,8 @@ public:
     // functions returning primary variables
     ////////////////////////////////////////////////////////////
 
-    /*!\brief Returns the cell phase pressure
+    /*!
+     * \brief Returns the cell phase pressure
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -150,7 +150,8 @@ public:
         return pressure_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase pressure
+    /*!
+     * \brief Returns the cell phase pressure
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -159,7 +160,8 @@ public:
         return pressure_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase pressure
+    /*!
+     * \brief Sets the cell phase pressure
      *
      * \param phaseIdx Index of a fluid phase
      * \param press Phase pressure which is stored
@@ -181,7 +183,8 @@ public:
         return pressure_[wPhaseIdx];
     }
 
-    /*!\brief Sets the cell global pressure
+    /*!
+     * \brief Sets the cell global pressure
      *
      * \param press Global pressure which is stored
      */
@@ -190,7 +193,8 @@ public:
         pressure_[wPhaseIdx] = press;
     }
 
-    /*!\brief Returns the cell phase potential
+    /*!
+     * \brief Returns the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -199,7 +203,8 @@ public:
         return potential_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase potential
+    /*!
+     * \brief Returns the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -208,7 +213,8 @@ public:
         return potential_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase potential
+    /*!
+     * \brief Sets the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
      * \param pot Phase potential which is stored
@@ -218,7 +224,8 @@ public:
         potential_[phaseIdx] = pot;
     }
 
-    /*!\brief Returns the cell phase saturation
+    /*!
+     * \brief Returns the cell phase saturation
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -227,7 +234,8 @@ public:
         return saturation_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase saturation
+    /*!
+     * \brief Returns the cell phase saturation
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -236,7 +244,8 @@ public:
         return saturation_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase saturation
+    /*!
+     * \brief Sets the cell phase saturation
      *
      * \param phaseIdx Index of a fluid phase
      * \param sat Phase saturation which is stored
@@ -250,7 +259,7 @@ public:
     // functions returning the vectors of secondary variables
     //////////////////////////////////////////////////////////////
 
-    /*!\brief Returns the cell phase mobility
+    /*! \brief Returns the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -259,7 +268,7 @@ public:
         return mobility_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase mobility
+    /*! \brief Returns the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -268,7 +277,7 @@ public:
         return mobility_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase mobility
+    /*! \brief Sets the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      * \param mobility Phase mobility with which is stored
@@ -278,7 +287,7 @@ public:
         mobility_[phaseIdx] = mobility;
     }
 
-    /*!\brief Returns the cell phase fractional flow function
+    /*! \brief Returns the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -287,7 +296,7 @@ public:
         return fracFlowFunc_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase fractional flow function
+    /*! \brief Returns the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -296,7 +305,7 @@ public:
         return fracFlowFunc_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase fractional flow function
+    /*! \brief Sets the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      * \param fracFlowFunc Phase fractional flow function which is stored
@@ -318,7 +327,7 @@ public:
         return capillaryPressure_;
     }
 
-    /*!\brief Sets the cell capillary pressure
+    /*! \brief Sets the cell capillary pressure
      *
      * \param pc Capillary pressure which is stored
      */
@@ -327,7 +336,7 @@ public:
         capillaryPressure_ = pc;
     }
 
-    /*!\brief Store transport update
+    /*! \brief Store transport update
      *
      * \param update Transport update of the cell
      */
@@ -372,11 +381,11 @@ public:
 };
 
 /*!
- * \ingroup IMPES
- */
-//! Class including the variables and data of discretized data of the constitutive relations for one grid cell.
-/*! The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
- *! Further, resulting cell values for constitutive relationships like
+ * \brief Class including the variables and data of discretized data of the constitutive relations for one grid cell.
+ * \ingroup SequentialTwoPModel
+ *
+ * The variables of two-phase flow, which are phase pressures and saturations are stored in this class.
+ *Further, resulting cell values for constitutive relationships like
  * mobilities, fractional flow functions and capillary pressure are stored.
  * Additionally, data assigned to cell-cell interfaces, so-called flux-data are stored.
  *
@@ -456,7 +465,8 @@ public:
     // functions returning primary variables
     ////////////////////////////////////////////////////////////
 
-    /*!\brief Returns the cell phase pressure
+    /*!
+     * \brief Returns the cell phase pressure
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -465,7 +475,8 @@ public:
         return fluidState_.pressure(phaseIdx);
     }
 
-    /*!\brief Returns the cell phase pressure
+    /*!
+     * \brief Returns the cell phase pressure
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -474,7 +485,8 @@ public:
         return fluidState_.pressure(phaseIdx);
     }
 
-    /*!\brief Sets the cell phase pressure
+    /*!
+     * \brief Sets the cell phase pressure
      *
      * \param phaseIdx Index of a fluid phase
      * \param press Phase pressure which is stored
@@ -484,7 +496,8 @@ public:
         fluidState_.setPressure(phaseIdx, press);
     }
 
-    /*!\brief Returns the cell phase potential
+    /*!
+     * \brief Returns the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -493,7 +506,8 @@ public:
         return potential_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase potential
+    /*!
+     * \brief Returns the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -502,7 +516,8 @@ public:
         return potential_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase potential
+    /*!
+     * \brief Sets the cell phase potential
      *
      * \param phaseIdx Index of a fluid phase
      * \param pot Phase potential which is stored
@@ -532,7 +547,8 @@ public:
     }
     //! \endcond
 
-    /*!\brief Returns the cell phase saturation
+    /*!
+     * \brief Returns the cell phase saturation
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -541,7 +557,8 @@ public:
         return fluidState_.saturation(phaseIdx);
     }
 
-    /*!\brief Returns the cell phase saturation
+    /*!
+     * \brief Returns the cell phase saturation
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -550,7 +567,8 @@ public:
         return fluidState_.saturation(phaseIdx);
     }
 
-    /*!\brief Sets the cell phase saturation
+    /*!
+     * \brief Sets the cell phase saturation
      *
      * \param phaseIdx Index of a fluid phase
      * \param sat Phase saturation which is stored
@@ -564,7 +582,8 @@ public:
     // functions returning the vectors of secondary variables
     //////////////////////////////////////////////////////////////
 
-    /*!\brief Returns the cell phase mobility
+    /*!
+     * \brief Returns the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -573,7 +592,8 @@ public:
         return mobility_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase mobility
+    /*!
+     * \brief Returns the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -582,7 +602,8 @@ public:
         return mobility_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase mobility
+    /*!
+     * \brief Sets the cell phase mobility
      *
      * \param phaseIdx Index of a fluid phase
      * \param mobility Phase mobility with which is stored
@@ -592,7 +613,8 @@ public:
         mobility_[phaseIdx] = mobility;
     }
 
-    /*!\brief Returns the cell phase fractional flow function
+    /*!
+     * \brief Returns the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -601,7 +623,8 @@ public:
         return fracFlowFunc_[phaseIdx];
     }
 
-    /*!\brief Returns the cell phase fractional flow function
+    /*!
+     * \brief Returns the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -610,7 +633,8 @@ public:
         return fracFlowFunc_[phaseIdx];
     }
 
-    /*!\brief Sets the cell phase fractional flow function
+    /*!
+     * \brief Sets the cell phase fractional flow function
      *
      * \param phaseIdx Index of a fluid phase
      * \param fracFlowFunc Phase fractional flow function which is stored
@@ -640,7 +664,8 @@ public:
     }
     //! \endcond
 
-    /*!\brief Returns the cell phase density
+    /*!
+     * \brief Returns the cell phase density
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -649,7 +674,8 @@ public:
         return fluidState_.density(phaseIdx);
     }
 
-    /*!\brief Returns the cell phase density
+    /*!
+     * \brief Returns the cell phase density
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -658,7 +684,8 @@ public:
         return fluidState_.density(phaseIdx);
     }
 
-    /*!\brief Sets the cell phase density
+    /*!
+     * \brief Sets the cell phase density
      *
      * \param phaseIdx Index of a fluid phase
      * \param density Phase density which is stored
@@ -668,7 +695,8 @@ public:
         fluidState_.setDensity(phaseIdx, density);
     }
 
-    /*!\brief Returns the cell phase viscosity
+    /*!
+     * \brief Returns the cell phase viscosity
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -677,7 +705,8 @@ public:
         return fluidState_.viscosity(phaseIdx);
     }
 
-    /*!\brief Returns the cell phase viscosity
+    /*!
+     * \brief Returns the cell phase viscosity
      *
      * \param phaseIdx Index of a fluid phase
      */
@@ -696,7 +725,8 @@ public:
         fluidState_.setViscosity(phaseIdx, viscosity);
     }
 
-    /*!\brief Store transport update
+    /*!
+     * \brief Store transport update
      *
      * \param update Transport update of the cell
      */

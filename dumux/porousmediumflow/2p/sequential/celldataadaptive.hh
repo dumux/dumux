@@ -16,26 +16,24 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Class including the data of a grid cell needed if an adaptive grid is used.
+ */
 #ifndef DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 #define DUMUX_ELEMENTDATA2P_ADAPTIVE_HH
 
 #include <dune/grid/utility/persistentcontainer.hh>
-
 #include "celldata.hh"
-
-/**
- * \file
- * \brief  Class including the data of a grid cell needed if an adaptive grid is used.
- */
 
 namespace Dumux
 {
-
 /*!
- * \ingroup IMPES
- */
-//! Class including the data of a grid cell needed if an adaptive grid is used.
-/*! The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
+ * \brief Class including the data of a grid cell needed if an adaptive grid is used.
+ * \ingroup SequentialTwoPModel
+ *
+ * The class provides model-specific functions needed to adapt the stored cell data to a new (adapted) grid.
  * Additionally, it provides the storage-infrastructure for explicit front tracking.
  *
  * \tparam TypeTag The problem TypeTag
@@ -94,8 +92,9 @@ public:
     CellData2PAdaptive()
     {}
 
-    //! Stores values to be adapted in an adaptedValues container
-    /**
+    /*!
+     * \brief Stores values to be adapted in an adaptedValues container
+     *
      * Stores values to be adapted from the current CellData objects into
      * the adaptation container in order to be mapped on a new grid.
      *
@@ -112,8 +111,10 @@ public:
         adaptedValues.potNw = this->potential(nPhaseIdx);
         adaptedValues.volCorr = this->volumeCorrection();
     }
-    //! Stores sons entries into father element for averaging
-    /**
+
+    /*!
+     * \brief Stores sons entries into father element for averaging
+     *
      * Sum up the adaptedValues (sons values) into father element. We store from leaf
      * upwards, so sons are stored first, then cells on the next leaf (=fathers)
      * can be averaged.
@@ -134,8 +135,10 @@ public:
         adaptedValuesFather.potNw += adaptedValues.potNw / adaptedValues.count;
         adaptedValuesFather.volCorr += adaptedValues.volCorr / adaptedValues.count;
     }
-    //! Set adapted values in CellData
-    /**
+
+    /*!
+     * \brief Set adapted values in CellData
+     *
      * This methods stores reconstructed values into the cellData object, by
      * this setting a newly mapped solution to the storage container of the
      * sequential models.
@@ -154,8 +157,9 @@ public:
         this->setUpdate(adaptedValues.volCorr / adaptedValues.count);
     }
 
-    //! Reconstructs sons entries from data of father cell
-    /**
+    /*!
+     * \brief Reconstructs sons entries from data of father cell
+     *
      * Reconstructs a new solution from a father cell into a newly
      * generated son cell. New cell is stored into the global
      * adaptationMap.
