@@ -69,8 +69,6 @@
  //////////////////////////////////////////////////////////////////
 
  NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
- NEW_PROP_TAG(EnableComponentTransport); //!< Returns whether to consider component transport or not
- NEW_PROP_TAG(EnableEnergyTransport); //!<  Returns whether to consider energy transport or not
  NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 
  ///////////////////////////////////////////////////////////////////////////
@@ -130,10 +128,6 @@
  SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
 
  SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true);
-
- SET_BOOL_PROP(NavierStokes, EnableEnergyTransport, false);
-
- SET_BOOL_PROP(NavierStokes, EnableComponentTransport, false);
 
  //! Normalize the pressure term in the momentum balance or not
  SET_BOOL_PROP(NavierStokes, NormalizePressure, true);

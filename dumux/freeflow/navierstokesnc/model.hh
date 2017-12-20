@@ -137,8 +137,6 @@
          using type = CompositionalFluidState<Scalar, FluidSystem>;
  };
 
- SET_BOOL_PROP(NavierStokesNC, EnableComponentTransport, true);
-
  //! The one-phase model has no molecular diffusion
  SET_BOOL_PROP(NavierStokesNC, EnableMolecularDiffusion, true);
 

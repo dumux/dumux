@@ -41,9 +41,6 @@ namespace Properties {
 //! The type tags for the non-isothermal Navier Stokes problems
 NEW_TYPE_TAG(NavierStokesNonIsothermal);
 
-NEW_PROP_TAG(IsothermalNumEqCellCenter);
-NEW_PROP_TAG(IsothermalNumEqFace);
-
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
