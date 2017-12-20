@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPNCModel
  * \brief The primary variable switch for the 2pnc model
  */
 #ifndef DUMUX_2PNC_PRIMARY_VARIABLE_SWITCH_HH
