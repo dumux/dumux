@@ -56,9 +56,9 @@ public:
 
 SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
 
-SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, FreeFlowEnergyVtkOutputFields<TypeTag>);
 
 SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, NavierStokesNonIsothermalVtkOutputFields<TypeTag>);
 
 SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
 
