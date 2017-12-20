@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Dumux sequential solver backends
+ * \ingroup Linear
+ * \brief Base class for linear solvers
  */
 #ifndef DUMUX_LINEAR_SOLVER_HH
 #define DUMUX_LINEAR_SOLVER_HH
@@ -41,7 +42,15 @@ public:
     //! export scalar type (might be needed to set parameters from output)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    //! default constructor sets some parameters
+    /*!
+     * \brief Contruct the solver
+     * \note Read parameters from the parameter tree
+     *       - LinearSolver.Verbosity the verbosity level of the linear solver
+     *       - LinearSolver.MaxIterations the maximum iterations of the solver
+     *       - LinearSolver.ResidualReduction the residual reduction threshold, i.e. stopping criterion
+     *       - LinearSolver.PreconditionerRelaxation precondition relaxation
+     *       - LinearSolver.PreconditionerIterations the number of preconditioner iterations
+     */
     LinearSolver()
     {
         static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
@@ -52,6 +61,10 @@ public:
         precondIter_ = getParamFromGroup<int>(modelParamGroup, "LinearSolver.PreconditionerIterations");
     }
 
+    /*!
+     * \brief Solve the linear system Ax = b
+     * \note This has to be overloaded by the actual solver
+     */
     template<class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {

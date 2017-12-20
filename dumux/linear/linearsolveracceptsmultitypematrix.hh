@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Dumux mixeddimension iterative solver backend
+ * \ingroup Linear
+ * \brief Trait checking if linear solvers accept Dune::MultiTypeBlockMatrix or we need to convert the matrix
  */
 #ifndef DUMUX_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_HH
 #define DUMUX_LINEAR_SOLVER_ACCEPTS_MULTITYPEMATRIX_HH
@@ -32,13 +33,17 @@ template<typename TypeTag, typename LinearSolver>
 struct LinearSolverAcceptsMultiTypeMatrixImpl
 { static constexpr bool value = true; };
 
-//! Convenience using declaration
+/*!
+ * \ingroup Linear
+ * \brief Trait checking if linear solvers accept Dune::MultiTypeBlockMatrix or we need to convert the matrix
+ */
 template <typename TypeTag>
 using LinearSolverAcceptsMultiTypeMatrix = LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, typename GET_PROP_TYPE(TypeTag, LinearSolver)>;
 
 //! Solvers that don't accept multi-type matrices
 //! Those are all with ILU preconditioner that doesn't support the additional block level
 //! And the direct solvers that have BCRS Matrix hardcoded
+
 template<typename TypeTag>
 struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnBiCGSTABBackend<TypeTag>>
 { static constexpr bool value = false; };

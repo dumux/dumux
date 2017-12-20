@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Linear
  * \brief Contains a class to exchange entries of a vector
  */
 #ifndef DUMUX_VECTOR_EXCHANGE_HH
@@ -28,6 +29,8 @@
 namespace Dumux
 {
 /*!
+ * \ingroup Linear
+ * \todo why is this needed? is parallel/vectorexhange.hh not the same?
  * \brief A data handle class to exchange entries of a vector
  */
 template<class Mapper, class Vector> // mapper type and vector type
@@ -51,9 +54,8 @@ public:
         return true;
   }
 
-  /*! how many objects of type DataType have to be sent for a given entity
-
-  Note: Only the sender side needs to know this size.
+  /*! \brief how many objects of type DataType have to be sent for a given entity
+  * \note Only the sender side needs to know this size.
   */
   template<class Entity>
   size_t size (Entity& entity) const
@@ -68,10 +70,10 @@ public:
       buff.write(dataVector_[mapper_.index(entity)]);
   }
 
-  /*! unpack data from message buffer to user
-
-  n is the number of objects sent by the sender
-  */
+  /*!
+   * \brief unpack data from message buffer to user
+   * \note n is the number of objects sent by the sender
+   */
   template<class MessageBuffer, class Entity>
   void scatter (MessageBuffer& buff, const Entity& entity, size_t n)
   {
@@ -90,6 +92,6 @@ private:
   Vector& dataVector_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

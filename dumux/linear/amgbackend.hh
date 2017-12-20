@@ -19,8 +19,8 @@
 /*!
  * \file
  * \ingroup Linear
- *
- * \brief Provides a linear solver based on the ISTL AMG.
+ * \brief Provides a linear solver based on the ISTL AMG preconditioner
+ *        and the ISTL BiCGSTAB solver.
  */
 #ifndef DUMUX_AMGBACKEND_HH
 #define DUMUX_AMGBACKEND_HH
@@ -39,6 +39,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup Linear
  * \brief Scale the linear system by the inverse of
  * its (block-)diagonal entries.
  *
@@ -69,7 +70,9 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
 }
 
 /*!
- * \brief Provides a linear solver using the ISTL AMG.
+ * \ingroup Linear
+ * \brief A linear solver based on the ISTL AMG preconditioner
+ *        and the ISTL BiCGSTAB solver.
  */
 template <class TypeTag>
 class AMGBackend : public LinearSolver<TypeTag>
@@ -90,7 +93,8 @@ public:
     /*!
      * \brief Construct the backend.
      *
-     * \param problem the problem at hand
+     * \param gridView the grid view on which we are performing the multi-grid
+     * \param dofMapper an index mapper for dof entities
      */
     AMGBackend(const GridView& gridView, const DofMapper& dofMapper)
     : gridView_(gridView)
@@ -121,6 +125,7 @@ public:
         using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<BCRSMat, Dune::Amg::FirstDiagonal>>;
 
         //! \todo Check whether the default accumulation mode atOnceAccu is needed.
+        //! \todo make parameters changeable at runtime from input file / parameter tree
         Dune::Amg::Parameters params(15,2000,1.2,1.6,Dune::Amg::atOnceAccu);
         params.setDefaultValuesIsotropic(Grid::dimension);
         params.setDebugLevel(this->verbosity());
@@ -138,6 +143,9 @@ public:
         return result_.converged;
     }
 
+    /*!
+     * \brief The name of the solver
+     */
     std::string name() const
     {
         return "AMG preconditioned BiCGSTAB solver";
@@ -166,6 +174,8 @@ private:
      * The function is called from the solve function. The call is
      * forwarded to the corresponding function of a class template.
      *
+     * \tparam Matrix the matrix type
+     * \tparam Vector the vector type
      * \tparam isParallel decides if the setting is parallel or sequential
      */
     template<class Matrix, class Vector, bool isParallel>

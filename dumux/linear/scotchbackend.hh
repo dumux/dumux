@@ -19,8 +19,9 @@
 
 /*!
  * \file
+ * \ingroup Linear
  * \brief An interface to the scotch library for matrix reordering
- * \note This is adapted from the FEniCS implementation of the scotch interface
+ * \note You need to have PTSCOTCH installed to use this feature
  */
 #ifndef DUMUX_SCOTCH_BACKEND_HH
 #define DUMUX_SCOTCH_BACKEND_HH
@@ -37,15 +38,21 @@ extern "C"
 }
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 
+/*!
+ * \file
+ * \ingroup Linear
+ * \brief A reordering backend using the scotch library
+ * \note You need to have PTSCOTCH installed to use this feature
+ */
 template<class IndexType>
 class ScotchBackend
 {
+public:
+    //! the graph type
     using Graph = std::vector<std::vector<IndexType>>;
 
-public:
     //! Compute reordering (map[old] -> new) using
     //! Gibbs-Poole-Stockmeyer (GPS) re-ordering
     static std::vector<int> computeGPSReordering(const Graph& graph,
@@ -56,7 +63,7 @@ public:
         return computeReordering(graph, strategy);
     }
 
-    // Compute graph re-ordering
+    //! Compute graph re-ordering
     static std::vector<int> computeReordering(const Graph& graph,
                                               std::string scotchStrategy = "")
     {
@@ -65,7 +72,7 @@ public:
         return permutation;
     }
 
-    // Compute graph re-ordering
+    //! Compute graph re-ordering
     static void computeReordering(const Graph& graph,
                                    std::vector<int>& permutation,
                                    std::vector<int>& inversePermutation,
@@ -119,13 +126,6 @@ public:
             std::cerr << "Error building SCOTCH graph!" << std::endl;
             exit(1);
         }
-
-        // Check graph data for consistency
-        // if (SCOTCH_graphCheck(&scotchGraph))
-        // {
-        //     std::cerr << "Consistency error in SCOTCH graph!" << std::endl;
-        //     exit(1);
-        // }
 
         // Re-ordering strategy
         SCOTCH_Strat strat;

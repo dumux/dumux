@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Dumux sequential solver backends
+ * \ingroup Linear
+ * \brief Dumux sequential linear solver backends
  */
 #ifndef DUMUX_SEQ_SOLVER_BACKEND_HH
 #define DUMUX_SEQ_SOLVER_BACKEND_HH
@@ -52,17 +53,13 @@ struct isBCRSMatrix<Dune::BCRSMatrix<T> > : public std::true_type {};
  * combinations. Several parameters from the group LinearSolver are read to
  * customize the solver and preconditioner:
  *
- * Verbosity: determines how verbose the linear solver should print output.
- *
- * MaxIterations: the maximum number of iterations for the linear solver.
- *
- * ResidualReduction: the threshold for declaration of convergence.
- *
- * PreconditionerRelaxation: relaxation parameter for the preconditioner.
- *
- * PreconditionerIterations: usually specifies the number of times the
- * preconditioner is applied. In case of ILU(n), it specifies the order of the
- * applied ILU.
+ * - Verbosity: determines how verbose the linear solver should print output.
+ * - MaxIterations: the maximum number of iterations for the linear solver.
+ * - ResidualReduction: the threshold for declaration of convergence.
+ * - PreconditionerRelaxation: relaxation parameter for the preconditioner.
+ * - PreconditionerIterations: usually specifies the number of times the
+ *                             preconditioner is applied. In case of ILU(n),
+ *                             it specifies the order of the applied ILU.
  */
 class IterativePreconditionedSolverImpl
 {

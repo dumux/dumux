@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Properties
  * \ingroup Linear
  *
  * \brief Define traits for the AMG backend.
@@ -36,8 +35,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // Forward declaration for the property definitions
 template <class TypeTag> class AMGBackend;

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Linear
  * \brief A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
- *
  */
 #ifndef DUMUX_MATRIX_CONVERTER
 #define DUMUX_MATRIX_CONVERTER
@@ -35,7 +35,8 @@
 namespace Dumux {
 
 /*!
- * A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
+ * \ingroup Linear
+ * \brief A helper classe that converts a Dune::MultiTypeBlockMatrix into a plain Dune::BCRSMatrix
  * TODO: allow block sizes for BCRSMatrix other than 1x1 ?
  *
  */
@@ -50,7 +51,6 @@ public:
     /*!
      * \brief Converts the matrix to a type the IterativeSolverBackend can handle
      *
-     * \param M The converted matrix
      * \param A The original multitype blockmatrix
      */
     static auto multiTypeToBCRSMatrix(const MultiTypeBlockMatrix &A)
@@ -184,7 +184,8 @@ private:
 };
 
 /*!
- * A helper classe that converts a Dune::MultiTypeBlockVector into a plain Dune::BlockVector and transfers back values
+ * \ingroup Linear
+ * \brief A helper classe that converts a Dune::MultiTypeBlockVector into a plain Dune::BlockVector and transfers back values
  */
 template<class MultiTypeBlockVector, class Scalar=double>
 class VectorConverter
@@ -197,7 +198,7 @@ public:
     /*!
      * \brief Converts a Dune::MultiTypeBlockVector to a plain 1x1 Dune::BlockVector
      *
-     * \param A The original multitype blockvector
+     * \param b The original multitype blockvector
      */
     static auto multiTypeToBlockVector(const MultiTypeBlockVector& b)
     {
@@ -262,6 +263,7 @@ private:
         return size;
     }
 };
-}
+
+} // end namespace Dumux
 
 #endif
