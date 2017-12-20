@@ -31,6 +31,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup RichardsNCModel
+ * \brief  Contains the quantities which are constant within a
+ *        finite volume in the Richards, n-component model.
+ */
 template <class TypeTag>
 class RichardsBaseVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
@@ -296,7 +301,6 @@ protected:
 
 /*!
  * \ingroup RichardsNCModel
- * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the Richards, n-component model.
  */

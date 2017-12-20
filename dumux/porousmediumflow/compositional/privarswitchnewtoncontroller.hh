@@ -54,6 +54,7 @@ class PriVarSwitchNewtonController : public NewtonController<TypeTag>
 
 public:
     /*!
+     * \ingroup Newton
      * \brief Constructor for stationary problems
      */
     PriVarSwitchNewtonController(const Communicator& comm)
@@ -82,6 +83,7 @@ public:
     }
 
     /*!
+     *
      * \brief Called before the Newton method is applied to an
      *        non-linear system of equations.
      *

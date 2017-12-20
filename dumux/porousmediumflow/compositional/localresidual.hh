@@ -37,7 +37,6 @@ NEW_PROP_TAG(ReplaceCompEqIdx);
  * \ingroup Implicit
  * \brief Element-wise calculation of the local residual for problems
  *        using compositional fully implicit model.
- *
  */
 template<class TypeTag>
 class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual)

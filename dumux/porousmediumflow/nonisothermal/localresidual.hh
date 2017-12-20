@@ -38,13 +38,13 @@ NEW_PROP_TAG(Indices);
 template<class TypeTag, bool enableEneryBalance>
 class EnergyLocalResidualImplementation;
 
+template<class TypeTag>
+using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+
 /*!
  * \ingroup NIModel
  * \brief Element-wise calculation of the energy residual for non-isothermal problems.
  */
-template<class TypeTag>
-using EnergyLocalResidual = EnergyLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
-
 template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, false>
 {
@@ -104,6 +104,10 @@ public:
     {}
 };
 
+/*!
+ * \ingroup NIModel
+ * \brief TODO docme!
+ */
 template<class TypeTag>
 class EnergyLocalResidualImplementation<TypeTag, true>
 {
