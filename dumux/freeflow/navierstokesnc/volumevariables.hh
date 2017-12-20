@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup NavierStokesNCModel
  *
- * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
+ * \copydoc Dumux::NavierStokesNCVolumeVariables
  */
 #ifndef DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 #define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
@@ -34,10 +35,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup NavierStokesModel
- * \ingroup ImplicitVolumeVariables
- * \brief Contains the quantities which are constant within a
- *        finite volume in the one-phase model.
+ * \ingroup NavierStokesNCModel
+ * \brief Volume variables for the single-phase, multi-component Navier-Stokes model.
  */
 template <class TypeTag>
 class NavierStokesNCVolumeVariables : public NavierStokesVolumeVariables<TypeTag>
@@ -58,19 +57,25 @@ class NavierStokesNCVolumeVariables : public NavierStokesVolumeVariables<TypeTag
 
     enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
            numPhases = FluidSystem::numPhases,
-           phaseIdx = Indices::phaseIdx,
            mainCompIdx = Indices::mainCompIdx,
            pressureIdx = Indices::pressureIdx
     };
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr auto defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
 
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -84,16 +89,16 @@ public:
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(this->fluidState_);
-        int compIIdx = phaseIdx;
+        int compIIdx = defaultPhaseIdx;
         for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
         {
             // binary diffusion coefficents
             if(compIIdx!= compJIdx)
             {
-                setDiffusionCoefficient_(phaseIdx, compJIdx,
+                setDiffusionCoefficient_(defaultPhaseIdx, compJIdx,
                                          FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
                                                                                  paramCache,
-                                                                                 phaseIdx,
+                                                                                 defaultPhaseIdx,
                                                                                  compIIdx,
                                                                                  compJIdx));
             }
@@ -101,7 +106,7 @@ public:
     };
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Update the fluid state
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
@@ -111,14 +116,14 @@ public:
     {
         const Scalar t = ParentType::temperature(elemSol, problem, element, scv);
         fluidState.setTemperature(t);
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.);
+        fluidState.setSaturation(defaultPhaseIdx, 1.);
 
-        fluidState.setPressure(/*phaseIdx=*/0, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(defaultPhaseIdx, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
+        fluidState.setSaturation(defaultPhaseIdx, 1.0);
 
         Scalar fracMinor = 0.0;
         int transportEqIdx = 1;
@@ -130,28 +135,28 @@ public:
 
             const Scalar moleOrMassFraction = elemSol[0][transportEqIdx++] + 1.0;
             if(useMoles)
-                fluidState.setMoleFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
+                fluidState.setMoleFraction(defaultPhaseIdx, compIdx, moleOrMassFraction -1.0);
             else
-                fluidState.setMassFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
+                fluidState.setMassFraction(defaultPhaseIdx, compIdx, moleOrMassFraction -1.0);
             fracMinor += moleOrMassFraction - 1.0;
         }
         if(useMoles)
-            fluidState.setMoleFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
+            fluidState.setMoleFraction(defaultPhaseIdx, mainCompIdx, 1.0 - fracMinor);
         else
-            fluidState.setMassFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
+            fluidState.setMassFraction(defaultPhaseIdx, mainCompIdx, 1.0 - fracMinor);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, phaseIdx);
+        paramCache.updatePhase(fluidState, defaultPhaseIdx);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
-        fluidState.setDensity(phaseIdx, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, defaultPhaseIdx);
+        fluidState.setDensity(defaultPhaseIdx, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-        fluidState.setViscosity(phaseIdx, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, defaultPhaseIdx);
+        fluidState.setViscosity(defaultPhaseIdx, value);
 
         // compute and set the enthalpy
-        const Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
-        fluidState.setEnthalpy(phaseIdx, h);
+        const Scalar h = ParentType::enthalpy(fluidState, paramCache, defaultPhaseIdx);
+        fluidState.setEnthalpy(defaultPhaseIdx, h);
     }
 
 
@@ -162,7 +167,10 @@ public:
       * \param compIdx the index of the component
       */
      Scalar massFraction(int phaseIdx, int compIdx) const
-     { return this->fluidState_.massFraction(phaseIdx, compIdx); }
+     {
+         assert(phaseIdx == defaultPhaseIdx);
+         return this->fluidState_.massFraction(phaseIdx, compIdx);
+     }
 
      /*!
       * \brief Returns the mole fraction of a component in the phase
@@ -171,7 +179,10 @@ public:
       * \param compIdx the index of the component
       */
      Scalar moleFraction(int phaseIdx, int compIdx) const
-     { return this->fluidState_.moleFraction(phaseIdx, compIdx); }
+     {
+         assert(phaseIdx == defaultPhaseIdx);
+         return this->fluidState_.moleFraction(phaseIdx, compIdx);
+     }
 
      /*!
      * \brief Returns the mass density of a given phase within the
@@ -179,9 +190,9 @@ public:
      *
      * \param phaseIdx The phase index
      */
-    Scalar molarDensity() const
+    Scalar molarDensity(int phaseIdx = 0) const
     {
-        return this->fluidState_.molarDensity(phaseIdx);
+        return this->fluidState_.molarDensity(defaultPhaseIdx);
     }
 
      /*!
@@ -189,6 +200,7 @@ public:
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {
+        assert(phaseIdx == defaultPhaseIdx);
         if (compIdx < phaseIdx)
             return diffCoefficient_[phaseIdx][compIdx];
         else if (compIdx > phaseIdx)
@@ -207,6 +219,7 @@ protected:
 
     void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
     {
+        assert(phaseIdx == defaultPhaseIdx);
         if (compIdx < phaseIdx)
             diffCoefficient_[phaseIdx][compIdx] = std::move(d);
         else if (compIdx > phaseIdx)
@@ -215,10 +228,9 @@ protected:
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }
 
-
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

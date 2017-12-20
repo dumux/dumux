@@ -177,7 +177,7 @@
      * \ingroup FreeflowModels
      * \defgroup NavierStokesNIModel nonisothermal
      * \brief an energy equation adaptor for isothermal Navier Stokes models
-     * \copydetails ./freeflow/non-isothermal/model.hh
+     * \copydetails ./freeflow/nonisothermal/model.hh
      */
 
 /* ***************** Benchmarks and Tests ******************/

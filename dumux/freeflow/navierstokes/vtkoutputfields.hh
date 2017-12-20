@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields for the NavierStokesModel
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::NavierStokesVtkOutputFields
  */
 #ifndef DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_VTK_OUTPUT_FIELDS_HH
@@ -32,7 +33,8 @@ namespace Dumux
 {
 
 /*!
- * \brief Adds vtk output fields for the NavierStokesModel
+ * \ingroup NavierStokesModel
+ * \brief Adds vtk output fields for the Navier-Stokes model
  */
 template<class TypeTag>
 class NavierStokesVtkOutputFields
@@ -51,6 +53,7 @@ class NavierStokesVtkOutputFields
     using MethodType = std::integral_constant<DiscretizationMethods, method>;
 
 public:
+    //! Initialize the Navier-Stokes specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {

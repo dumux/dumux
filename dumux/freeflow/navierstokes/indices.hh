@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the one-phase isothermal Navier-Stoke model.
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::NavierStokesIndices
  */
-#ifndef DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
-#define DUMUX_NAVIERSTOKES_COMMON_INDICES_HH
+#ifndef DUMUX_NAVIERSTOKES_INDICES_HH
+#define DUMUX_NAVIERSTOKES_INDICES_HH
 
 #include <dumux/common/properties.hh>
 
@@ -30,12 +31,12 @@ namespace Dumux
 // \{
 /*!
  * \ingroup NavierStokesModel
- * \brief The common indices for the isothermal Navier-Stoke model.
+ * \brief The common indices for the isothermal Navier-Stokes model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-struct NavierStokesCommonIndices
+struct NavierStokesIndices
 {
 
     static constexpr int dimXIdx = 0; //!< Index of the x-component of a vector of size dim
@@ -43,7 +44,7 @@ struct NavierStokesCommonIndices
     static constexpr int dimZIdx = 2; //!< Index of the z-component of a vector of size dim
 
     static constexpr int massBalanceIdx = PVOffset + 0; //!< Index of the mass balance equation
-    static constexpr int conti0EqIdx = massBalanceIdx; //!< Index of first (for C-guys: 0th) mass conservation equation
+    static constexpr int conti0EqIdx = massBalanceIdx; //!< Index of the mass balance equation
     static constexpr int pressureIdx = massBalanceIdx; //!< Index of the pressure in a solution vector
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -60,7 +61,12 @@ struct NavierStokesCommonIndices
     static constexpr int velocityYIdx = momentumBalanceIdx + 1; //!< Index of the velocity in a solution vector
     static constexpr int velocityZIdx = momentumBalanceIdx + 2; //!< Index of the velocity in a solution vector
 
-    static constexpr int velocity(int dirIdx) //!< Index of the velocity in a solution vector given a certain dimension
+    /*!
+     * \brief Index of the velocity in a solution vector given a certain direction.
+     *
+     * \param dirIdx The index of the direction.
+     */
+    static constexpr int velocity(int dirIdx)
     {
         return dirIdx + momentumBalanceIdx;
     }

@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the NavierStokesNC model
+ * \ingroup NavierStokesNCModel
+ * \copydoc Dumux::NavierStokesNCVtkOutputFields
  */
 #ifndef DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_NAVIER_STOKES_NC_VTK_OUTPUT_FIELDS_HH
@@ -30,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoP, InputOutput
+ * \ingroup NavierStokesNCModel
  * \brief Adds vtk output fields specific to the NavierStokesNC model
  */
 template<class TypeTag>
@@ -45,6 +46,7 @@ class NavierStokesNCVtkOutputFields : NavierStokesVtkOutputFields<TypeTag>
     static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
+    //! Initialize the Navier-StokesNC specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {

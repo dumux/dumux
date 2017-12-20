@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all stokes problems which use the box scheme.
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::NavierStokesProblem
  */
 #ifndef DUMUX_NAVIERSTOKES_PROBLEM_HH
 #define DUMUX_NAVIERSTOKES_PROBLEM_HH
@@ -48,9 +49,12 @@ using NavierStokesParentProblem =
       GET_PROP_VALUE(TypeTag, DiscretizationMethod)>::type;
 
 /*!
- * \brief NavierStokes problem base class.
+ * \ingroup NavierStokesModel
+ * \brief Navier-Stokes problem base class.
  *
  * This implements gravity (if desired) and a function returning the temperature.
+ * Includes a specialized method used only by the staggered grid discretization.
+  *
  */
 template<class TypeTag>
 class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
@@ -76,6 +80,7 @@ class NavierStokesProblem : public NavierStokesParentProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    //! The constructor sets the gravity, if desired by the user.
     NavierStokesProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
         : ParentType(fvGridGeometry),
           gravity_(0)
@@ -83,11 +88,6 @@ public:
         if (getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity"))
             gravity_[dim-1]  = -9.81;
     }
-
-    /*!
-     * \name Problem parameters
-     */
-    // \{
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ at a given global position.
@@ -111,13 +111,13 @@ public:
     /*!
      * \brief Returns the acceleration due to gravity.
      *
-     * If the <tt>EnableGravity</tt> property is true, this means
+     * If the <tt>Problem.EnableGravity</tt> parameter is true, this means
      * \f$\boldsymbol{g} = ( 0,\dots,\ -9.81)^T \f$, else \f$\boldsymbol{g} = ( 0,\dots, 0)^T \f$
      */
     const GlobalPosition &gravity() const
     { return gravity_; }
 
-    //! Applys the initial face solution. Specialization for staggered grid discretization.
+    //! Applys the initial face solution (velocities on the faces). Specialization for staggered grid discretization.
     template <class T = TypeTag>
     typename std::enable_if<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Staggered, void>::type
     applyInititalFaceSolution(SolutionVector& sol,
@@ -128,8 +128,6 @@ public:
         const auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
         sol[faceIdx][scvf.dofIndex()][numEqCellCenter] = initSol[Indices::velocity(scvf.directionIndex())];
     }
-
-    // \}
 
 private:
 

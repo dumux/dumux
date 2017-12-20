@@ -18,12 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the flux variables
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::FreeFlowFluxVariablesCache
  */
 #ifndef DUMUX_FREEFLOW_IMPLICIT_FLUXVARIABLESCACHE_HH
 #define DUMUX_FREEFLOW_IMPLICIT_FLUXVARIABLESCACHE_HH
 
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -35,29 +35,31 @@ class FreeFlowFluxVariablesCacheImplementation
 {};
 
 /*!
- * \ingroup ImplicitModel
- * \brief The flux variables cache classes for porous media.
+ * \ingroup NavierStokesModel
+ * \brief The flux variables cache classes for the Navier-Stokes model.
  *        Store flux stencils and data required for flux calculation
  */
 template<class TypeTag>
 using FreeFlowFluxVariablesCache = FreeFlowFluxVariablesCacheImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
-// specialization for the cell centered tpfa method
+/*!
+ * \ingroup NavierStokesModel
+ * \brief The flux variables cache classes for the Navier-Stokes model.
+ *        Store flux stencils and data required for flux calculation. <BR>
+ *        Specialization for the staggered grid discretization.
+ */
 template<class TypeTag>
 class FreeFlowFluxVariablesCacheImplementation<TypeTag, DiscretizationMethods::Staggered>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
 
 public:
+    //! Do nothing for the staggered grid specialization.
     void update(const Problem& problem,
                 const Element& element,
                 const FVElementGeometry& fvGeometry,

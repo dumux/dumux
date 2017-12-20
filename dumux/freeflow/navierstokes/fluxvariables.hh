@@ -18,13 +18,13 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the flux variables
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::NavierStokesFluxVariables
  */
 #ifndef DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
 #define DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
 
 #include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
@@ -32,20 +32,15 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(EnableInertiaTerms);
-}
-
 // forward declaration
 template<class TypeTag, DiscretizationMethods Method>
 class NavierStokesFluxVariablesImpl;
 
 /*!
- * \ingroup ImplicitModel
- * \brief The flux variables class
- *        specializations are provided for combinations of physical processes
+ * \ingroup NavierStokesModel
+ * \brief The flux variables class for the Navier-Stokes model.
+          This is a convenience alias for that actual,
+          discretization-specific flux variables.
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>

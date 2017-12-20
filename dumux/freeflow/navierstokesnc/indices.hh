@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the staggered Navier-Stokes NC model.
+ * \ingroup NavierStokesNCModel
+ * \copydoc Dumux::NavierStokesNCIndices
  */
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_INDICES_HH
@@ -31,25 +32,23 @@ namespace Dumux
 // \{
 /*!
  * \ingroup NavierStokesNCModel
- * \ingroup ImplicitIndices
- * \brief Indices for the staggered Navier-Stokes NC model model.
+ * \brief The common indices for the isothermal multi-component Navier-Stokes model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-struct NavierStokesNCIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
+struct NavierStokesNCIndices : public NavierStokesIndices<TypeTag, PVOffset>
 {
 private:
-    using ParentType = NavierStokesCommonIndices<TypeTag, PVOffset>;
+    using ParentType = NavierStokesIndices<TypeTag, PVOffset>;
 
 public:
 
-    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static constexpr int mainCompIdx = phaseIdx;
-    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
-    // TODO: componentIdx?
-    //TODO: what about the offset?
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx); //!< The phase index
+    static constexpr int mainCompIdx = phaseIdx; //!< The index of the main component
 
+    //! The index of the component whose mass balance will be replaced by the total one
+    static constexpr int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
 };
 
 // \}

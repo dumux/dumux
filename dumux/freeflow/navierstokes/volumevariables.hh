@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup NavierStokesModel
  *
- * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
+ * \copydoc Dumux::NavierStokesVolumeVariables
  */
 #ifndef DUMUX_NAVIERSTOKES_VOLUME_VARIABLES_HH
 #define DUMUX_NAVIERSTOKES_VOLUME_VARIABLES_HH
@@ -35,20 +36,16 @@ template <class TypeTag, bool enableEnergyBalance>
 class NavierStokesVolumeVariablesImplementation;
 
 /*!
- * \ingroup ImplicitVolumeVariables
- * \brief Base class for the model specific class which provides
- *        access to all volume averaged quantities for the free flow.
- *        The volume variables base class
- *        is specialized for isothermal and non-isothermal models.
+ * \ingroup NavierStokesModel
+ * \brief Volume variables for the single-phase Navier-Stokes model.
+ *        The class is specialized for isothermal and non-isothermal models.
  */
 template <class TypeTag>
 using NavierStokesVolumeVariables = NavierStokesVolumeVariablesImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 /*!
  * \ingroup NavierStokesModel
- * \ingroup ImplicitVolumeVariables
- * \brief Isothermal base class, contains the quantities which are constant within a
- *        finite volume in the one-phase model.
+ * \brief Volume variables for the isothermal single-phase Navier-Stokes model.
  */
 template <class TypeTag>
 class NavierStokesVolumeVariablesImplementation<TypeTag, false>
@@ -69,7 +66,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -89,7 +92,7 @@ public:
     { return elemSol[0]; }
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Update the fluid state
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
@@ -162,8 +165,6 @@ public:
     /*!
     * \brief Returns the mass density of a given phase within the
     *        control volume.
-    *
-    * \param defaultPhaseIdx The phase index
     */
    Scalar molarDensity(int phaseIdx = 0) const
    {
@@ -173,8 +174,6 @@ public:
    /*!
    * \brief Returns the molar mass of a given phase within the
    *        control volume.
-   *
-   * \param defaultPhaseIdx The phase index
    */
   Scalar molarMass(int phaseIdx = 0) const
   {
@@ -220,8 +219,7 @@ protected:
 
 /*!
  * \ingroup NavierStokesModel
- * \ingroup ImplicitVolumeVariables
- * \brief Non-isothermal base class
+ * \brief Volume variables for the non-isothermal single-phase Navier-Stokes model.
  */
 template <class TypeTag>
 class NavierStokesVolumeVariablesImplementation<TypeTag, true>
@@ -246,7 +244,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -259,7 +263,7 @@ public:
     }
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Update the fluid state
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,

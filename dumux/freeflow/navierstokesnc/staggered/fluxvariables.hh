@@ -16,16 +16,18 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \brief Base class for the flux variables
- */
+ /*!
+  * \file
+  * \ingroup NavierStokesNCModel
+  * \copydoc Dumux::NavierStokesNCFluxVariablesImpl
+  */
 #ifndef DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
 
 namespace Dumux
 {
@@ -35,11 +37,9 @@ template<class TypeTag, DiscretizationMethods Method>
 class NavierStokesNCFluxVariablesImpl;
 
 /*!
- * \ingroup Discretization
- * \brief Base class for the flux variables
- *        Actual flux variables inherit from this class
+ * \ingroup NavierStokesNCModel
+ * \brief The flux variables class for the multi-component Navier-Stokes model using the staggered grid discretization.
  */
-// specialization for immiscible, isothermal flow
 template<class TypeTag>
 class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 : public NavierStokesFluxVariables<TypeTag>
@@ -61,7 +61,7 @@ class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
-    //! The index of the component balance equation that gets replaced with the total mass balance
+    // The index of the component balance equation that gets replaced with the total mass balance
     static const int replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
     static const int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
@@ -71,6 +71,9 @@ class NavierStokesNCFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 
 public:
 
+    /*!
+    * \brief Computes the flux for the cell center residual.
+    */
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,

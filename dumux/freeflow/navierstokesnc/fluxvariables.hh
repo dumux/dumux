@@ -16,16 +16,15 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \brief Base class for the flux variables
- */
+ /*!
+  * \file
+  * \ingroup NavierStokesNCModel
+  * \copydoc Dumux::NavierStokesNCFluxVariables
+  */
 #ifndef DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
 #define DUMUX_FREELOW_IMPLICIT_NC_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
-#include <dumux/discretization/fluxvariablesbase.hh>
-#include <dumux/freeflow/navierstokes/fluxvariables.hh>
 #include <dumux/freeflow/navierstokesnc/staggered/fluxvariables.hh>
 
 namespace Dumux
@@ -37,9 +36,10 @@ template<class TypeTag, DiscretizationMethods Method>
 class NavierStokesNCFluxVariablesImpl;
 
 /*!
- * \ingroup ImplicitModel
- * \brief The flux variables class
- *        specializations are provided for combinations of physical processes
+ * \ingroup NavierStokesNCModel
+ * \brief The flux variables class for the multi-componentNavier-Stokes model.
+          This is a convenience alias for that actual,
+          discretization-specific flux variables.
  * \note  Not all specializations are currently implemented
  */
 template<class TypeTag>

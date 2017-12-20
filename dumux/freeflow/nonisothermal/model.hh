@@ -18,10 +18,17 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup NavierStokesNIModel
  *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase flow model.
+ * \brief A single-phase, non-isothermal Navier-Stokes model
+ *
+ * In addition to the momentum and mass/mole balance equations, this model also solves the <B> energy balance equation </B>:
+ * \f[
+ *    \frac{\partial (\varrho  v)}{\partial t}
+ *    + \nabla \cdot \left( \varrho h {\boldsymbol{v}}
+ *    - \lambda \textbf{grad}\, T \right) - q_T = 0
+ * \f]
+ *
  */
 
 #ifndef DUMUX_STAGGERED_NI_MODEL_HH
@@ -38,17 +45,14 @@ namespace Dumux
 
 namespace Properties {
 
-//! The type tags for the non-isothermal Navier Stokes problems
+//! The type tags for the non-isothermal Navier Stokes model
 NEW_TYPE_TAG(NavierStokesNonIsothermal);
-
-NEW_PROP_TAG(IsothermalNumEqCellCenter);
-NEW_PROP_TAG(IsothermalNumEqFace);
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
-
+//! The non-isothermal model has one more balance equation (energy balance) compared to the non-isothermal ones
 SET_PROP(NavierStokesNonIsothermal, NumEq)
 {
 private:
@@ -57,12 +61,16 @@ public:
     static constexpr int value = isothermalNumEq + 1;
 };
 
-SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
-
-SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, FreeFlowEnergyVtkOutputFields<TypeTag>);
-
+//! Enable the energy balance
 SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
 
+//! The non-isothermal indices
+SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
+
+//! The non-isothermal vtk output fields
+SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, NavierStokesNonIsothermalVtkOutputFields<TypeTag>);
+
+//! Use Fourier's Law as default heat conduction type
 SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
 
 } // end namespace Properties

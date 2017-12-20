@@ -18,10 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to non-isothermal models
+ * \ingroup NavierStokesNIModel
+ * \copydoc Dumux::NavierStokesNonIsothermalVtkOutputFields
  */
-#ifndef DUMUX_FF_ENERGY_OUTPUT_FIELDS_HH
-#define DUMUX_FF_ENERGY_OUTPUT_FIELDS_HH
+#ifndef DUMUX_NAVIERSTOKES_NI_OUTPUT_FIELDS_HH
+#define DUMUX_NAVIERSTOKES_NI_OUTPUT_FIELDS_HH
 
 #include <dumux/common/properties.hh>
 
@@ -29,15 +30,17 @@ namespace Dumux
 {
 
 /*!
- * \ingroup NonIsothermal, InputOutput
- * \brief Adds vtk output fields specific to non-isothermal models
+ * \ingroup NavierStokesNIModel
+ * \brief Adds vtk output fields specific to non-isothermal free-flow models
  */
 template<class TypeTag>
-class FreeFlowEnergyVtkOutputFields
+class NavierStokesNonIsothermalVtkOutputFields
 {
     using IsothermalVtkOutputFields = typename GET_PROP_TYPE(TypeTag, IsothermalVtkOutputFields);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 public:
+
+    //! Initialize the non-isothermal specific vtk output fields.
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
     {

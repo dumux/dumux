@@ -16,10 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \brief Element-wise calculation of the residual NavierStokesNC models using the staggered discretization
- */
+ /*!
+  * \file
+  * \ingroup NavierStokesNCModel
+  * \copydoc Dumux::NavierStokesNCResidualImpl
+  */
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 
@@ -30,17 +31,14 @@
 namespace Dumux
 {
 
-/*!
- *
- * \todo Please doc me more!
- */
-
-
-// // forward declaration
+// forward declaration
 template<class TypeTag,  DiscretizationMethods Method>
 class NavierStokesNCResidualImpl;
 
-// specialization for miscible, isothermal flow
+/*!
+ * \ingroup NavierStokesNCModel
+ * \brief Element-wise calculation of the multi-component Navier-Stokes residual for models using the staggered discretization
+ */
 template<class TypeTag>
 class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethods::Staggered> : public NavierStokesResidual<TypeTag>
 {
@@ -78,16 +76,7 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethods::Staggered> : pu
 public:
     using ParentType::ParentType;
 
-     /*!
-     * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub-control
-     *        volume of a finite volume element for the immiscible models.
-     * \param scv The sub control volume
-     * \param volVars The current or previous volVars
-     * \note This function should not include the source and sink terms.
-     * \note The volVars can be different to allow computing
-     *       the implicit euler time derivative here
-     */
+    //! Evaluate fluxes entering or leaving the cell center control volume.
     CellCenterPrimaryVariables computeStorageForCellCenter(const Problem& problem,
                                                            const SubControlVolume& scv,
                                                            const VolumeVariables& volVars) const
@@ -127,10 +116,6 @@ protected:
     /*!
      * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
      *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
-     *
-     * \param insideScv The sub control volume
-     * \param elemVolVars The current or previous element volVars
-     * \param bcTypes The boundary types
      */
     void setFixedCell_(CellCenterResidual& residual,
                        const Problem& problem,
