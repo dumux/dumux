@@ -4,8 +4,8 @@
  * \file
  * \ingroup InputOutput
  * \brief Base class to write pvd-files which contains a list of all collected vtk-files.
-   *         This is a modified version of DUNE's pvd writer which takes a VTKWriter as template
-   *         argument making it more general.
+ *         This is a modified version of DUNE's pvd writer which takes a VTKWriter as template
+ *         argument making it more general.
  */
 #ifndef DUMUX_VTKSEQUENCEWRITER_HH
 #define DUMUX_VTKSEQUENCEWRITER_HH
