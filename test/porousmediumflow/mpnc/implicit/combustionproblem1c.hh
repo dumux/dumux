@@ -29,67 +29,39 @@
 #ifndef DUMUX_COMBUSTION_PROBLEM_ONE_COMPONENT_HH
 #define DUMUX_COMBUSTION_PROBLEM_ONE_COMPONENT_HH
 
-// st this to one for the Thermo-Gross Mass Transfer
-#define FUNKYMASSTRANSFER 0
+#include <dumux/discretization/box/properties.hh>
 
-// this sets that the relation using pc_max is used.
-// i.e. - only parameters for awn, ans are given,
-//      - the fit for ans involves the maximum value for pc, where Sw, awn are zero.
-// setting it here, because it impacts volume variables and spatialparameters
-#define USE_PCMAX 0
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/mpnc/model.hh>
 
-#include <dune/common/parametertreeparser.hh>
-
-#include <dumux/porousmediumflow/implicit/problem.hh>
-
-#include <dumux/porousmediumflow/mpnc/implicit/modelkinetic.hh>
+#include <dumux/material/fluidsystems/purewatersimple.hh>
+#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
 #include "combustionspatialparams.hh"
 
-#include <dumux/porousmediumflow/mpnc/implicit/velomodelnewtoncontroller.hh>
-
-#include <dumux/material/fluidsystems/purewatersimple.hh>
-
-#include <dumux/material/fluidstates/compositional.hh>
-
-#include <dumux/material/fluidmatrixinteractions/2p/thermalconductivitysimplefluidlumping.hh>
-
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
-
-//#include <dumux/io/plotoverline1d.hh>
-
-namespace Dumux {
+namespace Dumux
+{
 
 template<class TypeTag>
 class CombustionProblemOneComponent;
 
-namespace Properties {
-NEW_TYPE_TAG(CombustionProblemOneComponent,
-        INHERITS_FROM(BoxMPNCKinetic, CombustionSpatialParams));
+namespace Properties
+{
+NEW_TYPE_TAG(CombustionProblemOneComponent, INHERITS_FROM(MPNCNonequil, CombustionSpatialParams));
+NEW_TYPE_TAG(CombustionProblemOneComponentBoxProblem, INHERITS_FROM(BoxModel, CombustionProblemOneComponent));
 
 // Set the grid type
 SET_TYPE_PROP(CombustionProblemOneComponent, Grid, Dune::OneDGrid);
 
-#if HAVE_SUPERLU
-SET_TYPE_PROP(CombustionProblemOneComponent, LinearSolver, SuperLUBackend<TypeTag>);
-#endif
-
 // Set the problem property
 SET_TYPE_PROP(CombustionProblemOneComponent,
-                Problem,
-                CombustionProblemOneComponent<TTAG(CombustionProblemOneComponent)>);
+               Problem,
+               CombustionProblemOneComponent<TypeTag>);
 
-// Set fluid configuration
-SET_PROP(CombustionProblemOneComponent, FluidSystem){
-private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::PureWaterSimpleFluidSystem<Scalar, /*useComplexRelations=*/false>;
-};
-
-// Set the newton controller
-SET_TYPE_PROP(CombustionProblemOneComponent, NewtonController,
-        VeloModelNewtonController<TypeTag>);
+SET_TYPE_PROP(CombustionProblemOneComponent,
+              FluidSystem,
+              FluidSystems::PureWaterSimpleFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 //! Set the default pressure formulation: either pw first or pn first
 SET_INT_PROP(CombustionProblemOneComponent,
@@ -101,60 +73,37 @@ SET_TYPE_PROP(CombustionProblemOneComponent, Scalar, double );
 // quad / double
 
 // Specify whether diffusion is enabled
-SET_BOOL_PROP(CombustionProblemOneComponent, EnableDiffusion, false);
-
-// do not use a chopped newton method in the beginning
-SET_BOOL_PROP(CombustionProblemOneComponent, NewtonEnableChop, false);
-
-// Enable the re-use of the jacobian matrix whenever possible?
-SET_BOOL_PROP(CombustionProblemOneComponent, ImplicitEnableJacobianRecycling, true);
-
-// Specify whether the convergence rate ought to be written out by the
-// newton method
-SET_BOOL_PROP(CombustionProblemOneComponent, NewtonWriteConvergence, false);
+SET_BOOL_PROP(CombustionProblemOneComponent, EnableMolecularDiffusion, false);
 
 //! Franz Lindners simple lumping
-SET_TYPE_PROP(CombustionProblemOneComponent, ThermalConductivityModel, ThermalConductivitySimpleFluidLumping<TypeTag>);
+SET_PROP(CombustionProblemOneComponent, ThermalConductivityModel)
+{
+private:
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+public:
+    using type = ThermalConductivitySimpleFluidLumping<TypeTag, Scalar, Indices>;
+};
 
-//#################
-// Which Code to compile
-// Specify whether there is any energy equation
-SET_BOOL_PROP(CombustionProblemOneComponent, EnableEnergy, true);
-// Specify whether the kinetic energy module is used
-SET_INT_PROP(CombustionProblemOneComponent, NumEnergyEquations, 2);
-// Specify whether the kinetic mass module is use
-SET_BOOL_PROP(CombustionProblemOneComponent, EnableKinetic, false);
-//#################
-
-/*!
- * \brief The fluid state which is used by the volume variables to
- *        store the thermodynamic state. This has to be chosen
- *        appropriately for the model ((non-)isothermal, equilibrium, ...).
- */
 SET_PROP(CombustionProblemOneComponent, FluidState)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 public:
     using type = CompositionalFluidState<Scalar, FluidSystem>;
 };
+//#################
+//changes from the default settings which also assume chemical non-equilibrium
+//set the number of energyequations we want to use
+SET_INT_PROP(CombustionProblemOneComponent, NumEnergyEqFluid, 1);
+SET_INT_PROP(CombustionProblemOneComponent, NumEnergyEqSolid, 1);
 
-SET_BOOL_PROP(CombustionProblemOneComponent, UseMaxwellDiffusion, false);
+// by default chemical non equilibrium is enabled in the nonequil model, switch that off here
+SET_BOOL_PROP(CombustionProblemOneComponent, EnableChemicalNonEquilibrium, false);
+SET_INT_PROP(CombustionProblemOneComponent, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)+GET_PROP_VALUE(TypeTag, NumPhases));
+//#################
 
-// Output variables
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddVelocities, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddReynolds, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddPrandtl, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddNusselt, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddBoundaryTypes, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddInterfacialArea, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddTemperatures, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddxEquil, true);
-SET_BOOL_PROP(CombustionProblemOneComponent, VtkAddDeltaP, true);
-
-SET_BOOL_PROP(CombustionProblemOneComponent, VelocityAveragingInModel, true);
 }
 /*!
  * \ingroup MpNcBoxproblems
@@ -163,24 +112,30 @@ SET_BOOL_PROP(CombustionProblemOneComponent, VelocityAveragingInModel, true);
  *        which is supplied with energy from the right hand side to evaporate the water.
  */
 template<class TypeTag>
-class CombustionProblemOneComponent: public ImplicitPorousMediaProblem<TypeTag> {
-
-    using ThisType = CombustionProblemOneComponent<TypeTag>;
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
+{
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    /*!
-     * \brief The fluid state which is used by the volume variables to
-     *        store the thermodynamic state. This should be chosen
-     *        appropriately for the model ((non-)isothermal, equilibrium, ...).
-     *        This can be done in the problem.
-     */
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+
     enum {dim = GridView::dimension}; // Grid and world dimension
     enum {dimWorld = GridView::dimensionworld};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
@@ -190,18 +145,16 @@ class CombustionProblemOneComponent: public ImplicitPorousMediaProblem<TypeTag> 
     enum {conti00EqIdx = Indices::conti0EqIdx};
     enum {temperature0Idx = Indices::temperatureIdx};
     enum {energyEq0Idx = Indices::energyEqIdx};
-    enum {numEnergyEqs = Indices::numPrimaryEnergyVars};
-    enum {energyEqSolidIdx = energyEq0Idx + numEnergyEqs - 1};
+    enum {numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
+    enum {numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid)};
+    enum {energyEqSolidIdx = energyEq0Idx + numEnergyEqFluid + numEnergyEqSolid - 1};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {sPhaseIdx = FluidSystem::sPhaseIdx};
     enum {wCompIdx = FluidSystem::H2OIdx};
     enum {nCompIdx = FluidSystem::N2Idx};
-    enum {enableKinetic = GET_PROP_VALUE(TypeTag, EnableKinetic)};
-    enum {enableEnergy = GET_PROP_VALUE(TypeTag, EnableEnergy)};
-    enum {numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
-    enum {velocityOutput = GET_PROP_VALUE(TypeTag, VtkAddVelocities)};
-    enum {velocityAveragingInModel = GET_PROP_VALUE(TypeTag, VelocityAveragingInModel)};
+
+     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
     // formulations
     enum {
@@ -210,53 +163,35 @@ class CombustionProblemOneComponent: public ImplicitPorousMediaProblem<TypeTag> 
         leastWettingFirst = MpNcPressureFormulation::leastWettingFirst
     };
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-
     using DimVector = Dune::FieldVector<typename GridView::Grid::ctype, dim>;
-    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
-
-    using ScalarBuffer = std::vector<Dune::FieldVector<Scalar, 1>>;
-    using PhaseBuffer = std::array<ScalarBuffer, numPhases>;
-    using VelocityVector = Dune::FieldVector<Scalar, dimWorld>;
-    using VelocityField = Dune::BlockVector<VelocityVector>;
-    using PhaseVelocityField = std::array<VelocityField, numPhases>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-    CombustionProblemOneComponent(TimeManager &timeManager,
-            const GridView &gridView)
-    : ParentType(timeManager, gridView)
+    CombustionProblemOneComponent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
+            outputName_ = getParam<std::string>("Problem.Name");
+            nRestart_ = getParam<Scalar>("Constants.nRestart");
+            TInitial_ = getParam<Scalar>("InitialConditions.TInitial");
+            TRight_ = getParam<Scalar>("InitialConditions.TRight");
+            pnInitial_ = getParam<Scalar>("InitialConditions.pnInitial");
+            TBoundary_ = getParam<Scalar>("BoundaryConditions.TBoundary");
+            SwBoundary_ = getParam<Scalar>("BoundaryConditions.SwBoundary");
+            SwOneComponentSys_= getParam<Scalar>("BoundaryConditions.SwOneComponentSys");
+            massFluxInjectedPhase_ = getParam<Scalar>("BoundaryConditions.massFluxInjectedPhase");
+            heatFluxFromRight_ = getParam<Scalar>("BoundaryConditions.heatFluxFromRight");
+            coldTime_ =getParam<Scalar>("BoundaryConditions.coldTime");
+            time_ = 0.0;
     }
 
-    void init()
-    {
-            outputName_ = GET_RUNTIME_PARAM(TypeTag, std::string, Constants.outputName);
-            nRestart_ = GET_RUNTIME_PARAM(TypeTag, int, Constants.nRestart);
-            TInitial_ = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.TInitial);
-            TRight_ = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.TRight);
-            pnInitial_ = GET_RUNTIME_PARAM(TypeTag, Scalar,InitialConditions.pnInitial);
-            TBoundary_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.TBoundary);
-            SwBoundary_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.SwBoundary);
-            SwOneComponentSys_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.SwOneComponentSys);
-            massFluxInjectedPhase_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.massFluxInjectedPhase);
-            heatFluxFromRight_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.heatFluxFromRight);
-            coldTime_ = GET_RUNTIME_PARAM(TypeTag, Scalar,BoundaryConditions.coldTime);
+    void setTime(Scalar time)
+    { time_ = time; }
 
-        this->spatialParams().setInputInitialize();
+    void setGridVariables(std::shared_ptr<GridVariables> gridVariables)
+    { gridVariables_ = gridVariables; }
 
-        ParentType::init();
-        this->model().initVelocityStuff();
-    }
+     const GridVariables& gridVariables() const
+    { return *gridVariables_; }
 
     /*!
      * \brief Returns the temperature \f$\mathrm{[K]}\f$ for an isothermal problem.
@@ -265,6 +200,7 @@ public:
      */
     Scalar temperature() const
     {   return TInitial_;}
+
 
     /*!
      * \name Problem Params
@@ -278,156 +214,61 @@ public:
     const std::string name() const
     {   return outputName_;}
 
-    /*!
-     * \brief Returns the temperature within the domain.
-     *
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     *
-     */
-    Scalar boxTemperature(const Element &element,
-            const FVElementGeometry &fvGeometry,
-            const unsigned int scvIdx) const
-    {   return TInitial_;}
-
     // \}
 
     /*!
-     * \brief Called directly after the time integration.
-     */
-    void postTimeStep()
-    {
-//      if(this->timeManager().willBeFinished()){
-//          // write plot over Line to text files
-//          // each output gets it's writer object in order to allow for different header files
-//          PlotOverLine1D<TypeTag> writer;
-//
-//          // writer points: in the porous medium, not the outflow
-//          GlobalPosition pointOne ;
-//          GlobalPosition pointTwo ;
-//
-//          pointOne[0] = this->bBoxMin()[0] ;
-//          pointTwo[0] = (this->spatialParams().lengthPM()) ;
-//
-//          writer.write(*this,
-//                        pointOne,
-//                        pointTwo,
-//                        "plotOverLine");
-//      }
-
-        // Calculate storage terms of the individual phases
-        for (int phaseIdx = 0; phaseIdx < numEnergyEqs; ++phaseIdx) {
-            PrimaryVariables phaseStorage;
-            /* how much of the conserved quantity is in the system (in units of the balance eq.)
-             * summed up storage term over the whole system
-             */
-            this->model().globalPhaseStorage(phaseStorage, phaseIdx);
-
-            if (this->gridView().comm().rank() == 0) {
-                std::cout
-                <<"Storage in  "
-                << FluidSystem::phaseName(phaseIdx)
-                << "Phase: ["
-                << phaseStorage
-                << "]"
-                << "\n";
-            }
-        }
-
-        // Calculate total storage terms
-        PrimaryVariables storage;
-        this->model().globalStorage(storage);
-
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0) {
-            std::cout
-            <<"Storage total: [" << storage << "]"
-            << "\n";
-        }
-    }
-
-    /*!
-     * \brief Write a restart file?
-     *yes of course:
-     * - every nRestart_'th steps
-     */
-    bool shouldWriteRestartFile() const
-    {
-        return this->timeManager().timeStepIndex() > 0 and
-        (this->timeManager().timeStepIndex() % nRestart_ == 0);
-    }
-
-    /*!
-     * \brief Write a output file?
-     */
-    bool shouldWriteOutput() const
-    {   return true;}
-
-    /*!
-     * \brief Evaluate the source term for all phases within a given
+     * \brief Evaluate the source term for all balance equations within a given
      *        sub-control-volume.
      *
-     * For this method, the \a values parameter stores the rate mass
-     * of a component is generated or annihilate per volume
-     * unit. Positive values mean that mass is created, negative ones
-     * mean that it vanishes.
-     *
-     * \param priVars Stores the Dirichlet values for the conservation equations in
+     * \param values Stores the solution for the conservation equations in
+     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite volume geometry of the element
      * \param scvIdx The local index of the sub-control volume
+     *
+     * Positive values mean that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVariables & priVars,
-            const Element & element,
-            const FVElementGeometry & fvGeometry,
-            const unsigned int scvIdx) const
+    //! \copydoc Dumux::ImplicitProblem::source()
+    PrimaryVariables source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume &scv) const
     {
-        priVars = Scalar(0.0);
-        const GlobalPosition & globalPos = fvGeometry.subContVol[scvIdx].global;
+        PrimaryVariables priVars(0.0);
 
-        const Scalar volume = fvGeometry.subContVol[scvIdx].volume;
-        const unsigned int numScv = fvGeometry.numScv; // box: numSCV, cc:1
+        const auto& globalPos = scv.dofPosition();
 
-        if ((this->timeManager().time()) > coldTime_ )
+        const Scalar volume = scv.volume();
+        const Scalar numScv = fvGeometry.numScv(); // box: numSCV, cc:1
+
+        if (time_ > coldTime_ )
         {
             if (onRightBoundaryPorousMedium_(globalPos))
             {
-                if(numEnergyEquations>1) // for  2 and 3 energy equations
-                {
-                    if(numEnergyEquations==2) {
-                        // Testing the location of a vertex, but function is called for each associated scv. Compensate for that
-                        priVars[energyEqSolidIdx] = heatFluxFromRight_ / volume / (Scalar)numScv;
-                    }
-                    else
-                    // Multiply by volume, because afterwards we divide by it -> make independet of grid resolution
-                    priVars[energyEq0Idx + sPhaseIdx] = heatFluxFromRight_ / volume / (Scalar)numScv;
-                }
-                else if (enableEnergy) {
-                    // Multiply by volume, because afterwards we divide by it -> make independet of grid resolution
-                    priVars[energyEq0Idx] = heatFluxFromRight_ / volume / (Scalar)numScv;
-                }
+                // Testing the location of a vertex, but function is called for each associated scv. Compensate for that
+                priVars[energyEqSolidIdx] = heatFluxFromRight_ / volume / numScv;
             }
-        }
+         }
+        return priVars;
     }
 
     /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      *
-     * \param bTypes The bounentraldary types for the conservation equations
-     * \param globalPos The global position
-
+     * \param values The boundary types for the conservation equations
+     * \param globalPos The position for which the bc type should be evaluated
      */
-    void boundaryTypesAtPos(BoundaryTypes &bTypes,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes bcTypes;
         // Default: Neumann
-        bTypes.setAllNeumann();
+         bcTypes.setAllNeumann();
 
-        if(onRightBoundary_(globalPos) ) {
-            bTypes.setAllDirichlet();
-        }
+         if(onRightBoundary_(globalPos) ) {
+            bcTypes.setAllDirichlet();
+         }
+        return bcTypes;
     }
 
     /*!
@@ -440,39 +281,34 @@ public:
      *
      * For this method, the \a values parameter stores primary variables.
      */
-    void dirichletAtPos(PrimaryVariables &priVars,
-                        const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(priVars, globalPos);
+       return  initial_(globalPos);
     }
 
     /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
-     * For this method, the \a values parameter stores the mass flux
-     * in normal direction of each component. Negative values mean
-     * influx.
-     *
-     * \param priVars Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
+     * \param values The neumann values for the conservation equations
      * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
+     * \param fvGeometry The finite-volume geometry in the box scheme
      * \param intersection The intersection between element and boundary
-     * \param scvIdx The local index of the sub-control volume
+     * \param scvIdx The local vertex index
      * \param boundaryFaceIdx The index of the boundary face
-     * \param elemVolVars The element Volume Variables
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each phase. Negative values mean influx.
      */
+    PrimaryVariables neumann(const Element &element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
+    {
+        PrimaryVariables priVars(0.0);
 
-    void solDependentNeumann(PrimaryVariables &priVars,
-            const Element &element,
-            const FVElementGeometry &fvGeometry,
-            const Intersection &intersection,
-            const int scvIdx,
-            const int boundaryFaceIdx,
-            const ElementVolumeVariables &elemVolVars) const {
-
-        const GlobalPosition & globalPos = fvGeometry.subContVol[scvIdx].global;
+        const auto& globalPos = fvGeometry.scv(scvf.insideScvIdx()).dofPosition();
+        const auto& scvIdx = scvf.insideScvIdx();
         const Scalar massFluxInjectedPhase = massFluxInjectedPhase_;
 
         FluidState fluidState;
@@ -480,23 +316,11 @@ public:
         const Scalar pn = elemVolVars[scvIdx].pressure(nPhaseIdx);
         const Scalar pw = elemVolVars[scvIdx].pressure(wPhaseIdx);
 
-        const Scalar Tn = elemVolVars[scvIdx].temperature(nPhaseIdx);
-        const Scalar Tw = elemVolVars[scvIdx].temperature(wPhaseIdx);
-
         fluidState.setPressure(nPhaseIdx, pn);
         fluidState.setPressure(wPhaseIdx, pw);
 
-        if(numEnergyEquations == 3 ) { // only in this case the fluidstate hase several temperatures
-            fluidState.setTemperature(nPhaseIdx, Tn );
-            fluidState.setTemperature(wPhaseIdx, Tw );
-        }
-        else
         fluidState.setTemperature(TBoundary_ );
-
         ParameterCache dummyCache;
-        // This solves the system of equations defining x=x(p,T)
-//           FluidSystem::calculateEquilibriumMoleFractions(fluidState, dummyCache) ;
-
         fluidState.setMoleFraction(wPhaseIdx, nCompIdx, 0.0);
         fluidState.setMoleFraction(wPhaseIdx, wCompIdx, 1.0);
         // compute density of injection phase
@@ -514,38 +338,13 @@ public:
 
         const Scalar molarFlux = massFluxInjectedPhase / fluidState.averageMolarMass(wPhaseIdx);
 
-        // Default Neumann noFlow
-        priVars = 0.0;
-
         if (onLeftBoundary_(globalPos))
         {
-            if (enableKinetic) {
-                priVars[conti00EqIdx + numComponents*wPhaseIdx+wCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, wCompIdx);
-                priVars[conti00EqIdx + numComponents*wPhaseIdx+nCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, nCompIdx);
-                if (enableEnergy) {
-                    if (numEnergyEquations == 3)
-                    priVars[energyEq0Idx + wPhaseIdx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
-                    else if(numEnergyEquations == 2)
-                    priVars[energyEq0Idx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
-                    else if(numEnergyEquations == 1)
-                    priVars[energyEq0Idx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
-                    else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
-                }
-            }
-            else {
-                priVars[conti00EqIdx + wCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, wCompIdx);;
-                priVars[conti00EqIdx + nCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, nCompIdx);;
-                if (enableEnergy) {
-                    if (numEnergyEquations == 3)
-                    priVars[energyEq0Idx + wPhaseIdx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
-                    else if(numEnergyEquations == 2)
-                    priVars[energyEq0Idx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
-                    else if(numEnergyEquations == 1)
-                    priVars[energyEq0Idx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
-                    else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
-                }
-            }
+            priVars[conti00EqIdx + wCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, wCompIdx);;
+            priVars[conti00EqIdx + nCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, nCompIdx);;
+            priVars[energyEq0Idx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
         }
+        return priVars;
     }
 
     /*!
@@ -558,17 +357,16 @@ public:
      *               \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
      * \param globalPos The global position
      */
-    void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+       return initial_(globalPos);
     }
 
 private:
     // the internal method for the initial condition
-    void initial_(PrimaryVariables &priVars,
-            const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables priVars(0.0);
         const Scalar curPos = globalPos[0];
         const Scalar slope = (SwBoundary_-SwOneComponentSys_) / (this->spatialParams().lengthPM());
         Scalar S[numPhases];
@@ -597,27 +395,20 @@ private:
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             fluidState.setSaturation(phaseIdx, S[phaseIdx]);
 
-            if(numEnergyEquations > 2) { // only in this case the fluidstate has more than one temperature
-                fluidState.setTemperature(phaseIdx, thisTemperature );
-            }
-            else
             fluidState.setTemperature(thisTemperature );
-        }
 
+        }
         //////////////////////////////////////
         // Set temperature
         //////////////////////////////////////
-        if(enableEnergy) {
-            for (int energyEqIdx=0; energyEqIdx< numEnergyEqs; ++energyEqIdx)
-            priVars[energyEq0Idx + energyEqIdx] = thisTemperature;
-        }
-
-        const MaterialLawParams &materialParams =
-        this->spatialParams().materialLawParamsAtPos(globalPos);
+        priVars[energyEq0Idx] = thisTemperature;
+        priVars[energyEqSolidIdx] = thisTemperature;
         Scalar capPress[numPhases];
 
         //obtain pc according to saturation
-        MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
+        const auto &materialParams =
+        this->spatialParams().materialLawParamsAtPos(globalPos);
+         MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
 
         Scalar p[numPhases];
 
@@ -649,55 +440,44 @@ private:
         fluidState.setMoleFraction(nPhaseIdx, wCompIdx, 1.0);
         fluidState.setMoleFraction(nPhaseIdx, nCompIdx, 0.0);
 
-        /* Difference between kinetic and MPNC:
-         * number of component related primVar and how they are calculated (mole fraction, fugacities, resp.)          */
-        if(enableKinetic) {
-            for(int phaseIdx=0; phaseIdx < numPhases; ++ phaseIdx) {
-                for(int compIdx=0; compIdx <numComponents; ++compIdx) {
-                    int offset = compIdx + phaseIdx * numComponents;
-                    priVars[conti00EqIdx + offset] = fluidState.moleFraction(phaseIdx,compIdx);
-                }
-            }
+       int refPhaseIdx;
+
+        // on right boundary: reference is gas
+        refPhaseIdx = nPhaseIdx;
+
+        if(inPM_(globalPos)) {
+            refPhaseIdx = wPhaseIdx;
         }
-        else { //enableKinetic
-            int refPhaseIdx;
 
-            // on right boundary: reference is gas
-            refPhaseIdx = nPhaseIdx;
+        // obtain fugacities
+        using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
+        ParameterCache paramCache;
+        ComputeFromReferencePhase::solve(fluidState,
+                                        paramCache,
+                                        refPhaseIdx,
+                                        /*setViscosity=*/false,
+                                        /*setEnthalpy=*/false);
 
-            if(inPM_(globalPos)) {
-                refPhaseIdx = wPhaseIdx;
-            }
-
-            // obtain fugacities
-            using ComputeFromReferencePhase = ComputeFromReferencePhase<Scalar, FluidSystem>;
-            ParameterCache paramCache;
-            ComputeFromReferencePhase::solve(fluidState,
-                    paramCache,
-                    refPhaseIdx,
-                    /*setViscosity=*/false,
-                    /*setEnthalpy=*/false);
-
-            //////////////////////////////////////
-            // Set fugacities
-            //////////////////////////////////////
-            for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
-                priVars[conti00EqIdx + compIdx] = fluidState.fugacity(refPhaseIdx,compIdx);
-            }
-        } // end not enableKinetic
+        //////////////////////////////////////
+        // Set fugacities
+        //////////////////////////////////////
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx) {
+            priVars[conti00EqIdx + compIdx] = fluidState.fugacity(refPhaseIdx,compIdx);
+        }
+        return priVars;
     }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (left) in the domain
      */
     bool onLeftBoundary_(const GlobalPosition & globalPos) const
-    {   return globalPos[0] < this->bBoxMin()[0] + eps_;}
+    {   return globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_;}
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (right) in the domain
      */
     bool onRightBoundary_(const GlobalPosition & globalPos) const
-    {   return globalPos[0] > this->bBoxMax()[0] - eps_;}
+    {   return globalPos[0] > this->fvGridGeometry().bBoxMax()[0] - eps_;}
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (right) in the domain
@@ -706,7 +486,7 @@ private:
     bool onRightBoundaryPorousMedium_(const GlobalPosition & globalPos) const
     {
         using std::abs;
-        return ( abs(globalPos[0] - (this->spatialParams().lengthPM())) < eps_ );
+        return (abs(globalPos[0] - (this->spatialParams().lengthPM())) < eps_ );
     }
 
     /*!
@@ -716,18 +496,6 @@ private:
     {   return
         not this->spatialParams().inOutFlow(globalPos);
     }
-
-    /*!
-     * \brief Give back whether the tested position (input) is a specific region (down, (gravityDir)) in the domain
-     */
-    bool onLowerBoundary_(const GlobalPosition & globalPos) const
-    {   return globalPos[dimWorld-1] < this->bBoxMin()[dimWorld-1] + eps_;}
-
-    /*!
-     * \brief Give back whether the tested position (input) is a specific region (up, (gravityDir)) in the domain
-     */
-    bool onUpperBoundary_(const GlobalPosition & globalPos) const
-    {   return globalPos[dimWorld-1] > this->bBoxMax()[dimWorld-1] - eps_;}
 
 private:
     static constexpr Scalar eps_ = 1e-6;
@@ -749,19 +517,14 @@ private:
 
     Scalar massFluxInjectedPhase_;
     Scalar heatFluxFromRight_;
-    PhaseVelocityField volumeDarcyVelocity_;
-    PhaseBuffer volumeDarcyMagVelocity_;
-    ScalarBuffer boxSurface_;
     Scalar lengthPM_;
     Scalar coldTime_;
 
-public:
+    Scalar time_;
+    std::shared_ptr<GridVariables> gridVariables_;
 
-    Dune::ParameterTree getInputParameters() const
-    {   return inputParameters_;}
 };
 
-}
- //end namespace
+} //end namespace
 
 #endif

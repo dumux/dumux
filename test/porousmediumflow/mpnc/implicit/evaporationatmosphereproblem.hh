@@ -488,15 +488,13 @@ public:
         ParameterCache dummyCache;
         FluidState fluidState;
 
-        for(int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
+        for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++)
+        {
             fluidState.setPressure(phaseIdx, pnInitial_);
-
-        if(numEnergyEquations){
-            fluidState.setTemperature(nPhaseIdx, TInject_ );
-            fluidState.setTemperature(wPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
         }
-        else
-            fluidState.setTemperature(TInject_ );
+
+        fluidState.setTemperature(nPhaseIdx, TInject_ );
+        fluidState.setTemperature(wPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
 
         // This solves the system of equations defining x=x(p,T)
         FluidSystem::calculateEquilibriumMoleFractions(fluidState, dummyCache) ;

@@ -1,7 +1,6 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 5e-1 # [s]
 TEnd = 1e3 # [s]
-MaxTimeStepSize = 2e20  # maximum allowed timestep size
 
 [Grid]
 File =   ./grids/combustionOutflowGridLinNX100LogNx100.dgf
@@ -29,7 +28,7 @@ meanPoreSize = 5e-4 # characteristic length of the system
 factorEnergyTransfer = 1 #
 factorMassTransfer = 1 #
 
-[SpatialParams.OutFlow]
+[SpatialParams.Outflow]
 permeabilityOutFlow = 1e-6 # m^2
 porosityOutFlow = 0.35 #
 soilThermalConductivityOutFlow = 0.01#
@@ -42,14 +41,13 @@ heatCapacity = 466 # J / (kg K) steel:466 granite:800
 Swr =  0.0 #  5e-3
 Snr = 0 #
 
-[Constants]
-outputName =  combustion #
+[Problem]
+Name = combustion
 
+[Constants]
 interfacialTension = 0.0589 # interfacial tension of water at 100 ° C
 
 nRestart = 10000 # after so many timesteps a restart file should be written
 
-[Implicit]
-MassUpwindWeight=1
-MobilityUpwindWeight=1
-
+[Vtk]
+AddVelocity = 1 # enable velocity output
