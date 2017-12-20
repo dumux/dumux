@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief Simplifies writing multi-file VTK datasets.
  */
 #ifndef VTK_MULTI_WRITER_HH
@@ -49,6 +50,7 @@
 
 namespace Dumux {
 /*!
+ * \ingroup InputOutput
  * \brief Simplifies writing multi-file VTK datasets.
  *
  * This class automatically keeps the meta file up to date and

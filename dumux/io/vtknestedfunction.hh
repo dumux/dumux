@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief Provides a vector-valued function using Dune::FieldVectors
  *        as elements.
  */
@@ -33,6 +34,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a vector-valued function using Dune::FieldVectors
  *        as elements.
  */

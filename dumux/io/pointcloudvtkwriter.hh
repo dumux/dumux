@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief A VTK writer specialized for staggered grid implementations with dofs on the faces
  */
 #ifndef STAGGERED_VTK_WRITER_HH

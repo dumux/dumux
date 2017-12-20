@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief Provides a grid creator for a piece of cake grid
  */
 
@@ -39,6 +39,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides a grid creator with a method for creating creating vectors
  *        with polar Coordinates and one for creating a cartesian grid from
  *        these polar coordinates.

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief Interface for plotting the non-isothermal two-phase fluid-matrix-interaction laws
  */
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
@@ -32,6 +32,7 @@ namespace Dumux
 template<class Scalar> class GnuplotInterface;
 
 /*!
+ * \ingroup InputOutput
  * \brief Interface for plotting the non-isothermal two-phase fluid-matrix-interaction laws
  */
 template<class Scalar, class ThermalConductivityModel, class FluidSystem>

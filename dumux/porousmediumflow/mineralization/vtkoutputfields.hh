@@ -30,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Mineralization, InputOutput
+ * \ingroup Mineralization
  * \brief Adds vtk output fields specific to the a NCMin model
  */
 template<class TypeTag>

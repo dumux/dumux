@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief Interface for plotting the multi-component-matrix-interaction laws
  */
 #ifndef DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
@@ -30,6 +30,7 @@ namespace Dumux
 template<class Scalar> class GnuplotInterface;
 
 /*!
+ * \ingroup InputOutput
  * \brief Interface for plotting the multi-component-matrix-interaction laws
  */
 template<class Scalar, class EffectiveDiffusivityModel>

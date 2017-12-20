@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief Generic class to read/write restart files.
  */
 #ifndef DUMUX_RESTART_HH
@@ -36,6 +37,7 @@
 
 namespace Dumux {
 /*!
+ * \ingroup InputOutput
  * \brief Load or save a state of a model to/from the harddisk.
  */
 class Restart {
