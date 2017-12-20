@@ -16,20 +16,21 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
+ */
 #ifndef DUMUX_EVALCFLFLUX_HH
 #define DUMUX_EVALCFLFLUX_HH
 
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-/**
- * @file
- * @brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
- */
 namespace Dumux
 {
-/*!\ingroup IMPES
- * \ingroup Saturation2p
- * @brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
+/*!
+ * \brief  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition
+ * \ingroup SequentialTwoPModel
  *
  *  Base class for implementations of different kinds of fluxes to evaluate a CFL-Condition of the form
  *
@@ -62,7 +63,8 @@ public:
     void initialize()
     {}
 
-    /*! \brief adds a flux to the cfl-criterion evaluation
+    /*!
+     * \brief adds a flux to the cfl-criterion evaluation
      *
      *  \param lambdaW        wetting phase mobility
      *  \param lambdaNw       non-wetting phase mobility
@@ -76,7 +78,8 @@ public:
                  const Intersection& intersection, int phaseIdx)
     {}
 
-    /*! \brief adds a flux to the cfl-criterion evaluation
+    /*!
+     * \brief adds a flux to the cfl-criterion evaluation
      *
      *  \param lambdaW        wetting phase mobility
      *  \param lambdaNw       non-wetting phase mobility
@@ -90,7 +93,8 @@ public:
                  const Element& element, int phaseIdx)
     {}
 
-    /*! \brief Returns the CFL flux-function
+    /*!
+     * \brief Returns the CFL flux-function
      *
      *  \param element       element on which the CFL-criterion is evaluated
      *  \return fluxFunction for the calculation of the CFL time-step (\f$ 1/F_i \f$)
@@ -100,7 +104,8 @@ public:
         return 0.0;
     }
 
-    /*! \brief  Returns the CFL time-step
+    /*!
+     * \brief  Returns the CFL time-step
      *
      *  \param element       element on which the CFL-criterion is evaluated
      *  \return CFL time-step
@@ -114,7 +119,7 @@ public:
     void reset()
     {}
 
-    /*! @brief Constructs a EvalCflFlux instance */
+    /*! \brief Constructs a EvalCflFlux instance */
     EvalCflFlux ()
     {}
 };

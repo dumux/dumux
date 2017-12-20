@@ -16,19 +16,16 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Specifies the properties for immiscible 2p transport
+ */
 #ifndef DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
 #define DUMUX_FV_TRANSPORT_PROPERTIES_2P_HH
 
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 
-/*!
- * \ingroup FVSaturation2p
- * \ingroup IMPETProperties
- */
-/*!
- * \file
- * \brief Specifies the properties for immiscible 2p transport
- */
 namespace Dumux
 {
 namespace Properties
@@ -66,7 +63,7 @@ SET_TYPE_PROP(FVTransportTwoP, EvalCflFluxFunction, EvalCflFluxDefault<TypeTag>)
 SET_TYPE_PROP(FVTransportTwoP, CapillaryFlux, DiffusivePart<TypeTag>);
 //! Set the default implementation of an additional convective flux -> additional convective flux dissabled
 SET_TYPE_PROP(FVTransportTwoP, GravityFlux, ConvectivePart<TypeTag>);
-//! \brief Set PrecomputedConstRels flag <tt>true</tt> as default
+//! Set PrecomputedConstRels flag <tt>true</tt> as default
 SET_BOOL_PROP( FVTransportTwoP, PrecomputedConstRels, true);
 //! Set finite volume implementation of the two-phase saturation equation as default saturation model
 SET_TYPE_PROP(FVTransportTwoP, TransportModel, FVSaturation2P<TypeTag>);

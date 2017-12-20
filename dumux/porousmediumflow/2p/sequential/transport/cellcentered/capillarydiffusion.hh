@@ -16,19 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation
+ */
 #ifndef DUMUX_CAPILLARYDIFFUSION_HH
 #define DUMUX_CAPILLARYDIFFUSION_HH
 
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/diffusivepart.hh>
 #include "properties.hh"
-/**
- * @file
- * @brief  Class for defining the diffusive capillary pressure term of a 2p saturation equation
- */
+
 namespace Dumux
 {
-/*!\ingroup FVSaturation2p
+/*!
  * \brief  Class for defining the diffusive capillary pressure term of a saturation equation
+ * \ingroup SequentialTwoPModel
  *
  * Defines the diffusive capillary pressure term of the form
  *
@@ -80,8 +83,9 @@ private:
 
 public:
 
-    //! Returns capillary diffusion term
-    /*! Returns capillary diffusion term for current element face
+    /*!
+     * \brief Returns capillary diffusion term for current element face
+     *
      *  \param flux        Flux vector (gets the flux from the function)
      *  \param intersection  Intersection of two grid elements/global boundary
      *  \param satI           saturation of current element
@@ -222,7 +226,8 @@ public:
         flux *= mobBar;
     }
 
-    /*! \brief Constructs a CapillaryDiffusion object
+    /*!
+     * \brief Constructs a CapillaryDiffusion object
      *
      *  \param problem A problem class object
      */

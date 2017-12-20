@@ -16,21 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Fluxes to evaluate a CFL-Condition
+ */
 #ifndef DUMUX_EVALCFLFLUX_DEFAULT_HH
 #define DUMUX_EVALCFLFLUX_DEFAULT_HH
-
-/**
- * @file
- * @brief  Fluxes to evaluate a CFL-Condition
- */
 
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include "evalcflflux.hh"
 
 namespace Dumux
 {
-/*!\ingroup IMPES
- * @brief  Default implementation of cfl-fluxes to evaluate a CFL-Condition
+/*!
+ * \brief  Default implementation of cfl-fluxes to evaluate a CFL-Condition
+ * \ingroup SequentialTwoPModel
  *
  * Compares the maximum of inflow and outflow to the element volume weighted by relative permeability and viscosity ratios.
  *
@@ -61,7 +62,8 @@ private:
 
 public:
 
-    /*! \brief adds a flux to the cfl-criterion evaluation
+    /*!
+     * \brief adds a flux to the cfl-criterion evaluation
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Element&,int)
      */
@@ -71,7 +73,8 @@ public:
         addFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, phaseIdx);
     }
 
-    /*! \brief adds a flux to the cfl-criterion evaluation
+    /*!
+     * \brief adds a flux to the cfl-criterion evaluation
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
      */
@@ -81,13 +84,15 @@ public:
         addFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, phaseIdx);
     }
 
-    /*! \brief Returns the CFL flux-function
+    /*!
+     * \brief Returns the CFL flux-function
      *
      * \copydetails EvalCflFlux::getCflFluxFunction(const Element&)
      */
     Scalar getCflFluxFunction(const Element& element);
 
-    /*! \brief  Returns the CFL time-step
+    /*!
+     * \brief  Returns the CFL time-step
      *
      * \copydetails EvalCflFlux::getDt(const Element&)
      */
@@ -108,7 +113,8 @@ public:
         fluxOut_ = 0;
     }
 
-    /*! \brief Constructs an EvalCflFluxDefault object
+    /*!
+     * \brief Constructs an EvalCflFluxDefault object
      *
      * \param problem A problem type object
      */
@@ -120,7 +126,7 @@ public:
     }
 
 private:
-
+    // TODO doc me!
     void addFlux(Scalar& lambdaW, Scalar& lambdaNw, Scalar& viscosityW, Scalar& viscosityNw, Scalar flux, int phaseIdx = -1)
     {
         using std::abs;
@@ -175,6 +181,7 @@ private:
          }
     }
 
+    // TODO doc me!
     Scalar getCFLFluxIn(int phaseIdx = 0)
     {
         using std::isnan;
@@ -187,6 +194,7 @@ private:
             return fluxIn_;
     }
 
+    // TODO doc me!
     Scalar getCFLFluxOut(int phaseIdx = 0)
     {
         using std::isnan;
@@ -223,7 +231,7 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
-// Returns the CFL flux-function
+//! Returns the CFL flux-function
 template<class TypeTag>
 typename EvalCflFluxDefault<TypeTag>::Scalar EvalCflFluxDefault<TypeTag>::getCflFluxFunction(const Element& element)
 {

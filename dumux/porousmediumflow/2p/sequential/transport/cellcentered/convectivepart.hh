@@ -16,21 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Base class for defining a convective part of the saturation transport equation
+ */
 #ifndef DUMUX_CONVECTIVEPART_HH
 #define DUMUX_CONVECTIVEPART_HH
 
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-/**
- * \file
- * \brief  Base class for defining a convective part of the saturation transport equation
- */
-
 namespace Dumux
 {
 
-/*!\ingroup FVSaturation2p
+/*!
  * \brief  Base class for defining a convective part of the saturation transport equation
+ * \ingroup SequentialTwoPModel
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -51,7 +52,8 @@ public:
     void initialize()
     {}
 
-    /*! \brief Returns convective term for current element face
+    /*!
+     * \brief Returns convective term for current element face
      *  \param intersection  Intersection of two grid elements/global boundary
      *  \param sat           Saturation of current element
      *  \return     Convective flux
@@ -61,7 +63,8 @@ public:
         return 0.0;
     }
 
-    /*! \brief Returns convective term for current intersection
+    /*!
+     * \brief Returns convective term for current intersection
      *
      *  \param flux        Flux vector (gets the flux from the function)
      *  \param intersection  Intersection of two grid elements/global boundary
@@ -71,7 +74,8 @@ public:
     void getFlux(DimVector& flux, const Intersection& intersection, const Scalar satI, const Scalar satJ) const
     {}
 
-    /*! Constructs a ConvectivePart object
+    /*!
+     * \brief Constructs a ConvectivePart object
      *
      *  \param problem A problem class object
      */

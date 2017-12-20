@@ -16,21 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Class for defining the gravity term of a two-phase flow saturation equation
+ */
 #ifndef DUMUX_GRAVITYPART_HH
 #define DUMUX_GRAVITYPART_HH
 
 #include <dumux/porousmediumflow/2p/sequential/transport/cellcentered/convectivepart.hh>
 #include "properties.hh"
 
-/**
- * @file
- * @brief  Class for defining the gravity term of a two-phase flow saturation equation
- */
-
 namespace Dumux
 {
-/*!\ingroup FVSaturation2p
+/*!
  * \brief  Class for defining the gravity term of  a two-phase flow saturation equation
+ * \ingroup SequentialTwoPModel
  *
  * Defines the gravity term of the form
  *
@@ -77,7 +78,8 @@ private:
 
 public:
 
-    /*! \brief Returns convective term for current element face
+    /*!
+     * \brief Returns convective term for current element face
      *
      *  \param flux        Flux vector (gets the flux from the function)
      *  \param intersection  Intersection of two grid elements/global boundary
@@ -192,7 +194,9 @@ public:
         // set result to f_w*lambda_n*K*grad(pc)
         flux *= lambdaW*lambdaNw/(lambdaW+lambdaNw) * scalarPerm * (density_[wPhaseIdx] - density_[nPhaseIdx]) * scalarGravity * areaScaling;
     }
-    /*! \brief Constructs a GravityPart object
+
+    /*!
+     * \brief Constructs a GravityPart object
      *
      *  \param problem A problem class object
      */
