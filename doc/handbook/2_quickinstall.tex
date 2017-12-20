@@ -1,71 +1,52 @@
 \section{Quick Installation of \Dumux}
 \label{quick-install}
 
-This only provides one quick way of installing \Dumux.
-You should have a recent working Linux environment, no \Dune core modules should be installed.
-If you need more information,
+This section only provides one quick way of installing \Dumux.
+You should have a recent working Linux environment and no \Dune core modules should be installed.
+If you need more information or
 have \Dune already installed, please have a look at the detailed installation
 instructions in Section \ref{install}.
 
-\subsection{Obtaining the Code with the Script \texttt{checkout-dumux}}
+\subsection{Prerequisites} \label{sec:prerequisites}
+For this quick start guide the following software packages are required:
+\begin{itemize}
+\item GitLab client
+\item A standard compliant C++ compiler supporting C++11 and the C++14 feature set of GCC 4.9. We support GCC 4.9 or newer and Clang 3.8 or newer.
+\item CMake 2.8.12 or newer
+\item pkg-config
+\item paraview (to visualize the results)
+\end{itemize}
 
-The shell-script \texttt{checkout-dumux}
-facilitates setting up a {\Dune}/{\Dumux} directory tree.
-It is available after obtaining a download link via \url{http://www.dumux.org/download/}.
-For example the second line below will check out the required \Dune modules and \texttt{dumux},
-\texttt{dumux-devel} and the \texttt{external} folder, which contains some useful external software and libraries.
-Again,  \texttt{joeuser} needs to be replaced by the actual user name.
-\begin{lstlisting}[style=Bash]
-$ checkout-dumux -h      # show help,
-$ checkout-dumux -gme -u joeuser -p password -d DUMUX
+The building of included documentation like this handbook requires \LaTeX{} and auxiliary tools
+\texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
+It is possible to switch off the building of the documentation by setting the switch \texttt{--disable-documentation}
+in the \texttt{CONFIGURE\_FLAGS} of the building options, see Chapter \ref{buildIt}.
+
+\subsection{Obtaining code and configuring all modules with a script}
+We provide you with a shell-script \texttt{installDumux.sh} that facilitates setting up a {\Dune}/{\Dumux} directory tree
+and configures all modules with CMake.
+It is available after obtaining a download link via \url{http://www.dumux.org/download/} or
+by copying the following lines into a text-file named \texttt{installDumux.sh}:
+\lstinputlisting[style=DumuxCode, numbersep=5pt, firstline=1, firstnumber=1]{installDumux.sh}
+
+Place the \texttt{installDumux.sh} script in the directory where you want to install \Dumux and \Dune (a single
+root folder \texttt{DUMUX} will be produced, so you do not need to provide one).
+Run the script by typing into the terminal: \texttt{./installDumux.sh}
+
+Configuring \Dune and \Dumux is done by the command-line script \texttt{dunecontrol}
+using optimized configure options, see the line entitled \texttt{\# run build} in the \texttt{installDumux.sh} script. 
+More details about the build-system can be found in section \ref{buildIt}.
+
+\subsection{A first test run of \Dumux}
+When the \texttt{installDumux.sh} script from the subsection above has run successfully, you can execute a second script that
+will compile and run a simple one-phase ground water flow example and will visualize the result using paraview.
+The test script can be obtained by copying the following lines into a text-file named \texttt{test\_dumux.sh}
+that has to be located in the same directory as the installation script.
+\begin{lstlisting}[style=DumuxCode]
+cd DUMUX/dumux/build-cmake/test/porousmediumflow/1p/implicit
+make -B test_1pcctpfa
+./test_1pcctpfa test_1pcctpfa.input
+paraview *pvd
 \end{lstlisting}
-
-Be aware that you cannot get \texttt{dumux-devel} or the external libraries from \texttt{dumux-external} unless
-you have an GitLab account with the right privileges.
-
-If you want to install \Dune and \Dumux without the help of \texttt{checkout-dumux} script a complete installation
-guide can be found in chapter \ref{install}.
-
-\subsection{Build of \Dune and \Dumux}
-\label{buildIt}
-Building of \Dune and \Dumux is done by the command-line script \texttt{dunecontrol} as described in
-\Dune Installation Notes\footnote{\url{https://www.dune-project.org/doc/installation/}}.
-More details about the build-system can be found in the \Dune buildsystem documentation\footnote{\url{https://www.dune-project.org/buildsystem/}}.
-If something fails during the execution of \texttt{dunecontrol} feel free to report it to the \Dune or \Dumux developer mailing list,
-but also try to include error details.
-
-It is possible to compile \Dumux with nearly no explicit options to the build system.
-However, for the successful compilation of \Dune and \Dumux, it is currently necessary to pass
-the option \texttt{-fno-strict-aliasing} to the \Cplusplus compiler,
-which is done here via a command-line argument to \texttt{dunecontrol}:
-\begin{lstlisting}[style=Bash]
-$ # make sure you are in the directory DUNE-Root
-$ ./dune-common/bin/dunecontrol --configure-opts="CXXFLAGS=-fno-strict-aliasing" --use-cmake all
-\end{lstlisting}
-
-Too many options can make life hard. That's why usually option files are being used together with \texttt{dunecontrol} and its sub-tools.
-Larger sets of options are kept in them. If you are going to compile with options suited for debugging the code, the following
-can be a starting point:
-\begin{lstlisting}[style=Bash]
-$ # make sure you are in the directory DUNE-Root
-$ cp dumux/debug.opts my-debug.opts      # create a personal version
-$ gedit my-debug.opts                    # optional editing the options file
-$ ./dune-common/bin/dunecontrol --opts=my-debug.opts --use-cmake all
-\end{lstlisting}
-
-More optimized code, which is typically not usable for standard debugging tasks, can be produced by
-\begin{lstlisting}[style=Bash]
-$ cp dumux/optim.opts my-optim.opts
-$ ./dune-common/bin/dunecontrol --opts=my-optim.opts --use-cmake all
-\end{lstlisting}
-
-Sometimes it is necessary to have additional options which
-are specific to a package set of an operating system or
-sometimes you have your own preferences.
-Feel free to work with your own set of options, which may evolve over time.
-The option files above are to be understood more as a starting point
-for setting up an own customization than as something which is fixed.
-The use of external libraries can make it necessary to add quite many options in an option file.
-It can be helpful to give your customized option file its own name, as done above.
-One avoids confusing it with the option files which came out of the distribution.
-
+The script \texttt{test\_dumux.sh} can be executed by typing into the terminal: \texttt{./test\_dumux.sh}.
+If everything works fine, a paraview-window with the result should open automatically.

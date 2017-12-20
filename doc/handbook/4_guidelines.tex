@@ -3,32 +3,88 @@
 Writing code in a readable manner is very important, especially
 for future code developers (e.g. for adding features, debugging, etc.).
 This section is inspired by the DUNE coding guidelines
-% this site is currently down (27.02.2017), hope it will be online soon again
-\url{http://www.dune-project.org/doc/devel/codingstyle.html}, which is strongly recommended.
+\url{https://www.dune-project.org/dev/codingstyle/}, which is strongly recommended.
 
-\paragraph{Documentation:}
-Please document freely what each part of your code does. All comments/ documentation
-is in \textbf{English}.
+\subsection{Documentation:}
+Please document freely what each part of your code \emph{should} do. All comments/documentation
+is in English.
 We proclaim the Doc-Me Dogma, which means whatever you do, please document
-it least with
+it at least with:
 \begin{lstlisting}[style=DumuxCode]
-  /*! \todo Please doc me! */
+  \todo Please doc me!
 \end{lstlisting}
 That way at least the absence of documentation is documented, and it is easier
-to get rid of it systematically. Please comment \textbf{all}:
+to get rid of it systematically.
+In the following we will describe several ways for
+commenting code in \Dumux.\\
+There are four ways to comment a \textbf{single line} of code:
+\begin{lstlisting}[style=DumuxCode]
+Line of code 1 // Short comment on line of code 1 that will not show in doxygen
+Line of code 2 //!< Short comment on line of code 2 that will show in doxygen
+//! Short comment on the following line (line of code 3) that will show in doxygen
+Line of code 3
+/*!
+ * Longer comment on line of code 4 
+ * with several lines of length 
+ * that will show in doxygen
+ */
+Line of code 4
+\end{lstlisting}
+The third and fourth of the above shown options can also be used to document functions with
+neither method parameters nor return value.\\
+For doxygen to be able to group the \textbf{files} correctly, please add before the headerguard:
+\begin{lstlisting}[style=DumuxCode] 
+/*!
+ * \file
+ * \ingroup GroupName
+ * \brief A short description of the file.
+ */
+ 
+#ifndef HEADERGUARD
+#define HEADERGUARD
+\end{lstlisting}
+For doxygen to be able to group the \textbf{classes} correctly, please add before each class:
+\begin{lstlisting}[style=DumuxCode] 
+/*!
+ * \ingroup GroupName
+ * \brief A short description of the class.
+ *
+ * Optional detailed description of the class
+ * over several lines.
+ */
+template <class TypeTag>
+\end{lstlisting}
+For an overview over all available groups and to add new groups please
+see the file\\ \texttt{doc/doxygen/modules.txt} from the \texttt{dumux} module.\\
+Please add before each \textbf{function} with method parameters or return value:
+\begin{lstlisting}[style=DumuxCode]
+/*!
+ * \brief A short description of the function. 
+ *
+ * Optional detailed description of the function
+ * over several lines.
+ *
+ * \param paramName Very short description of paramName
+ * \return returnName Very short description of returnName
+ */
+paramType functionName(paramType paramName)
+{ 
+   ...
+   return returnName
+}
+\end{lstlisting}
+Furthermore, please comment \textit{all}:
 \begin{itemize}
-  \item Method Parameters (in / out)
+  \item Template Parameters
+  \item Exceptions thrown by a method
   \item Method parameters which are not self-explanatory should always
         have a meaningful comment at calling sites. Example:
   \begin{lstlisting}[style=DumuxCode]
     localResidual.eval(/*includeBoundaries=*/true);
   \end{lstlisting}
-  \item Template Parameters
-  \item Return Values
-  \item Exceptions thrown by a method
 \end{itemize}
 
-\paragraph{Naming:}
+\subsection{Naming:}
 To avoid duplicated types or variables and for a better understanding and usability
 of the code we have the following naming conventions:
 \begin{itemize}

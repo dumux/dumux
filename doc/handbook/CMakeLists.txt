@@ -4,7 +4,6 @@ set(TEX_INPUTS
   1_introduction.tex
   2_detailedinstall.tex
   2_quickinstall.tex
-  2_quickstartguide.tex
   3_tutorial.tex
   3_furtherpractice.tex
   4_assemblinglinearsystem.tex
@@ -19,7 +18,8 @@ set(TEX_INPUTS
   5_grids.tex
   5_models.tex
   5_propertysystem.tex
-  5_spatialdiscretizations.tex)
+  5_spatialdiscretizations.tex
+  installDumux.sh)
 
 set(TEX_IMAGES
   PNG/box_disc.png

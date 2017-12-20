@@ -4,6 +4,7 @@
  inputencoding=ansinew,
  breaklines=true,
  tabsize=4,
+ columns=flexible,
  literate={0}{{\textcolordigits{0}}}{1}%
           {1}{{\textcolordigits{1}}}{1}%
           {2}{{\textcolordigits{2}}}{1}%
@@ -68,7 +69,7 @@
  language=sh,
  numbers=left,
  numbersep=5pt,
- numberstyle=\tiny,
+ numberstyle=\tiny\noncopynumber,
  basicstyle=\ttfamily\scriptsize,
  stringstyle=\color{BrickRed}\ttfamily\let\textcolor\textcolordummy,
  commentstyle=\color[gray]{0.35}\ttfamily\itshape\let\textcolor\textcolordummy,
@@ -81,7 +82,7 @@
   escapeinside={/*@}{@*/}, % escape the long comments
   numbers=left,
   numbersep=5pt,
-  numberstyle=\tiny,
+  numberstyle=\tiny\noncopynumber,
   basicstyle=\ttfamily\scriptsize,
   keywordstyle=\color{dumuxBlue}\ttfamily\let\textcolor\textcolordummy,
   stringstyle=\color{BrickRed}\ttfamily\let\textcolor\textcolordummy,
@@ -100,9 +101,15 @@
  language=sh,
  numbers=left,
  numbersep=5pt,
- numberstyle=\tiny,
+ numberstyle=\tiny\noncopynumber,
  basicstyle=\ttfamily\scriptsize,
  stringstyle=\color{BrickRed}\ttfamily\let\textcolor\textcolordummy,
  commentstyle=\color[gray]{0.35}\ttfamily\itshape\let\textcolor\textcolordummy,
  morecomment=[l][\color{dumuxBlue}\let\textcolor\textcolordummy]{[},
+}
+
+\newcommand{\noncopynumber}[1]{
+    \BeginAccSupp{method=escape,ActualText={}}
+    #1
+    \EndAccSupp{}
 }

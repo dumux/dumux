@@ -1,105 +1,69 @@
 \section{Detailed Installation Instructions}
 \label{install}
 
-In this section about the installation of \Dumux it is assumed that you work with
-a Linux or Apple OS X operating system
-and that you are familiar with the use of a command line shell. Installation means
-that you unpack \Dune together with \Dumux in a certain directory.
-Then, you compile it in that directory tree in which you do the further work, too.
-You also should know how to install new software packages
-or you should have a person on hand who can give you assistance with that. In
-section \ref{sec:prerequisites} we list some prerequisites for running \Dune and \Dumux.
-Please check in said paragraph whether you can fulfill them. In addition, section
-\ref{sec:external-modules-libraries} provides some details on optional libraries and modules.
+Installing \Dumux means that you first unpack \Dune and \Dumux in a root directory,
+(section \ref{sc:ObtainingSourceCode}).
+In a second step of the installation, all modules are configured with CMake
+(section \ref{buildIt}).
+After successfull installation of \Dumux we guide you to start a test application,
+described in section \ref{quick-start-guide}.
+In section \ref{sec:build-doxy-doc} we explain how to build the \Dumux documentation.
+Lastly, section \ref{sec:external-modules-libraries} provides details on optional libraries and modules.
 
 In a technical sense \Dumux is a module of \Dune.
 Thus, the installation procedure of \Dumux is the same as that of \Dune.
 Details regarding the installation of \Dune are provided on the \Dune website \cite{DUNE-HP}.
-If you are interested in more details about the build system that is used,
-they can be found in the \Dune buildsystem documentation\footnote{\url{https://www.dune-project.org/buildsystem/}} and
-CMake's documentation\footnote{\url{https://cmake.org/documentation/}}.
 
-All \Dune modules, including \Dumux, get extracted into a common directory, as it
-is done in an ordinary \Dune installation.
-We refer to that directory abstractly as {\Dune} root directory or, in short, as {\Dune}-Root.
-If it is used as directory's path of a shell command it is typed as \texttt{\Dune-Root}.
-For the real {\Dune} root directory on your file system any valid directory name can be chosen.
-
-Source code files for each \Dune module are contained in their own subdirectory
-within {\Dune}-Root.
-We name this directory of a certain module \emph{module root directory} or
-\texttt{module-root-directory} if it is a directory path,
-e.\,g. for the module \texttt{dumux} these names are  \emph{dumux root directory}
-respective \texttt{dumux-root-directory}.
-The real directory names for the modules can be chosen arbitrarily. In this manual
-they are the same as the
-module name or the module name extended by a version number suffix.
-The name of each \Dune module is defined in the file \texttt{dune.module}, which is
-in the root
-directory of the respective module. This should not be changed by the user.
-
-After extracting the source code for all relevant \Dune modules, including \Dumux, \Dune has to be built
-by the shell-command \texttt{dunecontrol} which is part of the \Dune build system.
-
-\subsection{Prerequisites} \label{sec:prerequisites}
-A reasonable recent \Cplusplus compiler (g++ (4.9), clang++ (3.5), or Intels ICC), CMake (version 2.8.12 or newer) and their
-dependencies are required.
-For prerequisite software packages to install see \cite{DUNE-HP}.
-
-The building of included documentation like this handbook requires \LaTeX{} and auxiliary tools
-\texttt{bibtex}. One usually chooses a \LaTeX{} distribution like \texttt{texlive} for this purpose.
-It is possible to switch off the building of the documentation by setting the switch \texttt{--disable-documentation}
-in the \texttt{CONFIGURE\_FLAGS} of the building options, see Chapter \ref{buildIt}.
-Additional parts of documentation are contained within the source code files as special formatted comments.
-Extracting them can be done using \texttt{doxygen}, cf. Section \ref{sec:build-doxy-doc}.
-
-Depending on whether you are going to use external libraries and modules for additional \Dune features,
-additional software packages may be required. Some hints on that are given in Section \ref{sec:external-modules-libraries}.
-
-Git clients must be installed to download modules from Git repositories.
 
 \subsection{Obtaining Source Code for \Dune and \Dumux}
-As stated above, the \Dumux release and trunk (developer tree) are based on the most recent
-\Dune release 2.4, comprising the core modules dune-common, dune-geometry, dune-grid,
-dune-istl and dune-localfunctions. For working with \Dumux, these modules are required. The
-external module dune-PDELab is recommended and required for several \Dumux features.
+\label{sc:ObtainingSourceCode}
+The \Dumux release and trunk (developer tree) are based on the most recent
+\Dune release 2.5, comprising the core modules dune-common, dune-geometry, dune-grid,
+dune-istl and dune-localfunctions. For working with \Dumux, these modules are required.
+All \Dune modules, including the \Dumux module, get extracted into a common root directory, as it
+is done in an ordinary \Dune installation.
+We usually name our root directory \texttt{DUMUX} but an arbitrary name can be chosen.
+Source code files for each \Dune module are contained in their own subdirectory within the root directory.
+The subdirectories for the modules are named after the module names (depending on how
+the modules were obtained a version number is added to the module name).
+The name of each \Dune module is defined in the file \texttt{dune.module}, which is
+in the root directory of the respective module. This should not be changed by the user.
 
 Two possibilities exist to get the source code of \Dune and \Dumux.
 Firstly, \Dune and \Dumux can be downloaded as tar files from the respective \Dune and \Dumux website.
 They have to be extracted as described in the next paragraph.
 Secondly, a method to obtain the most recent source code (or, more generally, any of its previous revisions) by direct access
 to the software repositories of the revision control system is described in the subsequent part.
+Be aware that you cannot get \texttt{dumux-devel} or the external libraries from \texttt{dumux-external} unless
+you have an GitLab account with the right privileges.
 
-However, if a user does not want to use the most recent version,
-certain version tags or branches (i.\,e. special names) are means
-of the software revision control system to provide access to different versions of the software.
+In section \ref{sec:prerequisites} we list some prerequisites for running \Dune and \Dumux.
+Please check in said paragraph whether you can fulfill them before continuing.
 
 \paragraph{Obtaining the software by installing tar files}
 The slightly old-fashionedly named tape-archive-file, shortly named tar file or
 tarball, is a common file format for distributing collections of files contained
 within these archives.
 The extraction from the tar files is done as follows:
-Download the tarballs from the respective \Dune (version 2.4.1) and \Dumux websites
+Download the tarballs from the respective \Dune (version 2.5) and \Dumux websites
 to a certain folder in your file system.
-Create the {\Dune} root directory, named \texttt{dune} in the example below.
+Create the common root directory, named \texttt{DUMUX} in the example below.
 Then extract the content of the tar files, e.\,g. with the command-line program
 \texttt{tar}.
 This can be achieved by the following shell commands. Replace \texttt{path\_to\_tarball}
 with the directory name where the downloaded files are actually located.
-After extraction, the actual name of the \emph{dumux root directory} is \texttt{dumux-\DumuxVersion}
+After extraction, the actual name of the dumux subdirectory is \texttt{dumux-\DumuxVersion}
 (or whatever version you downloaded).
 
 \begin{lstlisting}[style=Bash]
-$ mkdir dune
-$ cd dune
-$ tar xzvf path_to_tarball_of/dune-common-2.4.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-geometry-2.4.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-grid-2.4.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-istl-2.4.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-localfunctions-2.4.1.tar.gz
-$ tar xzvf path_to_tarball_of/dune-pdelab-2.0.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-typetree-2.4.1.tar.gz
-$ tar xzvf path_to_tarball_of/dumux-2.9.tar.gz
+$ mkdir DUMUX
+$ cd DUMUX
+$ tar xzvf path_to_tarball_of/dune-common-2.5.0.tar.gz
+$ tar xzvf path_to_tarball_of/dune-geometry-2.5.0.tar.gz
+$ tar xzvf path_to_tarball_of/dune-grid-2.5.0.tar.gz
+$ tar xzvf path_to_tarball_of/dune-istl-2.5.0.tar.gz
+$ tar xzvf path_to_tarball_of/dune-localfunctions-2.5.0.tar.gz
+$ tar xzvf path_to_tarball_of/dumux-3.0-alpha.tar.gz
 \end{lstlisting}
 
 Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
@@ -107,8 +71,8 @@ on the Dune grid interface, act similar.
 
 \paragraph{Obtaining \Dune and \Dumux from software repositories}
 Direct access to a software revision control system for downloading code can be of advantage later on.
-It is easier to keep up with code changes and to receive important bug fixes.\Dune and \Dumux use
-Git for their software repositories. To access them a Git client is needed.
+It is easier to keep up with code changes and to receive important bug fixes.
+\Dune and \Dumux use Git for their software repositories. To access them a Git client is needed.
 
 In the technical language of Git, \emph{cloning a certain software version} means nothing more then fetching
 a local copy from the software repository and laying it out in the file system.
@@ -118,42 +82,28 @@ also possible to do the opposite, i.\,e. to load up a modified revision of softw
 into the software repository. This is usually termed as \emph{commit} and \emph{push}.
 
 The installation procedure is done as follows:
-Create a  {\Dune} root directory, named e.g. \texttt{DUNE-ROOT} in the lines below.
+Create a common root directory, named e.g. \texttt{DUMUX} in the lines below.
 Then, enter the previously created directory and check out the desired modules.
 As you see below, the check-out uses two different servers for getting the sources,
 one for \Dune and one for \Dumux.
-The \Dune modules of the stable 2.4 release branch are checked out as described
-on the \Dune website \cite{DUNE-HP}:
 
 \begin{lstlisting}[style=Bash]
-$ mkdir DUNE-ROOT
-$ cd DUNE-ROOT
-$ git clone -b releases/2.4 https://gitlab.dune-project.org/core/dune-common.git
-$ git clone -b releases/2.4 https://gitlab.dune-project.org/core/dune-geometry.git
-$ git clone -b releases/2.4 https://gitlab.dune-project.org/core/dune-grid.git
-$ git clone -b releases/2.4 https://gitlab.dune-project.org/core/dune-istl.git
-$ git clone -b releases/2.4 https://gitlab.dune-project.org/core/dune-localfunctions.git
-$ git clone -b releases/2.3 https://gitlab.dune-project.org/PDELab/dune-typetree.git
-$ git clone -b releases/2.0 https://gitlab.dune-project.org/PDELab/dune-pdelab.git
+$ mkdir DUMUX
+$ cd DUMUX
+$ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-common.git
+$ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-geometry.git
+$ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-grid.git
+$ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-istl.git
+$ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-localfunctions.git
+$ git clone -b releases/3.0-alpha https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 \end{lstlisting}
 
-The newest and maybe unstable developments are also provided in these repositories and can be found in the \emph{master} branch.
-Please check the \Dune website \cite{DUNE-HP} for further information. We always try to keep up with the latest developments of \Dune.
-However, the current \Dumux release is based on the stable 2.4 release and it might not compile without further adaptations using the newest versions of \Dune.
+The newest and maybe unstable developments of \Dune and \Dumux are also provided in these repositories and can be found in the \emph{master} branch.
+Please check the \Dune website \cite{DUNE-HP} for further information on the \Dune development. We always try to keep up with the latest developments of \Dune.
+However, the current \Dumux release is based on the stable 2.5 release and it might not compile without further adaptations using the newest versions of \Dune.
 
 Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
 on the Dune grid interface, act similar.
-
-The \texttt{dumux} module is checked out as described below (see also the \Dumux website:
-\url{http://www.dumux.org/}).
-Its file tree has to be created in the \Dune-Root directory, where the \Dune modules
-have also been checked out to. Subsequently, the next command
-is executed there, too. The dumux root directory is called \texttt{dumux} here.
-
-\begin{lstlisting}[style=Bash]
-$ # make sure you are in DUNE-Root
-$ git clone https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
-\end{lstlisting}
 
 \paragraph{Patching \Dune or external libraries}
 \label{sc:patchingDUNE}
@@ -173,7 +123,7 @@ In general, a patch can be applied as follows
 We include here an example of a patching dune-grid.
 
 \begin{lstlisting}[style=Bash]
-$ # make sure you are in DUNE-Root
+$ # make sure you are in the common root directory
 $ cd dune-grid
 $ patch -p0 < ../dumux/patches/grid-2.3.1.patch
 \end{lstlisting}
@@ -183,16 +133,87 @@ It can be removed by
 $ path -p0 -R < ../dumux/patches/grid-2.3.1.patch
 \end{lstlisting}
 
-The \texttt{checkout-dumux} script also applies patches, if not explicitly requested not to do so.
-
 \paragraph{Hints for \Dumux-Developers}
 If you also want to actively participate in the development of \Dumux, you can allways send patches
 to the Mailing list.
-
 To get more involved, you can apply either for full developer
 access or for developer access on certain parts of \Dumux. Granted developer access means that
 you are allowed to commit own code and that you can access the \texttt{dumux-devel} module.
 This enhances \texttt{dumux} by providing maybe unstable code from the developer group.
+
+\subsection{Build of \Dune and \Dumux}
+\label{buildIt}
+Configuring \Dune and \Dumux is done by the shell-command \texttt{dunecontrol} which is part of the \Dune build system.
+If you are interested in more details about the build system that is used,
+they can be found in the \Dune buildsystem documentation\footnote{\url{https://www.dune-project.org/buildsystem/}} and
+CMake's documentation\footnote{\url{https://cmake.org/documentation/}}.
+If something fails during the execution of \texttt{dunecontrol} feel free to report it to the \Dune or \Dumux developer mailing list,
+but also try to include error details.
+
+It is possible to compile \Dumux with nearly no explicit options to the build system.
+However, for the successful compilation of \Dune and \Dumux, it is currently necessary to pass
+the option \texttt{-fno-strict-aliasing} to the \Cplusplus compiler,
+which is done here via a command-line argument to \texttt{dunecontrol}:
+\begin{lstlisting}[style=Bash]
+$ # make sure you are in the common root directory
+$ ./dune-common/bin/dunecontrol --configure-opts="CXXFLAGS=-fno-strict-aliasing" --use-cmake all
+\end{lstlisting}
+
+Too many options can make life hard. That's why usually option files are being used together with \texttt{dunecontrol} and its sub-tools.
+Larger sets of options are kept in them. If you are going to compile with options suited for debugging the code, the following
+can be a starting point:
+\begin{lstlisting}[style=Bash]
+$ # make sure you are in the common root directory
+$ cp dumux/debug.opts my-debug.opts      # create a personal version
+$ gedit my-debug.opts                    # optional editing the options file
+$ ./dune-common/bin/dunecontrol --opts=my-debug.opts --use-cmake all
+\end{lstlisting}
+
+More optimized code, which is typically not usable for standard debugging tasks, can be produced by
+\begin{lstlisting}[style=Bash]
+$ cp dumux/optim.opts my-optim.opts
+$ ./dune-common/bin/dunecontrol --opts=my-optim.opts --use-cmake all
+\end{lstlisting}
+
+Sometimes it is necessary to have additional options which
+are specific to a package set of an operating system or
+sometimes you have your own preferences.
+Feel free to work with your own set of options, which may evolve over time.
+The option files above are to be understood more as a starting point
+for setting up an own customization than as something which is fixed.
+The use of external libraries can make it necessary to add quite many options in an option file.
+It can be helpful to give your customized option file its own name, as done above,
+to avoid confusing it with the option files which came out of the distribution.
+
+\subsection{The First Run of a Test Application}
+\label{quick-start-guide}
+The previous section showed how to install and compile \Dumux. This chapter
+shall give a very brief introduction how to run a first test application and how
+to visualize the first output files. A more detailed explanations can be found in
+the tutorials in the following chapter.\\
+All executables are compiled in the \texttt{build} subdirectories of \Dumux.
+If not given differently in the input files, this is \texttt{build-cmake} as default.
+
+\begin{enumerate}
+\item Go to the directory \texttt{build-cmake/test}. There, various test application
+      folders can be found. Let us consider as example\\
+      \texttt{porousmediumflow/2p/implicit/incompressible/test{\_}2p{\_}incompressible{\_}tpfa}.
+\item Enter the folder \texttt{porousmediumflow/2p/implicit/incompressible}.\\ Type \texttt{make test{\_}2p{\_}incompressible{\_}tpfa} 
+      in order to compile the application\\ \texttt{test{\_}2p{\_}incompressible{\_}tpfa}. To run the simulation, 
+      type \texttt{./test{\_}2p{\_}incompressible{\_}tpfa}
+      into the console. If you explicitly want to state a parameter file, type\\ 
+      \texttt{./test{\_}2p{\_}incompressible{\_}tpfa -parameterFile ./test\_2p.input}.
+      The parameter\\ \texttt{-parameterFile} specifies that all
+      important parameters (like first timestep size, end of simulation and location
+      of the grid file) can be found in a text file in the same directory  with the
+      name \texttt{test\_2p.input}.
+\item The simulation starts and produces some .vtu output files and also a .pvd
+      file. The .pvd file can be used to examine time series and summarizes the .vtu
+      files. It is possible to stop a running application by pressing $<$Ctrl$><$c$>$.
+\item You can display the results using the visualization tool ParaView (or
+      alternatively VisIt). Just type \texttt{paraview} in the console and open the
+      .pvd file. On the left hand side, you can choose the desired parameter to be displayed.
+\end{enumerate}
 
 \subsection{Building Documentation}
 \subsubsection{Doxygen}
@@ -232,7 +253,7 @@ Make sure you compile the required external libraries before you run \texttt{dun
 
 An easy way to install some of the libraries and modules given below is the
 \texttt{installexternal.sh} script located in \texttt{bin}. The script
-has to be called from your {\Dune} root directory.
+has to be called from your common root directory.
 
 
 \subsubsection{List of External Libraries and Modules}
@@ -251,28 +272,13 @@ and some more libraries and tools which are prerequisites for their use.
   or network flow problems.
   Download: \url{https://gitlab.dune-project.org/extensions/dune-foamgrid}
 
-\item \textbf{\Dune-multidomaingrid} and \textbf{\Dune-multidomain}: External modules which offer a meta grid that
-  has different sub-domains. Each sub-domain can have a local operator that is coupled by a coupling condition. They are
-  used for multi-physics approaches or domain decomposition methods. Download:
-  \url{https://github.com/smuething/dune-multidomaingrid}
-  and \url{https://github.com/smuething/dune-multidomain}
-
-\item \textbf{\Dune-PDELab}: External module to write more easily discretizations. PDELab provides
-  a sound number of discretizations like FEM or discontinuous Galerkin methods.
-  Download: \url{https://gitlab.dune-project.org/pdelab/dune-pdelab}
-
-\item \textbf{PARDISO}: External library for solving linear equations. The package PARDISO is a thread-safe,
-  high-performance, robust, memory efficient and easy to use software for solving large sparse symmetric
-  and asymmetric linear systems of equations on shared memory multiprocessors. The precompiled binary
-  can be downloaded after personal registration from the PARDISO website: \url{http://www.pardiso-project.org}
-
 \item \textbf{SuperLU}: External library for solving linear equations. SuperLU is a general purpose
   library for the direct solution of large, sparse, non-symmetric systems of linear equations.
   Download: \url{http://crd.lbl.gov/~xiaoye/SuperLU}
 
 \item \textbf{UMFPack}: External library for solving linear equeations. It is part of SuiteSparse.
 
-\item \textbf{UG}: External library for use as grid. UG is a toolbox for unstructured grids, released under GPL.
+\item \textbf{dune-UG}: External library for use as grid. UG is a toolbox for unstructured grids, released under GPL.
   To build UG the tools \texttt{lex}/\texttt{yacc} or the GNU variants of \texttt{flex}/\texttt{bison} must be provided.
   Download: \url{https://gitlab.dune-project.org/staging/dune-uggrid}
 \end{itemize}
