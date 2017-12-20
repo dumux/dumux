@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Provides a few default main functions for convenience.
  */
 #ifndef DUMUX_START_HH
@@ -45,7 +46,7 @@ NEW_PROP_TAG(TimeManager);
 }
 
 /*!
- * \ingroup Start
+ * \ingroup Common
  *
  * \brief Provides a main function which reads in parameters from the
  *        command line and a parameter file.

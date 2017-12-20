@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Some templates to wrap the valgrind macros
  */
 #ifndef DUMUX_VALGRIND_HH
@@ -42,7 +43,7 @@ void voidBlubb() { }
 namespace Valgrind
 {
 /*!
- * \ingroup Valgrind
+ * \ingroup Common
  * \brief Returns whether the program is running under Valgrind or not.
  */
 inline bool Running()

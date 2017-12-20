@@ -18,9 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief A wrapper that can either contain an object of T or be empty.
  *        This might be used as a workaround for non-default constructible classes.
- * \note  This was adopted from dune-functions.
+ * \note  Replace this with std::optional when C++17 is available
  */
 #ifndef DUMUX_COMMON_OPTIONAL_HH
 #define DUMUX_COMMON_OPTIONAL_HH
@@ -31,11 +32,9 @@
 
 namespace Dumux {
 
-/**
+/*!
+ * \ingroup Common
  * \brief A wrapper that can either contain an object of T or be empty
- *
- * \ingroup Utility
- *
  * \tparam T Type of wrapped objects
  */
 template<class T>

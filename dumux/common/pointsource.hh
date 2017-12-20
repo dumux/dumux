@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief A point source class,
  *        i.e. sources located at a single point in space
  */

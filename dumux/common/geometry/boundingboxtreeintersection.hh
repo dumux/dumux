@@ -16,6 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief A class storing intersections from intersecting two bounding box trees
  */
 #ifndef DUMUX_BOUNDING_BOX_TREE_INTERSECTION_HH
@@ -28,6 +29,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Common
  * \brief An intersection object resulting from the intersection of two bounding box tree primitives
  *
  * After is has been found that two leaf bounding boxes intersect a primitive test has to be

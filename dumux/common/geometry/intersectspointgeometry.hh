@@ -16,6 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Detect if a point intersects a geometry
  */
 #ifndef DUMUX_INTERSECTS_POINT_GEOMETRY_HH
@@ -29,7 +30,10 @@
 
 namespace Dumux {
 
-//! Find out whether a point is inside a three-dimensional geometry
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a three-dimensional geometry
+ */
 template <class ctype, int dimworld, class Geometry, typename std::enable_if_t<(Geometry::mydimension == 3), int> = 0>
 bool intersectsPointGeometry(const Dune::FieldVector<ctype, dimworld>& point, const Geometry& g)
 {
@@ -74,7 +78,10 @@ bool intersectsPointGeometry(const Dune::FieldVector<ctype, dimworld>& point, co
                    << type << " in " << dimworld << "-dimensional world.");
 }
 
-//! Find out whether a point is inside a two-dimensional geometry
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a two-dimensional geometry
+ */
 template <class ctype, int dimworld, class Geometry, typename std::enable_if_t<(Geometry::mydimension == 2), int> = 0>
 bool intersectsPointGeometry(const Dune::FieldVector<ctype, dimworld>& point, const Geometry& g)
 {
@@ -99,7 +106,10 @@ bool intersectsPointGeometry(const Dune::FieldVector<ctype, dimworld>& point, co
                    << type << " in " << dimworld << "-dimensional world.");
 }
 
-//! Find out whether a point is inside a one-dimensional geometry
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a one-dimensional geometry
+ */
 template <class ctype, int dimworld, class Geometry, typename std::enable_if_t<(Geometry::mydimension == 1), int> = 0>
 bool intersectsPointGeometry(const Dune::FieldVector<ctype, dimworld>& point, const Geometry& g)
 {

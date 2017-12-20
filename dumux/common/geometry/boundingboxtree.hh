@@ -16,6 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief An axis-aligned bounding box volume hierarchy for dune grids
  *
  * Dumux implementation of an AABB tree
@@ -42,6 +43,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Common
  * \brief An axis-aligned bounding box volume tree implementation
  *
  * The class constructs a hierarchical structure of bounding box volumes around
@@ -293,7 +295,7 @@ private:
 };
 
 /*!
- * \brief Check whether a point is intersectin a bounding box
+ * \brief Check whether a point is intersectin a bounding box (dimworld == 3)
  * \param point The point
  * \param b Pointer to bounding box coordinates
  */
@@ -309,6 +311,11 @@ inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>&
             b[2] - eps2 <= point[2] && point[2] <= b[5] + eps2);
 }
 
+/*!
+ * \brief Check whether a point is intersectin a bounding box  (dimworld == 2)
+ * \param point The point
+ * \param b Pointer to bounding box coordinates
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<dimworld == 2, int> = 0>
 inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>& point, const ctype* b)
 {
@@ -319,6 +326,11 @@ inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>&
             b[1] - eps1 <= point[1] && point[1] <= b[3] + eps1);
 }
 
+/*!
+ * \brief Check whether a point is intersectin a bounding box  (dimworld == 1)
+ * \param point The point
+ * \param b Pointer to bounding box coordinates
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<dimworld == 1, int> = 0>
 inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>& point, const ctype* b)
 {
@@ -328,7 +340,7 @@ inline bool intersectsPointBoundingBox(const Dune::FieldVector<ctype, dimworld>&
 }
 
 /*!
- * \brief Check whether a bounding box is intersecting another bounding box
+ * \brief Check whether a bounding box is intersecting another bounding box (dimworld == 3)
  * \param a Pointer to first bounding box coordinates
  * \param b Pointer to second bounding box coordinates
  */
@@ -346,6 +358,11 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 
 }
 
+/*!
+ * \brief Check whether a bounding box is intersecting another bounding box (dimworld == 2)
+ * \param a Pointer to first bounding box coordinates
+ * \param b Pointer to second bounding box coordinates
+ */
 template<int dimworld, class ctypea, class ctypeb, typename std::enable_if_t<dimworld == 2, int> = 0>
 inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
@@ -357,6 +374,11 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
             b[1] - eps1 <= a[3] && a[1] <= b[3] + eps1);
 }
 
+/*!
+ * \brief Check whether a bounding box is intersecting another bounding box  (dimworld == 1)
+ * \param a Pointer to first bounding box coordinates
+ * \param b Pointer to second bounding box coordinates
+ */
 template<int dimworld, class ctypea, class ctypeb, typename std::enable_if_t<dimworld == 1, int> = 0>
 inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {

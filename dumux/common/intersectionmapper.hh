@@ -15,6 +15,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Common
+ * \brief defines intersection mappers.
+ */
 #ifndef DUMUX_INTERSECTIONITERATOR_HH
 #define DUMUX_INTERSECTIONITERATOR_HH
 
@@ -26,15 +31,12 @@
 
 #include <dune/common/version.hh>
 
-/*!
- * \file
- * \brief defines intersection mappers.
- */
 
 namespace Dumux
 {
 
 /*!
+ * \ingroup Common
  * \brief defines a standard intersection mapper for mapping of global DOFs assigned
  *        to faces. It only works for conforming grids, without hanging nodes.
  */
@@ -79,6 +81,7 @@ private:
 };
 
 /*!
+ * \ingroup Common
  * \brief defines an intersection mapper for mapping of global DOFs assigned
  *        to faces which also works for non-conforming grids and corner-point grids.
  */
@@ -177,6 +180,7 @@ private:
 };
 
 /*!
+ * \ingroup Common
  * \brief defines an intersection mapper for mapping of global DOFs assigned
  *        to faces which also works for adaptive grids.
  */
@@ -391,6 +395,6 @@ protected:
     std::unordered_map<int, int> standardLocalIdxMap_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

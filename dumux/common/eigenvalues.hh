@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Defines a functions to calculate eigenvalues and eigenvectors of n x n matrices. For n > 2 a cyclic jacobi method is used.
  * This implementation is not efficient for larg matrices!
  */
@@ -29,8 +30,7 @@
 
 #include "math.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 template<int dim, class Matrix>
 void identityMatrix(Matrix& matrix)
@@ -56,7 +56,7 @@ double calcOffDiagonalNorm(Matrix& matrix)
 }
 
 /*!
- * \briefFunction to calculate eigenvalues of n x n matrices
+ * \brief Function to calculate eigenvalues of n x n matrices
  *
  * \param eigVel Vector for storing the eigenvalues
  * \param matrix n x n matrices for which eigenvalues have to be calculated
@@ -214,7 +214,6 @@ bool calculateEigenValues(EVVectorType &eigVel, MatrixType& eigVec, MatrixType& 
         return true;
 }
 
-
-}
+} // end namespace Dumux
 
 #endif

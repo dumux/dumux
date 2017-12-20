@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems
+ * \ingroup Common
+ * \brief Base class for all finite volume problems
  */
 #ifndef DUMUX_FV_PROBLEM_HH
 #define DUMUX_FV_PROBLEM_HH
@@ -33,12 +34,10 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
-//#include <dumux/io/restart.hh>
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
- * \ingroup Problems
+ * \ingroup Common
  * \brief Base class for all finite-volume problems
  *
  * \note All quantities (regarding the units) are specified assuming a
@@ -81,8 +80,7 @@ class FVProblem
 public:
     /*!
      * \brief Constructor
-     *
-     * \param gridView The simulation's idea about physical space
+     * \param fvGridGeometry The finite volume grid geometry
      */
     FVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : fvGridGeometry_(fvGridGeometry)
@@ -178,10 +176,11 @@ public:
 
     /*!
      * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     *        control volume face.
      *
      * \param element The finite element
      * \param scvf the sub control volume face
+     * \note used for cell-centered discretization schemes
      *
      * The method returns the boundary types information.
      */
@@ -196,6 +195,16 @@ public:
             return asImp_().dirichletAtPos(scvf.ipGlobal());
     }
 
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        control volume.
+     *
+     * \param element The finite element
+     * \param scv the sub control volume
+     * \note used for cell-centered discretization schemes
+     *
+     * The method returns the boundary types information.
+     */
     PrimaryVariables dirichlet(const Element &element, const SubControlVolume &scv) const
     {
         // forward it to the method which only takes the global coordinate
@@ -214,8 +223,6 @@ public:
      * \param globalPos The position of the center of the finite volume
      *            for which the dirichlet condition ought to be
      *            set in global coordinates
-     *
-     * For this method, the \a values parameter stores primary variables.
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
@@ -232,23 +239,19 @@ public:
      *        boundary segment.
      *
      * This is the method for the case where the Neumann condition is
-     * potentially solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
+     * potentially solution dependent
      *
-     * \param values The neumann values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
      * \param scvf The sub control volume face
      *
-     * For this method, the \a values parameter stores the flux
-     * in normal direction of each phase. Negative values mean influx.
+     * Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     ResidualVector neumann(const Element& element,
                            const FVElementGeometry& fvGeometry,
-                           const ElementVolumeVariables& elemVolvars,
+                           const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf) const
     {
         // forward it to the interface with only the global position
@@ -261,8 +264,7 @@ public:
      *
      * \param globalPos The position of the boundary face's integration point in global coordinates
      *
-     * For this method, the \a values parameter stores the flux
-     * in normal direction of each phase. Negative values mean influx.
+     * Negative values mean influx.
      * E.g. for the mass balance that would be the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
     ResidualVector neumannAtPos(const GlobalPosition &globalPos) const
@@ -285,7 +287,7 @@ public:
      * \param elemVolVars All volume variables for the element
      * \param scv The sub control volume
      *
-     * For this method, the \a values parameter stores the conserved quantity rate
+     * For this method, the return parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
@@ -307,7 +309,7 @@ public:
      *            for which the source term ought to be
      *            specified in global coordinates
      *
-     * For this method, the \a values parameter stores the conserved quantity rate
+     * For this method, the values parameter stores the conserved quantity rate
      * generated or annihilate per volume unit. Positive values mean
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
@@ -326,7 +328,7 @@ public:
      * \param pointSources A vector of PointSource s that contain
               source values for all phases and space positions.
      *
-     * For this method, the \a values method of the point source
+     * For this method, the values method of the point source
      * has to return the absolute rate values in units
      * \f$ [ \textnormal{unit of conserved quantity} / s ] \f$.
      * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
@@ -339,8 +341,7 @@ public:
      *        for all phases within a given sub-control-volume.
      *
      * This is the method for the case where the point source is
-     * solution dependent and requires some quantities that
-     * are specific to the fully-implicit method.
+     * solution dependent
      *
      * \param source A single point source
      * \param element The finite element
@@ -348,7 +349,7 @@ public:
      * \param elemVolVars All volume variables for the element
      * \param scv The sub control volume
      *
-     * For this method, the \a values() method of the point sources returns
+     * For this method, the values() method of the point sources returns
      * the absolute conserved quantity rate generated or annihilate in
      * units \f$ [ \textnormal{unit of conserved quantity} / s ] \f$.
      * Positive values mean that the conserved quantity is created, negative ones mean that it vanishes.
@@ -453,7 +454,7 @@ public:
 
     /*!
      * \brief Applies the initial solution for all degrees of freedom of the grid.
-     *
+     * \param sol the initial solution vector
     */
     void applyInitialSolution(SolutionVector& sol) const
     {
@@ -523,165 +524,6 @@ public:
     }
 
     // \}
-
-    /*!
-     * \name Simulation steering
-     */
-    // \{
-
-    /*!
-     * \brief TODO serialization
-     */
-    // void timeIntegration()
-    // {
-    //     // if the simulation  run is about to abort, write restart files for the current and previous time steps:
-    //     // write restart file for the current time step
-    //     serialize();
-
-    //     //write restart file for the previous time step:
-    //     //set the time manager and the solution vector to the previous time step
-    //     const Scalar time = timeManager().time();
-    //     timeManager().setTime(time - timeManager().previousTimeStepSize());
-    //     const auto curSol = model_.curSol();
-    //     model_.curSol() = model_.prevSol();
-    //     //write restart file
-    //     serialize();
-    //     //reset time manager and solution vector
-    //     model_.curSol() = curSol;
-    //     timeManager().setTime(time);
-    // }
-
-    // TODO could be move to the episode manager that is user implemented?
-    // /*!
-    //  * \brief Called when the end of an simulation episode is reached.
-    //  *
-    //  * Typically a new episode should be started in this method.
-    //  */
-    // void episodeEnd()
-    // {
-    //     std::cerr << "The end of an episode is reached, but the problem "
-    //               << "does not override the episodeEnd() method. "
-    //               << "Doing nothing!\n";
-    // }
-    // \}
-
-    /*!
-     * \name TODO: Restart mechanism
-     */
-    // \{
-
-    /*!
-     * \brief This method writes the complete state of the simulation
-     *        to the harddisk.
-     *
-     * The file will start with the prefix returned by the name()
-     * method, has the current time of the simulation clock in it's
-     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Restart for details.
-     */
-    // void serialize()
-    // {
-    //     using Restarter = Restart;
-    //     Restarter res;
-    //     res.serializeBegin(asImp_());
-    //     if (gridView().comm().rank() == 0)
-    //         std::cout << "Serialize to file '" << res.fileName() << "'\n";
-
-    //     timeManager().serialize(res);
-    //     asImp_().serialize(res);
-    //     res.serializeEnd();
-    // }
-
-    /*!
-     * \brief This method writes the complete state of the problem
-     *        to the harddisk.
-     *
-     * The file will start with the prefix returned by the name()
-     * method, has the current time of the simulation clock in it's
-     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See Restart for details.
-     *
-     * \tparam Restarter The serializer type
-     *
-     * \param res The serializer object
-     */
-    // template <class Restarter>
-    // void serialize(Restarter &res)
-    // {
-    //     vtkOutputModule_->serialize(res);
-    //     model().serialize(res);
-    // }
-
-    /*!
-     * \brief Load a previously saved state of the whole simulation
-     *        from disk.
-     *
-     * \param tRestart The simulation time on which the program was
-     *                 written to disk.
-     */
-    // void restart(const Scalar tRestart)
-    // {
-    //     using Restarter = Restart;
-
-    //     Restarter res;
-
-    //     res.deserializeBegin(asImp_(), tRestart);
-    //     if (gridView().comm().rank() == 0)
-    //         std::cout << "Deserialize from file '" << res.fileName() << "'\n";
-    //     timeManager().deserialize(res);
-    //     asImp_().deserialize(res);
-    //     res.deserializeEnd();
-    // }
-
-    /*!
-     * \brief This method restores the complete state of the problem
-     *        from disk.
-     *
-     * It is the inverse of the serialize() method.
-     *
-     * \tparam Restarter The deserializer type
-     *
-     * \param res The deserializer object
-     */
-    // template <class Restarter>
-    // void deserialize(Restarter &res)
-    // {
-    //     vtkOutputModule_->deserialize(res);
-    //     model().deserialize(res);
-    // }
-
-    // \}
-
-    // TODO this can probably be a setter function for the assembler
-    /*!
-     * \brief Function to add additional DOF dependencies, i.e. the residual of DOF globalIdx depends
-     * on additional DOFs not included in the discretization schemes' occupation pattern
-     *
-     * \param globalIdx The index of the DOF that depends on additional DOFs
-     * \return A vector of the additional DOFs the DOF with index globalIdx depends on
-     *
-     * \note This will lead to additional matrix entries and derivative computations automatically
-     *       This function is used when creating the matrix and when computing entries of the jacobian matrix
-     * Per default we don't have additional DOFs
-     */
-    // std::vector<IndexType> getAdditionalDofDependencies(IndexType globalIdx) const
-    // { return std::vector<IndexType>(); }
-
-    // TODO is this necessary or can it just be meshed?
-    /*!
-     * \brief Function to set intersections as interior boundaries. This functionality is only
-     *        available for models using cell-centered schemes. The corresponding boundary
-     *        types and conditions are obtained from the standard methods.
-     *
-     * \param element The finite element
-     * \param intersection The intersection within the element
-     * \return boolean to mark an intersection as an interior boundary
-     *
-     * Per default we don't have interior boundaries
-     */
-    // template<class T = TypeTag>
-    // bool isInteriorBoundary(const Element& element, const Intersection& intersection) const
-    // { return false; }
 
     //! The finite volume grid geometry
     const FVGridGeometry& fvGridGeometry() const

@@ -17,6 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
+ * \ingroup Common
  * \file
  * \brief Provides 3rd order polynomial splines.
  */
@@ -30,7 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup Spline
+ * \ingroup Common
  * \brief A 3rd order polynomial spline.
 
  * This class implements a spline \f$s(x)\f$ for which, given \f$n\f$ sampling

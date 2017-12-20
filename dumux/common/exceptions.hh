@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Some exceptions thrown in DUMUX
+ * \ingroup Common
+ * \brief Some exceptions thrown in DuMu<sup>x</sup>
  */
 #ifndef DUMUX_EXCEPTIONS_HH
 #define DUMUX_EXCEPTIONS_HH
@@ -29,7 +30,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup Exception
+ * \ingroup Common
  * \brief Exception thrown if a fixable numerical problem occurs.
  *
  * (e.g. time step too big, etc.)
@@ -52,7 +53,7 @@ public:
 };
 
 /*!
- * \ingroup Exception
+ * \ingroup Common
  * \brief Exception thrown if a run-time parameter is not specified correctly.
  */
 class ParameterException : public Dune::Exception

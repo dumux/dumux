@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Implements tabulation for a two-dimensional function.
  */
 #ifndef DUMUX_TABULATED_2D_FUNCTION_HH
@@ -26,9 +27,10 @@
 #include <vector>
 #include <cassert>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
+ * \ingroup Common
  * \brief Implements tabulation for a two-dimensional function.
  *
  * This class can be used to tabulate a two dimensional function

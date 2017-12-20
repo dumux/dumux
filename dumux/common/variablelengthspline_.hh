@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Implements a spline with a variable number of sampling points
  */
 #ifndef DUMUX_VARIABLE_LENGTH_SPLINE_HH
@@ -30,9 +31,10 @@
 
 #include "splinecommon_.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
+ * \ingroup Common
  * \brief The common code for all 3rd order polynomial splines with
  *        where the number of sampling points only known at run-time.
  */
@@ -424,6 +426,7 @@ protected:
     Vector yPos_;
     Vector m_;
 };
-}
+
+} // end namespace Dumux
 
 #endif

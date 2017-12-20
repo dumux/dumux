@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Common
  * \brief Boundary flag to store e.g. in sub control volume faces
  */
 #ifndef DUMUX_BOUNDARY_FLAG_HH
@@ -29,10 +29,14 @@
 #include <dune/alugrid/grid.hh>
 #endif
 
-namespace Dumux
-{
+namespace Dumux {
 
-//! a boundary flag class specialized on the grid type
+/*!
+ * \file
+ * \ingroup Common
+ * \brief Boundary flag to store e.g. in sub control volume faces
+ * \tparam Grid the type of the gri
+ */
 template<class Grid>
 class BoundaryFlag
 {

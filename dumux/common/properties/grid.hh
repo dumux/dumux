@@ -17,22 +17,19 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
+ * \ingroup Properties
  * \brief Defines a type tags and some fundamental grid-related properties
  */
 #ifndef DUMUX_GRID_PROPERTIES_HH
 #define DUMUX_GRID_PROPERTIES_HH
 
-#include <dumux/common/properties.hh>
-
+#include <dune/common/version.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
+#include <dumux/common/properties.hh>
 #include <dumux/common/pointsource.hh>
 #include <dumux/io/gridcreator.hh>
-
-#include <dune/common/version.hh>
 
 namespace Dumux
 {

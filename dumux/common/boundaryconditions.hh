@@ -16,21 +16,21 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Common
+ * \brief Definition of boundary condition types, extend if necessary
+ * \todo can this be removed for the sake of boundarytypes.hh?
+ */
 #ifndef DUMUX_BOUNDARYCONDITIONS_HH
 #define DUMUX_BOUNDARYCONDITIONS_HH
 
-/**
-* @file
-* @brief  Definition of boundary condition types, extend if necessary
-*/
-namespace Dumux
-{
-/**
- * \ingroup BC
- * @brief Define a class containing boundary condition flags
- */
+namespace Dumux {
 
-//! base Class that defines boundary condition flags
+/*!
+ * \ingroup Common
+ * \brief Define a class containing boundary condition flags
+ */
 struct BoundaryConditions
 {
     /** \brief These values are ordered according to precedence */
@@ -42,6 +42,6 @@ struct BoundaryConditions
     };
 };
 
-/** @} */
-}
+} // end namespace Dumux
+
 #endif

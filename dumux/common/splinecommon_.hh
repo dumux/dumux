@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief The common code for all 3rd order polynomial splines.
  */
 #ifndef DUMUX_SPLINE_COMMON__HH
@@ -33,9 +34,10 @@
 #include "math.hh"
 #include "valgrind.hh"
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
+ * \ingroup Common
  * \brief The common code for all 3rd order polynomial splines.
  */
 template<class ScalarT, class ImplementationT>

@@ -16,6 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief An interface for a set of geometric entities
  * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
  * It defines the minimum requirement for such a set
@@ -29,6 +30,12 @@
 
 namespace Dumux {
 
+/*!
+ * \ingroup Common
+ * \brief An interface for a set of geometric entities
+ * \note This can be used e.g. to contruct a bounding box volume hierarchy of a grid
+ * It defines the minimum requirement for such a set
+ */
 template <class GridView, int codim = 0>
 class GridViewGeometricEntitySet
 {

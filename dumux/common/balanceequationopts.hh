@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class to set options used by the local residual when
+ * \ingroup Common
+ * \brief Traits class to set options used by the local residual when
  *        when evaluating the balance equations.
  */
 #ifndef BALANCE_EQUATION_OPTIONS_HH
@@ -28,8 +29,11 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BC
- * \brief Class to specify the type of a boundary.
+ * \ingroup Common
+ * \brief Traits class to set options used by the local residual when
+ *        when evaluating the balance equations.
+ * \todo include useMoles here
+ * \todo include replaceCompIdx here
  */
 template <class TypeTag>
 class BalanceEquationOptions
@@ -44,6 +48,6 @@ public:
     { return true; }
 };
 
-}
+} // end namespace Dumux
 
 #endif

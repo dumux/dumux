@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Manages the handling of time dependent problems
  */
 #ifndef DUMUX_TIME_MANAGER_HH
@@ -34,16 +35,11 @@
 #include "properties.hh"
 #include "parameters.hh"
 
-namespace Dumux
-{
-namespace Properties
-{
-NEW_PROP_TAG(Scalar);
-NEW_PROP_TAG(Problem);
-}
+namespace Dumux {
 
 /*!
- * \ingroup SimControl
+ * \ingroup Common
+ * \deprecated
  * \brief Manages the handling of time dependent problems.
  *
  * This class facilitates the time management of the simulation.

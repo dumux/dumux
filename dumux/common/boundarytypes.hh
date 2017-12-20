@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Class to specify the type of a boundary.
  */
 #ifndef DUMUX_BOUNDARY_TYPES_HH
@@ -27,7 +28,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BC
+ * \ingroup Common
  * \brief Class to specify the type of a boundary.
  */
 template <int numEq>

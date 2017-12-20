@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief A parameter tree that logs which parameters have been used
  */
 #ifndef DUMUX_LOGGING_PARAMETER_TREE_HH
@@ -28,9 +29,7 @@
 #include <string>
 
 #include <dune/common/parametertree.hh>
-
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/parameters.hh>
 
 namespace Dumux
 {
@@ -76,7 +75,6 @@ public:
      * Prints all entries with given prefix.
      *
      * \param stream Stream to print to
-     * \param prefix for key and substructure names
      */
     void reportAll(std::ostream& stream = std::cout) const
     {
@@ -415,7 +413,7 @@ public:
 
     /** \brief Find the keys that haven't been used yet
      *
-     * \retuns unusedParams Container storing unused keys
+     * \return unusedParams Container storing unused keys
      * \note Useful for debugging purposes
      */
     std::vector<std::string> getUnusedKeys() const

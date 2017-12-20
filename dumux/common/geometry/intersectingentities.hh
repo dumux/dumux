@@ -16,6 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Algorithms that finds which geometric entites intersect
  */
 #ifndef DUMUX_INTERSECTING_ENTITIES_HH
@@ -30,10 +31,12 @@
 #include <dumux/common/geometry/geometryintersection.hh>
 #include <dumux/common/geometry/boundingboxtreeintersection.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-//! Compute all intersections between entities and a point
+/*!
+ * \ingroup Common
+ * \brief Compute all intersections between entities and a point
+ */
 template<class EntitySet, class ctype, int dimworld>
 inline std::vector<std::size_t>
 intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
@@ -45,7 +48,10 @@ intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
     return entities;
 }
 
-//! Compute collisions with point for a node of the bounding box tree
+/*!
+ * \ingroup Common
+ * \brief Compute intersections with point for all nodes of the bounding box tree recursively
+ */
 template<class EntitySet, class ctype, int dimworld>
 void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
                           const BoundingBoxTree<EntitySet>& tree,
@@ -77,7 +83,10 @@ void intersectingEntities(const Dune::FieldVector<ctype, dimworld>& point,
     }
 }
 
-//! Compute all intersections between two bounding box trees
+/*!
+ * \ingroup Common
+ * \brief Compute all intersections between two bounding box trees
+ */
 template<class EntitySet0, class EntitySet1>
 inline std::vector<BoundingBoxTreeIntersection<EntitySet0, EntitySet1>>
 intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
@@ -99,7 +108,10 @@ intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
     return intersections;
 }
 
-//! Compute all intersections between two bounding box tree nodes recursively
+/*!
+ * \ingroup Common
+ * \brief Compute all intersections between two all bounding box tree nodes recursively
+ */
 template<class EntitySet0, class EntitySet1>
 void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                           const BoundingBoxTree<EntitySet1>& treeB,

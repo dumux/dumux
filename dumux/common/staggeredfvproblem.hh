@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Base class for all problems
  */
 #ifndef DUMUX_STAGGERD_FV_PROBLEM_HH
@@ -30,6 +31,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Problems
+ * \ingroup Common
  * \brief Base class for all finite-volume problems
  *
  * \note All quantities (regarding the units) are specified assuming a
@@ -67,8 +69,7 @@ class StaggeredFVProblem : public FVProblem<TypeTag>
 public:
     /*!
      * \brief Constructor
-     *
-     * \param gridView The simulation's idea about physical space
+    * \param fvGridGeometry The finite volume grid geometry
      */
     StaggeredFVProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Common
  * \brief This file provides the infrastructure to use quad-precision
  *        floating point values in the numerical models.
  */

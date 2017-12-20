@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Manages the handling of time dependent problems
  */
 #ifndef DUMUX_TIME_LOOP_HH
@@ -35,7 +36,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup SimControl
+ * \ingroup Common
  * \brief Manages the handling of time dependent problems.
  *
  * This class facilitates the time management of the simulation.
@@ -54,14 +55,6 @@ namespace Dumux
  * the (simulation) time it starts, its length and a consecutive
  * index starting at 0.
  */
-
-//! The abstract base class
-//! only contains the methods needed during the assembly
-////////////////////////////////////////////////////////////////////
-//! TODO this might not be necessary if t and dt are actually passed into
-//! a time stepping method that forwards it everywhere nedded
-//! Then the time loop always stays contained in the main file
-////////////////////////////////////////////////////////////////////
 template<class Scalar>
 class TimeLoopBase
 {
@@ -196,7 +189,7 @@ public:
     /*!
      * \brief Set the maximum time step size to a given value.
      *
-     * \param dt The new value for the maximum time step size \f$\mathrm{[s]}\f$
+     * \param maxDt The new value for the maximum time step size \f$\mathrm{[s]}\f$
      */
     void setMaxTimeStepSize(Scalar maxDt)
     { maxTimeStepSize_ = maxDt; }
@@ -402,9 +395,9 @@ public:
     }
 
     /*!
-     * \brief Set the maximum time step size to a given value.
-     *
-     * \param dt The new value for the maximum time step size \f$\mathrm{[s]}\f$
+     * \brief Set a periodic check point
+     * \note You can query if we are at a time check point with isCheckPoint()
+     * \param interval Set a periodic checkout every [interal] seconds
      */
     void setPeriodicCheckPoint(Scalar interval)
     {

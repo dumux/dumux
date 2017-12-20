@@ -19,6 +19,7 @@
 
 /*!
  * \file
+ * \ingroup Common
  * \brief An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
  * \note The reordering needs the SCOTCH library
  */
@@ -33,6 +34,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup Common
+ * \brief An SCSG element mapper that sorts the indices in order to optimize the matrix sparsity pattern
+ * \note The reordering needs the SCOTCH library
+ */
 template<class GridView, int codimension>
 class ReorderingDofMapper
 : public Dune::Mapper<typename GridView::Grid, ReorderingDofMapper<GridView, codimension>, typename GridView::IndexSet::IndexType>

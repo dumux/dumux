@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Define some often used mathematical functions
  */
 #ifndef DUMUX_MATH_HH
@@ -34,7 +35,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Calculate the harmonic mean of two scalar values.
  *
  * \param x The first input value
@@ -49,7 +50,7 @@ Scalar harmonicMean(Scalar x, Scalar y)
 }
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Calculate the geometric mean of two scalar values.
  *
  * \param x The first input value
@@ -65,7 +66,7 @@ Scalar geometricMean(Scalar x, Scalar y)
 }
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Calculate the harmonic mean of a fixed-size matrix.
  *
  * This is done by calculating the harmonic mean for each entry
@@ -94,7 +95,7 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
 }
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Invert a linear polynomial analytically
  *
  * The polynomial is defined as
@@ -120,7 +121,7 @@ int invertLinearPolynomial(SolContainer &sol,
 }
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Invert a quadratic polynomial analytically
  *
  * The polynomial is defined as
@@ -193,7 +194,7 @@ void invertCubicPolynomialPostProcess_(SolContainer &sol,
 //! \endcond
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Invert a cubic polynomial analytically
  *
  * The polynomial is defined as
@@ -382,7 +383,7 @@ int invertCubicPolynomial(SolContainer *sol,
 }
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -408,7 +409,7 @@ bool isLarger(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Comparison of two position vectors
  *
  * Compares an current position vector with a reference vector, and returns true
@@ -434,7 +435,7 @@ bool isSmaller(const Dune::FieldVector<Scalar, dim> &pos,
 }
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Comparison of three position vectors
  *
  * Compares an current position vector with two reference vector, and returns true
@@ -464,7 +465,7 @@ bool isBetween(const Dune::FieldVector<Scalar, dim> &pos,
 
 
 /*!
- * \ingroup Math
+ * \ingroup Common
  * \brief Evaluates the Antoine equation used to calculate the vapour
  *        pressure of various liquids.
  *
@@ -487,6 +488,7 @@ Scalar antoine(Scalar temperature,
 }
 
 /*!
+ * \ingroup Common
  * \brief Sign or signum function.
  *
  * Returns 1 for a positive argument.
@@ -500,6 +502,7 @@ int sign(const ValueType& value)
 }
 
 /*!
+ * \ingroup Common
  * \brief Cross product of two vectors in three-dimensional Euclidean space
  *
  * \param vec1 The first vector
@@ -515,6 +518,7 @@ Dune::FieldVector<Scalar, 3> crossProduct(const Dune::FieldVector<Scalar, 3> &ve
 }
 
 /*!
+ * \ingroup Common
  * \brief Cross product of two vectors in two-dimensional Euclidean space retuning scalar
  *
  * \param vec1 The first vector
@@ -526,6 +530,7 @@ Scalar crossProduct(const Dune::FieldVector<Scalar, 2> &vec1,
 {   return vec1[0]*vec2[1]-vec1[1]*vec2[0]; }
 
 /*!
+ * \ingroup Common
  * \brief Triple product of three vectors in three-dimensional Euclidean space retuning scalar
  *
  * \param vec1 The first vector
@@ -539,6 +544,7 @@ Scalar tripleProduct(const Dune::FieldVector<Scalar, 3> &vec1,
 {   return crossProduct<Scalar>(vec1, vec2)*vec3; }
 
 /*!
+ * \ingroup Common
  * \brief Transpose a FieldMatrix
  *
  * \param M The matrix to be transposed
@@ -555,6 +561,7 @@ Dune::FieldMatrix<Scalar, n, m> getTransposed(const Dune::FieldMatrix<Scalar, m,
 }
 
 /*!
+ * \ingroup Common
  * \brief Transpose a DynamicMatrix
  *
  * \param M The matrix to be transposed
@@ -575,6 +582,7 @@ Dune::DynamicMatrix<Scalar> getTransposed(const Dune::DynamicMatrix<Scalar>& M)
 }
 
 /*!
+ * \ingroup Common
  * \brief Multiply two dynamic matrices
  *
  * \param M1 The first dynamic matrix
@@ -600,6 +608,7 @@ Dune::DynamicMatrix<Scalar> multiplyMatrices(const Dune::DynamicMatrix<Scalar> &
 }
 
 /*!
+ * \ingroup Common
  * \brief Trace of dynamic matrix
  *
  * \param M The dynamic matrix
@@ -620,6 +629,7 @@ Scalar trace(const Dune::DynamicMatrix<Scalar>& M)
 }
 
 /*!
+ * \ingroup Common
  * \brief Evaluates the scalar product of a vector v2, projected by
  *        a matrix M, with a vector v1.
  *
@@ -644,6 +654,7 @@ vtmv(const Dune::DenseVector<V1>& v1,
 }
 
 /*!
+ * \ingroup Common
  * \brief Evaluates the scalar product of a vector v2, scaled by
  *        a scalar m, with a vector v1.
  *

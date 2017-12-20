@@ -17,7 +17,7 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
+ * \ingroup Common
  * \file
  *
  * \brief _Declares_ all properties used in Dumux.
@@ -31,10 +31,9 @@
 #include <dumux/common/properties/propertysystem.hh>
 #endif
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 ///////////////////////////////////////
 // Basic properties of numeric models:
 ///////////////////////////////////////

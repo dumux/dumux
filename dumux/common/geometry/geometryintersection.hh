@@ -16,6 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief A class for collision detection of two geometries
  *        and computation of intersection corners
  */
@@ -32,6 +33,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Common
  * \brief A class for geometry collision detection and intersection calculation
  * The class can be specialized for combinations of dimworld, dim1, dim2, where
  * dimworld is the world dimension embedding a grid of dim1 and a grid of dim2.

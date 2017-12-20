@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Provides the class creating the famous dumux start and end messages
+ * \ingroup Common
+ * \brief Provides the class creating the famous DuMu<sup>x</sup> start and end messages
  */
 #ifndef DUMUX_MESSAGE_HH
 #define DUMUX_MESSAGE_HH
@@ -31,8 +32,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Start
- * \brief Dumux start and end message.
+ * \ingroup Common
+ * \brief DuMu<sup>x</sup> start and end message.
  */
 class DumuxMessage
 {

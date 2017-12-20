@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief A map from indices to entities using grid entity seeds
  */
 #ifndef DUMUX_ENTITY_INDEX_MAP_HH
@@ -26,6 +27,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup Common
  * \brief A map from indices to entities using grid entity seeds
  */
 template <class GridView, int codim = 0>

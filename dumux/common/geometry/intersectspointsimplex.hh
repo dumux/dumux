@@ -16,6 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Detect if a point intersects a simplex (including boundary)
  */
 #ifndef DUMUX_INTERSECTS_POINT_SIMPLEX_HH
@@ -27,7 +28,10 @@
 
 namespace Dumux {
 
-//! Find out whether a point is inside a tetrahedron (p0, p1, p2, p3) (dimworld is 3)
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a tetrahedron (p0, p1, p2, p3) (dimworld is 3)
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p0,
@@ -66,7 +70,10 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     return true;
 }
 
-//! Find out whether a point is inside a triangle (p0, p1, p2) (dimworld is 3)
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a triangle (p0, p1, p2, p3) (dimworld is 3)
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p0,
@@ -112,7 +119,10 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     return true;
 }
 
-//! Find out whether a point is inside a triangle (p0, p1, p2) (dimworld is 2)
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a triangle (p0, p1, p2, p3) (dimworld is 2)
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 2), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p0,
@@ -136,7 +146,10 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
             && (s + t) < 2*A*sign + eps);
 }
 
-//! Find out whether a point is inside an interval (p0, p1) (dimworld is 3)
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 3)
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 3), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p0,
@@ -173,7 +186,10 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     return (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_));
 }
 
-//! Find out whether a point is inside an interval (p0, p1) (dimworld is 2)
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 2)
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 2), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p0,
@@ -211,7 +227,10 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
     return (v1.dot(v2) > 0.0 && v2norm < v1norm*(1 + eps_));
 }
 
-//! Find out whether a point is inside an interval (p0, p1) (dimworld is 1)
+/*!
+ * \ingroup Common
+ * \brief Find out whether a point is inside a interval (p0, p1, p2, p3) (dimworld is 1)
+ */
 template<class ctype, int dimworld, typename std::enable_if_t<(dimworld == 1), int> = 0>
 bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p0,

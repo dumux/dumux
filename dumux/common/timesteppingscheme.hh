@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief Manages the handling of time dependent problems
  */
 #ifndef DUMUX_TIME_STEPPING_SCHEME_HH
@@ -29,6 +30,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Common
  * \brief The abstract time stepping parameter interface
  */
 template <class Scalar>
@@ -59,6 +61,7 @@ public:
 };
 
 /*!
+ * \ingroup Common
  * \brief The time stepping scheme class
  */
 template <class Scalar>

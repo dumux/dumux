@@ -18,15 +18,16 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Common
  * \brief A class to create an iterable integer range
  */
 #ifndef DUMUX_INTEGER_RANGE_HH
 #define DUMUX_INTEGER_RANGE_HH
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
+ * \ingroup Common
  * \brief This class generates a IntRange [a,b) which can be used in a for loop, e.g.
  *        for(auto i : IntRange(3) { ... i = 0, 1, 2 }   or
  *        for(auto i : IntRange(5, 8) { ... i = 5, 6, 7 }

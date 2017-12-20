@@ -17,9 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Parameter
  * \file
- *
+ * \ingroup Common
  * \brief The infrastructure to retrieve run-time parameters from
  *        Dune::ParameterTrees with the defaul value taken from the
  *        property system.
@@ -42,8 +41,9 @@
 #include <dumux/common/defaultusagemessage.hh>
 #include <dumux/common/loggingparametertree.hh>
 
+#ifndef DOXYGEN // hide deprecated macros from doxygen
 /*!
- * \ingroup Parameter
+ * \ingroup Common
  * \brief Retrieve a runtime parameter which _does_ have a default value taken from
  *        the Dumux property system.
  *
@@ -59,7 +59,7 @@
 //     ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#ParamName), GET_PROP_VALUE(TypeTag, ParamName))
 
 /*!
- * \ingroup Parameter
+ * \ingroup Common
  * \brief Retrieve a runtime parameter which _does_ have a default value taken from
  *        the Dumux property system.
  *
@@ -79,7 +79,7 @@
 
 
 /*!
- * \ingroup Parameter
+ * \ingroup Common
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
@@ -94,7 +94,7 @@
     ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#ParamName))
 
 /*!
- * \ingroup Parameter
+ * \ingroup Common
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
@@ -123,7 +123,7 @@
     ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(ParamName))
 
 /*!
- * \ingroup Parameter
+ * \ingroup Common
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
@@ -141,7 +141,7 @@
     ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(#GroupName) + "." + std::string(#ParamName))
 
 /*!
- * \ingroup Parameter
+ * \ingroup Common
  * \brief Retrieve a runtime parameter which _does not_ have a default value taken from
  *        the Dumux property system.
  *
@@ -171,10 +171,15 @@
 #define GET_RUNTIME_PARAM_FROM_GROUP_CSTRING(TypeTag, ParamType, GroupName, ParamName) \
     ::Dumux::template getParam_UsingDeprecatedMacro<ParamType>(std::string(GroupName) + "." + std::string(#ParamName))
 
-namespace Dumux
-{
+#endif // DOXYGEN
 
-//! The runtime parameter managing class
+namespace Dumux {
+
+/*!
+ * \ingroup Common
+ * \brief Parameter class managing runtime input parameters
+ * \todo Doc me!
+ */
 class Parameters {
 
     using DefaultParams = std::function<void (Dune::ParameterTree&)>;
@@ -399,8 +404,11 @@ void setParam(Dune::ParameterTree& params,
         params[group + "." + key] = value;
 }
 
-// a free function to get a parameter from the parameter tree singleton
-// e.g. auto endTime = getParam<double>("TimeManager.TEnd");
+/*!
+ * \ingroup Common
+ * \brief A free function to get a parameter from the parameter tree singleton
+ * \note \code auto endTime = getParam<double>("TimeManager.TEnd"); \endcode
+ */
 template<typename T, typename... Args>
 T getParam(Args&&... args)
 {
@@ -408,8 +416,11 @@ T getParam(Args&&... args)
     return p.template get<T>(std::forward<Args>(args)... );
 }
 
-// a free function to get a parameter from the parameter tree singleton
-// e.g. auto endTime = getParam<double>("TimeManager.TEnd");
+/*!
+ * \ingroup Common
+ * \brief A free function to get a parameter from the parameter tree singleton with a model group
+ * \note \code  auto endTime = getParamFromGroup<double>("FreeFlow", "TimeManager.TEnd"); \endcode
+ */
 template<typename T, typename... Args>
 T getParamFromGroup(Args&&... args)
 {
@@ -417,14 +428,20 @@ T getParamFromGroup(Args&&... args)
     return p.template getFromGroup<T>(std::forward<Args>(args)... );
 }
 
-// a free function to check whether a key exists
+/*!
+ * \ingroup Common
+ * \brief Check whether a key exists in the parameter tree
+ */
 bool haveParam(const std::string& param)
 {
     const auto& p = Parameters::getTree();
     return p.hasKey(param);
 }
 
-// a free function to check whether a key exists
+/*!
+ * \ingroup Common
+ * \brief Check whether a key exists in the parameter tree with a model group prefix
+ */
 template<typename... Args>
 bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
 {
@@ -435,6 +452,7 @@ bool haveParamInGroup(const std::string& paramGroup, const std::string& param)
         return p.hasKey(paramGroup + "." + param);
 }
 
+#ifndef DOXYGEN
 template<typename T, typename... Args>
 DUNE_DEPRECATED_MSG("Using preprocessor MACROS for getting parameters is deprecated on next. Please use the new getParam method.")
 T getParam_UsingDeprecatedMacro(Args&&... args)
@@ -442,6 +460,7 @@ T getParam_UsingDeprecatedMacro(Args&&... args)
     const auto& p = Parameters::getTree();
     return p.template get<T>(std::forward<Args>(args)... );
 }
+#endif
 
 } // namespace Dumux
 

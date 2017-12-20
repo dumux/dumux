@@ -17,12 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file dimensionlessnumbers.hh
- *
+ * \file
+ * \ingroup Common
  * \brief Collection of functions, calculating dimensionless numbers.
  *
- *        All the input to the dimensionless numbers has to be provided as function arguments.
- *        Rendering this collection generic in the sense that it can be used by any model.
+ * All the input to the dimensionless numbers has to be provided as function arguments.
+ * Rendering this collection generic in the sense that it can be used by any model.
  */
 #ifndef DIMENSIONLESS_NUMBERS_HH
 #define DIMENSIONLESS_NUMBERS_HH
@@ -31,14 +31,14 @@
 
 #include <dune/common/exceptions.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \brief Collection of functions which calculate dimensionless numbers.
- *
- *        Each number has it's own function.
- *        All the parameters for the calculation have to be handed over.
- *        Rendering this collection generic in the sense that it can be used by any model.
+ * \ingroup Common
+ * Each number has it's own function.
+ * All the parameters for the calculation have to be handed over.
+ * Rendering this collection generic in the sense that it can be used by any model.
  */
 template <class Scalar>
 class DimensionlessNumbers
@@ -48,11 +48,11 @@ public:
 /*!
  * \brief   Calculate the Reynolds Number [-] (Re).
  *
- *          The Reynolds number is a measure for the relation of inertial to viscous forces.
- *          The bigger the value, the more important inertial (as compared to viscous) effects become.
- *          According to Bear [Dynamics of fluids in porous media (1972)] Darcy's law is valid for Re<1.
+ * The Reynolds number is a measure for the relation of inertial to viscous forces.
+ * The bigger the value, the more important inertial (as compared to viscous) effects become.
+ * According to Bear [Dynamics of fluids in porous media (1972)] Darcy's law is valid for Re<1.
  *
- *          source for Reynolds number definition: http://en.wikipedia.org/wiki/Reynolds_number
+ * Source for Reynolds number definition: http://en.wikipedia.org/wiki/Reynolds_number
  *
  * \param darcyMagVelocity      The absolute value of the darcy velocity. In the context of box models this
  *                              leads to a problem: the velocities are defined on the faces while other things (storage, sources, output)
@@ -296,7 +296,9 @@ static Scalar thermalDiffusivity(const Scalar & thermalConductivity ,
 {
     return thermalConductivity / (phaseDensity * heatCapacity);
 }
-}; // end class
+
+}; // end class DimensionlessNumbers
+
 } // end namespace Dumux
 
 #endif // DIMENSIONLESS_NUMBERS_HH

@@ -17,11 +17,9 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
  * \file
- *
- * \brief Defines a type tags and some fundamental properties for
- *        all models
+ * \ingroup Properties
+ * \brief Defines a type tags and some fundamental properties for all models
  */
 #ifndef DUMUX_MODEL_PROPERTIES_HH
 #define DUMUX_MODEL_PROPERTIES_HH
@@ -35,10 +33,9 @@
 // Forward declaration
 namespace Dune { class ParameterTree; }
 
-namespace Dumux
-{
-namespace Properties
-{
+namespace Dumux {
+namespace Properties {
+
 //! Type tag for numeric models.
 NEW_TYPE_TAG(ModelProperties);
 
