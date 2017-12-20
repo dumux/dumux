@@ -23,7 +23,7 @@
  *        n-component fully implicit model.
  *
  * In the unsaturated zone, Richards' equation
- *\f{eqnarray}
+ *\f{eqnarray*}
  && \frac{\partial (\sum_w \varrho_w X_w^\kappa \phi S_w )}
  {\partial t}
  - \sum_w  \text{div} \left\{ \varrho_w X_w^\kappa
