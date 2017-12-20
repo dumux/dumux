@@ -79,6 +79,7 @@ SET_TYPE_PROP(PorousMediumFlow, VelocityOutput, PorousMediumFlowVelocityOutput<T
 //! By default, we set an empty primary variables switch
 SET_TYPE_PROP(PorousMediumFlow, PrimaryVariableSwitch, NoPrimaryVariableSwitch<TypeTag>);
 
+SET_BOOL_PROP(PorousMediumFlow, EnableThermalNonEquilibrium, false);
 } // namespace Properties
 } // namespace Dumux
 
