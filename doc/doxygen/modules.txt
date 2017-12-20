@@ -8,10 +8,12 @@
 /* ***************** Porousmediumflow ******************/
 /*!
  * \defgroup PorousmediumflowModels Porous-Medium Flow Models
+ * \brief Single and multi-phase models for flow and transport in porous materials
  */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup OnePModel 1p (one-phase Darcy flow)
+     * \defgroup OnePModel 1p
+     * \brief single-phase (immiscible) Darcy flow
      * \copydetails ./porousmediumflow/1p/model.hh
      */
        /*!
@@ -25,19 +27,20 @@
         */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup OnePNCModel 1pnc (one-phase, n-component Darcy flow)
-     *
+     * \defgroup OnePNCModel 1pnc
+     * \brief single-phase, multi-component Darcy flow
      * \copydetails ./porousmediumflow/1pnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup OnePNCMinModel 1pncmin (one-phase, n-component Darcy flow with mineralization)
-     *
+     * \defgroup OnePNCMinModel 1pncmin
+     * \brief single-phase, multi-component Darcy flow with mineralization
      * \copydetails ./porousmediumflow/1pncmin/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup TwoPModel 2p (two-phase Darcy flow)
+     * \defgroup TwoPModel 2p
+     * \brief two-phase (immiscible) Darcy flow
      * \copydetails ./porousmediumflow/2p/model.hh
      */
         /*!
@@ -51,13 +54,15 @@
          */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup TwoPOneCModel 2p1c (two-phase, one-component Darcy flow)
+     * \defgroup TwoPOneCModel 2p1c
+     * \brief two-phase, one-component Darcy flow
      *
      * \copydetails ./porousmediumflow/2p1c/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup TwoPTwoCModel 2p2c (two-phase, two-component Darcy flow)
+     * \defgroup TwoPTwoCModel 2p2c
+     * \brief two-phase, two-component Darcy flow
      * \copydetails ./porousmediumflow/2p2c/model.hh
      */
         /*!
@@ -71,73 +76,82 @@
          */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup TwoPNCModel 2pnc (two-phase, n-component Darcy flow)
+     * \defgroup TwoPNCModel 2pnc
+     * \brief two-phase, multi-component Darcy flow
      *
      * \copydetails ./porousmediumflow/2pnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup TwoPNCMinModel 2pncmin (two-phase, n-component Darcy flow with mineralization)
-     *
+     * \defgroup TwoPNCMinModel 2pncmin
+     * \brief two-phase, multi-component Darcy flow with mineralization
      * \copydetails ./porousmediumflow/2pncmin/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup ThreePModel 3p (three-phase Darcy flow)
-     *
+     * \defgroup ThreePModel 3p
+     * \brief three-phase (immiscible) Darcy flow
      * \copydetails ./porousmediumflow/3p/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup ThreePThreeCModel 3p3c (three-phase, three-component Darcy flow)
+     * \defgroup ThreePThreeCModel 3p3c
+     * \brief three-phase, three-component Darcy flow
      *
      * \copydetails ./porousmediumflow/3p3c/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup ThreePWaterOilModel 3pwateroil (three-phase, two-component Darcy flow)
+     * \defgroup ThreePWaterOilModel 3pwateroil
+     * \brief three-phase, two-component Darcy flow with water (liquid & gas) and oil
      *
      * \copydetails ./porousmediumflow/3pwateroil/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup CO2Model CO2 (two-phase, two-component Darcy flow)
-     *
+     * \defgroup CO2Model CO2
+     * \brief two-phase, two-component Darcy flow specialized for supercritical CO<sub>2</sub> storage
      * \copydetails ./porousmediumflow/co2/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup MineralizationModel Mineralization (equation adding solid/mineralization-phases to a standard Darcy flow model)
+     * \defgroup MineralizationModel mineralization
+     * \brief model adding components that can precipitate as a solid phase to a standard Darcy flow model
      *
      * \copydetails ./porousmediumflow/mineralization/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup MPNCModel MpNc (m-phase, n-component Darcy flow)
+     * \defgroup MPNCModel mpnc
+     * \brief generalized multi-phase, multi-component Darcy flow
      *
      * \copydetails ./porousmediumflow/mpnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup NIModel Non-isothermal (energy equation, to be added to an isothermal model)
+     * \defgroup NIModel nonisothermal
+     * \brief model that adds an energy equation (thermal equilibrium) to another porous medium flow model
      *
-     * \copydetails ./porousmediumflow/non-isothermal/model.hh
+     * \copydetails ./porousmediumflow/nonisothermal/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup RichardsModel Richards (Richards flow)
+     * \defgroup RichardsModel Richards
+     * \brief Richards flow
      *
      * \copydetails ./porousmediumflow/richards/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup RichardsNCModel RichardsNC (n-component Richards flow)
+     * \defgroup RichardsNCModel Richards nc
+     * \brief Richards multi-component flow
      *
      * \copydetails ./porousmediumflow/richardsnc/model.hh
      */
     /*!
      * \ingroup PorousmediumflowModels
-     * \defgroup TracerModel Tracer (adds tracer transport to a model)
+     * \defgroup TracerModel Tracer
+     * \brief Multi-component advection-diffusion-reaction model with given velocity field
      *
      * \copydetails ./porousmediumflow/tracer/model.hh
      */
@@ -145,91 +159,95 @@
 /* ***************** FreeflowModels ******************/
 /*!
  * \defgroup FreeflowModels Free Flow Models
+ * \brief Single-phase Navier Stokes / Stokes model
  */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup NavierStokesModel NavierStokes (one-phase Navier-Stokes flow)
-     *
+     * \defgroup NavierStokesModel NavierStokes
+     * \brief single-phase Navier Stokes flow
      * \copydetails ./freeflow/navierstokes/model.hh
      */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup NavierStokesNCModel NavierStokesnc (one-phase, n-component Navier-Stokes flow)
-     *
+     * \defgroup NavierStokesNCModel NavierStokes nc
+     * \brief single-phase multi-component Navier Stokes flow
      * \copydetails ./freeflow/navierstokesnc/model.hh
      */
     /*!
      * \ingroup FreeflowModels
-     * \defgroup NavierStokesNIModel Non-isothermal (energy equation, to be added to a isothermal NavierStokes model)
-     *
+     * \defgroup NavierStokesNIModel nonisothermal
+     * \brief an energy equation adaptor for isothermal Navier Stokes models
      * \copydetails ./freeflow/non-isothermal/model.hh
      */
 
 /* ***************** Benchmarks and Tests ******************/
 /*!
  * \defgroup BenchmarksAndTests Benchmarks and Tests
- *  TODO: Doc me in modules.txt!
+ * \brief Benchmarks and tests used for (automated) testing and demonstration purposes
  */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup OnePTests 1p (one phase) benchmarks and tests
- 	 * OnePTests contain various tests using a OnePModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \brief various tests using a OnePModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup OnePNCTests 1pnc (one phase, n-component) benchmarks and tests
- 	 * OnePNCTests contain various tests using a OneNCPModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \defgroup OnePNCTests 1pnc (one phase, multi-component) benchmarks and tests
+ 	 * \brief various tests using a OneNCPModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup OnePNCMinTests 1pncmin (one phase, n-component mineralization) benchmarks and tests
+ 	 * \defgroup OnePNCMinTests 1pncmin (one phase, multi-component mineralization) benchmarks and tests
+   * \brief Various tests using the OnePNCMinModel.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPTests 2p (two phase) benchmarks and tests
- 	 * TwoPTests contain various tests using a TwoPModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \brief various tests using a TwoPModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPOneCTests 2p1c (two phase, one component) benchmarks and tests
+   * \brief various tests using the TwoPOneCModel
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TwoPTwoCTests 2p2c (two phase, two component) benchmarks and tests
- 	 * TwoPTwoCTests contain various tests using a TwoPTwoCModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \brief various tests using a TwoPTwoCModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup TwoPNCTests 2pnc (two phase, n-component) benchmarks and tests
- 	 * TwoPNCTests contain a fuel cell test problem using the TwoPNCModel. The files are listed below.
+ 	 * \defgroup TwoPNCTests 2pnc (two phase, multi-component) benchmarks and tests
+ 	 * \brief a fuel cell test problem using the TwoPNCModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup TwoPNCMinTests 2pncmin (two phase, n-component mineralization) benchmarks and tests
- 	 * TwoPNCMinTests contain a salt dissolution test problem using the TwoPNCMinModel. The files are listed below.
+ 	 * \defgroup TwoPNCMinTests 2pncmin (two phase, multi-component mineralization) benchmarks and tests
+ 	 * \brief a salt dissolution test problem using the TwoPNCMinModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePTests 3p (three phase) benchmarks and tests
- 	 * ThreePTests contain various tests using a ThreePModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \brief various tests using a ThreePModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePThreeCTests 3p3c (three phase, three component) benchmarks and tests
- 	 * ThreePThreeCTests contain various tests using a ThreePThreeCModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \brief various tests using a ThreePThreeCModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup ThreePWaterOilTests 3pwateroil (three phase, water oil) benchmarks and tests
- 	 * ThreePWaterOilTests contain a SAGD test problem using the ThreePWaterOilModel. The files are listed below.
+ 	 * \brief a SAGD test problem using the ThreePWaterOilModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup CO2Tests CO2 (two phase, two component) benchmarks and tests
- 	 * CO2Tests contain a CO2 injection test problem using the TwoPTwoCModel and heterogeneous spatial parameters. The files are listed below.
+ 	 * \brief a CO2 injection test problem using the TwoPTwoCModel and heterogeneous spatial parameters. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup MPNCTests MPNC (m phase, n-component) benchmarks and tests
+ 	 * \defgroup MPNCTests MPNC (multi-phase, multi-component) benchmarks and tests
+   * \brief various tests using the MPNCModel
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup RichardsTests Richards benchmarks and tests
- 	 * RichardsTests contain various tests using a RichardsModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \brief various tests using a RichardsModel. The files are listed below, with hopefully self-explanatory names.
  	 */
  	/*! \ingroup BenchmarksAndTests
- 	 * \defgroup RichardsNCTests Richards n-component benchmarks and tests
- 	 * RichardsNCTests contain a n-component transport problem in the unsaturated zone using the RichardsNCModel. The files are listed below.
+ 	 * \defgroup RichardsNCTests Richards multi-component benchmarks and tests
+ 	 * \brief a multi-component transport problem in the unsaturated zone using the RichardsNCModel. The files are listed below.
  	 */
  	/*! \ingroup BenchmarksAndTests
  	 * \defgroup TracerTests Tracer benchmarks and tests
- 	 * TracerTests contain various tests using a TracerModel. The files are listed below, with hopefully self-explanatory names.
+ 	 * \brief various tests using a TracerModel. The files are listed below, with hopefully self-explanatory names.
  	 */
 
 /* ***************** Discretization ******************/
@@ -270,6 +288,8 @@
 /* ***************** Material ******************/
 /*!
  * \defgroup Material Material and Fluid Framework
+ * \brief The DuMu<sup>x</sup> material and fluid framework with constitutive laws and physics
+ * \par
  * Short description of the most important concepts of the material and fluid framework:
  *
  *  - __Binary coefficient:__ <br>  @copydoc Binarycoefficients
@@ -285,6 +305,8 @@
     /*!
      * \ingroup Material
      * \defgroup Binarycoefficients Binary Coefficients
+     * \brief binary coefficients
+     *
      *  Binary coefficients describe the relations
      *  of a mixture of two components. Typical binary coefficients are
      *  Henry coefficients or binary molecular diffusion
@@ -294,6 +316,8 @@
     /*!
      * \ingroup Material
      * \defgroup Chemistry Chemistry
+     * \brief chemical reactions
+     *
      * Chemical reactions can be relevant for all thermodynamic relations
      * for the liquid and gas phase of multiple chemical species
      * The main purpose is to provide a convenient way to access these
@@ -302,6 +326,8 @@
     /*!
      * \ingroup Material
      * \defgroup Components Components
+     * \brief components: building blocks for fluid systems
+     *
      * Components are fluid systems which provide the
      *  thermodynamic relations for the liquid and gas phase of a single
      *  chemical species or a fixed mixture of species. Their main purpose
@@ -312,10 +338,13 @@
          /*!
          * \ingroup Components
          * \defgroup IAPWS IAPWS
+         * \brief Tabulated values according to the International Association for the Properties of Water and Steam (IAPWS)
          */
      /*!
      * \ingroup Material
      * \defgroup ConstraintSolver Constraint Solver
+     * \brief constraint solvers converting primary to secondary variables
+     *
      * Constraint solvers are auxiliary tools to
      * make sure that a fluid state is consistent with some thermodynamic
      * constraints. All constraint solvers specify a well defined set of
@@ -330,6 +359,8 @@
     /*!
      * \ingroup Material
      * \defgroup EOS Equation of State
+     * \brief equations of state
+     *
      * Equations of state (EOS) are auxiliary
      * classes which provide relations between a fluid phase's temperature,
      * pressure, composition and density. Since these classes are only used
@@ -338,26 +369,22 @@
      */
     /*!
      * \ingroup Material
-     *  \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
+     * \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
+     * \brief e.g. pc-Sw, kr-Sw relations, effective diffusion coefficients
+     *
      * Some parameters are functions of the fluid state as well as parameters of
      * the matrix. For example the capillary pressure is a function of the phase saturation
      * and the shape parameter \f$\lambda\f$ which is dependent on the material. All such relations
      * are gathered in this module.
      */
-        /*!
-         * \ingroup fluidmatrixinteractions
-         *  \defgroup fluidmatrixinteractionslaws Laws for Fluid-Matrix Interactions
-         */
-         /*!
-         * \ingroup fluidmatrixinteractions
-         *  \defgroup fluidmatrixinteractionsparams Parameters for Fluid-Matrix Interactions
-         */
     /*!
      * \ingroup Material
      * \defgroup FluidStates Fluid States
-     * Fluid states are responsible for representing the
+     * \brief Fluid states are responsible for representing the
      * complete thermodynamic configuration of a system at a given spatial
-     * and temporal position. A fluid state always provides access methods
+     * and temporal position.
+     *
+     * A fluid state always provides access methods
      * to __all__ thermodynamic quantities, but the concept of a fluid state does not
      * mandate what assumptions are made to store these thermodynamic
      * quantities. What fluid states also do __not__ do is to make sure
@@ -367,17 +394,19 @@
     /*!
      * \ingroup Material
      * \defgroup Fluidsystems Fluid Systems
-     * Fluid systems express the thermodynamic relations
-    *  Strictly speaking, these relations are
-    *  functions, mathematically.} between quantities. Since functions do
-    *  not exhibit any internal state, fluid systems are stateless classes,
-    *  i.e. all member functions are static. This is a conscious
-    *  decision since the thermodynamic state of the system is expressed by
-    *  a fluid state!
+     * \brief Fluid systems express the thermodynamic relations (functions).
+     *
+     * Since functions do
+     *  not exhibit any internal state, fluid systems are stateless classes,
+     *  i.e. all member functions are static. This is a conscious
+     *  decision since the thermodynamic state of the system is expressed by
+     *  a fluid state!
      */
     /*!
      * \ingroup Material
      * \defgroup SpatialParameters Spatial Parameters
+     * \brief Parameters of the porous matrix and other parameter varying with position (e.g. porosity)
+     *
      * All parameters which depend on the matrix and
      * therefore on the position within the model domain are defined as spatial
      * parameters. For example permeability, porosity etc.
@@ -399,18 +428,18 @@
 /* ***************** Common ******************/
 /*!
  * \defgroup Common Common
- *  TODO: Doc me in modules.txt!
+ * \brief Common classes, functions, properties and concepts
  */
  	/*!
   	 * \ingroup Common
   	 * \defgroup Properties Properties
-  	 * TODO: Doc me in modules.txt!
+  	 * \brief Basic properties of all models in DuMu<sup>x</sup>
   	 */
 
 /* ***************** InputOutput ******************/
 /*!
  * \defgroup InputOutput Input Output
- *  TODO: Doc me in modules.txt!
+ * \brief Classes and functions dealing with input and output of data and grids
  */
 
 /* ***************** Linear ******************/
