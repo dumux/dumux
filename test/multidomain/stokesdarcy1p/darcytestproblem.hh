@@ -36,6 +36,7 @@
 
 // coupling-specific includes
 #include <dumux/multidomain/subproblemproperties.hh>
+#include <dumux/multidomain/staggered-ccfv/localresidual.hh> // TODO?
 
 namespace Dumux
 {
@@ -76,6 +77,9 @@ SET_STRING_PROP(DarcyTestProblem, GridParameterGroup, "DarcyGrid");
 SET_BOOL_PROP(DarcyTestProblem, EnableGlobalFVGeometryCache, true);
 NEW_PROP_TAG(GlobalProblemTypeTag);
 NEW_PROP_TAG(CouplingManager);
+
+SET_TYPE_PROP(DarcyTestProblem, LocalResidual, DarcyCouplingLocalResidual<TypeTag>); // TODO
+
 }
 
 template <class TypeTag>
@@ -120,6 +124,9 @@ public:
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
         bBoxMin_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, LowerLeft);
         bBoxMax_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, UpperRight);
+
+        this->boundingBoxTree(); // TODO
+
 }
 
     /*!
@@ -183,9 +190,10 @@ public:
     {
         BoundaryTypes values;
         values.setAllNeumann();
+//        values.setAllDirichlet(); // TODO only for test case
 
         if(onCouplingInterface(globalPos))
-            values.setAllCouplingNeumann();
+            values.setAllDirichlet();
 
         return values;
     }
@@ -203,7 +211,17 @@ public:
                                const SubControlVolumeFace &scvf) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5;
+        values[pressureIdx] = 0.9e5;
+
+        FVElementGeometry fvGeometry = localView(this->model().globalFvGeometry());
+        fvGeometry.bind(element);
+        Scalar scvIdx = scvf.insideScvIdx();
+        SubControlVolume scv = fvGeometry.scv(scvIdx);
+
+        if(onCouplingInterface(scvf.center()))
+        {
+            values[pressureIdx] = couplingManager().stokesData().valueFromSolVec(scv.dofIndex(), pressureIdx);
+        }
         return values;
     }
 
@@ -224,10 +242,8 @@ public:
                              const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables values(0.0);
-
         return values;
     }
-
 
     // \}
 
@@ -256,7 +272,6 @@ public:
                             const SubControlVolume &scv) const
     {
         PrimaryVariables values(0.0);
-
         return values;
     }
     // \}
@@ -272,7 +287,7 @@ public:
     PrimaryVariables initial(const Element &element) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 1.0e5;
+        values[pressureIdx] = 0.9e5;
         return values;
     }
 

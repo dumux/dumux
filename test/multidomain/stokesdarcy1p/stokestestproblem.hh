@@ -108,6 +108,10 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using SubControlVolumeFace =  typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry) ;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         dim = GridView::dimension,
@@ -133,6 +137,8 @@ class StokesTestProblem : public NavierStokesProblem<TypeTag>
     using BoundaryValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
     using InitialValues = typename GET_PROP_TYPE(TypeTag, BoundaryValues);
 
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+
 public:
     StokesTestProblem(TimeManager &timeManager, const GridView &gridView)
         : ParentType(timeManager, gridView)
@@ -145,6 +151,8 @@ public:
         bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, StokesGrid, Positions1)[0];
         bBoxMax_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, StokesGrid, Positions0)[1];
         bBoxMax_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, StokesGrid, Positions1)[1];
+
+        this->boundingBoxTree(); // TODO
 }
 
     /*!
@@ -172,7 +180,7 @@ public:
      */
     Scalar temperatureAtPos(const GlobalPosition &globalPos) const
     {
-        return 273.15 + 10.0; // -> 10C
+        return 273.15 + 10.0; // 10°C
     }
 
     // \}
@@ -187,6 +195,7 @@ public:
     {
         BoundaryTypes values;
 
+        // inflow left, outflow right (pnmstokes1p)
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
 
@@ -194,7 +203,7 @@ public:
         if (onRightBoundary_(globalPos))
         {
             values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx);
+            values.setOutflow(momentumBalanceIdx); // TODO mixed b.c.s not allowed anymore!
         }
         else
             values.setOutflow(massBalanceIdx);
@@ -202,34 +211,41 @@ public:
         return values;
     }
 
-    /*!
-     * \brief Return Dirichlet boundary values at a given position
-     *
-     * \param globalPos The global position
-     */
-    BoundaryValues dirichletAtPos(const GlobalPosition &globalPos) const
+    //! \copydoc ImplicitProblem::dirichlet()
+    BoundaryValues dirichlet(const Element& element, const SubControlVolumeFace& scvf) const
     {
-        BoundaryValues values;
+        const auto& globalPos = scvf.dofPosition();
 
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
-        values[pressureIdx] = 0.0;
+        BoundaryValues values(0.0);
+        values[pressureIdx] = 1e5;
 
-        if (onLeftBoundary_(globalPos))
+        if(globalPos[0] < bBoxMin_[0] + eps_) // left boundary -- inflow
         {
-            values[velocityXIdx] = vIn_;
+            values[velocityXIdx] = vIn_*(globalPos[1] - bBoxMin_[1])*(bBoxMax_[1] - globalPos[1])
+                                     / (0.25*(bBoxMax_[1] - bBoxMin_[1])*(bBoxMax_[1] - bBoxMin_[1]));
+
         }
+
+        if(couplingManager().isStokesCouplingEntity(element, scvf))
+        {
+            if(onCouplingInterface(globalPos))
+            {
+                values[velocityYIdx] = couplingManager().darcyData().boundaryVelocity(scvf);
+            }
+        }
+
         return values;
     }
 
-    /*!
-     * \brief Return Neumann boundary values at a given position
-     *
-     * \param globalPos The global position
-     */
-    BoundaryValues neumannAtPos(const GlobalPosition &globalPos) const
+    //! \copydoc ImplicitProblem::neumann()
+    BoundaryValues neumann(const Element& element,
+            const FVElementGeometry& fvGeometry,
+            const ElementVolumeVariables& elemVolVars,
+            const SubControlVolumeFace& scvf) const
     {
-        return BoundaryValues(0.0);
+        BoundaryValues values(0.0);
+
+        return values;
     }
 
     // \}
@@ -247,9 +263,13 @@ public:
     InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
         InitialValues values(0.0);
-        values[pressureIdx] = 0.0;
-        values[velocityXIdx] = 0.0;
-        values[velocityYIdx] = 0.0;
+//        values = dirichletAtPos(globalPos);
+
+        // copied from dirichlet TODO
+        values[pressureIdx] = 1e5;
+        // left inflow
+        values[velocityXIdx] = vIn_*(globalPos[1] - bBoxMin_[1])*(bBoxMax_[1] - globalPos[1])
+                                 / (0.25*(bBoxMax_[1] - bBoxMin_[1])*(bBoxMax_[1] - bBoxMin_[1]));
 
         return values;
     }

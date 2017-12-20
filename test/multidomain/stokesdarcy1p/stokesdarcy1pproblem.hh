@@ -74,6 +74,12 @@ SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyToStokesMapValue, Dumux::Darcy
 SET_TYPE_PROP(TestCoupledStokesDarcyProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 
+NEW_PROP_TAG(StokesData);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, StokesData, StokesData<TypeTag>);
+
+NEW_PROP_TAG(DarcyData);
+SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyData, DarcyData<TypeTag>);
+
 }//end namespace properties
 
 template <class TypeTag>
