@@ -19,7 +19,7 @@
 
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::H2ON2O2
  */
 #ifndef DUMUX_H2O_N2_O2_FLUID_SYSTEM_HH
@@ -50,7 +50,6 @@ namespace FluidSystems
 
 /*!
  * \ingroup Fluidsystems
- *
  * \brief A two-phase (water and air) fluid system
  *        with water, nitrogen and oxygen as components.
  *

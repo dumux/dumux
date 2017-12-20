@@ -18,11 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief A fluid system with water, gas and NAPL as phases and
- *        \f$H_2O\f$ and \f$NAPL (contaminant)\f$ as components.
- * It uses heavyoil Properties, but allows for a scaling of density
- * thus enabling an artifical DNAPL if desired
+ * \ingroup Fluidsystems
+ * \brief @copybrief Dumux::FluidSystems::H2OHeavyOil
  */
 #ifndef DUMUX_H2O_HEAVYOIL_FLUID_SYSTEM_HH
 #define DUMUX_H2O_HEAVYOIL_FLUID_SYSTEM_HH

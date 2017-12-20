@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidSystems
  * \brief @copybrief Dumux::FluidSystems::BrineAir
  */
 #ifndef DUMUX_BRINE_AIR_SYSTEM_HH
@@ -43,7 +43,6 @@ namespace Dumux {
 namespace FluidSystems {
 /*!
  * \ingroup Fluidsystems
- *
  * \brief A compositional two-phase fluid system with a liquid and a gaseous phase
  *        and \f$H_2O\f$, \f$Air\f$ and \f$S\f$ (dissolved minerals) as components.
  *
@@ -279,6 +278,7 @@ public:
              /*endPressure=*/20e6,
              /*pressureSteps=*/200);
     }
+
    /*!
     * \brief Initialize the fluid system's static parameters using
     *        problem specific temperature and pressure ranges
@@ -290,7 +290,6 @@ public:
     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
     * \param nPress The number of ticks on the pressure axis of the  table of water
     */
-
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                       Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
@@ -310,7 +309,7 @@ public:
     }
 
     using Base::density;
-     /*!
+    /*!
      * \brief Given a phase's composition, temperature, pressure, and
      *        the partial pressures of all components, return its
      *        density \f$\mathrm{[kg/m^3]}\f$.
@@ -555,7 +554,7 @@ public:
         }
     }
 
-    /*!
+   /*!
     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
     * \param fluidState The fluid state
     * \param phaseIdx The index of the phase
@@ -642,6 +641,7 @@ public:
         else
             DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
+
     /*!
      * \brief Return the molality of NaCl \f$\mathrm{[mol/m^3]}\f$.
      * \param fluidState An abitrary fluid state

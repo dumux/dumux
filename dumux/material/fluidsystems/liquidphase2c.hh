@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::LiquidPhaseTwoC
  */
 #ifndef DUMUX_LIQUID_TWOC_PHASE_HH

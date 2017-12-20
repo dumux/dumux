@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::GasPhase
  */
 #ifndef DUMUX_GAS_PHASE_HH

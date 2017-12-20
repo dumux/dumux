@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::H2OAirMesitylene
  */
 #ifndef DUMUX_H2O_AIR_MESITYLENE_FLUID_SYSTEM_HH

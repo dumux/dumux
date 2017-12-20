@@ -19,7 +19,7 @@
 
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::H2OAir
  */
 #ifndef DUMUX_H2O_AIR_SYSTEM_HH

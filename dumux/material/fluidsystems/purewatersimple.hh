@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::PureWaterSimpleFluidSystem
  */
 #ifndef DUMUX_PURE_WATER_FLUID_SYSTEM_HH

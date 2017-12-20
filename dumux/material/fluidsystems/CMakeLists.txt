@@ -14,9 +14,11 @@ install(FILES
   h2on2kinetic.hh
   h2on2o2.hh
   liquidphase.hh
+  liquidphase2c.hh
   nullparametercache.hh
   parametercachebase.hh
   purewatersimple.hh
+  simplesteamaircao2h2.hh
   spe5.hh
   spe5parametercache.hh
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/material/fluidsystems)

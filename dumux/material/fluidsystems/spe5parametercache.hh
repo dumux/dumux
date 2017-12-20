@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::Spe5ParameterCache
  */
 #ifndef SPE5_PARAMETER_CACHE_HH

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::TwoPImmiscible
  */
 #ifndef DUMUX_2P_IMMISCIBLE_FLUID_SYSTEM_HH
@@ -40,7 +40,6 @@ namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
- *
  * \brief A fluid system for two-phase models assuming immiscibility and
  *        thermodynamic equilibrium
  *

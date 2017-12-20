@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief @copybrief Dumux::FluidSystems::H2ON2
+ * \ingroup Fluidsystems
+ * \brief @copydoc Dumux::FluidSystems::H2ON2
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_HH

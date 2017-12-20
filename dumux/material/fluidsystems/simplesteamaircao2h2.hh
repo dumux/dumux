@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::SteamAirCaO2H2
  */
 #ifndef DUMUX_STEAM_AIR_CAO2H2_SYSTEM_HH
@@ -42,7 +42,6 @@ namespace Dumux {
 namespace FluidSystems {
 /*!
  * \ingroup Fluidsystems
- *
  * \brief A compositional one-phase fluid system with \f$H_2O\f$ \f$Air\f$ as gaseous components
  *              and \f$CaO\f$  and \f$Ca(OH)_2\f$ as solid components drawn for thermo-chemical
  *              heat storage.
@@ -62,7 +61,6 @@ class SteamAirCaO2H2
 
 public:
     using H2O = Dumux::SimpleH2O<Scalar>;
-//     using H2O = H2Otype;
     using H2O_Air = Dumux::BinaryCoeff::H2O_Air;
     using Air = Dumux::Air<Scalar>;
 
@@ -103,7 +101,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
-     /*!
+    /*!
      * \brief Return whether a phase is liquid
      *
      * \param phaseIdx The index of the fluid phase to consider
@@ -181,7 +179,7 @@ public:
     static const int CaO2H2Idx  = 3;
 
 
-     /*!
+    /*!
      * \brief Return the human readable name of a component
      *
      * \param compIdx The index of the component to consider
@@ -199,7 +197,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
-     /*!
+    /*!
      * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
@@ -216,7 +214,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
-        /*!
+    /*!
      * \brief Return the mass density of the solid \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx The index of the solid phase to consider
@@ -235,12 +233,11 @@ public:
 //            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << sPhaseIdx);
     }
 
-     /*!
+    /*!
      * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
      *
      * \param phaseIdx The index of the solid phase to consider
      */
-
      static Scalar precipitateHeatCapacity(int phaseIdx)
      {
       if(phaseIdx==cPhaseIdx)
@@ -287,18 +284,17 @@ public:
              /*pressureSteps=*/200);
     }
 
-   /*!
-    * \brief Initialize the fluid system's static parameters using
-    *        problem specific temperature and pressure ranges
-    *
-    * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
-    * \param tempMax The maximum temperature used for tabulation of water \f$\mathrm{[K]}\f$
-    * \param nTemp The number of ticks on the temperature axis of the  table of water
-    * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
-    * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
-    * \param nPress The number of ticks on the pressure axis of the  table of water
-    */
-
+    /*!
+     * \brief Initialize the fluid system's static parameters using
+     *        problem specific temperature and pressure ranges
+     *
+     * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+     * \param tempMax The maximum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+     * \param nTemp The number of ticks on the temperature axis of the  table of water
+     * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+     * \param nPress The number of ticks on the pressure axis of the  table of water
+     */
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                       Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
@@ -481,11 +477,11 @@ public:
     }
 
     /*!
-    * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
-    * \param fluidState The fluid state
-    * \param phaseIdx The index of the phase
-    * \param componentIdx The index of the component
-    */
+     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+     * \param fluidState The fluid state
+     * \param phaseIdx The index of the phase
+     * \param componentIdx The index of the component
+     */
     template <class FluidState>
     static Scalar componentEnthalpy(const FluidState &fluidState,
                                     int phaseIdx,
