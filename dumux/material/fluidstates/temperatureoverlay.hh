@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidStates
  * \brief This is a fluid state which allows to set the fluid
  *        temperatures and takes all other quantities from an other
  *        fluid state.

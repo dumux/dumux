@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidStates
  * \brief This is a fluid state which allows to set the fluid
  *        saturations and takes all other quantities from an other
  *        fluid state.
@@ -77,7 +77,12 @@ public:
      * on thermodynamic equilibrium required)
      *****************************************************/
     /*!
-     *  @copydoc CompositionalFluidState::saturation()
+     * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The saturation is defined as the pore space occupied by the fluid divided by the total pore space:
+     *  \f[S_\alpha := \frac{\phi \mathcal{V}_\alpha}{\phi \mathcal{V}}\f]
+     *
+     * \param phaseIdx the index of the phase
      */
     Scalar saturation(int phaseIdx) const
     { return saturation_[phaseIdx]; }

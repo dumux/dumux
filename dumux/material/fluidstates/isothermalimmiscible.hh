@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a isothermal immiscible
  *        multi-phase fluid system
  */
@@ -56,37 +56,74 @@ public:
      * Generic access to fluid properties
      *****************************************************/
     /*!
-     * @copydoc CompositionalFluidState::saturation()
+     * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The saturation is defined as the pore space occupied by the fluid divided by the total pore space:
+     *  \f[S_\alpha := \frac{\phi \mathcal{V}_\alpha}{\phi \mathcal{V}}\f]
+     *
+     * \param phaseIdx the index of the phase
      */
     Scalar saturation(int phaseIdx) const
     { return saturation_[phaseIdx]; }
 
     /*!
-     * @copydoc CompositionalFluidState::moleFraction()
+     * \brief Returns the molar fraction \f$x^\kappa_\alpha\f$ of the component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The molar fraction \f$x^\kappa_\alpha\f$ is defined as the ratio of the number of molecules
+     * of component \f$\kappa\f$ and the total number of molecules of the phase \f$\alpha\f$.
+     * They are set either 1 or 0 in a phase since this is an immiscible fluidstate.
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     { return (phaseIdx == compIdx)?1.0:0.0; }
 
     /*!
-     * @copydoc CompositionalFluidState::massFraction()
+     * \brief Returns the mass fraction \f$X^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * They are set either 1 or 0 in a phase since this is an immiscible fluidstate.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     { return (phaseIdx == compIdx)?1.0:0.0; }
 
     /*!
-     * @copydoc CompositionalFluidState::averageMolarMass()
+     * \brief The average molar mass \f$\overline M_\alpha\f$ of phase \f$\alpha\f$ in \f$\mathrm{[kg/mol]}\f$
+     *
+     * The average molar mass is the mean mass of a mole of the
+     * fluid at current composition. It is defined as the sum of the
+     * component's molar masses weighted by the current mole fraction:
+     * \f[\mathrm{ \overline M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa}\f]
+     *
+     * Since this is an immiscible fluidstate we simply consider the molarMass of the
+     * pure component/phase.
      */
     Scalar averageMolarMass(int phaseIdx) const
     { return FluidSystem::molarMass(/*compIdx=*/phaseIdx); }
 
     /*!
-     * @copydoc CompositionalFluidState::molarity()
+     * \brief The molar concentration \f$c^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * This quantity is usually called "molar concentration" or just
+     * "concentration", but there are many other (though less common)
+     * measures for concentration.
+     *
+     * http://en.wikipedia.org/wiki/Concentration
      */
     Scalar molarity(int phaseIdx, int compIdx) const
     { return molarDensity(phaseIdx)*moleFraction(phaseIdx, compIdx); }
 
     /*!
+     * \brief The fugacity \f$f^\kappa_\alpha\f$ of component \f$\kappa\f$
+     *  in fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
      * @copydoc ImmiscibleFluidState::fugacity()
+     * To avoid numerical issues with code that assumes miscibility,
+     * we return a fugacity of 0 for components which do not mix with
+     * the specified phase. (Actually it is undefined, but for finite
+     * fugacity coefficients, the only way to get components
+     * completely out of a phase is 0 to feed it zero fugacity.)
      */
     Scalar fugacity(int phaseIdx, int compIdx) const
     {
@@ -97,7 +134,12 @@ public:
     }
 
     /*!
-     * @copydoc ImmiscibleFluidState::fugacityCoefficient()
+     * \brief The fugacity coefficient \f$\Phi^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$
+     *
+     * Since we assume immiscibility, the fugacity coefficients for
+     * the components which are not miscible with the phase is
+     * infinite. Beware that this will very likely break your code if
+     * you don't keep that in mind.
      */
     Scalar fugacityCoefficient(int phaseIdx, int compIdx) const
     {
@@ -108,19 +150,27 @@ public:
     }
 
     /*!
-     * @copydoc CompositionalFluidState::molarVolume()
+     * \brief The molar volume \f$v_{mol,\alpha}\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[m^3/mol]}\f$
+     *
+     * This quantity is the inverse of the molar density.
      */
     Scalar molarVolume(int phaseIdx) const
     { return 1/molarDensity(phaseIdx); }
 
     /*!
-     * @copydoc CompositionalFluidState::density()
+     * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
+     *  \f$\alpha\f$ in \f$\mathrm{[kg/m^3]}\f$
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
     /*!
-     * @copydoc CompositionalFluidState::molarDensity()
+     * \brief The molar density \f$\rho_{mol,\alpha}\f$
+     *   of a fluid phase \f$\alpha\f$ in \f$\mathrm{[mol/m^3]}\f$
+     *
+     * The molar density is defined by the mass density \f$\rho_\alpha\f$ and the mean molar mass \f$\overline M_\alpha\f$:
+     *
+     * \f[\rho_{mol,\alpha} = \frac{\rho_\alpha}{\overline M_\alpha} \;.\f]
      */
     Scalar molarDensity(int phaseIdx) const
     { return density_[phaseIdx]/averageMolarMass(phaseIdx); }
@@ -138,25 +188,30 @@ public:
     { return temperature_; }
 
     /*!
-     *  @copydoc CompositionalFluidState::pressure()
+     * \brief The pressure \f$p_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
      */
     Scalar pressure(int phaseIdx) const
     { return pressure_[phaseIdx]; }
 
     /*!
-     * @copydoc CompositionalFluidState::enthalpy()
+     * \brief The specific enthalpy \f$h_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[J/kg]}\f$
+     * This is not defined for an isothermal fluidstate.
      */
     Scalar enthalpy(int phaseIdx) const
     { DUNE_THROW(Dune::NotImplemented,"No enthalpy() function defined for isothermal systems!"); }
 
     /*!
-     * @copydoc CompositionalFluidState::internalEnergy()
+     * \brief The specific internal energy \f$u_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[J/kg]}\f$
+     *
+     * The specific internal energy is defined by the relation:
+     * \f[u_\alpha = h_\alpha - \frac{p_\alpha}{\rho_\alpha}\f]
+     * This is not defined for an isothermal fluidstate.
      */
     Scalar internalEnergy(int phaseIdx) const
     { DUNE_THROW(Dune::NotImplemented,"No internalEnergy() function defined for isothermal systems!"); }
 
     /*!
-     * @copydoc CompositionalFluidState::viscosity()
+     * \brief The dynamic viscosity \f$\mu_\alpha\f$ of fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa s]}\f$
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }

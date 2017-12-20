@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a
  *        multi-phase, multi-component fluid system without using
  *        any assumptions.
@@ -106,7 +106,7 @@ class NonEquilibriumMassFluidState
         return temperature_ ;
     }
 
-    /*!
+     /*!
       * \brief Retrieve all parameters from an arbitrary fluid
       *        state. The assign method from the parent class cannot be used, because here, we have only one temperature.
       * \param fs Fluidstate
@@ -133,8 +133,6 @@ class NonEquilibriumMassFluidState
          temperature_ = fs.temperature(/*phaseIdx=*/0); // in this fluidstate there is only one temperature.
 
      }
-
-
 
 private:
     Scalar temperature_;

@@ -1,11 +1,12 @@
 
 #install headers
 install(FILES
+2p2c.hh
 compositional.hh
 immiscible.hh
 isothermalimmiscible.hh
-nonequilibriumenergy.hh
 nonequilibrium.hh
+nonequilibriumenergy.hh
 nonequilibriummass.hh
 pressureoverlay.hh
 saturationoverlay.hh

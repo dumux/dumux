@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a
  *        multi-phase, multi-component fluid system without using
  *        any assumptions.
@@ -70,8 +70,22 @@ public:
     { return fugacity(0, compIdx); }
 
     /*!
-     * @copydoc NonEquilibriumFluidState::fugacity()
-    */
+     * \brief The fugacity \f$f^\kappa_\alpha\f$ of component \f$\kappa\f$
+     *  in fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
+     *
+     *  The fugacity is defined as:
+     *  \f$f_\alpha^\kappa := \Phi^\kappa_\alpha x^\kappa_\alpha p_\alpha \;,\f$
+     *  where \f$\Phi^\kappa_\alpha\f$ is the fugacity coefficient \cite reid1987 .
+     *  The physical meaning of fugacity becomes clear from the equation:
+     *       \f[f_\alpha^\kappa = p_\alpha \exp\left\{\frac{\zeta^\kappa_\alpha}{R T_\alpha} \right\} \;,\f]
+     *  where \f$\zeta^\kappa_\alpha\f$ represents the \f$\kappa\f$'s chemical
+     *  potential in phase \f$\alpha\f$, \f$R\f$ stands for the ideal gas constant,
+     *  and \f$T_\alpha\f$ for the absolute temperature of phase \f$\alpha\f$. Assuming thermal equilibrium,
+     *  there is a one-to-one mapping between a component's chemical potential
+     *  \f$\zeta^\kappa_\alpha\f$ and its fugacity \f$f^\kappa_\alpha\f$. In this
+     *  case chemical equilibrium can thus be expressed by:
+     *     \f[f^\kappa := f^\kappa_\alpha = f^\kappa_\beta\quad\forall \alpha, \beta\f]
+     */
     Scalar fugacity(int phaseIdx, int compIdx) const
     {
         // Unfortunately throw does not work when triggered from a constructor

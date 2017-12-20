@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidStates
  * \brief Calculates phase state for a single phase but two-component state.
  */
 #ifndef DUMUX_PSEUDO1P2C_FLUID_STATE_HH
@@ -56,7 +56,13 @@ public:
 public:
     /*! \name Acess functions */
     //@{
-    /*!  @copydoc CompositionalFluidState::saturation()
+    /*!
+     * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The saturation is defined as the pore space occupied by the fluid divided by the total pore space:
+     *  \f[S_\alpha := \frac{\phi \mathcal{V}_\alpha}{\phi \mathcal{V}}\f]
+     * This is set either to 1 or 0 depending on the phase presence.
+     * \param phaseIdx the index of the phase
      */
     Scalar saturation(int phaseIdx) const
     {
@@ -86,7 +92,7 @@ public:
     }
 
     /*!
-     *  @copydoc CompositionalFluidState::partialPressure()
+     * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
      */
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
@@ -94,13 +100,14 @@ public:
         return pressure(phaseIdx)*moleFraction(phaseIdx, compIdx);
     }
 
-    /*!  @copydoc CompositionalFluidState::pressure()
+    /*!
+     * \brief The pressure \f$p_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
      */
     Scalar pressure(int phaseIdx) const
     { return pressure_[phaseIdx]; }
 
     /*!
-     *  @copydoc CompositionalFluidState::density()
+     * \brief Set the density of a phase \f$\mathrm{[kg / m^3]}\f$
      */
     Scalar density(int phaseIdx) const
     {
@@ -112,7 +119,18 @@ public:
     }
 
     /*!
-     *  @copydoc CompositionalFluidState::massFraction()
+     * \brief Returns the mass fraction \f$X^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The mass fraction \f$X^\kappa_\alpha\f$ is defined as the weight of all molecules of a
+     * component divided by the total mass of the fluid phase. It is related with the component's mole fraction by means of the relation
+     *
+     * This is either set to 1 or 0 depending on the phase presence for the
+     * non-wetting phase in general.
+     * It is set to the mass fraction of water or 1-massFractionWater
+     * if the considered component is the main component of the wetting phase.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
      */
     Scalar massFraction(int phaseIdx, int compIdx) const
     {
@@ -133,7 +151,14 @@ public:
     }
 
     /*!
-     *  @copydoc CompositionalFluidState::moleFraction()
+     * \brief Returns the molar fraction \f$x^\kappa_\alpha\f$ of the component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * This is either set to 1 or 0 depending on the phase presence for the
+     * non-wetting phase in general.
+     * It is set to the mole fraction of water or 1-moleFractionWater
+     * if the considered component is the main component of the wetting phase.
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
@@ -152,7 +177,7 @@ public:
     }
 
     /*!
-     *  @copydoc CompositionalFluidState::viscosity()
+     * \brief The dynamic viscosity \f$\mu_\alpha\f$ of fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa s]}\f$
      */
     Scalar viscosity(int phaseIdx) const
     {
@@ -161,7 +186,12 @@ public:
     }
 
     /*!
-     *  @copydoc CompositionalFluidState::averageMolarMass()
+     * \brief The average molar mass \f$\overline M_\alpha\f$ of phase \f$\alpha\f$ in \f$\mathrm{[kg/mol]}\f$
+     *
+     * The average molar mass is the mean mass of a mole of the
+     * fluid at current composition. It is defined as the sum of the
+     * component's molar masses weighted by the current mole fraction:
+     * \f[\mathrm{ \overline M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa}\f]
      */
     Scalar averageMolarMass(int phaseIdx) const
     {
@@ -169,7 +199,7 @@ public:
     }
 
     /*!
-     *  @copydoc CompositionalFluidState::enthalpy()
+     * \brief The specific enthalpy \f$h_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[J/kg]}\f$
      */
     Scalar enthalpy(int phaseIdx) const
     {
@@ -180,7 +210,11 @@ public:
     }
 
     /*!
-     *  @copydoc CompositionalFluidState::internalEnergy()
+     * \brief The specific internal energy \f$u_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[J/kg]}\f$
+     *
+     * The specific internal energy is defined by the relation:
+     *
+     * \f[u_\alpha = h_\alpha - \frac{p_\alpha}{\rho_\alpha}\f]
      */
     Scalar internalEnergy(int phaseIdx) const
     {
