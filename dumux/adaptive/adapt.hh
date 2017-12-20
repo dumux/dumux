@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Adaptive
  * \brief A free function for h-adaptivity.
  */
 #ifndef DUMUX_ADAPTIVE_ADAPT_HH
@@ -29,7 +30,8 @@ namespace Dumux
 {
 
 /*!
- * \brief Adapt the grid.
+ * \ingroup Adaptive
+ * \brief Adapt the grid and reconstruct the user data
  *
  * \param grid The grid to adapt
  * \param dataTransfer A class that performs the data
@@ -38,22 +40,22 @@ namespace Dumux
 template<class Grid>
 bool adapt(Grid& grid, GridDataTransfer& dataTransfer)
 {
-    //! Do pre-adaption step of the grid
+    // Do pre-adaption step of the grid
     const bool mightCoarsen = grid.preAdapt();
 
-    //! Let the helper do storage of variables
+    // Let the helper do storage of variables
     dataTransfer.store();
 
-    //! adapt the grid
+    // adapt the grid
     const bool refine = grid.adapt();
 
-    //! (Re-)construct variables to new grid
+    // (Re-)construct variables to new grid
     dataTransfer.reconstruct();
 
     // delete markers in grid
     grid.postAdapt();
 
-    //! return boolean if grid has been changed
+    // return boolean if grid has been changed
     return mightCoarsen || refine;
 }
 

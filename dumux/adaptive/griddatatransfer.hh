@@ -16,22 +16,31 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Adaptive
+ * \brief Interface to be used by classes transferring grid data on adpative grids
+ */
 #ifndef DUMUX_ADAPTIVE_GRIDDATATRANSFER_HH
 #define DUMUX_ADAPTIVE_GRIDDATATRANSFER_HH
 
 namespace Dumux {
 
 /*!
- * \brief Interface to be used by classes transferring grid data.
+ * \ingroup Adaptive
+ * \brief Interface to be used by classes transferring grid data on adpative grids
  */
 class GridDataTransfer
 {
 public:
-  virtual ~GridDataTransfer() = default;
+    //! pure virtual base class needs virtual destructor
+    virtual ~GridDataTransfer() = default;
 
-  virtual void store() = 0;
+    //! store user data before grid adaption
+    virtual void store() = 0;
 
-  virtual void reconstruct() = 0;
+    //! store user data after adaption
+    virtual void reconstruct() = 0;
 };
 
 } // end namespace Dumux

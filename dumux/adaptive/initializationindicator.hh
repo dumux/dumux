@@ -16,23 +16,23 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
-* \file
-* \brief Class defining an initialization indicator for grid adaption
-*/
+/*!
+ * \file
+ * \ingroup Adaptive
+ * \brief Class defining an initialization indicator for grid adaption
+ */
 #ifndef DUMUX_GRIDADAPTINITIALIZATIONINDICATOR_HH
 #define DUMUX_GRIDADAPTINITIALIZATIONINDICATOR_HH
 
 #include <dune/geometry/type.hh>
-
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-/*!\ingroup GridAdapt
+/*!
+ * \ingroup Adaptive
  * \brief Class defining an initialization indicator for grid adaption.
- *        Accounts for sources and boundaries. Only for grid initialization!
+ *        Refines at sources and boundaries. Use before computing on the grid.
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -46,16 +46,21 @@ class GridAdaptInitializationIndicator
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
 
-    /*! \brief Constructor
-     *
+    /*!
+     * \brief Constructor
+     * \note Reads the folloing parameters from the parameter tree
+     *       - Adaptive.MinLevel The minimum refinement level
+     *       - Adaptive.MaxLevel The maximum refinement level
+     *       - Adaptive.RefineAtDirichletBC If to refine at Dirichlet boundaries (default: true)
+     *       - Adaptive.RefineAtFluxBC If to refine at Neumann/Robin boundaries (default: true)
+     *       - Adaptive.RefineAtSource If to refine where source terms are specified (default: true)
+     *       - Adaptive.BCRefinementThreshold The threshold above which fluxes are treated as non-zero (default: 1e-10)
      * \param problem The problem object
      * \param fvGridGeometry The finite volume geometry of the grid
      * \param gridVariables The secondary variables on the grid
@@ -76,7 +81,6 @@ public:
 
     /*!
      * \brief Function to set the minimum allowed level.
-     *
      */
     void setMinLevel(std::size_t minLevel)
     {
@@ -85,7 +89,6 @@ public:
 
     /*!
      * \brief Function to set the maximum allowed level.
-     *
      */
     void setMaxLevel(std::size_t maxLevel)
     {
@@ -94,7 +97,6 @@ public:
 
     /*!
      * \brief Function to set the minumum/maximum allowed levels.
-     *
      */
     void setLevels(std::size_t minLevel, std::size_t maxLevel)
     {
@@ -104,7 +106,6 @@ public:
 
     /*!
      * \brief Function to set if refinement at Dirichlet boundaries is to be used.
-     *
      */
     void setRefinementAtDirichletBC(bool refine)
     {
@@ -113,7 +114,6 @@ public:
 
     /*!
      * \brief Function to set if refinement at sources is to be used.
-     *
      */
     void setRefinementAtSources(bool refine)
     {
@@ -122,7 +122,6 @@ public:
 
     /*!
      * \brief Function to set if refinement at sources is to be used.
-     *
      */
     void setRefinementAtFluxBoundaries(bool refine)
     {
@@ -148,18 +147,18 @@ public:
             if (element.level() < minLevel_)
             {
                 indicatorVector_[eIdx] = true;
-                continue; //!< proceed to the next element
+                continue; // proceed to the next element
             }
 
-            //! If refinement at sources/BCs etc is deactivated, skip the rest
+            // If refinement at sources/BCs etc is deactivated, skip the rest
             if (!refineAtSource_ && !refineAtFluxBC_ && !refineAtDirichletBC_)
                 continue;
 
-            //! if the element is already on the maximum permissive level, skip rest
+            // if the element is already on the maximum permissive level, skip rest
             if (element.level() == maxLevel_)
                 continue;
 
-            //! get the fvGeometry and elementVolVars needed for the bc and source interfaces
+            // get the fvGeometry and elementVolVars needed for the bc and source interfaces
             auto fvGeometry = localView(*fvGridGeometry_);
             fvGeometry.bindElement(element);
 
@@ -175,63 +174,63 @@ public:
                     if (source.infinity_norm() > eps_)
                     {
                         indicatorVector_[eIdx] = true;
-                        break; //!< element is marked, escape scv loop
+                        break; // element is marked, escape scv loop
                     }
                 }
             }
 
             //! Check if we have to refine at the boundary
-            if (!indicatorVector_[eIdx]                       //! proceed if element is not already marked
-                && element.hasBoundaryIntersections()         //! proceed if element is on boundary
-                && (refineAtDirichletBC_ || refineAtFluxBC_)) //! proceed if boundary refinement is active
+            if (!indicatorVector_[eIdx]                       // proceed if element is not already marked
+                && element.hasBoundaryIntersections()         // proceed if element is on boundary
+                && (refineAtDirichletBC_ || refineAtFluxBC_)) // proceed if boundary refinement is active
             {
-                //! cell-centered schemes
+                // cell-centered schemes
                 if (!isBox)
                 {
                     for (const auto& scvf : scvfs(fvGeometry))
                     {
-                        //! skip non-boundary scvfs
+                        // skip non-boundary scvfs
                         if (!scvf.boundary())
                             continue;
 
                         const auto bcTypes = problem_->boundaryTypes(element, scvf);
-                        //! We assume pure BCs, mixed boundary types are not allowed anyway!
+                        // We assume pure BCs, mixed boundary types are not allowed anyway!
                         if(bcTypes.hasOnlyDirichlet() && refineAtDirichletBC_)
                         {
                             indicatorVector_[eIdx] = true;
-                            break; //!< element is marked, escape scvf loop
+                            break; // element is marked, escape scvf loop
                         }
 
-                        //! we are on a pure Neumann boundary
+                        // we are on a pure Neumann boundary
                         else if(refineAtFluxBC_)
                         {
                             const auto fluxes = problem_->neumann(element, fvGeometry, elemVolVars, scvf);
                             if (fluxes.infinity_norm() > eps_)
                             {
                                 indicatorVector_[eIdx] = true;
-                                break; //!< element is marked, escape scvf loop
+                                break; // element is marked, escape scvf loop
                             }
                         }
                     }
                 }
-                //! box-scheme
+                // box-scheme
                 else
                 {
-                    //! container to store bcTypes
+                    // container to store bcTypes
                     std::vector<BoundaryTypes> bcTypes(fvGeometry.numScv());
 
-                    //! Get bcTypes and maybe mark for refinement on Dirichlet boundaries
+                    // Get bcTypes and maybe mark for refinement on Dirichlet boundaries
                     for (const auto& scv : scvs(fvGeometry))
                     {
                         bcTypes[scv.indexInElement()] = problem_->boundaryTypes(element, scv);
                         if (refineAtDirichletBC_ && bcTypes[scv.indexInElement()].hasDirichlet())
                         {
                             indicatorVector_[eIdx] = true;
-                            break; //!< element is marked, escape scv loop
+                            break; // element is marked, escape scv loop
                         }
                     }
 
-                    //! If element hasn't been marked because of Dirichlet BCS, check Neumann BCs
+                    // If element hasn't been marked because of Dirichlet BCS, check Neumann BCs
                     if (!indicatorVector_[eIdx] && refineAtFluxBC_)
                     {
                         for (const auto& scvf : scvfs(fvGeometry))
@@ -243,7 +242,7 @@ public:
                                 if (fluxes.infinity_norm() > eps_)
                                 {
                                     indicatorVector_[eIdx] = true;
-                                    break; //!< element is marked, escape scvf loop
+                                    break; // element is marked, escape scvf loop
                                 }
                             }
                         }
@@ -285,5 +284,6 @@ private:
     Scalar eps_;               //!< Threshold for refinement at sources/BCS
 };
 
-}
+} // end namespace Dumux
+
 #endif

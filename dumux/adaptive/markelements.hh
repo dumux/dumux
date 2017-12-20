@@ -18,18 +18,26 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A class for h-adaptivity when using finite volume schemes.
+ * \ingroup Adaptive
+ * \brief A function to mark element for refinement or coarsening
  */
 #ifndef DUMUX_ADAPTIVE_MARKELEMENTS_HH
 #define DUMUX_ADAPTIVE_MARKELEMENTS_HH
 
-namespace Dumux
-{
+namespace Dumux {
 
+/*!
+ * \ingroup Adaptive
+ * \brief A function to mark element for refinement or coarsening
+ * \param grid the grid to mark the entities on
+ * \param indicator indicated per element whether to refine, coarsen, do nothing. It has a ()-operator taking an element
+ * \param verbose If verbose output to std::cout is enabled
+ * \return bool whether or not anything has been marked
+ */
 template<class Grid, class Indicator>
 bool markElements(Grid& grid, Indicator& indicator, bool verbose = true)
 {
-    //! mark elements according to indicator
+    // mark elements according to indicator
     std::size_t refine = 0;
     std::size_t coarsen = 0;
     for (const auto& element : elements(grid.leafGridView(), Dune::Partitions::interior))
@@ -47,7 +55,7 @@ bool markElements(Grid& grid, Indicator& indicator, bool verbose = true)
         }
     }
 
-    //! abort if nothing in grid is marked
+    // abort if nothing in grid is marked
     const std::size_t sumRefine = grid.comm().sum(refine);
     const std::size_t sumCoarsen = grid.comm().sum(coarsen);
 
@@ -55,7 +63,7 @@ bool markElements(Grid& grid, Indicator& indicator, bool verbose = true)
         std::cout << sumRefine << " cells have been marked to be refined, "
                   << sumCoarsen << " to be coarsened." << std::endl;
 
-    //! return whether or not anything has been marked
+    // return whether or not anything has been marked
     return sumRefine != 0 || sumCoarsen != 0;
 }
 

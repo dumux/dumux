@@ -387,7 +387,7 @@
 /* ***************** Adaptive ******************/
 /*!
  * \defgroup Adaptive Adaptive
- *  TODO: Doc me in modules.txt!
+ * \brief Adaptive grids
  */
 
 /* ***************** Assembly ******************/
