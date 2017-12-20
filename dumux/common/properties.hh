@@ -181,6 +181,7 @@ NEW_PROP_TAG(OnlyGasPhaseCanDisappear); //!< reduces the phasestates to threePha
 /////////////////////////////////////////////////////////////
 // Properties used by the staggered-grid discretization method
 /////////////////////////////////////////////////////////////
+
 NEW_PROP_TAG(NumEqCellCenter);                     //!< The number of equations for cell-centered dofs
 NEW_PROP_TAG(NumEqFace);                           //!< The number of equations for face dofs
 NEW_PROP_TAG(CellCenterSolutionVector);            //!< The solution vector type for cell-centered dofs
@@ -195,6 +196,31 @@ NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary varia
 NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data
 NEW_PROP_TAG(BoundaryValues);                      //!< Class containing local boundary data
+
+/////////////////////////////////////////////////////////////
+// Properties used by the mpnc model
+/////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(PressureFormulation); //! the formulation of the pressure e.g most wetting first
+
+/////////////////////////////////////////////////////////////
+// Properties used by the nonequilibrium model
+/////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(EquilibriumLocalResidual);
+NEW_PROP_TAG(EquilibriumIndices);
+NEW_PROP_TAG(EquilibriumVtkOutputFields);
+NEW_PROP_TAG(NumEqBalance);
+NEW_PROP_TAG(EnableThermalNonEquilibrium);
+NEW_PROP_TAG(EnableChemicalNonEquilibrium);
+NEW_PROP_TAG(NumEnergyEqFluid);
+NEW_PROP_TAG(NumEnergyEqSolid);
+
+NEW_PROP_TAG(AwnSurface);
+NEW_PROP_TAG(AwsSurface);
+NEW_PROP_TAG(AnsSurface);
+NEW_PROP_TAG(NusseltFormulation);
+NEW_PROP_TAG(SherwoodFormulation);
 
 } // end namespace Properties
 } // end namespace Dumux
