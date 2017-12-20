@@ -235,37 +235,36 @@
 /* ***************** Discretization ******************/
 /*!
  * \defgroup Discretization Discretization schemes
+ * \brief The discretization schemes available in DuMu<sup>x</sup>
  */
     /*!
      * \ingroup Discretization
-     * \defgroup BoxDiscretization Box finite volume scheme
+     * \defgroup BoxDiscretization Box FV scheme
      *
-     * \copydetails ./discretization/box/properties.hh
+     * \brief The box method is a collocated finite volume scheme with control volumes centered at grid nodes
      */
     /*!
      * \ingroup Discretization
-     * \defgroup CCDiscretization Cell-centered finite volume scheme
-     * # Tpfa
-     * \copybrief ./discretization/cellcentered/tpfa/properties.hh
-     * # Mpfa
-     * \copybrief ./discretization/cellcentered/mpfa/properties.hh
+     * \defgroup CCDiscretization Cell-centered FV scheme
+     * \brief Finite volume schemes with degrees of freedom located at grid cell centers
      */
          /*!
          * \ingroup CCDiscretization
-         * \defgroup CCTpfaDiscretization Cell-centered finite volume scheme with two-point flux-approximuation (Tpfa)
+         * \defgroup CCTpfaDiscretization Two-point flux approximation (Tpfa)
          *
-         * \copydetails ./discretization/cellcentered/tpfa/properties.hh
+         * \brief A cell-centered finite volume scheme with two-point flux approximation
          */
          /*!
          * \ingroup CCDiscretization
-         * \defgroup CCMpfaDiscretization Cell-centered finite volume scheme with multi-point flux-approximuation (Mpfa)
+         * \defgroup CCMpfaDiscretization Multi-point flux approximation (Mpfa)
          *
-         * \copydetails ./discretization/cellcentered/mpfa/properties.hh
+         * \brief A cell-centered finite volume scheme with multi-point flux approximation
          */
     /*!
      * \ingroup Discretization
-     * \defgroup StaggeredDiscretization Staggered finite volume scheme
-     * \copydetails ./discretization/staggered/properties.hh
+     * \defgroup StaggeredDiscretization Staggered FV scheme
+     *
+     * \brief A staggered finite volume scheme with degrees of freedom at cell-centers and facets
      */
 
 /* ***************** Material ******************/
