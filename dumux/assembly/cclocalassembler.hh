@@ -18,8 +18,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief An assembler for the global linear system for fully implicit models
- *        and cell-centered discretization schemes using Newton's method.
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
+ * \tparam TypeTag the TypeTag
+ * \tparam DM the differentiation method to residual compute derivatives
+ * \tparam implicit if to use an implicit or explicit time discretization
  */
 #ifndef DUMUX_CC_LOCAL_ASSEMBLER_HH
 #define DUMUX_CC_LOCAL_ASSEMBLER_HH
@@ -34,16 +38,23 @@
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief An assembler for the local contributions (per element) to the global
- *        linear system for fully implicit models and cell-centered discretization schemes.
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
+ * \tparam TypeTag the TypeTag
+ * \tparam DM the differentiation method to residual compute derivatives
+ * \tparam implicit if to use an implicit or explicit time discretization
  */
 template<class TypeTag,
          DiffMethod DM = DiffMethod::numeric,
          bool implicit = true>
 class CCLocalAssembler;
 
-
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
+ */
 template<class TypeTag>
 class CCLocalAssembler<TypeTag,
                        DiffMethod::numeric,
@@ -586,7 +597,12 @@ private:
     { return gridVolVars.volVars(scv); }
 };
 
-//! Explicit assembler with numeric differentiation
+
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief Cell-centered scheme local assembler using numeric differentiation and explicits time discretization
+ */
 template<class TypeTag>
 class CCLocalAssembler<TypeTag,
                        DiffMethod::numeric,
@@ -926,7 +942,11 @@ private:
     { return gridVolVars.volVars(scv); }
 };
 
-//! implicit assembler using analytic differentiation
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and implicit time discretization
+ */
 template<class TypeTag>
 class CCLocalAssembler<TypeTag,
                        DiffMethod::analytic,
@@ -1187,7 +1207,11 @@ private:
     }
 };
 
-//! explicit assembler using analytic differentiation
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and explicit time discretization
+ */
 template<class TypeTag>
 class CCLocalAssembler<TypeTag,
                        DiffMethod::analytic,

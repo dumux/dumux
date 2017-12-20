@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief An assembler for the global linear system
- *        for fully implicit models and vertex-centered discretization schemes.
+ * \ingroup Assembly
+ * \ingroup StaggeredDiscretization
+ * \brief A linear system assembler (residual and Jacobian) for staggered finite volume schemes
  */
 #ifndef DUMUX_STAGGERED_FV_ASSEMBLER_HH
 #define DUMUX_STAGGERED_FV_ASSEMBLER_HH
@@ -39,9 +40,12 @@
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief An assembler for the global linear system
- *        for fully implicit models and cell-centered discretization schemes.
+ * \ingroup Assembly
+ * \ingroup StaggeredDiscretization
+ * \brief A linear system assembler (residual and Jacobian) for staggered finite volume schemes
+ * \tparam TypeTag the TypeTag
+ * \tparam diffMethod the differentiation method to residual compute derivatives
+ * \tparam isImplicit if to use an implicit or explicit time discretization
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class StaggeredFVAssembler
@@ -255,7 +259,6 @@ public:
     /*!
      * \brief Resizes the jacobian and sets the jacobian' sparsity pattern.
      */
-
     void setJacobianPattern()
     {
         // resize the jacobian and the residual
@@ -360,14 +363,14 @@ public:
     { return localResidual_; }
 
 private:
-    // reset the residual to 0.0
+    //! reset the residual to 0.0
     void resetResidual_()
     {
         (*residual_)[cellCenterIdx] = 0.0;
         (*residual_)[faceIdx] = 0.0;
     }
 
-    // reset the jacobian to 0.0
+    //! reset the jacobian to 0.0
     void resetJacobian_()
     {
         (*jacobian_)[cellCenterIdx][cellCenterIdx] = 0.0;
@@ -376,23 +379,23 @@ private:
         (*jacobian_)[faceIdx][faceIdx] = 0.0;
     }
 
-    // pointer to the problem to be solved
+    //! pointer to the problem to be solved
     std::shared_ptr<const Problem> problem_;
 
-    // the finite volume geometry of the grid
+    //! the finite volume geometry of the grid
     std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
 
-    // the variables container for the grid
+    //! the variables container for the grid
     std::shared_ptr<GridVariables> gridVariables_;
 
-    // shared pointers to the jacobian matrix and residual
+    //! shared pointers to the jacobian matrix and residual
     std::shared_ptr<JacobianMatrix> jacobian_;
     std::shared_ptr<SolutionVector> residual_;
 
-    // class computing the residual of an element
+    //! class computing the residual of an element
     LocalResidual localResidual_;
 
-    // if this assembler is assembling a time dependent problem
+    //! if this assembler is assembling a time dependent problem
     bool stationary_;
 };
 

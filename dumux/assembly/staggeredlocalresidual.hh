@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \ingroup StaggeredDiscretization
+ * \ingroup Assembly
+ * \brief Calculates the element-wise residual for the staggered FV scheme
  */
 #ifndef DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
@@ -26,20 +28,16 @@
 #include <dumux/common/valgrind.hh>
 #include <dumux/common/timeloop.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 namespace Properties
 {
     NEW_PROP_TAG(ElementFaceVariables);
 }
 /*!
- * \ingroup CCModel
- * \ingroup StaggeredLocalResidual
- * \brief Element-wise calculation of the residual for models
- *        based on the fully implicit cell-centered scheme.
- *
- * \todo Please doc me more!
+ * \ingroup StaggeredDiscretization
+ * \ingroup Assembly
+ * \brief Calculates the element-wise residual for the staggered FV scheme
  */
 template<class TypeTag>
 class StaggeredLocalResidual
@@ -93,28 +91,32 @@ public:
     , prevSol_(nullptr)
     {}
 
-     /*!
+    /*!
      * \name User interface
      * \note The following methods are usually expensive to evaluate
      *       They are useful for outputting residual information.
      */
     // \{
 
-     /*!
-     * \brief Compute the local residual, i.e. the deviation of the
+    /*!
+     * \brief Compute the local cell residual, i.e. the deviation of the
      *        equations from zero for a transient problem.
      *
+     * \param problem The problem to solve
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
-     * \param prevVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the previous
-     *                   time level
-     * \param curVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the current
-     *                   time level
+     * \param prevElemVolVars The volume averaged variables (in the cell) for all
+     *                        sub-control volumes of the element at the previous time level
+     * \param curElemVolVars The volume averaged variables (in the cell) for all
+     *                       sub-control volumes of the element at the current time level
+     * \param prevElemFaceVars The volume averaged variables (on the face) for all
+     *                         sub-control volumes of the element at the previous time level
+     * \param curElemFaceVars The volume averaged variables (on the face) for all
+     *                        sub-control volumes of the element at the current time level
      * \param bcTypes The types of the boundary conditions for all
      *                vertices of the element
+     * \param elemFluxVarsCache The cache of the flux variables
      */
     auto evalCellCenter(const Problem& problem,
                         const Element &element,
@@ -142,21 +144,26 @@ public:
         return residual;
     }
 
-     /*!
-     * \brief Compute the local residual, i.e. the deviation of the
+    /*!
+     * \brief Compute the local face residual, i.e. the deviation of the
      *        equations from zero for a transient problem.
      *
+     * \param problem The problem to solve
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
-     * \param prevVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the previous
-     *                   time level
-     * \param curVolVars The volume averaged variables for all
-     *                   sub-control volumes of the element at the current
-     *                   time level
+     * \param scvf The sub control volume face
+     * \param prevElemVolVars The volume averaged variables (in the cell) for all
+     *                        sub-control volumes of the element at the previous time level
+     * \param curElemVolVars The volume averaged variables (in the cell) for all
+     *                       sub-control volumes of the element at the current time level
+     * \param prevElemFaceVars The volume averaged variables (on the face) for all
+     *                         sub-control volumes of the element at the previous time level
+     * \param curElemFaceVars The volume averaged variables (on the face) for all
+     *                        sub-control volumes of the element at the current time level
      * \param bcTypes The types of the boundary conditions for all
      *                vertices of the element
+     * \param elemFluxVarsCache The cache of the flux variables
      */
     auto evalFace(const Problem& problem,
                   const Element &element,

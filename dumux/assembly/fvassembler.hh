@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief An assembler for the global linear system
- *        for fully implicit models and vertex-centered discretization schemes.
+ * \ingroup Assembly
+ * \brief A linear system assembler (residual and Jacobian) for finite volume schemes
  */
 #ifndef DUMUX_FV_ASSEMBLER_HH
 #define DUMUX_FV_ASSEMBLER_HH
@@ -40,9 +40,11 @@
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief An assembler for the global linear system
- *        for fully implicit models and cell-centered discretization schemes.
+ * \ingroup Assembly
+ * \brief A linear system assembler (residual and Jacobian) for finite volume schemes
+ * \tparam TypeTag the TypeTag
+ * \tparam diffMethod the differentiation method to residual compute derivatives
+ * \tparam isImplicit if to use an implicit or explicit time discretization
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler

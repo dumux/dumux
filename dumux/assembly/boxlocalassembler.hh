@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief An assembler for the global linear system for fully implicit models
- *        and cell-centered discretization schemes using Newton's method.
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (box method)
  */
 #ifndef DUMUX_BOX_LOCAL_ASSEMBLER_HH
 #define DUMUX_BOX_LOCAL_ASSEMBLER_HH
@@ -33,16 +34,23 @@
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief An assembler for the local contributions (per element) to the global
- *        linear system for fully implicit models and cell-centered discretization schemes.
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (box method)
+ * \tparam TypeTag the TypeTag
+ * \tparam DM the differentiation method to residual compute derivatives
+ * \tparam implicit if to use an implicit or explicit time discretization
  */
 template<class TypeTag,
          DiffMethod DM = DiffMethod::numeric,
          bool implicit = true>
 class BoxLocalAssembler;
 
-
+/*!
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief Box local assembler using numeric differentiation and implicit time discretization
+ */
 template<class TypeTag>
 class BoxLocalAssembler<TypeTag,
                        DiffMethod::numeric,
@@ -442,6 +450,12 @@ private:
 
 }; // implicit BoxAssembler with numeric Jacobian
 
+
+/*!
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief Box local assembler using numeric differentiation and explicit time discretization
+ */
 template<class TypeTag>
 class BoxLocalAssembler<TypeTag,
                        DiffMethod::numeric,
@@ -809,6 +823,12 @@ private:
 
 }; // explicit BoxAssembler with numeric Jacobian
 
+
+/*!
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief Box local assembler using analytic (hard coded) derivatives and implicit time discretization
+ */
 template<class TypeTag>
 class BoxLocalAssembler<TypeTag,
                        DiffMethod::analytic,
@@ -1121,6 +1141,12 @@ private:
 
 }; // implicit BoxAssembler with analytic Jacobian
 
+
+/*!
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief Box local assembler using analytic (hard coded) derivatives and explicit time discretization
+ */
 template<class TypeTag>
 class BoxLocalAssembler<TypeTag,
                        DiffMethod::analytic,

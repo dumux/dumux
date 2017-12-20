@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief An assembler for the global linear system for fully implicit models
- *        and cell-centered discretization schemes using Newton's method.
+ * \ingroup StaggeredDiscretization
+ * \ingroup Assembly
+ * \brief An assembler for Jacobian and residual contribution per element (staggered FV method)
  */
 #ifndef DUMUX_CC_LOCAL_ASSEMBLER_HH
 #define DUMUX_CC_LOCAL_ASSEMBLER_HH
@@ -35,24 +36,30 @@
 #include <dune/common/version.hh>
 
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    #include <dune/common/hybridutilities.hh>
+#include <dune/common/hybridutilities.hh>
 #else
-    #include <dumux/common/intrange.hh>
+#include <dumux/common/intrange.hh>
 #endif
 
 namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief An assembler for the local contributions (per element) to the global
- *        linear system for fully implicit models and cell-centered discretization schemes.
+ * \ingroup Assembly
+ * \ingroup StaggeredDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (staggered FV method)
+ * \tparam TypeTag the TypeTag
+ * \tparam DM the differentiation method to residual compute derivatives
+ * \tparam implicit if to use an implicit or explicit time discretization
  */
 template<class TypeTag,
          DiffMethod DM = DiffMethod::numeric,
          bool implicit = true>
 class StaggeredLocalAssembler;
 
-
+/*!
+ * \ingroup Assembly
+ * \brief Staggerd FV scheme local assembler using numeric differentiation and implicit time discretization
+ */
 template<class TypeTag>
 class StaggeredLocalAssembler<TypeTag,
                        DiffMethod::numeric,
@@ -548,11 +555,14 @@ protected:
 
     /*!
      * \brief Computes the epsilon used for numeric differentiation
-     *        for a given value of a primary variable.
+     *        for a given value of a primary variable for
+     *        an equation residual with respect to a primary variable
      *
      * \param priVar The value of the primary variable
+     * \param eqIdx The equation index of the equation
+     * \param pvIdx The index of the primary variable
      */
-    static Scalar numericEpsilon(const Scalar priVar, const int idx1, const int idx2)
+    static Scalar numericEpsilon(const Scalar priVar, const int eqIdx, const int pvIdx)
     {
         // define the base epsilon as the geometric mean of 1 and the
         // resolution of the scalar type. E.g. for standard 64 bit
@@ -566,7 +576,7 @@ protected:
         const std::array<std::array<Scalar, 2>, 2> baseEps_ = BaseEpsilon::getEps();
 
 
-        static const Scalar baseEps = baseEps_[idx1][idx2];
+        static const Scalar baseEps = baseEps_[eqIdx][pvIdx];
         assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
         // the epsilon value used for the numeric differentiation is
         // now scaled by the absolute value of the primary variable...

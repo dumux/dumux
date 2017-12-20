@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief Calculates the element-wise residual for cell-centered discretization schemes
  */
 #ifndef DUMUX_CC_LOCAL_RESIDUAL_HH
 #define DUMUX_CC_LOCAL_RESIDUAL_HH
@@ -28,14 +30,12 @@
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \ingroup CCModel
- * \brief Element-wise calculation of the residual for models
- *        based on the fully implicit cell-centered scheme.
- *
- * \todo Please doc me more!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief Calculates the element-wise residual for the cell-centered discretization schemes
  */
 template<class TypeTag>
 class CCLocalResidual : public FVLocalResidual<TypeTag>
@@ -54,6 +54,7 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
 public:
     using ParentType::ParentType;
 
+    //! evaluate the flux residual for a sub control volume face and add to residual
     void evalFlux(ElementResidualVector& residual,
                   const Problem& problem,
                   const Element& element,
@@ -68,6 +69,7 @@ public:
         residual[localScvIdx] += evalFlux(problem, element, fvGeometry, elemVolVars, elemFluxVarsCache, scvf);
     }
 
+    //! evaluate the flux residual for a sub control volume face
     ResidualVector evalFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,

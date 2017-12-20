@@ -393,7 +393,7 @@
 /* ***************** Assembly ******************/
 /*!
  * \defgroup Assembly Assembly
- *  TODO: Doc me in modules.txt!
+ * \brief Assembly of linear systems (Jacobian and residual)
  */
 
 /* ***************** Common ******************/

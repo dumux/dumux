@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief Calculates the element-wise residual for the box scheme
  */
 #ifndef DUMUX_BOX_LOCAL_RESIDUAL_HH
 #define DUMUX_BOX_LOCAL_RESIDUAL_HH
@@ -29,14 +31,13 @@
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \ingroup BoxModel
- * \brief Element-wise calculation of the residual for models
- *        based on the fully implicit box scheme.
- *
- * \todo Please doc me more!
+ * \ingroup Assembly
+ * \ingroup BoxDiscretization
+ * \brief The element-wise residual for the box scheme
+ * \tparam TypeTag the TypeTag
  */
 template<class TypeTag>
 class BoxLocalResidual : public FVLocalResidual<TypeTag>
@@ -67,6 +68,7 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
 public:
     using ParentType::ParentType;
 
+    //! evaluate flux residuals for one sub control volume face and add to residual
     void evalFlux(ElementResidualVector& residual,
                   const Problem& problem,
                   const Element& element,
@@ -91,7 +93,7 @@ public:
         }
     }
 
-
+    //! evaluate flux residuals for one sub control volume face
     ResidualVector evalFlux(const Problem& problem,
                             const Element& element,
                             const FVElementGeometry& fvGeometry,
