@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Class used calculate fluxes over planes. This only works for the staggered grid discretization.
+ * \ingroup FreeflowModels
+ * \copydoc Dumux::FluxOverPlane
  */
 #ifndef DUMUX_FLUX_OVER_PLANE_STAGGERED_HH
 #define DUMUX_FLUX_OVER_PLANE_STAGGERED_HH
@@ -38,6 +38,7 @@ namespace Dumux
 
 
 /*!
+ * \ingroup FreeflowModels
  * \brief  Class used to calculate fluxes over planes. This only works for the staggered grid discretization.
  */
 template <class TypeTag>
@@ -160,7 +161,7 @@ public:
      * \brief Add a collection of sub planes under a given name
      *
      * \param name The name of the plane
-     * \param sol The list of sub planes
+     * \param planes The list of sub planes
      */
     void addPlane(const std::string& name, PlaneList&& planes )
     {
