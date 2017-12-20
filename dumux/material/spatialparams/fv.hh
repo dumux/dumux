@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
@@ -34,10 +33,6 @@ namespace Dumux {
 
 /*!
  * \ingroup SpatialParameters
- */
-
-
-/**
  * \brief The base class for spatial parameters of multi-phase problems
  * using a fully implicit discretization method.
  */
