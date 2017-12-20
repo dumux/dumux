@@ -1,0 +1,19 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 70000 # [s]
+MaxTimeStepSize = 1e6
+
+[Grid]
+UpperRight = 1 1
+Cells = 30 30
+
+[Problem]
+Name = test_msfreeflow # name passed to the output routines
+EnableGravity = false
+
+[ Newton ]
+MaxSteps = 10
+MaxRelativeShift = 1e-8
+
+[Vtk]
+WriteFaceData = false

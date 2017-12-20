@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES test_2pnc_fv.input)
+dune_symlink_to_source_files(FILES test_2pnc_fv.input test_2pnc_diffusion.input)
 
 # isothermal tests
 dune_add_test(NAME test_2pnc_box
@@ -19,10 +19,32 @@ dune_add_test(NAME test_2pnc_tpfa
                                ${CMAKE_CURRENT_BINARY_DIR}/fuelcell_tpfa-00015.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pnc_tpfa -ParameterFile test_2pnc_fv.input -Problem.Name fuelcell_tpfa")
 
+dune_add_test(NAME test_cc2pnc_maxwellstefan
+              SOURCES test_cc2pnc_diffusion.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionProblem DIFFUSIONTYPE=MaxwellStefansLaw<TypeTag>
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/2pncdiffusioncc-reference.vtu
+                                 ${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_maxwellstefan-00026.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_maxwellstefan test_2pnc_diffusion.input -Problem.Name test_cc2pnc_maxwellstefan")
+
+dune_add_test(NAME test_cc2pnc_fickslaw
+              SOURCES test_cc2pnc_diffusion.cc
+              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionProblem DIFFUSIONTYPE=FicksLaw<TypeTag>
+              COMMAND  ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/2pncdiffusioncc-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_fickslaw-00026.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc2pnc_fickslaw test_2pnc_diffusion.input -Problem.Name test_cc2pnc_fickslaw")
+
 #install sources
 install(FILES
 fuelcellproblem.hh
 fuelcellspatialparams.hh
 test_2pnc_fv.cc
 test_2pnc_fv.input
+test_cc2pnc_diffusion.cc
+maxwellstefandiffusion.hh
+maxwellstefandiffusionspatialparams.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/2pnc)
+set(CMAKE_BUILD_TYPE Release)

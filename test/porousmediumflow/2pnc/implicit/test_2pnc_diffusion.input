@@ -1,0 +1,11 @@
+[TimeLoop]
+DtInitial = 250 # [s]
+TEnd = 1e8 # [s]
+
+[Grid]
+UpperRight = 60 40
+Cells = 50 5
+
+[Problem]
+Name = 2pnc_diffusion
+EnableGravity = false
