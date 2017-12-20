@@ -16,10 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
- */
+ /*!
+  * \file
+  * \ingroup NavierStokesNCModel
+  * \copydoc Dumux::NavierStokesNCResidual
+  */
 #ifndef DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_NC_LOCAL_RESIDUAL_HH
 
@@ -31,15 +32,17 @@
 namespace Dumux
 {
 
-/*!
- *
- * \todo Please doc me more!
- */
-
-// // forward declaration
+// forward declaration
 template<class TypeTag, DiscretizationMethods Method>
 class NavierStokesNCResidualImpl;
 
+/*!
+ * \ingroup NavierStokesNCModel
+ * \brief The local residual class for the Navier-Stokes multi-component model (balance equations).
+          This is a convenience alias for the actual,
+          discretization-specific local residual.
+ * \note  Not all specializations are currently implemented
+ */
 template<class TypeTag>
 using NavierStokesNCResidual = NavierStokesNCResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
