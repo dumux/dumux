@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the flux variables
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::NavierStokesFluxVariablesImpl
  */
 #ifndef DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_STAGGERED_FLUXVARIABLES_HH
@@ -42,11 +43,9 @@ class NavierStokesFluxVariablesImpl;
 
 
 /*!
- * \ingroup Discretization
- * \brief Base class for the flux variables
- *        Actual flux variables inherit from this class
+ * \ingroup NavierStokesModel
+ * \brief The flux variables class for the Navier-Stokes model using the staggered grid discretization.
  */
-// specialization for immiscible, isothermal flow
 template<class TypeTag>
 class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 : public FluxVariablesBase<TypeTag>
@@ -86,6 +85,14 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 
 public:
 
+    /*!
+    * \brief Returns the advective flux over a sub control volume face
+    * \param elemVolVars All volume variables for the element
+    * \param elemFaceVars The face variables
+    * \param scvf The sub control volume face
+    * \param upwindTerm The uwind term (i.e. the advectively transported quantity)
+    * \param isOutflow Determines if we are on an outflow boundary
+    */
     template<class UpwindTerm>
     static Scalar advectiveFluxForCellCenter(const ElementVolumeVariables& elemVolVars,
                                              const ElementFaceVariables& elemFaceVars,
@@ -110,6 +117,9 @@ public:
         return flux;
     }
 
+    /*!
+    * \brief Computes the flux for the cell center residual.
+    */
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
@@ -188,10 +198,6 @@ public:
 
     /*!
     * \brief Returns the normal part of the momentum flux
-    * \param scvf The sub control volume face
-    * \param fvGeometry The finite-volume geometry
-    * \param elemVolVars All volume variables for the element
-    * \param elementFaceVars The face variables
     */
    FacePrimaryVariables computeNormalMomentumFlux(const Problem& problem,
                                                   const Element& element,
@@ -240,10 +246,6 @@ public:
 
    /*!
    * \brief Returns the tangential part of the momentum flux
-   * \param scvf The sub control volume face
-   * \param fvGeometry The finite-volume geometry
-   * \param elemVolVars All volume variables for the element
-   * \param elementFaceVars The face variables
    */
   FacePrimaryVariables computeTangetialMomentumFlux(const Problem& problem,
                                                     const Element& element,
