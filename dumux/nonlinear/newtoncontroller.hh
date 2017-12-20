@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Nonlinear
  * \brief Reference implementation of a controller class for the Newton solver.
  *
  * Usually this controller should be sufficient.
@@ -34,16 +35,15 @@
 #include <dumux/common/timeloop.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
- * \ingroup Newton
- * \brief A reference implementation of a Newton controller specific
- *        for the box scheme.
+ * \ingroup Nonlinear
+ * \brief An implementation of a Newton controller
  *
- * If you want to specialize only some methods but are happy with the
- * defaults of the reference controller, derive your controller from
- * this class and simply overload the required methods.
+ * \note If you want to specialize only some methods but are happy with the
+ *       defaults of the reference controller, derive your controller from
+ *       this class and simply overload the required methods.
  */
 template <class TypeTag>
 class NewtonController
@@ -77,6 +77,7 @@ public:
         initParams_();
     }
 
+    //! the communicator for parallel runs
     const Communicator& communicator() const
     { return comm_; }
 
@@ -134,6 +135,7 @@ public:
      * \brief Returns true if another iteration should be done.
      *
      * \param uCurrentIter The solution of the current Newton iteration
+     * \param converged if the Newton method's convergence criterion was met in this step
      */
     template<class SolutionVector>
     bool newtonProceed(const SolutionVector &uCurrentIter, bool converged)
@@ -257,6 +259,7 @@ public:
      * \brief Assemble the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
      * \param assembler The jacobian assembler
+     * \param uCurrentIter The current iteration's solution vector
      */
     template<class JacobianAssembler, class SolutionVector>
     void assembleLinearSystem(JacobianAssembler& assembler,
@@ -268,7 +271,7 @@ public:
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
-     * Throws NumericalProblem if the linear solver didn't
+     * \throws Dumux::NumericalProblem if the linear solver didn't
      * converge.
      *
      * \param ls The linear solver to be used
@@ -516,6 +519,7 @@ public:
 
 protected:
 
+    //! initialize the parameters by reading from the parameter tree
     void initParams_()
     {
         const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
@@ -597,15 +601,16 @@ protected:
         return result;
     }
 
-    // The grid view's communicator
+    //! The grid view's communicator
     const Communicator& comm_;
 
+    //! The time loop for stationary simulations
     std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
 
-    // message stream to be displayed at the end of iterations
+    //! message stream to be displayed at the end of iterations
     std::ostringstream endIterMsgStream_;
 
-    // switches on/off verbosity
+    //! switches on/off verbosity
     bool verbose_;
 
     // shift criterion variables
@@ -621,11 +626,11 @@ protected:
     Scalar reductionTolerance_;
     Scalar residualTolerance_;
 
-    // optimal number of iterations we want to achieve
+    //! optimal number of iterations we want to achieve
     int targetSteps_;
-    // maximum number of iterations we do before giving up
+    //! maximum number of iterations we do before giving up
     int maxSteps_;
-    // actual number of steps done so far
+    //! actual number of steps done so far
     int numSteps_;
 
     // further parameters
@@ -637,6 +642,6 @@ protected:
     bool satisfyResidualAndShiftCriterion_;
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

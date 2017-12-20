@@ -18,11 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A StaggeredModel specific controller for the newton solver.
- *
- * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the newton method to abort quicker if the solution is
- * way out of bounds.
+ * \ingroup Nonlinear
+ * \ingroup StaggeredDiscretization
+ * \brief A newton controller for staggered finite volume schemes
  */
 #ifndef DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 #define DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
@@ -37,12 +35,9 @@
 namespace Dumux {
 
 /*!
- * \ingroup StaggeredModel
- * \brief A StaggeredModel specific controller for the newton solver.
- *
- * This controller 'knows' what a 'physically meaningful' solution is
- * which allows the newton method to abort quicker if the solution is
- * way out of bounds.
+ * \ingroup Nonlinear
+ * \ingroup StaggeredDiscretization
+ * \brief A newton controller for staggered finite volume schemes
  */
 
 template <class TypeTag>
@@ -78,6 +73,7 @@ public:
      * If the linear solver doesn't accept multitype matrices we copy the matrix
      * into a 1x1 block BCRS matrix for solving.
      *
+     * \param ls the linear solver
      * \param A The matrix of the linear system of equations
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
@@ -141,6 +137,7 @@ public:
     * subtract deltaU from uLastIter, i.e.
     * \f[ u^{k+1} = u^k - \Delta u^k \f]
     *
+    * \param assembler The assembler for Jacobian and residual
     * \param uCurrentIter The solution vector after the current iteration
     * \param uLastIter The solution vector after the last iteration
     * \param deltaU The delta as calculated from solving the linear

@@ -422,7 +422,7 @@
 /* ***************** Nonlinear ******************/
 /*!
  * \defgroup Nonlinear Nonlinear
- *  TODO: Doc me in modules.txt!
+ * \brief Nonlinear solvers: Newton method
  */
 
 /* ***************** Parallel ******************/

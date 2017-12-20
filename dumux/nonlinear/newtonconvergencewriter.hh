@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Nonlinear
  * \brief This class provides the infrastructure to write the
  *        convergence behaviour of the newton method into a VTK file.
  */
@@ -34,9 +34,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Newton
- * \brief Writes the intermediate solutions during
- *        the Newton scheme
+ * \ingroup Nonlinear
+ * \brief Writes the intermediate solutions for every Newton iteration
  * \note To use this create a unique_ptr to an instance of this class in the main file
  *       and pass it to newton.solve(x, convergencewriter). You can use the reset method
  *       to write out multiple Newton solves with a unique id, if you don't call use all
@@ -46,6 +45,12 @@ template <class Scalar, class GridView, int numEq>
 class NewtonConvergenceWriter
 {
 public:
+    /*!
+     * \brief Constructor
+     * \param gridView the grid view we are solving on
+     * \param size the size of the solution data
+     * \param name base name of the vtk output
+     */
     NewtonConvergenceWriter(const GridView& gridView,
                             std::size_t size,
                             const std::string& name = "newton_convergence")
@@ -126,6 +131,6 @@ private:
     std::array<std::vector<Scalar>, numEq> x_;
 };
 
-} // namespace Dumux
+} // end namespace Dumux
 
 #endif

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Nonlinear
  * \brief The algorithmic part of the multi dimensional newton method.
  *
  * In order to use the method you need a Newtoncontroller
@@ -40,9 +40,12 @@ namespace Dumux
 
 /*!
  * \ingroup Newton
+ * \ingroup Nonlinear
  * \brief The algorithmic part of the multi dimensional newton method.
  *
- * In order to use the method you need a Newtoncontroller
+ * \tparam NewtonController the controller class is the driver implementation
+ * \tparam JacobianAssembler an assembler for the Jacobian and the residual
+ * \tparam LinearSolver the linear solver used to solve one iteration
  */
 template <class NewtonController, class JacobianAssembler, class LinearSolver>
 class NewtonMethod
