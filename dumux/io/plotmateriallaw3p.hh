@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief Interface for plotting the three-phase fluid-matrix-interaction laws
  */
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
@@ -31,7 +31,7 @@ template<class Scalar> class GnuplotInterface;
 
 /*!
  *\brief Interface for plotting the three-phase fluid-matrix-interaction laws
- *
+ * \ingroup InputOutput
  * TODO: add theta head pressure plot (porosity and density is needed)
  */
 template<class Scalar, class MaterialLaw>

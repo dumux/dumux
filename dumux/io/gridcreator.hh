@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief Provides a grid creator for all supported grid managers with
  *        input file interfaces.
  *
@@ -80,6 +81,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup InputOutput
  * \brief Provides the grid creator base interface (public) and methods common
  *        to most grid creator specializations (protected).
  */

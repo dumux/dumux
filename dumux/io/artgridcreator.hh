@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief Artmesh reader: Reads Artmesh files (ASCII) and constructs a UG grid
  *  for modeling lower dimensional discrete fracture-matrix problems.
  */
@@ -51,6 +51,7 @@ NEW_PROP_TAG(GridCreator);
 }
 
 /*!
+ * \ingroup InputOutput
  * \brief Reads in Artmesh files.
  */
 template <class TypeTag>

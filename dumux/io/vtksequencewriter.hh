@@ -1,6 +1,12 @@
 // -*- tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 2 -*-
 // vi: set et ts=4 sw=2 sts=2:
-
+/*!
+ * \file
+ * \ingroup InputOutput
+ * \brief Base class to write pvd-files which contains a list of all collected vtk-files.
+   *         This is a modified version of DUNE's pvd writer which takes a VTKWriter as template
+   *         argument making it more general.
+ */
 #ifndef DUMUX_VTKSEQUENCEWRITER_HH
 #define DUMUX_VTKSEQUENCEWRITER_HH
 
@@ -17,7 +23,9 @@
 
 namespace Dumux {
 
-  /** \brief Base class to write pvd-files which contains a list of all collected vtk-files.
+  /*!
+   * \ingroup InputOutput
+   * \brief Base class to write pvd-files which contains a list of all collected vtk-files.
    *         This is a modified version of DUNE's pvd writer which takes a VTKWriter as template
    *         argument making it more general.
    *

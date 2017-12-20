@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief Adds vtk output fields specific to a model, this is the default if a
           model doesn't implement this functionality
  */
@@ -30,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Common, InputOutput
+ * \ingroup InputOutput
  * \brief Adds vtk output fields specific to a model
  */
 class DefaultVtkOutputFields

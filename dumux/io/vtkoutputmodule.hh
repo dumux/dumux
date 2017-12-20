@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format
  */
 #ifndef VTK_OUTPUT_MODULE_HH

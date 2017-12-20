@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief A grid creator that reads Petrel files and generates a CpGrid.
  */
 #ifndef DUMUX_CPGRID_CREATOR_HH
@@ -42,6 +42,7 @@ NEW_PROP_TAG(Grid);
 }
 
 /*!
+ * \ingroup InputOutput
  * \brief A grid creator that reads Petrel files and generates a CpGrid.
  */
 template <class TypeTag>

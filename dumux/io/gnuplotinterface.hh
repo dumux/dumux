@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup InputOutput
  * \brief Interface for passing data sets to a file and plotting them, if gnuplot
  *        is installed.
  *
@@ -49,6 +49,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup InputOutput
  * \brief Interface for passing data sets to a file and plotting them, if gnuplot
  *        is installed.
  */

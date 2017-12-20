@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief Free functions to write and read a sequence container to and from a file
  * \note Reading should work for all sequence containers providing begin, end, and push_back
  *       (e.g. std::vector, std::deque, std::list), so not for e.g. std::array.

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup InputOutput
  * \brief Provides a restart functionality for adaptive grids
  */
 #ifndef DUMUX_ADAPTIVEGRIDRESTART_HH
@@ -39,6 +40,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup InputOutput
  * \brief Indices denoting the different grid types.
  */
 
