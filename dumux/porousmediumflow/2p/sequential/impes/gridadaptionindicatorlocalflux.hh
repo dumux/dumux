@@ -16,16 +16,17 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption
+ */
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2PLOCALFLUX_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2PLOCALFLUX_HH
 
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-/**
- * \file
- * \brief  Class defining a standard, saturation dependent indicator for grid adaption
- */
 namespace Dumux
 {
 
@@ -51,8 +52,9 @@ SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenPercentileSat, 0.2);
 
 }
 
-/*!\ingroup IMPES
+/*!
  * \brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * \ingroup SequentialTwoPModel
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -118,7 +120,8 @@ private:
     using RangeSet = std::set<SetField, Comparison>;
 
 public:
-    /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
+    /*!
+     * \brief Calculates the indicator used for refinement/coarsening for each grid cell.
      *
      * This standard indicator is based on the saturation gradient.
      */
@@ -540,7 +543,8 @@ public:
         }
     }
 
-    /*! \brief Check if pressure data is in some physical range
+    /*!
+     * \brief Check if pressure data is in some physical range
      *
      * Returns true if the cell pressure is in some range
      *
@@ -556,7 +560,8 @@ public:
         return true;
     }
 
-    /*! \brief Set a lower and upper pressure constraint
+    /*!
+     * \brief Set a lower and upper pressure constraint
      *
      *  \param lowerPressureBound lower pressure value
      *  \param upperPressureBound upper pressure value
@@ -567,7 +572,8 @@ public:
         upperPressureBound_ = upperPressureBound;
     }
 
-    /*! \brief Indicator function for marking of grid cells for refinement
+    /*!
+     * \brief Indicator function for marking of grid cells for refinement
      *
      * Returns true if an element should be refined.
      *
@@ -579,7 +585,8 @@ public:
         return (indicatorVector_[idx] > refineBound_);
     }
 
-    /*! \brief Indicator function for marking of grid cells for coarsening
+    /*!
+     * \brief Indicator function for marking of grid cells for coarsening
      *
      * Returns true if an element should be coarsened.
      *
@@ -591,7 +598,9 @@ public:
         return (indicatorVector_[idx] < coarsenBound_);
     }
 
-    /*! \brief Initializes the adaption indicator class*/
+    /*!
+     * \brief Initializes the adaption indicator class
+     */
     void init()
     {
         int size = problem_.gridView().size(0);
@@ -603,7 +612,8 @@ public:
             indicatorVectorFlux_.resize(size, -1e100);
     }
 
-    /*! \brief Function for changing the indicatorVector values for refinement
+    /*!
+     * \brief Function for changing the indicatorVector values for refinement
      *
      *  \param idx Index of cell which will be refined
      */
@@ -612,7 +622,8 @@ public:
         indicatorVector_[idx] = refineBound_+1;
     }
 
-    /*! \brief Function for changing the indicatorVector values for coarsening
+    /*!
+     * \brief Function for changing the indicatorVector values for coarsening
      *
      *  \param idx Index of cell which will be coarsen
      */
@@ -621,7 +632,8 @@ public:
         indicatorVector_[idx] = coarsenBound_ - 1;
     }
 
-    /*! \brief Constructs a GridAdaptionIndicator instance
+    /*!
+     * \brief Constructs a GridAdaptionIndicator instance
      *
      *  This standard indicator is based on the saturation gradient.
      *  It checks the local gradient compared to the maximum global gradient.

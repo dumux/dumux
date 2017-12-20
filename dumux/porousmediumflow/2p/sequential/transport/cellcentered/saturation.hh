@@ -16,22 +16,24 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Finite Volume discretization of a saturation transport equation
+ */
 #ifndef DUMUX_FVSATURATION2P_HH
 #define DUMUX_FVSATURATION2P_HH
 
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/transport.hh>
 
-/**
- * \file
- * \brief  Finite Volume discretization of a saturation transport equation
- */
-
 namespace Dumux
 {
-//! \ingroup FVSaturation2p
-//! \brief The finite volume discretization of a saturation transport equation
-/*! This model solves equations of the form
+/*!
+ * \brief The finite volume discretization of a saturation transport equation
+ * \ingroup SequentialTwoPModel
+ *
+ * This model solves equations of the form
  *
  *  \f[
  *  \phi \frac{\partial (\varrho_\alpha S_\alpha)}{\partial t} + \text{div}\, (\varrho_\alpha \boldsymbol{v_\alpha}) = q_\alpha,
@@ -164,27 +166,27 @@ public:
         return *velocity_;
     }
 
-    // Function which calculates the flux update
+    //! Function which calculates the flux update
     void getFlux(Scalar& update, const Intersection& intersection, CellData& cellDataI);
 
-    // Function which calculates the boundary flux update
+    //! Function which calculates the boundary flux update
     void getFluxOnBoundary(Scalar& update, const Intersection& intersection, CellData& cellDataI);
 
-    // Function which calculates the source update
+    //! Function which calculates the source update
     void getSource(Scalar& update, const Element& element, CellData& cellDataI);
 
-    // Sets the initial solution
+    //! Sets the initial solution
     void initialize();
 
-    // Update the values of the material laws and constitutive relations.
+    //! Update the values of the material laws and constitutive relations.
     void updateMaterialLaws();
 
 
-    /* \brief Writes the current values of the primary transport variable
+    /*!
+     * \brief Writes the current values of the primary transport variable
      * \into the <tt>transportedQuantity</tt>-vector (comes as function argument)
      *
      * \copydetails FVTransport::getTransportedQuantity(TransportSolutionType&)
-     *
      */
     void getTransportedQuantity(TransportSolutionType& transportedQuantity)
     {
@@ -208,7 +210,8 @@ public:
         }
     }
 
-    /* \brief Writes the current values of the primary transport variable into the variable container
+    /*!
+     * \brief Writes the current values of the primary transport variable into the variable container
      *
      * \copydetails FVTransport::setTransportedQuantity(TransportSolutionType&)
      *
@@ -241,11 +244,11 @@ public:
         }
     }
 
-    /*! \brief Check if saturation is in physical range.
+    /*!
+     * \brief Check if saturation is in physical range.
      *
      * \tparam DataEntry Data class
      * \param entry Entry which is checked
-     *
      */
     template<class DataEntry>
     bool inPhysicalRange(DataEntry& entry)
@@ -253,7 +256,8 @@ public:
         return (entry > -1e-6 && entry < 1.0 + 1e-6);
     }
 
-    /*! \brief Updates the primary transport variable.
+    /*!
+     * \brief Updates the primary transport variable.
      *
      * \copydetails FVTransport::updateTransportedQuantity(TransportSolutionType&)
      */
@@ -265,18 +269,19 @@ public:
             asImp_().updateSaturationSolution(updateVec);
     }
 
-    /*! \brief Updates the primary transport variable.
+    /*!
+     * \brief Updates the primary transport variable.
      *
      * \param updateVec Vector containing the global update
      * \param dt time step for update
-     *
      */
     void updateTransportedQuantity(TransportSolutionType& updateVec, Scalar dt)
     {
         asImp_().updateSaturationSolution(updateVec, dt);
     }
 
-    /*! \brief Globally updates the saturation solution
+    /*!
+     * \brief Globally updates the saturation solution
      *
      * \param updateVec Vector containing the global update.
      */
@@ -290,7 +295,8 @@ public:
         }
     }
 
-    /*! \brief Globally updates the saturation solution
+    /*!
+     * \brief Globally updates the saturation solution
      *
      * \param updateVec Vector containing the global update.
      * \param dt time step for update
@@ -304,7 +310,8 @@ public:
         }
     }
 
-    /*! \brief Updates the saturation solution of a cell
+    /*!
+     * \brief Updates the saturation solution of a cell
      *
      * Calculates secondary saturation variables and stores saturations.
      *
@@ -337,7 +344,8 @@ public:
         }
     }
 
-    /*! \brief Adds saturation output to the output file
+    /*!
+     * \brief Adds saturation output to the output file
      *
      * Adds the phase saturation to the output.
      * If the velocity is calculated in the transport model it is also added to the output.
@@ -347,7 +355,6 @@ public:
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -406,10 +413,10 @@ public:
         return;
     }
 
-    /*! \brief  Function for serialization of the primary transport variable.
+    /*!
+     * \brief  Function for serialization of the primary transport variable.
      *
      *\copydetails FVTransport::serializeEntity(std::ostream&,const Element&)
-     *
      */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
@@ -429,10 +436,10 @@ public:
         outstream << sat;
     }
 
-    /*! \brief  Function for deserialization of the primary transport variable.
+    /*!
+     * \brief  Function for deserialization of the primary transport variable.
      *
      *\copydetails FVTransport::deserializeEntity(std::istream&,const Element&)
-     *
      */
     void deserializeEntity(std::istream &instream, const Element &element)
     {
@@ -455,7 +462,8 @@ public:
     }
 
 
-    /*! \brief Constructs a FVSaturation2P object
+    /*!
+     * \brief Constructs a FVSaturation2P object
      *
      * \param problem A problem class object
      */
@@ -518,7 +526,8 @@ private:
     const bool switchNormals_;
 };
 
-/*! \brief Function which calculates the flux update
+/*!
+ * \brief Function which calculates the flux update
  *
  * \copydetails FVTransport::getFlux(Scalar&,const Intersection&,CellData&)
  *
@@ -713,7 +722,8 @@ void FVSaturation2P<TypeTag>::getFlux(Scalar& update, const Intersection& inters
     }
 }
 
-/*! \brief Function which calculates the boundary flux update
+/*!
+ * \brief Function which calculates the boundary flux update
  *
  * \copydetails FVTransport::getFluxOnBoundary(Scalar&,const Intersection&,CellData&)
  *
@@ -1024,7 +1034,8 @@ void FVSaturation2P<TypeTag>::getFluxOnBoundary(Scalar& update, const Intersecti
     }
 }
 
-/*! \brief Function which calculates the source update
+/*!
+ * \brief Function which calculates the source update
  *
  *\copydetails FVTransport::getSource(Scalar&,const Element&,CellData&)
  *
@@ -1167,10 +1178,10 @@ void FVSaturation2P<TypeTag>::initialize()
     return;
 }
 
-/*! \brief Updates constitutive relations and stores them in the variable class
+/*!
+ * \brief Updates constitutive relations and stores them in the variable class
  *
  * Stores mobility, fractional flow function and capillary pressure for all grid cells.
- *
  */
 template<class TypeTag>
 void FVSaturation2P<TypeTag>::updateMaterialLaws()

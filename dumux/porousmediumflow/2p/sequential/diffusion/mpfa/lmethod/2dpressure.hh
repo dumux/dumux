@@ -14,6 +14,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Finite volume MPFA L-method discretization of a two-phase pressure equation of the sequential IMPES model.
+ */
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_HH
 
@@ -24,15 +29,11 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include "2dtransmissibilitycalculator.hh"
 
-/**
- * @file
- * @brief Finite volume MPFA L-method discretization of a two-phase pressure equation of the sequential IMPES model.
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief Finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
+/*!
+ * \brief Finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model.
+ * \ingroup SequentialTwoPModel
  *
  * Finite volume MPFA L-method discretization of the equations
  * \f[ - \text{div}\, \boldsymbol v_t = - \text{div}\, (\lambda_t \boldsymbol K \textbf{grad}\,
@@ -139,11 +140,11 @@ class FvMpfaL2dPressure2p: public FVPressure<TypeTag>
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
 public:
-    /*! \brief Type of the interaction volume objects
+    /*!
+     * \brief Type of the interaction volume objects
      *
      * Type of the interaction volume objects used to store the geometric information which is needed
      * to calculated the transmissibility matrices of one MPFA interaction volume.
-     *
      */
     using InteractionVolume = FVMPFALInteractionVolume<TypeTag>;
     using TransmissibilityCalculator = FvMpfaL2dTransmissibilityCalculator<TypeTag>;
@@ -152,27 +153,27 @@ private:
     using GlobalInteractionVolumeVector = std::vector<InteractionVolume>;
     using InnerBoundaryVolumeFaces = std::vector<Dune::FieldVector<bool, 2*dim> >;
 
-    // helper function that finds the correct neighboring intersections
+    //! helper function that finds the correct neighboring intersections
     Intersection getNextIntersection_(const Element&, const IntersectionIterator&);
 
-    //initializes the matrix to store the system of equations
+    //! initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
     void initializeMatrix();
 
     void storeInteractionVolumeInfo();
 
-    //function which assembles the system of equations to be solved
+    //! function which assembles the system of equations to be solved
     void assemble();
 
 public:
 
-    //constitutive functions are initialized and stored in the variables object
+    //! constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
-    /*! \brief Updates interaction volumes
+    /*!
+     * \brief Updates interaction volumes
      *
      * Globally rebuilds the MPFA interaction volumes.
-     *
      */
     void updateInteractionVolumeInfo()
     {
@@ -185,9 +186,8 @@ public:
         storeInteractionVolumeInfo();
     }
 
-    /*! \brief Initializes the pressure model
-     *
-     * \copydetails FVPressure::initialize()
+    /*!
+     * \brief Initializes the pressure model
      */
     void initialize()
     {
@@ -220,8 +220,8 @@ public:
         return;
     }
 
-    /*! \brief Globally stores the pressure solution
-     *
+    /*!
+     * \brief Globally stores the pressure solution
      */
     void storePressureSolution()
     {
@@ -231,7 +231,8 @@ public:
         }
     }
 
-    /*! \brief Stores the pressure solution of a cell
+    /*!
+     * \brief Stores the pressure solution of a cell
      *
      * \param element Dune grid element
      */
@@ -282,10 +283,8 @@ public:
         cellData.fluxData().resetVelocity();
     }
 
-    /*! \brief Pressure update
-     *
-     * \copydetails FVPressure::update()
-     *
+    /*!
+     * \brief Pressure update
      */
     void update()
     {
@@ -326,7 +325,8 @@ public:
     }
 
 
-    /*! \brief Adds pressure output to the output file
+    /*!
+     * \brief Adds pressure output to the output file
      *
      * Adds the potential, the potential and the capillary pressure to the output.
      * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
@@ -334,7 +334,6 @@ public:
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -403,8 +402,9 @@ public:
         return;
     }
 
-    //! Constructs a FvMpfaL2dPressure2p object
-    /**
+    /*!
+     * \brief Constructs a FvMpfaL2dPressure2p object
+     *
      * \param problem A problem class object
      */
     FvMpfaL2dPressure2p(Problem& problem) :
@@ -475,7 +475,10 @@ private:
     //! gives kind of velocity used (\f$ 0 = v_w\f$, \f$ 1 = v_n\f$, \f$ 2 = v_t\f$)
     static const int velocityType_ = GET_PROP_VALUE(TypeTag, VelocityFormulation);
 
-    /* Volume correction term to correct for unphysical saturation overshoots/undershoots.
+    /*!
+     * \brief Volume correction term
+     *
+     * Volume correction term to correct for unphysical saturation overshoots/undershoots.
      * These can occur if the estimated time step for the explicit transport was too large.
      * Correction by an artificial source term allows to correct this errors due to wrong
      * time-stepping without losing mass conservation. The error term looks as follows:
@@ -526,6 +529,7 @@ private:
 
 };
 
+// TODO doc me!
 template<class TypeTag>
 typename FvMpfaL2dPressure2p<TypeTag>::Intersection
   FvMpfaL2dPressure2p<TypeTag>::getNextIntersection_(const Element& element,
@@ -579,6 +583,7 @@ typename FvMpfaL2dPressure2p<TypeTag>::Intersection
     return *nextIsIt;
 }
 
+// TODO doc me!
 template<class TypeTag>
 void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
 {
@@ -706,6 +711,7 @@ void FvMpfaL2dPressure2p<TypeTag>::initializeMatrix()
 //                 |________________________|________________________|
 
 // only for 2-D general quadrilateral
+// TODO doc me!
 template<class TypeTag>
 void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 {
@@ -1161,6 +1167,7 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 }
 
 // only for 2-D general quadrilateral
+// TODO doc me!
 template<class TypeTag>
 void FvMpfaL2dPressure2p<TypeTag>::assemble()
 {
@@ -1825,7 +1832,8 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
     return;
 }
 
-/*! \brief Updates constitutive relations and stores them in the variable class
+/*!
+ * \brief Updates constitutive relations and stores them in the variable class
  *
  * Stores mobility, fractional flow function and capillary pressure for all grid cells.
  */

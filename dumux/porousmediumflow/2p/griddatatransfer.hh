@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup TwoPModel
+ * \brief Performs the transfer of data on a grid from before to after adaptation.
+ */
 #ifndef DUMUX_TWOP_GRIDDATA_TRANSFER_HH
 #define DUMUX_TWOP_GRIDDATA_TRANSFER_HH
 
@@ -27,6 +32,7 @@
 namespace Dumux {
 
 /*!
+ * \ingroup TwoPModel
  * \brief Class performing the transfer of data on a grid from before to after adaptation.
  */
 template<class TypeTag>
@@ -60,7 +66,7 @@ class TwoPGridDataTransfer : public GridDataTransfer
     static constexpr int dimWorld = Grid::dimensionworld;
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
-    //! export some indices
+    // export some indices
     enum {
         // index of saturation in primary variables
         saturationIdx = Indices::saturationIdx,
@@ -77,12 +83,12 @@ class TwoPGridDataTransfer : public GridDataTransfer
         formulation = GET_PROP_VALUE(TypeTag, Formulation)
     };
 
-    //! This won't work (mass conservative) for compressible fluids
+    // This won't work (mass conservative) for compressible fluids
     static_assert(!FluidSystem::isCompressible(wPhaseIdx)
                   && !FluidSystem::isCompressible(nPhaseIdx),
                   "This adaption helper is only mass conservative for incompressible fluids!");
 
-    //! check if the used formulation is implemented here
+    // check if the used formulation is implemented here
     static_assert(formulation == pwsn || formulation == pnsw, "Chosen formulation not known to the TwoPGridDataTransfer");
 
 public:
@@ -121,19 +127,19 @@ public:
         {
             for (const auto& element : elements(grid.levelGridView(level)))
             {
-                //! get map entry
+                // get map entry
                 auto& adaptedValues = adaptionMap_[element];
 
-                //! put values in the map for leaf elements
+                // put values in the map for leaf elements
                 if (element.isLeaf())
                 {
                     auto fvGeometry = localView(*fvGridGeometry_);
                     fvGeometry.bindElement(element);
 
-                    //! store current element solution
+                    // store current element solution
                     adaptedValues.u = ElementSolution(element, sol_, *fvGridGeometry_);
 
-                    //! compute mass in the scvs
+                    // compute mass in the scvs
                     for (const auto& scv : scvs(fvGeometry))
                     {
                         VolumeVariables volVars;
@@ -144,11 +150,11 @@ public:
                         adaptedValues.associatedMass[wPhaseIdx] += poreVolume * volVars.density(wPhaseIdx) * volVars.saturation(wPhaseIdx);
                     }
 
-                    //! leaf elements always start with count = 1
+                    // leaf elements always start with count = 1
                     adaptedValues.count = 1;
                     adaptedValues.wasLeaf = true;
                 }
-                //! Average in father elements
+                // Average in father elements
                 if (element.level() > 0)
                 {
                     auto& adaptedValuesFather = adaptionMap_[element.father()];
@@ -158,9 +164,9 @@ public:
                         storeAdaptionValues(adaptedValues, adaptedValuesFather);
                 }
 
-                //! The vertices of the non-leaf elements exist on the leaf as well
-                //! This element solution constructor uses the vertex mapper to obtain
-                //! the privars at the vertices, thus, this works for non-leaf elements!
+                // The vertices of the non-leaf elements exist on the leaf as well
+                // This element solution constructor uses the vertex mapper to obtain
+                // the privars at the vertices, thus, this works for non-leaf elements!
                 if(isBox && !element.isLeaf())
                     adaptedValues.u = ElementSolution(element, sol_, *fvGridGeometry_);
             }
@@ -179,12 +185,12 @@ public:
      */
     void reconstruct() override
     {
-        //! resize stuff (grid might have changed)
+        // resize stuff (grid might have changed)
         adaptionMap_.resize();
         fvGridGeometry_->update();
         sol_.resize(fvGridGeometry_->numDofs());
 
-        //! vectors storing the mass associated with each vertex, when using the box method
+        // vectors storing the mass associated with each vertex, when using the box method
         std::vector<Scalar> massCoeff;
         std::vector<Scalar> associatedMass;
 
@@ -194,7 +200,7 @@ public:
             associatedMass.resize(fvGridGeometry_->numDofs(), 0.0);
         }
 
-        //! iterate over leaf and reconstruct the solution
+        // iterate over leaf and reconstruct the solution
         for (const auto& element : elements(fvGridGeometry_->gridView().grid().leafGridView(), Dune::Partitions::interior))
         {
             if (!element.isNew())
@@ -204,7 +210,7 @@ public:
                 auto fvGeometry = localView(*fvGridGeometry_);
                 fvGeometry.bindElement(element);
 
-                //! obtain element solution from map (divide by count!)
+                // obtain element solution from map (divide by count!)
                 auto elemSol = adaptedValues.u;
                 if (!isBox)
                     elemSol[0] /= adaptedValues.count;
@@ -215,14 +221,14 @@ public:
                     VolumeVariables volVars;
                     volVars.update(elemSol, *problem_, element, scv);
 
-                    //! write solution at dof in current solution vector
+                    // write solution at dof in current solution vector
                     sol_[scv.dofIndex()] = elemSol[scv.indexInElement()];
 
                     const auto dofIdxGlobal = scv.dofIndex();
-                    //! For cc schemes, overwrite the saturation by a mass conservative one here
+                    // For cc schemes, overwrite the saturation by a mass conservative one here
                     if (!isBox)
                     {
-                        //! only recalculate the saturations if element hasn't been leaf before adaptation
+                        // only recalculate the saturations if element hasn't been leaf before adaptation
                         if (!adaptedValues.wasLeaf)
                         {
                             if (formulation == pwsn)
@@ -238,7 +244,7 @@ public:
                         }
                     }
 
-                    //! For the box scheme, add mass & mass coefficient to container (saturations are recalculated at the end)
+                    // For the box scheme, add mass & mass coefficient to container (saturations are recalculated at the end)
                     else
                     {
                         const auto scvVolume = scv.volume();
@@ -257,10 +263,10 @@ public:
             }
             else
             {
-                //! value is not in map, interpolate from father element
+                // value is not in map, interpolate from father element
                 assert(element.hasFather() && "new element does not have a father element!");
 
-                //! find the ancestor element that existed on the old grid already
+                // find the ancestor element that existed on the old grid already
                 auto fatherElement = element.father();
                 while(fatherElement.isNew() && fatherElement.level() > 0)
                     fatherElement = fatherElement.father();
@@ -269,7 +275,7 @@ public:
                 {
                     const auto& adaptedValuesFather = adaptionMap_[fatherElement];
 
-                    //! obtain the mass contained in father
+                    // obtain the mass contained in father
                     Scalar massFather = 0.0;
                     if (formulation == pwsn)
                         massFather = adaptedValuesFather.associatedMass[nPhaseIdx];
@@ -288,10 +294,10 @@ public:
                         VolumeVariables volVars;
                         volVars.update(elemSolSon, *problem_, element, scv);
 
-                        //! store constructed values of son in the current solution
+                        // store constructed values of son in the current solution
                         sol_[scv.dofIndex()] = elemSolSon[0];
 
-                        //! overwrite the saturation by a mass conservative one here
+                        // overwrite the saturation by a mass conservative one here
                         Scalar massCoeffSon = 0.0;
                         if (formulation == pwsn)
                             massCoeffSon = scv.volume() * volVars.density(nPhaseIdx) * volVars.porosity();
@@ -307,7 +313,7 @@ public:
                     auto fvGeometry = localView(*fvGridGeometry_);
                     fvGeometry.bindElement(element);
 
-                    //! interpolate solution in the father to the vertices of the new son
+                    // interpolate solution in the father to the vertices of the new son
                     ElementSolution elemSolSon(element, sol_, *fvGridGeometry_);
                     const auto fatherGeometry = fatherElement.geometry();
                     for (const auto& scv : scvs(fvGeometry))
@@ -316,7 +322,7 @@ public:
                                                                         adaptedValuesFather.u,
                                                                         scv.dofPosition());
 
-                    //! compute mass & mass coeffients for the scvs (saturations are recalculated at the end)
+                    // compute mass & mass coeffients for the scvs (saturations are recalculated at the end)
                     const auto fatherElementVolume = fatherGeometry.volume();
                     for (const auto& scv : scvs(fvGeometry))
                     {
@@ -336,7 +342,7 @@ public:
                             associatedMass[dofIdxGlobal] += scvVolume / fatherElementVolume * adaptedValuesFather.associatedMass[wPhaseIdx];
                         }
 
-                        //! store constructed (pressure) values of son in the current solution (saturation comes later)
+                        // store constructed (pressure) values of son in the current solution (saturation comes later)
                         sol_[dofIdxGlobal] = elemSolSon[scv.indexInElement()];
                     }
                 }
@@ -349,7 +355,7 @@ public:
                 sol_[dofIdxGlobal][saturationIdx] = associatedMass[dofIdxGlobal] / massCoeff[dofIdxGlobal];
         }
 
-        //! reset entries in adaptation map
+        // reset entries in adaptation map
         adaptionMap_.resize( typename PersistentContainer::Value() );
         adaptionMap_.shrinkToFit();
         adaptionMap_.fill( typename PersistentContainer::Value() );
@@ -381,31 +387,31 @@ public:
     static void storeAdaptionValues(AdaptedValues& adaptedValues,
                                     AdaptedValues& adaptedValuesFather)
     {
-        //! Add associated mass of the child to the one of the father
+        // Add associated mass of the child to the one of the father
         adaptedValuesFather.associatedMass += adaptedValues.associatedMass;
 
         if(!isBox)
         {
-            //! add the child's primary variables to the ones of father
-            //! we have to divide the child's ones in case it was composed
-            //! of several children as well!
+            // add the child's primary variables to the ones of father
+            // we have to divide the child's ones in case it was composed
+            // of several children as well!
             auto values = adaptedValues.u[0];
             values /= adaptedValues.count;
             adaptedValuesFather.u[0] += values;
 
-            //! keep track of the number of children that composed this father
+            // keep track of the number of children that composed this father
             adaptedValuesFather.count += 1;
 
-            //! A father element is never leaf
+            // A father element is never leaf
             adaptedValuesFather.wasLeaf = false;
         }
         else
         {
-            //! For the box scheme, scaling of primary variables by count is obsolete
-            //! Thus, we always want count = 1
+            // For the box scheme, scaling of primary variables by count is obsolete
+            // Thus, we always want count = 1
             adaptedValuesFather.count = 1;
 
-            //! A father element is never leaf
+            // A father element is never leaf
             adaptedValuesFather.wasLeaf = false;
         }
     }

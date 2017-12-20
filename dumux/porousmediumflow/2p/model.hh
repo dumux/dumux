@@ -85,8 +85,9 @@ namespace Properties
 // Type tags
 //////////////////////////////////////////////////////////////////
 
-//! The type tags for the isothermal & non-isothermal two-phase model
+//! The type tag for the isothermal two-phase model
 NEW_TYPE_TAG(TwoP, INHERITS_FROM(PorousMediumFlow));
+//! The type tag for the non-isothermal two-phase model
 NEW_TYPE_TAG(TwoPNI, INHERITS_FROM(TwoP, NonIsothermal));
 
 ///////////////////////////////////////////////////////////////////////////
@@ -101,7 +102,7 @@ SET_BOOL_PROP(TwoP, EnableMolecularDiffusion, false);                         //
 SET_BOOL_PROP(TwoP, EnableEnergyBalance, false);                              //!< Isothermal model (non-isothermal type tag is below)
 SET_TYPE_PROP(TwoP, LocalResidual, ImmiscibleLocalResidual<TypeTag>);         //!< Use the immiscible local residual operator for the 2p model
 SET_TYPE_PROP(TwoP, VolumeVariables, TwoPVolumeVariables<TypeTag>);           //!< the VolumeVariables property
-SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);           //!< The spatial parameters. Use FVSpatialParams by default.
+SET_TYPE_PROP(TwoP, SpatialParams, FVSpatialParams<TypeTag>);                 //!< The spatial parameters. Use FVSpatialParams by default.
 SET_TYPE_PROP(TwoP, VtkOutputFields, TwoPVtkOutputFields<TypeTag>);           //!< Set the vtk output fields specific to the twop model
 
 SET_TYPE_PROP(TwoP,
@@ -126,7 +127,7 @@ SET_TYPE_PROP(TwoPNI, IsothermalVolumeVariables, TwoPVolumeVariables<TypeTag>); 
 SET_TYPE_PROP(TwoPNI, IsothermalLocalResidual, ImmiscibleLocalResidual<TypeTag>); //!< set isothermal LocalResidual
 SET_TYPE_PROP(TwoPNI, IsothermalVtkOutputFields, TwoPVtkOutputFields<TypeTag>);   //!< set isothermal output fields
 
-//! set isothermal Indices
+//! Set isothermal Indices
 SET_PROP(TwoPNI, IsothermalIndices)
 {
 private:

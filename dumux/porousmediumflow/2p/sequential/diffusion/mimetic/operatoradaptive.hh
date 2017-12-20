@@ -16,15 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
 *****************************************************************************/
-
-#ifndef DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
-#define DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
-
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief An assembler for the Jacobian matrix based on mimetic FD.
  */
+#ifndef DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
+#define DUMUX_MIMETICOPERATOR2PADAPTIVE_HH
 
 #include "croperatoradaptive.hh"
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
@@ -33,16 +31,14 @@
 namespace Dumux
 {
 /*!
- * \ingroup Mimetic2P
- * @brief Levelwise assembler
-
-  This class serves as a base class for local assemblers. It provides
-  space and access to the local stiffness matrix. The actual assembling is done
-  in a derived class via the virtual assemble method.
-
-  The template parameters are:
-
-  - Scalar The field type used in the elements of the stiffness matrix
+ * \brief Levelwise assembler
+ * \ingroup SequentialTwoPModel
+ *
+ * This class serves as a base class for local assemblers. It provides
+ * space and access to the local stiffness matrix. The actual assembling is done
+ * in a derived class via the virtual assemble method.
+ *
+ * \tparam TypeTag The problem Type Tag
 */
 template<class TypeTag>
 class MimeticOperatorAssemblerTwoPAdaptive : public CROperatorAssemblerTwoPAdaptive<TypeTag>
@@ -90,6 +86,7 @@ public:
     : ParentType(gridView)
     {}
 
+    // TODO doc me!
     template<class Vector>
     void calculatePressure(LocalStiffness& loc, Vector& u, Problem& problem)
     {

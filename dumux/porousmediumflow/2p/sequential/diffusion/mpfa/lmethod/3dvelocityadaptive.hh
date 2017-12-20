@@ -16,21 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  3-d velocity calculation on adaptive grids using a 3-d MPFA L-method
+ */
 #ifndef DUMUX_FVMPFAL3DVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL3DVELOCITY2P_ADAPTIVE_HH
 
 #include "3dvelocity.hh"
 
-/**
- * @file
- * @brief  3-d velocity calculation on adaptive grids using a 3-d MPFA L-method
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
+/*!
+ * \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
+ * \ingroup SequentialTwoPModel
+ *
  * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization and a MPFA L-method.
  * At Dirichlet boundaries a two-point flux approximation is used.
  * The pressure has to be given as piecewise constant cell values.
@@ -144,8 +145,8 @@ template<class TypeTag> class FvMpfaL3dVelocity2pAdaptive: public FvMpfaL3dVeloc
     }
 
 public:
-    //! Constructs a FvMpfaL3dVelocity2pAdaptive object
     /*!
+     * \brief Constructs a FvMpfaL3dVelocity2pAdaptive object
      * \param problem A problem class object
      */
     FvMpfaL3dVelocity2pAdaptive(Problem& problem) :
@@ -157,12 +158,12 @@ public:
         viscosity_[nPhaseIdx] = 0.;
 }
 
-    //calculate velocities for flux faces of a hanging node interaction volume
+    //! Calculate velocities for flux faces of a hanging node interaction volume
     void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume,
             CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
             CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8, int fIdx = -1);
 
-    //!Initializes the velocity model
+    //! Initializes the velocity model
     void initialize()
     {
         ParentType::initialize();
@@ -199,7 +200,8 @@ private:
 };
 // end of template
 
-/*! \brief Calculates the velocities at the flux faces of an interation volume around a hanging node vertex.
+/*!
+ * \brief Calculates the velocities at the flux faces of an interation volume around a hanging node vertex.
  *
  *  Calculates the velocities at the flux faces of an interation volume around  a hanging node vertex
  *  and adds them to the face velocity vectors in the <tt>CellData</tt> objects.

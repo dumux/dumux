@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup SequentialTwoPModel
  * \brief Base class for stationary solution of a two-phase diffusion/pressure equation
  */
 #ifndef DUMUX_DIFFUSIONPROBLEM_2P_HH
@@ -29,9 +30,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup IMPETproblems
- * \ingroup Pressure2p
  * \brief  Base class for stationary solution of a two-phase diffusion/pressure equation
+ * \ingroup SequentialTwoPModel
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -135,7 +135,8 @@ public:
      */
     // \{
 
-    /* \brief Time integration function called by the time manager
+    /*!
+     * \brief Time integration function called by the time manager
      *
      * For stationary diffusion problems this function just finishes the simulation.
      */
@@ -151,7 +152,6 @@ public:
      * \brief Returns the temperature within the domain.
      *
      * \param element The element
-     *
      */
     Scalar temperature(const Element& element) const
     {
@@ -162,7 +162,6 @@ public:
      * \brief Returns the temperature within the domain.
      *
      * \param globalPos The position of the center of an element
-     *
      */
     Scalar temperatureAtPos(const GlobalPosition& globalPos) const
     {
@@ -176,7 +175,6 @@ public:
      * \brief Returns the reference pressure for evaluation of constitutive relations.
      *
      * \param element The element
-     *
      */
     Scalar referencePressure(const Element& element) const
     {
@@ -187,7 +185,6 @@ public:
      * \brief Returns the reference pressure for evaluation of constitutive relations.
      *
      * \param globalPos The position of the center of an element
-     *
      */
     Scalar referencePressureAtPos(const GlobalPosition& globalPos) const
     {
@@ -230,7 +227,7 @@ public:
     PressureModel &pressureModel()
     { return *pressModel_; }
 
-    //! \copydoc IMPETProblem::pressureModel()
+    //! \copydoc IMPETProblem::pressureModel() // TODO doc me!
     const PressureModel &pressureModel() const
     { return *pressModel_; }
 
@@ -241,7 +238,7 @@ private:
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
 
-    //! \copydoc IMPETProblem::asImp_()
+    //! \copydoc IMPETProblem::asImp_() // TODO doc me!
     const Implementation &asImp_() const
     { return *static_cast<const Implementation *>(this); }
 

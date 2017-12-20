@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation
+ *
+ * Remark1: only for 3-D hexahedrons of quadrilaterals.
+ */
 #ifndef DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_HH
 
@@ -25,16 +32,11 @@
 #include "3dinteractionvolumecontainer.hh"
 #include "3dtransmissibilitycalculator.hh"
 
-/**
- * @file
- * @brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation
- * @brief  Remark1: only for 3-D hexahedrons of quadrilaterals.
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model
+/*!
+ * \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation of the sequential IMPES model
+ * \ingroup SequentialTwoPModel
  *
  * Finite Volume-MPFAL-Implementation of the equation
  * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\,
@@ -155,23 +157,24 @@ public:
     //! Type for storing interaction volume information
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
 protected:
-    //initializes the matrix to store the system of equations
+    //! initializes the matrix to store the system of equations
     friend class FVPressure<TypeTag>;
     void initializeMatrix();
     void initializeMatrixRowSize();
     void initializeMatrixIndices();
 
-    //function which assembles the system of equations to be solved
+    //! function which assembles the system of equations to be solved
     void assemble();
     void assembleInnerInteractionVolume(InteractionVolume& interactionVolume);
     void assembleBoundaryInteractionVolume(InteractionVolume& interactionVolume);
 
 public:
 
-    //constitutive functions are initialized and stored in the variables object
+    //! constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
-    /*! \brief Initializes the pressure model
+    /*!
+     * \brief Initializes the pressure model
      *
      * \copydetails FVPressure::initialize()
      */
@@ -212,7 +215,8 @@ public:
         }
     }
 
-    /*! \brief Stores the pressure solution of a cell
+    /*!
+     * \brief Stores the pressure solution of a cell
      *
      * \param element Dune grid element
      */
@@ -263,7 +267,8 @@ public:
         cellData.fluxData().resetVelocity();
     }
 
-    /*! \brief Pressure update
+    /*!
+     * \brief Pressure update
      *
      * \copydetails FVPressure::update()
      */
@@ -318,7 +323,8 @@ public:
         return;
     }
 
-    /* \brief Volume correction term to correct for unphysical saturation overshoots/undershoots.
+    /*!
+     * \brief Volume correction term to correct for unphysical saturation overshoots/undershoots.
      *
      * These can occur if the estimated time step for the explicit transport was too large.
      * Correction by an artificial source term allows to correct
@@ -368,7 +374,8 @@ public:
         return 0.0;
     }
 
-    /*! \brief Adds pressure output to the output file
+    /*!
+     * \brief Adds pressure output to the output file
      *
      * Adds the pressure, the potential and the capillary pressure to the output.
      * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
@@ -376,7 +383,6 @@ public:
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -449,8 +455,9 @@ public:
         return interactionVolumes_;
     }
 
-    //! Returns the transmissibility calculator
     /*!
+     * \brief Returns the transmissibility calculator
+     *
      *  Object including methods for the MPFA transmissibility calculation
      */
     TransmissibilityCalculator& transmissibilityCalculator()
@@ -458,8 +465,8 @@ public:
         return transmissibilityCalculator_;
     }
 
-    //! Constructs a FvMpfaL3dPressure2p object
-    /**
+    /*!
+     * \brief Constructs a FvMpfaL3dPressure2p object
      * \param problem A problem class object
      */
     FvMpfaL3dPressure2p(Problem& problem) :
@@ -2251,6 +2258,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleInnerInteractionVolume(InteractionVol
     }
 }
 
+// TODO doc me!
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(InteractionVolume& interactionVolume)
 {
@@ -2474,7 +2482,7 @@ void FvMpfaL3dPressure2p<TypeTag>::assembleBoundaryInteractionVolume(Interaction
     }
 }
 
-//constitutive functions are updated once if new saturations are calculated and stored in the variables object
+//! constitutive functions are updated once if new saturations are calculated and stored in the variables object
 template<class TypeTag>
 void FvMpfaL3dPressure2p<TypeTag>::updateMaterialLaws()
 {

@@ -19,6 +19,7 @@
 
 /*!
  * \file
+ * \ingroup TwoPModel
  * \brief Defines the indices required for the two-phase fully implicit model.
  */
 #ifndef DUMUX_BOX_2P_INDICES_HH
@@ -30,10 +31,8 @@ namespace Dumux
 {
 // \{
 
-
 /*!
  * \ingroup TwoPModel
- * \ingroup ImplicitIndices
  * \brief Enumerates the formulations which the two-phase model accepts.
  */
 struct TwoPFormulation
@@ -44,10 +43,10 @@ struct TwoPFormulation
 
 /*!
  * \ingroup TwoPModel
- * \ingroup ImplicitIndices
  * \brief Defines the indices required for the two-phase fully implicit model.
  *
  * \tparam TypeTag The problem type tag
+ * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
 struct TwoPCommonIndices
@@ -55,23 +54,22 @@ struct TwoPCommonIndices
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting phase
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the non-wetting phase
 
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+    static const int pressureIdx = PVOffset + 0; //!< index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< index of the saturation of the non-wetting/wetting phase
 
     // indices of the equations
-    static const int conti0EqIdx = PVOffset + 0; //!< Index of the first continuity equation
-    static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
-    static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
+    static const int conti0EqIdx = PVOffset + 0; //!< index of the first continuity equation
+    static const int contiWEqIdx = PVOffset + 0; //!< index of the continuity equation of the wetting phase
+    static const int contiNEqIdx = PVOffset + 1; //!< index of the continuity equation of the non-wetting phase
 };
 
 
 /*!
- * \ingroup TwoPBoxModel
- * \ingroup ImplicitIndices
+ * \ingroup TwoPModel
  * \brief The indices for the \f$p_w-S_n\f$ formulation of the
  *        isothermal two-phase model.
  *
@@ -92,10 +90,10 @@ struct TwoPIndices
 
 /*!
  * \ingroup TwoPModel
- * \ingroup ImplicitIndices
  * \brief The indices for the \f$p_n-S_w\f$ formulation of the
  *        isothermal two-phase model.
  *
+ * \tparam TypeTag The problem type tag
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset>

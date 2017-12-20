@@ -19,7 +19,7 @@
 
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Defines the indices required for the two-phase sequential model.
  */
 #ifndef DUMUX_SEQUENTIAL_2P_INDICES_HH
@@ -27,11 +27,6 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup IMPES
- */
-// \{
-
 /*!
  * \brief The common indices for the isothermal two-phase model.
  */
@@ -47,9 +42,9 @@ struct SequentialTwoPCommonIndices
     static const int pGlobalSn = 5; //!< pGlobal and sn as primary variables
 
     // Phase indices
-    static const int wPhaseIdx = 0; //!< Index of the wetting phase in a phase vector
-    static const int nPhaseIdx = 1; //!< Index of the non-wetting phase in a phase vector
-    static const int totalPhaseIdx = 2; //!< Index of the total phase (wetting + nonwetting)
+    static const int wPhaseIdx = 0; //!< index of the wetting phase in a phase vector
+    static const int nPhaseIdx = 1; //!< index of the non-wetting phase in a phase vector
+    static const int totalPhaseIdx = 2; //!< index of the total phase (wetting + nonwetting)
 
     //saturation flags
     static const int saturationW = 0; //!< Indicates wetting phase saturation
@@ -80,8 +75,8 @@ template <int formulation = SequentialTwoPCommonIndices::pwsn, int PVOffset = 0>
 struct SequentialTwoPIndices : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  index for the primary pressure variable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pwIdx = PVOffset + 0; //!< index of the wetting phase pressure
@@ -96,11 +91,11 @@ struct SequentialTwoPIndices : public SequentialTwoPCommonIndices
     //! \endcond
 
     // indices of the equations
-    static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
-    static const int pressureEqIdx = contiWEqIdx; //!< Index of the pressure equation (total mass balance)
-    static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
-    static const int satEqIdx = contiNEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
+    static const int contiWEqIdx = PVOffset + 0; //!< index of the continuity equation of the wetting phase
+    static const int pressureEqIdx = contiWEqIdx; //!< index of the pressure equation (total mass balance)
+    static const int contiNEqIdx = PVOffset + 1; //!< index of the continuity equation of the non-wetting phase
+    static const int satEqIdx = contiNEqIdx; //!< index of the continuity equation of the non-wetting phase (saturation equation)
+    static const int transportEqIdx = satEqIdx; //!< index of the saturation transport equation
 };
 
 /*!
@@ -114,8 +109,8 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pnsw, PVOffset>
     : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  index for the primary pressure variable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pnIdx = PVOffset + 0; //!< index of the non-wetting phase pressure
@@ -130,11 +125,11 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pnsw, PVOffset>
     //! \endcond
 
     // indices of the equations
-    static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
-    static const int pressureEqIdx = contiNEqIdx; //!< Index of the pressure equation (total mass balance)
-    static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
-    static const int satEqIdx = contiWEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
+    static const int contiNEqIdx = PVOffset + 0; //!< index of the continuity equation of the non-wetting phase
+    static const int pressureEqIdx = contiNEqIdx; //!< index of the pressure equation (total mass balance)
+    static const int contiWEqIdx = PVOffset + 1; //!< index of the continuity equation of the wetting phase
+    static const int satEqIdx = contiWEqIdx; //!< index of the continuity equation of the non-wetting phase (saturation equation)
+    static const int transportEqIdx = satEqIdx; //!< index of the saturation transport equation
 };
 
 
@@ -149,8 +144,8 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pwsw, PVOffset>
     : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  index for the primary pressure variable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pwIdx = PVOffset + 0; //!< Pressure index of the wetting phase
@@ -165,11 +160,11 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pwsw, PVOffset>
     //! \endcond
 
     // indices of the equations
-    static const int contiWEqIdx = PVOffset + 0; //!< Index of the continuity equation of the wetting phase
-    static const int pressureEqIdx = contiWEqIdx; //!< Index of the pressure equation (total mass balance)
-    static const int contiNEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase
-    static const int satEqIdx = contiNEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
+    static const int contiWEqIdx = PVOffset + 0; //!< index of the continuity equation of the wetting phase
+    static const int pressureEqIdx = contiWEqIdx; //!< index of the pressure equation (total mass balance)
+    static const int contiNEqIdx = PVOffset + 1; //!< index of the continuity equation of the non-wetting phase
+    static const int satEqIdx = contiNEqIdx; //!< index of the continuity equation of the non-wetting phase (saturation equation)
+    static const int transportEqIdx = satEqIdx; //!< index of the saturation transport equation
 };
 
 /*!
@@ -183,8 +178,8 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pnsn, PVOffset>
     : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure vairable in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  index for the primary pressure vairable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pnIdx = PVOffset + 0; //!< index of the nonwetting phase pressure
@@ -199,11 +194,11 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pnsn, PVOffset>
     //! \endcond
 
     // indices of the equations
-    static const int contiNEqIdx = PVOffset + 0; //!< Index of the continuity equation of the non-wetting phase
-    static const int pressureEqIdx = contiNEqIdx; //!< Index of the pressure equation (total mass balance)
-    static const int contiWEqIdx = PVOffset + 1; //!< Index of the continuity equation of the wetting phase
-    static const int satEqIdx = contiWEqIdx; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
+    static const int contiNEqIdx = PVOffset + 0; //!< index of the continuity equation of the non-wetting phase
+    static const int pressureEqIdx = contiNEqIdx; //!< index of the pressure equation (total mass balance)
+    static const int contiWEqIdx = PVOffset + 1; //!< index of the continuity equation of the wetting phase
+    static const int satEqIdx = contiWEqIdx; //!< index of the continuity equation of the non-wetting phase (saturation equation)
+    static const int transportEqIdx = satEqIdx; //!< index of the saturation transport equation
 };
 
 
@@ -217,8 +212,8 @@ template <int PVOffset>
 struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSw, PVOffset> : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  index for the primary pressure variable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pGlobalIdx = PVOffset + 0; //!< index of the global pressure
@@ -233,9 +228,9 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSw, PVOffset> :
     //! \endcond
 
     // indices of the equations
-    static const int pressureEqIdx = PVOffset + 0; //!< Index of the pressure equation (total mass balance)
-    static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
+    static const int pressureEqIdx = PVOffset + 0; //!< index of the pressure equation (total mass balance)
+    static const int satEqIdx = PVOffset + 1; //!< index of the continuity equation of the non-wetting phase (saturation equation)
+    static const int transportEqIdx = satEqIdx; //!< index of the saturation transport equation
 };
 
 /*!
@@ -249,8 +244,8 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSn, PVOffset>
     : public SequentialTwoPCommonIndices
 {
     // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!<  Index for the primary pressure variable in a solution vector
-    static const int saturationIdx = PVOffset + 1; //!< Index for the primary saturation variable in a solution vector
+    static const int pressureIdx = PVOffset + 0; //!<  index for the primary pressure variable in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< index for the primary saturation variable in a solution vector
 
     // indices of the primary variables
     static const int pGlobalIdx = PVOffset + 0; //!< index of the global pressure
@@ -265,9 +260,9 @@ struct SequentialTwoPIndices<SequentialTwoPCommonIndices::pGlobalSn, PVOffset>
     //! \endcond
 
     // indices of the equations
-    static const int pressureEqIdx = PVOffset + 0; //!< Index of the pressure equation (total mass balance)
-    static const int satEqIdx = PVOffset + 1; //!< Index of the continuity equation of the non-wetting phase (saturation equation)
-    static const int transportEqIdx = satEqIdx; //!< Index of the saturation transport equation
+    static const int pressureEqIdx = PVOffset + 0; //!< index of the pressure equation (total mass balance)
+    static const int satEqIdx = PVOffset + 1; //!< index of the continuity equation of the non-wetting phase (saturation equation)
+    static const int transportEqIdx = satEqIdx; //!< index of the saturation transport equation
 };
 
 // \}

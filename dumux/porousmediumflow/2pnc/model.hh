@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  *  \file
- *
  * \ingroup TwoPNCModel
  * \brief Adaption of the fully implicit scheme to the
  *        two-phase n-component fully implicit model.
@@ -120,7 +119,7 @@ SET_TYPE_PROP(TwoPNC, PrimaryVariables, SwitchablePrimaryVariables<TypeTag, int>
 SET_TYPE_PROP(TwoPNC, PrimaryVariableSwitch, TwoPNCPrimaryVariableSwitch<TypeTag>);         //!< The primary variable switch for the 2pnc model
 SET_TYPE_PROP(TwoPNC, VolumeVariables, TwoPNCVolumeVariables<TypeTag>);                     //!< the VolumeVariables property
 SET_TYPE_PROP(TwoPNC, Indices, TwoPNCIndices <TypeTag, /*PVOffset=*/0>);                    //!< The indices required by the isothermal 2pnc model
-SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                       //!< Use the FVSpatialParams by default
+SET_TYPE_PROP(TwoPNC, SpatialParams, FVSpatialParams<TypeTag>);                             //!< Use the FVSpatialParams by default
 SET_TYPE_PROP(TwoPNC, VtkOutputFields, TwoPNCVtkOutputFields<TypeTag>);                     //!< Set the vtk output fields specific to the TwoPNC model
 SET_TYPE_PROP(TwoPNC, LocalResidual, CompositionalLocalResidual<TypeTag>);                  //!< Use the compositional local residual
 

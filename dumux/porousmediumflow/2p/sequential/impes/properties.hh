@@ -16,20 +16,17 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Properties related to the sequential IMPES algorithms
+ */
 #ifndef DUMUX_IMPES2P_PROPERTIES_HH
 #define DUMUX_IMPES2P_PROPERTIES_HH
 
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-/*!
- * \ingroup IMPES
- * \ingroup IMPETProperties
- */
-/*!
- * \file
- * \brief Properties related to the sequential IMPES algorithms
- */
 namespace Dumux
 {
 

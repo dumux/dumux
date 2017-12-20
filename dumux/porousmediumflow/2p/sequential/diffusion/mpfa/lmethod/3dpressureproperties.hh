@@ -17,10 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup MPFA
- * \ingroup Properties
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Properties for the MPFA-O method.
  */
 #ifndef DUMUX_FVMPFAL3DPROPERTIES2P_HH

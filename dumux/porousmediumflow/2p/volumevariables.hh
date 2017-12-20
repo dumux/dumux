@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPModel
  * \brief Contains the quantities which are constant within a
  *        finite volume in the two-phase model.
  */
@@ -73,8 +73,14 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
-     */
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub control volume
+    */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
                 const Element &element,
@@ -101,7 +107,15 @@ public:
     }
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Complete the fluid state
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The problem
+     * \param element The element
+     * \param scv The sub control volume
+     * \param fluidState The fluid state
+     *
+     * Set temperature, saturations, capillary pressures, viscosities, densities and enthalpies.
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,

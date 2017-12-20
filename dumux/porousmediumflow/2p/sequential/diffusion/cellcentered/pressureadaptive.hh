@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Finite Volume discretization of a two-phase flow pressure equation.
+ */
 #ifndef DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVPRESSURE2P_ADAPTIVE_HH
 
@@ -26,16 +31,13 @@
 #include <dumux/porousmediumflow/2p/sequential/diffusion/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/velocity.hh>
 
-/**
- * \file
- * \brief  Finite Volume discretization of a two-phase flow pressure equation.
- */
+
 
 namespace Dumux
 {
-
-//! \ingroup FVPressure2p
-/*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
+/*!
+ * \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
+ * \ingroup FVPressure2p
  *
  * Details see FVPressure2P
  *
@@ -93,7 +95,8 @@ public:
     // Function which calculates the flux entry
     void getFlux(EntryType&, const Intersection&, const CellData&, const bool);
 
-    /*! \brief Initializes the adaptive pressure model
+    /*!
+     * \brief Initializes the adaptive pressure model
      *
      * \copydetails FVPressure2P::initialize()
      */
@@ -119,7 +122,8 @@ public:
         velocity_.initialize();
     }
 
-    /*! \brief Pressure update
+    /*!
+     * \brief Pressure update
      *
      *  \copydetails FVPressure::update()
      *
@@ -166,16 +170,16 @@ public:
         return;
     }
 
-    /*! \brief Velocity calculation
-     *
+    /*!
+     * \brief Velocity calculation
      */
     void calculateVelocity()
     {
         velocity_.calculateVelocity();
     }
 
-    /*! \brief Velocity update
-     *
+    /*!
+     * \brief Velocity update
      */
     void updateVelocity()
     {
@@ -184,7 +188,8 @@ public:
         calculateVelocity();
     }
 
-    /*! \brief Adds pressure output to the output file
+    /*!
+     * \brief Adds pressure output to the output file
      *
      *  \copydetails FVPressure2P::addOutputVtkFields(MultiWriter&)
      *
@@ -197,8 +202,9 @@ public:
             velocity_.addOutputVtkFields(writer);
     }
 
-    //! Constructs a FVPressure2PAdaptive object
-    /**
+    /*!
+     * \brief  Constructs a FVPressure2PAdaptive object
+     *
      * \param problem A problem class object
      */
     FVPressure2PAdaptive(Problem& problem) :
@@ -238,13 +244,13 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
-/*! \brief Function which calculates the flux entry.
+/*!
+ * \brief Function which calculates the flux entry.
  *
  * \copydetails FVPressure2P::getFlux(EntryType&,const Intersection&,const CellData&,const bool)
  *
  * Implementation of the getFlux() function for cell-cell interfaces with hanging nodes.
  * In case of hanging nodes the function does not return a vector of entry but directly manipulates the global matrix!
- *
  */
 template<class TypeTag>
 void FVPressure2PAdaptive<TypeTag>::getFlux(EntryType& entry, const Intersection& intersection

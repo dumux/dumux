@@ -16,21 +16,22 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Velocity calculation on adaptive grids using a 2-d MPFA L-method
+ */
 #ifndef DUMUX_FVMPFAL2DVELOCITY2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DVELOCITY2P_ADAPTIVE_HH
 
-
 #include "2dvelocity.hh"
-
-/**
- * @file
- * @brief  Velocity calculation on adaptive grids using a 2-d MPFA L-method
- */
 
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
+/*!
+ * \brief Class for calculating 2-d velocities from cell-wise constant pressure values.
+ * \ingroup SequentialTwoPModel
+ *
  * Calculates phase velocities or total velocity from a known pressure field applying a
  * finite volume discretization and a MPFA L-method.
  * At Dirichlet boundaries a two-point flux approximation is used.
@@ -118,15 +119,15 @@ template<class TypeTag> class FvMpfaL2dVelocity2pAdaptive : public FvMpfaL2dVelo
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
 public:
-    //! Constructs a FvMpfaL2dVelocity2pAdaptive object
     /*!
+     * \brief Constructs a FvMpfaL2dVelocity2pAdaptive object
      * \param problem A problem class object
      */
     FvMpfaL2dVelocity2pAdaptive(Problem& problem) :
         ParentType(problem), problem_(problem)
     {}
 
-    //calculate velocities for flux faces of a hanging node interaction volume
+    //! Calculate velocities for flux faces of a hanging node interaction volume
     void calculateHangingNodeInteractionVolumeVelocity(InteractionVolume& interactionVolume, CellData& cellData1,
                                                        CellData& cellData2, CellData& cellData4,
                                                        InnerBoundaryVolumeFaces& innerBoundaryVolumeFaces);
@@ -136,7 +137,8 @@ private:
 };
 // end of template
 
-/*! \brief Calculates the velocities at the flux faces of an interation volume around a hanging node vertex.
+/*!
+ * \brief Calculates the velocities at the flux faces of an interation volume around a hanging node vertex.
  *
  *  Calculates the velocities at the flux faces of an interation volume around a hanging
  *  node vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.

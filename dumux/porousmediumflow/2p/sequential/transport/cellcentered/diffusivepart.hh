@@ -16,19 +16,21 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Base class for defining a diffusive part of the saturation transport equation
+ */
 #ifndef DUMUX_DIFFUSIVEPART_HH
 #define DUMUX_DIFFUSIVEPART_HH
 
 #include <dumux/porousmediumflow/2p/sequential/transport/properties.hh>
 
-/**
- * \file
- * \brief  Base class for defining a diffusive part of the saturation transport equation
- */
 namespace Dumux
 {
-/*!\ingroup FVSaturation2p
+/*!
  * \brief  Base class for defining the diffusive part of the saturation transport equation
+ * \ingroup SequentialTwoPModel
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -50,7 +52,8 @@ public:
     void initialize()
     {}
 
-    /*! \brief Returns diffusive term for current element face
+    /*!
+     * \brief Returns diffusive term for current element face
      *
      *  \param flux        Flux vector (gets the flux from the function)
      *  \param intersection  Intersection of two grid elements/global boundary
@@ -61,7 +64,8 @@ public:
     void getFlux(DimVector& flux, const Intersection& intersection, Scalar satI, Scalar satJ, const DimVector& pcGradient) const
     {}
 
-    /*! \brief Returns diffusive term for current element face
+    /*!
+     * \brief Returns diffusive term for current element face
      *
      *  \param flux        Flux vector (gets the flux from the function)
      *  \param intersection  Intersection of two grid elements/global boundary
@@ -73,7 +77,8 @@ public:
                                     const Scalar satIntersection, const DimVector& satGradient, const Scalar time) const
     {}
 
-    /*! \brief Returns diffusive term for current element face
+    /*!
+     * \brief Returns diffusive term for current element face
      *
      *  \param flux        Flux vector (gets the flux from the function)
      *  \param intersection  Intersection of two grid elements/global boundary
@@ -88,7 +93,8 @@ public:
                                     Scalar satI, Scalar satJ) const
     {}
 
-    /*! Constructs a DiffusivePart object
+    /*!
+     * \brief Constructs a DiffusivePart object
      *
      *  \param problem problem class object
      */

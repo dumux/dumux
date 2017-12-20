@@ -16,13 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Velocity Field from a finite volume solution of a pressure equation.
+ */
 #ifndef DUMUX_FVVELOCITY2P_HH
 #define DUMUX_FVVELOCITY2P_HH
-
-/**
- * @file
- * @brief  Velocity Field from a finite volume solution of a pressure equation.
- */
 
 #include <dune/common/float_cmp.hh>
 #include <dune/grid/common/gridenums.hh>
@@ -30,7 +30,7 @@
 
 namespace Dumux
 {
-//! \ingroup FVPressure2p
+//! \ingroup SequentialTwoPModel
 //! \brief Determines the velocity from a finite volume solution of the  pressure equation of a sequential model (IMPES).
 /*! Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization.
  * The wetting or the non-wetting phase pressure, or the global pressure has to be given as piecewise constant cell values.
@@ -112,7 +112,8 @@ class FVVelocity2P
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    /*! \brief Constructs a FVVelocity2P object
+    /*!
+     * \brief Constructs a FVVelocity2P object
      * \param problem A Problem class object
      */
     FVVelocity2P(Problem& problem) :
@@ -136,7 +137,7 @@ public:
         vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");;
     }
 
-    //! For initialization
+    // For initialization
     void initialize()
     {
         if (!compressibility_)
@@ -155,13 +156,14 @@ public:
         }
     }
 
-    // Calculates the velocity at a cell-cell interface.
+    //! Calculates the velocity at a cell-cell interface.
     void calculateVelocity(const Intersection&, CellData&);
 
-    //Calculates the velocity at a boundary.
+    //! Calculates the velocity at a boundary.
     void calculateVelocityOnBoundary(const Intersection&, CellData&);
 
-    /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
+    /*!
+     * \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
      *
      * Returns true (In the standard finite volume discretization the velocity is calculated during the saturation transport.)
      */
@@ -170,13 +172,13 @@ public:
         return true;
     }
 
-    /*! \brief Adds velocity output to the output file
+    /*!
+     * \brief Adds velocity output to the output file
      *
      * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -318,7 +320,8 @@ private:
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
 };
 
-/*! \brief Calculates the velocity at a cell-cell interface.
+/*!
+ * \brief Calculates the velocity at a cell-cell interface.
  *
  * Calculates the velocity at a cell-cell interface from a given pressure field.
  *
@@ -477,7 +480,8 @@ void FVVelocity2P<TypeTag>::calculateVelocity(const Intersection& intersection, 
     return;
 }
 
-/*! \brief Calculates the velocity at a boundary.
+/*!
+ * \brief Calculates the velocity at a boundary.
  *
  * Calculates the velocity at a boundary from a given pressure field.
  *

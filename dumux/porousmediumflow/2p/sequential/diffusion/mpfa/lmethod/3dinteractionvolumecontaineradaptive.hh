@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
+ */
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
 
@@ -25,23 +30,17 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume3dadaptive.hh>
 #include "3dinteractionvolumecontainer.hh"
 
-/**
- * @file
- * @brief  Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
- */
-
 namespace Dumux
 {
-
-//! \ingroup FVPressure2p mpfa
-/*! \brief Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
+/*!
+ * \brief Interactionvolume container for 3-d MPFA L-method on an h-adaptive grid
+ * \ingroup SequentialTwoPModel
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
  * Each <tt>InteractionVolume</tt> object stores the information which is necessary to calculate MPFA transmissibility matrices:
  *
  * - relationship and orientation of the elements around a vertex (see doc/docextra/3dmpfa)
  * - geometric information, such as element/face/edge positions, normals, ...
- *
  */
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVolumeContainer<TypeTag>
@@ -95,7 +94,8 @@ protected:
 
 public:
 
-    /*! \brief Returns the set of vertices on an element face
+    /*!
+     * \brief Returns the set of vertices on an element face
      *
      * The DUNE reference elements does not allow to access hanging nodes from a given element face.
      * However, if a flux through a entire element face has to be calculated, e.g. if single fluxes
@@ -107,8 +107,8 @@ public:
         return faceVertices_[eIdxGlobal][fIdx];
     }
 
-    //! Constructs a FvMpfaL3dInteractionVolumeContainerAdaptive object
-    /**
+    /*!
+     * \brief Constructs a FvMpfaL3dInteractionVolumeContainerAdaptive object
      * \param problem A problem class object
      */
     FvMpfaL3dInteractionVolumeContainerAdaptive(Problem& problem) :
@@ -135,7 +135,8 @@ private:
     FaceVerticesVector faceVertices_;
 };
 
-/*! \brief Stores additional information which can be constructed for interaction
+/*!
+ * \brief Stores additional information which can be constructed for interaction
  *         volumes of non-boundary vertices.
  *
  * Stores additional information which can be constructed for interaction volumes of
@@ -290,7 +291,8 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
     }
 }
 
-/*! \brief Stores additional information which can be constructed for interaction volumes around hanging nodes.
+/*!
+ * \brief Stores additional information which can be constructed for interaction volumes around hanging nodes.
  *
  *  Stores additional information which can be constructed for interaction volumes around hanging nodes.
  *

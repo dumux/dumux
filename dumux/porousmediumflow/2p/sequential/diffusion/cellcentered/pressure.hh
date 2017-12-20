@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Finite Volume discretization of a two-phase flow pressure equation.
+ */
 #ifndef DUMUX_FVPRESSURE2P_HH
 #define DUMUX_FVPRESSURE2P_HH
 
@@ -25,15 +30,11 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 
-/**
- * \file
- * \brief  Finite Volume discretization of a two-phase flow pressure equation.
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
+/*!
+ * \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
+ * \ingroup SequentialTwoPModel
  *
  * This model implements two-phase flow of two immiscible fluids \f$\alpha \in \{ w, n \}\f$ using
  * a standard multiphase Darcy approach as the equation for the conservation of momentum, i.e.
@@ -173,23 +174,24 @@ protected:
     //! \endcond
 
 public:
-    // Function which calculates the source entry
+    //! Function which calculates the source entry
     void getSource(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
-    // Function which calculates the storage entry
+    //! Function which calculates the storage entry
     void getStorage(EntryType& entry, const Element& element, const CellData& cellData, const bool first);
 
-    // Function which calculates the flux entry
+    //! Function which calculates the flux entry
     void getFlux(EntryType& entry, const Intersection& intersection, const CellData& cellData, const bool first);
 
-    // Function which calculates the boundary flux entry
+    //! Function which calculates the boundary flux entry
     void getFluxOnBoundary(EntryType& entry,
     const Intersection& intersection, const CellData& cellData, const bool first);
 
-    // updates and stores constitutive relations
+    //! updates and stores constitutive relations
     void updateMaterialLaws();
 
-    /*! \brief Initializes the pressure model
+    /*!
+     * \brief Initializes the pressure model
      *
      * \copydetails ParentType::initialize()
      *
@@ -252,7 +254,8 @@ public:
         storePressureSolution();
     }
 
-    /*! \brief Pressure update
+    /*!
+     * \brief Pressure update
      *
      * \copydetails FVPressure::update()
      */
@@ -295,7 +298,8 @@ public:
         storePressureSolution();
     }
 
-    /*! \brief Velocity update
+    /*!
+     * \brief Velocity update
      *
      * Reset the velocities in the cellData
      */
@@ -322,7 +326,8 @@ public:
         }
     }
 
-    /*! \brief Stores the pressure solution of a cell
+    /*!
+     * \brief Stores the pressure solution of a cell
      *
      * Calculates secondary pressure variables and stores pressures.
      *
@@ -396,14 +401,14 @@ public:
         cellData.fluxData().resetVelocity();
     }
 
-    /*! \brief Adds pressure output to the output file
+    /*!
+     * \brief Adds pressure output to the output file
      *
      * Adds the phase pressures or a global pressure (depending on the formulation) as well as the capillary pressure to the output.
      * In the compressible case additionally density and viscosity are added.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -532,8 +537,8 @@ public:
         }
     }
 
-    //! Constructs a FVPressure2P object
-    /**
+    /*!
+     * \brief Constructs a FVPressure2P object
      * \param problem A problem class object
      */
     FVPressure2P(Problem& problem) :
@@ -623,7 +628,7 @@ void FVPressure2P<TypeTag>::getSource(EntryType& entry, const Element& element
     entry[rhs] = volume * (sourcePhase[wPhaseIdx] + sourcePhase[nPhaseIdx]);
 }
 
-/** \brief Function which calculates the storage entry
+/*! \brief Function which calculates the storage entry
  *
  * \copydetails FVPressure::getStorage(EntryType&,const Element&,const CellData&,const bool)
  *
@@ -1075,6 +1080,8 @@ const Intersection& intersection, const CellData& cellData, const bool first)
  *
  * Stores mobility, fractional flow function and capillary pressure for all grid cells.
  * In the compressible case additionally the densities and viscosities are stored.
+ *
+ * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 void FVPressure2P<TypeTag>::updateMaterialLaws()

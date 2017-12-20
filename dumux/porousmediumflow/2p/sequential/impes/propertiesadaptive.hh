@@ -16,20 +16,17 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Properties for adaptive implementations of the sequential IMPES algorithms
+ */
 #ifndef DUMUX_IMPES2PADAPTIVE_PROPERTIES_HH
 #define DUMUX_IMPES2PADAPTIVE_PROPERTIES_HH
 
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
-/*!
- * \ingroup IMPES
- * \ingroup IMPETProperties
- */
-/*!
- * \file
- * \brief Properties for adaptive implementations of the sequential IMPES algorithms
- */
 namespace Dumux
 {
 
@@ -71,7 +68,7 @@ SET_TYPE_PROP(IMPESTwoPAdaptive, Variables, VariableClassAdaptive<TypeTag>);
 SET_TYPE_PROP(IMPESTwoPAdaptive, CellData, CellData2PAdaptive<TypeTag>);
 //! Set the standard indicator class of two-phase models for adaption or coarsening
 SET_TYPE_PROP(IMPESTwoPAdaptive, AdaptionIndicator, GridAdaptionIndicator2P<TypeTag>);
-//!Set default class for adaptation initialization indicator
+//! Set default class for adaptation initialization indicator
 SET_TYPE_PROP(IMPESTwoPAdaptive,  AdaptionInitializationIndicator, GridAdaptInitializationIndicator<TypeTag>);
 }
 }

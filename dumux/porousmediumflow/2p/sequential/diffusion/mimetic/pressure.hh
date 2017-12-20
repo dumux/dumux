@@ -16,15 +16,14 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Model for the pressure equation discretized by mimetic FD.
+ */
 #ifndef DUMUX_MIMETICPRESSURE2P_HH
 #define DUMUX_MIMETICPRESSURE2P_HH
 
-/*!
- * \file
- *
- * \brief Model for the pressure equation discretized by mimetic FD.
- */
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
@@ -34,10 +33,9 @@
 namespace Dumux
 {
 
-
-/*! \ingroup Mimetic2p
- *
- * \brief mimetic method for the pressure equation
+/*!
+ *\brief mimetic method for the pressure equation
+ * \ingroup SequentialTwoPModel
  *
  * Provides a mimetic implementation for the evaluation
  * of equations of the form
@@ -59,7 +57,7 @@ namespace Dumux
  * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
  * on \f$\Gamma_{Dirichlet}\f$.
  *
- *\tparam TypeTag The Type Tag
+ *\tparam TypeTag The problem Type Tag
  */
 template<class TypeTag> class MimeticPressure2P
 {
@@ -121,10 +119,10 @@ template<class TypeTag> class MimeticPressure2P
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
     using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
-    //initializes the matrix to store the system of equations
+    //! initializes the matrix to store the system of equations
     void initializeMatrix();
 
-    //function which assembles the system of equations to be solved
+    //! function which assembles the system of equations to be solved
     void assemble(bool first)
     {
         Scalar timeStep = problem_.timeManager().timeStepSize();
@@ -158,7 +156,7 @@ template<class TypeTag> class MimeticPressure2P
         return;
     }
 
-    //solves the system of equations to get the spatial distribution of the pressure
+    //!solves the system of equations to get the spatial distribution of the pressure
     void solve();
 
     void postprocess()
@@ -169,9 +167,15 @@ template<class TypeTag> class MimeticPressure2P
     }
 
 public:
-    //constitutive functions are initialized and stored in the variables object
+    //! constitutive functions are initialized and stored in the variables object
     void updateMaterialLaws();
 
+    /*! \brief Initializes the model
+     *
+     * \copydetails ParentType::initialize()
+     *
+     * \param solveTwice indicates if more than one iteration is allowed to get an initial pressure solution
+     */
     void initialize(bool solveTwice = true)
     {
         const auto element = *problem_.gridView().template begin<0>();
@@ -203,12 +207,18 @@ public:
         return;
     }
 
+    /*!
+     * \brief Velocity update
+     *
+     * Reset the velocities in the cellData
+     */
     void updateVelocity()
     {
         updateMaterialLaws();
         postprocess();
     }
 
+    // TODO doc me!
     void update()
     {
         lstiff_.reset();
@@ -220,8 +230,12 @@ public:
         return;
     }
 
-    //! \brief Write data files
-     /*  \param name file name */
+    /*!
+     * \brief  Write data file
+     *
+     * \tparam MultiWriter Class defining the output writer
+     * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
+     */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
     {
@@ -395,10 +409,14 @@ public:
             }
     }
 
-    /*! \name general methods for serialization, output */
-    //@{
-    // serialization methods
-    //! Function needed for restart option.
+    /*!
+     * \brief general method for serialization, output
+     *
+     * Function needed for restart option.
+     *
+     * \param outstream The output stream
+     * \param element The grid element
+     */
     void serializeEntity(std::ostream &outstream, const Element &element)
     {
         int numFaces = element.subEntities(1);
@@ -409,6 +427,12 @@ public:
         }
     }
 
+    /*!
+     * \brief general method for deserialization
+     *
+     * \param instream The input stream
+     * \param element The grid element
+     */
     void deserializeEntity(std::istream &instream, const Element &element)
     {
         int numFaces = element.subEntities(1);
@@ -418,10 +442,9 @@ public:
             instream >> pressTrace_[fIdxGlobal][0];
         }
     }
-    //@}
 
-    //! Constructs a MimeticPressure2P object
-    /**
+    /*!
+     * \brief Constructs a MimeticPressure2P object
      * \param problem The Dumux problem
      */
     MimeticPressure2P(Problem& problem) :
@@ -462,7 +485,7 @@ private:
     int vtkOutputLevel_;
 };
 
-//solves the system of equations to get the spatial distribution of the pressure
+//! solves the system of equations to get the spatial distribution of the pressure
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::solve()
 {
@@ -479,7 +502,7 @@ void MimeticPressure2P<TypeTag>::solve()
     return;
 }
 
-//constitutive functions are updated once if new saturations are calculated and stored in the variables object
+//! constitutive functions are updated once if new saturations are calculated and stored in the variables object
 template<class TypeTag>
 void MimeticPressure2P<TypeTag>::updateMaterialLaws()
 {

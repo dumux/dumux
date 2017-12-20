@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup SequentialTwoPModel
  * \brief Base class for two-phase transport problems
  */
 #ifndef DUMUX_TRANSPORTPROBLEM_2P_HH
@@ -41,9 +42,8 @@ SET_TYPE_PROP(TransportTwoP, Velocity, FVVelocityDefault<TypeTag>);
 }
 
 /*!
- * \ingroup Saturation2p
- * \ingroup IMPETproblems
  * \brief  Base class for a sequential two-phase transport problem
+ * \ingroup SequentialTwoPModel
  *
  * \tparam TypeTag The problem Type Tag
  */

@@ -16,19 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
-#ifndef DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
-#define DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
-
-/*!
- * \ingroup IMPES
- * \ingroup Properties
- */
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Defines the properties required for (immiscible) twophase sequential models.
  */
+#ifndef DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
+#define DUMUX_MIMETICPROPERTIES2P_SEQUENTIAL_HH
 
 //Dumux-includes
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
@@ -51,8 +45,7 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 
 //! The type tag for the two-phase problems
-NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP, Mimetic))
-;
+NEW_TYPE_TAG(MimeticPressureTwoP, INHERITS_FROM(PressureTwoP, Mimetic));
 
 //////////////////////////////////////////////////////////////////
 // Property tags

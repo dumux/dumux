@@ -16,25 +16,25 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief 2-d velocity calculation using a 3-d MPFA L-method
+ */
 #ifndef DUMUX_FVMPFAL2PVELOCITY2P_HH
 #define DUMUX_FVMPFAL2PVELOCITY2P_HH
-
 
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include "3dtransmissibilitycalculator.hh"
 
-/**
- * @file
- * @brief 2-d velocity calculation using a 3-d MPFA L-method
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
+/*!
+ * \brief Class for calculating 3-d velocities from cell-wise constant pressure values.
+ * \ingroup SequentialTwoPModel
+ *
  * Calculates phase velocities or total velocity from a known pressure field applying a finite volume discretization and a MPFA L-method.
  * At Dirichlet boundaries a two-point flux approximation is used.
  * The pressure has to be given as piecewise constant cell values.
@@ -134,8 +134,8 @@ template<class TypeTag> class FvMpfaL3dVelocity2p
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
 public:
-    //! Constructs a FvMpfaL3dVelocity2p object
     /*!
+     * \brief Constructs a FvMpfaL3dVelocity2p object
      * \param problem A problem class object
      */
     FvMpfaL3dVelocity2p(Problem& problem) :
@@ -149,7 +149,7 @@ public:
         vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
     }
 
-    //calculate velocities for flux faces of an interaction volume
+    //! Calculate velocities for flux faces of an interaction volume
     void calculateInnerInteractionVolumeVelocity(InteractionVolume& interactionVolume,
             CellData & cellData1,  CellData & cellData2, CellData & cellData3, CellData & cellData4,
             CellData & cellData5, CellData & cellData6, CellData & cellData7, CellData & cellData8,
@@ -158,7 +158,7 @@ public:
     void calculateBoundaryInteractionVolumeVelocity(InteractionVolume& interactionVolume,
                                                     CellData& cellData, int elemIdx);
 
-    //!Initializes the velocity model
+    //! Initializes the velocity model
     void initialize(bool solveTwice = true)
     {
         const auto element = *problem_.gridView().template begin<0>();
@@ -176,7 +176,8 @@ public:
         return;
     }
 
-    /*! \brief Adds velocity output to the output file
+    /*!
+     * \brief Adds velocity output to the output file
      *
      * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
      * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
@@ -184,7 +185,6 @@ public:
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -274,7 +274,8 @@ private:
 };
 // end of template
 
-/*! \brief Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex.
+/*!
+ * \brief Calculates the velocities at the flux faces of an interation volume around a vertex which is not a boundary vertex.
  *
  *  Calculates the velocities at the flux faces of an interation volume around a vertex
  *  which is not a boundary vertex and adds them to the face velocity vectors in the <tt>CellData</tt> objects.
@@ -1909,7 +1910,8 @@ void FvMpfaL3dVelocity2p<TypeTag>::calculateInnerInteractionVolumeVelocity(Inter
     cellData8.fluxData().setVelocityMarker(interactionVolume.getIndexOnElement(7, 2));
         }
 
-/*! \brief Calculates the velocity at a boundary flux faces.
+/*!
+ * \brief Calculates the velocity at a boundary flux faces.
  *
  *  Calculates the velocity at a boundary flux face and adds it to the face velocity vector in the <tt>CellData</tt> object.
  *

@@ -16,13 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
+ */
 #ifndef DUMUX_EVALCFLFLUX_COATS_HH
 #define DUMUX_EVALCFLFLUX_COATS_HH
-
-/**
- * @file
- * @brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
- */
 
 #include <dune/common/float_cmp.hh>
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
@@ -30,8 +30,9 @@
 
 namespace Dumux
 {
-/*!\ingroup IMPES
- * @brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
+/*!
+ * \brief  Cfl-flux-function to evaluate a Cfl-Condition after Coats 2003
+ * \ingroup SequentialTwoPModel
  *
  * tparam TypeTag The problem TypeTag
  */
@@ -98,7 +99,8 @@ public:
         density_[nPhaseIdx] = FluidSystem::density(fluidState, nPhaseIdx);
     }
 
-    /*! \brief adds a flux to the cfl-criterion evaluation
+    /*!
+     * \brief adds a flux to the cfl-criterion evaluation
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Element&,int)
      */
@@ -108,7 +110,8 @@ public:
         addDefaultFlux(flux, phaseIdx);
     }
 
-    /*! \brief adds a flux to the cfl-criterion evaluation
+    /*!
+     * \brief adds a flux to the cfl-criterion evaluation
      *
      * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
      */
@@ -119,7 +122,8 @@ public:
         addCoatsFlux(lambdaW, lambdaNw, viscosityW, viscosityNw, flux, intersection, phaseIdx);
     }
 
-    /*! \brief Returns the Cfl flux-function
+    /*!
+     * \brief Returns the Cfl flux-function
      *
      * \copydetails EvalCflFlux::getCflFluxFunction(const Element&)
      */
@@ -152,7 +156,8 @@ public:
         }
     }
 
-    /*! \brief  Returns the Cfl time-step
+    /*!
+     * \brief  Returns the Cfl time-step
      *
      * \copydetails EvalCflFlux::getDt(const Element&)
      */
@@ -175,7 +180,8 @@ public:
         fluxOut_ = 0;
     }
 
-    /*! \brief Constructs an EvalCflFluxDefault object
+    /*!
+     * \brief Constructs an EvalCflFluxDefault object
      *
      * \param problem A problem type object
      */
@@ -308,7 +314,8 @@ void EvalCflFluxCoats<TypeTag>::addDefaultFlux(Scalar flux, int phaseIdx)
     }
 }
 
-/*! \brief adds a flux to the cfl-criterion evaluation
+/*!
+ * \brief adds a flux to the cfl-criterion evaluation
  *
  * \copydetails EvalCflFlux::addFlux(Scalar&,Scalar&,Scalar&,Scalar&,Scalar,const Intersection&,int)
  */
