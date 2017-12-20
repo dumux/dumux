@@ -55,8 +55,8 @@ public:
     /****************************************
      * Fluid phase related static parameters
      ****************************************/
-    static const int numPhases = 1;
-    static const int numComponents = 1;
+    static constexpr int numPhases = 1;
+    static constexpr int numComponents = 1;
 
     /*!
      * \brief Initialize the fluid system's static parameters generically
@@ -89,7 +89,7 @@ public:
     /*!
      * \brief Returns whether the fluid is a liquid
      */
-    static bool isLiquid(int phaseIdx = 0)
+    static constexpr bool isLiquid(int phaseIdx = 0)
     { return false; }
 
     /*!
@@ -106,7 +106,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-    static bool isIdealMixture(int phaseIdx = 0)
+    static constexpr bool isIdealMixture(int phaseIdx = 0)
     { return true; }
 
     /*!
@@ -118,7 +118,7 @@ public:
     /*!
      * \brief Returns true if the fluid is assumed to be an ideal gas
      */
-    static bool isIdealGas(int phaseIdx = 0)
+    static constexpr bool isIdealGas(int phaseIdx = 0)
     { return Component::gasIsIdeal(); }
 
     /*!
