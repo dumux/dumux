@@ -31,13 +31,20 @@
 namespace Dumux
 {
 
+namespace Properties
+{
+    NEW_PROP_TAG(StaggeredFluxStencils);
+}
+
 template<class TypeTag>
 class StaggeredConnectivityMap
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
+    using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -53,6 +60,7 @@ class StaggeredConnectivityMap
     using FaceToFaceMap = std::vector<std::vector<IndexType>>;
 
     using Stencil = std::vector<IndexType>;
+    using FluxStencils = typename GET_PROP_TYPE(TypeTag, StaggeredFluxStencils);
 
 public:
 
@@ -76,7 +84,6 @@ public:
         std::vector<Stencil> fullfaceToFaceStencils;
         fullfaceToFaceStencils.resize(numDofsFace);
 
-        FluxVariables fluxVars;
         for(auto&& element: elements(fvGridGeometry.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
@@ -87,12 +94,12 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const auto dofIdxCellCenter = fvGridGeometry.elementMapper().index(element);
-                fluxVars.computeCellCenterToCellCenterStencil(cellCenterToCellCenterMap_[dofIdxCellCenter], element, fvGeometry, scvf);
-                fluxVars.computeCellCenterToFaceStencil(cellCenterToFaceMap_[dofIdxCellCenter], element, fvGeometry, scvf);
+                FluxStencils::computeCellCenterToCellCenterStencil(cellCenterToCellCenterMap_[dofIdxCellCenter], element, fvGeometry, scvf);
+                FluxStencils::computeCellCenterToFaceStencil(cellCenterToFaceMap_[dofIdxCellCenter], element, fvGeometry, scvf);
 
                 const auto scvfIdx = scvf.index();
-                fluxVars.computeFaceToCellCenterStencil(faceToCellCenterMap_[scvfIdx], fvGeometry, scvf);
-                fluxVars.computeFaceToFaceStencil(faceToFaceMap_[scvfIdx], fvGeometry, scvf);
+                FluxStencils::computeFaceToCellCenterStencil(faceToCellCenterMap_[scvfIdx], fvGeometry, scvf);
+                FluxStencils::computeFaceToFaceStencil(faceToFaceMap_[scvfIdx], fvGeometry, scvf);
             }
         }
     }

@@ -38,34 +38,34 @@ namespace Dumux
 {
 
 //! Dummy flux variables class so that we can update the connectivity map
-class MockFluxVariables
+class MockFluxStencil
 {
 public:
 
   template<class Map, class Element, class FvGeometry, class Scvf>
-  void computeCellCenterToCellCenterStencil(Map& map,
-                                            const Element& element,
-                                            const FvGeometry& fvGeometry,
-                                            const Scvf& scvf)
+  static void computeCellCenterToCellCenterStencil(Map& map,
+                                                   const Element& element,
+                                                   const FvGeometry& fvGeometry,
+                                                   const Scvf& scvf)
   {}
 
   template<class Map, class Element, class FvGeometry, class Scvf>
-  void computeCellCenterToFaceStencil(Map& map,
-                                      const Element& element,
-                                      const FvGeometry& fvGeometry,
-                                      const Scvf& scvf)
+  static void computeCellCenterToFaceStencil(Map& map,
+                                             const Element& element,
+                                             const FvGeometry& fvGeometry,
+                                             const Scvf& scvf)
   {}
 
   template<class Map, class FvGeometry, class Scvf>
-  void computeFaceToCellCenterStencil(Map& map,
-                                      const FvGeometry& fvGeometry,
-                                      const Scvf& scvf)
+  static void computeFaceToCellCenterStencil(Map& map,
+                                             const FvGeometry& fvGeometry,
+                                             const Scvf& scvf)
   {}
 
   template<class Map, class FvGeometry, class Scvf>
-  void computeFaceToFaceStencil(Map& map,
-                                const FvGeometry& fvGeometry,
-                                const Scvf& scvf)
+  static void computeFaceToFaceStencil(Map& map,
+                                       const FvGeometry& fvGeometry,
+                                       const Scvf& scvf)
   {}
 
 };
@@ -76,7 +76,7 @@ NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel));
 
 SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(TestFVGeometry, FluxVariables, MockFluxVariables);
+SET_TYPE_PROP(TestFVGeometry, StaggeredFluxStencils, MockFluxStencil);
 
 SET_BOOL_PROP(TestFVGeometry, EnableFVGridGeometryCache, true);
 }
