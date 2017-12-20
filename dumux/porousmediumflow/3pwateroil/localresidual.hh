@@ -18,38 +18,47 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePWaterOilModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the three-phase three-component fully implicit model.
  */
 #ifndef DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 #define DUMUX_3P2CNI_LOCAL_RESIDUAL_HH
 
-#include "properties.hh"
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/3p3c/localresidual.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup ThreePWaterOilModel
- * \ingroup ImplicitLocalResidual
- * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the three-phase three-component fully implicit model.
+ * \brief Element-wise calculation of the local residual for problems
+ *        using the ThreePWaterOil fully implicit model.
  *
- * This class is used to fill the gaps in BoxLocalResidual for the 3P2C flow.
+ * This class is used to fill the gaps in the CompositionalLocalResidual for the 3PWaterOil flow.
  */
 template<class TypeTag>
 class ThreePWaterOilLocalResidual: public ThreePThreeCLocalResidual<TypeTag>
 {
 protected:
+    using ParentType = ThreePThreeCLocalResidual<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
-
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
 
 
     enum {
@@ -67,127 +76,128 @@ protected:
         nCompIdx = Indices::nCompIdx,
     };
 
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-
     //! property that defines whether mole or mass fractions are used
     static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 public:
+    using ParentType::ParentType;
 
     /*!
-     * \brief Evaluate the storage term of the current solution in a
-     *        single phase.
+     * \brief Evaluate the amount of all conservation quantities
+     *        (e.g. phase mass) within a sub-control volume.
      *
-     * \param element The element
-     * \param phaseIdx The index of the fluid phase
+     * The result should be averaged over the volume (e.g. phase mass
+     * inside a sub control volume divided by the volume)
+     *
+     *  \param storage The mass of the component within the sub-control volume
+     *  \param scvIdx The SCV (sub-control-volume) index
+     *  \param usePrevSol Evaluate function with solution of current or previous time step
      */
-    void evalPhaseStorage(const Element &element, const int phaseIdx)
+     ResidualVector computeStorage(const Problem& problem,
+                                  const SubControlVolume& scv,
+                                  const VolumeVariables& volVars) const
     {
-        FVElementGeometry fvGeometry;
-        fvGeometry.update(this->gridView_(), element);
-        ElementBoundaryTypes bcTypes;
-        bcTypes.update(this->problem_(), element, fvGeometry);
-        ElementVolumeVariables elemVolVars;
-        elemVolVars.update(this->problem_(), element, fvGeometry, false);
+        ResidualVector storage(0.0);
 
-        this->storageTerm_.resize(fvGeometry.numScv);
-        this->storageTerm_ = 0;
+        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
-        this->elemPtr_ = &element;
-        this->fvElemGeomPtr_ = &fvGeometry;
-        this->bcTypesPtr_ = &bcTypes;
-        this->prevVolVarsPtr_ = 0;
-        this->curVolVarsPtr_ = &elemVolVars;
-        evalPhaseStorage_(phaseIdx);
+        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
+
+        // compute storage term of all components within all phases
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                    int eqIdx = (compIdx == wCompIdx) ? conti0EqIdx : conti1EqIdx;
+                    storage[eqIdx] += volVars.porosity()
+                                      * volVars.saturation(phaseIdx)
+                                      * massOrMoleDensity(volVars, phaseIdx)
+                                      * massOrMoleFraction(volVars, phaseIdx, compIdx);
+            }
+
+            //! The energy storage in the fluid phase with index phaseIdx
+            EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars, phaseIdx);
+        }
+
+        //! The energy storage in the solid matrix
+        EnergyLocalResidual::solidPhaseStorage(storage, scv, volVars);
+
+        return storage;
     }
 
-    /*!
-     * \brief Adds the diffusive mass flux of all components over
-     *        a face of a subcontrol volume.
+     /*!
+     * \brief Evaluates the total flux of all conservation quantities
+     *        over a face of a sub-control volume.
      *
-     * \param flux The diffusive flux over the sub-control-volume face for each component
-     * \param fluxVars The flux variables at the current SCV
+     * \param flux The flux over the SCV (sub-control-volume) face for each component
+     * \param fIdx The index of the SCV face
+     * \param onBoundary A boolean variable to specify whether the flux variables
+     *        are calculated for interior SCV faces or boundary faces, default=false
      */
-
-    void computeDiffusiveFlux(PrimaryVariables &flux, const FluxVariables &fluxVars) const
+    ResidualVector computeFlux(const Problem& problem,
+                               const Element& element,
+                               const FVElementGeometry& fvGeometry,
+                               const ElementVolumeVariables& elemVolVars,
+                               const SubControlVolumeFace& scvf,
+                               const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        // TODO: reference!?  Dune::FieldMatrix<Scalar, numPhases, numComponents> averagedPorousDiffCoeffMatrix = fluxVars.porousDiffCoeff();
-        // add diffusive flux of gas component in liquid phase
-        Scalar tmp;
-        tmp = - fluxVars.porousDiffCoeff(wPhaseIdx) * fluxVars.molarDensity(wPhaseIdx);
-        tmp *= (fluxVars.moleFractionCompNGrad(wPhaseIdx) * fluxVars.face().normal);
-        Scalar jNW = tmp;
+        FluxVariables fluxVars;
+        fluxVars.init(problem, element, fvGeometry, elemVolVars, scvf, elemFluxVarsCache);
 
-        Scalar jWW = -jNW;
+        // get upwind weights into local scope
+        ResidualVector flux(0.0);
 
-        tmp = - fluxVars.porousDiffCoeff(gPhaseIdx) * fluxVars.molarDensity(gPhaseIdx);
-        tmp *= (fluxVars.moleFractionCompWGrad(gPhaseIdx) * fluxVars.face().normal);
-        Scalar jWG = tmp;
+        const auto massOrMoleDensity = [](const auto& volVars, const int phaseIdx)
+        { return useMoles ? volVars.molarDensity(phaseIdx) : volVars.density(phaseIdx); };
 
-        Scalar jNG = -jWG;
+        const auto massOrMoleFraction= [](const auto& volVars, const int phaseIdx, const int compIdx)
+        { return useMoles ? volVars.moleFraction(phaseIdx, compIdx) : volVars.massFraction(phaseIdx, compIdx); };
 
-        tmp = - fluxVars.porousDiffCoeff(nPhaseIdx) * fluxVars.molarDensity(nPhaseIdx);
-        tmp *= (fluxVars.moleFractionCompWGrad(nPhaseIdx) * fluxVars.face().normal);
-        Scalar jWN = tmp;
+        // advective fluxes
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        {
+            for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+            {
+                 const auto upwindTerm = [&massOrMoleDensity, &massOrMoleFraction, phaseIdx, compIdx] (const auto& volVars)
+                { return massOrMoleDensity(volVars, phaseIdx)*massOrMoleFraction(volVars, phaseIdx, compIdx)*volVars.mobility(phaseIdx); };
 
+                // get equation index
+                auto eqIdx = conti0EqIdx + compIdx;
+                flux[eqIdx] += fluxVars.advectiveFlux(phaseIdx, upwindTerm);
+            }
+
+            //! Add advective phase energy fluxes. For isothermal model the contribution is zero.
+            EnergyLocalResidual::heatConvectionFlux(flux, fluxVars, phaseIdx);
+        }
+
+        //! Add diffusive energy fluxes. For isothermal model the contribution is zero.
+        EnergyLocalResidual::heatConductionFlux(flux, fluxVars);
+
+        const auto diffusionFluxesWPhase = fluxVars.molecularDiffusionFlux(wPhaseIdx);
+
+        // diffusive fluxes
+        Scalar jNW =  diffusionFluxesWPhase[nCompIdx];
+        Scalar jWW = -(jNW);
+
+        const auto diffusionFluxesGPhase = fluxVars.molecularDiffusionFlux(gPhaseIdx);
+
+        Scalar jWG = diffusionFluxesGPhase[wCompIdx];
+        Scalar jNG = -(jWG);
+
+        const auto diffusionFluxesNPhase = fluxVars.molecularDiffusionFlux(nPhaseIdx);
+        // At the moment we do not consider diffusion in the NAPL phase
+        Scalar jWN = diffusionFluxesNPhase[wCompIdx];
         Scalar jNN = -jWN;
 
         flux[conti0EqIdx] += jWW+jWG+jWN;
         flux[conti1EqIdx] += jNW+jNG+jNN;
+
+        return flux;
     }
+
 
 protected:
-    void evalPhaseStorage_(const int phaseIdx)
-    {
-        if(!useMoles) //mass-fraction formulation
-        {
-            // evaluate the storage terms of a single phase
-            for (int i=0; i < this->fvGeometry_().numScv; i++) {
-                PrimaryVariables &storage = this->storageTerm_[i];
-                const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-                const VolumeVariables &volVars = elemVolVars[i];
-
-                // compute storage term of all components within all phases
-                storage = 0;
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    int eqIdx = (compIdx == wCompIdx) ? conti0EqIdx : conti1EqIdx;
-                    storage[eqIdx] += volVars.density(phaseIdx)
-                        * volVars.saturation(phaseIdx)
-                        * volVars.fluidState().massFraction(phaseIdx, compIdx);
-                }
-
-                storage *= volVars.porosity();
-                storage *= this->fvGeometry_().subContVol[i].volume;
-            }
-        }
-        else //mole-fraction formulation
-        {
-            // evaluate the storage terms of a single phase
-            for (int i=0; i < this->fvGeometry_().numScv; i++) {
-                PrimaryVariables &storage = this->storageTerm_[i];
-                const ElementVolumeVariables &elemVolVars = this->curVolVars_();
-                const VolumeVariables &volVars = elemVolVars[i];
-
-                // compute storage term of all components within all phases
-                storage = 0;
-                for (int compIdx = 0; compIdx < numComponents; ++compIdx)
-                {
-                    int eqIdx = (compIdx == wCompIdx) ? conti0EqIdx : conti1EqIdx;
-                    storage[eqIdx] += volVars.molarDensity(phaseIdx)
-                        * volVars.saturation(phaseIdx)
-                        * volVars.fluidState().moleFraction(phaseIdx, compIdx);
-                }
-
-                storage *= volVars.porosity();
-                storage *= this->fvGeometry_().subContVol[i].volume;
-            }
-        }
-    }
     Implementation *asImp_()
     {
         return static_cast<Implementation *> (this);

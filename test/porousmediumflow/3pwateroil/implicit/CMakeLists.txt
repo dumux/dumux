@@ -1,13 +1,13 @@
 add_input_file_links()
 
-dune_add_test(
-  NAME test_box3pwateroil
-  SOURCES test_box3pwateroil.cc
-  COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-  CMD_ARGS --script fuzzy
-           --files ${CMAKE_SOURCE_DIR}/test/references/3pwateroilbox-reference.vtu
+dune_add_test(NAME test_box3pwateroil
+              SOURCES test_box3pwateroil.cc
+              COMPILE_DEFINITIONS TYPETAG=ThreePWaterOilSagdBoxProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+                CMD_ARGS --script fuzzy
+            --files ${CMAKE_SOURCE_DIR}/test/references/3pwateroilbox-reference.vtu
                    ${CMAKE_CURRENT_BINARY_DIR}/sagd-00011.vtu
-           --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pwateroil"
+            --command "${CMAKE_CURRENT_BINARY_DIR}/test_box3pwateroil"
   )
 
 #install sources
