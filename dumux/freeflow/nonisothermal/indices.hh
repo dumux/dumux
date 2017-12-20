@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief  Defines the indices for the  Navier-Stokes NI model.
+ * \ingroup NavierStokesNIModel
+ * \copydoc Dumux::NavierStokesNonIsothermalIndices
  */
 #ifndef DUMUX_NAVIERSTOKES_NI_INDICES_HH
 #define DUMUX_NAVIERSTOKES_NI_INDICES_HH
@@ -30,8 +31,7 @@ namespace Dumux
 // \{
 /*!
  * \ingroup NavierStokesNIModel
- * \ingroup ImplicitIndices
- * \brief Indices for the  Navier-Stokes NI model model.
+ * \brief Indices for the non-isothermal Navier-Stokes model.
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
