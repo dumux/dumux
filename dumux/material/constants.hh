@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Material
  * \brief A central place for various physical constants occuring in
  *        some equations.
  */
@@ -31,6 +31,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Material
  * \brief A central place for various physical constants occuring in
  *        some equations.
  */

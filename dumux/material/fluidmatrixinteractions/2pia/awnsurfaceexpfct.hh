@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This function is exponential.
  */
@@ -105,5 +105,3 @@ public:
 } // namespace Dumux
 
 #endif
-
-

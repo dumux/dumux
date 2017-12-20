@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Material
  * \brief Relations valid for an ideal gas.
  */
 #ifndef DUMUX_IDEAL_GAS_HH
@@ -30,6 +30,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup Material
  * \brief Relations valid for an ideal gas.
  */
 template <class Scalar>
