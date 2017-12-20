@@ -46,7 +46,7 @@ namespace Dumux
 
 // \{
 ///////////////////////////////////////////////////////////////////////////
-// properties for the single-phase, isothermal Navier-Stokes model
+// properties for the single-phase Navier-Stokes model
 ///////////////////////////////////////////////////////////////////////////
 namespace Properties {
 
@@ -80,7 +80,11 @@ SET_BOOL_PROP(NavierStokes, EnableEnergyBalance, false); //!< The model is isoth
 SET_BOOL_PROP(NavierStokes, EnableInertiaTerms, true); //!< Consider inertia terms by default
 SET_BOOL_PROP(NavierStokes, NormalizePressure, true); //!< Normalize the pressure term in the momentum balance by default
 
-//! The number of equations
+/*!
+* \brief The number of equations.
+*         There are as many momentum balance equations as dimensions
+*         and one mass balance equation.
+*/
 SET_PROP(NavierStokes, NumEq)
 {
 private:
