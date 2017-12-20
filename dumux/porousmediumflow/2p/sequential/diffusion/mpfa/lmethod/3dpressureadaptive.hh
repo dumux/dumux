@@ -16,6 +16,14 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation on h-adaptive grids
+ *
+ * Remark1: only for 3-D hexahedrons of quadrilaterals.
+ * Remark2: number of grid cells in each direction > 1
+ */
 #ifndef DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2PFABOUND3DPRESSURE2P_ADAPTIVE_HH
 
@@ -24,20 +32,14 @@
 #include "3dinteractionvolumecontaineradaptive.hh"
 #include "3dtransmissibilitycalculator.hh"
 
-/**
- * @file
- * @brief  3-d finite Volume-MPFAL implementation of a two-phase pressure equation on h-adaptive grids
- * @brief  Remark1: only for 3-D hexahedrons of quadrilaterals.
- * @brief  Remark2: number of grid cells in each direction > 1
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation
- *! of the sequential IMPES model on h-adaptive grids.
+/*!
+ * \brief 3-d finite volume MPFA L-method discretization of a two-phase flow pressure equation
+ * of the sequential IMPES model on h-adaptive grids.
+ * \ingroup SequentialTwoPModel
  *
- * * Finite Volume-MPFAL-Implementation of the equation
+ * Finite Volume-MPFAL-Implementation of the equation
  *
  * \f$ - \text{div}\, \mathbf{v}_t = - \text{div}\, (\lambda_t \mathbf{K} \text{grad}\,
  * \Phi_w + f_n \lambda_t \mathbf{K} \text{grad}\, \Phi_{cap}   ) = 0, \f$,
@@ -170,7 +172,8 @@ protected:
     void assemble();
     void assembleHangingNodeInteractionVolume(InteractionVolume& interactionVolume);
 public:
-    /*! \brief Initializes the pressure model
+    /*!
+     * \brief Initializes the pressure model
      *
      * \copydetails ParentType::initialize()
      */
@@ -211,8 +214,8 @@ public:
         ParentType::update();
     }
 
-    //! Constructs a FvMpfaL3dPressure2pAdaptive object
-    /**
+    /*!
+     * \brief Constructs a FvMpfaL3dPressure2pAdaptive object
      * \param problem A problem class object
      */
     FvMpfaL3dPressure2pAdaptive(Problem& problem) :

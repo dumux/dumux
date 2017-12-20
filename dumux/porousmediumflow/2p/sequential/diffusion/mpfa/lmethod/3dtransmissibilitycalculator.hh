@@ -15,6 +15,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Provides methods for transmissibility calculation in 3-d
+ */
 #ifndef DUMUX_FVMPFAL3D_TRANSMISSIBILITYCALCULATOR_HH
 #define DUMUX_FVMPFAL3D_TRANSMISSIBILITYCALCULATOR_HH
 
@@ -22,15 +27,11 @@
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 
-/**
- * @file
- * @brief Provides methods for transmissibility calculation in 3-d
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief Provides methods for transmissibility calculation in 3-d.
+/*!
+ * \brief Provides methods for transmissibility calculation in 3-d.
+ * \ingroup SequentialTwoPModel
  *
  *  The transmissibilities are calculated using the MPFA L-method.
  *
@@ -118,8 +119,8 @@ public:
                                  int idx1, int idx2, int idx3, int idx6);
 
 
-    //! Constructs a FvMpfaL3dTransmissibilityCalculator object
-    /**
+    /*!
+     * \brief Constructs a FvMpfaL3dTransmissibilityCalculator object
      * \param problem A problem class object
      */
     FvMpfaL3dTransmissibilityCalculator(Problem& problem) :
@@ -167,7 +168,8 @@ private:
     int transCriterion_;
 };
 
-/*! \brief Compares two transmissibility matrices according to a L-selection criterion
+/*!
+ * \brief Compares two transmissibility matrices according to a L-selection criterion
  *
  * Compares two transmissibility matrices according to the L-selection criterion which is chosen via the parameter/property
  * MPFATransmissibilityCriterion (Criterion of [1], 1: Criterion of [2]) and returns the number of the preferable L-shape (1-4).
@@ -246,7 +248,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::chooseTransmissibility(Transmi
 
 }
 
-/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
+/*!
+ * \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
  *
  *  \param transmissibility Reference to the local transmissibility matrix
  *  \param interactionVolume An interaction volume object
@@ -346,7 +349,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(Transmissibil
     }
 }
 
-/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
+/*!
+ * \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
  *
  *  \param transmissibility Reference to the local transmissibility matrix
  *  \param interactionVolume An interaction volume object
@@ -521,7 +525,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibility(Transmissibil
     }
 }
 
-/*! \brief Calculates a TPFA transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
+/*!
+ * \brief Calculates a TPFA transmissibility matrix for the flux face between the cells with the local index idx1 and idx2
  *
  *  \param transmissibility Reference to the local transmissibility matrix
  *  \param interactionVolume An interaction volume object
@@ -617,7 +622,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityTPFA(
     return 1;
 }
 
-/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 1
+/*!
+ * \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 1
  *
  * For more details on L-shape type 1 see:
  *
@@ -998,7 +1004,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseOne(
     return 1;
 }
 
-/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 2
+/*!
+ * \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 2
  *
  * For more details on L-shape type 2 see:
  *
@@ -1392,7 +1399,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseTwo(
     return 2;
 }
 
-/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 3
+/*!
+ * \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 3
  *
  * For more details on L-shape type 3 see:
  *
@@ -1786,7 +1794,8 @@ int FvMpfaL3dTransmissibilityCalculator<TypeTag>::transmissibilityCaseThree(
     return 3;
 }
 
-/*! \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 4
+/*!
+ * \brief Calculates the transmissibility matrix for the flux face between the cells with the local index idx1 and idx2 using the L-shape type 4
  *
  * For more details on L-shape type 4 see:
  *

@@ -16,12 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
- * \ingroup MPFA
- * \ingroup Properties
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Properties for the adaptive MPFA-L method.
  */
 #ifndef DUMUX_FVMPFAL2DPROPERTIES2P_ADAPTIVE_HH

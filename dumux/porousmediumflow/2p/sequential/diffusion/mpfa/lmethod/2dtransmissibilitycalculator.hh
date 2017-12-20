@@ -15,6 +15,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief Provides methods for transmissibility calculation 2-d
+ */
 #ifndef DUMUX_FVMPFAL2D_TRANSMISSIBILITYCALCULATOR_HH
 #define DUMUX_FVMPFAL2D_TRANSMISSIBILITYCALCULATOR_HH
 
@@ -23,21 +28,16 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume.hh>
 
-/**
- * @file
- * @brief Provides methods for transmissibility calculation 2-d
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p mpfa
-/*! \brief Provides methods for transmissibility calculation in 2-d.
+/*!
+ * \brief Provides methods for transmissibility calculation in 2-d.
+ * \ingroup SequentialTwoPModel
  *
  *  The transmissibilities are calculated using the MPFA L-method.
  *
  *  Aavatsmark et al. A compact multipoint flux calculation method with improved robustness.
  *  Numerical Methods for Partial Differential Equations 24. 2008
- *
  */
 template<class TypeTag>
 class FvMpfaL2dTransmissibilityCalculator
@@ -70,27 +70,27 @@ public:
         rightTriangle = 1 //!< Right L-shape
     };
 
-    // Calculates tranmissibility matrix
+    //! Calculates tranmissibility matrix
     int calculateTransmissibility(
             TransmissibilityType& transmissibility,
             InteractionVolume& interactionVolume,
             std::vector<DimVector >& lambda,
             int idx1, int idx2, int idx3, int idx4);
 
-    // Calculates tranmissibility matrix of left L-shape
+    //! Calculates tranmissibility matrix of left L-shape
     int calculateLeftHNTransmissibility(TransmissibilityType& transmissibility,
     InteractionVolume& interactionVolume,
     std::vector<DimVector >& lambda,
     int idx1, int idx2, int idx3);
 
-    // Calculates tranmissibility matrix of right L-shape
+    //! Calculates tranmissibility matrix of right L-shape
     int calculateRightHNTransmissibility(TransmissibilityType& transmissibility,
     InteractionVolume& interactionVolume,
     std::vector<DimVector >& lambda,
     int idx1, int idx2, int idx3);
 
-    //! Constructs a FvMpfaL2dTransmissibilityCalculator object
-    /**
+    /*!
+     * \brief Constructs a FvMpfaL2dTransmissibilityCalculator object
      * \param problem A problem class object
      */
     FvMpfaL2dTransmissibilityCalculator(Problem& problem) :
@@ -114,7 +114,8 @@ private:
     DimMatrix R_;
 };
 
-/*! \brief Calculates tranmissibility matrix
+/*!
+ * \brief Calculates tranmissibility matrix
  *
  * Calculates tranmissibility matrix of an L-shape for a certain flux face.
  * Automatically selects one of the two possible L-shape (left, or right).
@@ -370,7 +371,8 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateTransmissibility(
     }
 }
 
-/*! \brief Calculates tranmissibility matrix
+/*!
+ * \brief Calculates tranmissibility matrix
  *
  * Calculates tranmissibility matrix of an L-shape for a certain flux face.
  * Calculates only the transmissibility of the left L-shape (needed at hanging nodes HN).
@@ -513,7 +515,8 @@ int FvMpfaL2dTransmissibilityCalculator<TypeTag>::calculateLeftHNTransmissibilit
     return leftTriangle;
 }
 
-/*! \brief Calculates tranmissibility matrix
+/*!
+ * \brief Calculates tranmissibility matrix
  *
  * Calculates tranmissibility matrix of an L-shape for a certain flux face.
  * Calculates only the transmissibility of the right L-shape (needed at hanging nodes HN).

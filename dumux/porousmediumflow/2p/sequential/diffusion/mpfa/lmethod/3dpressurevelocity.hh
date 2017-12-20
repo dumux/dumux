@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  3d Velocity Field from a finite volume solution of a pressure equation using a MPFA L-method.
+ */
 #ifndef DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 
@@ -23,15 +28,11 @@
 #include "3dpressure.hh"
 #include "3dvelocity.hh"
 
-/**
- * @file
- * @brief  3d Velocity Field from a finite volume solution of a pressure equation using a MPFA L-method.
- */
-
 namespace Dumux
 {
-//! \ingroup FVPressure2p
-/*! \brief Class for the calculation of 3d velocities from the  pressure solution of an IMPES scheme using a MPFA L-method.
+/*!
+ * \brief Class for the calculation of 3d velocities from the  pressure solution of an IMPES scheme using a MPFA L-method.
+ * \ingroup SequentialTwoPModel
  *
  * Can be used for calculating the complete velocity field before the solution of the transport equation (more efficient),
  * or for face-wise velocity calculation directly in the transport solution (less efficient).
@@ -89,8 +90,8 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2p: public FvMpfaL3dPress
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 
 public:
-    //! Constructs a FvMpfaL3dPressureVelocity2p object
     /*!
+     * \brief Constructs a FvMpfaL3dPressureVelocity2p object
      * \param problem A problem class object
      */
     FvMpfaL3dPressureVelocity2p(Problem& problem) :
@@ -123,7 +124,8 @@ public:
         calculateVelocity();
     }
 
-    /*! \brief Initializes pressure and velocity
+    /*!
+     * \brief Initializes pressure and velocity
      *
      * \copydetails FVPressure::initialize()
      */
@@ -150,7 +152,8 @@ public:
         return;
     }
 
-    /*! \brief Pressure and velocity update
+    /*!
+     * \brief Pressure and velocity update
      *
      * \copydetails FVPressure::update()
      */
@@ -162,7 +165,8 @@ public:
         calculateVelocity();
     }
 
-    /*! \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
+    /*!
+     * \brief Indicates if velocity is reconstructed in the pressure step or in the transport step
      *
      * Returns true (In the standard finite volume discretization the velocity is calculated during the saturation transport.)
      */
@@ -171,7 +175,8 @@ public:
         return calcVelocityInTransport_;
     }
 
-    /*! \brief Adds velocity output to the output file
+    /*!
+     * \brief Adds velocity output to the output file
      *
      * Adds the phase velocities or a total velocity (depending on the formulation) to the output.
      * If the VtkOutputLevel is equal to zero (default) only primary variables are written,
@@ -179,7 +184,6 @@ public:
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)
@@ -203,10 +207,10 @@ private:
 };
 // end of template
 
-/*! \brief Calculates the velocities at a cell-cell interfaces for the entire simulation grid.
+/*!
+ * \brief Calculates the velocities at a cell-cell interfaces for the entire simulation grid.
  *
  * Calculates the velocities at a cell-cell interfaces from a given pressure field for the entire simulation grid.
- *
  */
 template<class TypeTag>
 void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity()
@@ -280,7 +284,8 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity()
     return;
 }
 
-/*! \brief Calculates the velocity at a cell-cell interface.
+/*!
+ * \brief Calculates the velocity at a cell-cell interface.
  *
  * Calculates the velocity at a cell-cell interface from a given pressure field.
  *
@@ -368,7 +373,8 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
     cellDataJ.fluxData().setVelocityMarker(indexInOutside);
 }
 
-/*! \brief Calculates the velocity at a boundary.
+/*!
+ * \brief Calculates the velocity at a boundary.
  *
  * Calculates the velocity at a boundary from a given pressure field.
  *

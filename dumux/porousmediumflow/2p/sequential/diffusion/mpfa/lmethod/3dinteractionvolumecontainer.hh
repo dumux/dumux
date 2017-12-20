@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Interactionvolume container for 3-d MPFA L-method
+ */
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 
@@ -23,11 +28,6 @@
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume3d.hh>
-
-/**
- * @file
- * @brief  Interactionvolume container for 3-d MPFA L-method
- */
 
 namespace Dumux
 {
@@ -37,15 +37,15 @@ bool sort_compare(const std::vector<int>& entryI, const std::vector<int>& entryJ
     return (entryI[1] < entryJ[1]);
 }
 
-//! \ingroup FVPressure2p mpfa
-/*! \brief Interactionvolume container for 3-d MPFA L-method
+/*!
+ * \brief Interactionvolume container for 3-d MPFA L-method
+ * \ingroup SequentialTwoPModel
  *
  * Container class which stores MPFA-interaction-volume information for each vertex of a DUNE grid.
  * Each <tt>InteractionVolume</tt> object stores the information which is necessary to calculate MPFA transmissibility matrices:
  *
  * - relationship and orientation of the elements around a vertex (see doc/docextra/3dmpfa)
  * - geometric information, such as element/face/edge positions, normals, ...
- *
  */
 template<class TypeTag>
 class FvMpfaL3dInteractionVolumeContainer
@@ -111,7 +111,8 @@ private:
     void storeInteractionVolumeInfo();
 public:
 
-    /*! \brief Updates the interaction volume container
+    /*!
+     * \brief Updates the interaction volume container
      *
      * Rebuilds and stores the interaction volumes for the entire grid
      */
@@ -128,7 +129,8 @@ public:
     }
 
 
-    /*! \brief Initializes the interaction volume container
+    /*!
+     * \brief Initializes the interaction volume container
      *
      * Builds and stores the interaction volumes for the entire grid
      */
@@ -139,18 +141,18 @@ public:
         return;
     }
 
-    //! Returns an interaction volume
     /*!
-     *  \param vertexIdx Global index of a vertex in the DUNE grid
+     * \brief Returns an interaction volume
+     * \param vertexIdx Global index of a vertex in the DUNE grid
      */
     InteractionVolume& interactionVolume(int vertexIdx)
     {
         return interactionVolumes_[vertexIdx];
     }
 
-    //! Returns an interaction volume
     /*!
-     *  \param vertexIdx Global index of a vertex in the DUNE grid
+     * \brief Returns an interaction volume
+     * \param vertexIdx Global index of a vertex in the DUNE grid
      */
     InteractionVolume& interactionVolume(int vertexIdx) const
     {
@@ -169,14 +171,15 @@ public:
         return interactionVolumes_;
     }
 
-    //! Returns the area weighting factor for the fluxes
     /*!
-     *  \param interactionVolume An interaction volume object
-     *  \param elemGlobalIdx Global index of an element in the DUNE grid
-     *  \param elemLocalIdx Local index of an element in the interaction volume
-     *  \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     * \brief Returns the area weighting factor for the fluxes
      *
-     *  \return Ratio of the element face area and the flux face area through which fluxes are calculated by the MPFA method
+     * \param interactionVolume An interaction volume object
+     * \param elemGlobalIdx Global index of an element in the DUNE grid
+     * \param elemLocalIdx Local index of an element in the interaction volume
+     * \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     *
+     * \return Ratio of the element face area and the flux face area through which fluxes are calculated by the MPFA method
      *  (1 if an element does not touches the domain boundary!)
      */
     Scalar faceAreaFactor(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
@@ -187,12 +190,13 @@ public:
         return factor;
     }
 
-    //! Returns the area weighting factor for the fluxes
     /*!
-     *  \param elemGlobalIdx Global index of an element in the DUNE grid
-     *  \param indexInInside Local index of the face in the DUNE reference element
+     * \brief Returns the area weighting factor for the fluxes
      *
-     *  \return Ratio of the element face area and the flux face area through which fluxes are calculated by the MPFA method
+     * \param elemGlobalIdx Global index of an element in the DUNE grid
+     * \param indexInInside Local index of the face in the DUNE reference element
+     *
+     * \return Ratio of the element face area and the flux face area through which fluxes are calculated by the MPFA method
      *  (1 if an element does not touches the domain boundary!)
      */
     Scalar faceAreaFactor(int elemGlobalIdx, int indexInInside)
@@ -203,14 +207,15 @@ public:
         return factor;
     }
 
-    //! Returns the area trough which fluxes are calculated by the MPFA
     /*!
-     *  \param interactionVolume An interaction volume object
-     *  \param elemGlobalIdx Global index of an element in the DUNE grid
-     *  \param elemLocalIdx Local index of an element in the interaction volume
-     *  \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     * \brief Returns the area trough which fluxes are calculated by the MPFA
      *
-     *  \return flux face area (equal to the element face area if an element does not touches the domain boundary!)
+     * \param interactionVolume An interaction volume object
+     * \param elemGlobalIdx Global index of an element in the DUNE grid
+     * \param elemLocalIdx Local index of an element in the interaction volume
+     * \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     *
+     * \return flux face area (equal to the element face area if an element does not touches the domain boundary!)
      */
     Scalar getRealFluxFaceArea(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
     {
@@ -219,12 +224,13 @@ public:
         return factor;
     }
 
-    //! Returns the area trough which fluxes are calculated by the MPFA
     /*!
-     *  \param elemGlobalIdx Global index of an element in the DUNE grid
-     *  \param indexInInside Local index of the face in the DUNE reference element
+     * \brief  Returns the area trough which fluxes are calculated by the MPFA
      *
-     *  \return flux face area (equal to the element face area if an element does not touches the domain boundary!)
+     * \param elemGlobalIdx Global index of an element in the DUNE grid
+     * \param indexInInside Local index of the face in the DUNE reference element
+     *
+     * \return flux face area (equal to the element face area if an element does not touches the domain boundary!)
      */
     Scalar getRealFluxFaceArea(int elemGlobalIdx, int indexInInside)
     {
@@ -233,14 +239,15 @@ public:
         return factor;
     }
 
-    //! Returns the face area of the element
     /*!
-     *  \param interactionVolume An interaction volume object
-     *  \param elemGlobalIdx Global index of an element in the DUNE grid
-     *  \param elemLocalIdx Local index of an element in the interaction volume
-     *  \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     * \brief Returns the face area of the element
      *
-     *  \return the face area of the element
+     * \param interactionVolume An interaction volume object
+     * \param elemGlobalIdx Global index of an element in the DUNE grid
+     * \param elemLocalIdx Local index of an element in the interaction volume
+     * \param localFaceIdx  Local index of a flux face with respect to an element of the interaction volume
+     *
+     * \return the face area of the element
      */
     Scalar getRealFaceArea(InteractionVolume& interactionVolume, int elemGlobalIdx, int elemLocalIdx, int localFaceIdx)
     {
@@ -249,12 +256,13 @@ public:
         return factor;
     }
 
-    //! Returns the face area of the element
     /*!
-     *  \param elemGlobalIdx Global index of an element in the DUNE grid
-     *  \param indexInInside Local index of the face in the DUNE reference element
+     * \brief Returns the face area of the element
      *
-     *  \return the face area of the element
+     * \param elemGlobalIdx Global index of an element in the DUNE grid
+     * \param indexInInside Local index of the face in the DUNE reference element
+     *
+     * \return the face area of the element
      */
     Scalar getRealFaceArea(int elemGlobalIdx, int indexInInside)
     {
@@ -263,8 +271,8 @@ public:
         return factor;
     }
 
-    //! Constructs a FvMpfaL3dInteractionVolumeContainer object
-    /**
+    /*!
+     * \brief Constructs a FvMpfaL3dInteractionVolumeContainer object
      * \param problem A problem class object
      */
     FvMpfaL3dInteractionVolumeContainer(Problem& problem) :
@@ -300,7 +308,8 @@ private:
     { return *static_cast<const Implementation *>(this); }
 };
 
-/*! \brief Function for storing the elements of an interaction volume and
+/*!
+ * \brief Function for storing the elements of an interaction volume and
  * constructing a map from a vertex to its surrounding elements
  *
  * Stores an element in all interaction volumes it belongs to. Additionally,
@@ -349,7 +358,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeSubVolumeElements(const 
 
 }
 
-/*! \brief Stores information with respect to DUNE intersections in the interaction volumes
+/*!
+ * \brief Stores information with respect to DUNE intersections in the interaction volumes
  *
  * Stores information with respect to DUNE intersections, such as normals,
  * in the interaction volumes. Assumes a local storage following the DUNE
@@ -1314,7 +1324,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
     }
 }
 
-/*! \brief Stores additional information which can be constructed for interaction volumes of non-boundary vertices.
+/*!
+ * \brief Stores additional information which can be constructed for interaction volumes of non-boundary vertices.
  *
  * Stores additional information which can be constructed for interaction volumes of non-boundary vertices:
  *
@@ -1447,7 +1458,8 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
     interactionVolume.setFaceArea(faceArea, 11);
 }
 
-/*! \brief Stores additional information for interaction volumes of boundary vertices.
+/*!
+ * \brief Stores additional information for interaction volumes of boundary vertices.
  *
  * Stores additional information for interaction volumes of boundary vertices:
  *
@@ -1985,7 +1997,9 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeBoundaryInteractionVolum
 }
 
 
-//! \brief Stores interaction volumes for each grid vertex
+/*!
+ * \brief Stores interaction volumes for each grid vertex
+ */
 template<class TypeTag>
 void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInteractionVolumeInfo()
 {
