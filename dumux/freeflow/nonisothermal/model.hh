@@ -16,13 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- *
- * \brief Base class for all models which use the one-phase,
- *        fully implicit model.
- *        Adaption of the fully implicit scheme to the one-phase flow model.
- */
+ /*!
+  * \file
+  * \ingroup NavierStokesNIModel
+  *
+  * \brief A single-phase, non-isothermal Navier-Stokes model
+  * TODO: doc me!
+  */
 
 #ifndef DUMUX_STAGGERED_NI_MODEL_HH
 #define DUMUX_STAGGERED_NI_MODEL_HH
@@ -38,14 +38,14 @@ namespace Dumux
 
 namespace Properties {
 
-//! The type tags for the non-isothermal Navier Stokes problems
+//! The type tags for the non-isothermal Navier Stokes model
 NEW_TYPE_TAG(NavierStokesNonIsothermal);
 
 ///////////////////////////////////////////////////////////////////////////
 // default property values for the non-isothermal single phase model
 ///////////////////////////////////////////////////////////////////////////
 
-
+//! The non-isothermal model has one more balance equation (energy balance) compared to the non-isothermal ones
 SET_PROP(NavierStokesNonIsothermal, NumEq)
 {
 private:
@@ -54,12 +54,16 @@ public:
     static constexpr int value = isothermalNumEq + 1;
 };
 
+//! Enable the energy balance
+SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+
+//! The non-isothermal indices
 SET_TYPE_PROP(NavierStokesNonIsothermal, Indices, NavierStokesNonIsothermalIndices<TypeTag>);
 
-
-SET_BOOL_PROP(NavierStokesNonIsothermal, EnableEnergyBalance, true);
+//! The non-isothermal vtk output fields
 SET_TYPE_PROP(NavierStokesNonIsothermal, VtkOutputFields, NavierStokesNonIsothermalVtkOutputFields<TypeTag>);
 
+//! Use Fourier's Law as default heat conduction type
 SET_TYPE_PROP(NavierStokesNonIsothermal, HeatConductionType, FouriersLaw<TypeTag>);
 
 } // end namespace Properties
