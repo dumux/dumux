@@ -32,8 +32,9 @@
 
 namespace Dumux
 {
-//! \ingroup SequentialTwoPModel
-/*!  \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
+/*!
+ * \brief Finite Volume discretization of a two-phase flow pressure equation of the sequential IMPES model.
+ * \ingroup SequentialTwoPModel
  *
  * This model implements two-phase flow of two immiscible fluids \f$\alpha \in \{ w, n \}\f$ using
  * a standard multiphase Darcy approach as the equation for the conservation of momentum, i.e.
@@ -189,7 +190,8 @@ public:
     //! updates and stores constitutive relations
     void updateMaterialLaws();
 
-    /*! \brief Initializes the pressure model
+    /*!
+     * \brief Initializes the pressure model
      *
      * \copydetails ParentType::initialize()
      *
@@ -252,7 +254,8 @@ public:
         storePressureSolution();
     }
 
-    /*! \brief Pressure update
+    /*!
+     * \brief Pressure update
      *
      * \copydetails FVPressure::update()
      */
@@ -295,7 +298,8 @@ public:
         storePressureSolution();
     }
 
-    /*! \brief Velocity update
+    /*!
+     * \brief Velocity update
      *
      * Reset the velocities in the cellData
      */
@@ -322,7 +326,8 @@ public:
         }
     }
 
-    /*! \brief Stores the pressure solution of a cell
+    /*!
+     * \brief Stores the pressure solution of a cell
      *
      * Calculates secondary pressure variables and stores pressures.
      *
@@ -396,14 +401,14 @@ public:
         cellData.fluxData().resetVelocity();
     }
 
-    /*! \brief Adds pressure output to the output file
+    /*!
+     * \brief Adds pressure output to the output file
      *
      * Adds the phase pressures or a global pressure (depending on the formulation) as well as the capillary pressure to the output.
      * In the compressible case additionally density and viscosity are added.
      *
      * \tparam MultiWriter Class defining the output writer
      * \param writer The output writer (usually a <tt>VTKMultiWriter</tt> object)
-     *
      */
     template<class MultiWriter>
     void addOutputVtkFields(MultiWriter &writer)

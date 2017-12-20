@@ -16,15 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
-#ifndef DUMUX_MIMETIC2P_HH
-#define DUMUX_MIMETIC2P_HH
-
 /*!
  * \file
- *
+ * \ingroup SequentialTwoPModel
  * \brief Local stiffness matrix for the diffusion equation discretized by mimetic FD
  */
+#ifndef DUMUX_MIMETIC2P_HH
+#define DUMUX_MIMETIC2P_HH
 
 #include<map>
 #include<iostream>
@@ -48,15 +46,7 @@
 namespace Dumux
 {
 /*!
- *  \ingroup Mimetic2p
- */
-/**
- * @brief compute local stiffness matrix for conforming finite elements for the full 2-phase pressure equation
- *
- */
-
-//! A class for computing local stiffness matrices
-/*! A class for computing local stiffness matrix for the full 2-phase pressure equation
+ * \brief compute local stiffness matrix for conforming finite elements for the full 2-phase pressure equation
  */
 template<class TypeTag>
 class MimeticTwoPLocalStiffness: public LocalStiffness<TypeTag, 1>
@@ -170,15 +160,18 @@ public:
         timeStep_ = dt;
     }
 
-    //! assemble local stiffness matrix for given element and order
-    /*! On exit the following things have been done:
-     - The stiffness matrix for the given entity and polynomial degree has been assembled and is
-     accessible with the mat() method.
-     - The boundary conditions have been evaluated and are accessible with the bc() method
-     - The right hand side has been assembled. It contains either the value of the essential boundary
-     condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
-     @param[in]  element a codim 0 entity reference
-     @param[in]  k order of CR basis (only k = 1 is implemented)
+    /*!
+     * \brief assemble local stiffness matrix for given element and order
+     *
+     * On exit the following things have been done:
+     * - The stiffness matrix for the given entity and polynomial degree has been assembled and is
+     * accessible with the mat() method.
+     * - The boundary conditions have been evaluated and are accessible with the bc() method
+     * - The right hand side has been assembled. It contains either the value of the essential boundary
+     * condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
+     *
+     * \param  element a codim 0 entity reference
+     * \param  k order of CR basis (only k = 1 is implemented)
      */
     void assemble(const Element& element, int k = 1)
     {
@@ -208,13 +201,16 @@ public:
         assemble(cell, orderOfShapeFns);
     }
 
-    //! assemble only boundary conditions for given element
-    /*! On exit the following things have been done:
-     - The boundary conditions have been evaluated and are accessible with the bc() method
-     - The right hand side contains either the value of the essential boundary
-     condition or the assembled neumann boundary condition. It is accessible via the rhs() method.
-     @param[in]  element a codim 0 entity reference
-     @param[in]  k order of CR basis
+    /*!
+     * \brief assemble only boundary conditions for given element
+     *
+     * On exit the following things have been done:
+     * - The boundary conditions have been evaluated and are accessible with the bc() method
+     * - The right hand side contains either the value of the essential boundary
+     * condition or the assembled neumann boundary condition. It is accessible via the rhs() method.
+     *
+     * \param element a codim 0 entity reference
+     * \param k order of CR basis
      */
     void assembleBoundaryCondition(const Element& element, int k = 1)
     {
@@ -231,6 +227,7 @@ public:
         assembleBC(element, k);
     }
 
+    // TODO doc me!
     template<class Vector>
     void completeRHS(const Element& element, Dune::FieldVector<int, 2*dim>& local2Global, Vector& f)
     {
@@ -248,6 +245,7 @@ public:
         }
     }
 
+    // TODO doc me!
     Scalar constructPressure(const Element& element, Dune::FieldVector<Scalar,2*dim>& pressTrace)
     {
         int eIdxGlobal = problem_.variables().index(element);
@@ -265,6 +263,7 @@ public:
         return (dInv*(qmean + (F*pressTrace)));
     }
 
+    // TODO doc me!
     void constructVelocity(const Element& element, Dune::FieldVector<Scalar,2*dim>& vel,
                            Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
     {
@@ -282,6 +281,7 @@ public:
                 vel[i] += W_[eIdxGlobal][i][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
+    // TODO doc me!
     void constructVelocity(const Element& element, int fIdx, Scalar& vel,
                            Dune::FieldVector<Scalar,2*dim>& pressTrace, Scalar press)
     {
@@ -298,6 +298,7 @@ public:
                 vel += W_[eIdxGlobal][fIdx][j]*faceVol[j]*(press - pressTrace[j]);
     }
 
+    // TODO doc me!
     void computeReconstructionMatrices(const Element& element,
                                        const Dune::FieldMatrix<Scalar, 2 * dim, 2 * dim>& W,
                                        Dune::FieldVector<Scalar, 2 * dim>& F, Scalar& dInv)
@@ -349,6 +350,7 @@ private:
 
     void assembleBC(const Element& element, int k = 1);
 
+    // TODO doc me!
     Scalar evaluateErrorTerm(CellData& cellData)
     {
         //error term for incompressible models to correct unphysical saturation over/undershoots due to saturation transport
@@ -397,6 +399,7 @@ private:
     Scalar viscosity_[numPhases];
 };
 
+// TODO doc me!
 template<class TypeTag>
 void MimeticTwoPLocalStiffness<TypeTag>::assembleV(const Element& element, int)
 {
@@ -444,6 +447,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleV(const Element& element, int)
     //             << ", b = " << this->b[0] << ", " << this->b[1] << ", " << this->b[2] << ", " << this->b[3] << std::endl;
 }
 
+// TODO doc me!
 template<class TypeTag>
 void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& element,
         Dune::FieldVector<Scalar, 2 * dim>& faceVol,
@@ -709,6 +713,7 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleElementMatrices(const Element& 
         qmean += evaluateErrorTerm(cellData) * volume;
 }
 
+// TODO doc me!
 template<class TypeTag>
 void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int k)
 {
@@ -744,6 +749,5 @@ void MimeticTwoPLocalStiffness<TypeTag>::assembleBC(const Element& element, int 
 
 }
 
-/** @} */
 }
 #endif

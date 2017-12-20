@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  defines a class for Crozieux-Raviart piecewise linear finite element functions
+ */
 
 #ifndef DUMUX_CROPERATOR2PADAPTIVE_HH
 #define DUMUX_CROPERATOR2PADAPTIVE_HH
@@ -43,34 +48,16 @@
 #include "localstiffness.hh"
 #include <dumux/common/intersectionmapper.hh>
 
-/**
- * @file
- * @brief  defines a class for piecewise linear finite element functions
- */
-
 namespace Dumux
 {
-
 /*!
- * \ingroup Mimetic2p
- */
-/**
- * @brief defines a class for Crozieux-Raviart piecewise linear finite element functions
+ * \brief Extends CROperatorBase by a generic methods to assemble global stiffness matrix from local stiffness matrices
+ * \ingroup SequentialTwoPModel
+ * \tparam TypeTag The problem Type Tag
  *
- */
-
-/*! @brief A class for mapping a CR function to a CR function
-
-  This class sets up a compressed row storage matrix with connectivity for CR elements.
-
-  This class does not fill any entries into the matrix.
-
-  The template parameter TypeTag describes what kind of Assembler we are. There two choices:
-  <dt>LevelTag</dt> We assemble on a grid level.
-  <dt>LeafTag</dt> We assemble on the leaf entities of the grid
-*/
-/*! @brief Extends CROperatorBase by a generic methods to assemble global stiffness matrix from local stiffness matrices
- *
+ * A class for mapping a CR function to a CR function
+ * This class sets up a compressed row storage matrix with connectivity for CR elements.
+ * This class does not fill any entries into the matrix.
  *
  * The template parameter TypeTag describes what kind of Assembler we are. There two choices:
  * <dt>LevelTag</dt> We assemble on a grid level.
@@ -149,26 +136,23 @@ public:
         return intersectionMapper_;
     }
 
-    /*! @brief Assemble global stiffness matrix
-
-      This method takes an object that can compute local stiffness matrices and
-      assembles the global linear system Au=f.
-
-      @param[in] loc the local assembler providing element stiffness and boundary conditions for all elements
-      @param[in,out] u solution, contains initial values on input, Dirichlet values are set. The
-      type of boundary condition for a node is inferred from the values returned
-      by the local assembler. A node is of Neumann type if all elements referring
-      to that node report a Neumann boundary condition, it is set to Dirichlet
-      if a least one element reports a process or Dirichlet boundary condition. The difference
-      between process and Dirichlet is that process always denotes a homogeneous Dirichlet
-      value.
-      @param[in] f right hand side is filled by this method
-
-      Note that the rows corresponding to nodes at the Dirichlet boundary are filled
-      with trivial equations of the form \f[1\cdot u_i = f_i \f] where \f$u_i\f$ and \f$f_i\f$ are both set to the
-      Dirichlet value at the \f$i\f$th node.
-
-    */
+    /*!
+     * \brief Assemble global stiffness matrix
+     *
+     * This method takes an object that can compute local stiffness matrices and
+     * assembles the global linear system Au=f.
+     *
+     * \param loc the local assembler providing element stiffness and boundary conditions for all elements
+     * \param[in,out] u solution, contains initial values on input, Dirichlet values are set. The type of boundary
+     * condition for a node is inferred from the values returned by the local assembler. A node is of Neumann
+     * type if all elements referring to that node report a Neumann boundary condition, it is set to Dirichlet
+     * if a least one element reports a process or Dirichlet boundary condition. The difference between process
+     * and Dirichlet is that process always denotes a homogeneous Dirichlet value.
+     * \param f right hand side is filled by this method
+     *
+     * Note that the rows corresponding to nodes at the Dirichlet boundary are filled with trivial equations
+     * of the form \f[1\cdot u_i = f_i \f] where \f$u_i\f$ and \f$f_i\f$ are both set to the Dirichlet value at the \f$i\f$th node.
+     */
     template <class LocalStiffness, class Vector>
     void assemble (LocalStiffness& loc, Vector& u, Vector& f);
 
