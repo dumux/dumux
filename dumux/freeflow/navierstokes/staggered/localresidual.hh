@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Element-wise calculation of the residual NavierStokes models using the staggered discretization
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::NavierStokesResidualImpl
  */
 #ifndef DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_NAVIERSTOKES_LOCAL_RESIDUAL_HH
@@ -36,21 +37,16 @@ namespace Properties
 // forward declaration
 NEW_PROP_TAG(EnableInertiaTerms);
 NEW_PROP_TAG(NormalizePressure);
-NEW_PROP_TAG(ElementFaceVariables);
 }
-
-/*!
- * \ingroup NavierStokes
- * \brief Element-wise calculation of the residual NavierStokes models using the staggered discretization
- *
- * \todo Please doc me more!
- */
 
  // forward declaration
  template<class TypeTag, DiscretizationMethods Method>
  class NavierStokesResidualImpl;
 
-
+ /*!
+  * \ingroup NavierStokes
+  * \brief Element-wise calculation of the Navier- Stokes residual for models using the staggered discretization
+  */
 template<class TypeTag>
 class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
 : public StaggeredLocalResidual<TypeTag>
@@ -106,9 +102,10 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
 
 public:
 
+    //! Use the parent type's constructor
     using ParentType::ParentType;
 
-
+    //! Evaluate fluxes entering or leaving the cell center control volume.
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
                                                         const Element &element,
                                                         const FVElementGeometry& fvGeometry,
@@ -146,6 +143,7 @@ public:
         return flux;
     }
 
+    //! Evaluate the source term for the cell center control volume.
     CellCenterPrimaryVariables computeSourceForCellCenter(const Problem& problem,
                                                           const Element &element,
                                                           const FVElementGeometry& fvGeometry,
@@ -166,16 +164,7 @@ public:
     }
 
 
-     /*!
-     * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub-control
-     *        volume of a finite volume element for the immiscible models.
-     * \param scv The sub control volume
-     * \param volVars The current or previous volVars
-     * \note This function should not include the source and sink terms.
-     * \note The volVars can be different to allow computing
-     *       the implicit euler time derivative here
-     */
+    //! Evaluate the storage term for the cell center control volume.
     CellCenterPrimaryVariables computeStorageForCellCenter(const Problem& problem,
                                                            const SubControlVolume& scv,
                                                            const VolumeVariables& volVars) const
@@ -193,16 +182,7 @@ public:
         return storage;
     }
 
-     /*!
-     * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub-control
-     *        volume of a finite volume element for the immiscible models.
-     * \param scvf The sub control volume
-     * \param volVars The current or previous volVars
-     * \note This function should not include the source and sink terms.
-     * \note The volVars can be different to allow computing
-     *       the implicit euler time derivative here
-     */
+    //! Evaluate the storage term for the face control volume.
     FacePrimaryVariables computeStorageForFace(const Problem& problem,
                                                const SubControlVolumeFace& scvf,
                                                const VolumeVariables& volVars,
@@ -214,6 +194,7 @@ public:
         return storage;
     }
 
+    //! Evaluate the source term for the face control volume.
     FacePrimaryVariables computeSourceForFace(const Problem& problem,
                                               const SubControlVolumeFace& scvf,
                                               const ElementVolumeVariables& elemVolVars,
@@ -229,13 +210,7 @@ public:
         return source;
     }
 
-     /*!
-     * \brief Returns the complete momentum flux for a face
-     * \param scvf The sub control volume face
-     * \param fvGeometry The finite-volume geometry
-     * \param elemVolVars All volume variables for the element
-     * \param elementFaceVars The face variables
-     */
+    //! Evaluate the momentum flux for the face control volume.
     FacePrimaryVariables computeFluxForFace(const Problem& problem,
                                             const Element& element,
                                             const SubControlVolumeFace& scvf,
@@ -314,10 +289,6 @@ protected:
     /*!
      * \brief Sets a fixed Dirichlet value for a cell (such as pressure) at the boundary.
      *        This is a provisional alternative to setting the Dirichlet value on the boundary directly.
-     *
-     * \param insideScv The sub control volume
-     * \param elemVolVars The current or previous element volVars
-     * \param bcTypes The boundary types
      */
     void setFixedCell_(CellCenterResidual& residual,
                        const Problem& problem,
@@ -378,8 +349,6 @@ protected:
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
             }
         }
-//        std::cout << "** staggered/localresidual: massBalanceIdx = " << massBalanceIdx
-//        		<< ", momBalanceIdx = " << momentumBalanceIdx << std::endl;
     }
 
 

@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Calculates the residual of models based on the box scheme element-wise.
+ * \ingroup NavierStokesModel
+ * \copydoc Dumux::NavierStokesResidual
  */
 #ifndef DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH
 #define DUMUX_NAVIERSTOKES_LOCAL_RESIDUAL_HH
@@ -30,16 +31,17 @@
 namespace Dumux
 {
 
-
-/*!
- *
- * \todo Please doc me more!
- */
-
 // forward declaration
 template<class TypeTag, DiscretizationMethods Method>
 class NavierStokesResidualImpl;
 
+/*!
+ * \ingroup NavierStokesModel
+ * \brief The local residual class for the Navier-Stokes model (balance equations).
+          This is a convenience alias for that actual,
+          discretization-specific local residual.
+ * \note  Not all specializations are currently implemented
+ */
 template<class TypeTag>
 using NavierStokesResidual = NavierStokesResidualImpl<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
 
