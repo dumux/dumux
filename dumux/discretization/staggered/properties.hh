@@ -23,8 +23,8 @@
  * \brief Defines a type tag and some properties for models using the staggered scheme.
  */
 
-#ifndef DUMUX_STAGGERDs_PROPERTIES_HH
-#define DUMUX_STAGGERDs_PROPERTIES_HH
+#ifndef DUMUX_STAGGERD_PROPERTIES_HH
+#define DUMUX_STAGGERD_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
 
@@ -51,7 +51,6 @@
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
-
 namespace Dumux
 {
 
@@ -66,6 +65,7 @@ NEW_PROP_TAG(FaceSolutionVector);
 NEW_PROP_TAG(StaggeredFaceSolution);
 NEW_PROP_TAG(ElementFaceVariables);
 NEW_PROP_TAG(EnableGlobalFaceVariablesCache);
+NEW_PROP_TAG(StaggeredFluxStencils);
 
 //! Type tag for the staggered scheme.
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));

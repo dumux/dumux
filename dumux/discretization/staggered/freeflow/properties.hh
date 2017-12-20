@@ -31,6 +31,7 @@
 #include <dumux/freeflow/properties.hh>
 
 #include "subcontrolvolumeface.hh"
+#include "fluxstencil.hh"
 #include "facevariables.hh"
 #include "boundarytypes.hh"
 #include "velocityoutput.hh"
@@ -109,6 +110,8 @@ public:
 };
 
 SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
+
+SET_TYPE_PROP(StaggeredFreeFlowModel, StaggeredFluxStencils, StaggeredNavierStokesFluxStencils<TypeTag>);
 
 } // namespace Properties
 } // namespace Dumux
