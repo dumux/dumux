@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup NavierStokesNCModel
  *
- * \brief Quantities required by the one-phase fully implicit model defined on a vertex.
+ * \copydoc Dumux::NavierStokesNCVolumeVariables
  */
 #ifndef DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
 #define DUMUX_NAVIER_STOKES_NC_VOLUMEVARIABLES_HH
@@ -34,10 +35,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup NavierStokesModel
- * \ingroup ImplicitVolumeVariables
- * \brief Contains the quantities which are constant within a
- *        finite volume in the one-phase model.
+ * \ingroup NavierStokesNCModel
+ * \brief Volume variables for the single-phase, multi-component Navier-Stokes model.
  */
 template <class TypeTag>
 class NavierStokesNCVolumeVariables : public NavierStokesVolumeVariables<TypeTag>
@@ -70,7 +69,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -101,7 +106,7 @@ public:
     };
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Update the fluid state
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
@@ -219,6 +224,6 @@ protected:
     std::array<std::array<Scalar, numComponents-1>, numPhases> diffCoefficient_;
 };
 
-}
+} // end namespace Dumux
 
 #endif
