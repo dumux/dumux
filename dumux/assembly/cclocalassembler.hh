@@ -482,6 +482,13 @@ private:
             }
         }
 
+        // Restore original state of the flux vars cache in case of global caching.
+        // This has to be done in order to guarantee that everything is in an undeflected
+        // state before the assembly of another element is called. In the case of local caching
+        // this is obsolete because the elemFluxVarsCache used here goes out of scope after this.
+        if (enableGridFluxVarsCache)
+            gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
+
         //////////////////////////////////////////////////////////////////////////////////////////////
         //                                                                                          //
         // Calculate derivatives of the dofs in the element with respect to user-defined additional //
