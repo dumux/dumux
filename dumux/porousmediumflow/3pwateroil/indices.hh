@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup ThreePWaterOilModel
  * \brief Defines the indices required for the 3p2cni model.
  */
 #ifndef DUMUX_3P2CNI_INDICES_HH
@@ -29,7 +30,6 @@ namespace Dumux
 
 /*!
  * \ingroup ThreePWaterOilModel
- * \ingroup ImplicitIndices
  * \brief The indices for the isothermal 3p2cni model.
  *
  * \tparam formulation The formulation, only pgSwSn

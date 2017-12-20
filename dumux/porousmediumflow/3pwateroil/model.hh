@@ -18,38 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePWaterOilModel
  * \brief Adaption of the fully implicit scheme to the three-phase three-component flow model.
  *
  * The model is designed for simulating three fluid phases with water, gas, and
  * a liquid contaminant (NAPL - non-aqueous phase liquid)
- */
-#ifndef DUMUX_3PWATEROIL_MODEL_HH
-#define DUMUX_3PWATEROIL_MODEL_HH
-
-#include <dumux/common/properties.hh>
-
-#include <dumux/material/spatialparams/fv.hh>
-#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
-#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
-
-#include <dumux/porousmediumflow/properties.hh>
-#include <dumux/porousmediumflow/nonisothermal/model.hh>
-#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
-
-#include "indices.hh"
-#include "model.hh"
-#include "volumevariables.hh"
-#include "localresidual.hh"
-#include "primaryvariableswitch.hh"
-#include "vtkoutputfields.hh"
-
-namespace Dumux
-{
-/*!
- * \ingroup ThreePWaterOilModel
- * \brief Adaption of the fully implicit scheme to the three-phase two-component flow model.
- *
  * This model implements three-phase two-component flow of three fluid phases
  * \f$\alpha \in \{ water, gas, NAPL \}\f$ each composed of up to two components
  * \f$\kappa \in \{ water, contaminant \}\f$. The standard multiphase Darcy
@@ -93,6 +66,34 @@ namespace Dumux
  * <ul>
  *  <li> ... to be completed ... </li>
  * </ul>
+ */
+
+#ifndef DUMUX_3PWATEROIL_MODEL_HH
+#define DUMUX_3PWATEROIL_MODEL_HH
+
+#include <dumux/common/properties.hh>
+
+#include <dumux/material/spatialparams/fv.hh>
+#include <dumux/material/fluidmatrixinteractions/3p/thermalconductivitysomerton3p.hh>
+#include <dumux/material/fluidmatrixinteractions/diffusivitymillingtonquirk.hh>
+
+#include <dumux/porousmediumflow/properties.hh>
+#include <dumux/porousmediumflow/nonisothermal/model.hh>
+#include <dumux/porousmediumflow/compositional/switchableprimaryvariables.hh>
+
+#include "indices.hh"
+#include "model.hh"
+#include "volumevariables.hh"
+#include "localresidual.hh"
+#include "primaryvariableswitch.hh"
+#include "vtkoutputfields.hh"
+
+namespace Dumux
+{
+/*!
+ * \ingroup ThreePWaterOilModel
+ * \brief Adaption of the fully implicit scheme to the three-phase two-component flow model.
+ *
  */
 namespace Properties {
 

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePWaterOilModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the three-phase three-component fully implicit model.
  */
@@ -32,11 +32,10 @@ namespace Dumux
 {
 /*!
  * \ingroup ThreePWaterOilModel
- * \ingroup ImplicitLocalResidual
- * \brief Element-wise calculation of the Jacobian matrix for problems
- *        using the three-phase three-component fully implicit model.
+ * \brief Element-wise calculation of the local residual for problems
+ *        using the ThreePWaterOil fully implicit model.
  *
- * This class is used to fill the gaps in BoxLocalResidual for the 3P2C flow.
+ * This class is used to fill the gaps in the CompositionalLocalResidual for the 3PWaterOil flow.
  */
 template<class TypeTag>
 class ThreePWaterOilLocalResidual: public ThreePThreeCLocalResidual<TypeTag>

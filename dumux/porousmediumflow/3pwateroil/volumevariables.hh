@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ThreePWaterOilModel
  * \brief Contains the quantities which are constant within a
  *        finite volume in the three-phase, two-component model.
  */
@@ -45,7 +45,7 @@ namespace Dumux
 /*!
  * \ingroup ThreePWaterOilModel
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, two-component model.
+ *        finite volume in the three-phase, two-component model.
  */
 template <class TypeTag>
 class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>

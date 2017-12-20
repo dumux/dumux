@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup OnePTests
  * \brief Test for the three-phase three-component box model
  */
 #include <config.h>
@@ -52,8 +52,7 @@
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
+ * \ingroup OnePTests
  * \param errorMsg  The error message that was issued by the start function.
  *                  Comprises the thing that went wrong and a general help message.
  */

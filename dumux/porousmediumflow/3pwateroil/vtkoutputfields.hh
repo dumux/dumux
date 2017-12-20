@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup ThreePWaterOilModel
  * \brief Adds vtk output fields specific to the twop model
  */
 #ifndef DUMUX_THREEPWATEROIL_VTK_OUTPUT_FIELDS_HH
@@ -29,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ThreePThreeC, InputOutput
+ * \ingroup ThreePWaterOilModel
  * \brief Adds vtk output fields specific to the three-phase three-component model
  */
 template<class TypeTag>
