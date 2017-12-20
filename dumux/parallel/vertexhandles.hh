@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Provides data handles for parallel communication which
- *        operate on vertices
+ * \ingroup Parallel
+ * \brief Provides data handles for parallel communication which operate on vertices
+ * \note This is useful for schemes with degrees of freedom on vertices (box scheme)
  */
 #ifndef DUMUX_VERTEX_HANDLES_HH
 #define DUMUX_VERTEX_HANDLES_HH
@@ -28,9 +28,10 @@
 #include <dune/grid/common/datahandleif.hh>
 
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
+ * \ingroup Parallel
  * \brief Data handle for parallel communication which sums up all
  *        values are attached to vertices
  */
@@ -206,6 +207,6 @@ private:
     Container &container_;
 };
 
-}
+} // end namespace Dumux
 
 #endif

@@ -428,5 +428,5 @@
 /* ***************** Parallel ******************/
 /*!
  * \defgroup Parallel Parallel
- *  TODO: Doc me in modules.txt!
+ * \brief Helpers for parallel runs with MPI
  */
