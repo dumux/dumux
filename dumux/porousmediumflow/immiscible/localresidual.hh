@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup OnePModel
+ * \ingroup PorousMediumImmiscible
  * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
@@ -28,7 +28,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup OnePModel
+ * \ingroup PorousMediumImmiscible
  * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */

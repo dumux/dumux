@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Implicit
+ * \ingroup PorousmediumCompositional
  * \brief Element-wise calculation of the local residual for problems
  *        using compositional fully implicit model.
  */
@@ -34,7 +34,7 @@ NEW_PROP_TAG(ReplaceCompEqIdx);
 } // end namespace Properties
 
 /*!
- * \ingroup Implicit
+ * \ingroup PorousmediumCompositional
  * \brief Element-wise calculation of the local residual for problems
  *        using compositional fully implicit model.
  */

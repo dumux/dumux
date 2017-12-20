@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup ImplicitModel
+ * \ingroup PorousmediumCompositional
  * \brief A primary variable vector with a state to allow variable switches
  */
 #ifndef DUMUX_SWITCHABLE_PRIMARY_VARIABLES_HH
@@ -31,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup PorousmediumCompositional
  * \brief A primary variable vector with a state to allow variable switches
  */
 template<class TypeTag, class StateType>

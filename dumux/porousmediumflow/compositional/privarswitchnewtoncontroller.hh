@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Newton
+ * \ingroup PorousmediumCompositional
  * \brief Reference implementation of a controller class for the Newton solver.
  *
  * Usually this controller should be sufficient.
@@ -34,7 +34,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Newton
+ * \ingroup PorousmediumCompositional
  * \brief A newton controller that handles primary variable switches
  */
 template <class TypeTag>

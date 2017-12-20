@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PorousmediumCompositional
  * \brief The primary variable switch base class for compositional models
  */
 #ifndef DUMUX_PRIMARY_VARIABLE_SWITCH_HH
@@ -53,7 +53,7 @@ public:
 };
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup PorousmediumCompositional
  * \brief The primary variable switch controlling the phase presence state variable
  */
 template<class TypeTag>
