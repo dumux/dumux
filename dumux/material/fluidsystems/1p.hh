@@ -24,9 +24,12 @@
 #ifndef DUMUX_1P_FLUIDSYSTEM_HH
 #define DUMUX_1P_FLUIDSYSTEM_HH
 
+#warning "This header is deprecated! Use LiquidPhase (liquidphase.hh) or GasPhase (gasphase.hh) directly"
+
 #include <limits>
 #include <cassert>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include "base.hh"
 
@@ -44,7 +47,7 @@ namespace FluidSystems {
  * FluidSystems::GasPhase<Component> may be used.
  */
 template <class Scalar, class FluidType>
-class OneP
+class DUNE_DEPRECATED_MSG("OneP fluid system is deprecated! Use LiquidPhase or GasPhase directly") OneP
     : public BaseFluidSystem<Scalar, OneP<Scalar, FluidType> >
 {
     using ThisType = OneP<Scalar, FluidType>;
