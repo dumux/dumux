@@ -43,8 +43,6 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dumux/porousmediumflow/mpnc/implicit/modelkinetic.hh>
-
 namespace Dumux
 {
 
@@ -64,7 +62,6 @@ SET_TYPE_PROP(EvaporationAtmosphereSpatialParams, SpatialParams, EvaporationAtmo
 SET_PROP(EvaporationAtmosphereSpatialParams, MaterialLaw)
 {
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-
     enum {wPhaseIdx   = FluidSystem::wPhaseIdx};
 
 private:
@@ -92,16 +89,15 @@ private:
     #endif
 
     #if RegVGofT
-        using EffectiveLaw = RegularizedVanGenuchtenOfTemperature<Scalar>;
+        using EffectiveLaw =  RegularizedVanGenuchtenOfTemperature<Scalar>;
     #endif
 
     #if VG
-        using EffectiveLaw = VanGenuchten<Scalar>;
+        using EffectiveLaw =  VanGenuchten<Scalar> ;
     #endif
 
     using TwoPMaterialLaw = EffToAbsLaw<EffectiveLaw>;
     public:
-//        using type = TwoPOfTAdapter<wPhaseIdx, TwoPMaterialLaw>; // adapter for incorporating temperature effects on pc-S
         using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
 };
 
@@ -111,9 +107,9 @@ private:
 SET_PROP(EvaporationAtmosphereSpatialParams, AwnSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfacePcMaxFct<Scalar>;
-    //    using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
 public:
     using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
 };
@@ -123,7 +119,8 @@ public:
 SET_PROP(EvaporationAtmosphereSpatialParams, AwsSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfacePolynomial2ndOrder<Scalar>;
 public:
     using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
@@ -133,7 +130,8 @@ public:
 SET_PROP(EvaporationAtmosphereSpatialParams, AnsSurface)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using EffectiveIALaw = AwnSurfaceExpSwPcTo3<Scalar>;
 public:
     using type = EffToAbsLawIA<EffectiveIALaw, MaterialLawParams>;
@@ -148,8 +146,15 @@ template<class TypeTag>
 class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
 {
     using ParentType = FVSpatialParams<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {dim=GridView::dimension };
@@ -157,168 +162,128 @@ class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {sPhaseIdx = FluidSystem::sPhaseIdx};
-    enum { numEnergyEquations  = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
+    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum { enableEnergy         = GET_PROP_VALUE(TypeTag, EnableEnergy)};
+    enum { enableThermalNonEquilibrium  = GET_PROP_VALUE(TypeTag,EnableThermalNonEquilibrium)};
 
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using LocalPosition = Dune::FieldVector<Scalar, dim>;
-
-    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using DimVector =  Dune::FieldVector<Scalar,dim>;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
 
     using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
-    using AwnSurfaceParams = typename AwnSurface::Params;
-
+    using AwnSurfaceParams = typename  AwnSurface::Params;
     using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
-    using AwsSurfaceParams = typename AwsSurface::Params;
-
+    using AwsSurfaceParams = typename  AwsSurface::Params;
     using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
-    using AnsSurfaceParams = typename AnsSurface::Params;
+    using AnsSurfaceParams = typename  AnsSurface::Params;
+    using PermeabilityType = Scalar;
 
-
-    EvaporationAtmosphereSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    EvaporationAtmosphereSpatialParams(const Problem &problem)
+        : ParentType(problem)
     {
+        heightPM_               = getParam<std::vector<Scalar>>("Grid.Positions1")[1];
+        heightDomain_           = getParam<std::vector<Scalar>>("Grid.Positions1")[2];
+
+        porosityPM_                 = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
+        intrinsicPermeabilityPM_    = getParam<Scalar>("SpatialParams.PorousMedium.permeability");
+
+        porosityFF_                 = getParam<Scalar>("SpatialParams.FreeFlow.porosity");
+        intrinsicPermeabilityFF_    = getParam<Scalar>("SpatialParams.FreeFlow.permeability");
+
+        solidDensity_               = getParam<Scalar>("SpatialParams.soil.density");
+        solidThermalConductivity_    = getParam<Scalar>("SpatialParams.soil.thermalConductivity");
+        solidHeatCapacity_               = getParam<Scalar>("SpatialParams.soil.heatCapacity");
+
+        aWettingNonWettingA1_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA1");
+        aWettingNonWettingA2_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA2");
+        aWettingNonWettingA3_ = getParam<Scalar>("SpatialParams.soil.aWettingNonWettingA3");
+
+        aNonWettingSolidA1_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA1");
+        aNonWettingSolidA2_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA2");
+        aNonWettingSolidA3_ = getParam<Scalar>("SpatialParams.soil.aNonWettingSolidA3");
+
+        BCPd_           = getParam<Scalar>("SpatialParams.soil.BCPd");
+        BClambda_       = getParam<Scalar>("SpatialParams.soil.BClambda");
+        Swr_            = getParam<Scalar>("SpatialParams.soil.Swr");
+        Snr_            = getParam<Scalar>("SpatialParams.soil.Snr");
+
+        characteristicLengthFF_   = getParam<Scalar>("SpatialParams.FreeFlow.meanPoreSize");
+        characteristicLengthPM_   = getParam<Scalar>("SpatialParams.PorousMedium.meanPoreSize");
+
+        factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
+        factorMassTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorMassTransfer");
+
+        // residual saturations
+        materialParamsFF_.setSwr(0.0);
+        materialParamsFF_.setSnr(0.00);
+
+        materialParamsPM_.setSwr(Swr_);
+        materialParamsPM_.setSnr(Snr_);
+
+        // pc / kr parameters
+        materialParamsPM_.setLambda(BClambda_);
+        materialParamsPM_.setPe(BCPd_);
+
+        // for making pc == 0 in the FF
+        materialParamsFF_.setLambda(42.);
+        materialParamsFF_.setPe(0.);
+
+        {//scope it
+            // capillary pressure parameters
+            FluidState fluidState ;
+            Scalar S[numPhases] ;
+            const auto &materialParams =  materialParamsPM_;
+                    Scalar capPress[numPhases];
+            //set saturation to inital values, this needs to be done in order for the fluidState to tell me pc
+            for (int phaseIdx = 0; phaseIdx < numPhases ; ++phaseIdx) {
+                // set saturation to zero for getting pcmax
+                S[phaseIdx] = 0. ;
+                Scalar TInitial  = getParam<Scalar>("InitialConditions.TInitial");
+                fluidState.setSaturation(phaseIdx, S[phaseIdx]);
+                fluidState.setTemperature(phaseIdx,TInitial);
+            }
+
+            //obtain pc according to saturation
+            MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
+            using std::abs;
+            pcMax_ = abs(capPress[0]);
+
+            // set pressures from capillary pressures
+            aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
+        }
+
+        // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
+        aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
+        aWettingNonWettingSurfaceParams_.setA2(aWettingNonWettingA2_);
+        aWettingNonWettingSurfaceParams_.setA3(aWettingNonWettingA3_);
+
+        // non-wetting-solid
+        aNonWettingSolidSurfaceParams_.setA1(aNonWettingSolidA1_);
+        aNonWettingSolidSurfaceParams_.setA2(aNonWettingSolidA2_);
+        aNonWettingSolidSurfaceParams_.setA3(aNonWettingSolidA3_);
+
+        // dummys for free flow: no interface where there is only one phase
+        aWettingNonWettingSurfaceParamsFreeFlow_.setA1(0.);
+        aWettingNonWettingSurfaceParamsFreeFlow_.setA2(0.);
+        aWettingNonWettingSurfaceParamsFreeFlow_.setA3(0.);
+        aWettingNonWettingSurfaceParamsFreeFlow_.setPcMax(42.); // not needed because it is anyways zero; silencing valgrind
+
+        // dummys for free flow: no interface where there is only one phase
+        aNonWettingSolidSurfaceParamsFreeFlow_.setA1(0.);
+        aNonWettingSolidSurfaceParamsFreeFlow_.setA2(0.);
+        aNonWettingSolidSurfaceParamsFreeFlow_.setA3(0.);
     }
 
     ~EvaporationAtmosphereSpatialParams()
     {}
 
-        // load parameters from input file and initialize parameter values
-        void setInputInitialize()
-        {
-                heightPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar, Grid.InterfacePosY);
-                heightDomain_           = GET_RUNTIME_PARAM(TypeTag, GlobalPosition, Grid.UpperRight)[1];
-                // BEWARE! First the input values have to be set, than the material parameters can be set
 
-                // this is the parameter value from file part
-                porosityPM_                 = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.porosity);
-                intrinsicPermeabilityPM_    = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.permeability);
-
-                porosityFF_                 = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.FreeFlow.porosity);
-                intrinsicPermeabilityFF_    = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.FreeFlow.permeability);
-
-                solidDensity_               = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
-                solidThermalConductivity_    = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.thermalConductivity);
-                solidHeatCapacity_               = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.heatCapacity);
-
-                aWettingNonWettingA1_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.aWettingNonWettingA1);
-                aWettingNonWettingA2_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.aWettingNonWettingA2);
-                aWettingNonWettingA3_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.aWettingNonWettingA3);
-
-                aNonWettingSolidA1_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.aNonWettingSolidA1);
-                aNonWettingSolidA2_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.aNonWettingSolidA2);
-                aNonWettingSolidA3_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.aNonWettingSolidA3);
-
-                BCPd_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.BCPd);
-                BClambda_       = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.BClambda);
-                Swr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Swr);
-                Snr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Snr);
-
-                characteristicLengthFF_         = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.FreeFlow.meanPoreSize);
-
-                characteristicLengthPM_         = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.meanPoreSize);
-                factorEnergyTransfer_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorEnergyTransfer);
-                factorMassTransfer_             = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorMassTransfer);
-
-            // residual saturations
-            materialParamsFF_.setSwr(0.0);
-            materialParamsFF_.setSnr(0.00);
-
-            materialParamsPM_.setSwr(Swr_);
-            materialParamsPM_.setSnr(Snr_);
-
-            // pc / kr parameters
-            materialParamsPM_.setLambda(BClambda_);
-            materialParamsPM_.setPe(BCPd_);
-
-            // for making pc == 0 in the FF
-            materialParamsFF_.setLambda(42.);
-            materialParamsFF_.setPe(0.);
-
-            {//scope it
-                // capillary pressure parameters
-                FluidState fluidState ;
-                Scalar S[numPhases] ;
-                const MaterialLawParams &materialParams =  materialParamsPM_;
-                        Scalar capPress[numPhases];
-                //set saturation to inital values, this needs to be done in order for the fluidState to tell me pc
-                for (int phaseIdx = 0; phaseIdx < numPhases ; ++phaseIdx) {
-                    // set saturation to zero for getting pcmax
-                    S[phaseIdx] = 0. ;
-                    Scalar TInitial               = GET_RUNTIME_PARAM(TypeTag, Scalar, InitialConditions.TInitial);
-
-                    fluidState.setSaturation(phaseIdx, S[phaseIdx]);
-                    if(enableEnergy){
-                        if (numEnergyEquations>1)
-                            fluidState.setTemperature(phaseIdx,TInitial);
-                        else
-                            fluidState.setTemperature(TInitial);
-                    }
-                }
-
-                //obtain pc according to saturation
-                MaterialLaw::capillaryPressures(capPress, materialParams, fluidState);
-                using std::abs;
-                pcMax_ = abs(capPress[0]);
-
-                // set pressures from capillary pressures
-                aWettingNonWettingSurfaceParams_.setPcMax(pcMax_);
-            }
-
-            // wetting-non wetting: surface which goes to zero on the edges, but is a polynomial
-            aWettingNonWettingSurfaceParams_.setA1(aWettingNonWettingA1_);
-            aWettingNonWettingSurfaceParams_.setA2(aWettingNonWettingA2_);
-            aWettingNonWettingSurfaceParams_.setA3(aWettingNonWettingA3_);
-
-            // non-wetting-solid
-            aNonWettingSolidSurfaceParams_.setA1(aNonWettingSolidA1_);
-            aNonWettingSolidSurfaceParams_.setA2(aNonWettingSolidA2_);
-            aNonWettingSolidSurfaceParams_.setA3(aNonWettingSolidA3_);
-
-            // dummys for free flow: no interface where there is only one phase
-            aWettingNonWettingSurfaceParamsFreeFlow_.setA1(0.);
-            aWettingNonWettingSurfaceParamsFreeFlow_.setA2(0.);
-            aWettingNonWettingSurfaceParamsFreeFlow_.setA3(0.);
-            aWettingNonWettingSurfaceParamsFreeFlow_.setPcMax(42.); // not needed because it is anyways zero; silencing valgrind
-
-            // dummys for free flow: no interface where there is only one phase
-            aNonWettingSolidSurfaceParamsFreeFlow_.setA1(0.);
-            aNonWettingSolidSurfaceParamsFreeFlow_.setA2(0.);
-            aNonWettingSolidSurfaceParamsFreeFlow_.setA3(0.);
-
-            // dummy for aws not necessary: aws = ans - as, ans=0, as=ans(0,pcmax)=0 -> aws=0
-        }
-
-    /*! \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     */
-    void update(const SolutionVector & globalSolutionFn)
-    { }
-
-    /*! \brief Returns the intrinsic permeability
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume */
-    const Scalar intrinsicPermeability(const Element & element,
-                                       const FVElementGeometry & fvGeometry,
-                                       const unsigned int scvIdx) const
+     PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
+        const  auto & globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
             return intrinsicPermeabilityFF_ ;
         else if (inPM_(globalPos))
@@ -334,13 +299,11 @@ public:
      * \param element The finite element
      * \param fvGeometry The finite volume geometry
      * \param scvIdx The local index of the sub-control volume  */
-    const Scalar porosity(const Element & element,
-                          const FVElementGeometry & fvGeometry,
-                          const unsigned int scvIdx) const
+    Scalar porosity(const Element &element,
+                    const SubControlVolume &scv,
+                    const ElementSolutionVector &elemSol) const
     {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-//        const  LocalPosition & localPos =  fvGeometry.subContVol[scvIdx].localCenter ;
-//        const  GlobalPosition & globalPos =  element.geometry().global(localPos) ;
+        const auto& globalPos =  scv.dofPosition();
 
         if (inFF_(globalPos) )
             return porosityFF_ ;
@@ -350,28 +313,21 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    /*!
-     * \brief Return a reference to the material parameters of the material law.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    const MaterialLawParams & materialLawParams(const Element & element,
-                                                const FVElementGeometry & fvGeometry,
-                                                const unsigned int scvIdx) const
+    const MaterialLawParams& materialLawParams(const Element& element,
+                                               const SubControlVolume& scv,
+                                               const ElementSolutionVector& elemSol) const
     {
-        const GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        const MaterialLawParams & materialParams  = materialLawParamsAtPos(globalPos) ;
-        return materialParams ;
+        const auto& globalPos =  scv.dofPosition();
+        if (inFF_(globalPos) )
+            return materialParamsFF_ ;
+        else if (inPM_(globalPos))
+            return materialParamsPM_ ;
+        else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
     /*!
      * \brief Return a reference to the material parameters of the material law.
-     *
-     * \param globalPos The position in global coordinates.
-     */
+     * \param globalPos The position in global coordinates. */
     const MaterialLawParams & materialLawParamsAtPos(const GlobalPosition & globalPos) const
     {
         if (inFF_(globalPos) )
@@ -389,11 +345,11 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
-    const AwnSurfaceParams & aWettingNonWettingSurfaceParams(const Element & element,
-                                                             const FVElementGeometry & fvGeometry,
-                                                             const unsigned int scvIdx) const
+    const AwnSurfaceParams & aWettingNonWettingSurfaceParams(const Element &element,
+                                                             const SubControlVolume &scv,
+                                                             const ElementSolutionVector &elemSol) const
     {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
+        const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
             return aWettingNonWettingSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
@@ -410,10 +366,10 @@ public:
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
     const AnsSurfaceParams & aNonWettingSolidSurfaceParams(const Element &element,
-                                                           const FVElementGeometry &fvGeometry,
-                                                           const unsigned int scvIdx) const
+                                                             const SubControlVolume &scv,
+                                                             const ElementSolutionVector &elemSol) const
     {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
+        const auto& globalPos =  scv.dofPosition();
         if (inFF_(globalPos) )
             return aNonWettingSolidSurfaceParamsFreeFlow_  ;
         else if (inPM_(globalPos))
@@ -433,10 +389,11 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub-control volume */
-    const Scalar pcMax(const Element & element,
-                       const FVElementGeometry & fvGeometry,
-                       const unsigned int scvIdx) const
+    const Scalar pcMax(const Element &element,
+                       const SubControlVolume &scv,
+                       const ElementSolutionVector &elemSol) const
     { return aWettingNonWettingSurfaceParams_.pcMax() ; }
+
 
     /*!\brief Return the characteristic length for the mass transfer.
      *
@@ -446,10 +403,14 @@ public:
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
     const Scalar characteristicLength(const Element & element,
-                                      const FVElementGeometry & fvGeometry,
-                                      const unsigned int scvIdx) const
-    {   const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        return characteristicLengthAtPos(globalPos); }
+                                      const SubControlVolume &scv,
+                                      const ElementSolutionVector &elemSol) const
+
+    {
+        const auto& globalPos =  scv.dofPosition();
+        return characteristicLengthAtPos(globalPos);
+    }
+
     /*!\brief Return the characteristic length for the mass transfer.
      * \param globalPos The position in global coordinates.*/
     const Scalar characteristicLengthAtPos(const  GlobalPosition & globalPos) const
@@ -468,14 +429,17 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
-    const Scalar factorEnergyTransfer(const Element & element,
-                                      const FVElementGeometry & fvGeometry,
-                                      const unsigned int scvIdx) const
-    {   const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        return factorEnergyTransferAtPos(globalPos); }
+    const Scalar factorEnergyTransfer(const Element &element,
+                                      const SubControlVolume &scv,
+                                      const ElementSolutionVector &elemSol) const
+    {
+       const auto& globalPos =  scv.dofPosition();
+       return factorEnergyTransferAtPos(globalPos);
+    }
+
     /*!\brief Return the pre factor the the energy transfer
      * \param globalPos The position in global coordinates.*/
-    const Scalar factorEnergyTransferAtPos(const GlobalPosition & globalPos) const
+    const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
     {
         if (inFF_(globalPos) )
             return factorEnergyTransfer_ ;
@@ -484,21 +448,25 @@ public:
         else             DUNE_THROW(Dune::InvalidStateException, "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
     }
 
-    /*!\brief Return the pre factor for the mass transfer
+    /*!\brief Return the pre factor the the mass transfer
      *
      *        The position is determined based on the coordinate of
      *        the vertex belonging to the considered sub controle volume.
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
-    const Scalar factorMassTransfer(const Element & element,
-                                    const FVElementGeometry & fvGeometry,
-                                    const unsigned int scvIdx) const
-    {   const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        return factorMassTransferAtPos(globalPos); }
+    const Scalar factorMassTransfer(const Element &element,
+                                      const SubControlVolume &scv,
+                                      const ElementSolutionVector &elemSol) const
+    {
+       const auto& globalPos =  scv.dofPosition();
+        return factorMassTransferAtPos(globalPos);
+
+    }
+
     /*!\brief Return the pre factor the the mass transfer
      * \param globalPos The position in global coordinates.*/
-    const Scalar factorMassTransferAtPos(const GlobalPosition & globalPos) const
+    const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
     {
         if (inFF_(globalPos) )
             return factorMassTransfer_ ;
@@ -508,32 +476,34 @@ public:
     }
 
 
-    /*! \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined */
-    const Scalar solidHeatCapacity(const Element & element,
-                              const FVElementGeometry & fvGeometry,
-                              const unsigned int scvIdx) const
+    /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
     {  return solidHeatCapacity_ ;}  // specific heat capacity of solid  [J / (kg K)]
 
-    /*!\brief Returns the density \f$[kg/m^3]\f$ of the rock matrix.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    const Scalar solidDensity(const Element & element,
-                             const FVElementGeometry & fvGeometry,
-                             const unsigned int scvIdx) const
-    { return solidDensity_ ;} // density of solid [kg/m^3]
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
+    {return solidDensity_ ;} // density of solid [kg/m^3]
 
-    /*!\brief Returns the thermal conductivity \f$[W/(m K)]\f$ of the rock matrix.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    const Scalar  solidThermalConductivity(const Element & element,
-                                          const FVElementGeometry & fvGeometry,
-                                          const unsigned int scvIdx)const
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidThermalConductivityAtPos(const GlobalPosition& globalPos) const
     { return solidThermalConductivity_ ;} // conductivity of solid  [W / (m K ) ]
 
     /*!\brief Give back whether the tested position (input) is a specific region (porous medium part) in the domain
@@ -547,7 +517,7 @@ public:
      * -> be careful with neumannAtPos
      */
     bool inPM_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dimWorld-1] > 0. - eps_) and (globalPos[dimWorld-1] < (heightPM_ + eps_) ) );   }
+    { return ( (globalPos[dimWorld-1] > 0. - eps_) and (globalPos[dimWorld-1] < (heightPM_ + eps_) ) );   }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (above PM / "free flow") in the domain
@@ -561,21 +531,7 @@ public:
      * -> be careful with neumannAtPos
      */
     bool inFF_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dimWorld-1] < heightDomain_ + eps_) and (globalPos[dimWorld-1] > (heightPM_ + eps_) ) );   }
-
-    /*!
-     * \brief Give back whether the tested position (input) is a specific region (above PM / "free flow") in the domain
-     *
-     * This setting ensures, that the boundary between the two domains has porous medium properties.
-     * This is desirable, because I want to observe the boundary of the porous domain.
-     * However, the position has to be the coordinate of the vertex and not the integration point
-     * of the boundary flux. If the position is the ip of the neumann flux this leads to a situation
-     * where the vertex belongs to porous medium and there is nonetheless injection over the boundary.
-     * That does not work.
-     * -> be careful with neumannAtPos
-     */
-    bool inInjection_(const GlobalPosition & globalPos) const
-    {       return ( (globalPos[dimWorld-1] < heightDomain_ - 0.25*heightDomain_  + eps_) and (globalPos[dimWorld-1] > (heightPM_ + eps_) ) );   }
+    { return ( (globalPos[dimWorld-1] < heightDomain_ + eps_) and (globalPos[dimWorld-1] > (heightPM_ + eps_) ) );   }
 
     /*! \brief access function for the depth / height of the porous medium */
     const Scalar heightPM() const
@@ -627,6 +583,7 @@ private:
     Scalar BClambda_ ;
     Scalar Swr_ ;
     Scalar Snr_ ;
+    std::vector<Scalar> gridVector_;
 };
 
 }

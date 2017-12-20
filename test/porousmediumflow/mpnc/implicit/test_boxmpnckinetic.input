@@ -1,24 +1,18 @@
-[TimeManager]
-DtInitial = 1.5 # [s]
+[TimeLoop]
+DtInitial = 0.05 # [s]
 TEnd = 10 # [s]
-MaxTimeStepSize = 2e20 # maximum allowed timestep size
 
 [Grid]
 Cells0 = 14
 Cells1 = 15 15
 Grading0 = 1.0
-Grading1 = 1.2 0.833333
+Grading1 = -0.833333 0.833333
 Positions0 = 0.0 1.0
 Positions1 = 0.0 0.25 0.5
 
-Cells = 14 30
-UpperRight = 1.0 0.5
-InterfacePosY = 0.25
-RefineTop = false
-
 [InitialConditions]
-SwFFInitial = 1e-5 # - 0.001#
-SwPMInitial = 0.999 # -
+SwFFInitial = 1e-4 # - 0.001#
+SwPMInitial = 0.8 # -
 pnInitial = 1e5 # 6.8e6 # 1e5 # 101475 	# Pa
 TInitial = 293
 pnInjection = 100003
@@ -68,10 +62,15 @@ aNonWettingSolidA3 = 1.063e-09 #
 heatIntoSolid = 0  #
 
 [Constants]
-outputName = evaporationatmosphere
 nRestart = 100 # after so many timesteps a restart file should be written
+
+[Problem]
+Name = evaporationatmosphere
 
 [FluidSystem]
 nTemperature = 100 # for the tabulation of water: so many interpolation points
 nPressure = 100 # for the tabulation of water: so many interpolation points
 hammer = 1e4
+
+[Vtk]
+AddVelocity = 1 # enable velocity output
