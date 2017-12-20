@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup TwoPTwoCModel
  * \file
+ * \ingroup TwoPTwoCModel
  * \brief Adaption of the fully implicit scheme to the
  *        two-phase two-component fully implicit model.
  *
@@ -217,13 +217,13 @@ public:
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 
-//set isothermal Indices
+//! Set isothermal Indices
 SET_TYPE_PROP(TwoPTwoCNI, IsothermalIndices, TwoPTwoCIndices<typename GET_PROP_TYPE(TypeTag, FluidSystem), /*PVOffset=*/0>);
 
-//set isothermal output fields
+//! Set isothermal output fields
 SET_TYPE_PROP(TwoPTwoCNI, IsothermalVtkOutputFields, TwoPTwoCVtkOutputFields<TypeTag>);
 
-//set isothermal NumEq
+// Set isothermal NumEq
 SET_INT_PROP(TwoPTwoCNI, IsothermalNumEq, 2);
 
 } // end namespace Properties

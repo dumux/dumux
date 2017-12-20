@@ -16,9 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
+ * \ingroup TwoPTwoCModel
  * \brief Defines the indices required for the two-phase two-component model
  */
 #ifndef DUMUX_2P2C_INDICES_HH
@@ -28,18 +28,16 @@
 
 namespace Dumux
 {
-// \{
-
 /*!
- * \ingroup TwoPTwoCModel
  * \brief Enumerates the formulations which the two-phase two-component model accepts.
+ * \ingroup TwoPTwoCModel
  */
 struct TwoPTwoCFormulation
 { enum { pnsw, pwsn}; };
 
 /*!
- * \ingroup TwoPTwoCModel
  * \brief The indices for the isothermal two-phase two-component model.
+ * \ingroup TwoPTwoCModel
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
@@ -47,12 +45,12 @@ template <class FluidSystem, int PVOffset = 0>
 struct TwoPTwoCIndices
 {
     // Phase indices
-    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< Index of the wetting phase
-    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< Index of the non-wetting phase
+    static const int wPhaseIdx = FluidSystem::wPhaseIdx; //!< index of the wetting phase
+    static const int nPhaseIdx = FluidSystem::nPhaseIdx; //!< index of the non-wetting phase
 
     // Component indices
-    static const int wCompIdx = FluidSystem::wCompIdx; //!< Index of the primary component of the wetting phase
-    static const int nCompIdx = FluidSystem::nCompIdx; //!< Index of the primary component of the non-wetting phase
+    static const int wCompIdx = FluidSystem::wCompIdx; //!< index of the primary component of the wetting phase
+    static const int nCompIdx = FluidSystem::nCompIdx; //!< index of the primary component of the non-wetting phase
 
     // present phases (-> 'pseudo' primary variable)
     static const int wPhaseOnly = 1; //!< Only the non-wetting phase is present
@@ -60,17 +58,17 @@ struct TwoPTwoCIndices
     static const int bothPhases = 3; //!< Both phases are present
 
     // Primary variable indices
-    //! Index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
+    //! index for wetting/non-wetting phase pressure (depending on the formulation) in a solution vector
     static const int pressureIdx = PVOffset + 0;
-    //! Index of either the saturation or the mass fraction of the non-wetting/wetting phase
+    //! index of either the saturation or the mass fraction of the non-wetting/wetting phase
     static const int switchIdx = PVOffset + 1;
 
     // equation indices
-    //! Index of the mass conservation equation for the first component
+    //! index of the mass conservation equation for the first component
     static const int conti0EqIdx = PVOffset;
-    //! Index of the mass conservation equation for the primary component of the wetting phase
+    //! index of the mass conservation equation for the primary component of the wetting phase
     static const int contiWEqIdx = conti0EqIdx + wCompIdx;
-    //! Index of the mass conservation equation for the primary component of the non-wetting phase
+    //! index of the mass conservation equation for the primary component of the non-wetting phase
     static const int contiNEqIdx = conti0EqIdx + nCompIdx;
 };
 

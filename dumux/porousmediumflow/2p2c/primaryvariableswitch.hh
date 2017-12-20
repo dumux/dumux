@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPTwoCModel
  * \brief The primary variable switch for the 2p2c model
  */
 #ifndef DUMUX_2P2C_PRIMARY_VARIABLE_SWITCH_HH

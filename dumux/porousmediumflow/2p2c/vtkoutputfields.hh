@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup TwoPTwoCModel
  * \brief Adds vtk output fields specific to the twop model
  */
 #ifndef DUMUX_TWOPTWOC_VTK_OUTPUT_FIELDS_HH
@@ -29,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoPTwoC, InputOutput
+ * \ingroup TwoPTwoCModel
  * \brief Adds vtk output fields specific to the two-phase two-component model
  */
 template<class TypeTag>
