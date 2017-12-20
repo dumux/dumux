@@ -1,4 +1,4 @@
-[TimeManager]
+[TimeLoop]
 DtInitial = 250 # [s]
 TEnd = 1e4 # [s]
 
@@ -10,5 +10,5 @@ Cells = 24 16
 ResidualReduction = 1e-12
 
 [Problem]
-Name = obstaclebox
+Name = obstacle
 
