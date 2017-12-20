@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
+ * \ingroup MultiDomainModel
  * \brief Base class for the coupled models of equal dimension
  */
 #ifndef DUMUX_MULTIDOMAIN_MODEL_FOR_STAGGERED_HH
@@ -36,50 +36,42 @@
 
 namespace Dumux
 {
-
 /*!
- * \ingroup MultiDomain
+ * \ingroup MultiDomainModel
  * \brief The base class for implicit models of equal dimension.
  */
 template<class TypeTag>
 class MultiDomainModelForStaggered
 {
-    typedef typename GET_PROP_TYPE(TypeTag, Model) Implementation;
-    typedef typename GET_PROP_TYPE(TypeTag, Problem) Problem;
-    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, SolutionVector) SolutionVector;
-    typedef typename GET_PROP_TYPE(TypeTag, JacobianAssembler) JacobianAssembler;
-    typedef typename GET_PROP_TYPE(TypeTag, StokesLocalJacobian) StokesLocalJacobian;
-    typedef typename GET_PROP_TYPE(TypeTag, DarcyLocalJacobian) DarcyLocalJacobian;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonMethod) NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, NewtonController) NewtonController;
-    typedef typename GET_PROP(TypeTag, SubProblemBlockIndices) SubProblemBlockIndices;
+    using Implementation = typename GET_PROP_TYPE(TypeTag, Model);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using JacobianAssembler = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
+    using StokesLocalJacobian = typename GET_PROP_TYPE(TypeTag, StokesLocalJacobian);
+    using DarcyLocalJacobian = typename GET_PROP_TYPE(TypeTag, DarcyLocalJacobian);
+    using NewtonMethod = typename GET_PROP_TYPE(TypeTag, NewtonMethod);
+    using NewtonController = typename GET_PROP_TYPE(TypeTag, NewtonController);
+    using SubProblemBlockIndices = typename GET_PROP(TypeTag, SubProblemBlockIndices);
 
     // obtain the type tags of the sub problems
-    typedef typename GET_PROP_TYPE(TypeTag, StokesProblemTypeTag) StokesProblemTypeTag;
-    typedef typename GET_PROP_TYPE(TypeTag, DarcyProblemTypeTag) DarcyProblemTypeTag;
+    using StokesProblemTypeTag = typename GET_PROP_TYPE(TypeTag, StokesProblemTypeTag);
+    using DarcyProblemTypeTag = typename GET_PROP_TYPE(TypeTag, DarcyProblemTypeTag);
 
-    typedef typename GET_PROP_TYPE(StokesProblemTypeTag, GridView) StokesGridView;
-    typedef typename GET_PROP_TYPE(DarcyProblemTypeTag, GridView) DarcyGridView;
+    using StokesGridView = typename GET_PROP_TYPE(StokesProblemTypeTag, GridView);
+    using DarcyGridView = typename GET_PROP_TYPE(DarcyProblemTypeTag, GridView);
 
-    typedef typename GET_PROP_TYPE(StokesProblemTypeTag, LocalResidual) StokesLocalResidual;
-    typedef typename GET_PROP_TYPE(DarcyProblemTypeTag, LocalResidual) DarcyLocalResidual;
+    using StokesLocalResidual = typename GET_PROP_TYPE(StokesProblemTypeTag, LocalResidual);
+    using DarcyLocalResidual = typename GET_PROP_TYPE(DarcyProblemTypeTag, LocalResidual);
 
-    typedef typename GET_PROP_TYPE(StokesProblemTypeTag, VertexMapper) StokesVertexMapper;
-    typedef typename GET_PROP_TYPE(DarcyProblemTypeTag, VertexMapper) DarcyVertexMapper;
+    using StokesVertexMapper = typename GET_PROP_TYPE(StokesProblemTypeTag, VertexMapper);
+    using DarcyVertexMapper = typename GET_PROP_TYPE(DarcyProblemTypeTag, VertexMapper);
 
-    typedef typename GET_PROP_TYPE(StokesProblemTypeTag, ElementMapper) StokesElementMapper;
-    typedef typename GET_PROP_TYPE(DarcyProblemTypeTag, ElementMapper) DarcyElementMapper;
+    using StokesElementMapper = typename GET_PROP_TYPE(StokesProblemTypeTag, ElementMapper);
+    using DarcyElementMapper = typename GET_PROP_TYPE(DarcyProblemTypeTag, ElementMapper);
 
     enum {
         dim = StokesGridView::dimension,
-        dimWorld = StokesGridView::dimensionworld
-    };
-
-    enum {
-        darcyIsBox = GET_PROP_VALUE(DarcyProblemTypeTag, ImplicitIsBox),
-        stokesDofCodim = 0,
-        darcyDofCodim = 0
     };
 
     typename SubProblemBlockIndices::StokesIdx stokesIdx;
@@ -88,12 +80,6 @@ class MultiDomainModelForStaggered
     using DofTypeIndices = typename GET_PROP(StokesProblemTypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
-
-    typedef typename StokesGridView::template Codim<0>::Entity StokesElement;
-    typedef typename DarcyGridView::template Codim<0>::Entity DarcyElement;
-
-    typedef typename Dune::ReferenceElements<Scalar, dim> StokesReferenceElements;
-    typedef typename Dune::ReferenceElements<Scalar, dim> DarcyReferenceElements;
 
 public:
      // copying a model is not a good idea
@@ -174,20 +160,6 @@ public:
         for (const auto& element : elements(stokesGridView_()))
         {
             stokesLocalResidual().eval(element);
-
-//             if (stokesIsBox)
-//             {
-//                 for (int i = 0; i < element.subEntities(dim); ++i)
-//                 {
-//                     const unsigned int dofIdxGlobal = problem_().stokesProblem().model().dofMapper().subIndex(element, i, dim);
-//                     residual[stokesIdx][dofIdxGlobal] += stokesLocalResidual().residual(i);
-//                 }
-//             }
-//             else//TODO
-//             {
-//                 const unsigned int dofIdxGlobal = problem_().stokesProblem().model().dofMapper().index(element);
-//                 residual[stokesIdx][dofIdxGlobal] = stokesLocalResidual().residual(0);
-//             }
         }
 
         for (const auto& element : elements(darcyGridView_()))
@@ -247,7 +219,7 @@ public:
 
     /*!
      * \brief Returns the local jacobian which calculates the local
-     *        stiffness matrix for an arbitrary stokes element.
+     *        stiffness matrix for an arbitrary Stokes element.
      *
      * The local stiffness matrices of the element are used by
      * the jacobian assembler to produce a global linerization of the
@@ -263,7 +235,7 @@ public:
 
     /*!
      * \brief Returns the local jacobian which calculates the local
-     *        stiffness matrix for an arbitrary low dimensional element.
+     *        stiffness matrix for an arbitrary Darcy element.
      *
      * The local stiffness matrices of the element are used by
      * the jacobian assembler to produce a global linerization of the
@@ -520,7 +492,7 @@ protected:
     // relations, matxerial laws, etc.
     Problem *problemPtr_;
 
-    // calculates the local jacobian matrix for a given stokes/lowdim element
+    // calculates the local jacobian matrix for a given Stokes/Darcy element
     StokesLocalJacobian stokesLocalJacobian_;
     DarcyLocalJacobian darcyLocalJacobian_;
 

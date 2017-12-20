@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
+ * \ingroup MultiDomainModel
  * \brief Reference implementation of a controller class for the Newton solver.
  *
  * Usually this controller should be sufficient.
@@ -96,7 +96,7 @@ NEW_PROP_TAG(NewtonMaxSteps);
 } // end namespace Properties
 
 /*!
- * \ingroup MultiDomain
+ * \ingroup MultiDomainModel
  * \brief A reference implementation of a Newton controller specific
  *        for the coupled problems of equal dimension.
  *
@@ -129,13 +129,6 @@ class MultiDomainNewtonControllerForStaggered
     typename DofTypeIndices::FaceIdx faceIdx;
 
     typename GET_PROP(TypeTag, JacobianMatrix)::localDarcyIdx localDarcyIdx;
-
-
-    enum {
-        numEqStokesCellCenter = GET_PROP_VALUE(StokesProblemTypeTag, NumEqCellCenter),
-        numEqStokesFace = GET_PROP_VALUE(StokesProblemTypeTag, NumEqFace),
-        numEqDarcy = GET_PROP_VALUE(DarcyProblemTypeTag, NumEq)
-    };
 
 public:
     /*!
@@ -414,6 +407,19 @@ public:
 
             BlockVector y;
             y.resize(numRows);
+
+//            printmatrix(std::cout, M, "M", "");
+//            printmatrix(std::cout, A11, "A11", "");
+//            printmatrix(std::cout, A12, "A12", "");
+//            printmatrix(std::cout, A13, "A13", "");
+//            printmatrix(std::cout, A21, "A21", "");
+//            printmatrix(std::cout, A22, "A22", "");
+//            printmatrix(std::cout, A23, "A23", "");
+//            printmatrix(std::cout, A31, "A31", "");
+//            printmatrix(std::cout, A32, "A32", "");
+//            printmatrix(std::cout, A33, "A33", "");
+
+//            printmatrix(std::cout,M, "M", "");
 
             // solve
             bool converged = linearSolver_.solve(M, y, bTmp);

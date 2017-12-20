@@ -42,7 +42,6 @@ class MultiDomainAssemblerForStaggered
 {
     using Implementation = typename GET_PROP_TYPE(TypeTag, JacobianAssembler);
 
-    using Model = typename GET_PROP_TYPE(TypeTag, Model);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
@@ -52,9 +51,6 @@ class MultiDomainAssemblerForStaggered
 
     using StokesGridView = typename GET_PROP_TYPE(StokesProblemTypeTag, GridView);
     using DarcyGridView = typename GET_PROP_TYPE(DarcyProblemTypeTag, GridView);
-
-    using StokesElement = typename StokesGridView::template Codim<0>::Entity;
-    using DarcyElement = typename DarcyGridView::template Codim<0>::Entity;
 
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -71,7 +67,6 @@ class MultiDomainAssemblerForStaggered
     using DofTypeIndices = typename GET_PROP(StokesProblemTypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
-
 
     typename SubProblemBlockIndices::StokesIdx stokesIdx;
     typename SubProblemBlockIndices::DarcyIdx darcyIdx;
@@ -120,8 +115,6 @@ public:
         residual_[stokesIdx][cellCenterIdx].resize(problem.stokesProblem().model().numCellCenterDofs());
         residual_[stokesIdx][faceIdx].resize(problem.stokesProblem().model().numFaceDofs());
         residual_[darcyIdx].resize(problem.model().darcyNumDofs());
-
-
 
 //         printmatrix(std::cout, (*matrix_)[stokesIdx][stokesIdx][cellCenterIdx][cellCenterIdx], "A11", "");
 //         printmatrix(std::cout, (*matrix_)[stokesIdx][stokesIdx][cellCenterIdx][faceIdx], "A12", "");

@@ -18,11 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup MultiDomain
+ * \ingroup MultiDomainModel
  * \brief Base properties for equal dimensional models
  *        including a staggered grid discretization for the stokes model
  */
-
 #ifndef DUMUX_STAGGERED_MULTIDOMAIN_PROPERTIES_HH
 #define DUMUX_STAGGERED_MULTIDOMAIN_PROPERTIES_HH
 
@@ -34,10 +33,8 @@
 #include <dumux/multidomain/staggered-ccfv/newtoncontroller.hh>
 #include <dumux/multidomain/staggered-ccfv/subproblemlocaljacobian.hh>
 
-
 namespace Dumux
 {
-
 namespace Properties
 {
 NEW_TYPE_TAG(CouplingStokesStaggeredModel, INHERITS_FROM(StaggeredModel));
