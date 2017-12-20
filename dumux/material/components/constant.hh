@@ -33,7 +33,6 @@ namespace Components {
 
 /*!
  * \ingroup Components
- *
  * \brief A component which returns run time specified values
  *        for all fluid properties.
  *
@@ -59,7 +58,7 @@ public:
     { return false; }
 
     /*!
-     * \brief Returns true if the gas phase viscostiy is constant
+     * \brief Returns true if the gas phase viscosity is constant
      */
     static constexpr bool gasViscosityIsConstant()
     { return true; }
@@ -77,7 +76,7 @@ public:
     { return false; }
 
     /*!
-     * \brief Returns true if the liquid phase viscostiy is constant
+     * \brief Returns true if the liquid phase viscosity is constant
      */
     static constexpr bool liquidViscosityIsConstant()
     { return true; }

@@ -18,11 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on
  *        absolute saturations.
- *
  */
 #ifndef DUMUX_EFF_TO_ABS_LAW_HH
 #define DUMUX_EFF_TO_ABS_LAW_HH
@@ -34,7 +33,6 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on absolute
  *        saturations.
@@ -69,8 +67,6 @@ public:
 
     /*!
      * \brief The capillary pressure-saturation curve.
-     *
-     *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -78,26 +74,24 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Capillary pressure calculated by specific constitutive relation
      *                  (EffLaw e.g. Brooks & Corey, van Genuchten, linear...)
-     *
      */
     static Scalar pc(const Params &params, const Scalar sw)
     {
         return EffLaw::pc(params, swToSwe(params, sw));
     }
 
-     /*!
+    /*!
      * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
-     *
      */
     static Scalar pcgw(const Params &params, const Scalar sw)
     {
          return EffLaw::pcgw(params, swToSwe(params, sw));
     }
 
-     /*!
-     * \brief The capillary pressure-saturation curve the non-wettigng and wetting phase
+    /*!
+     * \brief The capillary pressure-saturation curve the non-wetting and wetting phase
      * \param params Array of parameters
      * \param sw wetting phase saturation or sum of wetting phase saturations
      */
@@ -106,7 +100,7 @@ public:
         return EffLaw::pcnw(params, swToSwe(params, sw));
     }
 
-     /*!
+    /*!
      * \brief The capillary pressure-saturation curve for the gas and non-wetting phase
      * \param params Array of parameters
      * \param st sum of wetting (liquid) phase saturations
@@ -116,8 +110,8 @@ public:
         return EffLaw::pcgn(params, stToSte(params, st));
     }
 
-     /*!
-     * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
+    /*!
+     * \brief This function ensures a continuous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
      * \param sn Non-wetting liquid saturation
      */
@@ -128,7 +122,6 @@ public:
 
     /*!
      * \brief The saturation-capillary pressure curve.
-     *
      * \param pc Capillary pressure \f$\mathrm{[p_c]}\f$ in \f$\mathrm{[Pa]}\f$.
      * \param params  A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
@@ -146,7 +139,6 @@ public:
     /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure w.r.t the absolute saturation.
-     *
      *        In this case the chain rule needs to be applied:
      \f$\mathrm{
              p_c = p_c( \overline{S}_w (S_w))
@@ -158,7 +150,7 @@ public:
                         and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to
                         EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
-    */
+     */
     static Scalar dpc_dsw(const Params &params, const Scalar sw)
     {
         return EffLaw::dpc_dswe(params, pc);
@@ -167,7 +159,6 @@ public:
     /*!
      * \brief Returns the partial derivative of the absolute
      *        saturation w.r.t. the capillary pressure.
-     *
      * In this case the chain rule needs to be applied:
      \f$\mathrm{
             S_w = S_w(\overline{S}_w (p_c) )
@@ -225,7 +216,7 @@ public:
         return EffLaw::krn(params, swToSwe(params, sw), sn, stToSte(params, st));
     }
 
-     /*!
+    /*!
      * \brief The relative permeability for the gas phase.
      *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[{S}_w]}\f$. It is converted to effective saturation
@@ -244,7 +235,7 @@ public:
         return EffLaw::krg(params, stToSte(params, st));
     }
 
-     /*!
+    /*!
      * \brief The relative permeability for a phase.
      * \param sw Wetting liquid saturation
      * \param sg Gas saturation
@@ -258,7 +249,7 @@ public:
       return EffLaw::kr(params, phaseIdx, swToSwe(params, sw), sn, stToSte(params, st));
     }
 
-    /*!
+   /*!
     * \brief the basis for calculating adsorbed NAPL in storage term
     * \param params Array of parameters
     */
@@ -309,7 +300,7 @@ public:
         return (st-params.swr()) / (1-params.swr());
     }
 
-     /*!
+    /*!
      * \brief Convert an absolute gas saturation to an effective one.
      *
      * \param sg Absolute saturation of the gas phase \f$\mathrm{[{S}_n]}\f$.

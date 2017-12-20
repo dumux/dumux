@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and xylene.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_XYLENE_HH
@@ -33,6 +33,7 @@ namespace BinaryCoeff
 {
 
 /*!
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and xylene.
  */
 class H2O_Xylene
@@ -46,7 +47,6 @@ public:
      *
      *  Sander (1999) \cite sander1999
      */
-
     template <class Scalar>
     static Scalar henry(Scalar temperature)
     {

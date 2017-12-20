@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and a "constant" component.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_CONSTANT_HH
@@ -37,6 +37,7 @@ namespace BinaryCoeff
 {
 
 /*!
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and another component.
  * \todo All other binary coefficient could be generalized like this
  */
@@ -58,12 +59,10 @@ class H2O_Component<Scalar, Components::Constant<id, Scalar>>
 {
 public:
     /*!
-     * \brief Henry coefficent \f$N/m^2\f$  for heavy oil in liquid water.
+     * \brief Henry coefficent \f$N/m^2\f$  for the constant component in liquid water.
      *
-     * See:
-     *
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
-
     static Scalar henryCompInWater(Scalar temperature)
     {
         static const Scalar h = getParamFromGroup<Scalar>(std::to_string(id), "Component.HenryComponentInWater", 1.0);
@@ -71,12 +70,10 @@ public:
     }
 
     /*!
-     * \brief Henry coefficent \f$N/m^2\f$  for water in liquid heavy oil.
+     * \brief Henry coefficent \f$N/m^2\f$  for water in the constant component.
      *
-     * See:
-     *
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
-
     static Scalar henryWaterInComp(Scalar temperature)
     {
         static const Scalar h = getParamFromGroup<Scalar>(std::to_string(id), "Component.HenryWaterInComponent", 1.0);
@@ -85,8 +82,9 @@ public:
 
 
     /*!
-     * \brief Binary diffusion coefficent \f$m^2/s\f$ for molecular water and heavy oil.
-     *
+     * \brief Binary diffusion coefficent \f$m^2/s\f$ for molecular water and the constant component.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
@@ -95,9 +93,9 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficent \f$m^2/s\f$ for tce in liquid water.
-     *
-     * \todo
+     * \brief Diffusion coefficent \f$m^2/s\f$ for the constant component in liquid water.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
     {

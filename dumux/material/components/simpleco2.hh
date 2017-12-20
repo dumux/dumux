@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief A simple class for the \f$CO_2\f$ fluid properties
  */
 #ifndef DUMUX_SIMPLE_CO2_HH
@@ -36,7 +34,6 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- *
  * \brief A class for the \f$CO_2\f$ fluid properties
  *
  * \tparam Scalar The type used for scalar values
@@ -136,7 +133,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-    */
+     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         // Assume an ideal gas
@@ -164,7 +161,7 @@ public:
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$CO_2\f$ at a given pressure and temperature.
      *
-     *\param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:

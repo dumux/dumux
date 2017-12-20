@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Properties of methane \f$CH_4\f$.
  */
 #ifndef DUMUX_CH4_HH
@@ -37,9 +35,7 @@ namespace Dumux
 
 /*!
  * \ingroup Components
- *
  * \brief Properties of pure molecular methane \f$CH_4\f$.
- *
  * \tparam Scalar The type used for scalar values
  */
 template <class Scalar>
@@ -227,7 +223,7 @@ public:
             2.16178*exp(- 2.43787*Tstar);
         Scalar mu = 40.785*Fc*sqrt(M*temperature)/(pow(Vc, 2./3)*Omega_v);
 
-        // convertion from micro poise to Pa s
+        // conversion from micro poise to Pa s
         return mu/1e6 / 10;
     }
 };

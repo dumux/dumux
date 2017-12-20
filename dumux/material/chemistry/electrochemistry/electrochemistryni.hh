@@ -18,10 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Chemistry
  * \brief Electrochemical model for a fuel cell application.
  */
-
 #ifndef DUMUX_ELECTROCHEMISTRY_NI_HH
 #define DUMUX_ELECTROCHEMISTRY_NI_HH
 
@@ -33,11 +32,11 @@ namespace Dumux
 {
 
 /*!
-* \brief
-* Class calculating source terms and current densities for fuel cells
-* with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta (2006) \cite A3:acosta:2006
-* for the non-isothermal case
-*/
+ * \ingroup Chemistry
+ * \brief Class calculating source terms and current densities for fuel cells
+ * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta (2006) \cite A3:acosta:2006
+ * for the non-isothermal case.
+ */
 template <class TypeTag, ElectroChemistryModel electroChemistryModel>
 class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryModel>
 {
@@ -73,13 +72,13 @@ class ElectroChemistryNI : public ElectroChemistry<TypeTag, electroChemistryMode
 
 public:
     /*!
-    * \brief Calculates reaction sources with an electrochemical model approach.
-    *
-    * \param values The primary variable vector
-    * \param currentDensity The current density
-    *
-    * For this method, the \a values parameter stores source values
-    */
+     * \brief Calculates reaction sources with an electrochemical model approach.
+     *
+     * \param values The primary variable vector
+     * \param currentDensity The current density
+     *
+     * For this method, the \a values parameter stores source values
+     */
     static void reactionSource(SourceValues &values,
                                Scalar currentDensity)
     {

@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
- *\ingroup IAPWS
- *
+ * \ingroup IAPWS
  * \brief Implements the equations for region 4 of the IAPWS '97 formulation.
  *
  * See:
@@ -42,9 +40,7 @@ namespace IAPWS
 
 /*!
  * \ingroup IAPWS
- *
  * \brief Implements the equations for region 4 of the IAPWS '97 formulation.
- *
  * \tparam Scalar The type used for scalar values
  *
  * See:

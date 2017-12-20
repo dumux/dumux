@@ -40,7 +40,6 @@ namespace Dumux
 
 /*!
  * \ingroup Components
- *
  * \brief  Tabulates all thermodynamic properties of a given
  *        untabulated chemical species.
  *

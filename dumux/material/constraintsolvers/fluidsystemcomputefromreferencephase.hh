@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ConstraintSolver
  * \brief Computes the composition of all phases of a N-phase,
  *        N-component fluid system assuming that all N phases are
  *        present. The composition is actually retrieved from a
@@ -137,6 +137,7 @@ public:
             checkDefinedMoleFractions(fluidState);
         }
     }
+
     /*!
      * \brief checks whether all the mole fractions which are stored in the fluidstate are founded on defined values.
      */

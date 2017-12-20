@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::OneP
  */
 #ifndef DUMUX_1P_FLUIDSYSTEM_HH
@@ -38,7 +38,6 @@ namespace FluidSystems {
 
 /*!
  * \ingroup Fluidsystems
- *
  * \brief A fluid system for single phase models.
  *
  * \tparam Scalar the scalar type

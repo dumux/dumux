@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief Specification of the material params for the van Genuchten
  *        capillary pressure model.
  *
@@ -34,6 +34,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup fluidmatrixinteractionsparams
  * \brief Reference implementation of a van Genuchten params
  */
 template<class ScalarT>
@@ -166,7 +167,7 @@ public:
     void setSnr(Scalar input)
     { snr_ = input; }
 
-     /*!
+    /*!
      * \brief Return the residual gas saturation.
      */
     Scalar sgr() const
@@ -174,7 +175,7 @@ public:
         return sgr_;
     }
 
-     /*!
+    /*!
      * \brief Set the residual gas saturation.
      * \param input Set the resiudal gas saturation
      */
@@ -183,7 +184,7 @@ public:
          sgr_ = input;
     }
 
-     /*!
+    /*!
      * \brief Set the residual total liquid saturation.
      */
     Scalar swrx() const
@@ -192,7 +193,7 @@ public:
          return swr_;
     }
 
-     /*!
+    /*!
      * \brief Set the residual total liquid saturation.
      * \param v Set the resiudal gas saturation
      */

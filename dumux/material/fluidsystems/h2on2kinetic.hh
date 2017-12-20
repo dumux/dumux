@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief @copybrief Dumux::FluidSystems::H2ON2Kinetic
+ * \ingroup Fluidsystems
+ * \brief @copydoc Dumux::FluidSystems::H2ON2Kinetic
  */
 #ifndef DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
 #define DUMUX_H2O_N2_FLUID_SYSTEM_KINETIC_HH
@@ -310,7 +310,7 @@ public:
         return ParentType::H2O::vaporPressure(temperature);
     }
 };
-}// end namespace Fluidsystem
+} // end namespace Fluidsystem
 } // end namespace Dumux
 
 #endif

@@ -16,23 +16,18 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief Specification of the parameters for a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization is a second order polynomial which is zero for saturations of zero and one.
  */
 #ifndef AWN_SURFACE_POLYNOMIAL_EDGE_ZERO_2ND_ORDER_PARAMS_HH
 #define AWN_SURFACE_POLYNOMIAL_EDGE_ZERO_2ND_ORDER_PARAMS_HH
 
-/*!
- * \file
- * Specification of the material params for the interfacial area surface
- * parameters
- */
-
 namespace Dumux
 {
 /*!
- * \brief implementation of interfacial area surface params
+ * \ingroup fluidmatrixinteractionsparams
+ * \brief Implementation of interfacial area surface params
  */
 template<class ScalarT>
 class AwnSurfacePolynomialEdgeZero2ndOrderParams

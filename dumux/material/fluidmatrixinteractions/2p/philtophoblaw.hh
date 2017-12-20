@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on
  *        absolute saturations. It is valid for hydrophobic materials and is
@@ -37,7 +37,6 @@ namespace Dumux
 {
 /*!
  * \ingroup fluidmatrixinteractionslaws
- *
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on absolute
  *        saturations.

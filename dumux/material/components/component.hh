@@ -19,7 +19,6 @@
 
 /*!
  * \file
- *
  * \ingroup Components
  * \brief Abstract base class of a pure chemical species.
  */

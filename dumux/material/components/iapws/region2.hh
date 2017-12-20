@@ -19,11 +19,8 @@
 
 /*!
  * \file
- *
  * \ingroup IAPWS
- *
  * \brief Implements the equations for region 2 of the IAPWS '97 formulation.
- *
  * See:
  *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation
@@ -42,13 +39,9 @@ namespace Dumux
 namespace IAPWS
 {
 /*!
- *
  * \ingroup IAPWS
- *
  * \brief Implements the equations for region 2 of the IAPWS '97 formulation.
- *
  * \tparam Scalar The type used for scalar values
- *
  * See:
  *
  * IAPWS: "Revised Release on the IAPWS Industrial Formulation

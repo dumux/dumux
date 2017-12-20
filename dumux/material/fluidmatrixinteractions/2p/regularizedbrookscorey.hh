@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of a regularized version of the Brooks-Corey
  *        capillary pressure / relative permeability  <-> saturation relation.
  */
@@ -34,8 +34,8 @@
 
 namespace Dumux
 {
-/*!\ingroup fluidmatrixinteractionslaws
- *
+/*!
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the regularized  Brooks-Corey
  *        capillary pressure / relative permeability  <-> saturation relation.
  *        This class bundles the "raw" curves as
@@ -276,7 +276,7 @@ public:
      *    - above \f$\mathrm{\overline{S}_w =1}\f$:                  set relative permeability to one
      *    - for \f$\mathrm{0 \leq \overline{S}_w \leq 0.05}\f$:     use a spline as interpolation
      *
-         \copydetails BrooksCorey::krn()
+     * \copydetails BrooksCorey::krn()
      *
      */
     static Scalar krn(const Params &params, Scalar swe)

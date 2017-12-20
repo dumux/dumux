@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup EOS
  * \brief Implements the Peng-Robinson equation of state for a
  *        mixture.
  */
@@ -79,16 +79,14 @@ public:
      *
      * The fugacity coefficient \f$\phi_i\f$ of a component \f$i\f$ is
      * defined as
-     * \f[
-     f_i = \phi_i x_i \;,
-     \f]
+     * \f[f_i = \phi_i x_i \;,\f]
      * where \f$f_i\f$ is the component's fugacity and \f$x_i\f$ is
      * the component's mole fraction.
      *
      * See:
      *
-      * R. Reid, et al. (1987, pp. 42-44, 143-145) \cite reid1987
-      */
+     * R. Reid, et al. (1987, pp. 42-44, 143-145) \cite reid1987
+     */
     template <class FluidState, class Params>
     static Scalar computeFugacityCoefficient(const FluidState &fs,
                                              const Params &params,

@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Properties of pure molecular hydrogen \f$H_2\f$.
  */
 #ifndef DUMUX_H2_HH
@@ -37,7 +35,6 @@ namespace Dumux
 
 /*!
  * \ingroup Components
- *
  * \brief Properties of pure molecular hydrogen \f$H_2\f$.
  *
  * \tparam Scalar The type used for scalar values
@@ -161,6 +158,8 @@ public:
      *
      * This is equivalent to the partial derivative of the specific
      * enthalpy to the temperature.
+     * \param T temperature of component in \f$\mathrm{[K]}\f$
+     * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */
@@ -184,7 +183,7 @@ public:
     /*!
      * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of \f$H_2\f$ at a given pressure and temperature.
      *
-     *\param temperature temperature of component in \f$\mathrm{[K]}\f$
+     * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
      *
      * See:

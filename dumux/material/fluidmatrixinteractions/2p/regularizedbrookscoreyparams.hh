@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief   Parameters that are necessary for the \em regularization of
  *          the Brooks-Corey capillary pressure model.
  */
@@ -32,8 +32,7 @@ namespace Dumux
 /*!
  * \brief   Parameters that are necessary for the \em regularization of
  *          the Brooks-Corey capillary pressure model.
- *
- *        \ingroup fluidmatrixinteractionsparams
+ * \ingroup fluidmatrixinteractionsparams
  */
 template <class ScalarT>
 class RegularizedBrooksCoreyParams : public BrooksCoreyParams<ScalarT>

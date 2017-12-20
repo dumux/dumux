@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization uses a maximum value of capillary pressure.
  */
@@ -26,13 +26,10 @@
 #include "awnsurfacepcmaxfctparams.hh"
 #include <dune/common/exceptions.hh>
 
-
-
 namespace Dumux
 {
 /*!
- * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of an interfacial area surface.
  *
  * The idea here is to make sure that interfacial area be zero for Sw=1 and pc=pcmax.

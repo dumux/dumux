@@ -18,11 +18,10 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on
  *        absolute saturations.
- *
  */
 #ifndef DUMUX_EFF_TO_ABS_LAW_HH
 #define DUMUX_EFF_TO_ABS_LAW_HH
@@ -68,8 +67,6 @@ public:
 
     /*!
      * \brief The capillary pressure-saturation curve.
-     *
-     *
      * \param sw Absolute saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$. It is converted to effective saturation
      *                  and then handed over to the material law actually used for calculation.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -77,7 +74,6 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Capillary pressure calculated by specific constitutive relation
      *                  (EffLaw e.g. Brooks & Corey, van Genuchten, linear...)
-     *
      */
     static Scalar pc(const Params &params, Scalar sw)
     {
@@ -91,17 +87,15 @@ public:
      * \param params  A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
-     *\return           Absolute wetting phase saturation calculated as inverse of
+     * \return Absolute wetting phase saturation \f$\mathrm{[S_w]}\f$ calculated as inverse of
      *                  (EffLaw e.g. Brooks & Corey, van Genuchten, linear...) constitutive relation.
-     *
-     * \return The absolute saturation of the wetting phase \f$\mathrm{[S_w]}\f$
      */
     static Scalar sw(const Params &params, Scalar pc)
     {
         return sweToSw_(params, EffLaw::sw(params, pc));
     }
 
-     /*!
+    /*!
      * \brief The capillary pressure at Swe = 1.0 also called end point capillary pressure
      *
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -126,7 +120,7 @@ public:
                         and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return          Partial derivative of \f$\mathrm{[p_c]}\f$ w.r.t. effective saturation according to
                         EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
-    */
+     */
     static Scalar dpc_dsw(const Params &params, Scalar sw)
     {
         return EffLaw::dpc_dswe(params, swToSwe(params, sw) )*dswe_dsw_(params);
@@ -165,7 +159,6 @@ public:
      *                  and then the params container is constructed accordingly. Afterwards the values are set there, too.
      * \return Relative permeability of the wetting phase calculated as implied by
      *                  EffLaw e.g. Brooks & Corey, van Genuchten, linear... .
-     *
      */
     static Scalar krw(const Params &params, Scalar sw)
     {

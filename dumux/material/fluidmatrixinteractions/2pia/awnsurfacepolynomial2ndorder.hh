@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization is a second order polynomial.
  */
@@ -28,19 +28,16 @@
 
 #include <dune/common/exceptions.hh>
 
-
 #include <algorithm>
-
 #include <cmath>
 #include <assert.h>
 
 namespace Dumux
 {
 /*!
- * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the polynomial of second order relating
- *             specific interfacial  area to wetting phase saturation and capillary pressure as suggested by Joekar-Niasar(2008) \cite joekar2008 .
+ *        specific interfacial  area to wetting phase saturation and capillary pressure as suggested by Joekar-Niasar(2008) \cite joekar2008 .
  */
 template <class ScalarT, class ParamsT = AwnSurfacePolynomial2ndOrderParams<ScalarT> >
 class AwnSurfacePolynomial2ndOrder

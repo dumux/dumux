@@ -18,10 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
- * \brief Properties of heavyoil.
+ * \brief Properties of the component heavyoil.
  *
  */
 #ifndef DUMUX_HEAVYOIL_HH
@@ -35,7 +33,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- * \brief heavyoil
+ * \brief Properties of the component heavyoil
  *
  * \tparam Scalar The type used for scalar values
  */
@@ -220,8 +218,6 @@ public:
   /*!
      * \brief The saturation vapor pressure in \f$\mathrm{[Pa]}\f$ of
      *
-     *
-     *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
     static Scalar vaporPressure(Scalar temperature)
@@ -330,7 +326,7 @@ public:
     }
 
     /*!
-     * \brief
+     * \brief The (ideal) gas density of heavyoil vapor at a given temperature and pressure \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$

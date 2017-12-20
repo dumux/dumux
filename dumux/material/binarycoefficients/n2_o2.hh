@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for nitrogen and oxygen.
  */
 #ifndef DUMUX_BINARY_COEFF_N2_O2_HH

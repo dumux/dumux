@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup ConstraintSolver
  * \brief Determines the fluid composition given the component
  *        fugacities and an arbitary equation of state.
  */

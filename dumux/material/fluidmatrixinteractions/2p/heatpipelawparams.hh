@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslparams
  * \brief Specification of the material params for the heat pipe's capillary
  *        pressure model.
  */
@@ -28,6 +28,7 @@
 namespace Dumux
 {
 /*!
+ * \ingroup fluidmatrixinteractionsparams
  * \brief Reference implementation of a params for the heat pipe's
  *        material law
  */

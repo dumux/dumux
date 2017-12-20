@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of van Genuchten's capillary pressure-saturation relation for three phases.
- *
  */
 #ifndef PARKERVANGEN_3P_HH
 #define PARKERVANGEN_3P_HH
@@ -32,8 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of van Genuchten's capillary pressure <->
  *        saturation relation. This class bundles the "raw" curves
  *        as static members and doesn't concern itself converting
@@ -53,13 +51,12 @@ public:
      * \brief The capillary pressure-saturation curve.
      * \param params Array of parameters
      * \param sw wetting phase saturation
-     *
      */
     static Scalar pc(const Params &params, const Scalar sw)
     {
         DUNE_THROW(Dune::NotImplemented, "Capillary pressures for three phases is not so simple! Use pcgn, pcnw, and pcgw");
     }
-   /*!
+    /*!
      * \brief The capillary pressure-saturation curve for the gas and wetting phase
      * \param params Array of parameters
      * \param swe Effective wetting phase saturation
@@ -71,7 +68,7 @@ public:
         return pc_(params, swe);
     }
 
-  /*!
+    /*!
      * \brief The capillary pressure-saturation curve for the non-wettigng and wetting phase
      * \param params Array of parameters
      * \param swe Effective wetting phase saturation
@@ -93,8 +90,8 @@ public:
         return pc_(params,ste)/params.betaGn();
     }
 
-     /*!
-     * \brief This function ensures a continous transition from 2 to 3 phases and vice versa
+    /*!
+     * \brief This function ensures a continuous transition from 2 to 3 phases and vice versa
      * \param params Array of parameters
      * \param sne Non-wetting liquid saturation
      */
@@ -134,18 +131,18 @@ public:
      *        pressure to the effective saturation.
      * \param params Array of parameters
      * \param swe Effective wetting liquid saturation
-    */
+     */
     static Scalar dpc_dswe(const Params &params, const Scalar swe)
     {
         DUNE_THROW(Dune::NotImplemented, "dpc/dswe for three phases not implemented! Do it yourself!");
     }
 
-     /*!
+    /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
-    */
+     */
     static Scalar dpcgw_dswe(const Params &params, const Scalar seRegu)
     {
         using std::pow;
@@ -154,12 +151,12 @@ public:
             * powSeRegu/seRegu/params.vgm()/params.betaGw();
     }
 
-     /*!
+    /*!
      * \brief Returns the partial derivative of the capillary
      *        pressure to the effective saturation.
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
-    */
+     */
     static Scalar dpcnw_dswe(const Params &params, const Scalar seRegu)
     {
         using std::pow;
@@ -173,7 +170,7 @@ public:
      *        pressure to the effective saturation.
      * \param params Array of parameters
      * \param seRegu Effective wetting phase saturation for regularization
-    */
+     */
     static Scalar dpcgn_dste(const Params &params, const Scalar seRegu)
     {
         using std::pow;

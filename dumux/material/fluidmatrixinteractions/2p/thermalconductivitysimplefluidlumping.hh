@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
 #ifndef THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH

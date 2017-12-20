@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Components
  * \brief A generic template for tabulated material laws that depend
  *        on two parameters.
  */
@@ -30,6 +30,7 @@
 
 namespace Dumux {
 /*!
+ * \ingroup Components
  * \brief A generic template for tabulated material laws that depend
  *        on two parameters.
  */

@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Properties of pure molecular nitrogen \f$N_2\f$.
  */
 #ifndef DUMUX_N2_HH
@@ -36,8 +34,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Components
- *
+ * \ingroup Componentss
  * \brief Properties of pure molecular nitrogen \f$N_2\f$.
  *
  * \tparam Scalar The type used for scalar values
@@ -88,7 +85,7 @@ public:
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure molecular nitrogen
      *        at a given temperature.
      *
-     *\param T temperature of component in \f$\mathrm{[K]}\f$
+     * \param T temperature of component in \f$\mathrm{[K]}\f$
      *
      * Taken from:
      *

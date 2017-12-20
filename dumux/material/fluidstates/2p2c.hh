@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup FluidStates
  * \brief Calculates the 2p2c phase state for compositional models.
  */
 #ifndef DUMUX_2P2C_FLUID_STATE_HH
@@ -33,8 +33,7 @@ namespace Dumux
  * \ingroup FluidStates
  * \brief Calculates the phase state from the primary variables in the
  *        sequential 2p2c model.
- *
- *        This boils down to so-called "flash calculation", in this case isothermal and isobaric.
+ * This boils down to so-called "flash calculation", in this case isothermal and isobaric.
  */
 template <class Scalar, class FluidSystem>
 class TwoPTwoCFluidState
@@ -51,10 +50,18 @@ public:
 
 public:
     /*!
-     * \name acess functions
+     * \name access functions
+     * \todo doc me!
      */
     //@{
-    /*! @copydoc CompositionalFluidState::saturation()
+
+    /*!
+     * \brief Returns the saturation \f$S_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The saturation is defined as the pore space occupied by the fluid divided by the total pore space:
+     *  \f[S_\alpha := \frac{\phi \mathcal{V}_\alpha}{\phi \mathcal{V}}\f]
+     *
+     * \param phaseIdx the index of the phase
      */
     Scalar saturation(int phaseIdx) const
     {
@@ -65,38 +72,63 @@ public:
         return 1.0 - sw_;
     }
 
-    /*! @copydoc CompositionalFluidState::massFraction()
-     */
-    Scalar massFraction(int phaseIdx, int compIdx) const
-    {
-        return massFraction_[phaseIdx][compIdx];
-    }
-
-    /*! @copydoc CompositionalFluidState::moleFraction()
+    /*!
+     * \brief Returns the molar fraction \f$x^\kappa_\alpha\f$ of the component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The molar fraction \f$x^\kappa_\alpha\f$ is defined as the ratio of the number of molecules
+     * of component \f$\kappa\f$ and the total number of molecules of the phase \f$\alpha\f$.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
      */
     Scalar moleFraction(int phaseIdx, int compIdx) const
     {
         return moleFraction_[phaseIdx][compIdx];
     }
 
-    /*! @copydoc CompositionalFluidState::density()
+    /*!
+     * \brief Returns the mass fraction \f$X^\kappa_\alpha\f$ of component \f$\kappa\f$ in fluid phase \f$\alpha\f$ in \f$\mathrm{[-]}\f$.
+     *
+     * The mass fraction \f$X^\kappa_\alpha\f$ is defined as the weight of all molecules of a
+     * component divided by the total mass of the fluid phase. It is related with the component's mole fraction by means of the relation
+     *
+     * \f[X^\kappa_\alpha = x^\kappa_\alpha \frac{M^\kappa}{\overline M_\alpha}\;,\f]
+     *
+     * where \f$M^\kappa\f$ is the molar mass of component \f$\kappa\f$ and
+     * \f$\overline M_\alpha\f$ is the mean molar mass of a molecule of phase
+     * \f$\alpha\f$.
+     *
+     * \param phaseIdx the index of the phase
+     * \param compIdx the index of the component
+     */
+    Scalar massFraction(int phaseIdx, int compIdx) const
+    {
+        return massFraction_[phaseIdx][compIdx];
+    }
+
+    /*!
+     * \brief The mass density \f$\rho_\alpha\f$ of the fluid phase
+     *  \f$\alpha\f$ in \f$\mathrm{[kg/m^3]}\f$
      */
     Scalar density(int phaseIdx) const
     { return density_[phaseIdx]; }
 
-    /*! @copydoc CompositionalFluidState::viscosity()
+    /*!
+     * \brief The dynamic viscosity \f$\mu_\alpha\f$ of fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa s]}\f$
      */
     Scalar viscosity(int phaseIdx) const
     { return viscosity_[phaseIdx]; }
 
-    /*! @copydoc CompositionalFluidState::partialPressure()
+    /*!
+     * \brief The partial pressure of a component in the n-phase \f$\mathrm{[Pa]}\f$
      */
     Scalar partialPressure(int compIdx) const
     {
         return partialPressure(nPhaseIdx, compIdx);
     }
 
-    /*! @copydoc CompositionalFluidState::partialPressure()
+    /*!
+     * \brief The partial pressure of a component in a phase \f$\mathrm{[Pa]}\f$
      */
     Scalar partialPressure(int phaseIdx, int compIdx) const
     {
@@ -104,7 +136,8 @@ public:
         return pressure(phaseIdx)*moleFraction(phaseIdx, compIdx);
     }
 
-    /*! @copydoc CompositionalFluidState::pressure()
+    /*!
+     * \brief The pressure \f$p_\alpha\f$ of a fluid phase \f$\alpha\f$ in \f$\mathrm{[Pa]}\f$
      */
     Scalar pressure(int phaseIdx) const
     { return phasePressure_[phaseIdx]; }
@@ -115,12 +148,19 @@ public:
     Scalar capillaryPressure() const
     { return phasePressure_[nPhaseIdx] - phasePressure_[wPhaseIdx]; }
 
-    /*! @copydoc CompositionalFluidState::temperature()
+    /*!
+     * \brief The temperature within the domain \f$\mathrm{[K]}\f$
      */
     Scalar temperature(int phaseIdx = 0) const
     { return temperature_; }
 
-    /*! @copydoc CompositionalFluidState::averageMolarMass()
+    /*!
+     * \brief The average molar mass \f$\overline M_\alpha\f$ of phase \f$\alpha\f$ in \f$\mathrm{[kg/mol]}\f$
+     *
+     * The average molar mass is the mean mass of a mole of the
+     * fluid at current composition. It is defined as the sum of the
+     * component's molar masses weighted by the current mole fraction:
+     * \f[\mathrm{ \overline M_\alpha = \sum_\kappa M^\kappa x_\alpha^\kappa}\f]
      */
     Scalar averageMolarMass(int phaseIdx) const
     {
@@ -134,7 +174,6 @@ public:
 
     /*!
      * \brief Returns the phase mass fraction. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
-     *
      * \param phaseIdx the index of the phase
      */
     Scalar phaseMassFraction(int phaseIdx)
@@ -148,10 +187,10 @@ public:
         }
         return nu_[phaseIdx];
     }
+
     /*!
      * \brief Returns the phase mass fraction \f$ \nu \f$:
      *  phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
-     *
      * \param phaseIdx the index of the phase
      */
     Scalar& nu(int phaseIdx) const
@@ -165,7 +204,6 @@ public:
     //@{
     /*!
      * \brief Sets the viscosity of a phase \f$\mathrm{[Pa*s]}\f$.
-     *
      * \param phaseIdx the index of the phase
      * @param value Value to be stored
      */
@@ -175,7 +213,6 @@ public:
 
     /*!
      * \brief Sets the mass fraction of a component in a phase.
-     *
      * \param phaseIdx the index of the phase
      * \param compIdx the index of the component
      * @param value Value to be stored
@@ -187,7 +224,6 @@ public:
 
     /*!
      * \brief Sets the molar fraction of a component in a fluid phase.
-     *
      * \param phaseIdx the index of the phase
      * \param compIdx the index of the component
      * @param value Value to be stored
@@ -198,7 +234,6 @@ public:
     }
     /*!
      * \brief Sets the density of a phase \f$\mathrm{[kg/m^3]}\f$.
-     *
      * \param phaseIdx the index of the phase
      * @param value Value to be stored
      */
@@ -220,7 +255,6 @@ public:
 
     /*!
      * \brief Sets the phase mass fraction. phase mass per total mass \f$\mathrm{[kg/kg]}\f$.
-     *
      * \param phaseIdx the index of the phase
      * @param value Value to be stored
      */
@@ -230,7 +264,6 @@ public:
     }
     /*!
      * \brief Sets the temperature
-     *
      * @param value Value to be stored
      */
     void setTemperature(Scalar value)
@@ -239,7 +272,6 @@ public:
     }
     /*!
      * \brief Sets phase pressure
-     *
      * \param phaseIdx the index of the phase
      * @param value Value to be stored
      */

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::H2OAirXylene
  */
 #ifndef DUMUX_H2O_AIR_XYLENE_FLUID_SYSTEM_HH

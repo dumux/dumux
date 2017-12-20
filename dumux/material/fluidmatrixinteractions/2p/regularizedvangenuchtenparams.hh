@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief   Parameters that are necessary for the \em regularization of
  *          VanGenuchten "material law".
  */
@@ -31,12 +31,9 @@
 namespace Dumux
 {
 /*!
- *
- *
+ * \ingroup fluidmatrixinteractionsparams
  * \brief   Parameters that are necessary for the \em regularization of
  *          VanGenuchten "material law".
- *
- * \ingroup fluidmatrixinteractionsparams
  */
 template<class ScalarT>
 class RegularizedVanGenuchtenParams : public VanGenuchtenParams<ScalarT>

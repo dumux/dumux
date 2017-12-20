@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Properties of pure molecular oxygen \f$O_2\f$.
  */
 #ifndef DUMUX_O2_HH
@@ -37,7 +35,6 @@ namespace Dumux
 
 /*!
  * \ingroup Components
- *
  * \brief Properties of pure molecular oxygen \f$O_2\f$.
  *
  * \tparam Scalar The type used for scalar values
@@ -173,6 +170,8 @@ public:
      *
      * This is equivalent to the partial derivative of the specific
      * enthalpy to the temperature.
+     * \param T absolute temperature in \f$\mathrm{[K]}\f$
+     * \param pressure of the phase in \f$\mathrm{[Pa]}\f$
      *
      * See: R. Reid, et al. (1987, pp 154, 657, 665) \cite reid1987
      */

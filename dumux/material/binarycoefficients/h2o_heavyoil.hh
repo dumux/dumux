@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Binary coefficients for water and tce.
+ * \ingroup Binarycoefficients
+ * \brief Binary coefficients for water and heavy oil.
  */
 #ifndef DUMUX_BINARY_COEFF_H2O_HEAVYOIL_HH
 #define DUMUX_BINARY_COEFF_H2O_HEAVYOIL_HH
@@ -33,6 +33,7 @@ namespace BinaryCoeff
 {
 
 /*!
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for water and heavy oil as in SAGD processes
  */
 class H2O_HeavyOil
@@ -40,11 +41,8 @@ class H2O_HeavyOil
 public:
     /*!
      * \brief Henry coefficient \f$[N/m^2]\f$  for heavy oil in liquid water.
-     *
-     * See:
-     *
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
-
     template <class Scalar>
     static Scalar henryOilInWater(Scalar temperature)
     {
@@ -56,11 +54,8 @@ public:
 
     /*!
      * \brief Henry coefficient \f$[N/m^2]\f$  for water in liquid heavy oil.
-     *
-     * See:
-     *
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
-
     template <class Scalar>
     static Scalar henryWaterInOil(Scalar temperature)
     {
@@ -71,7 +66,8 @@ public:
 
     /*!
      * \brief Binary diffusion coefficient [m^2/s] for molecular water and heavy oil.
-     *
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
@@ -80,9 +76,9 @@ public:
     }
 
     /*!
-     * \brief Diffusion coefficient [m^2/s] for tce in liquid water.
-     *
-     * \todo
+     * \brief Diffusion coefficient [m^2/s] for heavy oil in liquid water.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)

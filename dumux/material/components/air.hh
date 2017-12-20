@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief A simple class for the air fluid properties
  */
 #ifndef DUMUX_AIR_HH
@@ -34,7 +32,6 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- *
  * \brief A class for the air fluid properties
  *
  * \tparam Scalar The type used for scalar values

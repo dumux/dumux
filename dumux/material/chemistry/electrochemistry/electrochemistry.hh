@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Chemistry
  * \brief Electrochemical model for a fuel cell application.
  */
 #ifndef DUMUX_ELECTROCHEMISTRY_HH
@@ -36,14 +36,13 @@ namespace Dumux
 {
 
 /*!
- * \brief
- * The type of electrochemistry models implemented here (Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006 )
+ * \ingroup Chemistry
+ * \brief The type of electrochemistry models implemented here (Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006 )
  */
 enum ElectroChemistryModel { Ochs, Acosta };
 
 /*!
- * \brief
- * This class calculates source terms and current densities for fuel cells
+ * \brief This class calculates source terms and current densities for fuel cells
  * with the electrochemical models suggested by Ochs (2008) \cite ochs2008 or Acosta et al. (2006) \cite A3:acosta:2006
  */
 template <class TypeTag, ElectroChemistryModel electroChemistryModel>
@@ -96,13 +95,13 @@ class ElectroChemistry
 
 public:
     /*!
-    * \brief Calculates reaction sources with an electrochemical model approach.
-    *
-    * \param values The primary variable vector
-    * \param currentDensity The current density
-    *
-    * For this method, the \a values parameter stores source values
-    */
+     * \brief Calculates reaction sources with an electrochemical model approach.
+     *
+     * \param values The primary variable vector
+     * \param currentDensity The current density
+     *
+     * For this method, the \a values parameter stores source values
+     */
     static void reactionSource(SourceValues &values,
                                Scalar currentDensity)
     {
@@ -128,9 +127,10 @@ public:
     }
 
     /*!
-    * \brief Newton solver for calculation of the current density.
-    * \returns The current density in A/m^2
-    */
+     * \brief Newton solver for calculation of the current density.
+     * \param volVars The volume variables
+     * \returns The current density in A/m^2
+     */
     static Scalar calculateCurrentDensity(const VolumeVariables &volVars)
     {
         static Scalar maxIter = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.MaxIterations");
@@ -198,8 +198,10 @@ public:
 private:
 
     /*!
-    * \brief Calculation of the activation losses
-    */
+     * \brief Calculation of the activation losses
+     * \param volVars The volume variables
+     * \param currentDensity The current density
+     */
     static Scalar calculateActivationLosses_(const VolumeVariables &volVars, const Scalar currentDensity)
     {
         static Scalar refO2PartialPressure = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.RefO2PartialPressure");
@@ -237,8 +239,9 @@ private:
 
 
     /*!
-    * \brief Calculation of concentration losses.
-    */
+     * \brief Calculation of concentration losses.
+     * \param volVars The volume variables
+     */
     static Scalar calculateConcentrationLosses_(const VolumeVariables &volVars)
     {
         static Scalar pO2Inlet = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "ElectroChemistry.pO2Inlet");
@@ -267,8 +270,9 @@ private:
 
 
     /*!
-    * \brief Calculation of the exchange current density.
-    */
+     * \brief Calculation of the exchange current density.
+     * \param volVars The volume variables
+     */
     static Scalar exchangeCurrentDensity_(const VolumeVariables &volVars)
     {
         using std::exp;

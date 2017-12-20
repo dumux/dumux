@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file 2padapter.hh
- *
+ * \file
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Makes the twophase capillary pressure-saturation relations available under the M-phase API for material laws
  *
  * Makes the twophase capillary pressure-saturation relations
@@ -32,8 +32,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup material
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implements a brookscorey saturation-capillary pressure relation
  *
  * Implements a brookscorey saturation-capillary pressure relation for

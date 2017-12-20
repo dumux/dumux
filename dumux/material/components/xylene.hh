@@ -18,9 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup Components
- *
  * \brief Properties of xylene.
  */
 #ifndef DUMUX_XYLENE_HH
@@ -36,7 +34,7 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- * \brief xylene
+ * \brief Properties of xylene.
  *
  * \tparam Scalar The type used for scalar values
  */
@@ -98,7 +96,6 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      */
-
     static Scalar vaporPressure(Scalar temperature)
     {
         const Scalar A = 7.00909;
@@ -254,7 +251,7 @@ public:
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
-    */
+     */
     static Scalar molarGasDensity(Scalar temperature, Scalar pressure)
     {
         return (gasDensity(temperature, pressure) / molarMass());

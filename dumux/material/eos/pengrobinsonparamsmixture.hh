@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup EOS
  * \brief The mixing rule for the oil and the gas phases of the SPE5 problem.
  *
  * This problem comprises \f$H_2O\f$, \f$C_1\f$, \f$C_3\f$, \f$C_6\f$,
@@ -138,6 +138,7 @@ public:
      *
      * The updatePure() method needs to be called _before_ calling
      * this method!
+     * \param fs the thermodynamic state of the fluids
      */
     template <class FluidState>
     void updateMix(const FluidState &fs)
@@ -187,6 +188,8 @@ public:
      *
      * The updatePure() method needs to be called _before_ calling
      * this method!
+     * \param fs the thermodynamic state of the fluids
+     * \param compIdx the component index
      */
     template <class FluidState>
     void updateSingleMoleFraction(const FluidState &fs,
@@ -197,12 +200,14 @@ public:
 
     /*!
      * \brief Return the Peng-Robinson parameters of a pure substance,
+     * \param compIdx the component index
      */
     const PureParams &pureParams(int compIdx) const
     { return pureParams_[compIdx]; }
 
     /*!
      * \brief Returns the Peng-Robinson parameters for a pure component.
+     * \param compIdx the component index
      */
     const PureParams &operator[](int compIdx) const
     {

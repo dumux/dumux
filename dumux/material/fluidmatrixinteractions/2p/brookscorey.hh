@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the capillary pressure and
  * relative permeability <-> saturation relations according to Brooks and Corey.
  *
@@ -58,10 +58,9 @@ public:
      * The Brooks-Corey empirical  capillary pressure <-> saturation
      * function is given by
      *
-     *  \f$\mathrm{
-        p_C = p_e\overline{S}_w^{-1/\lambda}
-    *  }\f$
-    *
+     *  \f$\mathrm{ p_C = p_e\overline{S}_w^{-1/\lambda}
+     *  }\f$
+     *
      * \param swe Effective saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
      *                  Therefore, in the (problem specific) spatialParameters  first, the material law is chosen,
@@ -86,8 +85,7 @@ public:
      * \brief The saturation-capillary pressure curve according to Brooks & Corey.
      *
      * This is the inverse of the capillary pressure-saturation curve:
-     * \f$\mathrm{
-     \overline{S}_w = (\frac{p_C}{p_e})^{-\lambda}}\f$
+     * \f$\mathrm{ \overline{S}_w = (\frac{p_C}{p_e})^{-\lambda}}\f$
      *
      * \param pc Capillary pressure \f$\mathrm{[p_C]}\f$  in \f$\mathrm{[Pa]}\f$.
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -123,10 +121,9 @@ public:
      *        pressure w.r.t. the effective saturation according to Brooks & Corey.
      *
      * This is equivalent to
-     * \f$\mathrm{
-     \frac{\partial p_C}{\partial \overline{S}_w} =
-     -\frac{p_e}{\lambda} \overline{S}_w^{-1/\lambda - 1}
-     }\f$
+     * \f$\mathrm{\frac{\partial p_C}{\partial \overline{S}_w} =
+     * -\frac{p_e}{\lambda} \overline{S}_w^{-1/\lambda - 1}
+     * }\f$
      *
      * \param swe Effective saturation of the wetting phase \f$\mathrm{[\overline{S}_w]}\f$
      * \param params A container object that is populated with the appropriate coefficients for the respective law.
@@ -136,7 +133,7 @@ public:
      *
      * \note Instead of undefined behaviour if pc is not in the valid range, we return a valid number,
      *       by clamping the input.
-    */
+     */
     static Scalar dpc_dswe(const Params &params, Scalar swe)
     {
         using std::pow;

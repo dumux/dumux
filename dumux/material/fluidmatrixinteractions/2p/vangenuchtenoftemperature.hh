@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the regularized version of the van Genuchten's
  *        capillary pressure / relative permeability  <-> saturation relation
  *        *as function of temperature*.
@@ -31,8 +31,8 @@
 
 namespace Dumux
 {
-/*!\ingroup fluidmatrixinteractionslaws
- *
+/*!
+ * \ingroup fluidmatrixinteractionslaws
  * \brief Implementation of the regularized  van Genuchten's
  *        capillary pressure / relative permeability  <-> saturation relation
  *        *as a function of temperature*.

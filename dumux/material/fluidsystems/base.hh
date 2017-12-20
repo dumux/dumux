@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::BaseFluidSystem
  */
 #ifndef DUMUX_BASE_FLUID_SYSTEM_HH
@@ -29,18 +29,18 @@
 
 namespace Dumux
 {
-/*!
- * \ingroup Fluidsystems
- * \brief Fluid system base class.
- *
- * \note Always derive your fluid system from this class to be sure
- *       that all basic functionality is available!
- */
 
 namespace FluidSystems
-{
 
-template <class Scalar, class Implementation>
+{
+   /*!
+    * \ingroup Fluidsystems
+    * \brief Fluid system base class.
+    *
+    * \note Always derive your fluid system from this class to be sure
+    *       that all basic functionality is available!
+    */
+   template <class Scalar, class Implementation>
 class BaseFluidSystem
 {
 public:

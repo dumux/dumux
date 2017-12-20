@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Binarycoefficients
  * \brief Binary coefficients for air and xylene.
  */
 #ifndef DUMUX_BINARY_COEFF_AIR_XYLENE_HH
@@ -33,15 +33,15 @@ namespace BinaryCoeff
 {
 
 /*!
- * \brief Binary coefficients for water and xylene.
- * \param temperature temperature in \f$\mathrm{[K]}\f$
- *
+ * \ingroup Binarycoefficients
+ * \brief Binary coefficients for air and xylene.
  */
 class Air_Xylene
 {
 public:
     /*!
-     *
+     * \brief Henry coefficient \f$\mathrm{[Pa]}\f$  for mesitylene in air.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
      */
     template <class Scalar>
     static Scalar henry(Scalar temperature)

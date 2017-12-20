@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::BrineCO2
  */
 #ifndef DUMUX_BRINE_CO2_SYSTEM_HH
@@ -413,7 +413,6 @@ public:
      * \param paramCache Parameter cache
      * \param phaseIdx The index of the fluid phase to consider
      */
-
     template <class FluidState>
     static Scalar equilibriumMoleFraction(const FluidState &fluidState,
                                       const ParameterCache &paramCache,

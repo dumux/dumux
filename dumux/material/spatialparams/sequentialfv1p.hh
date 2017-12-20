@@ -18,7 +18,6 @@
  *****************************************************************************/
 /*!
  * \file
- *
  * \ingroup SpatialParameters
  * \brief The base class for spatial parameters of problems using the
  *        fv method.
@@ -39,12 +38,8 @@ namespace Properties
 NEW_PROP_TAG(SpatialParams);
 }
 
-
 /*!
  * \ingroup SpatialParameters
- */
-
-/**
  * \brief The base class for spatial parameters of problems using the
  *        fv method.
  */

@@ -19,7 +19,6 @@
 /*!
  * \file
  * \ingroup Components
- *
  * \brief A class for the CO2 fluid properties
  */
 #ifndef DUMUX_CO2_HH
@@ -119,7 +118,7 @@ public:
     /*!
      * \brief The vapor pressure in \f$\mathrm{[Pa]}\f$ of pure CO2
      *        at a given temperature.
-     *
+     * \param T the temperature \f$\mathrm{[K]}\f$
      * See:
      *
      * R. Span and W. Wagner (1996, pp. 1509-1596) \cite span1996
@@ -147,6 +146,8 @@ public:
 
     /*!
      * \brief Specific enthalpy of gaseous CO2 \f$\mathrm{[J/kg]}\f$.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasEnthalpy(Scalar temperature,
                               Scalar pressure)
@@ -163,6 +164,8 @@ public:
 
     /*!
      * \brief Specific enthalpy of liquid CO2 \f$\mathrm{[J/kg]}\f$.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidEnthalpy(Scalar temperature,
                                  Scalar pressure)
@@ -179,6 +182,8 @@ public:
 
     /*!
      * \brief Specific internal energy of CO2 \f$\mathrm{[J/kg]}\f$.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar gasInternalEnergy(Scalar temperature,
                                     Scalar pressure)
@@ -191,6 +196,8 @@ public:
 
     /*!
      * \brief Specific internal energy of liquid CO2 \f$\mathrm{[J/kg]}\f$.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidInternalEnergy(Scalar temperature,
                                        Scalar pressure)
@@ -203,7 +210,9 @@ public:
 
     /*!
      * \brief The density of CO2 at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
-    */
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
+     */
     static Scalar gasDensity(Scalar temperature, Scalar pressure)
     {
         if ((temperature < criticalTemperature() || pressure < criticalPressure()) && !warningThrown)
@@ -218,6 +227,8 @@ public:
 
     /*!
      * \brief The density of pure CO2 at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
+     * \param temperature the temperature \f$\mathrm{[K]}\f$
+     * \param pressure the pressure \f$\mathrm{[Pa]}\f$
      */
     static Scalar liquidDensity(Scalar temperature, Scalar pressure)
     {

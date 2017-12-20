@@ -32,7 +32,6 @@ namespace Dumux
 {
 /*!
  * \ingroup Components
- *
  * \brief A simple benzene component (LNAPL).
  *
  * \tparam Scalar The type used for scalar values
@@ -124,7 +123,7 @@ public:
     }
 
     /*!
-     * \brief The density of steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
+     * \brief The density of benzene steam at a given pressure and temperature \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
@@ -148,7 +147,7 @@ public:
     }
 
     /*!
-     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of steam.
+     * \brief The dynamic viscosity \f$\mathrm{[Pa*s]}\f$ of benzene steam.
      *
      * \param temperature temperature of component in \f$\mathrm{[K]}\f$
      * \param pressure pressure of component in \f$\mathrm{[Pa]}\f$
