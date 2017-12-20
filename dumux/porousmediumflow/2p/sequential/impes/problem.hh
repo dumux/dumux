@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup SequentialTwoPModel
  * \brief Base class for all 2-phase problems which use an impes algorithm
  */
 #ifndef DUMUX_IMPESPROBLEM_2P_HH
@@ -28,15 +29,13 @@
 #include "properties.hh"
 #include "propertiesadaptive.hh"
 
-
 namespace Dumux
 {
 /*!
- * \ingroup IMPETproblems
- * \ingroup IMPES
  * \brief  Base class for all 2-phase problems which use an impes algorithm
+ * \ingroup SequentialTwoPModel
  *
- * @tparam TypeTag The problem TypeTag
+ * \tparam TypeTag The problem TypeTag
  */
 template<class TypeTag>
 class IMPESProblem2P : public IMPETProblem<TypeTag>

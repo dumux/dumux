@@ -16,6 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+/*!
+ * \file
+ * \ingroup SequentialTwoPModel
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption
+ */
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2P_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2P_HH
 
@@ -23,14 +28,11 @@
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 #include <dumux/linear/vectorexchange.hh>
 
-/**
- * @file
- * @brief  Class defining a standard, saturation dependent indicator for grid adaption
- */
 namespace Dumux
 {
-/*!\ingroup IMPES
- * @brief  Class defining a standard, saturation dependent indicator for grid adaption
+/*!
+ * \brief  Class defining a standard, saturation dependent indicator for grid adaption
+ * \ingroup SequentialTwoPModel
  *
  * \tparam TypeTag The problem TypeTag
  */
@@ -61,7 +63,8 @@ private:
     };
 
 public:
-    /*! \brief Calculates the indicator used for refinement/coarsening for each grid cell.
+    /*!
+     * \brief Calculates the indicator used for refinement/coarsening for each grid cell.
      *
      * This standard indicator is based on the saturation gradient.
      */
@@ -154,7 +157,8 @@ public:
 #endif
     }
 
-    /*! \brief Indicator function for marking of grid cells for refinement
+    /*!
+     * \brief Indicator function for marking of grid cells for refinement
      *
      * Returns true if an element should be refined.
      *
@@ -165,7 +169,8 @@ public:
         return (indicatorVector_[problem_.elementMapper().index(element)] > refineBound_);
     }
 
-    /*! \brief Indicator function for marking of grid cells for coarsening
+    /*!
+     * \brief Indicator function for marking of grid cells for coarsening
      *
      * Returns true if an element should be coarsened.
      *
@@ -176,14 +181,16 @@ public:
         return (indicatorVector_[problem_.elementMapper().index(element)] < coarsenBound_);
     }
 
-    /*! \brief Initializes the adaption indicator class*/
+    /*!
+     *\brief Initializes the adaption indicator class*/
     void init()
     {
         refineBound_ = 0.;
         coarsenBound_ = 0.;
     };
 
-    /*! @brief Constructs a GridAdaptionIndicator instance
+    /*!
+     * \brief Constructs a GridAdaptionIndicator instance
      *
      *  This standard indicator is based on the saturation gradient.
      *  It checks the local gradient compared to the maximum global gradient.
