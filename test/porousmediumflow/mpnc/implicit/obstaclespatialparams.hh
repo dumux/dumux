@@ -29,7 +29,6 @@
 #include <dumux/material/fluidmatrixinteractions/2p/regularizedlinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/2p/efftoabslaw.hh>
 
-#include <dumux/porousmediumflow/mpnc/implicit/model.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/mplinearmaterial.hh>
 #include <dumux/material/fluidmatrixinteractions/mp/2padapter.hh>
 
@@ -73,26 +72,24 @@ template<class TypeTag>
 class ObstacleSpatialParams : public FVSpatialParams<TypeTag>
 {
     using ParentType = FVSpatialParams<TypeTag>;
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using CoordScalar = typename Grid::ctype;
-
-    enum {dimWorld=GridView::dimensionworld};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using DimWorldVector = Dune::FieldVector<CoordScalar, dimWorld>;
-
-public:
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
 
-    ObstacleSpatialParams(const GridView &gridView)
-        : ParentType(gridView)
+    enum {dimWorld=GridView::dimensionworld};
+
+public:
+     using PermeabilityType = Scalar;
+
+
+    ObstacleSpatialParams(const Problem &problem)
+        : ParentType(problem)
     {
         // intrinsic permeabilities
         coarseK_ = 1e-12;
@@ -118,31 +115,14 @@ public:
     ~ObstacleSpatialParams()
     {}
 
-    /*!
-     * \brief Update the spatial parameters with the flow solution
-     *        after a timestep.
-     *
-     * \param globalSol The current solution vector
-     */
-    void update(const SolutionVector &globalSol)
+    PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-    }
-
-    /*!
-     * \brief Returns the intrinsic permeability tensor.
-     *
-     * \param element       The current finite element
-     * \param fvGeometry    The current finite volume geometry of the element
-     * \param scvIdx        The index sub-control volume where the
-     *                      intrinsic permeability is given.
-     */
-    Scalar intrinsicPermeability(const Element &element,
-                                 const FVElementGeometry &fvGeometry,
-                                 const unsigned int scvIdx) const
-    {
-        if (isFineMaterial_(fvGeometry.subContVol[scvIdx].global))
+        if (isFineMaterial_(scv.dofPosition()))
             return fineK_;
-        return coarseK_;
+        else
+            return coarseK_;
     }
 
     /*!
@@ -153,9 +133,9 @@ public:
      * \param scvIdx      The local index of the sub-control volume where
      *                    the porosity needs to be defined
      */
-    double porosity(const Element &element,
-                    const FVElementGeometry &fvGeometry,
-                    const unsigned int scvIdx) const
+    Scalar porosity(const Element &element,
+                    const SubControlVolume &scv,
+                    const ElementSolutionVector &elemSol) const
     {
         return porosity_;
     }
@@ -166,9 +146,9 @@ public:
      * \param pos The global position of the sub-control volume.
      * \return the material parameters object
      */
-    const MaterialLawParams& materialLawParamsAtPos(const DimWorldVector &pos) const
+    const MaterialLawParams& materialLawParamsAtPos(const GlobalPosition& globalPos) const
     {
-        if (isFineMaterial_(pos))
+        if (isFineMaterial_(globalPos))
             return fineMaterialParams_;
         else
             return coarseMaterialParams_;
@@ -179,7 +159,7 @@ private:
      * \brief Returns whether a given global position is in the
      *        fine-permeability region or not.
      */
-    static bool isFineMaterial_(const DimWorldVector &pos)
+    static bool isFineMaterial_(const GlobalPosition &pos)
     {
         return
             10 - eps_ <= pos[0] && pos[0] <= 20 + eps_ &&

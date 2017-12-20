@@ -27,12 +27,15 @@
 
 #include <dune/common/parametertreeparser.hh>
 
-#include <dumux/porousmediumflow/mpnc/implicit/model.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+
+#include <dumux/porousmediumflow/mpnc/model.hh>
+#include <dumux/porousmediumflow/problem.hh>
 
 #include <dumux/material/fluidsystems/h2on2.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/fluidstates/compositional.hh>
+#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
 #include "obstaclespatialparams.hh"
 
@@ -46,7 +49,7 @@ namespace Properties
 {
 NEW_TYPE_TAG(ObstacleProblem, INHERITS_FROM(MPNC, ObstacleSpatialParams));
 NEW_TYPE_TAG(ObstacleBoxProblem, INHERITS_FROM(BoxModel, ObstacleProblem));
-NEW_TYPE_TAG(ObstacleCCProblem, INHERITS_FROM(CCModel, ObstacleProblem));
+NEW_TYPE_TAG(ObstacleCCProblem, INHERITS_FROM(CCTpfaModel, ObstacleProblem));
 
 // Set the grid type
 SET_TYPE_PROP(ObstacleProblem, Grid, Dune::YaspGrid<2>);
@@ -57,24 +60,9 @@ SET_TYPE_PROP(ObstacleProblem,
               ObstacleProblem<TypeTag>);
 
 // Set fluid configuration
-SET_PROP(ObstacleProblem, FluidSystem)
-{ private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-public:
-    using type = FluidSystems::H2ON2<Scalar, /*useComplexRelations=*/false>;
-};
-
-// Enable smooth upwinding?
-SET_BOOL_PROP(ObstacleProblem, ImplicitEnableSmoothUpwinding, true);
-
-// Enable molecular diffusion of the components?
-SET_BOOL_PROP(ObstacleProblem, EnableDiffusion, true);
-
-// Enable the re-use of the jacobian matrix whenever possible?
-SET_BOOL_PROP(ObstacleProblem, ImplicitEnableJacobianRecycling, true);
-
-// Reassemble the jacobian matrix only where it changed?
-SET_BOOL_PROP(ObstacleProblem, ImplicitEnablePartialReassemble, true);
+SET_TYPE_PROP(ObstacleProblem,
+              FluidSystem,
+              FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 // decide which type to use for floating values (double / quad)
 SET_TYPE_PROP(ObstacleProblem, Scalar, double);
@@ -111,19 +99,28 @@ SET_TYPE_PROP(ObstacleProblem, Scalar, double);
  */
 template <class TypeTag>
 class ObstacleProblem
-    : public ImplicitPorousMediaProblem<TypeTag>
+    : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using ParameterCache = typename FluidSystem::ParameterCache;
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    using ParameterCache = typename FluidSystem::ParameterCache;
 
     // world dimension
     enum {dimWorld = GridView::dimensionworld};
@@ -137,13 +134,10 @@ class ObstacleProblem
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
+
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    enum { isBox = GET_PROP_VALUE(TypeTag, ImplicitIsBox) };
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
     /*!
@@ -152,8 +146,8 @@ public:
      * \param timeManager The time manager
      * \param gridView The grid view
      */
-    ObstacleProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ObstacleProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
         temperature_ = 273.15 + 25; // -> 25°C
 
@@ -167,42 +161,7 @@ public:
         int np = 1000;
 
         FluidSystem::init(Tmin, Tmax, nT, pmin, pmax, np);
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-    }
-
-    /*!
-     * \brief User defined output after the time integration
-     *
-     * Will be called diretly after the time integration.
-     */
-    void postTimeStep()
-    {
-        // Calculate storage terms of the individual phases
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-            PrimaryVariables phaseStorage;
-            this->model().globalPhaseStorage(phaseStorage, phaseIdx);
-
-            if (this->gridView().comm().rank() == 0) {
-                std::cout
-                    <<"Storage in "
-                    << FluidSystem::phaseName(phaseIdx)
-                    << "Phase: ["
-                    << phaseStorage
-                    << "]"
-                    << "\n";
-            }
-        }
-
-        // Calculate total storage terms
-        PrimaryVariables storage;
-        this->model().globalStorage(storage);
-
-        // Write mass balance information for rank 0
-        if (this->gridView().comm().rank() == 0) {
-            std::cout
-                <<"Storage total: [" << storage << "]"
-                << "\n";
-        }
+        name_ = getParam<std::string>("Problem.Name");
     }
 
     /*!
@@ -223,7 +182,7 @@ public:
      *
      * \param globalPos The global position
      */
-    Scalar temperatureAtPos(const GlobalPosition &globalPos) const
+    Scalar temperature() const
     { return temperature_; }
 
     /*!
@@ -240,37 +199,31 @@ public:
      * \name Boundary conditions
      */
     // \{
-
     /*!
      * \brief Specifies which kind of boundary condition should be
-     *        used for which equation on a given boundary control volume.
+     *        used for which equation on a given boundary segment
      *
-     * \param values The boundary types for the conservation equations
-     * \param globalPos The position of the center of the finite volume
+     * \param globalPos The global position
      */
-    void boundaryTypesAtPos(BoundaryTypes &values,
-                            const GlobalPosition &globalPos) const
+    BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
+        BoundaryTypes bcTypes;
         if (onInlet_(globalPos) || onOutlet_(globalPos))
-            values.setAllDirichlet();
+            bcTypes.setAllDirichlet();
         else
-            values.setAllNeumann();
+            bcTypes.setAllNeumann();
+        return bcTypes;
     }
 
     /*!
-     * \brief Evaluate the boundary conditions for a dirichlet
-     *        control volume.
+     * \brief Evaluates the boundary conditions for a Dirichlet
+     *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
-     * \param globalPos The center of the finite volume which ought to be set.
-     *
-     * For this method, the \a values parameter stores primary variables.
+     * \param globalPos The global position
      */
-    void dirichletAtPos(PrimaryVariables &values,
-                        const GlobalPosition &globalPos) const
+    PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
+       return initial_(globalPos);
     }
 
     /*!
@@ -287,13 +240,13 @@ public:
      *
      * Negative values mean influx.
      */
-    void neumann(PrimaryVariables &values,
-                 const Element &element,
-                 const FVElementGeometry &fvGeometry,
-                 const Intersection &intersection,
-                 const unsigned int scvIdx,
-                 const unsigned int boundaryFaceIdx) const
-    { values = 0.; }
+    PrimaryVariables neumann(const Element& element,
+                             const FVElementGeometry& fvGeometry,
+                             const ElementVolumeVariables& elemVolVars,
+                             const SubControlVolumeFace& scvf) const
+    {
+        return PrimaryVariables(0.0);
+    }
 
     // \}
 
@@ -314,12 +267,13 @@ public:
      *
      * Positive values mean that mass is created, negative ones mean that it vanishes.
      */
-    void source(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const unsigned int scvIdx) const
+    //! \copydoc Dumux::ImplicitProblem::source()
+    PrimaryVariables source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume &scv) const
     {
-        values = Scalar(0.0);
+       return PrimaryVariables(0.0);
     }
 
     /*!
@@ -331,20 +285,18 @@ public:
      * For this method, the \a values parameter stores primary
      * variables.
      */
-    void initialAtPos(PrimaryVariables &values,
-                      const GlobalPosition &globalPos) const
+    PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
-        initial_(values, globalPos);
-        Valgrind::CheckDefined(values);
+        return initial_(globalPos);
     }
 
     // \}
 
 private:
     // the internal method for the initial condition
-    void initial_(PrimaryVariables &values,
-                  const GlobalPosition &globalPos) const
+    PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
+        PrimaryVariables values(0.0);
         FluidState fs;
 
         int refPhaseIdx;
@@ -389,7 +341,7 @@ private:
         fs.setSaturation(otherPhaseIdx, 1.0 - fs.saturation(refPhaseIdx));
 
         // calulate the capillary pressure
-        const MaterialLawParams &matParams =
+        const auto& matParams =
             this->spatialParams().materialLawParamsAtPos(globalPos);
         PhaseVector pc;
         MaterialLaw::capillaryPressures(pc, matParams, fs);
@@ -422,6 +374,7 @@ private:
 
         // first pressure
         values[p0Idx] = fs.pressure(/*phaseIdx=*/0);
+        return values;
     }
 
     bool onInlet_(const GlobalPosition &globalPos) const

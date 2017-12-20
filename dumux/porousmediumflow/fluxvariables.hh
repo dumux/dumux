@@ -61,6 +61,7 @@ class PorousMediumFluxVariables : public FluxVariablesBase<TypeTag>
     static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
     static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
     static constexpr bool enableEnergyBalance = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+    static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium);
 
 public:
 
@@ -115,6 +116,7 @@ public:
         }
     }
 
+    template <bool enable = !enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
     Scalar heatConductionFlux() const
     {
         if (enableEnergyBalance)
@@ -130,6 +132,19 @@ public:
         {
             return 0.0;
         }
+    }
+
+    template <bool enable = enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
+    Scalar heatConductionFlux(const int phaseIdx) const
+    {
+            return HeatConductionType::flux(this->problem(),
+                                            this->element(),
+                                            this->fvGeometry(),
+                                            this->elemVolVars(),
+                                            this->scvFace(),
+                                            phaseIdx,
+                                            this->elemFluxVarsCache());
+
     }
 
 private:

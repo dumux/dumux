@@ -19,10 +19,9 @@
 /*!
  * \file
  *
- * \brief Test for the three-phase box model
+ * \brief test for the mpnc porousmedium box flow model
  */
 #include <config.h>
-#include "combustionproblem1c.hh"
 
 #include <ctime>
 #include <iostream>
@@ -33,6 +32,8 @@
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/istl/io.hh>
 
+#include "obstacleproblem.hh"
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/valgrind.hh>
@@ -41,7 +42,7 @@
 
 #include <dumux/linear/amgbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/porousmediumflow/nonequilibrium/newtoncontroller.hh>
+#include <dumux/nonlinear/newtoncontroller.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -65,11 +66,17 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += progName;
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-TimeManager.TEnd              End of the simulation [s] \n"
-                                        "\t-TimeManager.DtInitial         Initial timestep size [s] \n"
-                                        "\t-Grid.File                     Name of the file containing the grid \n"
-                                        "\t                               definition in DGF format\n";
+                    errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
+                                        "\t-TimeManager.TEnd               End of the simulation [s] \n"
+                                        "\t-TimeManager.DtInitial          Initial timestep size [s] \n"
+                                        "\t-Grid.LowerLeft                 Lower left corner coordinates\n"
+                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
+                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
+                                        "\t                                definition in DGF format\n"
+                                        "\t-SpatialParams.LensLowerLeft   coordinates of the lower left corner of the lens [m] \n"
+                                        "\t-SpatialParams.LensUpperRight  coordinates of the upper right corner of the lens [m] \n"
+                                        "\t-SpatialParams.Permeability     Permeability of the domain [m^2] \n"
+                                        "\t-SpatialParams.PermeabilityLens Permeability of the lens [m^2] \n";
 
         std::cout << errorMessageOut
                   << "\n";
@@ -78,14 +85,10 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv) try
 {
-
     using namespace Dumux;
 
     // define the type tag for this problem
     using TypeTag = TTAG(TYPETAG);
-
-    ////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////
 
     // initialize MPI, finalize is done automatically on exit
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
@@ -128,7 +131,6 @@ int main(int argc, char** argv) try
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     auto gridVariables = std::make_shared<GridVariables>(problem, fvGridGeometry);
     gridVariables->init(x, xOld);
-    problem->setGridVariables(gridVariables);
 
     // get some time loop parameters
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -157,12 +159,12 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
-    using LinearSolver = Dumux::AMGBackend<TypeTag>;
+    using LinearSolver = AMGBackend<TypeTag>;
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = Dumux::NonEquilibriumNewtonController<TypeTag>;
-    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
+    using NewtonController = NewtonController<TypeTag>;
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
@@ -183,17 +185,16 @@ int main(int argc, char** argv) try
 
             if (!converged && i == maxDivisions-1)
                 DUNE_THROW(Dune::MathError,
-                            "Newton solver didn't converge after "
-                            << maxDivisions
-                            << " time-step divisions. dt="
-                            << timeLoop->timeStepSize()
-                            << ".\nThe solutions of the current and the previous time steps "
-                            << "have been saved to restart files.");
+                           "Newton solver didn't converge after "
+                           << maxDivisions
+                           << " time-step divisions. dt="
+                           << timeLoop->timeStepSize()
+                           << ".\nThe solutions of the current and the previous time steps "
+                           << "have been saved to restart files.");
         }
 
         // make the new solution the old solution
         xOld = x;
-        problem->setTime(timeLoop->time()+timeLoop->timeStepSize());
         gridVariables->advanceTimeStep();
 
         // advance to the time loop to the next step
@@ -207,7 +208,6 @@ int main(int argc, char** argv) try
 
         // set new dt as suggested by newton controller
         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
-
 
     } while (!timeLoop->finished());
 
@@ -225,8 +225,7 @@ int main(int argc, char** argv) try
     }
 
     return 0;
-
-}
+} // end main
 catch (Dumux::ParameterException &e)
 {
     std::cerr << std::endl << e << " ---> Abort!" << std::endl;

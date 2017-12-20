@@ -25,23 +25,25 @@
 #define THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
 
 #include <algorithm>
-#include <dumux/porousmediumflow/mpnc/implicit/properties.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
+struct SimpleLumpingIndices
+{
+    static const int wPhaseIdx = 0;
+    static const int nPhaseIdx = 1;
+};
 
 /*!
  * \ingroup fluidmatrixinteractionslaws
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  * \todo This shouldn't depend on TypeTag!!
  */
-template<class TypeTag>
+template<class TypeTag, class Scalar, class Indices = SimpleLumpingIndices>
 class ThermalConductivitySimpleFluidLumping
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum { numEnergyEquations = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
-
+    enum { numEnergyEquationsFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
 
 public:
     /*!
@@ -55,12 +57,12 @@ public:
      *
      * \return effective thermal conductivity \f$\mathrm{[W/(m K)]}\f$
      */
-    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry>
+    template<class VolumeVariables, class SpatialParams, class Element, class FVGeometry, class SubControlVolume>
     static Scalar effectiveThermalConductivity(const VolumeVariables& volVars,
                                                const SpatialParams& spatialParams,
                                                const Element& element,
                                                const FVGeometry& fvGeometry,
-                                               int scvIdx)
+                                               SubControlVolume& scv)
     {
         Scalar sw = volVars.saturation(Indices::wPhaseIdx);
         Scalar lambdaW = volVars.fluidThermalConductivity(Indices::wPhaseIdx);
@@ -90,7 +92,7 @@ public:
                                                const Scalar porosity,
                                                const Scalar rhoSolid = 0.0 /*unused*/)
     {
-        assert(numEnergyEquations != 3) ;
+        assert(numEnergyEquationsFluid != 2) ;
 
         // Franz Lindner / Shi & Wang 2011
         using std::max;
@@ -100,7 +102,7 @@ public:
 
         Scalar keff ;
 
-        if (numEnergyEquations == 2){ // solid dealed with individually (extra balance equation)
+        if (numEnergyEquationsFluid == 1){ // solid dealed with individually (extra balance equation)
             keff = kfeff ;
         }
         else {

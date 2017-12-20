@@ -41,12 +41,6 @@ class CombustionSpatialParams;
 
 namespace Properties
 {
-// Some forward declarations
-NEW_PROP_TAG(EnableEnergy);
-NEW_PROP_TAG(FluidState);
-NEW_PROP_TAG(FluidSystem);
-NEW_PROP_TAG(NumEnergyEquations);
-NEW_PROP_TAG(NumPhases);
 
 // The spatial params TypeTag
 NEW_TYPE_TAG(CombustionSpatialParams);
@@ -60,12 +54,10 @@ SET_PROP(CombustionSpatialParams, MaterialLaw)
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     enum {wPhaseIdx   = FluidSystem::wPhaseIdx};
-
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
 //    actually other people call this Leverett
     using EffectiveLaw = HeatPipeLaw<Scalar>;
-
     using TwoPMaterialLaw = EffToAbsLaw<EffectiveLaw>;
     public:
         using type = TwoPAdapter<wPhaseIdx, TwoPMaterialLaw>;
@@ -81,9 +73,17 @@ private:
 template<class TypeTag>
 class CombustionSpatialParams : public FVSpatialParams<TypeTag>
 {
+
     using ParentType = FVSpatialParams<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     enum {dim=GridView::dimension };
@@ -91,127 +91,76 @@ class CombustionSpatialParams : public FVSpatialParams<TypeTag>
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
     enum {sPhaseIdx = FluidSystem::sPhaseIdx};
-    enum {numEnergyEquations    = GET_PROP_VALUE(TypeTag, NumEnergyEquations)};
-    enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum {enableEnergy          = GET_PROP_VALUE(TypeTag, EnableEnergy)};
-
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using DimVector = Dune::FieldVector<Scalar, dimWorld>;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 public:
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
+    using PermeabilityType = Scalar;
 
-    CombustionSpatialParams(const GridView &gv)
-        : ParentType(gv)
+    CombustionSpatialParams(const Problem &problem)
+        : ParentType(problem)
     {
+        // this is the parameter value from file part
+        porosity_ = getParam<Scalar>("SpatialParams.PorousMedium.porosity");
+        intrinsicPermeabilityOutFlow_ = getParam<Scalar>("SpatialParams.Outflow.permeabilityOutFlow");
+        porosityOutFlow_                = getParam<Scalar>("SpatialParams.Outflow.porosityOutFlow");;
+        solidThermalConductivityOutflow_ =getParam<Scalar>("SpatialParams.Outflow.soilThermalConductivityOutFlow");
+        solidDensity_   = getParam<Scalar>("SpatialParams.soil.density");
+        solidThermalConductivity_ = getParam<Scalar>("SpatialParams.soil.thermalConductivity");
+        solidHeatCapacity_   = getParam<Scalar>("SpatialParams.soil.heatCapacity");
+        interfacialTension_  = getParam<Scalar>("Constants.interfacialTension");
+
+        Swr_ = getParam<Scalar>("SpatialParams.soil.Swr");
+        Snr_ = getParam<Scalar>("SpatialParams.soil.Snr");
+
+        characteristicLength_ =getParam<Scalar>("SpatialParams.PorousMedium.meanPoreSize");
+
+        using std::pow;
+        intrinsicPermeability_  =  (pow(characteristicLength_,2.0)  * pow(porosity_, 3.0)) / (150.0 * pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
+
+        factorEnergyTransfer_ = getParam<Scalar>("SpatialParams.PorousMedium.factorEnergyTransfer");
+        factorMassTransfer_ =getParam<Scalar>("SpatialParams.PorousMedium.factorMassTransfer");
+        lengthPM_ = getParam<Scalar>("Grid.lengthPM");
+
+        // residual saturations
+        materialParams_.setSwr(Swr_) ;
+        materialParams_.setSnr(Snr_) ;
+
+        using std::sqrt;
+        materialParams_.setP0(sqrt(porosity_/intrinsicPermeability_));
+        materialParams_.setGamma(interfacialTension_); // interfacial tension of water-air at 100°C
     }
 
     ~CombustionSpatialParams()
     {}
 
-    //! load parameters from input file and initialize parameter values
-        void setInputInitialize()
-        {
-                // BEWARE! First the input values have to be set, then the material parameters can be set
 
-                // this is the parameter value from file part
-                porosity_                       = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.porosity);
-
-                intrinsicPermeabilityOutFlow_   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.permeabilityOutFlow);
-                porosityOutFlow_                = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.porosityOutFlow);
-                solidThermalConductivityOutflow_ = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.OutFlow.soilThermalConductivityOutFlow);
-
-                solidDensity_                       = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.density);
-                solidThermalConductivity_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.thermalConductivity);
-                solidHeatCapacity_                      = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.heatCapacity);
-
-                interfacialTension_                 = GET_RUNTIME_PARAM(TypeTag, Scalar, Constants.interfacialTension);
-
-                Swr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Swr);
-                Snr_            = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.Snr);
-
-                characteristicLength_   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.meanPoreSize);
-                using std::pow;
-                intrinsicPermeability_  =  (pow(characteristicLength_,2.0)  * pow(porosity_,3.0)) / (150.0 * pow((1.0-porosity_),2.0)); // 1.69e-10 ; //
-
-                factorEnergyTransfer_         = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorEnergyTransfer);
-                factorMassTransfer_           = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.PorousMedium.factorMassTransfer);
-
-                lengthPM_               = GET_RUNTIME_PARAM(TypeTag, Scalar,Grid.lengthPM);
-
-            // residual saturations
-            materialParams_.setSwr(Swr_) ;
-            materialParams_.setSnr(Snr_) ;
-
-            using std::sqrt;
-            materialParams_.setP0(sqrt(porosity_/intrinsicPermeability_));
-            materialParams_.setGamma(interfacialTension_); // interfacial tension of water-air at 100°C
-        }
-
-    /*! \brief Update the spatial parameters with the flow solution
-     *        after a timestep. */
-    void update(const SolutionVector & globalSolutionFn)
-    { }
-
-    /*! \brief Returns the intrinsic permeability
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element The current finite element
-     * \param fvGeometry The current finite volume geometry of the element
-     * \param scvIdx The index sub-control volume */
-    const Scalar intrinsicPermeability(const Element & element,
-                                 const FVElementGeometry & fvGeometry,
-                                 const unsigned int scvIdx) const
+     PermeabilityType permeability(const Element& element,
+                                  const SubControlVolume& scv,
+                                  const ElementSolutionVector& elemSol) const
     {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
+        const auto& globalPos =  scv.dofPosition();
         if ( inOutFlow(globalPos) )
             return intrinsicPermeabilityOutFlow_ ;
         else
             return intrinsicPermeability_ ;
     }
 
-    /*! \brief Return the porosity \f$[-]\f$ of the soil
+    /*!
+     * \brief Define the porosity \f$[-]\f$ of the soil
      *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry
-     * \param scvIdx The local index of the sub-control volume  */
-    const Scalar porosity(const Element & element,
-                    const FVElementGeometry & fvGeometry,
-                    const unsigned int scvIdx) const
+     * \param element     The finite element
+     * \param fvGeometry  The finite volume geometry
+     * \param scvIdx      The local index of the sub-control volume where
+     *                    the porosity needs to be defined
+     */
+    Scalar porosity(const Element &element,
+                    const SubControlVolume &scv,
+                    const ElementSolutionVector &elemSol) const
     {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
+        const auto& globalPos =  scv.dofPosition();
         if ( inOutFlow(globalPos) )
             return porosityOutFlow_ ;
         else
             return porosity_ ;
-    }
-
-    /*!
-     * \brief Return a reference to the material parameters of the material law.
-     *
-     *        The position is determined based on the coordinate of
-     *        the vertex belonging to the considered sub control volume.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    const MaterialLawParams & materialLawParams(const Element & element,
-                                                   const FVElementGeometry & fvGeometry,
-                                                   const unsigned int scvIdx) const
-    {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        const MaterialLawParams & materialParams  = materialLawParamsAtPos(globalPos) ;
-        return materialParams ;
     }
 
     /*!
@@ -230,10 +179,15 @@ public:
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
     const Scalar characteristicLength(const Element & element,
-                                        const FVElementGeometry & fvGeometry,
-                                        const unsigned int scvIdx) const
-    {   const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        return characteristicLengthAtPos(globalPos); }
+                                      const SubControlVolume &scv,
+                                      const ElementSolutionVector &elemSol) const
+
+    {
+        const auto& globalPos =  scv.center();
+        return characteristicLengthAtPos(globalPos);
+    }
+
+
     /*!\brief Return the characteristic length for the mass transfer.
      * \param globalPos The position in global coordinates.*/
     const Scalar characteristicLengthAtPos(const  GlobalPosition & globalPos) const
@@ -246,11 +200,15 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
-    const Scalar factorEnergyTransfer(const Element & element,
-                                        const FVElementGeometry & fvGeometry,
-                                        const unsigned int scvIdx) const
-    {   const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        return factorEnergyTransferAtPos(globalPos); }
+    const Scalar factorEnergyTransfer(const Element &element,
+                                      const SubControlVolume &scv,
+                                      const ElementSolutionVector &elemSol) const
+    {
+       const auto& globalPos =  scv.dofPosition();
+        return factorEnergyTransferAtPos(globalPos);
+    }
+
+
     /*!\brief Return the pre factor the the energy transfer
      * \param globalPos The position in global coordinates.*/
     const Scalar factorEnergyTransferAtPos(const  GlobalPosition & globalPos) const
@@ -266,11 +224,14 @@ public:
      * \param element     The finite element
      * \param fvGeometry  The finite volume geometry
      * \param scvIdx      The local index of the sub control volume */
-    const Scalar factorMassTransfer(const Element & element,
-                                        const FVElementGeometry & fvGeometry,
-                                        const unsigned int scvIdx) const
-    {   const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
-        return factorMassTransferAtPos(globalPos); }
+    const Scalar factorMassTransfer(const Element &element,
+                                    const SubControlVolume &scv,
+                                    const ElementSolutionVector &elemSol) const
+    {
+       const auto& globalPos =  scv.dofPosition();
+       return factorMassTransferAtPos(globalPos);
+    }
+
     /*!\brief Return the pre factor the the mass transfer
      * \param globalPos The position in global coordinates.*/
     const Scalar factorMassTransferAtPos(const  GlobalPosition & globalPos) const
@@ -279,45 +240,53 @@ public:
     }
 
 
-    /*! \brief Returns the heat capacity \f$[J/m^3 K]\f$ of the rock matrix.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume where
-     *                    the heat capacity needs to be defined */
-    const Scalar solidHeatCapacity(const Element &element,
-                               const FVElementGeometry &fvGeometry,
-                               const unsigned int scvIdx) const
-    {  return solidHeatCapacity_ ;}  // specific heat capacity of solid  [J / (kg K)]
-
-    /*!\brief Returns the density \f$[kg/m^3]\f$ of the rock matrix.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    const Scalar solidDensity(const Element & element,
-                              const FVElementGeometry & fvGeometry,
-                              const unsigned int scvIdx) const
-    { return solidDensity_ ;} // density of solid [kg/m^3]
-
-    /*!\brief Returns the thermal conductivity \f$[W/(m K)]\f$ of the rock matrix.
-     * \param element     The finite element
-     * \param fvGeometry  The finite volume geometry
-     * \param scvIdx      The local index of the sub-control volume */
-    const Scalar  solidThermalConductivity(const Element &element,
-                                    const FVElementGeometry &fvGeometry,
-                                    const unsigned int scvIdx)const
+    /*!
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidHeatCapacityAtPos(const GlobalPosition& globalPos) const
     {
-        const  GlobalPosition & globalPos =  fvGeometry.subContVol[scvIdx].global ;
+        return solidHeatCapacity_ ;// specific heat capacity of solid  [J / (kg K)]
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidDensityAtPos(const GlobalPosition& globalPos) const
+    {
+        return solidDensity_ ;// density of solid [kg/m^3]
+    }
+
+    /*!
+     * \brief Returns the thermal conductivity \f$\mathrm{[W/(m K)]}\f$ of the porous material.
+     *
+     * This is only required for non-isothermal models.
+     *
+     * \param globalPos The global position
+     */
+    Scalar solidThermalConductivity(const Element &element,
+                                    const SubControlVolume &scv,
+                                    const ElementSolutionVector &elemSol) const
+    {
+        const auto& globalPos =  scv.dofPosition();
         if ( inOutFlow(globalPos) )
-            return solidThermalConductivityOutflow_ ;
+            return solidThermalConductivityOutflow_ ;// conductivity of solid  [W / (m K ) ]
         else
             return solidThermalConductivity_ ;
-    } // conductivity of solid  [W / (m K ) ]
+    }
 
     /*!
      * \brief Give back whether the tested position (input) is a specific region (right end of porous medium) in the domain
      */
     bool inOutFlow(const GlobalPosition & globalPos) const
-    {        return globalPos[0] > (lengthPM_ - eps_) ;    }
+    { return globalPos[0] > (lengthPM_ - eps_) ;    }
 
     /*!
      * \brief Give back how long the porous medium domain is.

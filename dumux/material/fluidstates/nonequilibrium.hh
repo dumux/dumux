@@ -23,8 +23,8 @@
  *        multi-phase, multi-component fluid system without using
  *        any assumptions.
  */
-#ifndef DUMUX_GENERIC_FLUID_STATE_HH
-#define DUMUX_GENERIC_FLUID_STATE_HH
+#ifndef DUMUX_NONEQUILIBRIUM_FLUID_STATE_HH
+#define DUMUX_NONEQUILIBRIUM_FLUID_STATE_HH
 
 #include <cmath>
 #include <algorithm>
@@ -35,6 +35,7 @@
 
 namespace Dumux
 {
+
 /*!
  * \ingroup FluidStates
  * \brief Represents all relevant thermodynamic quantities of a
@@ -45,8 +46,8 @@ template <class Scalar, class FluidSystem>
 class NonEquilibriumFluidState
 {
 public:
-    enum { numPhases = FluidSystem::numPhases };
-    enum { numComponents = FluidSystem::numComponents };
+    static constexpr int numPhases = FluidSystem::numPhases;
+    static constexpr int numComponents = FluidSystem::numComponents;
 
     NonEquilibriumFluidState()
     {
@@ -116,7 +117,14 @@ public:
      * @copydoc Dumux::CompositionalFluidState::fugacity()
      */
     Scalar fugacity(int phaseIdx, int compIdx) const
-    { return pressure_[phaseIdx]*fugacityCoefficient_[phaseIdx][compIdx]*moleFraction_[phaseIdx][compIdx]; }
+    {
+            return pressure_[phaseIdx]*fugacityCoefficient_[phaseIdx][compIdx]*moleFraction_[phaseIdx][compIdx];
+    }
+
+    Scalar fugacity(int compIdx) const
+    {
+           return fugacity(0, compIdx);
+    }
 
     /*!
      * @copydoc Dumux::CompositionalFluidState::molarVolume()
@@ -140,8 +148,16 @@ public:
     /*!
      * @copydoc Dumux::CompositionalFluidState::temperature()
      */
-    Scalar temperature(int phaseIdx) const
-    { return temperature_[phaseIdx]; }
+    Scalar temperature(const int phaseIdx) const
+    {  return temperature_[phaseIdx];  }
+
+    /*!
+     * \brief Get the equilibrium temperature \f$\mathrm{[K]}\f$ of the fluid phases.
+     */
+    Scalar temperature() const
+    {
+        return temperatureEquil_ ;
+    }
 
     /*!
      * @copydoc Dumux::CompositionalFluidState::pressure()
@@ -178,13 +194,17 @@ public:
      * \brief Set the temperature \f$\mathrm{[K]}\f$ of a fluid phase
      */
     void setTemperature(int phaseIdx, Scalar value)
-    { temperature_[phaseIdx] = value; }
+    {
+        temperature_[phaseIdx] = value;
+    }
 
     /*!
      * \brief Set the temperature \f$\mathrm{[K]}\f$ of all fluid phases.
      */
     void setTemperature(Scalar value)
-    {DUNE_THROW(Dune::NotImplemented, "This is a fluidstate for non-equilibrium, temperature in which phase?");}
+    {
+        temperatureEquil_ = value;
+    }
 
     /*!
      * \brief Set the fluid pressure of a phase \f$\mathrm{[Pa]}\f$
@@ -319,7 +339,8 @@ protected:
     Scalar density_[numPhases];
     Scalar enthalpy_[numPhases];
     Scalar viscosity_[numPhases];
-    Scalar temperature_[numPhases];
+    Scalar temperature_[numPhases]; //
+    Scalar temperatureEquil_;
 };
 
 } // end namespace Dumux
