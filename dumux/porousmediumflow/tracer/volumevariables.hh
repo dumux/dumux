@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup TracerModel
  * \brief Quantities required by the tracer model in a control volume
  */
 #ifndef DUMUX_TRACER_VOLUME_VARIABLES_HH
@@ -61,7 +62,13 @@ class TracerVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 public:
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -89,6 +96,8 @@ public:
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
+     *
+     * \param pIdx TODO docme!
      */
     Scalar density(int pIdx = 0) const
     { return fluidDensity_; }
@@ -98,6 +107,8 @@ public:
      *
      * This method is here for compatibility reasons with other models. The saturation
      * is always 1.0 in a one-phasic context.
+     *
+     * \param pIdx TODO docme!
      */
     Scalar saturation(int pIdx = 0) const
     { return 1.0; }
@@ -107,18 +118,24 @@ public:
      *
      * This method is here for compatibility reasons with other models. The mobility is always 1
      * for one-phasic models where the velocity field is given
+     *
+     * \param pIdx TODO docme!
      */
     Scalar mobility(int pIdx = 0) const
     { return 1.0; }
 
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
+     *
+     * \param pIdx TODO docme!
      */
     Scalar molarDensity(int pIdx = 0) const
     { return fluidDensity_/fluidMolarMass_; }
 
     /*!
      * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
+     *
+     * \param pIdx TODO docme!
      * \param compIdx The index of the component
      */
     Scalar moleFraction(int pIdx, int compIdx) const
@@ -126,6 +143,8 @@ public:
 
     /*!
      * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
+     *
+     * \param pIdx TODO docme!
      * \param compIdx The index of the component
      */
     Scalar massFraction(int pIdx, int compIdx) const
@@ -133,6 +152,8 @@ public:
 
     /*!
      * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
+     *
+     * \param pIdx TODO docme!
      * \param compIdx The index of the component
      */
     Scalar molarity(int pIdx, int compIdx) const
@@ -140,6 +161,9 @@ public:
 
     /*!
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     *
+     * \param pIdx TODO docme!
+     * \param compIdx The index of the component
      */
     Scalar diffusionCoefficient(int pIdx, int compIdx) const
     { return diffCoeff_[compIdx]; }
@@ -157,7 +181,7 @@ public:
     { return porosity_; }
 
 protected:
-    Scalar porosity_;    //!< Effective porosity within the control volume
+    Scalar porosity_;    // Effective porosity within the control volume
     Scalar fluidDensity_, fluidMolarMass_;
     GlobalPosition dispersivity_;
     std::array<Scalar, numComponents> diffCoeff_;

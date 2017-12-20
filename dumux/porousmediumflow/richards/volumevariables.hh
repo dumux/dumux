@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup RichardsModel
  * \brief Volume averaged quantities required by the Richards model.
  */
 #ifndef DUMUX_RICHARDS_VOLUME_VARIABLES_HH
@@ -37,7 +37,7 @@ namespace Dumux
  * \brief Volume averaged quantities required by the Richards model.
  *
  * This contains the quantities which are are constant within a finite
- * volume in the Richards model
+ * volume in the Richards model.
  */
 template <class TypeTag>
 class RichardsVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
@@ -89,7 +89,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -181,7 +187,17 @@ public:
     }
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Fill the fluid state according to the primary variables.
+     *
+     * Taking the information from the primary variables,
+     * the fluid state is filled with every information that is
+     * necessary to evaluate the model's local residual.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The problem at hand.
+     * \param element The current element.
+     * \param scv The subcontrol volume.
+     * \param fluidState The fluid state to fill.
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
@@ -397,6 +413,9 @@ public:
 
     /*!
      * \brief Returns the binary diffusion coefficients for a phase in \f$[m^2/s]\f$.
+     *
+     * \param phaseIdx The phase index
+     * \param compIdx The component index
      */
     Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
     {

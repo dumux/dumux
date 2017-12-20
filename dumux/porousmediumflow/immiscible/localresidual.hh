@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PorousmediumImmiscible
  * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
@@ -28,8 +28,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup OnePModel
- * \ingroup ImplicitLocalResidual
+ * \ingroup PorousmediumImmiscible
  * \brief Element-wise calculation of the residual for problems
  *        using the n-phase immiscible fully implicit models.
  */
@@ -64,6 +63,7 @@ public:
      * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub-control
      *        volume of a finite volume element for the immiscible models.
+     * \param problem TODO docme!
      * \param scv The sub control volume
      * \param volVars The current or previous volVars
      * \note This function should not include the source and sink terms.
@@ -96,7 +96,13 @@ public:
 
     /*!
      * \brief Evaluate the mass flux over a face of a sub control volume
+     *
+     * \param problem TODO docme!
+     * \param element The element
+     * \param fvGeometry The finite volume geometry context
+     * \param elemVolVars The volume variables for all flux stencil elements
      * \param scvf The sub control volume face to compute the flux on
+     * \param elemFluxVarsCache The cache related to flux compuation
      */
     ResidualVector computeFlux(const Problem& problem,
                                const Element& element,

@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A newton solver specific to the Richards problem.
+ * \ingroup RichardsModel
+ * \brief A Richards model specific controller for the newton solver.
  */
 #ifndef DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
 #define DUMUX_RICHARDS_NEWTON_CONTROLLER_HH
@@ -28,7 +29,7 @@
 
 namespace Dumux {
 /*!
- * \ingroup Newton
+ * \ingroup RichardsModel
  * \brief A Richards model specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
@@ -72,6 +73,7 @@ public:
      * This is basically the step
      * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
+     * \param assembler TODO docme!
      * \param uCurrentIter The solution after the current Newton iteration \f$ u^{k+1} \f$
      * \param uLastIter The solution after the last Newton iteration \f$ u^k \f$
      * \param deltaU The vector of differences between the last

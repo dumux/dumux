@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup RichardsModel
  * \brief Index names for the Richards model.
  */
 #ifndef DUMUX_RICHARDS_INDICES_HH
@@ -29,7 +30,6 @@ namespace Dumux
 
 /*!
  * \ingroup RichardsModel
- * \ingroup ImplicitIndices
  * \brief Index names for the Richards model.
  */
 

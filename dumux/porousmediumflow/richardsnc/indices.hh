@@ -18,8 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup RichardsNCModel
  * \brief Defines the primary variable and equation indices used by
- *        the richardsnc model
+ *        the richardsnc model.
  */
 
 #ifndef DUMUX_RICHARDSNC_INDICES_HH
@@ -31,7 +32,6 @@ namespace Dumux
 
 /*!
  * \ingroup RichardsNCModel
- * \ingroup ImplicitIndices
  * \brief The indices for the isothermal Richards, n-component model.
  */
 template <class TypeTag, int PVOffset = 0>

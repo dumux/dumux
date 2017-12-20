@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief The primary variable switch for the extended Richards model
+ * \ingroup RichardsModel
+ * \brief The primary variable switch for the extended Richards model.
  */
 #ifndef DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
@@ -31,8 +31,8 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPTwoCModel
- * \brief The primary variable switch controlling the phase presence state variable
+ * \ingroup RichardsModel
+ * \brief The primary variable switch controlling the phase presence state variable.
  */
 template<class TypeTag>
 class ExtendedRichardsPrimaryVariableSwitch : public PrimaryVariableSwitch<TypeTag>

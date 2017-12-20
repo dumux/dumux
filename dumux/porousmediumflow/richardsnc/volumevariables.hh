@@ -18,7 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief @copybrief Dumux::RichardsNCVolumeVariables
+ * \ingroup RichardsNCModel
+ * \brief  Contains the quantities which are constant within a
+ *        finite volume in the Richards, n-component model.
  */
 #ifndef DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDSNC_VOLUME_VARIABLES_HH
@@ -29,6 +31,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup RichardsNCModel
+ * \brief  Contains the quantities which are constant within a
+ *        finite volume in the Richards, n-component model.
+ */
 template <class TypeTag>
 class RichardsBaseVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 {
@@ -61,7 +68,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -86,7 +99,17 @@ public:
     }
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Fill the fluid state according to the primary variables.
+     *
+     * Taking the information from the primary variables,
+     * the fluid state is filled with every information that is
+     * necessary to evaluate the model's local residual.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The problem at hand.
+     * \param element The current element.
+     * \param scv The subcontrol volume.
+     * \param fluidState The fluid state to fill.
      */
     static void completeFluidState(const ElementSolutionVector& elemSol,
                                    const Problem& problem,
@@ -278,7 +301,6 @@ protected:
 
 /*!
  * \ingroup RichardsNCModel
- * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the Richards, n-component model.
  */
@@ -320,7 +342,13 @@ public:
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
     /*!
-     * \copydoc ImplicitVolumeVariables::update
+     * \brief Update all quantities for a given control volume
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
     void update(const ElementSolutionVector &elemSol,
                 const Problem &problem,
@@ -350,7 +378,17 @@ public:
     }
 
     /*!
-     * \copydoc ImplicitModel::completeFluidState
+     * \brief Fill the fluid state according to the primary variables.
+     *
+     * Taking the information from the primary variables,
+     * the fluid state is filled with every information that is
+     * necessary to evaluate the model's local residual.
+     *
+     * \param elemSol A vector containing all primary variables connected to the element.
+     * \param problem The problem at hand.
+     * \param element The current element.
+     * \param scv The subcontrol volume.
+     * \param fluidState The fluid state to fill.
      */
     static void completeFluidState(const ElementSolutionVector &elemSol,
                                    const Problem& problem,
@@ -391,7 +429,8 @@ public:
     /*!
      * \brief Return mole fraction \f$\mathrm{[mol/mol]}\f$ of a component in the phase.
      *
-     * \param compIdx The index of the component
+     * \param phaseIdx The index of the phase.
+     * \param compIdx The index of the component.
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
      */
@@ -401,6 +440,7 @@ public:
     /*!
      * \brief Return mass fraction \f$\mathrm{[kg/kg]}\f$ of a component in the phase.
      *
+     * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
@@ -411,6 +451,7 @@ public:
     /*!
      * \brief Return concentration \f$\mathrm{[mol/m^3]}\f$  of a component in the phase.
      *
+     * \param phaseIdx The index of the phase.
      * \param compIdx The index of the component
      *
      * We always forward to the fluid state with the phaseIdx property (see class description).
@@ -420,6 +461,9 @@ public:
 
     /*!
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
+     *
+     * \param phaseIdx The index of the phase.
+     * \param compIdx The index of the component
      */
     Scalar diffusionCoefficient(const int phaseIdx, const int compIdx) const
     {
@@ -435,6 +479,12 @@ public:
     { return dispersivity_; }
 
 private:
+    /*!
+     * \brief TODO docme!
+     *
+     * \param d TODO docme!
+     * \param compIdx The index of the component
+     */
     void setDiffusionCoefficient_(int compIdx, Scalar d)
     {
         assert(compIdx > wPhaseIdx);

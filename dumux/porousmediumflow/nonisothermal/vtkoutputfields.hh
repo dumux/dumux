@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup NIModel
  * \brief Adds vtk output fields specific to non-isothermal models
  */
 #ifndef DUMUX_ENERGY_OUTPUT_FIELDS_HH
@@ -29,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup NonIsothermal, InputOutput
+ * \ingroup NIModel
  * \brief Adds vtk output fields specific to non-isothermal models
  */
 template<class TypeTag>

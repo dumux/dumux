@@ -19,6 +19,7 @@
 
 /*!
  * \file
+ * \ingroup NIModel
  * \brief Defines the indices used by the non-isothermal two-phase two-component model
  */
 #ifndef DUMUX_ENERGY_INDICES_HH
@@ -29,7 +30,6 @@ namespace Dumux
 
 /*!
  * \ingroup NIModel
- * \ingroup ImplicitIndices
  * \brief Indices for the non-isothermal two-phase two-component model
  *
  * \tparam formulation The formulation, either pwsn or pnsw.

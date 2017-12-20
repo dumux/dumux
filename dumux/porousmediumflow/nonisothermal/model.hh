@@ -30,7 +30,7 @@
  * For the energy balance, local thermal equilibrium is assumed. This
  * results in one energy conservation equation for the porous solid
  * matrix and the fluids:
- \f{align*}{
+\f[
  \phi \frac{\partial \sum_\alpha \varrho_\alpha u_\alpha S_\alpha}{\partial t}
  & +
  \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
@@ -42,8 +42,8 @@
  \left( \textbf{grad}\,p_\alpha - \varrho_\alpha \mbox{\bf g} \right)
  \right\} \\
     & - \text{div} \left(\lambda_{pm} \textbf{grad} \, T \right)
-    - q^h = 0.
- \f}
+    - q^h = 0,
+  \f]
  * where \f$h_\alpha\f$ is the specific enthalpy of a fluid phase
  * \f$\alpha\f$ and \f$u_\alpha = h_\alpha -
  * p_\alpha/\varrho_\alpha\f$ is the specific internal energy of the

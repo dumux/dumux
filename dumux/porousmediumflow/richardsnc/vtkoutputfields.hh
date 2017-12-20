@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Adds vtk output fields specific to the twop model
+ * \ingroup RichardsNCModel
+ * \brief Adds vtk output fields specific to the Richards model.
  */
 #ifndef DUMUX_RICHARDSNC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_RICHARDSNC_VTK_OUTPUT_FIELDS_HH
@@ -28,8 +29,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Richards, InputOutput
- * \brief Adds vtk output fields specific to the richards model
+ * \ingroup RichardsNCModel
+ * \brief Adds vtk output fields specific to the Richards model.
  */
 template<class TypeTag>
 class RichardsNCVtkOutputFields

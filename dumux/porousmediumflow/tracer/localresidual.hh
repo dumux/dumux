@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TracerModel
  * \brief Element-wise calculation of the local residual for problems
  *        using fully implicit tracer model.
  */
@@ -31,8 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Implicit
- * \ingroup TracerLocalResidual
+ * \ingroup TracerModel
  * \brief Element-wise calculation of the local residual for problems
  *        using fully implicit tracer model.
  *
@@ -72,9 +71,9 @@ public:
      * The result should be averaged over the volume (e.g. phase mass
      * inside a sub control volume divided by the volume)
      *
-     *  \param scv The sub control volume
-     *  \param volVars The primary and secondary varaibles on the scv
-     *  \param useMoles If mole or mass fractions are used
+     * \param problem TODO docme!
+     * \param scv The sub control volume
+     * \param volVars The primary and secondary varaibles on the scv
      */
     PrimaryVariables computeStorage(const Problem& problem,
                                     const SubControlVolume& scv,
@@ -106,12 +105,12 @@ public:
      * \brief Evaluates the total flux of all conservation quantities
      *        over a face of a sub-control volume.
      *
+     * \param problem TODO docme!
      * \param element The element
      * \param fvGeometry The finite volume geometry context
      * \param elemVolVars The volume variables for all flux stencil elements
      * \param scvf The sub control volume face
      * \param elemFluxVarsCache The cache related to flux compuation
-     * \param useMoles If mole or mass fractions are used
      */
     PrimaryVariables computeFlux(const Problem& problem,
                                  const Element& element,
@@ -160,6 +159,16 @@ public:
         return flux;
     }
 
+    /*!
+     * \brief TODO docme!
+     *
+     * \param partialDerivatives TODO docme!
+     * \param problem TODO docme!
+     * \param element The element
+     * \param fvGeometry The finite volume geometry context
+     * \param curVolVars TODO docme!
+     * \param scv The sub control volume.
+     */
     template<class PartialDerivativeMatrix>
     void addStorageDerivatives(PartialDerivativeMatrix& partialDerivatives,
                                const Problem& problem,
@@ -176,6 +185,16 @@ public:
             partialDerivatives[compIdx][compIdx] += d_storage;
     }
 
+    /*!
+     * \brief TODO docme!
+     *
+     * \param partialDerivatives TODO docme!
+     * \param problem TODO docme!
+     * \param element The element
+     * \param fvGeometry The finite volume geometry context
+     * \param curVolVars TODO docme!
+     * \param scv The sub control volume.
+     */
     template<class PartialDerivativeMatrix>
     void addSourceDerivatives(PartialDerivativeMatrix& partialDerivatives,
                               const Problem& problem,
