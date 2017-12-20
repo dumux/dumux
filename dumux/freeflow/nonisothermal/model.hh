@@ -16,13 +16,20 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup NavierStokesNIModel
-  *
-  * \brief A single-phase, non-isothermal Navier-Stokes model
-  * TODO: doc me!
-  */
+/*!
+ * \file
+ * \ingroup NavierStokesNIModel
+ *
+ * \brief A single-phase, non-isothermal Navier-Stokes model
+ *
+ * In addition to the momentum and mass/mole balance equations, this model also solves the <B> energy balance equation </B>:
+ * \f[
+ *    \frac{\partial (\varrho  v)}{\partial t}
+ *    + \nabla \cdot \left( \varrho h {\boldsymbol{v}}
+ *    - \lambda \textbf{grad}\, T \right) - q_T = 0
+ * \f]
+ *
+ */
 
 #ifndef DUMUX_STAGGERED_NI_MODEL_HH
 #define DUMUX_STAGGERED_NI_MODEL_HH

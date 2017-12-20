@@ -21,7 +21,28 @@
  * \ingroup NavierStokesModel
  *
  * \brief A single-phase, isothermal Navier-Stokes model
- * TODO: doc me!
+ *
+ * This model implements a single-phase, isothermal Navier-Stokes model, solving the <B> momentum balance equation </B>
+ * \f[
+ \frac{\partial (\varrho \textbf{v})}{\partial t} + \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}}) = \nabla \cdot (\mu (\nabla \textbf{v} + \nabla \textbf{v}^{\textup{T}}))
+   - \nabla p + \varrho \textbf{g} - \textbf{f}
+ * \f]
+ * By setting the property <code>EnableInertiaTerms</code> to <code>false</code> the Stokes
+ * equation can be solved. In this case the term
+ * \f[
+ *    \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}})
+ * \f]
+ * is neglected.
+ *
+ * The <B> mass balance equation </B>
+ * \f[
+       \frac{\partial \varrho}{\partial t} + \nabla \cdot (\varrho \textbf{v}) - q = 0
+ * \f]
+ *
+ * closes the system.
+ *
+ *
+ * So far, only the staggered grid spatial discretization (for structured grids) is available.
  */
 
 #ifndef DUMUX_NAVIERSTOKES_MODEL_HH

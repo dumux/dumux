@@ -16,13 +16,46 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
- /*!
-  * \file
-  * \ingroup NavierStokesNCModel
-  *
-  * \brief A single-phase, multi-component isothermal Navier-Stokes model
-  * TODO: doc me!
-  */
+/*!
+ * \file
+ * \ingroup NavierStokesNCModel
+ *
+ * \brief A single-phase, multi-component isothermal Navier-Stokes model
+ *
+ * This model implements a single-phase, multi-component isothermal Navier-Stokes model, solving the <B> momentum balance equation </B>
+ * \f[
+ \frac{\partial (\varrho \textbf{v})}{\partial t} + \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}}) = \nabla \cdot (\mu (\nabla \textbf{v} + \nabla \textbf{v}^{\textup{T}}))
+     - \nabla p + \varrho \textbf{g} - \textbf{f}
+ * \f]
+ * By setting the property <code>EnableInertiaTerms</code> to <code>false</code> the Stokes
+ * equation can be solved. In this case the term
+ * \f[
+ *    \nabla \cdot (\varrho \textbf{v} \textbf{v}^{\textup{T}})
+ * \f]
+ * is neglected.
+ *
+ *
+ * The system is closed by a <B> component mass/mole balance equation </B> for each component \f$\kappa\f$:
+ * \f[
+ *    \frac{\partial \left(\varrho X^\kappa\right)}{\partial t}
+ *    + \nabla \cdot \left( \varrho {\boldsymbol{v}} X^\kappa
+ *    - D^\kappa \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa \right)
+ *    - q^\kappa = 0
+ * \f]
+ *
+ * Alternatively, one component balance equation can be replace by a <B> total mass/mole balance equation </B>:
+ *
+ * \f[
+ *    \frac{\partial \varrho_g}{\partial t}
+ *    + \nabla \cdot \left(
+ *        \varrho {\boldsymbol{v}}
+ *        - \sum_\kappa D^\kappa \varrho \frac{M^\kappa}{M} \textbf{grad}\, x^\kappa
+ *      \right)
+ *    - q = 0
+ * \f]
+ *
+ * So far, only the staggered grid spatial discretization (for structured grids) is available.
+ */
 
 #ifndef DUMUX_NAVIERSTOKES_NC_MODEL_HH
 #define DUMUX_NAVIERSTOKES_NC_MODEL_HH
