@@ -117,7 +117,7 @@ SET_TYPE_PROP(NavierStokes, FluxVariables, NavierStokesFluxVariables<TypeTag>);
 SET_TYPE_PROP(NavierStokes, FluxVariablesCache, FreeFlowFluxVariablesCache<TypeTag>);
 
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(NavierStokes, Indices, NavierStokesCommonIndices<TypeTag>);
+SET_TYPE_PROP(NavierStokes, Indices, NavierStokesIndices<TypeTag>);
 
 //! The specific vtk output fields
 SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);
@@ -126,7 +126,7 @@ SET_TYPE_PROP(NavierStokes, VtkOutputFields, NavierStokesVtkOutputFields<TypeTag
 // Property values for isothermal model required for the general non-isothermal model
 //////////////////////////////////////////////////////////////////
 //! The indices required by the isothermal single-phase model
-SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesCommonIndices<TypeTag>);
+SET_TYPE_PROP(NavierStokesNI, IsothermalIndices, NavierStokesIndices<TypeTag>);
 
 //! The specific isothermal vtk output fields
 SET_TYPE_PROP(NavierStokesNI, IsothermalVtkOutputFields, NavierStokesVtkOutputFields<TypeTag>);

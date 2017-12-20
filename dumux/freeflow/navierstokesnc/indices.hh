@@ -37,10 +37,10 @@ namespace Dumux
  * \tparam PVOffset The first index in a primary variable vector.
  */
 template <class TypeTag, int PVOffset = 0>
-struct NavierStokesNCIndices : public NavierStokesCommonIndices<TypeTag, PVOffset>
+struct NavierStokesNCIndices : public NavierStokesIndices<TypeTag, PVOffset>
 {
 private:
-    using ParentType = NavierStokesCommonIndices<TypeTag, PVOffset>;
+    using ParentType = NavierStokesIndices<TypeTag, PVOffset>;
 
 public:
 
