@@ -31,13 +31,14 @@
 #include <string>
 #include <utility>
 
-#include <dune/common/timer.hh>
-#include <dune/geometry/quadraturerules.hh>
-#include <dune/geometry/referenceelements.hh>
-#include <dune/localfunctions/lagrange/pqkfactory.hh>
+//#include <dune/common/timer.hh>
+//#include <dune/geometry/quadraturerules.hh>
+//#include <dune/geometry/referenceelements.hh>
+//#include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/common/boundingboxtree.hh>
 #include "couplingmapper.hh"
+#include "couplingdata.hh"
 #include <dumux/common/exceptions.hh>
 
 namespace Dumux
@@ -49,10 +50,12 @@ namespace Properties
 NEW_PROP_TAG(StokesProblemTypeTag);
 NEW_PROP_TAG(DarcyProblemTypeTag);
 NEW_PROP_TAG(GridView);
+NEW_PROP_TAG(StokesData);
+NEW_PROP_TAG(DarcyData);
 } // namespace Properties
 
 /*!
- * \brief Manages the coupling between Stokes and Darcy elements
+ * \brief Manages the coupling between stokes elements and lower dimensional elements
  * \ingroup BoundaryCoupling
  */
 template<class TypeTag>
@@ -76,43 +79,56 @@ class CouplingManagerStokesDarcy
     using DarcyProblem = typename GET_PROP_TYPE(DarcyProblemTypeTag, Problem);
 
     using DarcySubControlVolume = typename GET_PROP_TYPE(DarcyProblemTypeTag, SubControlVolume);
-    using DarcySubControlVolumeFace = typename GET_PROP_TYPE(DarcyProblemTypeTag, SubControlVolumeFace);
     using StokesSubControlVolume = typename GET_PROP_TYPE(StokesProblemTypeTag, SubControlVolume);
     using StokesSubControlVolumeFace = typename GET_PROP_TYPE(StokesProblemTypeTag, SubControlVolumeFace);
+
+    using DarcyPrimaryVariables = typename GET_PROP_TYPE(DarcyProblemTypeTag, PrimaryVariables);
+    using StokesPrimaryVariables = typename GET_PROP_TYPE(StokesProblemTypeTag, PrimaryVariables);
 
     using DarcyElementVolumeVariables = typename GET_PROP_TYPE(DarcyProblemTypeTag, ElementVolumeVariables);
     using StokesElementVolumeVariables = typename GET_PROP_TYPE(StokesProblemTypeTag, ElementVolumeVariables);
 
+    using StokesElementBoundaryTypes = typename GET_PROP_TYPE(StokesProblemTypeTag, ElementBoundaryTypes);
+    using StokesElementFluxVariablesCache = typename GET_PROP_TYPE(StokesProblemTypeTag, ElementFluxVariablesCache);
+
+    using DarcyElementBoundaryTypes = typename GET_PROP_TYPE(DarcyProblemTypeTag, ElementBoundaryTypes);
+    using DarcyElementFluxVariablesCache = typename GET_PROP_TYPE(DarcyProblemTypeTag, ElementFluxVariablesCache);
+
     using DarcyFVElementGeometry = typename GET_PROP_TYPE(DarcyProblemTypeTag, FVElementGeometry);
     using StokesFVElementGeometry = typename GET_PROP_TYPE(StokesProblemTypeTag, FVElementGeometry);
 
+    using StokesLocalResidual = typename GET_PROP_TYPE(StokesProblemTypeTag, LocalResidual);
+    using DarcyLocalResidual = typename GET_PROP_TYPE(DarcyProblemTypeTag, LocalResidual);
+
     using StokesGlobalFaceVars = typename GET_PROP_TYPE(StokesProblemTypeTag, GlobalFaceVars);
 
-    using FacePrimaryVariables = typename GET_PROP_TYPE(StokesProblemTypeTag, FacePrimaryVariables);
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(StokesProblemTypeTag, CellCenterPrimaryVariables);
-    using DarcyPrimaryVariables = typename GET_PROP_TYPE(DarcyProblemTypeTag, PrimaryVariables);
-
-    using StokesFluidSystem = typename GET_PROP_TYPE(StokesProblemTypeTag, FluidSystem);
-    using DarcyFluidSystem = typename GET_PROP_TYPE(DarcyProblemTypeTag, FluidSystem);
+    enum {
+        stokesDim = StokesGridView::dimension,
+        darcyDim = DarcyGridView::dimension,
+        dimWorld = StokesGridView::dimensionworld
+    };
 
     enum {
-        dim = StokesGridView::dimension,
-        dimWorld = StokesGridView::dimensionworld
+        stokesIsBox = GET_PROP_VALUE(StokesProblemTypeTag, ImplicitIsBox),
+        darcyIsBox = GET_PROP_VALUE(DarcyProblemTypeTag, ImplicitIsBox)
     };
 
     using StokesElement = typename StokesGridView::template Codim<0>::Entity;
     using DarcyElement = typename DarcyGridView::template Codim<0>::Entity;
 
-    using DarcyVertex = typename DarcyGrid::template Codim<dim>::Entity;
+    using CoordScalar = typename StokesGridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+
+    using StokesVertex = typename StokesGridView::template Codim<stokesDim>::Entity;
+    using DarcyVertex = typename DarcyGrid::template Codim<darcyDim>::Entity;
 
     using CouplingMapper = Dumux::CouplingMapperStokesDarcy<TypeTag>;
+    using StokesData = typename GET_PROP_TYPE(TypeTag, StokesData);
+    using DarcyData = typename GET_PROP_TYPE(TypeTag, DarcyData);
 
     using DofTypeIndices = typename GET_PROP(StokesProblemTypeTag, DofTypeIndices);
     using cellCenterIdx = typename DofTypeIndices::CellCenterIdx;
     using faceIdx = typename DofTypeIndices::FaceIdx;
-
-    using StokesIndices = typename GET_PROP_TYPE(StokesProblemTypeTag, Indices);
-    using DarcyIndices = typename GET_PROP_TYPE(DarcyProblemTypeTag, Indices);
 
 public:
 
@@ -124,12 +140,14 @@ public:
       darcyProblem_(darcyProblem),
       couplingMapper_(stokesProblem, darcyProblem, asImp_())
     {
-        fluxStokesToDarcy_ = 0.0;
+        // initialize the local residuals
+        stokesLocalResidual_.init(stokesProblem);
+        darcyLocalResidual_.init(darcyProblem);
     }
 
 
     /*!
-     * \brief Return a reference to the stokes problem
+     * \brief Return a reference to the Stokes problem
      */
     const StokesProblem& stokesProblem() const
     {
@@ -137,7 +155,7 @@ public:
     }
 
     /*!
-     * \brief Return a reference to the low dimensional problem
+     * \brief Return a reference to the Darcy problem
      */
     const DarcyProblem& darcyProblem() const
     {
@@ -145,7 +163,7 @@ public:
     }
 
     /*!
-     * \brief Return a reference to the stokes gridview
+     * \brief Return a reference to the Stokes gridview
      */
     const StokesGridView& stokesGridView() const
     {
@@ -153,7 +171,7 @@ public:
     }
 
     /*!
-     * \brief Return a reference to the low dimensional gridview
+     * \brief Return a reference to the Darcy gridview
      */
     const DarcyGridView& darcyGridView() const
     {
@@ -174,9 +192,9 @@ public:
     }
 
     /*!
-     * \brief Returns whether a stokes element sub control volume is considered for coupling
-     *        with the darcy domain. This function is used for the boundaryType() method
-     *        of the stokes problem which handles vertices.
+     * \brief Returns whether a Stokes element sub control volume is considered for coupling
+     *        with the Darcy domain. This function is used for the boundaryType() method
+     *        of the Stokes problem which handles vertices.
      *
      * \param element The element
      */
@@ -187,21 +205,22 @@ public:
 
 
     /*!
-     * \brief Returns whether a stokes element sub control volume is considered for coupling
-     *        with the darcy domain. This function is used for the boundaryType() method
-     *        of the stokes problem which handles vertices.
+     * \brief Returns whether a Stokes element sub control volume is considered for coupling
+     *        with the Darcy domain. This function is used for the boundaryType() method
+     *        of the Stokes problem which handles vertices.
      *
      * \param vertex The vertex
      */
+    // TODO remove 'element' as argument (misleading, not used)
     bool isStokesCouplingEntity(const StokesElement &element, const StokesSubControlVolumeFace& scvf) const
     {
         return couplingMapper_.stokesFaceToDarcyMap().count(scvf.dofIndex());
     }
 
     /*!
-     * \brief Returns whether a low dim vertex is considered for coupling
-     *        with the stokes domain. This function is used for the boundaryType() method
-     *        of the low dim problem which handles vertices.
+     * \brief Returns whether a Darcy vertex is considered for coupling
+     *        with the Stokes domain. This function is used for the boundaryType() method
+     *        of the Darcy problem which handles vertices.
      *
      * \param vertex The vertex
      */
@@ -212,9 +231,9 @@ public:
     }
 
     /*!
-     * \brief Returns whether a low dim vertex is considered for coupling
-     *        with the stokes domain. This function is used for the boundaryType() method
-     *        of the low dim problem which handles vertices.
+     * \brief Returns whether a Darcy vertex is considered for coupling
+     *        with the Stokes domain. This function is used for the boundaryType() method
+     *        of the Darcy problem which handles vertices.
      *
      * \param element The element
      */
@@ -224,27 +243,15 @@ public:
     }
 
     /*!
-     * \brief Returns whether a low dim vertex is considered for coupling
-     *        with the stokes domain. This function is used for the boundaryType() method
-     *        of the low dim problem which handles vertices.
+     * \brief Returns whether a Darcy vertex is considered for coupling
+     *        with the Stokes domain. This function is used for the boundaryType() method
+     *        of the Darcy problem which handles vertices.
      *
      * \param element The element
      */
     bool isDarcyCouplingEntity(const DarcySubControlVolume &scv) const
     {
         return couplingMapper_.darcyToStokesMap().count(scv.dofIndex());
-    }
-
-    /*!
-     * \brief Returns whether a low dim vertex is considered for coupling
-     *        with the stokes domain. This function is used for the boundaryType() method
-     *        of the low dim problem which handles vertices.
-     *
-     * \param element The element
-     */
-    bool isDarcyCouplingEntity(const DarcySubControlVolumeFace &scvf) const
-    {
-        return couplingMapper_.darcyToStokesMap().count(scvf.insideScvIdx()); //dofIndex()); TODO
     }
 
     /*!
@@ -261,14 +268,6 @@ public:
     const auto &darcyToStokesMap() const
     {
         return couplingMapper_.darcyToStokesMap();
-    }
-
-    /*!
-     * \brief Returns a reference to the coupling mapper.
-     */
-    const auto &stokesCCToDarcyMap() const
-    {
-        return couplingMapper_.stokesCCToDarcyMap();
     }
 
     /*!
@@ -393,326 +392,83 @@ public:
             return emptyStencil_;
     }
 
-    //! evaluate coupling residual for the derivative Stokes DOF with respect to Darcy DOF
-    auto evalStokesCCCouplingResidual(const StokesElement& element, // TODO not needed
-                              const StokesFVElementGeometry& fvGeometry,
-                              const StokesElementVolumeVariables& elemVolVars,
-                              const StokesGlobalFaceVars& globalFaceVars)
+    /*!
+     * \brief Returns a class containing all relevant Stokes data
+     */
+    auto stokesData() const
     {
-        CellCenterPrimaryVariables stokesCCCouplingResidual(0.0);
+        StokesData data(*this);
+        return data;
+    }
 
-        Scalar couplingScvfIdx = couplingSubControlVolumeFace(fvGeometry); // global scvf idx
-        Scalar outerNormalScalar = fvGeometry.scvf(couplingScvfIdx).outerNormalScalar(); // = -1
-        Scalar interfaceArea = fvGeometry.scvf(couplingScvfIdx).area(); // in m
-
-        StokesSubControlVolume stokesScv = fvGeometry.scv(fvGeometry.scvf(couplingScvfIdx).insideScvIdx());
-
-        // TODO upwind!
-        Scalar densityStokes = elemVolVars[stokesScv].density(StokesIndices::phaseIdx);
-
-        // TODO velocity across couplingScvf --> upwind??
-        Scalar couplingDofIdx = couplingDofIndex(fvGeometry);
-        const Scalar velocity = globalFaceVars.faceVars(couplingDofIdx).velocity();
-
-        // compute (vertical) distance across interface between adjacent cell centers
-        Scalar yPosCenterStokesElement = stokesScv.center()[1];
-        Scalar yPosCenterDarcyElement = centerInDarcyElement(fvGeometry.scvf(couplingScvfIdx))[1];
-        Scalar distanceCenters = yPosCenterStokesElement - yPosCenterDarcyElement;
-
-        // mass coupling condition
-        stokesCCCouplingResidual[StokesIndices::pressureIdx] = densityStokes * velocity * outerNormalScalar * interfaceArea;
-
-        // 2p2c
-        if (StokesFluidSystem::numComponents == 2)
-        {
-            Scalar diffusionCoefficient = elemVolVars[stokesScv].diffusionCoefficient(StokesFluidSystem::nPhaseIdx, StokesFluidSystem::wCompIdx);
-            Scalar molarDensityGas = elemVolVars[stokesScv].molarDensity();
-            Scalar molarMassComp = elemVolVars[stokesScv].molarMassComponent(); // H2O
-
-            // mole and mass fractions of water in gas TODO
-            Scalar moleFracDarcy = moleFracWaterInDarcyElement(fvGeometry);
-            Scalar moleFracStokes = elemVolVars[stokesScv].moleFraction(StokesFluidSystem::wPhaseIdx, StokesFluidSystem::nCompIdx);
-            Scalar massFracStokes = elemVolVars[stokesScv].priVar(StokesIndices::massOrMoleFracIdx); // TODO upwind
-            // TODO
-            // = elemVolVars[stokesScv].massFraction(StokesFluidSystem::wPhaseIdx, StokesFluidSystem::nCompIdx);
-            // returns "-nan", priVar originally not a function of staggerednc/volvars!
-
-            // j_g^w,ff = -D_g * rho_g^mol * M_w * grad X_g^w
-            Scalar diffusiveFluxComponent =  -1.0 * diffusionCoefficient * molarDensityGas * molarMassComp
-                                   * (moleFracDarcy - moleFracStokes)
-                                   / distanceCenters;
-
-            Scalar advectiveFluxComponent = densityStokes * velocity * massFracStokes;
-
-            stokesCCCouplingResidual[StokesIndices::massOrMoleFracIdx] = (advectiveFluxComponent + diffusiveFluxComponent) * outerNormalScalar * interfaceArea;
-
-//        else // TODO error (numComponents > 2)
-
-//         if (EnableEnergyBalance) // TODO
-            {
-                // advective fluxes
-                Scalar enthalpyStokes = elemVolVars[stokesScv].enthalpy(); // TODO upwind!
-                Scalar advectiveFluxEnergy = densityStokes * enthalpyStokes * velocity;
-
-                // diffusive fluxes (for each component, here: water, air)
-                Scalar molarMassPhase = elemVolVars[stokesScv].molarMass(); // air
-                Scalar enthalpyAirComp = enthalpyStokes;
-                Scalar enthalpyWaterComp = elemVolVars[stokesScv].enthalpyComponent();
-
-                // (h_g^air * M^w + h_g^water * M^air) * D * rho_g^mol * grad x_g^w
-                Scalar diffusiveFluxEnergy = (enthalpyAirComp * molarMassPhase + enthalpyWaterComp * molarMassComp)
-                                                 * diffusionCoefficient * molarDensityGas
-                                                 * (moleFracDarcy - moleFracStokes)
-                                                 / distanceCenters;
-
-                // conductive fluxes
-                Scalar thermalConductivity = elemVolVars[stokesScv].thermalConductivity();
-                Scalar tempDarcy = tempInDarcyElement(fvGeometry);
-                Scalar gradTemp = (elemVolVars[stokesScv].temperature() - tempDarcy) / distanceCenters;
-                Scalar conductiveFlux = -1.0 * thermalConductivity * gradTemp;
-
-                Scalar energyFlux = (diffusiveFluxEnergy + advectiveFluxEnergy + conductiveFlux)
-                                        * interfaceArea * outerNormalScalar;
-
-                stokesCCCouplingResidual[StokesIndices::temperatureIdx]  = energyFlux * interfaceArea;
-            }
-        }
-
-        Scalar elemIdx = fvGeometry.scv(fvGeometry.scvf(couplingScvfIdx).insideScvIdx()).elementIndex();
-
-        fluxStokesToDarcy_ = stokesCCCouplingResidual;
-
-        std::cout << "** couplingmanager: massFlux = " << fluxStokesToDarcy_[StokesIndices::pressureIdx]
-                << ", compFlux = " << fluxStokesToDarcy_[StokesIndices::massOrMoleFracIdx]
-                << ", energyFlux = " << fluxStokesToDarcy_[StokesIndices::temperatureIdx]
-                << " at cc in element " << elemIdx << std::endl;
-
-        return stokesCCCouplingResidual; // fluxStokesCCToDarcy
+    /*!
+     * \brief Returns a class containing all relevant Darcy data
+     */
+    auto darcyData() const
+    {
+        DarcyData data(*this);
+        return data;
     }
 
     //! evaluate coupling residual for the derivative stokes DOF with respect to low dim DOF
-    auto evalStokesFaceCouplingResidual(const StokesElement& element,
+    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
+    auto evalStokesCCCouplingResidual(const StokesElement& element,
                               const StokesFVElementGeometry& fvGeometry,
-                              const StokesGlobalFaceVars& globalFaceVars,
-                              const StokesSubControlVolumeFace& scvf)
+                              const StokesElementVolumeVariables& curElemVolVars,
+                              const StokesGlobalFaceVars& prevGlobalFaceVars,
+                              StokesGlobalFaceVars& curGlobalFaceVars,
+                              const StokesElementBoundaryTypes& elemBcTypes,
+                              const StokesElementFluxVariablesCache& elemFluxVarsCache)
     {
-        FacePrimaryVariables stokesFaceCouplingResidual(0.0);
-
-        Scalar couplingScvfIdx = scvf.index();
-        Scalar outerNormalScalar = fvGeometry.scvf(couplingScvfIdx).outerNormalScalar();
-        Scalar interfaceArea = fvGeometry.scvf(couplingScvfIdx).area();
-
-        // evaluate coupling condition on horizontal scvf on coupling interface
-        if (scvf.directionIndex() == 1 && stokesProblem_.onCouplingInterface(scvf.center()))
-        {
-            Scalar pressureDarcy = pressureInDarcyElement(fvGeometry);
-
-            // normal momentum coupling condition
-            stokesFaceCouplingResidual = pressureDarcy * outerNormalScalar * interfaceArea;
-        }
-
-        // TODO only for 2D, add loop over tangDims
-        // Fetzer2017 "classical BJ condition"
-        // tangential momentum coupling condition --> b.c. for stokesProblem?
-
-        else if (scvf.directionIndex() == 0 && !scvf.boundary()) // vertical scvf, not on boundary
-        { // TODO works only for horizontal coupling interface on lower boundary of Stokes domain
-            if( (scvf.index() % 4 == 0 && stokesProblem_.onCouplingInterface(fvGeometry.scvf(scvf.index()+2).center())) // if left scvf --> right neighbor scvf on interface
-             || (scvf.index() % 4 == 1 && stokesProblem_.onCouplingInterface(fvGeometry.scvf(scvf.index()+1).center())) ) // if right scvf --> left neighbor scvf on interface
-            {
-                Scalar distanceCenters = (fvGeometry.scv(scvf.insideScvIdx()).center() - scvf.center())[0]; // 0.25 TODO direction? 0,1,2?
-                Scalar permeability = darcyProblem_.spatialParams().permeabilityAtPos(scvf.center()); // 1e-10
-                Scalar alphaBeaversJoseph = darcyProblem_.spatialParams().beaversJosephCoeffAtPos(scvf.center()); // 1
-                Scalar beta = -1.0 * std::sqrt(permeability) / alphaBeaversJoseph / distanceCenters * outerNormalScalar; // 4e-5
-
-                std::cout << "** couplingmanager: beta = " << beta << std::endl;
-                auto stokesElemVolVars = localView(stokesProblem_.model().curGlobalVolVars());
-                stokesElemVolVars.bind(element, fvGeometry, stokesProblem_.model().curSol());
-                const auto stokesVolVars = stokesElemVolVars[scvf.insideScvIdx()];
-
-                Scalar dynViscosity = stokesVolVars.viscosity();
-//                Scalar effDynViscosity = BaseFluid::dynamicViscosity(stokesVolVars.pressure(), stokesVolVars.temperature(), stokesVolVars.massFrac());
-//                                                                + (eddyKinematicViscosity_(elementInsideIdx) * stokesVolVars.density()); TODO
-                const Scalar tangXVelocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
-                Scalar beaversJosephXVelocity = beta * tangXVelocity / (1.0 + beta);
-//                Scalar tangZVelocity = faceSolutionVector[velocityZIdx];
-//                Scalar beaversJosephZVelocity = beta * tangZVelocity / (1.0 + beta);
-
-                stokesFaceCouplingResidual = -0.5 * dynViscosity * (tangXVelocity - beaversJosephXVelocity)
-                    / distanceCenters * outerNormalScalar * interfaceArea;
-
-                std::cout << "** couplingmanager: effDynViscosity = " << dynViscosity
-                        << ", v_BJ = " << beaversJosephXVelocity
-                        << ", delta v = " << tangXVelocity - beaversJosephXVelocity
-                        << std::endl;
-//                stokesFaceCouplingResidual = -0.5 * effDynViscosity * (tangZVelocity - beaversJosephZVelocity)
-//                                                                          / distanceCenters * outerNormalScalar * interfaceArea;
-            }
-        }
-        if (stokesFaceCouplingResidual != 0.0)
-            std::cout << "** couplingmanager: StokesFaceCouplingResidual = " << stokesFaceCouplingResidual<< " at scvf " <<  scvf.index() << std::endl;
-
-        return stokesFaceCouplingResidual;
+        auto ccGlobalI =  stokesProblem().elementMapper().index(element);
+        auto&& scvI = fvGeometry.scv(ccGlobalI);
+        // calculate the local residual of the Stokes element
+        auto prevElemVolVars = localView(stokesProblem().model().prevGlobalVolVars());
+        prevElemVolVars.bindElement(element, fvGeometry, stokesProblem().model().prevSol());
+        stokesLocalResidual_.evalCellCenter(element, fvGeometry, scvI,
+                                          prevElemVolVars, curElemVolVars,
+                                          prevGlobalFaceVars, curGlobalFaceVars,
+                                          elemBcTypes, elemFluxVarsCache);
+        return stokesLocalResidual_.ccResidual();
     }
 
-    //! evaluate coupling residual for the derivative Darcy DOF with respect to Stokes DOF
-    auto evalDarcyCouplingResidual(const DarcyElement& element)
+    //! evaluate coupling residual for the derivative stokes DOF with respect to low dim DOF
+    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
+    auto evalStokesFaceCouplingResidual(const StokesElement& element,
+                              const StokesFVElementGeometry& fvGeometry,
+                              const StokesSubControlVolumeFace& scvf,
+                              const StokesElementVolumeVariables& curElemVolVars,
+                              const StokesGlobalFaceVars& prevGlobalFaceVars,
+                              StokesGlobalFaceVars& curGlobalFaceVars,
+                              const StokesElementBoundaryTypes& elemBcTypes,
+                              const StokesElementFluxVariablesCache& elemFluxVarsCache)
     {
-        DarcyPrimaryVariables fluxDarcyToStokes(0.0);
-        fluxDarcyToStokes[DarcyIndices::pressureIdx] = -1.0 * fluxStokesToDarcy_[StokesIndices::pressureIdx];
-        // 2p2c
-        fluxDarcyToStokes[DarcyIndices::contiWEqIdx] = -1.0 * fluxStokesToDarcy_[StokesIndices::massOrMoleFracIdx];
+        // calculate the local residual of the Stokes element
+        auto prevElemVolVars = localView(stokesProblem().model().prevGlobalVolVars());
+        prevElemVolVars.bindElement(element, fvGeometry, stokesProblem().model().prevSol());
+        stokesLocalResidual_.evalFace(element, fvGeometry, scvf,
+                                    prevElemVolVars, curElemVolVars,
+                                    prevGlobalFaceVars, curGlobalFaceVars,
+                                    elemBcTypes, elemFluxVarsCache, true /*resizeResidual*/);
+        return stokesLocalResidual_.faceResidual(scvf.localFaceIdx());
+    }
 
-        // TODO if (non-isothermal) // temperatureIdx not available for isothermal model!
-        fluxDarcyToStokes[DarcyIndices::temperatureIdx] = -1.0 * fluxStokesToDarcy_[StokesIndices::temperatureIdx];
-
-        return fluxDarcyToStokes; // fluxDarcyToStokesCC
+    //! evaluate coupling residual for the derivative low dim DOF with respect to stokes DOF
+    //! we only need to evaluate the part of the residual that will be influence by the stokes DOF
+    auto evalDarcyCouplingResidual(const DarcyElement& element,
+                              const DarcyFVElementGeometry& fvGeometry,
+                              const DarcyElementVolumeVariables& curElemVolVars,
+                              const DarcyElementBoundaryTypes& elemBcTypes,
+                              const DarcyElementFluxVariablesCache& elemFluxVarsCache)
+    {
+        // calculate the local residual of the Darcy element
+        auto prevElemVolVars = localView(darcyProblem().model().prevGlobalVolVars());
+        prevElemVolVars.bindElement(element, fvGeometry, darcyProblem().model().prevSol());
+        darcyLocalResidual_.eval(element, fvGeometry, prevElemVolVars, curElemVolVars, elemBcTypes, elemFluxVarsCache);
+        return darcyLocalResidual_.residual();
     }
 
 protected:
-    // ! Returns the global index of the subcontrolvolumeface at the coupling interface
-    const Scalar couplingSubControlVolumeFace(const StokesFVElementGeometry& fvGeometry)
-    {
-        Scalar couplingScvfIdx(-1);
-        // assumption: only one interface scvf (no corners in coupling interface)
-        for(const auto &scvf : scvfs(fvGeometry))
-        {
-            if(stokesProblem_.onCouplingInterface(scvf.center()))
-                couplingScvfIdx = scvf.index();
-        }
-        return couplingScvfIdx;
-    }
-
-    // ! Returns the global index of the subcontrolvolumeface at the coupling interface
-    const Scalar couplingDofIndex(const StokesFVElementGeometry& fvGeometry)
-    {
-        Scalar couplingDofIndex(-1);
-        // assumption: only one interface scvf (no corners in coupling interface)
-        for(const auto &scvf : scvfs(fvGeometry))
-        {
-            if(stokesProblem_.onCouplingInterface(scvf.center()))
-                couplingDofIndex = scvf.dofIndex();
-        }
-        return couplingDofIndex;
-    }
-
-    // ! Returns the pressure value of the adjacent Darcy element
-//    const Scalar pressureInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
-    const Scalar pressureInDarcyElement(const StokesFVElementGeometry& fvGeometry)
-    {
-        const auto& darcyTree = darcyProblem_.boundingBoxTree();
-
-        Scalar scvStokesIdx = -1;
-        for (const auto &scv : scvs(fvGeometry))
-            scvStokesIdx = scv.dofIndex();
-        // create a vector containing all Darcy elements coupled to the Stokes scvf
-//        const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
-        const auto darcyCouplingInfo = stokesCCToDarcyMap().at(scvStokesIdx);
-
-        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
-        DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
-        darcyFvGeometry.bind(darcyCouplingElement);
-
-        const auto darcyDofIdx = darcyCouplingInfo.darcyDofIdx;
-
-        auto darcyElemVolVars = localView(darcyProblem_.model().curGlobalVolVars());
-        darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, darcyProblem_.model().curSol());
-        const auto darcyVolVars = darcyElemVolVars[darcyDofIdx];
-
-        return darcyVolVars.pressure(DarcyIndices::nPhaseIdx);
-    }
-
-//    const Scalar moleFracWaterInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
-    const Scalar moleFracWaterInDarcyElement(const StokesFVElementGeometry& fvGeometry)
-    {
-        const auto& darcyTree = darcyProblem_.boundingBoxTree();
-
-        Scalar scvStokesIdx = -1;
-        for (const auto &scv : scvs(fvGeometry))
-            scvStokesIdx = scv.dofIndex();
-        // create a vector containing all Darcy elements coupled to the Stokes scvf
-//        const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
-        const auto darcyCouplingInfo = stokesCCToDarcyMap().at(scvStokesIdx);
-
-        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
-        DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
-        darcyFvGeometry.bind(darcyCouplingElement);
-
-        const auto darcyDofIdx = darcyCouplingInfo.darcyDofIdx;
-
-        auto darcyElemVolVars = localView(darcyProblem_.model().curGlobalVolVars());
-        darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, darcyProblem_.model().curSol());
-        const auto darcyVolVars = darcyElemVolVars[darcyDofIdx];
-
-        return darcyVolVars.moleFraction(DarcyIndices::wPhaseIdx, DarcyIndices::nCompIdx);
-    }
-
-//    const Scalar moleFracAirInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
-    const Scalar moleFracAirInDarcyElement(const StokesFVElementGeometry& fvGeometry)
-    {
-        const auto& darcyTree = darcyProblem_.boundingBoxTree();
-
-        Scalar scvStokesIdx = -1;
-        for (const auto &scv : scvs(fvGeometry))
-            scvStokesIdx = scv.dofIndex();
-        // create a vector containing all Darcy elements coupled to the Stokes scvf
-//        const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
-        const auto darcyCouplingInfo = stokesCCToDarcyMap().at(scvStokesIdx);
-
-        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
-        DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
-        darcyFvGeometry.bind(darcyCouplingElement);
-
-        const auto darcyDofIdx = darcyCouplingInfo.darcyDofIdx;
-
-        auto darcyElemVolVars = localView(darcyProblem_.model().curGlobalVolVars());
-        darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, darcyProblem_.model().curSol());
-        const auto darcyVolVars = darcyElemVolVars[darcyDofIdx];
-
-        return darcyVolVars.moleFraction(DarcyIndices::nPhaseIdx, DarcyIndices::wCompIdx);
-    }
-
-//    const Scalar tempInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
-    const Scalar tempInDarcyElement(const StokesFVElementGeometry& fvGeometry)
-    {
-        const auto& darcyTree = darcyProblem_.boundingBoxTree();
-
-        Scalar scvStokesIdx = -1;
-        for (const auto &scv : scvs(fvGeometry))
-            scvStokesIdx = scv.dofIndex();
-        // create a vector containing all Darcy elements coupled to the Stokes scvf
-//        const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
-        const auto darcyCouplingInfo = stokesCCToDarcyMap().at(scvStokesIdx);
-
-        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
-        DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
-        darcyFvGeometry.bind(darcyCouplingElement);
-
-        const auto darcyDofIdx = darcyCouplingInfo.darcyDofIdx;
-
-        auto darcyElemVolVars = localView(darcyProblem_.model().curGlobalVolVars());
-        darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, darcyProblem_.model().curSol());
-        const auto darcyVolVars = darcyElemVolVars[darcyDofIdx];
-
-        return darcyVolVars.temperature();
-    }
-
-    //! Returns the center coordinates of the adjacent Darcy element
-    const auto centerInDarcyElement(const StokesSubControlVolumeFace& scvf) // TODO remove duplicate code to find Darcy element
-    {
-        const auto& darcyTree = darcyProblem_.boundingBoxTree();
-
-        // create a vector containing all Darcy elements coupled to the Stokes scvf
-        const auto darcyCouplingInfo = stokesFaceToDarcyMap().at(scvf.dofIndex());
-
-        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
-        DarcyFVElementGeometry darcyFvGeometry = localView(darcyProblem_.model().globalFvGeometry());
-        darcyFvGeometry.bind(darcyCouplingElement);
-
-        auto center = darcyFvGeometry.scv(darcyCouplingInfo.darcyDofIdx).center();
-        return center;
-    }
-
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation &asImp_()
     { return *static_cast<Implementation *>(this); }
@@ -726,7 +482,8 @@ private:
     DarcyProblem& darcyProblem_;
     CouplingMapper couplingMapper_;
 
-    DarcyPrimaryVariables fluxStokesToDarcy_;
+    mutable StokesLocalResidual stokesLocalResidual_;
+    mutable DarcyLocalResidual darcyLocalResidual_;
 
     std::unordered_map<unsigned int, std::vector<unsigned int> > stokesCCCouplingStencils_;
     std::unordered_map<unsigned int, std::vector<unsigned int> > stokesFaceCouplingStencils_;
@@ -737,4 +494,4 @@ private:
 
 } // namespace Dumux
 
-#endif
+#endif // DUMUX_COUPLINGMANAGER_STOKES_DARCY_HH

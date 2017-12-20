@@ -17,7 +17,7 @@
  /*!
  * \file
  * \ingroup BoundaryCoupling
- * \brief The zwo container types used for storing the information of the two
+ * \brief The two container types used for storing the information of the two
  *        subdomains
  */
 
@@ -31,7 +31,7 @@ namespace Dumux
 
 /*!
  * \ingroup BoundaryCoupling
- * \brief The zwo container types used for storing the information of the two
+ * \brief The two container types used for storing the information of the two
  *        subdomains
  */
 template<typename TypeTag>
