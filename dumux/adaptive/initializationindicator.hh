@@ -24,7 +24,10 @@
 #ifndef DUMUX_GRIDADAPTINITIALIZATIONINDICATOR_HH
 #define DUMUX_GRIDADAPTINITIALIZATIONINDICATOR_HH
 
+#include <memory>
 #include <dune/geometry/type.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
