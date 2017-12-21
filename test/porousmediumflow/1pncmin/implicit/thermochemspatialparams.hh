@@ -115,9 +115,6 @@ public:
         effSolCp_.init(*this);
     }
 
-    ~ThermoChemSpatialParams()
-    {}
-
     /*!
      *  \brief Define the initial permeability \f$[m^2]\f$ distribution
      *
