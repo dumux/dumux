@@ -70,7 +70,7 @@ class StaggeredLocalAssembler<TypeTag,
     using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -649,14 +649,14 @@ private:
     { return gridVolVars.volVars(scv); }
 
     template<class T = TypeTag>
-    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGlobalFaceVariablesCache), FaceVariables&>::type
-    getFaceVarAccess(GlobalFaceVars& gridFaceVars, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
+    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGridFaceVariablesCache), FaceVariables&>::type
+    getFaceVarAccess(GridFaceVariables& GridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
     { return elemFaceVars[scvf]; }
 
     template<class T = TypeTag>
-    static typename std::enable_if<GET_PROP_VALUE(T, EnableGlobalFaceVariablesCache), FaceVariables&>::type
-    getFaceVarAccess(GlobalFaceVars& gridFaceVars, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
-    { return gridFaceVars.faceVars(scvf.index()); }
+    static typename std::enable_if<GET_PROP_VALUE(T, EnableGridFaceVariablesCache), FaceVariables&>::type
+    getFaceVarAccess(GridFaceVariables& GridFaceVariables, ElementFaceVariables& elemFaceVars, const SubControlVolumeFace& scvf)
+    { return GridFaceVariables.faceVars(scvf.index()); }
 };
 
 } // end namespace Dumux

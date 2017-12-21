@@ -42,7 +42,7 @@
 #include <dumux/discretization/staggered/elementvolumevariables.hh>
 #include <dumux/discretization/staggered/fvgridgeometry.hh>
 #include <dumux/discretization/staggered/fvelementgeometry.hh>
-#include <dumux/discretization/staggered/globalfacevariables.hh>
+#include <dumux/discretization/staggered/gridfacevariables.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
 #include <dumux/discretization/staggered/elementfacevariables.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
@@ -64,7 +64,6 @@ NEW_PROP_TAG(CellCenterSolutionVector);
 NEW_PROP_TAG(FaceSolutionVector);
 NEW_PROP_TAG(StaggeredFaceSolution);
 NEW_PROP_TAG(ElementFaceVariables);
-NEW_PROP_TAG(EnableGlobalFaceVariablesCache);
 
 //! Type tag for the staggered scheme.
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
@@ -128,7 +127,8 @@ public:
     using type = BaseStaggeredGeometryHelper<GridView>;
 };
 
-SET_TYPE_PROP(StaggeredModel, GlobalFaceVars, StaggeredGlobalFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);
+//! Set the default global face variables
+SET_TYPE_PROP(StaggeredModel, GridFaceVariables, StaggeredGridFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
 
 //! Set the default for the ElementBoundaryTypes
 SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
@@ -152,9 +152,9 @@ SET_TYPE_PROP(StaggeredModel, IntersectionMapper, ConformingGridIntersectionMapp
 
 SET_TYPE_PROP(StaggeredModel, StaggeredFaceSolution, StaggeredFaceSolution<TypeTag>);
 
-SET_TYPE_PROP(StaggeredModel, ElementFaceVariables, StaggeredElementFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGlobalFaceVariablesCache)>);
+SET_TYPE_PROP(StaggeredModel, ElementFaceVariables, StaggeredElementFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
 
-SET_BOOL_PROP(StaggeredModel, EnableGlobalFaceVariablesCache, true);
+SET_BOOL_PROP(StaggeredModel, EnableGridFaceVariablesCache, true);
 
 //! Definition of the indices for cell center and face dofs in the global solution vector
 SET_PROP(StaggeredModel, DofTypeIndices)

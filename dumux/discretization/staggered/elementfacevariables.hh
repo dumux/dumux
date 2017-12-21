@@ -32,34 +32,34 @@ namespace Dumux
  * \ingroup ImplicitModel
  * \brief Base class for the face variables vector
  */
-template<class TypeTag, bool enableGlobalFaceVarsCache>
+template<class TypeTag, bool enableGridFaceVariablesCache>
 class StaggeredElementFaceVariables
 {};
 
 
 template<class TypeTag>
-class StaggeredElementFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
+class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/true>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
 public:
 
-    StaggeredElementFaceVariables(const GlobalFaceVars& globalFacesVars) : globalFaceVarsPtr_(&globalFacesVars) {}
+    StaggeredElementFaceVariables(const GridFaceVariables& gridFaceVariables) : gridFaceVariablesPtr_(&gridFaceVariables) {}
 
     const FaceVariables& operator [](const SubControlVolumeFace& scvf) const
-    { return globalFaceVars().faceVars(scvf.index()); }
+    { return gridFaceVariables().faceVars(scvf.index()); }
 
     // operator for the access with an index
     // needed for cc methods for the access to the boundary volume variables
     const FaceVariables& operator [](const IndexType scvfIdx) const
-    { return globalFaceVars().faceVars(scvfIdx); }
+    { return gridFaceVariables().faceVars(scvfIdx); }
 
 
     //! For compatibility reasons with the case of not storing the face vars.
@@ -78,22 +78,22 @@ public:
 
 
     //! The global volume variables object we are a restriction of
-    const GlobalFaceVars& globalFaceVars() const
-    { return *globalFaceVarsPtr_; }
+    const GridFaceVariables& gridFaceVariables() const
+    { return *gridFaceVariablesPtr_; }
 
 
 private:
-    const GlobalFaceVars* globalFaceVarsPtr_;
+    const GridFaceVariables* gridFaceVariablesPtr_;
 };
 
 template<class TypeTag>
-class StaggeredElementFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
+class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/false>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using GlobalFaceVars = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -104,7 +104,7 @@ class StaggeredElementFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
 
 public:
 
-    StaggeredElementFaceVariables(const GlobalFaceVars& globalFacesVars) : globalFaceVarsPtr_(&globalFacesVars) {}
+    StaggeredElementFaceVariables(const GridFaceVariables& globalFacesVars) : gridFaceVariablesPtr_(&globalFacesVars) {}
 
     const FaceVariables& operator [](const SubControlVolumeFace& scvf) const
     { return faceVariables_[scvf.localFaceIdx()]; }
@@ -131,7 +131,7 @@ public:
 
         for(auto&& scvf : scvfs(fvGeometry))
         {
-            faceVariables_[scvf.localFaceIdx()].update(sol[faceIdx], globalFaceVars().problem(), element, fvGeometry, scvf);
+            faceVariables_[scvf.localFaceIdx()].update(sol[faceIdx], GridFaceVariables().problem(), element, fvGeometry, scvf);
             faceVarIndices_[scvf.localFaceIdx()] = scvf.index();
         }
     }
@@ -153,8 +153,8 @@ public:
     }
 
     //! The global volume variables object we are a restriction of
-    const GlobalFaceVars& globalFaceVars() const
-    { return *globalFaceVarsPtr_; }
+    const GridFaceVariables& gridFaceVariables() const
+    { return *gridFaceVariablesPtr_; }
 
 private:
 
@@ -165,7 +165,7 @@ private:
         return std::distance(faceVarIndices_.begin(), it);
     }
 
-    const GlobalFaceVars* globalFaceVarsPtr_;
+    const GridFaceVariables* gridFaceVariablesPtr_;
     std::vector<IndexType> faceVarIndices_;
     std::vector<FaceVariables> faceVariables_;
 };
