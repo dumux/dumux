@@ -65,7 +65,6 @@ NEW_PROP_TAG(FaceSolutionVector);
 NEW_PROP_TAG(StaggeredFaceSolution);
 NEW_PROP_TAG(ElementFaceVariables);
 NEW_PROP_TAG(EnableGlobalFaceVariablesCache);
-NEW_PROP_TAG(StaggeredFluxStencils);
 
 //! Type tag for the staggered scheme.
 NEW_TYPE_TAG(StaggeredModel, INHERITS_FROM(FiniteVolumeModel));
