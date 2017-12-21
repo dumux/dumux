@@ -44,7 +44,7 @@ NEW_TYPE_TAG(KovasznayTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierS
 SET_PROP(KovasznayTestProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type =FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
+    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
