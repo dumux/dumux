@@ -24,18 +24,18 @@
 #ifndef DUMUX_FLUX_OVER_PLANE_STAGGERED_HH
 #define DUMUX_FLUX_OVER_PLANE_STAGGERED_HH
 
+#include <numeric>
+
 #include <dune/common/fvector.hh>
-#include <dumux/common/properties.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/referenceelements.hh>
-#include <dumux/common/boundingboxtree.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/geometry/intersectspointgeometry.hh>
 
-
-namespace Dumux
-{
-
+namespace Dumux {
 
 /*!
  * \ingroup FreeflowModels
@@ -271,7 +271,7 @@ public:
 
                     for(int planeIdx = 0; planeIdx < subPlanes.size(); ++planeIdx)
                     {
-                        if(BoundingBoxTreeHelper<dim>::pointInGeometry(subPlanes[planeIdx], scvf.center()))
+                        if(intersectsPointGeometry(scvf.center(), subPlanes[planeIdx]))
                         {
                             const Scalar velocity = sol_[faceIdx][dofIdx][0];
                             const Scalar result = fluxType(element, fvGeometry, scvf, velocity);

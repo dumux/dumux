@@ -26,10 +26,10 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/freeflow/navierstokes/localresidual.hh>
 
-
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag,  DiscretizationMethods Method>
@@ -40,7 +40,8 @@ class NavierStokesNCResidualImpl;
  * \brief Element-wise calculation of the multi-component Navier-Stokes residual for models using the staggered discretization
  */
 template<class TypeTag>
-class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethods::Staggered> : public NavierStokesResidual<TypeTag>
+class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethods::Staggered>
+: public NavierStokesResidual<TypeTag>
 {
     using ParentType = NavierStokesResidual<TypeTag>;
     friend class StaggeredLocalResidual<TypeTag>;

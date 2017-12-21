@@ -24,10 +24,11 @@
 #ifndef DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
 #define DUMUX_NAVIERSTOKES_NC_STAGGERED_FLUXVARIABLES_HH
 
+#include <numeric>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxvariablesbase.hh>
 #include <dumux/discretization/methods.hh>
-#include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
+#include <dumux/freeflow/navierstokes/fluxvariables.hh>
 
 namespace Dumux
 {

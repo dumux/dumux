@@ -21,13 +21,11 @@
  * \ingroup NavierStokesModel
  * \copydoc Dumux::NavierStokesFluxVariables
  */
-#ifndef DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
-#define DUMUX_FREELOW_IMPLICIT_FLUXVARIABLES_HH
+#ifndef DUMUX_FREELOW_NAVIERSTOKES_FLUXVARIABLES_HH
+#define DUMUX_FREELOW_NAVIERSTOKES_FLUXVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
-
-#include <dumux/freeflow/navierstokes/staggered/fluxvariables.hh>
 
 namespace Dumux
 {
