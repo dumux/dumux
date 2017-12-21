@@ -64,7 +64,7 @@ public:
     CCTpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
-    //! operator for the access with an index
+    //! operator for the access with an scv
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return gridVolVars().volVars(scv.dofIndex()); }
 
