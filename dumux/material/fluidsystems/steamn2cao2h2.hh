@@ -51,32 +51,9 @@ namespace FluidSystems
  *              and \f$CaO\f$  and \f$Ca(OH)_2/f$ as solid components drawn for thermo-chemical
  *              heat storage.
  *
- *  This fluidsystem is applied by default to the simpleh2o, as the IAPWS-formulation has to be
- *  adapted to high temperatures and high pressures first.
- *
- *  To change the component formulation (i.e. to use (non)tabulated or
- *  incompressible water), or to switch on verbosity of tabulation,
- *  specify the water formulation via template arguments or via the property
- *  system, as described in the TypeTag Adapter at the end of the file.
- *
- * \code{.cpp}
- * // Select fluid system
- * SET_PROP(TheSpecificProblemTypeTag, FluidSystem)
- * {
- *     // e.g. to use a simple version of H2O
- *     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
- *     typedef Dumux::FluidSystems::H2OAir<Scalar, Dumux::SimpleH2O<Scalar> > type;
- * };
- * \endcode
- *
- *   Also remember to initialize tabulated components (FluidSystem::init()), while this
- *   is not necessary for non-tabularized ones.
- *
- * This FluidSystem can be used without the PropertySystem that is applied in Dumux,
- * as all Parameters are defined via template parameters. Hence it is in an
- * additional namespace Dumux::FluidSystem::.
- * An adapter class using Dumux::FluidSystem<TypeTag> is also provided
- * at the end of this file.
+ *  This fluidsystem is applied by default with the tabulated version of
+ *  water of the IAPWS-formulation. However, the IAPWS-formulation has to be
+ *  adapted, if to higher temperatures and higher pressures occur.
  */
 
 template <class Scalar,
@@ -260,9 +237,6 @@ public:
       else
         DUNE_THROW(Dune::InvalidStateException, "Invalid solid index " << phaseIdx);
         return 1;
-
-//        if(phaseIdx != sPhaseIdx)
-//            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << sPhaseIdx);
     }
 
      /*!
@@ -473,8 +447,7 @@ public:
         Scalar result = 0.0;
         if(compJIdx == H2OIdx)
         result = H2O_N2::gasDiffCoeff(temperature, pressure);
-//         else if (compJIdx == CaO2H2Idxdx)
-//             result = 0.12e-9; //Just added to avoid numerical problem. does not have any physical significance
+
         else
             DUNE_THROW(Dune::NotImplemented, "Binary diffusion coefficient of components "
                                                  << compIIdx << " and " << compJIdx
@@ -628,7 +601,6 @@ public:
         Scalar c_pN2;
         Scalar c_pH2O;
         // let the water and air components do things their own way
-//         if (useComplexRelations) {
             c_pN2= N2::gasHeatCapacity(fluidState.temperature(phaseIdx),
                                         fluidState.pressure(phaseIdx)
                                         * fluidState.moleFraction(phaseIdx, N2Idx));
@@ -636,20 +608,6 @@ public:
             c_pH2O = H2O::gasHeatCapacity(fluidState.temperature(phaseIdx),
                                           fluidState.pressure(phaseIdx)
                                           * fluidState.moleFraction(phaseIdx, H2OIdx));
-
-//         }
-//         else {
-//             // assume an ideal gas for both components. See:
-//             //
-//             // http://en.wikipedia.org/wiki/Heat_capacity
-//             Scalar c_vN2molar = Dumux::Constants<Scalar>::R*2.39;
-//             Scalar c_pN2 = Dumux::Constants<Scalar>::R + c_vN2molar;
-//
-//             Scalar c_vH2Omolar = Dumux::Constants<Scalar>::R*3.37; // <- correct??
-//             Scalar c_pH2O = Dumux::Constants<Scalar>::R + c_vH2Omolar;
-//         }
-//
-//         // mangle all components together
 
         return
             c_pH2O*fluidState.moleFraction(nPhaseIdx, H2OIdx) + c_pN2*fluidState.moleFraction(nPhaseIdx, N2Idx);
@@ -671,19 +629,6 @@ public:
         DUNE_THROW(Dune::NotImplemented, "solubilityLimit");
     }
 
-// private:
-//     static Scalar gasDensity_(Scalar T, Scalar pg, Scalar xgH2O)
-//     {
-//         //Dalton' Law
-//         const Scalar pH2O = xgH2O*pg;
-//         const Scalar pN2 = pg - pH2O;
-//         const Scalar gasDensityN2 = N2::gasDensity(T, pN2);
-//         const Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
-//         const Scalar gasDensity = gasDensityN2 + gasDensityH2O;
-//
-// //         return 0.944;
-//         return gasDensity*10;
-//     }
 };
 
 } // end namespace
