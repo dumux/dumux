@@ -1,5 +1,3 @@
-
-
 // -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
 // vi: set et ts=4 sw=4 sts=4:
 /*****************************************************************************
@@ -28,7 +26,6 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
@@ -48,7 +45,7 @@ NEW_TYPE_TAG(DoneaTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStoke
 SET_PROP(DoneaTestProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
+    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
