@@ -25,8 +25,9 @@
 #ifndef DUMUX_2P1C_INDICES_HH
 #define DUMUX_2P1C_INDICES_HH
 
-namespace Dumux
-{
+#include <dumux/common/properties.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup TwoPOneCModel

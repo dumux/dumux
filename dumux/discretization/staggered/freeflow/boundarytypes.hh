@@ -72,8 +72,6 @@ public:
         resetEq(eqIdx);
         boundaryInfo_[eqIdx].visited = true;
         boundaryInfo_[eqIdx].isDirichletCell = true;
-
-        Valgrind::SetDefined(boundaryInfo_[eqIdx]);
     }
 
     /*!
@@ -95,7 +93,6 @@ public:
             resetEq(eqIdx);
             boundaryInfo_[eqIdx].visited = true;
             boundaryInfo_[eqIdx].isSymmetry = true;
-            Valgrind::SetDefined(boundaryInfo_[eqIdx]);
         }
     }
 

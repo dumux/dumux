@@ -35,7 +35,9 @@
 #include <dune/grid/utility/grapedataioformattypes.hh>
 #endif
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux
 {
@@ -130,7 +132,7 @@ private:
         int rank = problem.gridView().comm().rank();
         std::ostringstream oss;
         try {
-            std::string name = GET_RUNTIME_PARAM_FROM_GROUP(TTAG(NumericModel), std::string, Problem, Name);
+            std::string name = getParam<std::string>("Problem.Name");
             oss << name;
         }
         catch (ParameterException &e)

@@ -23,6 +23,9 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
 
+#include <dune/common/exceptions.hh>
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 

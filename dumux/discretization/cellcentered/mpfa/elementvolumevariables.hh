@@ -23,8 +23,10 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
 
-namespace Dumux
-{
+#include <utility>
+#include <dumux/common/properties.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup ImplicitModel

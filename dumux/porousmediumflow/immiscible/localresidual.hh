@@ -25,6 +25,8 @@
 #ifndef DUMUX_IMMISCIBLE_LOCAL_RESIDUAL_HH
 #define DUMUX_IMMISCIBLE_LOCAL_RESIDUAL_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 /*!

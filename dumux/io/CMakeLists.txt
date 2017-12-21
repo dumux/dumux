@@ -1,6 +1,5 @@
 install(FILES
   adaptivegridrestart.hh
-  artgridcreator.hh
   container.hh
   cpgridcreator.hh
   gnuplotinterface.hh

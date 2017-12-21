@@ -24,6 +24,10 @@
 #ifndef DUMUX_ENTITY_INDEX_MAP_HH
 #define DUMUX_ENTITY_INDEX_MAP_HH
 
+#include <vector>
+#include <utility>
+#include <dune/geometry/dimension.hh>
+
 namespace Dumux {
 
 /*!

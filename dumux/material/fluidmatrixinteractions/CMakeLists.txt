@@ -6,8 +6,6 @@ add_subdirectory("mp")
 
 #install headers
 install(FILES
-diffusivityconstant.hh
-diffusivityconstanttau.hh
 diffusivityconstanttortuosity.hh
 diffusivitymillingtonquirk.hh
 permeabilitykozenycarman.hh

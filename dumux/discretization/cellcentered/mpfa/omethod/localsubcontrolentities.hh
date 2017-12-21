@@ -23,6 +23,9 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCALSUBCONTROLENTITIES_HH
 
+#include <dune/common/fvector.hh>
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 template<class TypeTag, class IvIndexSet>

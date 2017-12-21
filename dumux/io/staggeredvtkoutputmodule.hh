@@ -21,8 +21,8 @@
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format. Specialization for staggered grids with dofs on faces.
  */
-#ifndef STAGGERED_VTK_OUTPUT_MODULE_HH
-#define STAGGERED_VTK_OUTPUT_MODULE_HH
+#ifndef DUMUX_STAGGERED_VTK_OUTPUT_MODULE_HH
+#define DUMUX_STAGGERED_VTK_OUTPUT_MODULE_HH
 
 #include <dune/common/fvector.hh>
 
@@ -30,9 +30,7 @@
 #include <dumux/io/pointcloudvtkwriter.hh>
 #include <dumux/io/vtksequencewriter.hh>
 
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup InputOutput

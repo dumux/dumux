@@ -31,8 +31,9 @@
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+#include "indices.hh" // for formulation
+
+namespace Dumux {
 
 /*!
  * \ingroup TwoPTwoCModel

@@ -24,12 +24,14 @@
 #ifndef DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
 #define DUMUX_RICHARDS_PRIMARY_VARIABLE_SWITCH_HH
 
-#include <dune/common/exceptions.hh>
+#include <dumux/common/exceptions.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/material/constants.hh>
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup RichardsModel
  * \brief The primary variable switch controlling the phase presence state variable.

@@ -24,8 +24,11 @@
 #ifndef DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 #define DUMUX_PLOT_EFFECTIVE_DIFFUSIVITY_MODEL_HH
 
-namespace Dumux
-{
+#include <string>
+#include <vector>
+
+namespace Dumux {
+
 // forward declaration
 template<class Scalar> class GnuplotInterface;
 

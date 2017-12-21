@@ -25,22 +25,22 @@
 #ifndef DUMUX_3P2CNI_VOLUME_VARIABLES_HH
 #define DUMUX_3P2CNI_VOLUME_VARIABLES_HH
 
-#include <dumux/common/math.hh>
-
-#include <dune/common/parallel/collectivecommunication.hh>
 #include <vector>
 #include <iostream>
 
+#include <dune/common/deprecated.hh>
+
+#include <dumux/common/math.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 #include <dumux/material/constants.hh>
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
-#include <dune/common/deprecated.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup ThreePWaterOilModel
@@ -99,7 +99,7 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
 
     static const Scalar R; // universial gas constant
 
-     enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
+    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
     enum { dofCodim = isBox ? dim : 0 };
 
 public:

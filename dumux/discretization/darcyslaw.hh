@@ -27,6 +27,7 @@
 #ifndef DUMUX_DISCRETIZATION_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_DARCYS_LAW_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux

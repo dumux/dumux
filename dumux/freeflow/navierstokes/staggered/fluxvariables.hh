@@ -35,6 +35,7 @@ namespace Properties
 {
 // forward declaration
 NEW_PROP_TAG(EnableInertiaTerms);
+NEW_PROP_TAG(ElementFaceVariables);
 }
 
 // forward declaration

@@ -33,6 +33,10 @@
 #include "2pncdiffusionspatialparams.hh"
 #include <dumux/discretization/maxwellstefanslaw.hh>
 
+#ifndef DIFFUSIONTYPE // default to Fick's law if not set through CMake
+#define DIFFUSIONTYPE FicksLaw<TypeTag>
+#endif
+
 namespace Dumux
 {
 

@@ -27,9 +27,10 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class TypeTag, DiscretizationMethods discMethod>
 class FicksLawImplementation;

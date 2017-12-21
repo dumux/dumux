@@ -24,11 +24,13 @@
 #ifndef DUMUX_ENERGY_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 #define DUMUX_ENERGY_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 
+#include <cmath>
 #include <dumux/common/spline.hh>
+#include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup PorousmediumThermalNonEquilibriumModel
  * \brief This file contains the parts of the local residual to
@@ -252,7 +254,7 @@ public:
 
         using std::isfinite;
         if (!isfinite(solidToFluidEnergyExchange))
-                        DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "TFluid="<< TFluid << " TSolid="<< TSolid);
+            DUNE_THROW(NumericalProblem, "Calculated non-finite source, " << "TFluid="<< TFluid << " TSolid="<< TSolid);
 
         for(int energyEqIdx =0; energyEqIdx<numEnergyEqFluid+numEnergyEqSolid; ++energyEqIdx)
         {

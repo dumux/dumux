@@ -24,6 +24,10 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
+#include <cmath>
+#include <string>
+#include <vector>
+
 namespace Dumux
 {
 // forward declaration

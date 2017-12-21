@@ -25,6 +25,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include "fluxvariablescachefiller.hh"
 #include "methods.hh"
 

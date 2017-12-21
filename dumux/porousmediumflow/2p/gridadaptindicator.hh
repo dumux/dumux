@@ -25,9 +25,12 @@
 #ifndef DUMUX_TWOP_ADAPTION_INDICATOR_HH
 #define DUMUX_TWOP_ADAPTION_INDICATOR_HH
 
+#include <memory>
 #include <dune/common/exceptions.hh>
+#include <dune/grid/common/partitionset.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/evalsolution.hh>
 
 namespace Dumux

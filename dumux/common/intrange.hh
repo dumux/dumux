@@ -24,6 +24,8 @@
 #ifndef DUMUX_INTEGER_RANGE_HH
 #define DUMUX_INTEGER_RANGE_HH
 
+#include <cassert>
+
 namespace Dumux {
 
 /*!

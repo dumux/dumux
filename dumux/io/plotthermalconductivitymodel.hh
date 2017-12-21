@@ -24,10 +24,12 @@
 #ifndef DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 #define DUMUX_PLOT_THERMAL_CONDUCTIVITY_LAW_HH
 
+#include <string>
+#include <vector>
 #include <dumux/material/fluidstates/compositional.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template<class Scalar> class GnuplotInterface;
 

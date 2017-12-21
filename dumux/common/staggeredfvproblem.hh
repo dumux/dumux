@@ -24,11 +24,16 @@
 #ifndef DUMUX_STAGGERD_FV_PROBLEM_HH
 #define DUMUX_STAGGERD_FV_PROBLEM_HH
 
+#include <dune/common/version.hh>
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+#include <dune/common/rangeutilities.hh>
+#endif
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/fvproblem.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup Problems
  * \ingroup Common

@@ -24,6 +24,9 @@
 #ifndef DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 #define DUMUX_RICHARDS_VOLUME_VARIABLES_HH
 
+#include <cassert>
+
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/material/idealgas.hh>

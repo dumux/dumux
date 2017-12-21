@@ -25,13 +25,10 @@
 #ifndef DUMUX_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 #define DUMUX_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 
-namespace Dumux
-{
+#include <vector>
+#include <dumux/common/properties.hh>
 
-namespace Properties
-{
-NEW_PROP_TAG(ReplaceCompEqIdx);
-} // end namespace Properties
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumCompositional

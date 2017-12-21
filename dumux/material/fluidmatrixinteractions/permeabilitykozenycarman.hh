@@ -24,8 +24,11 @@
 #ifndef DUMUX_PERMEABILITY_KOZENY_CARMAN_HH
 #define DUMUX_PERMEABILITY_KOZENY_CARMAN_HH
 
-namespace Dumux
-{
+#include <cmath>
+#include <dune/common/fmatrix.hh>
+#include <dumux/common/properties.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup fluidmatrixinteractionslaws

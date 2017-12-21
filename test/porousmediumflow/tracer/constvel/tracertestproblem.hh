@@ -34,6 +34,10 @@
 
 #include "tracertestspatialparams.hh"
 
+#ifndef USEMOLES // default to true if not set through CMake
+#define USEMOLES true
+#endif
+
 namespace Dumux
 {
 /**

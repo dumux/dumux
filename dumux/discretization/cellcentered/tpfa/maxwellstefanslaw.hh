@@ -27,20 +27,16 @@
 #include <dune/common/float_cmp.hh>
 
 #include <dumux/common/math.hh>
+#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fluxvariablescaching.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
-namespace Properties
-{
-// forward declaration of properties
-NEW_PROP_TAG(NumPhases);
-NEW_PROP_TAG(EffectiveDiffusivityModel);
-}
+// forward declaration
+template <class TypeTag, DiscretizationMethods DM>
+class MaxwellStefansLawImplementation;
 
 /*!
  * \ingroup CCTpfaMaxwellStefansLaw

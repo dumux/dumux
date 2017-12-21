@@ -40,6 +40,10 @@
 // use the spatial parameters as the injection problem of the 2p2c test program
 #include <test/porousmediumflow/2p2c/implicit/injectionspatialparams.hh>
 
+#ifndef GRIDTYPE // default to yasp grid if not provided by CMake
+#define GRIDTYPE Dune::YaspGrid<2>
+#endif
+
 namespace Dumux {
 
 //! Forward declaration of the problem class

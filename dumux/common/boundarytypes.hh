@@ -24,6 +24,9 @@
 #ifndef DUMUX_BOUNDARY_TYPES_HH
 #define DUMUX_BOUNDARY_TYPES_HH
 
+#include <algorithm>
+#include <array>
+
 namespace Dumux
 {
 

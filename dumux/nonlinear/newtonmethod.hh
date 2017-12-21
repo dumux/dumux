@@ -34,9 +34,9 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Newton

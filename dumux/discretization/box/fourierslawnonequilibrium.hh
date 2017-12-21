@@ -31,8 +31,11 @@
 
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
+// forward declaration
+template <class TypeTag, DiscretizationMethods DM>
+class FouriersLawNonEquilibriumImplementation;
 
 /*!
  * \ingroup BoxFouriersLaw

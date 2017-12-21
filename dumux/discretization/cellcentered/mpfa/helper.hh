@@ -24,12 +24,17 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 
 #include <dune/common/version.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/fmatrix.hh>
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/geometry/type.hh>
+#include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/math.hh>
 #include "methods.hh"
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \brief Mpfa method-specific implementation of the helper class (dimension-dependent)

@@ -25,8 +25,10 @@
 #ifndef DUMUX_MY_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 #define DUMUX_MY_COMPOSITIONAL_LOCAL_RESIDUAL_HH
 
-namespace Dumux
-{
+#include <dumux/common/properties.hh>
+
+namespace Dumux {
+
 /*!
  * \ingroup Implicit
  * \ingroup ImplicitLocalResidual

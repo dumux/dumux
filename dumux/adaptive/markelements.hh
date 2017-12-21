@@ -24,6 +24,8 @@
 #ifndef DUMUX_ADAPTIVE_MARKELEMENTS_HH
 #define DUMUX_ADAPTIVE_MARKELEMENTS_HH
 
+#include <dune/grid/common/rangegenerators.hh>
+
 namespace Dumux {
 
 /*!

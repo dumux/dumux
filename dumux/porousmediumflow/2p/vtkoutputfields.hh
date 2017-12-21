@@ -24,8 +24,9 @@
 #ifndef DUMUX_TWOP_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TWOP_VTK_OUTPUT_FIELDS_HH
 
-namespace Dumux
-{
+#include <dumux/common/properties.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup TwoPModel

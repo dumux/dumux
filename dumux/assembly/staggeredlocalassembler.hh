@@ -37,6 +37,7 @@
 
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
 #include <dune/common/hybridutilities.hh>
+#include <dune/common/rangeutilities.hh>
 #else
 #include <dumux/common/intrange.hh>
 #endif
@@ -607,7 +608,6 @@ protected:
             assert(eqIdx < matrix[globalI][globalJ].size());
             assert(pvIdx < matrix[globalI][globalJ][eqIdx].size());
             matrix[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
-            Valgrind::CheckDefined(matrix[globalI][globalJ][eqIdx][pvIdx]);
         }
     }
 
@@ -617,11 +617,11 @@ protected:
     {
         constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
-    #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return Dune::range(0, numEqCellCenter);
-    #else
+#else
         return IntRange(0, numEqCellCenter);
-    #endif
+#endif
     }
 
     //! Helper function that returns an iterable range of primary variable indices.
