@@ -373,13 +373,13 @@ private:
 
         const Scalar deltaP = normalizePressure ? problem.initialAtPos(scvf.center())[pressureIdx] : 0.0;
 
-        Scalar result = (insideVolVars.pressure() - deltaP) * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
+        Scalar result = (insideVolVars.pressure() - deltaP) * scvf.area() * -1.0 * scvf.directionSign();
 
         // treat outflow BCs
         if(scvf.boundary())
         {
             const Scalar pressure = problem.dirichlet(element, scvf)[pressureIdx] - deltaP;
-            result += pressure * scvf.area() * sign(scvf.outerNormalScalar());
+            result += pressure * scvf.area() * scvf.directionSign();
         }
         return result;
     }

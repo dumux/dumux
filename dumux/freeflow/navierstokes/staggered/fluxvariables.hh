@@ -101,7 +101,7 @@ public:
                                              bool isOutflow = false)
     {
         const Scalar velocity = elemFaceVars[scvf].velocitySelf();
-        const bool insideIsUpstream = sign(scvf.outerNormalScalar()) == sign(velocity);
+        const bool insideIsUpstream = scvf.directionSign() == sign(velocity);
         static const Scalar upWindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
         const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
@@ -112,7 +112,7 @@ public:
 
         const Scalar flux = (upWindWeight * upwindTerm(upstreamVolVars) +
                             (1.0 - upWindWeight) * upwindTerm(downstreamVolVars))
-                            * velocity * scvf.area() * sign(scvf.outerNormalScalar());
+                            * velocity * scvf.area() * scvf.directionSign();
 
         return flux;
     }
@@ -216,7 +216,7 @@ public:
        {
            // advective part
            const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
-           const Scalar vUp = (sign(scvf.outerNormalScalar()) == sign(vAvg)) ? velocityOpposite : velocitySelf;
+           const Scalar vUp = (scvf.directionSign() == sign(vAvg)) ? velocityOpposite : velocitySelf;
            normalFlux += vAvg * vUp * insideVolVars.density();
        }
 
@@ -229,17 +229,17 @@ public:
        normalFlux -= insideVolVars.viscosity() * 2.0 * deltaV/deltaX;
 
        // account for the orientation of the face
-       const Scalar sgn = -1.0 * sign(scvf.outerNormalScalar());
+       const Scalar sgn = -1.0 * scvf.directionSign();
 
        Scalar result = normalFlux * sgn * scvf.area();
 
        // treat outflow conditions
        if(navierStokes && scvf.boundary())
        {
-           const auto& upVolVars = (sign(scvf.outerNormalScalar()) == sign(velocitySelf)) ?
+           const auto& upVolVars = (scvf.directionSign() == sign(velocitySelf)) ?
                                    elemVolVars[insideScvIdx] : elemVolVars[scvf.outsideScvIdx()] ;
 
-           result += velocitySelf * velocitySelf * upVolVars.density() * sign(scvf.outerNormalScalar()) * scvf.area() ;
+           result += velocitySelf * velocitySelf * upVolVars.density() * scvf.directionSign() * scvf.area() ;
        }
        return result;
    }
@@ -302,7 +302,7 @@ private:
       const auto insideScvIdx = normalFace.insideScvIdx();
       const auto outsideScvIdx = normalFace.outsideScvIdx();
 
-      const bool innerElementIsUpstream = ( sign(normalFace.outerNormalScalar()) == sign(transportingVelocity) );
+      const bool innerElementIsUpstream = ( normalFace.directionSign() == sign(transportingVelocity) );
 
       const auto& upVolVars = innerElementIsUpstream ? elemVolVars[insideScvIdx] : elemVolVars[outsideScvIdx];
 
@@ -311,9 +311,8 @@ private:
                                          faceVars.velocityParallel(localSubFaceIdx);
 
       const Scalar momentum = upVolVars.density() * transportedVelocity;
-      const int sgn = sign(normalFace.outerNormalScalar());
 
-      return transportingVelocity * momentum * sgn * normalFace.area() * 0.5;
+      return transportingVelocity * momentum * normalFace.directionSign() * normalFace.area() * 0.5;
   }
 
   FacePrimaryVariables computeDiffusivePartOfTangentialMomentumFlux_(const Problem& problem,
@@ -358,8 +357,7 @@ private:
       const Scalar parallelDerivative = parallelDeltaV / scvf.pairData(localSubFaceIdx).parallelDistance;
       tangentialDiffusiveFlux -= muAvg * parallelDerivative;
 
-      const Scalar sgn = sign(normalFace.outerNormalScalar());
-      return tangentialDiffusiveFlux * sgn * normalFace.area() * 0.5;
+      return tangentialDiffusiveFlux * normalFace.directionSign() * normalFace.area() * 0.5;
   }
 };
 
