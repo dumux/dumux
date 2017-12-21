@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_CCMPFA_FLUXVARSCACHE_FILLER_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>

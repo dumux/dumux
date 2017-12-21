@@ -27,7 +27,8 @@
 #include <utility>
 #include <dumux/common/properties.hh>
 
-namespace Dumux {
+namespace Dumux
+{
 
 /*!
  * \ingroup CCMpfaDiscretization

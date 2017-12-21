@@ -27,7 +27,6 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_COMPUTE_TRANSMISSIBILITY_HH
 
 #include <dune/common/typetraits.hh>
-#include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/math.hh>

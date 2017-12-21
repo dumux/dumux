@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux
 {

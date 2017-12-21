@@ -31,6 +31,7 @@
 #define DUMUX_DISCRETIZATION_MPFA_TENSOR_LAMBDA_FACTORY_HH
 
 #include <dumux/common/properties.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 

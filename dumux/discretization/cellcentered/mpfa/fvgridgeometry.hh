@@ -29,6 +29,9 @@
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
