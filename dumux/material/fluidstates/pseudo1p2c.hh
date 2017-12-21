@@ -24,8 +24,10 @@
 #ifndef DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 #define DUMUX_PSEUDO1P2C_FLUID_STATE_HH
 
-namespace Dumux
-{
+#include <cassert>
+
+namespace Dumux {
+
 /*!
  * \ingroup FluidStates
  * \brief Container for compositional variables in a 1p2c situation

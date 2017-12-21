@@ -29,6 +29,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>

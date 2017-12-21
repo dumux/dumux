@@ -261,10 +261,6 @@ public:
             const Scalar &porosity,
             const Scalar &temperature)
     {
-        if (saturation == 0. || saturation == 1.)
-                    Dune::dinfo << "saturation initial and boundary conditions set to zero or one!"
-                        << " assuming fully saturated compositional conditions" << std::endl;
-
         // set the temperature, pressure
         fluidState.setTemperature(temperature);
         fluidState.setPressure(wPhaseIdx, phasePressure[wPhaseIdx]);
