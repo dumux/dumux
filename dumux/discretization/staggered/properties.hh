@@ -23,8 +23,8 @@
  * \brief Defines a type tag and some properties for models using the staggered scheme.
  */
 
-#ifndef DUMUX_STAGGERDs_PROPERTIES_HH
-#define DUMUX_STAGGERDs_PROPERTIES_HH
+#ifndef DUMUX_STAGGERD_PROPERTIES_HH
+#define DUMUX_STAGGERD_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
 
@@ -50,7 +50,6 @@
 #include <dumux/common/intersectionmapper.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
-
 
 namespace Dumux
 {

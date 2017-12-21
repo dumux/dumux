@@ -139,64 +139,6 @@ public:
         return result;
     }
 
-    void computeCellCenterToCellCenterStencil(Stencil& stencil,
-                                              const Element& element,
-                                              const FVElementGeometry& fvGeometry,
-                                              const SubControlVolumeFace& scvf)
-    {
-        // the first entry is always the cc dofIdx itself
-        if(stencil.empty())
-            stencil.push_back(scvf.insideScvIdx());
-        if(!scvf.boundary())
-            stencil.push_back(scvf.outsideScvIdx());
-    }
-
-    void computeCellCenterToFaceStencil(Stencil& stencil,
-                                        const Element& element,
-                                        const FVElementGeometry& fvGeometry,
-                                        const SubControlVolumeFace& scvf)
-    {
-        stencil.push_back(scvf.dofIndex());
-    }
-
-    void computeFaceToCellCenterStencil(Stencil& stencil,
-                                        const FVElementGeometry& fvGeometry,
-                                        const SubControlVolumeFace& scvf)
-    {
-        const int eIdx = scvf.insideScvIdx();
-        stencil.push_back(scvf.insideScvIdx());
-
-        for(const auto& data : scvf.pairData())
-        {
-            auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
-            const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
-            if(!normalFace.boundary())
-                stencil.push_back(outerParallelElementDofIdx);
-        }
-    }
-
-    void computeFaceToFaceStencil(Stencil& stencil,
-                                  const FVElementGeometry& fvGeometry,
-                                  const SubControlVolumeFace& scvf)
-    {
-        // the first entries are always the face dofIdx itself and the one of the opposing face
-        if(stencil.empty())
-        {
-            stencil.push_back(scvf.dofIndex());
-            stencil.push_back(scvf.dofIndexOpposingFace());
-        }
-
-        for(const auto& data : scvf.pairData())
-        {
-            stencil.push_back(data.normalPair.first);
-            const auto outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
-            if(outerParallelFaceDofIdx >= 0)
-                stencil.push_back(outerParallelFaceDofIdx);
-            if(!scvf.boundary())
-                stencil.push_back(data.normalPair.second);
-        }
-    }
-
     /*!
     * \brief Returns the normal part of the momentum flux
     */

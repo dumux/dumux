@@ -27,7 +27,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
-#include <dumux/discretization/staggered/connectivitymap.hh>
 
 namespace Dumux
 {
@@ -65,7 +64,7 @@ class StaggeredFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag
     };
 
     using GeometryHelper = typename GET_PROP_TYPE(TypeTag, StaggeredGeometryHelper);
-    using ConnectivityMap = StaggeredConnectivityMap<TypeTag>;
+    using ConnectivityMap = typename GET_PROP_TYPE(TypeTag, AssemblyMap);
 
 public:
     //! Constructor

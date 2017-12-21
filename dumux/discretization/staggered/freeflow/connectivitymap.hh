@@ -22,8 +22,8 @@
  *        that contribute to the derivative calculation. This is used for
  *        finite-volume schemes with symmetric sparsity pattern in the global matrix.
  */
-#ifndef DUMUX_STAGGERED_CONNECTIVITY_MAP_HH
-#define DUMUX_STAGGERED_CONNECTIVITY_MAP_HH
+#ifndef DUMUX_STAGGERED_FREEFLOW_CONNECTIVITY_MAP_HH
+#define DUMUX_STAGGERED_FREEFLOW_CONNECTIVITY_MAP_HH
 
 #include <vector>
 #include <dumux/common/properties.hh>
@@ -32,12 +32,14 @@ namespace Dumux
 {
 
 template<class TypeTag>
-class StaggeredConnectivityMap
+class StaggeredFreeFlowConnectivityMap
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
+    using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -76,7 +78,6 @@ public:
         std::vector<Stencil> fullfaceToFaceStencils;
         fullfaceToFaceStencils.resize(numDofsFace);
 
-        FluxVariables fluxVars;
         for(auto&& element: elements(fvGridGeometry.gridView()))
         {
             // restrict the FvGeometry locally and bind to the element
@@ -87,12 +88,12 @@ public:
             for (auto&& scvf : scvfs(fvGeometry))
             {
                 const auto dofIdxCellCenter = fvGridGeometry.elementMapper().index(element);
-                fluxVars.computeCellCenterToCellCenterStencil(cellCenterToCellCenterMap_[dofIdxCellCenter], element, fvGeometry, scvf);
-                fluxVars.computeCellCenterToFaceStencil(cellCenterToFaceMap_[dofIdxCellCenter], element, fvGeometry, scvf);
+                computeCellCenterToCellCenterStencil_(cellCenterToCellCenterMap_[dofIdxCellCenter], element, fvGeometry, scvf);
+                computeCellCenterToFaceStencil_(cellCenterToFaceMap_[dofIdxCellCenter], element, fvGeometry, scvf);
 
                 const auto scvfIdx = scvf.index();
-                fluxVars.computeFaceToCellCenterStencil(faceToCellCenterMap_[scvfIdx], fvGeometry, scvf);
-                fluxVars.computeFaceToFaceStencil(faceToFaceMap_[scvfIdx], fvGeometry, scvf);
+                computeFaceToCellCenterStencil_(faceToCellCenterMap_[scvfIdx], fvGeometry, scvf);
+                computeFaceToFaceStencil_(faceToFaceMap_[scvfIdx], fvGeometry, scvf);
             }
         }
     }
@@ -119,6 +120,83 @@ public:
 
 private:
 
+    /*
+     * \brief Computes the stencil for cell center dofs w.r.t to other cell center dofs.
+     *        Basically, these are the dof indices of the neighboring elements plus the dof index of the element itself.
+     */
+    void computeCellCenterToCellCenterStencil_(Stencil& stencil,
+                                               const Element& element,
+                                               const FVElementGeometry& fvGeometry,
+                                               const SubControlVolumeFace& scvf)
+    {
+        // the first entry is always the cc dofIdx itself
+        if(stencil.empty())
+            stencil.push_back(scvf.insideScvIdx());
+        if(!scvf.boundary())
+            stencil.push_back(scvf.outsideScvIdx());
+    }
+
+    /*
+     * \brief Computes the stencil for cell center dofs w.r.t to face dofs.
+     *        Basically, these are the dof indices of the element's faces.
+     */
+    void computeCellCenterToFaceStencil_(Stencil& stencil,
+                                         const Element& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const SubControlVolumeFace& scvf)
+    {
+        stencil.push_back(scvf.dofIndex());
+    }
+
+    /*
+     * \brief Computes the stencil for face dofs w.r.t to cell center dofs.
+     *        Basically, these are the dof indices of the elements adjacent to the face and those of
+     *        the elements adjacent to the faces parallel to the own face.
+     */
+    void computeFaceToCellCenterStencil_(Stencil& stencil,
+                                         const FVElementGeometry& fvGeometry,
+                                         const SubControlVolumeFace& scvf)
+    {
+        const auto eIdx = scvf.insideScvIdx();
+        stencil.push_back(scvf.insideScvIdx());
+
+        for(const auto& data : scvf.pairData())
+        {
+            auto& normalFace = fvGeometry.scvf(eIdx, data.localNormalFaceIdx);
+            if(!normalFace.boundary())
+            {
+                const auto outerParallelElementDofIdx = normalFace.outsideScvIdx();
+                stencil.push_back(outerParallelElementDofIdx);
+            }
+        }
+    }
+
+    /*
+     * \brief Computes the stencil for face dofs w.r.t to face dofs.
+     *        For a full description of the stencil, please see the document under dumux/doc/docextra/staggered
+     */
+    void computeFaceToFaceStencil_(Stencil& stencil,
+                                   const FVElementGeometry& fvGeometry,
+                                   const SubControlVolumeFace& scvf)
+    {
+        // the first entries are always the face dofIdx itself and the one of the opposing face
+        if(stencil.empty())
+        {
+            stencil.push_back(scvf.dofIndex());
+            stencil.push_back(scvf.dofIndexOpposingFace());
+        }
+
+        for(const auto& data : scvf.pairData())
+        {
+            stencil.push_back(data.normalPair.first);
+            const auto outerParallelFaceDofIdx = data.outerParallelFaceDofIdx;
+            if(outerParallelFaceDofIdx >= 0)
+                stencil.push_back(outerParallelFaceDofIdx);
+            if(!scvf.boundary())
+                stencil.push_back(data.normalPair.second);
+        }
+    }
+
     CellCenterToCellCenterMap cellCenterToCellCenterMap_;
     CellCenterToFaceMap cellCenterToFaceMap_;
     FaceToCellCenterMap faceToCellCenterMap_;
@@ -127,4 +205,4 @@ private:
 
 } // end namespace Dumux
 
-#endif
+#endif // DUMUX_STAGGERED_FREEFLOW_CONNECTIVITY_MAP_HH
