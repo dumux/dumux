@@ -24,6 +24,9 @@
 #ifndef DUMUX_TWOP_GRIDDATA_TRANSFER_HH
 #define DUMUX_TWOP_GRIDDATA_TRANSFER_HH
 
+#include <memory>
+
+#include <dune/grid/common/partitionset.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>

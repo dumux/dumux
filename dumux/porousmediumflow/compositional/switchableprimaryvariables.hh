@@ -26,9 +26,9 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
+#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup PorousmediumCompositional

@@ -25,6 +25,9 @@
 #ifndef DUMUX_2P_INCOMPRESSIBLE_TEST_LOCAL_RESIDUAL_HH
 #define DUMUX_2P_INCOMPRESSIBLE_TEST_LOCAL_RESIDUAL_HH
 
+#include <cmath>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/immiscible/localresidual.hh>
 

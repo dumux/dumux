@@ -30,13 +30,14 @@
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
 
 #include <dumux/material/fluidstates/compositional.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 #include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 #include <dumux/material/constraintsolvers/miscible2pnccomposition.hh>
 
-#include "indices.hh"
+#include "indices.hh" // for formulation
 
 namespace Dumux
 {

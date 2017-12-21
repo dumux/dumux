@@ -25,8 +25,10 @@
 #ifndef DUMUX_2PNC_INDICES_HH
 #define DUMUX_2PNC_INDICES_HH
 
-namespace Dumux
-{
+#include <dumux/common/properties.hh>
+
+namespace Dumux {
+
 /*!
  * \ingroup TwoPNCModel
  * \brief Enumerates the formulations which the two-phase n-component model accepts.

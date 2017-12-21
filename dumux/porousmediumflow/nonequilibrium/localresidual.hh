@@ -25,11 +25,10 @@
 #ifndef DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 #define DUMUX_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 
-#include "model.hh"
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/nonequilibrium/thermal/localresidual.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, bool enableThermalNonEquilibrium, bool enableChemicalNonEquilibrium>

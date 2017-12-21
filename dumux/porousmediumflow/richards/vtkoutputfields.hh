@@ -24,8 +24,10 @@
 #ifndef DUMUX_RICHARDS_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_RICHARDS_VTK_OUTPUT_FIELDS_HH
 
-namespace Dumux
-{
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup RichardsModel
@@ -42,10 +44,7 @@ class RichardsVtkOutputFields
         wPhaseIdx = Indices::wPhaseIdx
     };
 
-    static constexpr bool enableWaterDiffusionInAir
-        = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
-
-
+    static constexpr bool enableWaterDiffusionInAir = GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir);
 
 public:
     template <class VtkOutputModule>

@@ -24,11 +24,15 @@
 #ifndef DUMUX_NONEQUILIBRIUM_GRID_VARIABLES_HH
 #define DUMUX_NONEQUILIBRIUM_GRID_VARIABLES_HH
 
+#include <dune/common/fvector.hh>
+#include <dune/grid/common/partitionset.hh>
+
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/methods.hh>
+#include <dumux/discretization/fvgridvariables.hh>
 
+namespace Dumux {
 
-namespace Dumux
-{
 /*!
  * \ingroup PorousmediumNonEquilibriumModel
  * \brief This class stores the velocities which are used to compute reynoldsnumbers for the source terms of nonequilibrium models
@@ -40,28 +44,22 @@ class NonEquilibriumGridVariables: public FVGridVariables<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    enum {dim = GridView::dimension}; // Grid and world dimension
-    enum {dimWorld = GridView::dimensionworld};
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-     static constexpr int dofCodim = isBox ? dim : 0;
+    enum { dim = GridView::dimension }; // Grid and world dimension
+    enum { dimWorld = GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<typename GridView::Grid::ctype, dimWorld>;
-
-    using CoordScalar = typename GridView::ctype;
-    using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
-    using ReferenceElements = Dune::ReferenceElements<CoordScalar, dim>;
-
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
     //! Constructor
-    NonEquilibriumGridVariables(std::shared_ptr<Problem> problem, std::shared_ptr<FVGridGeometry> fvGridGeometry)
+    NonEquilibriumGridVariables(std::shared_ptr<const Problem> problem,
+                                std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(problem, fvGridGeometry)
     , problem_(problem)
     , fvGridGeometry_(fvGridGeometry)
@@ -124,8 +122,8 @@ public:
     { return velocityNorm_[phaseIdx][dofIdxGlobal]; }
 
 private:
-    std::shared_ptr<Problem> problem_;
-    std::shared_ptr<FVGridGeometry> fvGridGeometry_;
+    std::shared_ptr<const Problem> problem_;
+    std::shared_ptr<const FVGridGeometry> fvGridGeometry_;
     std::array<std::vector<Dune::FieldVector<Scalar, 1> > , numPhases> velocityNorm_;
 
 

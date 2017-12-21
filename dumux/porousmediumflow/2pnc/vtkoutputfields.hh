@@ -24,6 +24,7 @@
 #ifndef DUMUX_TWOP_NC_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_TWOP_NC_VTK_OUTPUT_FIELDS_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/2p/vtkoutputfields.hh>
 
 namespace Dumux

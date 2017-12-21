@@ -25,8 +25,10 @@
 #ifndef DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 #define DUMUX_RICHARDS_LOCAL_RESIDUAL_HH
 
-namespace Dumux
-{
+#include <dumux/common/properties.hh>
+
+namespace Dumux {
+
 /*!
  * \ingroup RichardsModel
  * \brief Element-wise calculation of the Jacobian matrix for problems

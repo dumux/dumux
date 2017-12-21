@@ -28,6 +28,10 @@
 
 #include <memory>
 #include <dune/common/hybridutilities.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/discretization/methods.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 
 namespace Dumux

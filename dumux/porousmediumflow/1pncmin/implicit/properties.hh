@@ -29,13 +29,11 @@
 #ifndef DUMUX_1PNCMIN_PROPERTIES_HH
 #define DUMUX_1PNCMIN_PROPERTIES_HH
 
-#include <dumux/porousmediumflow/1pnc/properties.hh>
+#include <dumux/porousmediumflow/1pnc/model.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+namespace Properties {
 
-namespace Properties
-{
 //////////////////////////////////////////////////////////////////
 // Type tags
 //////////////////////////////////////////////////////////////////

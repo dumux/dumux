@@ -25,6 +25,7 @@
 #ifndef DUMUX_1PNC_VOLUME_VARIABLES_HH
 #define DUMUX_1PNC_VOLUME_VARIABLES_HH
 
+#include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/porousmediumflow/volumevariables.hh>
 

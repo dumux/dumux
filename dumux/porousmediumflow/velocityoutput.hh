@@ -29,6 +29,7 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux

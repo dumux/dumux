@@ -25,14 +25,9 @@
 #ifndef DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 #define DUMUX_ENERGY_LOCAL_RESIDUAL_HH
 
-namespace Dumux
-{
+#include <dumux/common/properties.hh>
 
-// property forward declarations
-namespace Properties
-{
-NEW_PROP_TAG(Indices);
-}
+namespace Dumux {
 
 // forward declaration
 template<class TypeTag, bool enableEneryBalance>

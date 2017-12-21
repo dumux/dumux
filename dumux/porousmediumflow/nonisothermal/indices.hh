@@ -25,6 +25,8 @@
 #ifndef DUMUX_ENERGY_INDICES_HH
 #define DUMUX_ENERGY_INDICES_HH
 
+#include <dumux/common/properties.hh>
+
 namespace Dumux
 {
 

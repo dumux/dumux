@@ -24,8 +24,7 @@
 #ifndef DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
 #define DUMUX_ONEP_VTK_OUTPUT_FIELDS_HH
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup OnePModel
@@ -34,7 +33,6 @@ namespace Dumux
 template<class TypeTag>
 class OnePVtkOutputFields
 {
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 public:
     template <class VtkOutputModule>
     static void init(VtkOutputModule& vtk)
