@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base classes for interaction volume of mpfa methods.
+ * \ingroup CCMpfaDiscretization
+ * \brief Class used for interaction volumes in mpfa schemes.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUME_HH
@@ -28,18 +29,20 @@
 
 namespace Dumux
 {
-// forward declaration of the base class
+
+// forward declaration of the method-specific implementation
 template<class TypeTag, MpfaMethods MpfaMethod>
 class CCMpfaInteractionVolumeImplementation;
 
 /*!
- * \ingroup Mpfa
- * \brief Base class for the interaction volumes of the mpfa method
+ * \ingroup CCMpfaDiscretization
+ * \brief Alias to select the correct implementation of the interactionvolume
+ *        volume. The implementations for the schemes have to be included below.
  */
 template<class TypeTag>
 using CCMpfaInteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
 
-} // end namespace
+} // end namespace Dumux
 
 // the specializations of this class for the available methods have to be included here
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>

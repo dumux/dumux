@@ -124,7 +124,7 @@ public:
                       "1p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& volVarIndices = fluxVarsCache.advectionVolVarsStencil();
+        const auto& volVarIndices = fluxVarsCache.advectionStencil();
         const auto& tij = fluxVarsCache.advectionTij();
 
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
@@ -211,7 +211,7 @@ public:
                                   const SubControlVolumeFace& scvf) const
     {
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& volVarIndices = fluxVarsCache.advectionVolVarsStencil();
+        const auto& volVarIndices = fluxVarsCache.advectionStencil();
         const auto& tij = fluxVarsCache.advectionTij();
 
         // we know the "upwind factor" is constant, get inner one here and compute derivatives

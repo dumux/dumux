@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class for the sub-control volume face in mpfa schemes
+ * \ingroup CCMpfaDiscretization
+ * \brief The sub control volume face
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
@@ -26,13 +27,14 @@
 #include <vector>
 #include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
+
 #include "methods.hh"
 
 namespace Dumux
 {
 
 /*!
- * \ingroup Mpfa
+ * \ingroup CCMpfaDiscretization
  * \brief Default implementation of the class for a sub-control volume face in mpfa methods.
  */
 template<class ScvfGeometryTraits>
@@ -51,7 +53,7 @@ public:
     /*!
      * \brief Constructor
      *
-     * \param geomHelper The mpfa geometry helper
+     * \param helper The helper class for mpfa schemes
      * \param corners The corners of the scv face
      * \param unitOuterNormal The unit outer normal vector of the scvf
      * \param vIdxGlobal The global vertex index the scvf is connected to
@@ -63,35 +65,35 @@ public:
      * \param boundary Boolean to specify whether or not the scvf is on a boundary
      */
     template<class MpfaHelper>
-    explicit CCMpfaDefaultSubControlVolumeFace(const MpfaHelper& helper,
-                                               CornerStorage&& corners,
-                                               GlobalPosition&& unitOuterNormal,
-                                               GridIndexType vIdxGlobal,
-                                               unsigned int vIdxLocal,
-                                               GridIndexType scvfIndex,
-                                               GridIndexType insideScvIdx,
-                                               const std::vector<GridIndexType>& outsideScvIndices,
-                                               Scalar q,
-                                               bool boundary)
-             : boundary_(boundary),
-               vertexIndex_(vIdxGlobal),
-               scvfIndex_(scvfIndex),
-               insideScvIdx_(insideScvIdx),
-               outsideScvIndices_(outsideScvIndices),
-               vIdxInElement_(vIdxLocal),
-               corners_(std::move(corners)),
-               center_(0.0),
-               unitOuterNormal_(std::move(unitOuterNormal))
-               {
-                     // compute the center of the scvf
-                     for (const auto& corner : corners_)
-                         center_ += corner;
-                     center_ /= corners_.size();
+    CCMpfaDefaultSubControlVolumeFace(const MpfaHelper& helper,
+                                      CornerStorage&& corners,
+                                      GlobalPosition&& unitOuterNormal,
+                                      GridIndexType vIdxGlobal,
+                                      unsigned int vIdxLocal,
+                                      GridIndexType scvfIndex,
+                                      GridIndexType insideScvIdx,
+                                      const std::vector<GridIndexType>& outsideScvIndices,
+                                      Scalar q,
+                                      bool boundary)
+    : boundary_(boundary)
+    ,   vertexIndex_(vIdxGlobal)
+    ,   scvfIndex_(scvfIndex)
+    ,   insideScvIdx_(insideScvIdx)
+    ,   outsideScvIndices_(outsideScvIndices)
+    ,   vIdxInElement_(vIdxLocal)
+    ,   corners_(std::move(corners))
+    ,   center_(0.0)
+    ,   unitOuterNormal_(std::move(unitOuterNormal))
+    {
+          // compute the center of the scvf
+          for (const auto& corner : corners_)
+              center_ += corner;
+          center_ /= corners_.size();
 
-                     // use helper class to obtain area & integration point
-                     ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
-                     area_ = helper.getScvfArea(corners_);
-               }
+          // use helper class to obtain area & integration point
+          ipGlobal_ = helper.getScvfIntegrationPoint(corners_, q);
+          area_ = helper.getScvfArea(corners_);
+    }
 
     //! The area of the sub control volume face
     Scalar area() const { return area_; }
@@ -169,7 +171,7 @@ private:
 };
 
 /*!
- * \ingroup Mpfa
+ * \ingroup CCMpfaDiscretization
  * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
  *        of a control volume we compute fluxes on. Per default, we use the default
  *        implementation of the mpfa scvf class. If a scheme requires a different implementation,

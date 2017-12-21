@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCMpfaDiscretization
  * \brief Helper class to be used to obtain lambda functions for the tensors
  *        involved in the laws that describe the different kind of fluxes that
  *        occur in DuMuX models (i.e. advective, diffusive and heat conduction fluxes).
@@ -30,6 +31,7 @@
 #define DUMUX_DISCRETIZATION_MPFA_TENSOR_LAMBDA_FACTORY_HH
 
 #include <dumux/common/properties.hh>
+
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/tensorlambdafactory.hh>
 
@@ -37,7 +39,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup MpfaModel
+ * \ingroup CCMpfaDiscretization
  * \brief Helper class to be used to obtain lambda functions for the tensors
  *        involved in the laws that describe the different kind of fluxes that
  *        occur in DuMuX models (i.e. advective, diffusive and heat conduction fluxes).
@@ -55,8 +57,9 @@ public:
 
     //! We return zero scalars here in the functions below.
     //! We have to return something as the local systems expect a type
-    //! to perform actions on. We return 0.0 as this call should never happen
-    //! for a tensor which is not treated by an mpfa method anyway.
+    //! to perform actions on, thus a compiler error will occur.
+    //! We return 0.0 as this call should never happen for a tensor
+    //! which is not treated by an mpfa method anyway.
 
     //! lambda for the law describing the advective term
     static auto getAdvectionLambda()

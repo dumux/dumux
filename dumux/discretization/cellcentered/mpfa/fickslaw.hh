@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the class which is required to calculate
- *        molar and mass fluxes of a component in a fluid phase over a face of a finite volume by means
- *        of Fick's Law for cell-centered MPFA models.
+ * \ingroup CCMpfaDiscretization
+ * \brief Fick's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FICKS_LAW_HH
@@ -29,15 +28,15 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux {
-
-// forward declaration
+namespace Dumux
+{
+//! forward declaration of the method-specific implemetation
 template<class TypeTag, DiscretizationMethods discMethod>
 class FicksLawImplementation;
 
 /*!
- * \ingroup Mpfa
- * \brief Specialization of Fick's Law for the CCMpfa method.
+ * \ingroup CCMpfaDiscretization
+ * \brief Fick's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 template <class TypeTag>
 class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
@@ -46,6 +45,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
+
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -54,14 +54,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using BalanceEqOpts = typename GET_PROP_TYPE(TypeTag, BalanceEqOpts);
 
-    // Always use the dynamic type for vectors (compatibility with the boundary)
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using CoefficientVector = typename PrimaryInteractionVolume::Traits::DynamicVector;
-    using DataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
-
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag,NumComponents);
     using ComponentFluxVector = Dune::FieldVector<Scalar, numComponents>;
 
@@ -81,78 +73,127 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                          const SubControlVolumeFace& scvf,
                          const FluxVariablesCacheFiller& fluxVarsCacheFiller)
         {
-          // get interaction volume from the flux vars cache filler & upate the cache
-          if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
-              scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.secondaryInteractionVolume(),
-                                                fluxVarsCacheFiller.dataHandle(),
-                                                scvf, phaseIdx, compIdx);
-          else
-              scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                fluxVarsCacheFiller.dataHandle(),
-                                                scvf, phaseIdx, compIdx);
+            // get interaction volume related data from the filler class & upate the cache
+            if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.secondaryInteractionVolume(),
+                                                  fluxVarsCacheFiller.secondaryIvLocalFaceData(),
+                                                  fluxVarsCacheFiller.secondaryIvDataHandle(),
+                                                  scvf, phaseIdx, compIdx);
+            else
+                scvfFluxVarsCache.updateDiffusion(fluxVarsCacheFiller.primaryInteractionVolume(),
+                                                  fluxVarsCacheFiller.primaryIvLocalFaceData(),
+                                                  fluxVarsCacheFiller.primaryIvDataHandle(),
+                                                  scvf, phaseIdx, compIdx);
         }
     };
 
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-        // We always use the dynamic types here to be compatible on the boundary
-        using Stencil = typename PrimaryInteractionVolume::Traits::DynamicGlobalIndexContainer;
-        using DirichletDataContainer = typename PrimaryInteractionVolume::DirichletDataContainer;
+        // In the current implementation of the flux variables cache we cannot
+        // make a disctinction between dynamic (mpfa-o) and static (mpfa-l)
+        // matrix and vector types, as currently the cache class can only be templated
+        // by a type tag (and there can only be one). We use a dynamic vector here to
+        // make sure it works in case one of the two used interaction volume types uses
+        // dynamic types performance is thus lowered for schemes using static types.
+        // TODO: this has to be checked thoroughly as soon as a scheme using static types
+        //       is implemented. One idea to overcome the performance drop could be only
+        //       storing the iv-local index here and obtain tij always from the datahandle
+        //       of the fluxVarsCacheContainer
+        using GridIndexType = typename GridView::IndexSet::IndexType;
+        using Vector = Dune::DynamicVector< Scalar >;
+        using Matrix = Dune::DynamicMatrix< Scalar >;
+        using Stencil = std::vector< GridIndexType >;
+
+        using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
+        using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
+        using PrimaryStencil = typename PrimaryInteractionVolume::Traits::Stencil;
+
+        static_assert( std::is_convertible<PrimaryIvVector*, Vector*>::value,
+                       "The vector type used in primary interaction volumes is not convertible to Dune::DynamicVector!" );
+        static_assert( std::is_convertible<PrimaryIvMatrix*, Matrix*>::value,
+                       "The matrix type used in primary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<PrimaryStencil*, Stencil*>::value,
+                       "The stencil type used in primary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+
+        using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+        using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
+        using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
+        using SecondaryStencil = typename SecondaryInteractionVolume::Traits::Stencil;
+
+        static_assert( std::is_convertible<SecondaryIvVector*, Vector*>::value,
+                       "The vector type used in secondary interaction volumes is not convertible to Dune::DynamicVector!" );
+        static_assert( std::is_convertible<SecondaryIvMatrix*, Matrix*>::value,
+                       "The matrix type used in secondary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<SecondaryStencil*, Stencil*>::value,
+                       "The stencil type used in secondary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+
+        static constexpr int dim = GridView::dimension;
+        static constexpr int dimWorld = GridView::dimensionworld;
+        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
     public:
         // export filler type
         using Filler = MpfaFicksLawCacheFiller;
 
-        // update cached objects for the diffusive fluxes
-        template<class InteractionVolume>
+        /*!
+         * \brief Update cached objects (transmissibilities)
+         *
+         * \tparam InteractionVolume The (mpfa scheme-specific) interaction volume
+         * \tparam LocalFaceData The object used to store iv-local info on an scvf
+         * \tparam DataHandle The object used to store transmissibility matrices etc.
+         *
+         * \param iv The interaction volume this scvf is embedded in
+         * \param localFaceData iv-local info on this scvf
+         * \param dataHandle Transmissibility matrix & gravity data of this iv
+         * \param scvf The sub-control volume face
+         */
+        template<class InteractionVolume, class LocalFaceData, class DataHandle>
         void updateDiffusion(const InteractionVolume& iv,
+                             const LocalFaceData& localFaceData,
                              const DataHandle& dataHandle,
                              const SubControlVolumeFace &scvf,
                              unsigned int phaseIdx, unsigned int compIdx)
         {
-            const auto& localFaceData = iv.getLocalFaceData(scvf);
+            stencil_[phaseIdx][compIdx] = &iv.stencil();
+            switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
 
-            // update the quantities that are equal for all phases
-            diffusionSwitchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
-            diffusionVolVarsStencil_[phaseIdx][compIdx] = &dataHandle.volVarsStencil();
-            diffusionDirichletData_[phaseIdx][compIdx] = &dataHandle.dirichletData();
+            // store pointer to the mole fraction vector of this iv
+            xj_[phaseIdx][compIdx] = &dataHandle.moleFractions(phaseIdx, compIdx);
 
-            // the transmissibilities on surface grids have to be obtained from the outside
+            const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
             if (dim == dimWorld)
-                diffusionTij_[phaseIdx][compIdx] = &dataHandle.T()[localFaceData.ivLocalScvfIndex()];
+                Tij_[phaseIdx][compIdx] = &dataHandle.diffusionT()[ivLocalIdx];
             else
-                diffusionTij_[phaseIdx][compIdx] = localFaceData.isOutside() ?
-                                                   &dataHandle.outsideTij()[localFaceData.ivLocalOutsideScvfIndex()] :
-                                                   &dataHandle.T()[localFaceData.ivLocalScvfIndex()];
+                Tij_[phaseIdx][compIdx] = localFaceData.isOutside() ? &dataHandle.diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                                                                    : &dataHandle.diffusionT()[ivLocalIdx];
         }
 
-        //! Returns the volume variables indices necessary for diffusive flux
-        //! computation. This includes all participating boundary volume variables
-        //! and it can be different for the phases & components.
-        const Stencil& diffusionVolVarsStencil(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *diffusionVolVarsStencil_[phaseIdx][compIdx]; }
-
-        //! On faces that are "outside" w.r.t. a face in the interaction volume,
-        //! we have to take the negative value of the fluxes, i.e. multiply by -1.0
+        //! In the interaction volume-local system of eq we have one unknown per face.
+        //! On scvfs on this face, but in "outside" (neighbor) elements of it, we have
+        //! to take the negative value of the fluxes due to the flipped normal vector.
+        //! This function returns whether or not this scvf is an "outside" face in the iv.
         bool diffusionSwitchFluxSign(unsigned int phaseIdx, unsigned int compIdx) const
-        { return diffusionSwitchFluxSign_[phaseIdx][compIdx]; }
+        { return switchFluxSign_[phaseIdx][compIdx]; }
 
-        //! Returns the transmissibilities associated with the volume variables
-        //! This can be different for the phases & components.
-        const CoefficientVector& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *diffusionTij_[phaseIdx][compIdx]; }
+        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions
+        const Vector& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *Tij_[phaseIdx][compIdx]; }
 
-        //! Returns the data on dirichlet boundary conditions affecting
-        //! the flux computation on this face
-        const DirichletDataContainer& diffusionDirichletData(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *diffusionDirichletData_[phaseIdx][compIdx]; }
+        //! The cell (& Dirichlet) mole fractions within this interaction volume
+        const Vector& moleFractions(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *xj_[phaseIdx][compIdx]; }
+
+        //! The stencils corresponding to the transmissibilities
+        const Stencil& diffusionStencil(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *stencil_[phaseIdx][compIdx]; }
 
     private:
-        std::array< std::array<bool, numComponents>, numPhases> diffusionSwitchFluxSign_;
-        std::array< std::array<const Stencil*, numComponents>, numPhases> diffusionVolVarsStencil_;
-        std::array< std::array<const DirichletDataContainer*, numComponents>, numPhases> diffusionDirichletData_;
-        std::array< std::array<const CoefficientVector*, numComponents>, numPhases> diffusionTij_;
+        std::array< std::array<bool, numComponents>, numPhases > switchFluxSign_;
+        std::array< std::array<const Stencil*, numComponents>, numPhases > stencil_;  //!< The stencils, i.e. the grid indices j
+        std::array< std::array<const Vector*, numComponents>, numPhases > Tij_;       //!< The transmissibilities such that f = Tij*xj
+        std::array< std::array<const Vector*, numComponents>, numPhases > xj_;        //!< The interaction-volume wide mole fractions xj
     };
 
 public:
@@ -162,13 +203,14 @@ public:
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFicksLawCache;
 
-    static ComponentFluxVector flux (const Problem& problem,
-                                     const Element& element,
-                                     const FVElementGeometry& fvGeometry,
-                                     const ElementVolumeVariables&  elemVolVars,
-                                     const SubControlVolumeFace& scvf,
-                                     const int phaseIdx,
-                                     const ElementFluxVariablesCache& elemFluxVarsCache)
+    //! Compute the diffusive flux across an scvf
+    static ComponentFluxVector flux(const Problem& problem,
+                                    const Element& element,
+                                    const FVElementGeometry& fvGeometry,
+                                    const ElementVolumeVariables&  elemVolVars,
+                                    const SubControlVolumeFace& scvf,
+                                    const int phaseIdx,
+                                    const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
@@ -187,20 +229,16 @@ public:
             const auto rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
 
             // prepare computations
-            Scalar flux(0.0);
-            unsigned int i = 0;
             const auto& fluxVarsCache = elemFluxVarsCache[scvf];
             const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
+            const auto& xj = fluxVarsCache.moleFractions(phaseIdx, compIdx);
 
             // calculate Tij*xj
-            for (const auto volVarIdx : fluxVarsCache.diffusionVolVarsStencil(phaseIdx, compIdx))
-                flux += tij[i++]*elemVolVars[volVarIdx].moleFraction(phaseIdx, compIdx);
+            Scalar flux = tij*xj;
+            if (fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx))
+                flux *= -1.0;
 
-            // add contributions from dirichlet BCs
-            for (const auto& d : fluxVarsCache.diffusionDirichletData(phaseIdx, compIdx))
-                flux += tij[i++]*elemVolVars[d.volVarIndex()].moleFraction(phaseIdx, compIdx);
-
-            componentFlux[compIdx] = fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx) ? -1.0*flux*rho*effFactor : flux*rho*effFactor;
+            componentFlux[compIdx] = flux*rho*effFactor;
         }
 
         // accumulate the phase component flux
@@ -212,6 +250,7 @@ public:
     }
 
 private:
+    //! compute the density at branching facets for network grids as arithmetic mean
     static Scalar interpolateDensity(const ElementVolumeVariables& elemVolVars,
                                      const SubControlVolumeFace& scvf,
                                      const unsigned int phaseIdx)

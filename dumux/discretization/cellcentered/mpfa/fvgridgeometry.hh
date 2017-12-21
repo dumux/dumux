@@ -18,15 +18,19 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the finite volume geometry vector for mpfa models
+ * \ingroup CCMpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered mpfa models on a grid view
  *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ *        for each element of the grid partition.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
+
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
@@ -37,129 +41,106 @@
 namespace Dumux
 {
 /*!
- * \ingroup Mpfa
- * \brief Base class for the finite volume geometry vector for mpfa models
+ * \ingroup CCMpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered mpfa models on a grid view
  *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
 template<class TypeTag, bool EnableFVElementGeometryCache>
-class CCMpfaFVGridGeometry
-{};
+class CCMpfaFVGridGeometry;
 
-// specialization in case the finite volume grid geometries are stored
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered mpfa models on a grid view
+ *        This builds up the sub control volumes and sub control volume faces
+ * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
+ */
 template<class TypeTag>
 class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
     using ParentType = BaseFVGridGeometry<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
-    using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Intersection = typename GridView::Intersection;
     using CoordScalar = typename GridView::ctype;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using LocalIndexType = typename PrimaryInteractionVolume::Traits::LocalIndexType;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
+    using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
+
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
-    using SecondaryIvIndicator = std::function<bool(const Element&, const Intersection&, bool)>;
+    using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
-    explicit CCMpfaFVGridGeometry(const GridView& gridView)
-             : ParentType(gridView)
-             , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
-                                        { return is.boundary() || isBranching; } )
-             {}
+    CCMpfaFVGridGeometry(const GridView& gridView)
+    : ParentType(gridView)
+    , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
+                               { return is.boundary() || isBranching; } )
+    {}
 
-     //! Constructor with user-defined indicator function for secondary interaction volumes
-     explicit CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
-              : ParentType(gridView)
-              , secondaryIvIndicator_(indicator)
-              {}
+    //! Constructor with user-defined indicator function for secondary interaction volumes
+    CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicatorType& indicator)
+    : ParentType(gridView)
+    , secondaryIvIndicator_(indicator)
+    {}
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const ElementMapper& dofMapper() const
-    { return this->elementMapper(); }
+    const ElementMapper& dofMapper() const { return this->elementMapper(); }
 
-    /*!
-     * \brief Returns the total number of sub control volumes.
-     */
-    std::size_t numScv() const
-    { return scvs_.size(); }
+    //! The total number of sub control volumes
+    std::size_t numScv() const { return scvs_.size(); }
 
-    /*!
-     * \brief Returns the total number of sub control volume faces.
-     */
-    std::size_t numScvf() const
-    { return scvfs_.size(); }
+    //! The total number of sub control volume faces
+    std::size_t numScvf() const { return scvfs_.size(); }
 
-    /*!
-     * \brief Returns the number of scvfs on the domain boundary.
-     */
-    std::size_t numBoundaryScvf() const
-    { return numBoundaryScvf_; }
+    //! The total number of boundary sub control volume faces
+    std::size_t numBoundaryScvf() const { return numBoundaryScvf_; }
 
-    /*!
-     * \brief Returns the total number of degrees of freedom.
-     */
-    std::size_t numDofs() const
-    { return this->gridView().size(0); }
+    //! The total number of degrees of freedom
+    std::size_t numDofs() const { return this->gridView().size(0); }
 
-    /*!
-     * \brief Gets an element from a global element index.
-     */
-    Element element(IndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
+    //! Get an element from a global element index
+    Element element(GridIndexType eIdx) const { return this->elementMap()[eIdx]; }
 
-    /*!
-     * \brief Gets an element from a sub control volume contained in it.
-     */
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
+    //! Get an element from a sub control volume contained in it
+    Element element(const SubControlVolume& scv) const { return this->elementMap()[scv.elementIndex()]; }
 
-    /*!
-     * \brief Returns true if primary interaction volumes are used around a given vertex,
-     *        false otherwise.
-     */
+    //! Returns true if primary interaction volumes are used around a given vertex.
     bool vertexUsesPrimaryInteractionVolume(const Vertex& v) const
     { return primaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
 
-    /*!
-     * \brief Returns true if primary interaction volumes are used around a given vertex index,
-     *        false otherwise.
-     */
-    bool vertexUsesPrimaryInteractionVolume(IndexType vIdxGlobal) const
+    //!Returns true if primary interaction volumes are used around a vertex (index).
+    bool vertexUsesPrimaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return primaryInteractionVolumeVertices_[vIdxGlobal]; }
 
-    /*!
-     * \brief Returns if primary interaction volumes are used around a given vertex.
-     */
+    //! Returns if primary interaction volumes are used around a given vertex.
     bool vertexUsesSecondaryInteractionVolume(const Vertex& v) const
     { return secondaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
 
-    /*!
-     * \brief Returns true if primary interaction volumes are used around a given vertex index,
-     *        false otherwise.
-     */
-    bool vertexUsesSecondaryInteractionVolume(IndexType vIdxGlobal) const
+    //! Returns true if primary interaction volumes are used around a given vertex index.
+    bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
 
-    /*!
-     * \brief Updates all finite volume geometries of the grid. Hhas to be called again after grid adaptation.
-     */
+    //! update all fvElementGeometries (do this again after grid adaption)
     void update()
     {
         ParentType::update();
@@ -189,10 +170,10 @@ public:
         const auto isGhostVertex = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        CCMpfaDualGridIndexSet<TypeTag> dualIdSet(this->gridView());
+        CCMpfaDualGridIndexSet<GridIndexType, LocalIndexType, dim> dualIdSet(this->gridView());
 
         // Build the SCVs and SCV faces
-        IndexType scvfIdx = 0;
+        GridIndexType scvfIdx = 0;
         numBoundaryScvf_ = 0;
         for (const auto& element : elements(this->gridView()))
         {
@@ -202,12 +183,12 @@ public:
             auto elementGeometry = element.geometry();
 
             // The local scvf index set
-            std::vector<IndexType> scvfIndexSet;
+            std::vector<GridIndexType> scvfIndexSet;
             scvfIndexSet.reserve(MpfaHelper::getNumLocalScvfs(elementGeometry.type()));
 
             // for network grids there might be multiple intersections with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<IndexType>> outsideIndices;
+            std::vector<std::vector<GridIndexType>> outsideIndices;
             if (dim < dimWorld)
             {
                 outsideIndices.resize(element.subEntities(1));
@@ -269,7 +250,7 @@ public:
                         secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
                     }
 
-                    // the quadrature point to be used on the scvfs
+                    // the quadrature point parameterizarion to be used on scvfs
                     static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
@@ -278,15 +259,15 @@ public:
                                                         if (!boundary)
                                                         {
                                                             return dim == dimWorld ?
-                                                                   std::vector<IndexType>({this->elementMapper().index(is.outside())}) :
+                                                                   std::vector<GridIndexType>({this->elementMapper().index(is.outside())}) :
                                                                    outsideIndices[indexInInside];
                                                         }
                                                         else
                                                         {
                                                             // compute boundary scv idx and increment counter
-                                                            const IndexType bIdx = numScvs + numBoundaryScvf_;
+                                                            const GridIndexType bIdx = numScvs + numBoundaryScvf_;
                                                             numBoundaryScvf_++;
-                                                            return std::vector<IndexType>(1, bIdx);
+                                                            return std::vector<GridIndexType>(1, bIdx);
                                                         }
                                                     } ();
 
@@ -368,43 +349,27 @@ public:
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;
     }
 
-    /*!
-     * \brief Returns a sub control volume for a given global scv index.
-     */
-    const SubControlVolume& scv(IndexType scvIdx) const
-    { return scvs_[scvIdx]; }
+    //! Get a sub control volume with a global scv index
+    const SubControlVolume& scv(GridIndexType scvIdx) const { return scvs_[scvIdx]; }
 
-    /*!
-     * \brief Returns a sub control volume face for a given global scvf index.
-     */
-    const SubControlVolumeFace& scvf(IndexType scvfIdx) const
-    { return scvfs_[scvfIdx]; }
+    //! Get a sub control volume face with a global scvf index
+    const SubControlVolumeFace& scvf(GridIndexType scvfIdx) const { return scvfs_[scvfIdx]; }
 
-    /*!
-     * \brief Returns the "flipped" scvf, i.e. the correspongin scvf in an outside element.
-     *        The second argument is optional and only comes into play on network/surface grids.
-     */
-    const SubControlVolumeFace& flipScvf(IndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    //! Returns the connectivity map of which dofs
+    //! have derivatives with respect to a given dof.
+    const ConnectivityMap& connectivityMap() const { return connectivityMap_; }
+
+    //! Returns the grid interaction volume seeds class.
+    const GridIVIndexSets& gridInteractionVolumeIndexSets() const { return ivIndexSets_; }
+
+    //! Get the scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
     { return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]]; }
 
-    /*!
-     * \brief Returns the sub control volume face indices of an scv by global index.
-     */
-    const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
+    //! Get the sub control volume face indices of an scv by global index
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
     { return scvfIndicesOfScv_[scvIdx]; }
-
-    /*!
-     * \brief Returns the connectivity map of which dofs have derivatives with respect
-     *        to a given dof.
-     */
-    const ConnectivityMap& connectivityMap() const
-    { return connectivityMap_; }
-
-    /*!
-     * \brief Returns the grit interaction volume seeds class.
-     */
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
-    { return ivIndexSets_; }
 
 private:
     // connectivity map for efficient assembly
@@ -415,45 +380,56 @@ private:
     std::vector<SubControlVolumeFace> scvfs_;
 
     // containers storing the global data
-    std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
+    std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
     std::vector<bool> primaryInteractionVolumeVertices_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
     std::size_t numBoundaryScvf_;
 
     // needed for embedded surface and network grids (dim < dimWorld)
-    std::vector<std::vector<IndexType>> flipScvfIndices_;
+    std::vector<std::vector<GridIndexType>> flipScvfIndices_;
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;
 
     // Indicator function on where to use the secondary IVs
-    SecondaryIvIndicator secondaryIvIndicator_;
+    SecondaryIvIndicatorType secondaryIvIndicator_;
 };
 
-// specialization in case the FVElementGeometries are not stored
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief The finite volume geometry (scvs and scvfs) for cell-centered mpfa models on a grid view
+ *        This builds up the sub control volumes and sub control volume faces
+ * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
+ *       the corresponding FVElementGeometry
+ */
 template<class TypeTag>
 class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
 {
     using ParentType = BaseFVGridGeometry<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
-    using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
+
     using Element = typename GridView::template Codim<0>::Entity;
     using Vertex = typename GridView::template Codim<dim>::Entity;
     using Intersection = typename GridView::Intersection;
     using CoordScalar = typename GridView::ctype;
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using LocalIndexType = typename PrimaryInteractionVolume::Traits::LocalIndexType;
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+    using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
+    using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
+
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
@@ -461,102 +437,64 @@ public:
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
-    explicit CCMpfaFVGridGeometry(const GridView& gridView)
-             : ParentType(gridView)
-             , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
-                                        { return is.boundary() || isBranching; } )
-             {}
+    CCMpfaFVGridGeometry(const GridView& gridView)
+    : ParentType(gridView)
+    , secondaryIvIndicator_([] (const Element& e, const Intersection& is, bool isBranching)
+                               { return is.boundary() || isBranching; } )
+    {}
 
-     //! Constructor with user-defined indicator function for secondary interaction volumes
-     explicit CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
-              : ParentType(gridView)
-              , secondaryIvIndicator_(indicator)
-              {}
+    //! Constructor with user-defined indicator function for secondary interaction volumes
+    CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
+    : ParentType(gridView)
+    , secondaryIvIndicator_(indicator)
+    {}
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
     const ElementMapper& dofMapper() const
     { return this->elementMapper(); }
 
-    /*!
-     * \brief Returns the total number of sub control volumes.
-     */
-    std::size_t numScv() const
-    { return numScvs_; }
+    //! Returns the total number of sub control volumes.
+    std::size_t numScv() const { return numScvs_; }
 
-    /*!
-     * \brief Returns the total number of sub control volume faces.
-     */
-    std::size_t numScvf() const
-    { return numScvf_; }
+    //! Returns the total number of sub control volume faces.
+    std::size_t numScvf() const { return numScvf_; }
 
-    /*!
-     * \brief Returns the number of scvfs on the domain boundary.
-     */
-    std::size_t numBoundaryScvf() const
-    { return numBoundaryScvf_; }
+    //! Returns the number of scvfs on the domain boundary.
+    std::size_t numBoundaryScvf() const { return numBoundaryScvf_; }
 
-    /*!
-     * \brief Returns the total number of degrees of freedom.
-     */
-    std::size_t numDofs() const
-    { return this->gridView().size(0); }
+    //! Returns the total number of degrees of freedom.
+    std::size_t numDofs() const { return this->gridView().size(0); }
 
-    /*!
-     * \brief Gets an element from a global element index.
-     */
-    Element element(IndexType eIdx) const
-    { return this->elementMap()[eIdx]; }
+    //! Gets an element from a global element index.
+    Element element(GridIndexType eIdx) const { return this->elementMap()[eIdx]; }
 
-    /*!
-     * \brief Gets an element from a sub control volume contained in it.
-     */
-    Element element(const SubControlVolume& scv) const
-    { return this->elementMap()[scv.elementIndex()]; }
+    //! Gets an element from a sub control volume contained in it.
+    Element element(const SubControlVolume& scv) const { return this->elementMap()[scv.elementIndex()]; }
 
-    /*!
-     * \brief Returns true if primary interaction volumes are used around a given vertex,
-     *        false otherwise.
-     */
+    //! Returns true if primary interaction volumes are used around a given vertex.
     bool vertexUsesPrimaryInteractionVolume(const Vertex& v) const
     { return primaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
 
-    /*!
-     * \brief Returns true if primary interaction volumes are used around a given vertex index,
-     *        false otherwise.
-     */
-    bool vertexUsesPrimaryInteractionVolume(IndexType vIdxGlobal) const
+    //! Returns true if primary interaction volumes are used around a given vertex (index).
+    bool vertexUsesPrimaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return primaryInteractionVolumeVertices_[vIdxGlobal]; }
 
-    /*!
-     * \brief Returns if primary interaction volumes are used around a given vertex.
-     */
+    //! Returns if primary interaction volumes are used around a given vertex.
     bool vertexUsesSecondaryInteractionVolume(const Vertex& v) const
     { return secondaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
 
-    /*!
-     * \brief Returns true if primary interaction volumes are used around a given vertex index,
-     *        false otherwise.
-     */
-    bool vertexUsesSecondaryInteractionVolume(IndexType vIdxGlobal) const
+    //! Returns true if primary interaction volumes are used around a given vertex (index).
+    bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
 
-    /*!
-     * \brief Returns true if a given vertex lies on a processor boundary inside a ghost element.
-     */
-    bool isGhostVertex(const Vertex& v) const
-    { return isGhostVertex_[this->vertexMapper().index(v)]; }
+    //! Returns true if a given vertex lies on a processor boundary inside a ghost element.
+    bool isGhostVertex(const Vertex& v) const { return isGhostVertex_[this->vertexMapper().index(v)]; }
 
-    /*!
-     * \brief Returns true if the vertex corresponding to a given vertex index lies on a
-     *        processor boundary inside a ghost element.
-     */
-    bool isGhostVertex(IndexType vIdxGlobal) const
-    { return isGhostVertex_[vIdxGlobal]; }
+    //! Returns true if the vertex (index) lies on a processor boundary inside a ghost element.
+    bool isGhostVertex(GridIndexType vIdxGlobal) const { return isGhostVertex_[vIdxGlobal]; }
 
-    /*!
-     * \brief Updates all finite volume geometries of the grid. Has to be called again after grid adaption.
-     */
+    //! Updates all finite volume geometries of the grid. Has to be called again after grid adaption.
     void update()
     {
         ParentType::update();
@@ -579,7 +517,7 @@ public:
         isGhostVertex_ = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        CCMpfaDualGridIndexSet<TypeTag> dualIdSet(this->gridView());
+        CCMpfaDualGridIndexSet<GridIndexType, LocalIndexType, dim> dualIdSet(this->gridView());
 
         // Build the SCVs and SCV faces
         numScvf_ = 0;
@@ -593,14 +531,14 @@ public:
 
             // the element-wise index sets for finite volume geometry
             const auto numLocalFaces = MpfaHelper::getNumLocalScvfs(elementGeometry.type());
-            std::vector<IndexType> scvfsIndexSet;
-            std::vector< std::vector<IndexType> > neighborVolVarIndexSet;
+            std::vector<GridIndexType> scvfsIndexSet;
+            std::vector< std::vector<GridIndexType> > neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
             // for network grids there might be multiple intersections with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<IndexType>> outsideIndices;
+            std::vector<std::vector<GridIndexType>> outsideIndices;
             if (dim < dimWorld)
             {
                 outsideIndices.resize(element.subEntities(1));
@@ -661,15 +599,15 @@ public:
                                                         if (!boundary)
                                                         {
                                                             return dim == dimWorld ?
-                                                                   std::vector<IndexType>({this->elementMapper().index(is.outside())}) :
+                                                                   std::vector<GridIndexType>({this->elementMapper().index(is.outside())}) :
                                                                    outsideIndices[indexInInside];
                                                         }
                                                         else
                                                         {
                                                             // compute boundary scv idx and increment counter
-                                                            const IndexType bIdx = numScvs_ + numBoundaryScvf_;
+                                                            const GridIndexType bIdx = numScvs_ + numBoundaryScvf_;
                                                             numBoundaryScvf_++;
-                                                            return std::vector<IndexType>(1, bIdx);
+                                                            return std::vector<GridIndexType>(1, bIdx);
                                                         }
                                                     } ();
 
@@ -705,38 +643,28 @@ public:
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;
     }
 
-    /*!
-     * \brief Returns the sub control volume face indices of an scv by global index.
-     */
-    const std::vector<IndexType>& scvfIndicesOfScv(IndexType scvIdx) const
+    //! Returns the sub control volume face indices of an scv by global index.
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
     { return scvfIndicesOfScv_[scvIdx]; }
 
-    /*!
-     * \brief Returns the neighboring vol var indices for each scvf contained in an scv.
-     */
-    const std::vector< std::vector<IndexType> >& neighborVolVarIndices(IndexType scvIdx) const
+    //! Returns the neighboring vol var indices for each scvf contained in an scv.
+    const std::vector< std::vector<GridIndexType> >& neighborVolVarIndices(GridIndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
-    /*!
-     * \brief Returns the connectivity map of which dofs have derivatives with respect
-     *        to a given dof.
-     */
-    const ConnectivityMap& connectivityMap() const
-    { return connectivityMap_; }
+    //! Returns the connectivity map of which dofs
+    //! have derivatives with respect to a given dof.
+    const ConnectivityMap& connectivityMap() const { return connectivityMap_; }
 
-    /*!
-     * \brief Returns the grit interaction volume seeds class.
-     */
-    const GridIVIndexSets& gridInteractionVolumeIndexSets() const
-    { return ivIndexSets_; }
+    //! Returns the grid interaction volume seeds class.
+    const GridIVIndexSets& gridInteractionVolumeIndexSets() const { return ivIndexSets_; }
 
 private:
     // connectivity map for efficient assembly
     ConnectivityMap connectivityMap_;
 
     // containers storing the global data
-    std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
-    std::vector< std::vector< std::vector<IndexType> > > neighborVolVarIndices_;
+    std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
+    std::vector< std::vector< std::vector<GridIndexType> > > neighborVolVarIndices_;
     std::vector<bool> primaryInteractionVolumeVertices_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
     std::vector<bool> isGhostVertex_;
@@ -751,6 +679,6 @@ private:
     SecondaryIvIndicator secondaryIvIndicator_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

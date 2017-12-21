@@ -18,8 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCMpfaDiscretization
  * \brief Stores the face indices corresponding to the neighbors of an element
- *        that contribute to the derivative calculation
+ *        that contribute to the derivative calculation. Depending on if an
+ *        mpfa scheme leads to a symmetric/unsymmetric sparsity pattern, the
+ *        adequate implementation of the connectiviy map is chosen.
  */
 #ifndef DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
 #define DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
@@ -35,15 +38,15 @@ namespace Dumux
 template<class TypeTag, MpfaMethods method>
 class CCMpfaConnectivityMapImplementation;
 
-// //! The Assembly map for models using mpfa methods
+//! The Assembly map for models using mpfa methods
 template<class TypeTag>
 using CCMpfaConnectivityMap = CCMpfaConnectivityMapImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
 
-//! The default is the general assembly map for mpfa schemes
+//! The default is the general assembly map for mpfa schemes (non-symmetric schemes)
 template<class TypeTag, MpfaMethods method>
 class CCMpfaConnectivityMapImplementation : public CCMpfaGeneralConnectivityMap<TypeTag> {};
 
-//! The o-method can use the simple assembly map
+//! The o-method can use the simple (symmetric) assembly map
 template<class TypeTag>
 class CCMpfaConnectivityMapImplementation<TypeTag, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<TypeTag> {};
 }

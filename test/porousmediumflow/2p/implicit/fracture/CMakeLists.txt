@@ -48,8 +48,18 @@ dune_add_test(NAME test_2p_fracture_gravity_tpfa
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/fracturecc2p_gravity-reference.vtu
-                               ${CMAKE_CURRENT_BINARY_DIR}/fracturetpfa_gravity-00043.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/fracturetpfa_gravity-00042.vtu
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_tpfa test_fracture.input -Problem.Name fracturetpfa_gravity -Problem.EnableGravity true")
+
+dune_add_test(NAME test_2p_fracture_gravity_mpfa
+              SOURCES test_2p_fracture_fv.cc
+              CMAKE_GUARD dune-foamgrid_FOUND
+              COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaTypeTag
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --files ${CMAKE_SOURCE_DIR}/test/references/fractureccmpfa2p_gravity-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/fracturempfa_gravity-00042.vtu
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_2p_fracture_mpfa test_fracture.input -Problem.Name fracturempfa_gravity -Problem.EnableGravity true")
 
 set(CMAKE_BUILD_TYPE Release)
 

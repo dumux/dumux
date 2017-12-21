@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCMpfaDiscretization
  * \brief Stores the face indices corresponding to the neighbors of an element
  *        that contribute to the derivative calculation
  */
@@ -34,7 +35,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup CellCentered
+ * \ingroup CCMpfaDiscretization
  * \brief General version of the assembly map for cellcentered schemes. To each
  *        cell I we store a list of cells J that are needed to compute the fluxes
  *        in these cells J that depend on cell I. Furthermore, we store for each cell J
@@ -47,7 +48,7 @@ class CCMpfaGeneralConnectivityMap
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
     using FluxStencil = Dumux::FluxStencil<TypeTag>;
 
     // To each cell "globalI" there will be a list of "globalJ", in which globalI is part
@@ -55,9 +56,9 @@ class CCMpfaGeneralConnectivityMap
     // additional scvfs which are needed temporarily to set up the transmissibilities of the scvfsJ
     struct DataJ
     {
-        IndexType globalJ;
-        std::vector<IndexType> scvfsJ;
-        std::vector<IndexType> additionalScvfs;
+        GridIndexType globalJ;
+        std::vector<GridIndexType> scvfsJ;
+        std::vector<GridIndexType> additionalScvfs;
     };
 
     using Map = std::vector<std::vector<DataJ>>;
@@ -81,7 +82,7 @@ public:
             fvGeometry.bindElement(element);
 
             // obtain the data of J in elements I
-            std::vector<std::pair<IndexType, std::vector<DataJ>>> dataJForI;
+            std::vector<std::pair<GridIndexType, std::vector<DataJ>>> dataJForI;
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
@@ -111,7 +112,7 @@ public:
                         // land in the list of additional scvfs. Of that list we will delete those
                         // that are already in the list of scvfsJ later...
                         const auto scvfVectorAtVertex = MpfaHelper::getScvFacesAtVertex(scvf.vertexIndex(), element, fvGeometry);
-                        std::vector<IndexType> scvfIndicesAtVertex(scvfVectorAtVertex.size());
+                        std::vector<GridIndexType> scvfIndicesAtVertex(scvfVectorAtVertex.size());
                         for (std::size_t i = 0; i < scvfVectorAtVertex.size(); ++i)
                             scvfIndicesAtVertex[i] = scvfVectorAtVertex[i]->index();
                         globalJDataJ.additionalScvfs.insert(globalJDataJ.additionalScvfs.end(),
@@ -131,7 +132,7 @@ public:
                             // if entry for globalJ2 does not exist yet, add globalJ2 to the J-data of globalI
                             // with an empty set of scvfs over which I and J are coupled (i.e. they aren't coupled)
                             if (it2 == it->second.end())
-                                it->second.push_back(DataJ({globalJ2, std::vector<IndexType>()}));
+                                it->second.push_back(DataJ({globalJ2, std::vector<GridIndexType>()}));
                         }
                     }
                     else
@@ -139,13 +140,13 @@ public:
                         // No DataJ for globalI exists yet. Make it and insert data on the actual
                         // global J as first entry in the vector of DataJs belonging to globalI
                         dataJForI.emplace_back(std::make_pair(globalI,
-                                                              std::vector<DataJ>({DataJ({globalJ, std::vector<IndexType>({scvf.index()})})})));
+                                                              std::vector<DataJ>({DataJ({globalJ, std::vector<GridIndexType>({scvf.index()})})})));
 
                         // Also, all scvfs connected to a vertex together with the actual scvf
                         // land in the list of additional scvfs. Of that list we will delete those
                         // that are already in the list of scvfsJ later...
                         const auto scvfVectorAtVertex = MpfaHelper::getScvFacesAtVertex(scvf.vertexIndex(), element, fvGeometry);
-                        std::vector<IndexType> scvfIndicesAtVertex(scvfVectorAtVertex.size());
+                        std::vector<GridIndexType> scvfIndicesAtVertex(scvfVectorAtVertex.size());
                         for (unsigned int i = 0; i < scvfVectorAtVertex.size(); ++i)
                             scvfIndicesAtVertex[i] = scvfVectorAtVertex[i]->index();
                         dataJForI.back().second[0].additionalScvfs.insert(dataJForI.back().second[0].additionalScvfs.end(),
@@ -155,7 +156,7 @@ public:
                         // all the other dofs in the stencil will be "globalJ" to globalI as well
                         for (auto globalJ2 : stencil)
                             if (globalJ2 != globalJ && globalJ2 != globalI)
-                                dataJForI.back().second.push_back(DataJ({globalJ2, std::vector<IndexType>()}));
+                                dataJForI.back().second.push_back(DataJ({globalJ2, std::vector<GridIndexType>()}));
                     }
                 }
             }
@@ -191,7 +192,8 @@ public:
         }
     }
 
-    const std::vector<DataJ>& operator[] (const IndexType globalI) const
+    //! Returns the assembly map of the element with given grid index
+    const std::vector<DataJ>& operator[] (const GridIndexType globalI) const
     { return map_[globalI]; }
 
 private:

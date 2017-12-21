@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCMpfaDiscretization
  * \brief The local (stencil) volume variables class for cell centered mpfa models
  */
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_ELEMENT_VOLUMEVARIABLES_HH
@@ -26,55 +27,60 @@
 #include <utility>
 #include <dumux/common/properties.hh>
 
-namespace Dumux {
+namespace Dumux
+{
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the local volume variables vector
+ * \ingroup CCMpfaDiscretization
+ * \brief The local (stencil) volume variables class for cell centered mpfa models
+ * \note The class is specilized for versions with and without caching
  */
 template<class TypeTag, bool enableGridVolVarsCache>
-class CCMpfaElementVolumeVariables
-{};
+class CCMpfaElementVolumeVariables;
 
-// specialization in case of storing the volume variables globally
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief The local (stencil) volume variables class for cell centered mpfa models with caching
+ * \note the volume variables are stored for the whole grid view in the corresponding GridVolumeVariables class
+ */
 template<class TypeTag>
 class CCMpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
+
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
 
 public:
     //! Constructor
     CCMpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
+    //! operator for the access with an scv
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return gridVolVars().volVars(scv.dofIndex()); }
 
-    // operator for the access with an index
-    // needed for cc methods for the access to the boundary volume variables
-    const VolumeVariables& operator [](const IndexType scvIdx) const
+    //! operator for the access with an index
+    const VolumeVariables& operator [](const GridIndexType scvIdx) const
     { return gridVolVars().volVars(scvIdx); }
 
-    // For compatibility reasons with the case of not storing the vol vars.
-    // function to be called before assembling an element, preparing the vol vars within the stencil
+    //! precompute all volume variables in a stencil of an element - do nothing volVars: are cached
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
-              const SolutionVector& sol) {}
+              const SolutionVector& sol)
+    {}
 
-    // function to prepare the vol vars within the element
+    //! precompute the volume variables of an element - do nothing: volVars are cached
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
-                     const SolutionVector& sol) {}
+                     const SolutionVector& sol)
+    {}
 
     //! The global volume variables object we are a restriction of
     const GridVolumeVariables& gridVolVars() const
@@ -85,36 +91,38 @@ private:
 };
 
 
-// Specialization when the current volume variables are not stored
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief The local (stencil) volume variables class for cell centered tpfa models with caching
+ */
 template<class TypeTag>
 class CCMpfaElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using Element = typename GridView::template Codim<0>::Entity;
+
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
 
-    static const int dim = GridView::dimension;
-    using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-
     //! Constructor
     CCMpfaElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
-    // Binding of an element, prepares the volume variables within the element stencil
-    // called by the local jacobian to prepare element assembly
+    //! Prepares the volume variables within the element stencil
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {
+        clear();
+
         const auto& problem = gridVolVars().problem();
         const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
         const auto& gridIvIndexSets = fvGridGeometry.gridInteractionVolumeIndexSets();
@@ -151,7 +159,7 @@ public:
             ++localIdx;
         }
 
-        // eventually prepare boundary volume variables
+        // maybe prepare boundary volume variables
         const auto maxNumBoundaryVolVars = maxNumBoundaryVolVars_(fvGeometry);
         if (maxNumBoundaryVolVars > 0)
         {
@@ -167,7 +175,8 @@ public:
 
                 const auto bcTypes = problem.boundaryTypes(element, scvf);
 
-                // on dirichlet boundaries use dirichlet values
+                // Only proceed on dirichlet boundaries. Fluxes across Neumann
+                // boundaries are never computed - the user-defined flux is taken.
                 if (bcTypes.hasOnlyDirichlet())
                 {
                     // boundary volume variables
@@ -180,12 +189,6 @@ public:
                     volumeVariables_.emplace_back(std::move(dirichletVolVars));
                     volVarIndices_.push_back(scvf.outsideScvIdx());
                 }
-                // use the inside volume variables for neumann boundaries
-                else
-                {
-                    volumeVariables_.emplace_back(volumeVariables_[0]);
-                    volVarIndices_.push_back(scvf.outsideScvIdx());
-                }
             }
 
             // Update boundary volume variables in the neighbors
@@ -194,16 +197,13 @@ public:
                 if (fvGridGeometry.vertexUsesPrimaryInteractionVolume(scvf.vertexIndex()))
                 {
                     const auto& nodalIndexSet = gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet();
-
                     // if present, insert boundary vol vars
                     if (nodalIndexSet.numBoundaryScvfs() > 0)
                         addBoundaryVolVars_(problem, fvGeometry, nodalIndexSet);
-
                 }
                 else
                 {
                     const auto& nodalIndexSet = gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet();
-
                     // if present, insert boundary vol vars
                     if (nodalIndexSet.numBoundaryScvfs() > 0)
                         addBoundaryVolVars_(problem, fvGeometry, nodalIndexSet);
@@ -235,11 +235,13 @@ public:
         // }
     }
 
-    // Binding of an element, prepares only the volume variables of the element
+    //! Prepares the volume variables of an element
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
     {
+        clear();
+
         auto eIdx = fvGeometry.fvGridGeometry().elementMapper().index(element);
         volumeVariables_.resize(1);
         volVarIndices_.resize(1);
@@ -253,29 +255,40 @@ public:
         volVarIndices_[0] = scv.dofIndex();
     }
 
+    //! access operator with scv
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
+    //! access operator with scv
     VolumeVariables& operator [](const SubControlVolume& scv)
     { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
-    const VolumeVariables& operator [](IndexType scvIdx) const
+    //! access operator with scv index
+    const VolumeVariables& operator [](GridIndexType scvIdx) const
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 
-    VolumeVariables& operator [](IndexType scvIdx)
+    //! access operator with scv index
+    VolumeVariables& operator [](GridIndexType scvIdx)
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 
     //! The global volume variables object we are a restriction of
     const GridVolumeVariables& gridVolVars() const
     { return *gridVolVarsPtr_; }
 
+    //! Clear all local storage
+    void clear()
+    {
+        volVarIndices_.clear();
+        volumeVariables_.clear();
+    }
+
 private:
     const GridVolumeVariables* gridVolVarsPtr_;
 
-    //! Computes how many boundary vol vars come into play for flux calculations
-    //! on this element. This number is probably almost always higher than the actually
-    //! needed number of volume variables. However, memory is not an issue for the global
-    //! caching being deactivated and we want to make sure we reserve enough memory here.
+    // Computes how many boundary vol vars come into play for flux calculations
+    // on this element. This number here is probably always higher than the actually
+    // needed number of volume variables. However, memory is not an issue for the global
+    // caching being deactivated and we want to make sure we reserve enough memory here.
     // TODO: What about non-symmetric schemes? Is there a better way for estimating this?
     std::size_t maxNumBoundaryVolVars_(const FVElementGeometry& fvGeometry)
     {
@@ -311,10 +324,10 @@ private:
             const auto insideElement = fvGeometry.fvGridGeometry().element(insideScvIdx);
             const auto bcTypes = problem.boundaryTypes(insideElement, ivScvf);
 
-            // on dirichlet boundaries use dirichlet values
+            // Only proceed on dirichlet boundaries. Fluxes across Neumann
+            // boundaries are never computed - the user-defined flux is taken.
             if (bcTypes.hasOnlyDirichlet())
             {
-                // boundary volume variables
                 VolumeVariables dirichletVolVars;
                 const auto& ivScv = fvGeometry.scv(insideScvIdx);
                 dirichletVolVars.update(ElementSolution(problem.dirichlet(insideElement, ivScvf)),
@@ -325,15 +338,10 @@ private:
                 volumeVariables_.emplace_back(std::move(dirichletVolVars));
                 volVarIndices_.push_back(ivScvf.outsideScvIdx());
             }
-            // use the inside volume variables for neumann boundaries
-            else
-            {
-                volumeVariables_.emplace_back((*this)[insideScvIdx]);
-                volVarIndices_.push_back(ivScvf.outsideScvIdx());
-            }
         }
     }
 
+    //! map a global scv index to the local storage index
     int getLocalIdx_(const int volVarIdx) const
     {
         auto it = std::find(volVarIndices_.begin(), volVarIndices_.end(), volVarIdx);
@@ -341,7 +349,7 @@ private:
         return std::distance(volVarIndices_.begin(), it);
     }
 
-    std::vector<IndexType> volVarIndices_;
+    std::vector<GridIndexType> volVarIndices_;
     std::vector<VolumeVariables> volumeVariables_;
 };
 

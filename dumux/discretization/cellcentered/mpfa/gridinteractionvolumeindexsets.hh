@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup CCMpfaDiscretization
  * \brief Class for the grid interaction volume index sets of mpfa schemes.
  */
 #ifndef DUMUX_DISCRETIZATION_MPFA_O_GRIDINTERACTIONVOLUME_INDEXSETS_HH
@@ -26,34 +27,39 @@
 #include <memory>
 #include <dumux/common/properties.hh>
 
+#include "dualgridindexset.hh"
+
 namespace Dumux
 {
-// forward declaration
-template<class TypeTag>
-class CCMpfaDualGridIndexSet;
 
 /*!
- * \ingroup Mpfa
- * \brief The grid interaction volume index sets class for the mpfa-o scheme.
+ * \ingroup CCMpfaDiscretization
+ * \brief Class that holds all interaction volume index sets on a grid view.
  */
 template<class TypeTag>
 class CCMpfaGridInteractionVolumeIndexSets
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+
     using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using PrimaryIVIndexSet = typename PrimaryIV::Traits::IndexSet;
     using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
     using SecondaryIVIndexSet = typename SecondaryIV::Traits::IndexSet;
-    using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using DualGridIndexSet = CCMpfaDualGridIndexSet<TypeTag>;
 
-    static const int dim = GridView::dimension;
+    static constexpr int dim = GridView::dimension;
+    using LocalIndexType = typename PrimaryIV::Traits::LocalIndexType;
+    using DualGridIndexSet = CCMpfaDualGridIndexSet< GridIndexType, LocalIndexType, dim>;
 
 public:
-
+    /*!
+     * \brief Construct all interaction volume index sets on the grid view
+     *
+     * \param fvGridGeometry The finite volume geometry on the grid view
+     * \param dualGridIdSet The index sets of the dual grid on the grid view
+     */
     void update(FVGridGeometry& fvGridGeometry, DualGridIndexSet&& dualGridIdSet)
     {
         dualGridIndexSet_ = std::make_unique<DualGridIndexSet>(std::move(dualGridIdSet));
@@ -91,32 +97,37 @@ public:
         }
     }
 
+    //! Return the iv index set in which a given scvf is embedded in
     const PrimaryIVIndexSet& primaryIndexSet(const SubControlVolumeFace& scvf) const
     { return primaryIndexSet(scvf.index()); }
 
-    const PrimaryIVIndexSet& primaryIndexSet(const IndexType scvfIdx) const
+    //! Return the iv index set in which a given scvf (index) is embedded in
+    const PrimaryIVIndexSet& primaryIndexSet(const GridIndexType scvfIdx) const
     { return primaryIVIndexSets_[scvfIndexMap_[scvfIdx]]; }
 
+    //! Return the iv index set in which a given scvf is embedded in
     const SecondaryIVIndexSet& secondaryIndexSet(const SubControlVolumeFace& scvf) const
     { return secondaryIndexSet(scvf.index()); }
 
-    const SecondaryIVIndexSet& secondaryIndexSet(const IndexType scvfIdx) const
+    //! Return the iv index set in which a given scvf (index) is embedded in
+    const SecondaryIVIndexSet& secondaryIndexSet(const GridIndexType scvfIdx) const
     { return secondaryIVIndexSets_[scvfIndexMap_[scvfIdx]]; }
 
+    //! Returns number of primary/secondary interaction volumes on the grid view
     std::size_t numPrimaryInteractionVolumes() const { return numPrimaryIV_; }
     std::size_t numSecondaryInteractionVolumes() const { return numSecondaryIV_; }
 
 private:
     std::vector<PrimaryIVIndexSet> primaryIVIndexSets_;
     std::vector<SecondaryIVIndexSet> secondaryIVIndexSets_;
-    std::vector<IndexType> scvfIndexMap_;
+    std::vector<GridIndexType> scvfIndexMap_;
 
     std::size_t numPrimaryIV_;
     std::size_t numSecondaryIV_;
 
     std::unique_ptr<DualGridIndexSet> dualGridIndexSet_;
 };
-} // end namespace
 
+} // end namespace Dumux
 
 #endif

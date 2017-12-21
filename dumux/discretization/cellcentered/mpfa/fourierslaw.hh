@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the class which is required to calculate
- *        heat conduction fluxes with Fourier's law for cell-centered MPFA models.
+ * \ingroup CCMpfaDiscretization
+ * \brief Fourier's law for cell-centered finite volume schemes with multi-point flux approximation
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
@@ -27,16 +27,18 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
+#include <dumux/discretization/methods.hh>
+
 namespace Dumux
 {
-// forward declaration
+//! forward declaration of the method-specific implementation
 template<class TypeTag, DiscretizationMethods discMethod>
 class FouriersLawImplementation;
 
 /*!
- * \ingroup Mpfa
- * \brief Specialization of Fourier's Law for the CCMpfa method.
- */
+* \ingroup CCMpfaDiscretization
+* \brief Fourier's law for cell-centered finite volume schemes with two-point flux approximation
+*/
 template <class TypeTag>
 class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
@@ -50,15 +52,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-
-    // Always use the dynamic type for vectors (compatibility with the boundary)
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using CoefficientVector = typename PrimaryInteractionVolume::Traits::DynamicVector;
-    using DataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
-
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr int energyEqIdx = GET_PROP_TYPE(TypeTag, Indices)::energyEqIdx;
 
     //! Class that fills the cache corresponding to mpfa Darcy's Law
     class MpfaFouriersLawCacheFiller
@@ -78,11 +71,13 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
           // get interaction volume from the flux vars cache filler & upate the cache
           if (fvGeometry.fvGridGeometry().vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
               scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.secondaryInteractionVolume(),
-                                                     fluxVarsCacheFiller.dataHandle(),
+                                                     fluxVarsCacheFiller.secondaryIvLocalFaceData(),
+                                                     fluxVarsCacheFiller.secondaryIvDataHandle(),
                                                      scvf);
           else
               scvfFluxVarsCache.updateHeatConduction(fluxVarsCacheFiller.primaryInteractionVolume(),
-                                                     fluxVarsCacheFiller.dataHandle(),
+                                                     fluxVarsCacheFiller.primaryIvLocalFaceData(),
+                                                     fluxVarsCacheFiller.primaryIvDataHandle(),
                                                      scvf);
         }
     };
@@ -90,52 +85,104 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     //! The cache used in conjunction with the mpfa Fourier's Law
     class MpfaFouriersLawCache
     {
-        // We always use the dynamic types here to be compatible on the boundary
-        using Stencil = typename PrimaryInteractionVolume::Traits::DynamicGlobalIndexContainer;
-        using DirichletDataContainer = typename PrimaryInteractionVolume::DirichletDataContainer;
+        // In the current implementation of the flux variables cache we cannot
+        // make a disctinction between dynamic (mpfa-o) and static (mpfa-l)
+        // matrix and vector types, as currently the cache class can only be templated
+        // by a type tag (and there can only be one). We use a dynamic vector here to
+        // make sure it works in case one of the two used interaction volume types uses
+        // dynamic types performance is thus lowered for schemes using static types.
+        // TODO: this has to be checked thoroughly as soon as a scheme using static types
+        //       is implemented. One idea to overcome the performance drop could be only
+        //       storing the iv-local index here and obtain tij always from the datahandle
+        //       of the fluxVarsCacheContainer
+        using GridIndexType = typename GridView::IndexSet::IndexType;
+        using Vector = Dune::DynamicVector< Scalar >;
+        using Matrix = Dune::DynamicMatrix< Scalar >;
+        using Stencil = std::vector< GridIndexType >;
+
+        using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
+        using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
+        using PrimaryStencil = typename PrimaryInteractionVolume::Traits::Stencil;
+
+        static_assert( std::is_convertible<PrimaryIvVector*, Vector*>::value,
+                       "The vector type used in primary interaction volumes is not convertible to Dune::DynamicVector!" );
+        static_assert( std::is_convertible<PrimaryIvMatrix*, Matrix*>::value,
+                       "The matrix type used in primary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<PrimaryStencil*, Stencil*>::value,
+                       "The stencil type used in primary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+
+        using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+        using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
+        using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
+        using SecondaryStencil = typename SecondaryInteractionVolume::Traits::Stencil;
+
+        static_assert( std::is_convertible<SecondaryIvVector*, Vector*>::value,
+                       "The vector type used in secondary interaction volumes is not convertible to Dune::DynamicVector!" );
+        static_assert( std::is_convertible<SecondaryIvMatrix*, Matrix*>::value,
+                       "The matrix type used in secondary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<SecondaryStencil*, Stencil*>::value,
+                       "The stencil type used in secondary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+
+        static constexpr int dim = GridView::dimension;
+        static constexpr int dimWorld = GridView::dimensionworld;
+
     public:
         // export filler type
         using Filler = MpfaFouriersLawCacheFiller;
 
-        // update cached objects for heat conduction
-        template<class InteractionVolume>
-        void updateHeatConduction(const InteractionVolume& iv, const DataHandle& dataHandle, const SubControlVolumeFace &scvf)
+        /*!
+         * \brief Update cached objects (transmissibilities)
+         *
+         * \tparam InteractionVolume The (mpfa scheme-specific) interaction volume
+         * \tparam LocalFaceData The object used to store iv-local info on an scvf
+         * \tparam DataHandle The object used to store transmissibility matrices etc.
+         *
+         * \param iv The interaction volume this scvf is embedded in
+         * \param localFaceData iv-local info on this scvf
+         * \param dataHandle Transmissibility matrix & gravity data of this iv
+         * \param scvf The sub-control volume face
+         */
+        template<class InteractionVolume, class LocalFaceData, class DataHandle>
+        void updateHeatConduction(const InteractionVolume& iv,
+                                  const LocalFaceData& localFaceData,
+                                  const DataHandle& dataHandle,
+                                  const SubControlVolumeFace &scvf)
         {
-            const auto& localFaceData = iv.getLocalFaceData(scvf);
+            stencil_ = &iv.stencil();
+            switchFluxSign_ = localFaceData.isOutside();
 
-            // update the quantities that are equal for all phases
-            heatConductionSwitchFluxSign_ = localFaceData.isOutside();
-            heatConductionVolVarsStencil_ = &dataHandle.volVarsStencil();
-            heatConductionDirichletData_ = &dataHandle.dirichletData();
+            // store pointer to the temperature vector of this iv
+            Tj_ = &dataHandle.temperatures();
 
-            // the transmissibilities on surface grids have to be obtained from the outside
+            const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
             if (dim == dimWorld)
-                heatConductionTij_ = &dataHandle.T()[localFaceData.ivLocalScvfIndex()];
+                Tij_ = &dataHandle.heatConductionT()[ivLocalIdx];
             else
-                heatConductionTij_ = localFaceData.isOutside() ?
-                                     &dataHandle.outsideTij()[localFaceData.ivLocalOutsideScvfIndex()] :
-                                     &dataHandle.T()[localFaceData.ivLocalScvfIndex()];
+                Tij_ = localFaceData.isOutside() ? &dataHandle.heatConductionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                                                 : &dataHandle.heatConductionT()[ivLocalIdx];
         }
 
-        //! Returns the stencil for heat conduction flux computation on an scvf
-        const Stencil& heatConductionVolVarsStencil() const { return *heatConductionVolVarsStencil_; }
+        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions
+        const Vector& heatConductionTij() const { return *Tij_; }
 
-        //! Returns the transmissibilities associated with the volume variables
-        const CoefficientVector& heatConductionTij() const { return *heatConductionTij_; }
+        //! The stencil corresponding to the transmissibilities
+        const Stencil& heatConductionStencil() const { return *stencil_; }
 
-        //! On faces that are "outside" w.r.t. a face in the interaction volume,
-        //! we have to take the negative value of the fluxes, i.e. multiply by -1.0
-        bool heatConductionSwitchFluxSign() const { return heatConductionSwitchFluxSign_; }
+        //! In the interaction volume-local system of eq we have one unknown per face.
+        //! On scvfs on this face, but in "outside" (neighbor) elements of it, we have
+        //! to take the negative value of the fluxes due to the flipped normal vector.
+        //! This function returns whether or not this scvf is an "outside" face in the iv.
+        bool heatConductionSwitchFluxSign() const { return switchFluxSign_; }
 
-        //! Returns the data on dirichlet boundary conditions affecting
-        //! the flux computation on this face
-        const DirichletDataContainer& heatConductionDirichletData() const { return *heatConductionDirichletData_; }
+        //! The cell (& Dirichlet) temperatures within this interaction volume
+        const Vector& temperatures() const { return *Tj_; }
 
     private:
-        bool heatConductionSwitchFluxSign_;
-        const Stencil* heatConductionVolVarsStencil_;
-        const CoefficientVector* heatConductionTij_;
-        const DirichletDataContainer* heatConductionDirichletData_;
+        bool switchFluxSign_;
+        const Stencil* stencil_; //!< The stencil, i.e. the grid indices j
+        const Vector* Tij_;      //!< The transmissibilities such that f = Tij*Tj
+        const Vector* Tj_;       //!< The interaction-volume wide temperature Tj
     };
 
 public:
@@ -145,6 +192,7 @@ public:
     // state the type for the corresponding cache and its filler
     using Cache = MpfaFouriersLawCache;
 
+    //! Compute the conductive flux across an scvf
     static Scalar flux(const Problem& problem,
                        const Element& element,
                        const FVElementGeometry& fvGeometry,
@@ -152,22 +200,16 @@ public:
                        const SubControlVolumeFace& scvf,
                        const ElementFluxVarsCache& elemFluxVarsCache)
     {
-        // prepare computations
-        Scalar flux(0.0);
-        unsigned int i = 0;
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& tij = fluxVarsCache.heatConductionTij();
+        const auto& Tj = fluxVarsCache.temperatures();
 
-        // calculate Tij*tj
-        for (const auto volVarIdx : fluxVarsCache.heatConductionVolVarsStencil())
-            flux += tij[i++]*elemVolVars[volVarIdx].temperature();
+        // compute Tij*tj
+        Scalar flux = tij*Tj;
+        if (fluxVarsCache.heatConductionSwitchFluxSign())
+            flux *= -1.0;
 
-        // add contributions from dirichlet BCs
-        for (const auto& d : fluxVarsCache.heatConductionDirichletData())
-            flux += tij[i++]*elemVolVars[d.volVarIndex()].temperature();
-
-        // return overall resulting flux
-        return fluxVarsCache.heatConductionSwitchFluxSign() ? -flux : flux;
+        return flux;
     }
 };
 
