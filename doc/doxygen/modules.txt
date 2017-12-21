@@ -129,6 +129,18 @@
      */
     /*!
      * \ingroup PorousmediumflowModels
+     * \defgroup PorousmediumNonEquilibriumModel NonEquilibrium 
+     * \brief model that adds nonequilibrium equations to another porous medium flow model (only used in MPNCModel currently)
+     * \copydetails ./porousmediumflow/nonequilibrium/model.hh
+     */
+     	/*!
+         * \ingroup PorousmediumNonEquilibriumModel
+         * \defgroup PorousmediumThermalNonEquilibriumModel ThermalNonEquilibrium
+         * \brief model that adapts the energy localresidual to thermal nonequilibrium
+         * \copydetails ./porousmediumflow/nonequilibrium/thermal/localresidual.hh
+         */
+    /*!
+     * \ingroup PorousmediumflowModels
      * \defgroup NIModel nonisothermal
      * \brief model that adds an energy equation (thermal equilibrium) to another porous medium flow model
      *
