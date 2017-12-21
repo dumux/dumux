@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPOneCTests
  * \brief Definition of the spatial parameters for the steam injection problem
  */
 
@@ -57,8 +57,7 @@ SET_PROP(InjectionProblemSpatialParams, MaterialLaw)
 }
 
 /*!
- * \ingroup TwoPOneCNIModel
- *
+ * \ingroup TwoPOneCTests
  * \brief Definition of the spatial parameters for various steam injection problems
  */
 template<class TypeTag>
