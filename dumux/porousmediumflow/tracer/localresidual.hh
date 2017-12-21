@@ -26,6 +26,8 @@
 #define DUMUX_TRACER_LOCAL_RESIDUAL_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
