@@ -115,10 +115,7 @@
 #include "localresidual.hh"
 
 /*!
- * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup BoxMpNcModel
- * \file
+ * \ingroup \ingroup MPNCModel
  * \brief  Defines the properties required for the MpNc fully implicit model.
  */
 namespace Dumux

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup MPNCModel
  * \brief Contains the secondary variables (Quantities which are
  *        constant within a finite volume) of the MpNc model.
  */
@@ -38,7 +38,6 @@ namespace Dumux
 {
 /*!
  * \ingroup MPNCModel
- * \ingroup ImplicitVolumeVariables
  * \brief Contains the quantities which are constant within a
  *        finite volume in the MpNc model.
  */

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MPNCModel
  * \brief MpNc specific details needed to approximately calculate the local
  *        defect in the fully implicit scheme.
  *
@@ -32,7 +33,6 @@ namespace Dumux
 {
 /*!
  * \ingroup MPNCModel
- * \ingroup ImplicitLocalResidual
  * \brief MpNc specific details needed to approximately calculate the local
  *        defect in the fully implicit scheme.
  *
