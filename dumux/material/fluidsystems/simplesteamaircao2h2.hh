@@ -30,8 +30,8 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/air.hh>
 #include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/CaO2H2.hh>
-#include <dumux/material/components/CaO.hh>
+#include <dumux/material/components/cao2h2.hh>
+#include <dumux/material/components/cao.hh>
 #include <dumux/material/binarycoefficients/h2o_air.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 

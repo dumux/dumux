@@ -26,7 +26,7 @@
 #define DUMUX_MODIFIED_CAO_HH
 
 
-#include <dumux/material/components/CaO.hh>
+#include <dumux/material/components/cao.hh>
 
 namespace Dumux
 {
