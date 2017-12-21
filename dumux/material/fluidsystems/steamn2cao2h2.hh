@@ -613,22 +613,6 @@ public:
             c_pH2O*fluidState.moleFraction(nPhaseIdx, H2OIdx) + c_pN2*fluidState.moleFraction(nPhaseIdx, N2Idx);
     }
 
-
-    static Scalar saltDensity(int phaseIdx)
-    {
-        DUNE_THROW(Dune::NotImplemented, "saltDensity");
-    }
-
-    static Scalar saltMolarDensity(int phaseIdx)
-     {
-        DUNE_THROW(Dune::NotImplemented, "saltMolarDensity");
-     }
-
-    static Scalar solubilityLimit(int compIdx)
-    {
-        DUNE_THROW(Dune::NotImplemented, "solubilityLimit");
-    }
-
 };
 
 } // end namespace
