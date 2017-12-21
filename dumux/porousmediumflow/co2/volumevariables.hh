@@ -31,7 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup TwoPTwoCModel
+ * \ingroup CO2Model
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the CO2 model.
  */

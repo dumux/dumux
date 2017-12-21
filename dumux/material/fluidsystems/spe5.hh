@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::Spe5
  */
 #ifndef DUMUX_SPE5_FLUID_SYSTEM_HH

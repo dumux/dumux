@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FluidSystems
+ * \ingroup Fluidsystems
  * \brief @copybrief Dumux::FluidSystems::BrineAir
  */
 #ifndef DUMUX_BRINE_AIR_SYSTEM_HH
