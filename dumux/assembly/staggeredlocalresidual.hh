@@ -25,15 +25,11 @@
 #ifndef DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
 #define DUMUX_STAGGERED_LOCAL_RESIDUAL_HH
 
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/properties.hh>
 
 namespace Dumux {
 
-namespace Properties
-{
-    NEW_PROP_TAG(ElementFaceVariables);
-}
 /*!
  * \ingroup StaggeredDiscretization
  * \ingroup Assembly
