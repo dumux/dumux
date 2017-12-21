@@ -1,3 +1,4 @@
+add_subdirectory("staggered")
 
 #install headers
 install(FILES
@@ -7,6 +8,4 @@ localresidual.hh
 model.hh
 volumevariables.hh
 vtkoutputfields.hh
-staggered/fluxvariables.hh
-staggered/localresidual.hh
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/freeflow/navierstokesnc)
