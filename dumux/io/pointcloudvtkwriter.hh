@@ -21,8 +21,8 @@
  * \ingroup InputOutput
  * \brief A VTK writer specialized for staggered grid implementations with dofs on the faces
  */
-#ifndef STAGGERED_VTK_WRITER_HH
-#define STAGGERED_VTK_WRITER_HH
+#ifndef DUMUX_POINTCLOUD_VTK_WRITER_HH
+#define DUMUX_POINTCLOUD_VTK_WRITER_HH
 
 #include <dune/common/fvector.hh>
 
@@ -31,9 +31,7 @@
 #include <dune/grid/io/file/vtk/common.hh>
 #include <dune/common/path.hh>
 
-
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup InputOutput

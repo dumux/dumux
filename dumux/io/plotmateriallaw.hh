@@ -24,8 +24,12 @@
 #ifndef DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 #define DUMUX_PLOT_FLUID_MATRIX_LAW_HH
 
-namespace Dumux
-{
+#include <cmath>
+#include <vector>
+#include <string>
+
+namespace Dumux {
+
 // forward declaration
 template<class Scalar> class GnuplotInterface;
 
