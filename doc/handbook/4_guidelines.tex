@@ -24,8 +24,8 @@ Line of code 2 //!< Short comment on line of code 2 that will show in doxygen
 //! Short comment on the following line (line of code 3) that will show in doxygen
 Line of code 3
 /*!
- * Longer comment on line of code 4 
- * with several lines of length 
+ * Longer comment on line of code 4
+ * with several lines of length
  * that will show in doxygen
  */
 Line of code 4
@@ -33,18 +33,18 @@ Line of code 4
 The third and fourth of the above shown options can also be used to document functions with
 neither method parameters nor return value.\\
 For doxygen to be able to group the \textbf{files} correctly, please add before the headerguard:
-\begin{lstlisting}[style=DumuxCode] 
+\begin{lstlisting}[style=DumuxCode]
 /*!
  * \file
  * \ingroup GroupName
  * \brief A short description of the file.
  */
- 
+
 #ifndef HEADERGUARD
 #define HEADERGUARD
 \end{lstlisting}
 For doxygen to be able to group the \textbf{classes} correctly, please add before each class:
-\begin{lstlisting}[style=DumuxCode] 
+\begin{lstlisting}[style=DumuxCode]
 /*!
  * \ingroup GroupName
  * \brief A short description of the class.
@@ -59,7 +59,7 @@ see the file\\ \texttt{doc/doxygen/modules.txt} from the \texttt{dumux} module.\
 Please add before each \textbf{function} with method parameters or return value:
 \begin{lstlisting}[style=DumuxCode]
 /*!
- * \brief A short description of the function. 
+ * \brief A short description of the function.
  *
  * Optional detailed description of the function
  * over several lines.
@@ -68,7 +68,7 @@ Please add before each \textbf{function} with method parameters or return value:
  * \return returnName Very short description of returnName
  */
 paramType functionName(paramType paramName)
-{ 
+{
    ...
    return returnName
 }

@@ -6,7 +6,7 @@
 \item \texttt{bin}: binaries, e.g. used for the automatic testing, postprocessing, installation
 \item \texttt{cmake}: the configuration options for building \Dumux
 \item \texttt{doc}: files necessary for the Doxygen documentation and this handbook, and various logos
-\item \texttt{dumux}: the main folder, containing the source files, see \ref{fig:dumux-structure}
+\item \texttt{dumux}: the main folder, containing the source files. see \ref{fig:dumux-structure}
       for a visualized structure. For more information on the models have a look at the
       Doxygen documentation.
 \item \texttt{test}: tests for each numerical model and some functionality.
@@ -15,7 +15,7 @@
       \texttt{*.cc}, the problem definition \texttt{*problem.hh}, and an input file \texttt{*.input}.
       If necessary, spatially dependent parameters are defined in \texttt{*spatialparameters.hh}.
       For more detailed descriptions of the tests, please have a look at the Doxygen documentation.
-\item \texttt{tutorial}: contains the tutorials described in Chapter \ref{chp:tutorial}.
+\item \texttt{tutorial}: contains the tutorials.
 \end{itemize}
 
 \begin{figure}
@@ -53,44 +53,45 @@
 
 \Tree
 [.\node[draw=dumuxYellow, ultra thick] {dumux};
+  [.\node[FirstLevel] {adaptive};
+    \node[ThirdLevel] {
+          Data transfer on new grid, adaptation indicators.};
+  ]
+  [.\node[FirstLevel] {assembly};
+    \node[ThirdLevel] {
+          Matrix assembler and residual for all discretization methods: cell centered, box, staggered grid.};
+  ]
   [.\node[FirstLevel] {common};
     \node[ThirdLevel] {
-          Common files of the implicit and the sequential models:
-          time integration, start routine \texttt{start.hh}, the property system, ...};
+          Common files of all models:
+          definition of boundary conditions, time stepping, splines, dimensionless numbers ...};
+    [.\node[SecondLevel] {geometry};
+      \node[ThirdLevel] {Common definitions of geometrical properties.};
+    ]
+    [.\node[SecondLevel] {properties};
+      \node[ThirdLevel] {Base properties for all models.};
+    ]
+  ]
+  [.\node[FirstLevel] {discretization};
+%     [.\node[SecondLevel] {\emph{models}};
+      \node[ThirdLevel] {Common methods for all discretizations: variable caching, advective and diffusive fluxes, upwinding...};
+%     ]
+    [.\node[SecondLevel] {box};
+      \node[ThirdLevel] {Specific files for the gerenal fully implicit box method:
+                         specifications for advective and diffusive fluxes...};
+    ]
+    [.\node[SecondLevel] {cellcentered};
+      \node[ThirdLevel] {Specific files for fully implicit cell centered method (mpfa and tpfa).};
+    ]
+    [.\node[SecondLevel] {staggered};
+      \node[ThirdLevel] {Specific files for staggered grid.};
+    ]
   ]
   [.\node[FirstLevel] {freeflow};
     [.\node[SecondLevel] {\emph{models}};
       \node[ThirdLevel] {Single-phase free flow models using Navier-Stokes
                          and algebraic turbulence models.
                          All models are discretized with the box-method.};
-    ]
-  ]
-  [.\node[FirstLevel] {geomechanics};
-    [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Specific model files for coupling flow and rock mechanisms.};
-    ]
-  ]
-  [.\node[FirstLevel] {implicit};
-%     [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Common functionality of cell centered and box formulation:
-                         assembling in localjacobian.hh, evaluation of partial derivative
-                         in localresidual.hh, base classes for model and problem definition.};
-%     ]
-    [.\node[SecondLevel] {adaptive};
-      \node[ThirdLevel] {Contains the methods for grid adaption.};
-    ]
-    [.\node[SecondLevel] {box};
-      \node[ThirdLevel] {Specific files for the gerenal fully implicit boxmethod:
-                         assembler, dual mesh geometry in fvelementgeometry.hh,
-                         base classes for model and problem definition.};
-    ]
-    [.\node[SecondLevel] {cellcentered};
-      \node[ThirdLevel] {Specific files for fully implicit cell centered method: assembler,
-                         mesh geometry in fvelementgeometry.hh, base classes for model and
-                         problem definition.};
-    ]
-    [.\node[SecondLevel] {cornerpoint};
-      \node[ThirdLevel] {Files need for handling cornerpoint grids.};
     ]
   ]
   [.\node[FirstLevel] {io};
@@ -122,7 +123,7 @@
                          and density.};
     ]
     [.\node[SecondLevel] {fluidmatrixint.};
-      \node[ThirdLevel] {Constitutive relationships (e.g. capillary pressures, relative permeabilities};
+      \node[ThirdLevel] {Constitutive relationships (e.g. capillary pressures, relative permeabilities)};
     ]
     [.\node[SecondLevel] {fluidstates};
       \node[ThirdLevel] {Fluid states are responsible for caching the thermodynamic
@@ -137,16 +138,17 @@
                          specified in the specific files of the respective models.};
     ]
   ]
-  [.\node[FirstLevel] {multidomain};
-    [.\node[SecondLevel] {\emph{models}};
-      \node[ThirdLevel] {Localoperators, which implement the coupling and communication
-                         between models in different subdomains, and model specific properties.};
+  [.\node[FirstLevel] {mixeddimension};
+    \node[ThirdLevel] {
+          Mixeddimension model.};
+    [.\node[SecondLevel] {embedded};
+      \node[ThirdLevel] {Embedded.};
     ]
-    [.\node[SecondLevel] {common};
-      \node[ThirdLevel] {The multidomain wrappers, generic functions, and properties.};
+    [.\node[SecondLevel] {facet};
+      \node[ThirdLevel] {Facet.};
     ]
-    [.\node[SecondLevel] {couplinglocalres.};
-      \node[ThirdLevel] {The localresiduals extending the baselocalresiduals for coupling.};
+    [.\node[SecondLevel] {glue};
+      \node[ThirdLevel] {Glue.};
     ]
   ]
   [.\node[FirstLevel] {nonlinear};
@@ -157,8 +159,7 @@
   ]
   [.\node[FirstLevel] {porousmediumflow};
     [.\node[SecondLevel] {\emph{models}};
-    \node[ThirdLevel] {Specific model definition for porous medium flow simulations, 
-                       in both \texttt{implicit} or \texttt{sequential} formulation:
+    \node[ThirdLevel] {Specific definition for porous medium flow simulations for all models:
                        implementation of equations,
                        model specific properties and indices.};
     ]

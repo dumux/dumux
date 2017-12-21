@@ -1,71 +1,68 @@
 \section{Parameters in \Dumux}
 \label{sc_parameterfiles}
 Simulation parameters can be parsed to the program via a parameter file or the command line.
-A list of all available parameters is provided in the Doxygen documentation
-of the file \texttt{parameterfile}, which is accessible via \texttt{Modules -> Parameters}.
+A list of all available parameters is provided in the Doxygen documentation: \texttt{Parameter List}.
 
 After having run the example application from section \ref{quick-start-guide} you will
 get the following output at the end of the simulation run
 \footnote{If you did not get the output, restart the application the following way:
-\texttt{./test{\_}box2p -PrintParameters true},
+\texttt{./test{\_}2p{\_}incompressible{\_}tpfa test{\_}2p.input -PrintParameters true},
 this will print the parameters once your simulation is finished}:
 \begin{lstlisting}[style=Bash]
-# Run-time specified parameters:
+# Runtime-specified parameters used:
 [ Grid ]
-File = "./grids/test_2p.dgf"
-[ Implicit ]
-EnableJacobianRecycling = "1"
-EnablePartialReassemble = "1"
+Cells = "48 32"
+UpperRight = "6 4"
 [ Problem ]
-Name = "lensbox"
+EnableGravity = "true"
+Name = "2p"
 [ SpatialParams ]
-LensLowerLeftX = "1.0"
-LensLowerLeftY = "2.0"
-LensUpperRightX = "4.0"
-LensUpperRightY = "3.0"
-[ TimeManager ]
+LensLowerLeft = "1.0 2.0"
+LensUpperRight = "4.0 3.0"
+[ TimeLoop ]
 DtInitial = "250"
 TEnd = "3000"
-# DEPRECATED run-time specified parameters:
-PrintParameters = "1"
-# Replace by:
-[ TimeManager ]
-PrintParameters = "1"
-# Compile-time specified parameters:
+
+# Default parameters used:
 [ Implicit ]
-EnableHints = "0"
-MassUpwindWeight = "1"
-MaxTimeStepDivisions = "10"
-MobilityUpwindWeight = "1"
 NumericDifferenceMethod = "1"
-UseTwoPointFlux = "0"
+UpwindWeight = "1.0"
 [ LinearSolver ]
 MaxIterations = "250"
-PreconditionerRelaxation = "1"
-ResidualReduction = "1e-06"
+PreconditionerIterations = "1"
+PreconditionerRelaxation = "1.0"
+ResidualReduction = "1e-13"
 Verbosity = "0"
 [ Newton ]
-WriteConvergence = "0"
-[ Problem ]
-EnableGravity = "1"
-[ TimeManager ]
-MaxTimeStepSize = "1.79769e+308"
+EnableAbsoluteResidualCriterion = "false"
+EnableResidualCriterion = "false"
+EnableShiftCriterion = "true"
+MaxAbsoluteResidual = "1e-5"
+MaxRelativeShift = "1e-8"
+MaxSteps = "18"
+ResidualReduction = "1e-5"
+SatisfyResidualAndShiftCriterion = "false"
+TargetSteps = "10"
+UseLineSearch = "false"
+[ TimeLoop ]
+MaxTimeStepDivisions = "10"
+MaxTimeStepSize = "1e300"
 [ Vtk ]
-AddVelocity = "0"
-# UNUSED parameters:
-ImportantVariable = "1"
+AddProcessRank = "true"
+AddVelocity = "false"
+
+# Unused parameters:
+Grid.LowerLeft = "0 0"
 \end{lstlisting}
 
 A number of things can be learned:
 \begin{itemize}
   \item \emph{run-time} parameters can be changed without re-compiling
-  \item \emph{deprecated run-time} parameters will be removed in the next release
-  \item \emph{compile-time} parameters cannot be overwritten by the input file
-  \item \emph{unused} are not used by the simulation (maybe typo or wrong group)
+  \item \emph{default parameters} are set by default
+  \item \emph{unused} parameters are not used by the simulation (maybe typo or wrong group in input file)
 \end{itemize}
 
 All applications have a help message which you can read by giving
 \texttt{--help} as a command line argument to the application.
-
-For further details, please have a look for \texttt{Dune::ParameterTree}
+For further details, please have a look at \texttt{Dune::ParameterTree}
 in the \Dune documentation.
