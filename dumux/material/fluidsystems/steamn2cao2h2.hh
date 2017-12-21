@@ -34,7 +34,6 @@
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/h2o.hh>
-// #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/CaO2H2.hh>
 #include <dumux/material/components/CaOtest.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
@@ -68,7 +67,6 @@ class SteamN2CaO2H2
     typedef Dumux::IdealGas<Scalar> IdealGas;
 
 public:
-//     typedef Dumux::SimpleH2O<Scalar> H2O;
     typedef H2Otype H2O;
     typedef Dumux::BinaryCoeff::H2O_N2 H2O_N2;
     typedef Dumux::N2<Scalar> N2;
@@ -88,7 +86,6 @@ public:
     static const int numSPhases = 2;//  solid phases CaO and CaO2H2
 
     static constexpr int gPhaseIdx = 0;
-//     static constexpr int gPhaseIdx = phaseIdx;
     static const int nPhaseIdx = gPhaseIdx; // index of the gas phase
 
     static constexpr int cPhaseIdx = 1; // CaO-phaseIdx
@@ -100,7 +97,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-        static std::string phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
         case nPhaseIdx: return "gas";
@@ -173,11 +170,11 @@ public:
         return H2O::gasIsIdeal() && N2::gasIsIdeal();
     }
 
-     /****************************************
-     * Component related static parameters
-     ****************************************/
+    /****************************************
+    * Component related static parameters
+    ****************************************/
 
-    static const int numComponents = 2;//3; // H2O, Air
+    static const int numComponents = 2; // H2O, Air
     static const int numMajorComponents = 2;// H2O, Air
     static const int numSComponents = 2;// CaO2H2, CaO
 
@@ -188,7 +185,7 @@ public:
     static const int CaO2H2Idx  = 3;
 
 
-     /*!
+    /*!
      * \brief Return the human readable name of a component
      *
      * \param compIdx The index of the component to consider
@@ -206,7 +203,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
-     /*!
+    /*!
      * \brief Return the molar mass of a component in \f$\mathrm{[kg/mol]}\f$.
      *
      * \param compIdx The index of the component to consider
@@ -223,7 +220,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid component index " << compIdx);
     }
 
-        /*!
+    /*!
      * \brief Return the mass density of the solid \f$\mathrm{[kg/m^3]}\f$.
      *
      * \param phaseIdx The index of the solid phase to consider
@@ -240,11 +237,10 @@ public:
     }
 
      /*!
-     * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
-     *
-     * \param phaseIdx The index of the solid phase to consider
-     */
-
+      * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
+      *
+      * \param phaseIdx The index of the solid phase to consider
+      */
      static Scalar precipitateHeatCapacity(int phaseIdx)
      {
       if(phaseIdx==cPhaseIdx)
@@ -302,7 +298,6 @@ public:
     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
     * \param nPress The number of ticks on the pressure axis of the  table of water
     */
-
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                       Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
@@ -517,8 +512,8 @@ public:
         }
     }
 
-   //for the boundary condition T = 573.15 K;
-   template <class FluidState>
+    //for the boundary condition T = 573.15 K;
+    template <class FluidState>
     static Scalar componentEnthalpyBorder(const FluidState &fluidState,
                                     int phaseIdx,
                                     int componentIdx)
@@ -560,7 +555,6 @@ public:
         // W.G. Mallard evaluated at p=.1 MPa, does not
         // change dramatically with p
         // and can be interpolated linearly with temperature
-//         Scalar lambdaPureN2 = 6.525e-5 * temperature + 0.024031;
         Scalar lambdaPureN2 = N2::gasThermalConductivity(temperature, pressure);
 
         if (useComplexRelations){
@@ -571,13 +565,13 @@ public:
                 // in order to obtain the partial density of water in the air phase
             if(xH2O <= 0+ 1e-6) return lambdaN2;
 
-                Scalar partialPressure  = pressure * xH2O;
-                Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
+            Scalar partialPressure  = pressure * xH2O;
+            Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
 
-                return lambdaN2 + lambdaH2O;
-            }
-            else
-                return lambdaPureN2; // conductivity of Air [W / (m K ) ]
+            return lambdaN2 + lambdaH2O;
+        }
+        else
+        return lambdaPureN2; // conductivity of Air [W / (m K ) ]
     }
 
     /*!
@@ -601,16 +595,15 @@ public:
         Scalar c_pN2;
         Scalar c_pH2O;
         // let the water and air components do things their own way
-            c_pN2= N2::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                        fluidState.pressure(phaseIdx)
-                                        * fluidState.moleFraction(phaseIdx, N2Idx));
+        c_pN2= N2::gasHeatCapacity(fluidState.temperature(phaseIdx),
+                                    fluidState.pressure(phaseIdx)
+                                    * fluidState.moleFraction(phaseIdx, N2Idx));
 
-            c_pH2O = H2O::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                          fluidState.pressure(phaseIdx)
-                                          * fluidState.moleFraction(phaseIdx, H2OIdx));
+        c_pH2O = H2O::gasHeatCapacity(fluidState.temperature(phaseIdx),
+                                    fluidState.pressure(phaseIdx)
+                                    * fluidState.moleFraction(phaseIdx, H2OIdx));
 
-        return
-            c_pH2O*fluidState.moleFraction(nPhaseIdx, H2OIdx) + c_pN2*fluidState.moleFraction(nPhaseIdx, N2Idx);
+        return c_pH2O*fluidState.moleFraction(nPhaseIdx, H2OIdx) + c_pN2*fluidState.moleFraction(nPhaseIdx, N2Idx);
     }
 
 };
