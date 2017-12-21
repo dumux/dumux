@@ -345,7 +345,7 @@
  *  - __Component:__ <br> @copydoc Components
  *  - __Constraint solver:__ <br> @copydoc ConstraintSolver
  *  - __Equation of state:__ <br> @copydoc EOS
- *  - __Fluid-Matrix Interactions:__ <br> @copydoc fluidmatrixinteractions
+ *  - __Fluid-Matrix Interactions:__ <br> @copydoc Fluidmatrixinteractions
  *  - __Fluid state:__ <br> @copydoc FluidStates
  *  - __Fluid system:__ <br> @copydoc Fluidsystems
  *  - __Spatial Parameters:__ <br> @copydoc SpatialParameters
@@ -417,7 +417,7 @@
      */
     /*!
      * \ingroup Material
-     * \defgroup fluidmatrixinteractions Fluid-Matrix Interactions
+     * \defgroup Fluidmatrixinteractions Fluid-Matrix Interactions
      * \brief e.g. pc-Sw, kr-Sw relations, effective diffusion coefficients
      *
      * Some parameters are functions of the fluid state as well as parameters of
