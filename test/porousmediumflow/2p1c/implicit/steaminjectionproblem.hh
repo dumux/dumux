@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup TwoPOneCTests
  * \brief Non-isothermal steam injection test problem for the 2p1cni model.
  *
  */
@@ -70,7 +70,7 @@ SET_BOOL_PROP(InjectionProblemTypeTag, UseBlockingOfSpuriousFlow, true);
 }
 
 /*!
- * \ingroup TwoPOneC
+ * \ingroup TwoPOneCTests
  * \brief Non-isothermal 2D problem where steam is injected on the lower left side of the domain.
  *
  * This problem uses the \ref TwoPOneC model.
