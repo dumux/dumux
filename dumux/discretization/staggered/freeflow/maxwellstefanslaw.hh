@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fick's law.
+ * \ingroup StaggeredDiscretization
+ * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_MAXWELL_STEFAN_LAW_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_MAXWELL_STEFAN_LAW_HH
@@ -39,7 +39,7 @@ template <class TypeTag, DiscretizationMethods DM>
 class MaxwellStefansLawImplementation;
 
 /*!
- * \ingroup StaggeredMaxwellStefansLaw
+ * \ingroup StaggeredDiscretization
  * \brief Specialization of Maxwell Stefan's Law for the Staggered method.
  */
 template <class TypeTag>

@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class to specify the type of a boundary for the staggered Navier-Stokes model.
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredFreeFlowBoundaryTypes
  */
 #ifndef STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
 #define STAGGERED_FREEFLOW_BOUNDARY_TYPES_HH
@@ -30,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup BC
+ * \ingroup StaggeredDiscretization
  * \brief Class to specify the type of a boundary for the staggered Navier-Stokes model.
  */
 template <int numEq>

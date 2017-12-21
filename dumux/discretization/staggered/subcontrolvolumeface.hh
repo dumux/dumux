@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a sub control volume face
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredSubControlVolumeFace
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_SUBCONTROLVOLUMEFACE_HH
@@ -37,7 +38,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Discretization
+ * \ingroup StaggeredDiscretization
  * \brief Base class for a staggered grid geometry helper
  */
 template<class GridView>
@@ -52,6 +53,9 @@ public:
     BaseStaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), gridView_(gridView)
     { }
 
+    /*!
+    * \brief Updates the current face, i.e. sets the correct intersection
+    */
     template<class IntersectionMapper>
     void updateLocalFace(const IntersectionMapper& intersectionMapper, const Intersection& intersection)
     {
@@ -139,7 +143,7 @@ public:
         return center_;
     }
 
-    //! The center of the sub control volume face
+    //! The position of the dof living on the face
     const GlobalPosition& dofPosition() const
     {
         return center_;
@@ -158,24 +162,25 @@ public:
         return area_;
     }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! Returns bolean if the sub control volume face is on the boundary
     bool boundary() const
     {
         return boundary_;
     }
 
+    //! The unit outer normal vector
     const GlobalPosition& unitOuterNormal() const
     {
         return unitOuterNormal_;
     }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! Index of the inside sub control volume
     GridIndexType insideScvIdx() const
     {
         return scvIndices_[0];
     }
 
-    //! index of the outside sub control volume for spatial param evaluation
+    //! Index of the outside sub control volume
     // This results in undefined behaviour if boundary is true
     GridIndexType outsideScvIdx() const
     {
@@ -188,6 +193,7 @@ public:
         return scvfIndex_;
     }
 
+    //! The positions of the corners
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");

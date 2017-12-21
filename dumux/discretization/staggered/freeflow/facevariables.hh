@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The face variables class for free flow staggered grid models.
- *        Contains all relevant velocities for the assembly of the momentum balance.
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredFaceVariables
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
@@ -30,6 +30,11 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief The face variables class for free flow staggered grid models.
+ *        Contains all relevant velocities for the assembly of the momentum balance.
+ */
 template<class TypeTag>
 class StaggeredFaceVariables
 {

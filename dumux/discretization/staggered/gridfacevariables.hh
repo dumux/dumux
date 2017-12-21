@@ -16,10 +16,11 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \brief The global face variables class for staggered grid models
- */
+ /*!
+  * \file
+  * \ingroup StaggeredDiscretization
+  * \copydoc Dumux::StaggeredGridFaceVariables
+  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
 
@@ -29,10 +30,19 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Face variables cache class for staggered models
+ */
 template<class TypeTag, bool enableGlobalFaceVarsCache>
 class StaggeredGridFaceVariables
 {};
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Face variables cache class for staggered models.
+          Specialization in case of storing the face variables.
+ */
 template<class TypeTag>
 class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
 {
@@ -52,6 +62,7 @@ class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
 public:
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    //! Update all face variables
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         const auto& faceSol = sol[faceIdx];
@@ -94,6 +105,11 @@ private:
     std::vector<FaceVariables> faceVariables_;
 };
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Face variables cache class for staggered models.
+          Specialization in case of not storing the face variables.
+ */
 template<class TypeTag>
 class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
 {
@@ -113,6 +129,7 @@ class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
 public:
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    //! Do nothing here.
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {  }
 

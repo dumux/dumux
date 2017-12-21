@@ -17,10 +17,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \ingroup Properties
+ * \ingroup StaggeredDiscretization
  * \file
  *
- * \brief Defines a type tag and some properties for free-flow models using the staggered scheme.
+ * \brief Defines a type tag and some properties for ree-flow models using the staggered scheme.
+           This scheme features degrees of freedom at the elements' centers and intersections (faces).
+ * TODO: detailed documentation and figures
  */
 
 #ifndef DUMUX_STAGGERD_FREE_FLOW_PROPERTIES_HH
@@ -109,6 +111,7 @@ public:
     using type = StaggeredFreeFlowBoundaryTypes<size>;
 };
 
+//! The velocity output
 SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
 SET_TYPE_PROP(StaggeredFreeFlowModel, AssemblyMap, StaggeredFreeFlowConnectivityMap<TypeTag>);

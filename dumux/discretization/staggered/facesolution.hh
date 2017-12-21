@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global volume variables class for cell centered models
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredFaceSolution
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FACE_SOLUTION_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FACE_SOLUTION_HH
@@ -31,6 +32,10 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief The global face variables class for staggered models
+ */
 template<class TypeTag>
 class StaggeredFaceSolution
 {

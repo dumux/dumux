@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The face variables class for free flow staggered grid models
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredElementFaceVariables
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENTFACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENTFACEVARIABLES_HH
@@ -29,14 +30,17 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup StaggeredDiscretization
  * \brief Base class for the face variables vector
  */
 template<class TypeTag, bool enableGridFaceVariablesCache>
 class StaggeredElementFaceVariables
 {};
 
-
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the face variables vector. Specialization for the case of storing the face variables globally.
+ */
 template<class TypeTag>
 class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/true>
 {
@@ -53,11 +57,12 @@ public:
 
     StaggeredElementFaceVariables(const GridFaceVariables& gridFaceVariables) : gridFaceVariablesPtr_(&gridFaceVariables) {}
 
+    //! operator for the access with an scvf
     const FaceVariables& operator [](const SubControlVolumeFace& scvf) const
     { return gridFaceVariables().faceVars(scvf.index()); }
 
-    // operator for the access with an index
-    // needed for cc methods for the access to the boundary volume variables
+    //! operator for the access with an index
+    //! needed for cc methods for the access to the boundary volume variables
     const FaceVariables& operator [](const IndexType scvfIdx) const
     { return gridFaceVariables().faceVars(scvfIdx); }
 
@@ -69,8 +74,8 @@ public:
               const SolutionVector& sol)
     {}
 
-    // Binding of an element, prepares only the face variables of the element
-    // specialization for Staggered models
+    //! Binding of an element, prepares only the face variables of the element
+    //! specialization for Staggered models
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -86,6 +91,10 @@ private:
     const GridFaceVariables* gridFaceVariablesPtr_;
 };
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the face variables vector. Specialization for the case of not storing the face variables globally.
+ */
 template<class TypeTag>
 class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/false>
 {
@@ -106,13 +115,15 @@ public:
 
     StaggeredElementFaceVariables(const GridFaceVariables& globalFacesVars) : gridFaceVariablesPtr_(&globalFacesVars) {}
 
+    //! const operator for the access with an scvf
     const FaceVariables& operator [](const SubControlVolumeFace& scvf) const
     { return faceVariables_[scvf.localFaceIdx()]; }
 
-    // operator for the access with an index
+    //! const operator for the access with an index
     const FaceVariables& operator [](const IndexType scvfIdx) const
     { return faceVariables_[getLocalIdx_(scvfIdx)]; }
 
+    //! operator for the access with an scvf
     FaceVariables& operator [](const SubControlVolumeFace& scvf)
     { return faceVariables_[scvf.localFaceIdx()]; }
 
@@ -136,8 +147,8 @@ public:
         }
     }
 
-    // Binding of an element, prepares only the face variables of the element
-    // specialization for Staggered models
+    //! Binding of an element, prepares only the face variables of the element
+    //! specialization for Staggered models
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)

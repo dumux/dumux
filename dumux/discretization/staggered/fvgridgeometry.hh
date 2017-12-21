@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for the finite volume geometry vector for staggered models
- *        This builds up the sub control volumes and sub control volume faces
- *        for each element of the grid partition.
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredFVGridGeometry
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FVGEOMETRY_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FVGEOMETRY_HH
@@ -32,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup StaggeredDiscretization
  * \brief Base class for the finite volume geometry vector for staggered models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
@@ -41,7 +40,12 @@ template<class TypeTag, bool EnableFVGridGeometryCache>
 class StaggeredFVGridGeometry
 {};
 
-// specialization in case the FVElementGeometries are stored globally
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Base class for the finite volume geometry vector for staggered models
+ *        This builds up the sub control volumes and sub control volume faces
+ *        for each element. Specialization in case the FVElementGeometries are stored.
+ */
 template<class TypeTag>
 class StaggeredFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
@@ -245,7 +249,12 @@ private:
     IndexType numBoundaryScvf_;
 };
 
-// specialization in case the FVElementGeometries are not stored
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Base class for the finite volume geometry vector for staggered models
+ *        This builds up the sub control volumes and sub control volume faces
+ *        for each element. Specialization in case the FVElementGeometries are stored.
+ */
 template<class TypeTag>
 class StaggeredFVGridGeometry<TypeTag, false>
 {

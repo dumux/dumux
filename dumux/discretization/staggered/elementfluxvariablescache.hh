@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global object of flux var caches
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredElementFluxVariablesCache
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_FLUXVARSCACHE_HH
@@ -29,15 +30,16 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the stencil local flux variables cache
+ * \ingroup StaggeredDiscretization
+ * \brief Base class for the stencil local flux variables cache for the staggered model
  */
 template<class TypeTag, bool EnableGridFluxVariablesCache>
 class StaggeredElementFluxVariablesCache;
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when caching globally
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the stencil local flux variables cache for the staggered model.
+          Specialization for the case of storing the fluxvars cache globally.
  */
 template<class TypeTag>
 class StaggeredElementFluxVariablesCache<TypeTag, true>
@@ -56,23 +58,23 @@ public:
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars) {}
 
-    // Specialization for the global caching being enabled - do nothing here
+    //! Specialization for the global caching being enabled - do nothing here
     void bindScvf(const Element& element,
                   const FVElementGeometry& fvGeometry,
                   const ElementVolumeVariables& elemVolVars,
                   const SubControlVolumeFace& scvf) {}
 
-    // aStaggeredess operators in the case of caching
+    //! operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return (*gridFluxVarsCachePtr_)[scvf.index()]; }
 
@@ -85,8 +87,9 @@ private:
 };
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when not using global caching
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the stencil local flux variables cache for the staggered model.
+          Specialization for the case of not storing the fluxvars cache globally.
  */
 template<class TypeTag>
 class StaggeredElementFluxVariablesCache<TypeTag, false>
@@ -105,8 +108,8 @@ public:
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
     : gridFluxVarsCachePtr_(&global) {}
 
-    // This function has to be called prior to flux calculations on the element.
-    // Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
+    //! This function has to be called prior to flux calculations on the element.
+    //! Prepares the transmissibilities of the scv faces in an element. The FvGeometry is assumed to be bound.
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const ElementVolumeVariables& elemVolVars)
@@ -126,8 +129,8 @@ public:
         }
     }
 
-    // This function is called by the StaggeredLocalResidual before flux calculations during assembly.
-    // Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
+    //! This function is called by the StaggeredLocalResidual before flux calculations during assembly.
+    //! Prepares the transmissibilities of the scv faces in the stencil. The FvGeometries are assumed to be bound.
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const ElementVolumeVariables& elemVolVars)
@@ -183,7 +186,7 @@ public:
         globalScvfIndices_[0] = scvf.index();
     }
 
-    // access operators in the case of no caching
+    //! access operators in the case of no caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[getLocalScvfIdx_(scvf.index())]; }
 

@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class storing scv and scvf variables
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredGridVariables
  */
 #ifndef DUMUX_STAGGERED_GRID_VARIABLES_HH
 #define DUMUX_STAGGERED_GRID_VARIABLES_HH
@@ -30,8 +31,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Class storing scv and scvf variables
+ * \ingroup StaggeredDiscretization
+ * \brief Class storing data associated to scvs and scvfs
  */
 template<class TypeTag>
 class StaggeredGridVariables : public FVGridVariables<TypeTag>
@@ -91,15 +92,19 @@ public:
         curGridFaceVariables_ = prevGridFaceVariables_;
     }
 
+    //! return the current face variables
     const GridFaceVariables& curGridFaceVars() const
     { return curGridFaceVariables_; }
 
+    //! return the previous face variables
     const GridFaceVariables& prevGridFaceVars() const
     { return prevGridFaceVariables_; }
 
+    //! return the current face variables
     GridFaceVariables& curGridFaceVars()
     { return curGridFaceVariables_; }
 
+    //! return the previous face variables
     GridFaceVariables& prevGridFaceVars()
     { return prevGridFaceVariables_; }
 

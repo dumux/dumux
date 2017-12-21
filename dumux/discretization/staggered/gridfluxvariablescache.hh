@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The global object of flux var caches
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredGridFluxVariablesCache
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_FLUXVARSCACHE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_FLUXVARSCACHE_HH
@@ -30,15 +31,16 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the flux variables cache vector, we store one cache per face
+ * \ingroup StaggeredDiscretization
+ * \brief Flux variables cache class for staggered models
  */
 template<class TypeTag, bool EnableGridFluxVariablesCache>
 class StaggeredGridFluxVariablesCache;
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when caching globally
+ * \ingroup StaggeredDiscretization
+ * \brief Flux variables cache class for staggered models.
+          Specialization in case of storing the flux cache.
  */
 template<class TypeTag>
 class StaggeredGridFluxVariablesCache<TypeTag, true>
@@ -107,8 +109,9 @@ private:
 };
 
 /*!
- * \ingroup ImplicitModel
- * \brief Spezialization when not using global caching
+ * \ingroup StaggeredDiscretization
+ * \brief Flux variables cache class for staggered models.
+          Specialization in case of not storing the flux cache.
  */
 template<class TypeTag>
 class StaggeredGridFluxVariablesCache<TypeTag, false>
