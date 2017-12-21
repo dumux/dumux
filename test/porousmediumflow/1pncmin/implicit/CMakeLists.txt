@@ -12,6 +12,8 @@ dune_add_test(NAME test_1pncminni_box
 
 #install sources
 install(FILES
+modifiedcao.hh
+modifiedsteamn2cao2h2.hh
 thermochemproblem.hh
 thermochemspatialparams.hh
 thermochemreaction.hh

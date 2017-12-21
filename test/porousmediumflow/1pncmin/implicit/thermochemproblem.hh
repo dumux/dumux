@@ -29,11 +29,11 @@
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/problem.hh>
-#include <dumux/material/fluidsystems/steamn2cao2h2.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 #include "thermochemspatialparams.hh"
 #include "thermochemreaction.hh"
+#include "modifiedsteamn2cao2h2.hh"
 
 
 namespace Dumux
@@ -55,7 +55,7 @@ SET_TYPE_PROP(ThermoChemProblem, Problem, ThermoChemProblem<TypeTag>);
 SET_PROP(ThermoChemProblem, FluidSystem)
 { /*private:*/
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::SteamN2CaO2H2<Scalar>;
+    using type = FluidSystems::ModifiedSteamN2CaO2H2<Scalar>;
 };
 
 // // Enable velocity output

@@ -21,8 +21,8 @@
  *
  * \brief @copybrief Dumux::FluidSystems::SteamN2CaO2H2
  */
-#ifndef DUMUX_STEAM_N2_CAO2H2_SYSTEM_HH
-#define DUMUX_STEAM_N2_CAO2H2_SYSTEM_HH
+#ifndef DUMUX_MODIFIED_STEAM_N2_CAO2H2_SYSTEM_HH
+#define DUMUX_MODIFIED_STEAM_N2_CAO2H2_SYSTEM_HH
 
 #include <cassert>
 
@@ -35,16 +35,19 @@
 #include <dumux/material/components/n2.hh>
 #include <dumux/material/components/h2o.hh>
 #include <dumux/material/components/CaO2H2.hh>
-#include <dumux/material/components/CaO.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
+
+// In order to reproduce the case presented in Shao et al. (2013),
+// we use a modified implementation of the CaO component
+#include "modifiedcao.hh"
 
 namespace Dumux
 {
 namespace FluidSystems
 {
 /*!
- * \ingroup Fluidsystems
+ * \ingroup OnePNCMinTests
  *
  * \brief A compositional one-phase fluid system with \f$H_2O\f$ \f$N_2\f$ as gaseous components
  *              and \f$CaO\f$  and \f$Ca(OH)_2/f$ as solid components drawn for thermo-chemical
@@ -58,10 +61,10 @@ namespace FluidSystems
 template <class Scalar,
            class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
           bool useComplexRelations=true>
-class SteamN2CaO2H2
-: public BaseFluidSystem<Scalar, SteamN2CaO2H2<Scalar, H2Otype, useComplexRelations> >
+class ModifiedSteamN2CaO2H2
+: public BaseFluidSystem<Scalar, ModifiedSteamN2CaO2H2<Scalar, H2Otype, useComplexRelations> >
 {
-    using ThisType = SteamN2CaO2H2<Scalar, H2Otype, useComplexRelations>;
+    using ThisType = ModifiedSteamN2CaO2H2<Scalar, H2Otype, useComplexRelations>;
     using Base =  BaseFluidSystem <Scalar, ThisType>;
 
     using IdealGas = Dumux::IdealGas<Scalar>;
@@ -71,7 +74,7 @@ public:
     using H2O_N2 = Dumux::BinaryCoeff::H2O_N2;
     using N2 = Dumux::N2<Scalar>;
 
-    using CaO = Dumux::CaO<Scalar>;
+    using CaO = Dumux::ModifiedCaO<Scalar>;
     using CaO2H2 =  Dumux::CaO2H2<Scalar>;
 
     // the type of parameter cache objects. this fluid system does not
