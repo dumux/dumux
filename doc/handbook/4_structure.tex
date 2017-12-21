@@ -59,14 +59,14 @@
   ]
   [.\node[FirstLevel] {assembly};
     \node[ThirdLevel] {
-          Matrix assembler and residual for all discretization methods: cell centered, box, staggered grid.};
+          Matrix assembler and residual for all discretization methods.};
   ]
   [.\node[FirstLevel] {common};
     \node[ThirdLevel] {
           Common files of all models:
           definition of boundary conditions, time stepping, splines, dimensionless numbers ...};
     [.\node[SecondLevel] {geometry};
-      \node[ThirdLevel] {Common definitions of geometrical properties.};
+      \node[ThirdLevel] {Geometrical algorithms};
     ]
     [.\node[SecondLevel] {properties};
       \node[ThirdLevel] {Base properties for all models.};
@@ -77,21 +77,20 @@
       \node[ThirdLevel] {Common methods for all discretizations: variable caching, advective and diffusive fluxes, upwinding...};
 %     ]
     [.\node[SecondLevel] {box};
-      \node[ThirdLevel] {Specific files for the gerenal fully implicit box method:
+      \node[ThirdLevel] {Specific files for the box finite volume method:
                          specifications for advective and diffusive fluxes...};
     ]
     [.\node[SecondLevel] {cellcentered};
-      \node[ThirdLevel] {Specific files for fully implicit cell centered method (mpfa and tpfa).};
+      \node[ThirdLevel] {Specific files for cell centered finite volume methods.};
     ]
     [.\node[SecondLevel] {staggered};
-      \node[ThirdLevel] {Specific files for staggered grid.};
+      \node[ThirdLevel] {Specific files for staggered finite volume method.};
     ]
   ]
   [.\node[FirstLevel] {freeflow};
     [.\node[SecondLevel] {\emph{models}};
       \node[ThirdLevel] {Single-phase free flow models using Navier-Stokes
-                         and algebraic turbulence models.
-                         All models are discretized with the box-method.};
+                         and algebraic turbulence models.};
     ]
   ]
   [.\node[FirstLevel] {io};
@@ -140,15 +139,15 @@
   ]
   [.\node[FirstLevel] {mixeddimension};
     \node[ThirdLevel] {
-          Mixeddimension model.};
+          Coupled model with different dimensions.};
     [.\node[SecondLevel] {embedded};
-      \node[ThirdLevel] {Embedded.};
+      \node[ThirdLevel] {Embedded mixed dimension method.};
     ]
     [.\node[SecondLevel] {facet};
-      \node[ThirdLevel] {Facet.};
+      \node[ThirdLevel] {Facet mixed dimension method.};
     ]
     [.\node[SecondLevel] {glue};
-      \node[ThirdLevel] {Glue.};
+      \node[ThirdLevel] {Grid glue backend.};
     ]
   ]
   [.\node[FirstLevel] {nonlinear};
