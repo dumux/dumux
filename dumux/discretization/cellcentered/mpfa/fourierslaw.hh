@@ -141,7 +141,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         {
             switchFluxSign_ = localFaceData.isOutside();
 
-            //! store pointer to the temperature vector of this iv
+            // store pointer to the temperature vector of this iv
             Tj_ = &dataHandle.temperatures();
 
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
@@ -189,7 +189,7 @@ public:
         const auto& tij = fluxVarsCache.heatConductionTij();
         const auto& Tj = fluxVarsCache.temperatures();
 
-        //! compute Tij*tj
+        // compute Tij*tj
         Scalar flux = tij*Tj;
         if (fluxVarsCache.heatConductionSwitchFluxSign())
             flux *= -1.0;

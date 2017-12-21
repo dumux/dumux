@@ -21,8 +21,8 @@
  * \ingroup CCMpfaDiscretization
  * \brief Class for the index sets of the dual grid in mpfa schemes.
  */
-#ifndef DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEXSET_BASE_HH
-#define DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEXSET_BASE_HH
+#ifndef DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEX_SET_HH
+#define DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEX_SET_HH
 
 namespace Dumux
 {

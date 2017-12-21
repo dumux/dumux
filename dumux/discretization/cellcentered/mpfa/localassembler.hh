@@ -77,7 +77,7 @@ class InteractionVolumeAssemblerBase
         elemVolVarsPtr_ = &elemVolVars;
     }
 
-    //! return functions to the local views & problem
+    // return functions to the local views & problem
     const Problem& problem() const { return *problemPtr_; }
     const FVElementGeometry& fvGeometry() const { return *fvGeometryPtr_; }
     const ElementVolumeVariables& elemVolVars() const { return *elemVolVarsPtr_; }

@@ -67,7 +67,7 @@ public:
     , isOutside_(true)
     {}
 
-    //! Functions to return stored data
+    // Functions to return stored data
     LocalIndexType ivLocalScvfIndex() const { return ivLocalScvfIndex_; }
     LocalIndexType ivLocalInsideScvIndex() const { return ivLocalInsideScvIndex_; }
     LocalIndexType scvfLocalOutsideScvfIndex() const { assert(isOutside_); return scvfLocalOutsideScvfIndex_; }

@@ -228,15 +228,15 @@ public:
         const auto& tij = fluxVarsCache.advectionTij();
         const auto& pj = fluxVarsCache.pressures(phaseIdx);
 
-        //! compute t_ij*p_j
+        // compute t_ij*p_j
         Scalar scvfFlux = tij*pj;
 
-        //! maybe add gravitational acceleration
+        // maybe add gravitational acceleration
         static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
         if (enableGravity)
             scvfFlux += fluxVarsCache.gravity(phaseIdx);
 
-        //! switch the sign if necessary
+        // switch the sign if necessary
         if (fluxVarsCache.advectionSwitchFluxSign())
             scvfFlux *= -1.0;
 

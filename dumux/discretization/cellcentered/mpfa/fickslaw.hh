@@ -151,7 +151,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         {
             switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
 
-            //! store pointer to the mole fraction vector of this iv
+            // store pointer to the mole fraction vector of this iv
             xj_[phaseIdx][compIdx] = &dataHandle.moleFractions(phaseIdx, compIdx);
 
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();

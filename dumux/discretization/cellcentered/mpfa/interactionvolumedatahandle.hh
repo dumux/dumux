@@ -43,7 +43,7 @@ public:
 template<class TypeTag, class InteractionVolume, bool EnableAdvection>
 class AdvectionDataHandle
 {
-    //! export matrix & vector types from interaction volume
+    // export matrix & vector types from interaction volume
     using Matrix = typename InteractionVolume::Traits::Matrix;
     using Vector = typename InteractionVolume::Traits::Vector;
     using Scalar = typename Vector::value_type;
@@ -172,14 +172,14 @@ private:
     std::array< Vector, numPhases > p_;                      //!< The interaction volume-wide phase pressures
     std::array< Vector, numPhases > g_;                      //!< The gravitational acceleration at each scvf (only for enabled gravity)
     std::vector< std::vector<Vector> > outsideT_;            //!< The transmissibilities for "outside" faces (only on surface grids)
-    std::array< std::vector<Vector>, numPhases > outsideG_; //!< The gravitational acceleration on "outside" faces (only on surface grids)
+    std::array< std::vector<Vector>, numPhases > outsideG_;  //!< The gravitational acceleration on "outside" faces (only on surface grids)
 };
 
 //! Data handle for quantities related to diffusion
 template<class TypeTag, class InteractionVolume, bool EnableDiffusion>
 class DiffusionDataHandle
 {
-    //! export matrix & vector types from interaction volume
+    // export matrix & vector types from interaction volume
     using Matrix = typename InteractionVolume::Traits::Matrix;
     using Vector = typename InteractionVolume::Traits::Vector;
     using OutsideTContainer = std::vector< std::vector<Vector> >;
@@ -205,11 +205,11 @@ public:
                 if (pIdx == cIdx)
                     continue;
 
-                //! resize transmissibility matrix & mole fraction vector
+                // resize transmissibility matrix & mole fraction vector
                 T_[pIdx][cIdx].resize(iv.numFaces(), iv.numKnowns());
                 xj_[pIdx][cIdx].resize(iv.numKnowns());
 
-                //! resize outsideTij on surface grids
+                // resize outsideTij on surface grids
                 if (dim < dimWorld)
                 {
                     outsideT_[pIdx][cIdx].resize(iv.numFaces());
@@ -236,8 +236,8 @@ public:
 
 private:
     //! diffusion-related variables
-    unsigned int phaseIdx_;                         //!< The phase index set for the context
-    unsigned int compIdx_;                          //!< The component index set for the context
+    unsigned int phaseIdx_;                                         //!< The phase index set for the context
+    unsigned int compIdx_;                                          //!< The component index set for the context
     std::array< std::array<Matrix, numComponents>, numPhases > T_;  //!< The transmissibilities such that f_i = T_ij*x_j
     std::array< std::array<Vector, numComponents>, numPhases > xj_; //!< The interaction volume-wide mole fractions
     std::array< std::array<OutsideTContainer, numComponents>, numPhases> outsideT_;

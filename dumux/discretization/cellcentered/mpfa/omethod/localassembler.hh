@@ -74,13 +74,13 @@ public:
     template< class GetTensorFunction >
     void assemble(Matrix& T, InteractionVolume& iv, const GetTensorFunction& getTensor)
     {
-        //! assemble D into T directly
+        // assemble D into T directly
         assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
 
-        //! maybe solve the local system
+        // maybe solve the local system
         if (iv.numUnknowns() > 0)
         {
-            //! T = C*A^-1*B + D
+            // T = C*A^-1*B + D
             iv.A().invert();
             iv.C().rightmultiply(iv.A());
             T += multiplyMatrices(iv.C(), iv.B());
@@ -100,10 +100,10 @@ public:
     template< class OutsideTijContainer, class GetTensorFunction >
     void assemble(OutsideTijContainer& outsideTij, Matrix& T, InteractionVolume& iv, const GetTensorFunction& getTensor)
     {
-        //! assemble D into T directly
+        // assemble D into T directly
         assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
 
-        //! maybe solve the local system
+        // maybe solve the local system
         if (iv.numUnknowns() > 0)
         {
             // T = C*A^-1*B + D
@@ -111,7 +111,7 @@ public:
             iv.B().leftmultiply(iv.A());
             T += multiplyMatrices(iv.C(), iv.B());
 
-            //! compute outside transmissibilities
+            // compute outside transmissibilities
             for (const auto& localFaceData : iv.localFaceData())
             {
                 // continue only for "outside" faces
@@ -170,19 +170,19 @@ public:
                              InteractionVolume& iv,
                              const GetTensorFunction& getTensor)
     {
-        //! assemble D into T & C into CA directly
+        // assemble D into T & C into CA directly
         assembleLocalMatrices_(iv.A(), iv.B(), CA, T, iv, getTensor);
 
-        //! maybe solve the local system
+        // maybe solve the local system
         if (iv.numUnknowns() > 0)
         {
-            //! T = C*A^-1*B + D
+            // T = C*A^-1*B + D
             iv.A().invert();
             CA.rightmultiply(iv.A());
             T += multiplyMatrices(CA, iv.B());
         }
 
-        //! assemble gravitational acceleration container (enforce usage of mpfa-o type version)
+        // assemble gravitational acceleration container (enforce usage of mpfa-o type version)
         assembleGravity(g, iv, CA, getTensor);
     }
 
@@ -215,10 +215,10 @@ public:
                              InteractionVolume& iv,
                              const GetTensorFunction& getTensor)
     {
-        //! assemble D into T directly
+        // assemble D into T directly
         assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
 
-        //! maybe solve the local system
+        // maybe solve the local system
         if (iv.numUnknowns() > 0)
         {
             // T = C*A^-1*B + D
@@ -228,7 +228,7 @@ public:
             A = iv.A();
             CA = iv.C().rightmultiply(A);
 
-            //! compute outside transmissibilities
+            // compute outside transmissibilities
             for (const auto& localFaceData : iv.localFaceData())
             {
                 // continue only for "outside" faces
@@ -281,15 +281,15 @@ public:
     template< class GetU >
     void assemble(Vector& u, const InteractionVolume& iv, const GetU& getU)
     {
-        //! resize given container
+        // resize given container
         u.resize(iv.numKnowns());
 
-        //! put the cell pressures first
+        // put the cell pressures first
 
         for (LocalIndexType i = 0; i < iv.numScvs(); ++i)
             u[i] = getU( iv.localScv(i).globalScvIndex() );
 
-        //! Dirichlet BCs come afterwards
+        // Dirichlet BCs come afterwards
         unsigned int i = iv.numScvs();
         for (const auto& data : iv.dirichletData())
             u[i++] = getU( data.volVarIndex() );
@@ -315,15 +315,15 @@ public:
                          const Matrix& CA,
                          const GetTensorFunction& getTensor)
     {
-        //! we require the CA matrix and the g vector to have the correct size already
+        // we require the CA matrix and the g vector to have the correct size already
         assert(g.size() == numPhases && "Provided gravity container does not have NumPhases entries");
         assert(g[0].size() == iv.numFaces() && "Gravitation vector g does not have the correct size");
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns() && "Matrix CA does not have the correct size");
 
         //! For each face, we...
         //! - arithmetically average the phase densities
-        //! - compute the term alpha:= A*rho*n^T*K*g in each neighboring cell
-        //! - compute sum_alphas = alpha_outside - alpha_inside
+        //! - compute the term \f$ \alpha := A \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
+        //! - compute \f$ \alpha^* = \alpha_{outside} - \alpha_{inside} \f$
         using Scalar = typename Vector::value_type;
 
         std::array< Vector, numPhases > sum_alphas;
@@ -335,12 +335,12 @@ public:
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
-            //! gravitational acceleration on this face
+            // gravitational acceleration on this face
             const auto& curLocalScvf = iv.localScvf(faceIdx);
             const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
             const auto gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
 
-            //! get permeability tensor in "positive" sub volume
+            // get permeability tensor in "positive" sub volume
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
             const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
@@ -348,8 +348,8 @@ public:
             const auto& posElement = iv.element(neighborScvIndices[0]);
             const auto tensor = getTensor(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
-            //! This function should never be called for surface grids,
-            //! for which there is the specialization of this function below
+            // This function should never be called for surface grids,
+            // for which there is the specialization of this function below
             assert(neighborScvIndices.size() <= 2 && "Scvf seems to have more than one outside scv!");
 
             std::array< Scalar, numPhases > rho;
@@ -361,7 +361,7 @@ public:
 
                 if (!curGlobalScvf.boundary())
                 {
-                    //! obtain outside tensor
+                    // obtain outside tensor
                     const auto& negLocalScv = iv.localScv( neighborScvIndices[1] );
                     const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
                     const auto& negVolVars = this->elemVolVars()[negGlobalScv];
@@ -386,7 +386,7 @@ public:
                         sum_alphas[pIdx][localDofIdx] -= alpha_inside*rho[pIdx]*curGlobalScvf.area();
                 }
             }
-            //! use Dirichlet BC densities
+            // use Dirichlet BC densities
             else
             {
                 const auto& dirichletVolVars = this->elemVolVars()[curGlobalScvf.outsideScvIdx()];
@@ -394,12 +394,12 @@ public:
                     rho[pIdx] = dirichletVolVars.density(pIdx);
             }
 
-            //! add "inside" alpha to gravity container
+            // add "inside" alpha to gravity container
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
                 g[pIdx][faceIdx] += alpha_inside*rho[pIdx]*curGlobalScvf.area();
         }
 
-        //! g += CA*sum_alphas
+        // g += CA*sum_alphas
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
             CA.umv(sum_alphas[pIdx], g[pIdx]);
     }
@@ -431,7 +431,7 @@ public:
                          const Matrix& A,
                          const GetTensorFunction& getTensor)
     {
-        //! we require the CA matrix and the gravity containers to have the correct size already
+        // we require the CA matrix and the gravity containers to have the correct size already
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns() && "Matrix CA does not have the correct size");
         assert(g.size() == numPhases && "Provided gravity container does not have NumPhases entries");
         assert(outsideG.size() == numPhases && "Provided outside gravity container does not have NumPhases entries");
@@ -442,8 +442,8 @@ public:
 
         //! For each face, we...
         //! - arithmetically average the phase densities
-        //! - compute the term alpha:= A*rho*n^T*K*g in each neighboring cell
-        //! - compute sum_alphas = alpha_outside - alpha_inside
+        //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
+        //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
         using Scalar = typename Vector::value_type;
 
         // reset everything to zero
@@ -457,12 +457,12 @@ public:
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
-            //! gravitational acceleration on this face
+            // gravitational acceleration on this face
             const auto& curLocalScvf = iv.localScvf(faceIdx);
             const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
             const auto gravity = this->problem().gravityAtPos(curGlobalScvf.ipGlobal());
 
-            //! get permeability tensor in "positive" sub volume
+            // get permeability tensor in "positive" sub volume
             const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
             const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
             const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
@@ -486,7 +486,7 @@ public:
                 {
                     for (unsigned int idxInOutside = 0; idxInOutside < curGlobalScvf.numOutsideScvs(); ++idxInOutside)
                     {
-                        //! obtain outside tensor
+                        // obtain outside tensor
                         const auto& negLocalScv = iv.localScv( neighborScvIndices[idxInOutside] );
                         const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
@@ -512,7 +512,7 @@ public:
                     sum_alphas[pIdx][localDofIdx] *= rho[pIdx]*curGlobalScvf.area();
                 }
             }
-            //! use Dirichlet BC densities
+            // use Dirichlet BC densities
             else
             {
                 const auto& dirichletVolVars = this->elemVolVars()[curGlobalScvf.outsideScvIdx()];
@@ -520,7 +520,7 @@ public:
                     rho[pIdx] = dirichletVolVars.density(pIdx);
             }
 
-            //! add "inside" & "outside" alphas to gravity containers
+            // add "inside" & "outside" alphas to gravity containers
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
             {
                 g[pIdx][faceIdx] += alpha_inside*rho[pIdx]*curGlobalScvf.area();
@@ -530,8 +530,8 @@ public:
             }
         }
 
-        //! g += CA*sum_alphas
-        //! outsideG = wikj*A^-1*sum_alphas + outsideG
+        // g += CA*sum_alphas
+        // outsideG = wikj*A^-1*sum_alphas + outsideG
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
         {
             CA.umv(sum_alphas[pIdx], g[pIdx]);
@@ -539,7 +539,7 @@ public:
             Vector AG(iv.numUnknowns());
             A.mv(sum_alphas[pIdx], AG);
 
-            //! compute gravitational accelerations
+            // compute gravitational accelerations
             for (const auto& localFaceData : iv.localFaceData())
             {
                 // continue only for "outside" faces
@@ -573,10 +573,9 @@ private:
      *        in the interaction volume-local system of equations resulting from flux
      *        and solution continuity across the scvfs.
      *
-     *        Flux expressions:
-     *        \f$\mathbf{f} = \mathbf{C} \bar{matbf{u}} + \mathbf{D} matbf{u}\f$.
-     *        Continuity equations
-     *        \f$\mathbf{A} \, \bar{matbf{u}} = \mathbf{B} \, matbf{u}\f$,
+     *        Flux expressions: \f$\mathbf{f} = \mathbf{C} \bar{\mathbf{u}} + \mathbf{D} \mathbf{u}\f$.
+     *
+     *        Continuity equations: \f$\mathbf{A} \, \bar{\mathbf{u}} = \mathbf{B} \, \mathbf{u}\f$.
      *
      * \note  The matrices are expected to have been resized beforehand.
      *
@@ -592,31 +591,31 @@ private:
                                 InteractionVolume& iv,
                                 const GetTensorFunction& getTensor)
     {
-        //! Matrix D is assumed to have the right size already
+        // Matrix D is assumed to have the right size already
         assert(D.rows() == iv.numFaces() && D.cols() == iv.numKnowns() && "Matrix D does not have the correct size");
 
-        //! if only Dirichlet faces are present in the iv,
-        //! the matrices A, B & C are undefined and D = T
+        // if only Dirichlet faces are present in the iv,
+        // the matrices A, B & C are undefined and D = T
         if (iv.numUnknowns() == 0)
         {
-            //! reset matrix beforehand
+            // reset matrix beforehand
             D = 0.0;
 
-            //! Loop over all the faces, in this case these are all dirichlet boundaries
+            // Loop over all the faces, in this case these are all dirichlet boundaries
             for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
             {
                 const auto& curLocalScvf = iv.localScvf(faceIdx);
                 const auto& curGlobalScvf = this->fvGeometry().scvf(curLocalScvf.globalScvfIndex());
                 const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
 
-                //! get tensor in "positive" sub volume
+                // get tensor in "positive" sub volume
                 const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
                 const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
                 const auto& posElement = iv.element(neighborScvIndices[0]);
                 const auto tensor = getTensor(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
-                //! the omega factors of the "positive" sub volume
+                // the omega factors of the "positive" sub volume
                 const auto wijk = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
                 const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
@@ -631,12 +630,12 @@ private:
         }
         else
         {
-            //! we require the matrices A,B,C to have the correct size already
+            // we require the matrices A,B,C to have the correct size already
             assert(A.rows() == iv.numUnknowns() && A.cols() == iv.numUnknowns() && "Matrix A does not have the correct size");
             assert(B.rows() == iv.numUnknowns() && B.cols() == iv.numKnowns() && "Matrix B does not have the correct size");
             assert(C.rows() == iv.numFaces() && C.cols() == iv.numKnowns() && "Matrix C does not have the correct size");
 
-            //! reset matrices
+            // reset matrices
             A = 0.0;
             B = 0.0;
             C = 0.0;
@@ -650,7 +649,7 @@ private:
                 const auto curIsDirichlet = curLocalScvf.isDirichlet();
                 const auto curLocalDofIdx = curLocalScvf.localDofIndex();
 
-                //! get tensor in "positive" sub volume
+                // get tensor in "positive" sub volume
                 const auto& neighborScvIndices = curLocalScvf.neighboringLocalScvIndices();
                 const auto& posLocalScv = iv.localScv(neighborScvIndices[0]);
                 const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
@@ -658,24 +657,24 @@ private:
                 const auto& posElement = iv.element(neighborScvIndices[0]);
                 const auto tensor = getTensor(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
-                //! the omega factors of the "positive" sub volume
+                // the omega factors of the "positive" sub volume
                 wijk[faceIdx][0] = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
 
-                //! go over the coordinate directions in the positive sub volume
+                // go over the coordinate directions in the positive sub volume
                 for (unsigned int localDir = 0; localDir < dim; localDir++)
                 {
                     const auto& otherLocalScvf = iv.localScvf( posLocalScv.scvfIdxLocal(localDir) );
                     const auto otherLocalDofIdx = otherLocalScvf.localDofIndex();
 
-                    //! if we are not on a Dirichlet face, add entries associated with unknown face pressures
-                    //! i.e. in matrix C and maybe A (if current face is not a Dirichlet face)
+                    // if we are not on a Dirichlet face, add entries associated with unknown face pressures
+                    // i.e. in matrix C and maybe A (if current face is not a Dirichlet face)
                     if (!otherLocalScvf.isDirichlet())
                     {
                         C[faceIdx][otherLocalDofIdx] -= wijk[faceIdx][0][localDir];
                         if (!curIsDirichlet)
                             A[curLocalDofIdx][otherLocalDofIdx] -= wijk[faceIdx][0][localDir];
                     }
-                    //! the current face is a Dirichlet face and creates entries in D & maybe B
+                    // the current face is a Dirichlet face and creates entries in D & maybe B
                     else
                     {
                         D[faceIdx][otherLocalDofIdx] -= wijk[faceIdx][0][localDir];
@@ -683,7 +682,7 @@ private:
                             B[curLocalDofIdx][otherLocalDofIdx] += wijk[faceIdx][0][localDir];
                     }
 
-                    //! add entries related to pressures at the scv centers (dofs)
+                    // add entries related to pressures at the scv centers (dofs)
                     const auto posScvLocalDofIdx = posLocalScv.localDofIndex();
                     D[faceIdx][posScvLocalDofIdx] += wijk[faceIdx][0][localDir];
 

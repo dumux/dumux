@@ -19,7 +19,7 @@
 /*!
  * \file
  * \ingroup CCMpfaDiscretization
- * \brief Classes for the interaction volume of the mpfa-o scheme.
+ * \brief Class for the interaction volume of the mpfa-o scheme.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUME_HH
@@ -135,7 +135,6 @@ public:
     //! publicly state the mpfa-scheme this interaction volume is associated with
     static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
 
-    //! Types required in the assembly of the local eq system
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -274,16 +273,19 @@ public:
     //! returns a reference to the information container on Dirichlet BCs within this iv
     const std::vector<DirichletData>& dirichletData() const { return dirichletData_; }
 
-    //! return functions for matrices involved in local system of equations
+    //! returns the matrix associated with face unknowns in local equation system
     const Matrix& A() const { return A_; }
     Matrix& A() { return A_; }
 
+    //! returns the matrix associated with cell unknowns in local equation system
     const Matrix& B() const { return B_; }
     Matrix& B() { return B_; }
 
+    //! returns the matrix associated with face unknowns in flux expressions
     const Matrix& C() const { return C_; }
     Matrix& C() { return C_; }
 
+    //! returns container storing the transmissibilities for each face & coordinate
     const std::vector< std::vector< DimVector > >& omegas() const { return wijk_; }
     std::vector< std::vector< DimVector > >& omegas() { return wijk_; }
 

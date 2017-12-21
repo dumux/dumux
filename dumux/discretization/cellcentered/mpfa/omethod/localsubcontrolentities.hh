@@ -44,7 +44,7 @@ class CCMpfaOInteractionVolumeLocalScv
 {
 
 public:
-    //! publicly state some types
+    // export some types
     using GridIndexType = typename IvIndexSet::GridIndexType;
     using LocalIndexType = typename IvIndexSet::LocalIndexType;
     using GlobalCoordinate = GC;
@@ -134,7 +134,7 @@ struct CCMpfaOInteractionVolumeLocalScvf
   using LocalIndexContainer = typename IvIndexSet::LocalIndexContainer;
 
 public:
-    //! export index types
+    // export index types
     using GridIndexType = typename IvIndexSet::GridIndexType;
     using LocalIndexType = typename IvIndexSet::LocalIndexType;
 

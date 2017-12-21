@@ -80,7 +80,7 @@ class CCMpfaInteractionVolumeBase
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    //! Types required in the assembly of the local eq system
+    // Types required in the assembly of the local eq system
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);

@@ -475,9 +475,9 @@ public:
         {
             case 3: // triangle
             {
-                //! Only build the maps the first time we encounter a triangle
-                static const std::uint8_t vo = 1; //!< vertex offset in point vector p
-                static const std::uint8_t eo = 4; //!< edge offset in point vector p
+                // Only build the maps the first time we encounter a triangle
+                static const std::uint8_t vo = 1; // vertex offset in point vector p
+                static const std::uint8_t eo = 4; // edge offset in point vector p
                 static const std::uint8_t map[3][4] =
                 {
                     {0, eo+1, eo+0, vo+0},
@@ -492,9 +492,9 @@ public:
             }
             case 4: // quadrilateral
             {
-                //! Only build the maps the first time we encounter a quadrilateral
-                static const std::uint8_t vo = 1; //!< vertex offset in point vector p
-                static const std::uint8_t eo = 5; //!< face offset in point vector p
+                // Only build the maps the first time we encounter a quadrilateral
+                static const std::uint8_t vo = 1; // vertex offset in point vector p
+                static const std::uint8_t eo = 5; // face offset in point vector p
                 static const std::uint8_t map[4][4] =
                 {
                     {0, eo+0, eo+2, vo+0},
