@@ -62,7 +62,7 @@ public:
      */
     static Scalar density()
     {
-        return 2249.0; //at 293 K ; Shao et al. (2013)
+        return 2200.0; //at 293 K ; Shao et al. (2013)
     }
 
     /*!
@@ -70,7 +70,7 @@ public:
      */
     static Scalar heatCapacity()
     {
-        return 0.0206;  //Nagel et al. (2014) : 1530 J/kgK
+        return 1530;  //Nagel et al. (2014) : 1530 J/kgK
     }
 };
 

@@ -62,7 +62,8 @@ public:
      */
     static Scalar density()
     {
-        return 3370.0; //at 293 K ; Shao et al. (2013)
+        return 1656; // value including volume change, see Shao et al. (2013)
+        //actual value: 3370;
     }
 
     /*!
