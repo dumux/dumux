@@ -27,7 +27,8 @@
 #include <dune/common/fvector.hh>
 #include <dumux/common/properties.hh>
 
-namespace Dumux {
+namespace Dumux
+{
 
 template<class TypeTag>
 class StaggeredFaceVariables

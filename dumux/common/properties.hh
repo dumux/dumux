@@ -196,6 +196,8 @@ NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary varia
 NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data
 NEW_PROP_TAG(BoundaryValues);                      //!< Class containing local boundary data
+NEW_PROP_TAG(StaggeredFaceSolution);               //!< A vector containing the solution for a face (similar to ElementSolution)
+NEW_PROP_TAG(ElementFaceVariables);                //!< Face related varibles (similar to volume variables)
 NEW_PROP_TAG(EnableGridFaceVariablesCache);      //!< Switch on/off caching of face variables
 
 /////////////////////////////////////////////////////////////
