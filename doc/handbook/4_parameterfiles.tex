@@ -62,6 +62,21 @@ A number of things can be learned:
   \item \emph{unused} parameters are not used by the simulation (maybe typo or wrong group in input file)
 \end{itemize}
 
+
+\subsection{Parameter Values}
+If you want to get the value of a parameter please use:
+\begin{lstlisting}[name=propsyscars,style=DumuxCode]
+paramname_ = getParam<TYPE>("GROUPNAME.PARAMNAME");
+\end{lstlisting}
+
+If you also want to set a default value for a parameter, just add it like this:
+
+\begin{lstlisting}[name=propsyscars,style=DumuxCode]
+paramname_ = getParam<TYPE>("GROUPNAME.PARAMNAME", default);
+\end{lstlisting}
+
+For further information you can also look at the \Dumux tutorial, especially exercise 1. 
+
 All applications have a help message which you can read by giving
 \texttt{--help} as a command line argument to the application.
 For further details, please have a look at \texttt{Dune::ParameterTree}

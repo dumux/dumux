@@ -379,19 +379,9 @@ $     int    NumSeats = '5' defined at test_propertysystem.cc:55
 $     int    TopSpeed = '::Dumux::Properties::GetProperty<TypeTag, ::Dumux::Properties::PTag::GasUsage>::p::value * 30' defined at test_propertysystem.cc:54
 \end{lstlisting}
 
-\subsection{Property and Parameter Values}
-In \Dumux three different ways to obtain the value of a property are available:
+\subsection{Property Values}
+To get the value of a property use:
 \begin{description}
 \item[\texttt{{\small GET\_PROP\_VALUE:}}]
-Always returns the \emph{compile-time} specified value of the property. This is
-needed for properties, which are not intended to be changed by parameter files.
-
-\item[\texttt{{\small GET\_PARAM\_FROM\_GROUP:}}]
-Returns the compile-time specified value, if this value is not be overwritten
-by the parameter input file.
-
-\item[\texttt{{\small GET\_RUNTIME\_PARAM\_FROM\_GROUP:}}]
-Always returns a \emph{run-time} specified value. If the value is not specified
-at run-time an error is thrown. This is needed for problem specific properties
-or properties, which do not have a meaningful default value.
+Always returns the \emph{compile-time} specified value of the property.
 \end{description}
