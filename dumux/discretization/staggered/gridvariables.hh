@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Class storing scv and scvf variables
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredGridVariables
  */
 #ifndef DUMUX_STAGGERED_GRID_VARIABLES_HH
 #define DUMUX_STAGGERED_GRID_VARIABLES_HH
@@ -30,8 +31,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Class storing scv and scvf variables
+ * \ingroup StaggeredDiscretization
+ * \brief Class storing data associated to scvs and scvfs
  */
 template<class TypeTag>
 class StaggeredGridVariables : public FVGridVariables<TypeTag>
@@ -40,7 +41,7 @@ class StaggeredGridVariables : public FVGridVariables<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GlobalFaceVars);
+    using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
@@ -91,15 +92,19 @@ public:
         curGridFaceVariables_ = prevGridFaceVariables_;
     }
 
+    //! return the current face variables
     const GridFaceVariables& curGridFaceVars() const
     { return curGridFaceVariables_; }
 
+    //! return the previous face variables
     const GridFaceVariables& prevGridFaceVars() const
     { return prevGridFaceVariables_; }
 
+    //! return the current face variables
     GridFaceVariables& curGridFaceVars()
     { return curGridFaceVariables_; }
 
+    //! return the previous face variables
     GridFaceVariables& prevGridFaceVars()
     { return prevGridFaceVariables_; }
 

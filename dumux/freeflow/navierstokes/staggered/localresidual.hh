@@ -32,13 +32,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(EnableInertiaTerms);
-NEW_PROP_TAG(NormalizePressure);
-}
-
 // forward declaration
 template<class TypeTag, DiscretizationMethods Method>
 class NavierStokesResidualImpl;

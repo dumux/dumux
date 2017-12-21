@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Specilialized sub control volume face for free-flow staggered grid models
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::FreeFlowStaggeredSubControlVolumeFace
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FREE_FLOW_SUBCONTROLVOLUMEFACE_HH
@@ -37,7 +38,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Discretization
+ * \ingroup StaggeredDiscretization
  * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
@@ -57,10 +58,10 @@ class FreeFlowStaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<Fr
     static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
 
 public:
-    //! state the traits public and thus export all types
+    //! State the traits public and thus export all types
     using Traits = ScvfGeometryTraits;
 
-    // the default constructor
+    // The default constructor
     FreeFlowStaggeredSubControlVolumeFace() = default;
 
     //! Constructor with intersection
@@ -113,7 +114,7 @@ public:
         return center_;
     }
 
-    //! The center of the sub control volume face
+    //! The position of the dof living on the face
     const GlobalPosition& dofPosition() const
     {
         return center_;
@@ -132,18 +133,19 @@ public:
         return area_;
     }
 
-    //! returns bolean if the sub control volume face is on the boundary
+    //! Returns bolean if the sub control volume face is on the boundary
     bool boundary() const
     {
         return boundary_;
     }
 
+    //! The unit outer normal vector
     const GlobalPosition& unitOuterNormal() const
     {
         return unitOuterNormal_;
     }
 
-    //! index of the inside sub control volume for spatial param evaluation
+    //! Index of the inside sub control volume for spatial param evaluation
     GridIndexType insideScvIdx() const
     {
         return scvIndices_[0];
@@ -162,6 +164,7 @@ public:
         return scvfIndex_;
     }
 
+    //! The positions of the corners
     const GlobalPosition& corner(unsigned int localIdx) const
     {
         assert(localIdx < corners_.size() && "provided index exceeds the number of corners");
@@ -198,13 +201,13 @@ public:
         return dirIdx_;
     }
 
-    //! The global index of this sub control volume face
+    //! The distance between the position of the dof itself and the one of the oppsing dof
     Scalar selfToOppositeDistance() const
     {
         return selfToOppositeDistance_;
     }
 
-    //! The returns whether the unitNormal of the face point in positive coordinate direction
+    //! Returns whether the unitNormal of the face points in positive coordinate direction
     bool normalInPosCoordDir() const
     {
         return normalInPosCoordDir_;
@@ -216,12 +219,13 @@ public:
         return outerNormalScalar_;
     }
 
-
+    //! Returns the data for one sub face
     const PairData<Scalar, GlobalPosition>& pairData(const int idx) const
     {
         return pairData_[idx];
     }
 
+    //! Return an array of all pair data
     const auto& pairData() const
     {
         return pairData_;

@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The local (stencil) volume variables class for cell centered models
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredElementVolumeVariables
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_ELEMENT_VOLUMEVARIABLES_HH
@@ -30,14 +31,18 @@ namespace Dumux
 {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the volume variables vector
+ * \ingroup StaggeredDiscretization
+ * \brief Base class for the element volume variables vector for the staggered model
  */
 template<class TypeTag, bool enableGridVolVarsCache>
 class StaggeredElementVolumeVariables
 {};
 
-// specialization in case of storing the volume variables globally
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the element volume variables vector for the staggered model.
+          Specialization in case the volume variables are stored globally.
+ */
 template<class TypeTag>
 class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
@@ -58,22 +63,23 @@ public:
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
+    //! operator for the access with an scv
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return gridVolVars().volVars(scv.dofIndex()); }
 
-    // operator for the access with an index
-    // needed for Staggered methods for the access to the boundary volume variables
+    //! operator for the access with an index
+    //! needed for Staggered methods for the access to the boundary volume variables
     const VolumeVariables& operator [](const IndexType scvIdx) const
     { return gridVolVars().volVars(scvIdx); }
 
-    // For compatibility reasons with the case of not storing the vol vars.
-    // function to be called before assembling an element, preparing the vol vars within the stencil
+    //! For compatibility reasons with the case of not storing the vol vars.
+    //! function to be called before assembling an element, preparing the vol vars within the stencil
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
     {}
 
-    // function to prepare the vol vars within the element
+    //! function to prepare the vol vars within the element
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -88,7 +94,11 @@ private:
 };
 
 
-// Specialization when the current volume variables are not stored
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the element volume variables vector for the staggered model.
+          Specialization in case the volume variables are not stored globally.
+ */
 template<class TypeTag>
 class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
@@ -119,8 +129,8 @@ public:
     StaggeredElementVolumeVariables(const GridVolumeVariables& gridVolVars)
     : gridVolVarsPtr_(&gridVolVars) {}
 
-    // Binding of an element, prepares the volume variables within the element stencil
-    // called by the local jacobian to prepare element assembly
+    //! Binding of an element, prepares the volume variables within the element stencil
+    //! called by the local jacobian to prepare element assembly
     void bind(const Element& element,
               const FVElementGeometry& fvGeometry,
               const SolutionVector& sol)
@@ -194,8 +204,8 @@ public:
         }
     }
 
-    // Binding of an element, prepares only the volume variables of the element
-    // specialization for Staggered models
+    //! Binding of an element, prepares only the volume variables of the element.
+    //! Specialization for Staggered models
     void bindElement(const Element& element,
                      const FVElementGeometry& fvGeometry,
                      const SolutionVector& sol)
@@ -218,15 +228,19 @@ public:
         volVarIndices_[0] = scv.dofIndex();
     }
 
+    //! const operator for the access with an scv
     const VolumeVariables& operator [](const SubControlVolume& scv) const
     { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
+    //! operator for the access with an scv
     VolumeVariables& operator [](const SubControlVolume& scv)
     { return volumeVariables_[getLocalIdx_(scv.dofIndex())]; }
 
+    //! const operator for the access with an index
     const VolumeVariables& operator [](IndexType scvIdx) const
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 
+    //! operator for the access with an index
     VolumeVariables& operator [](IndexType scvIdx)
     { return volumeVariables_[getLocalIdx_(scvIdx)]; }
 

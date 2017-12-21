@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief The grid volume variables class for staggered centered models
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredGridVolumeVariables
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GRID_VOLUMEVARIABLES_HH
@@ -30,14 +31,18 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Staggered
- * \brief Base class for the volume variables vector
+ * \ingroup StaggeredDiscretization
+ * \brief Grid volume variables class for staggered models
  */
 template<class TypeTag, bool enableGridVolVarsCache>
 class StaggeredGridVolumeVariables
 {};
 
-//! specialization in case of storing the volume variables
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Grid volume variables class for staggered models.
+          Specialization in case of storing the volume variables
+ */
 template<class TypeTag>
 class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 {
@@ -65,6 +70,7 @@ class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
 public:
     StaggeredGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    //! Update all volume variables
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         auto numScv = fvGridGeometry.numScv();
@@ -146,7 +152,11 @@ private:
 };
 
 
-//! Specialization when the current volume variables are not stored globally
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Grid volume variables class for staggered models.
+          Specialization in case of not storing the volume variables
+ */
 template<class TypeTag>
 class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {

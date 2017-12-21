@@ -31,13 +31,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-// forward declaration
-NEW_PROP_TAG(EnableInertiaTerms);
-NEW_PROP_TAG(ElementFaceVariables);
-}
-
 // forward declaration
 template<class TypeTag, DiscretizationMethods Method>
 class NavierStokesFluxVariablesImpl;

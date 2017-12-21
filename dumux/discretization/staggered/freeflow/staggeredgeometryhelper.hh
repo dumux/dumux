@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Helper class constructing the dual grid finite volume geometries
- *        for the staggered discretization method
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::FreeFlowStaggeredGeometryHelper
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
@@ -35,6 +35,10 @@
 namespace Dumux
 {
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Data stored per sub face
+ */
 template<class Scalar, class GlobalPosition>
 struct PairData
 {
@@ -48,8 +52,8 @@ struct PairData
     GlobalPosition virtualOuterParallelFaceDofPos;
 };
 
-
  /*!
+ * \ingroup StaggeredDiscretization
  * \brief Returns the dirction index of the facet (0 = x, 1 = y, 2 = z)
  */
 template<class Vector>
@@ -60,7 +64,11 @@ inline static int directionIndex(Vector&& vector)
     return idx;
 }
 
-//! A class to create face information per intersection
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Helper class constructing the dual grid finite volume geometries
+ *        for the free flow staggered discretization method.
+ */
 template<class GridView>
 class FreeFlowStaggeredGeometryHelper
 {
@@ -89,6 +97,7 @@ public:
     FreeFlowStaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), elementGeometry_(element.geometry()), gridView_(gridView)
     { }
 
+    //! update the local face
     template<class IntersectionMapper>
     void updateLocalFace(const IntersectionMapper& intersectionMapper_, const Intersection& intersection)
     {
@@ -97,7 +106,7 @@ public:
         fillPairData_();
     }
 
-     /*!
+    /*!
      * \brief Returns the global dofIdx of the intersection itself
      */
     int dofIndex() const
@@ -107,7 +116,7 @@ public:
         return gridView_.indexSet().subIndex(intersection_.inside(), inIdx, codimIntersection);
     }
 
-     /*!
+    /*!
      * \brief Returns the global dofIdx of the opposing intersection
      */
     int dofIndexOpposingFace() const
@@ -118,8 +127,8 @@ public:
     }
 
     /*!
-    * \brief Returns the local index of the face (i.e. the intersection)
-    */
+     * \brief Returns the local index of the face (i.e. the intersection)
+     */
     int localFaceIndex() const
     {
         return intersection_.indexInInside();
@@ -136,7 +145,7 @@ public:
         return (self.geometry().center() - opposite.geometry().center()).two_norm();
     }
 
-     /*!
+    /*!
      * \brief Returns a copy of the pair data
      */
     auto pairData() const

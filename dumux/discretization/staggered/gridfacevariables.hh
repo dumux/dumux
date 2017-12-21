@@ -16,12 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/*!
- * \file
- * \brief The global face variables class for staggered grid models
- */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
+ /*!
+  * \file
+  * \ingroup StaggeredDiscretization
+  * \copydoc Dumux::StaggeredGridFaceVariables
+  */
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
@@ -29,17 +30,21 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-    NEW_PROP_TAG(ElementFaceVariables);
-}
-
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Face variables cache class for staggered models
+ */
 template<class TypeTag, bool enableGlobalFaceVarsCache>
-class StaggeredGlobalFaceVariables
+class StaggeredGridFaceVariables
 {};
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Face variables cache class for staggered models.
+          Specialization in case of storing the face variables.
+ */
 template<class TypeTag>
-class StaggeredGlobalFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
+class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -55,8 +60,9 @@ class StaggeredGlobalFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
-    StaggeredGlobalFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
+    StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    //! Update all face variables
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {
         const auto& faceSol = sol[faceIdx];
@@ -86,7 +92,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFaceVariables localView(const StaggeredGlobalFaceVariables& global)
+    friend inline ElementFaceVariables localView(const StaggeredGridFaceVariables& global)
     { return ElementFaceVariables(global); }
 
     const Problem& problem() const
@@ -99,8 +105,13 @@ private:
     std::vector<FaceVariables> faceVariables_;
 };
 
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Face variables cache class for staggered models.
+          Specialization in case of not storing the face variables.
+ */
 template<class TypeTag>
-class StaggeredGlobalFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
+class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -116,8 +127,9 @@ class StaggeredGlobalFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
-    StaggeredGlobalFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
+    StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
+    //! Do nothing here.
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
     {  }
 
@@ -126,7 +138,7 @@ public:
      *        The local object is only functional after calling its bind/bindElement method
      *        This is a free function that will be found by means of ADL
      */
-    friend inline ElementFaceVariables localView(const StaggeredGlobalFaceVariables& global)
+    friend inline ElementFaceVariables localView(const StaggeredGridFaceVariables& global)
     { return ElementFaceVariables(global); }
 
     const Problem& problem() const

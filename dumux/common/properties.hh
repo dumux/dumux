@@ -186,9 +186,7 @@ NEW_PROP_TAG(NumEqCellCenter);                     //!< The number of equations 
 NEW_PROP_TAG(NumEqFace);                           //!< The number of equations for face dofs
 NEW_PROP_TAG(CellCenterSolutionVector);            //!< The solution vector type for cell-centered dofs
 NEW_PROP_TAG(FaceSolutionVector);                  //!< The solution vector type for face dofs
-NEW_PROP_TAG(StaggeredFaceSolution);               //!< The solution on the face
-NEW_PROP_TAG(GlobalFaceVars);                      //!< Class containing face-related data
-NEW_PROP_TAG(ElementFaceVariables);                //!< Face data per element
+NEW_PROP_TAG(GridFaceVariables);                   //!< Global vector containing face-related data
 NEW_PROP_TAG(CellCenterPrimaryVariables);          //!< The primary variables container type for cell-centered dofs
 NEW_PROP_TAG(FacePrimaryVariables);                //!< The primary variables container type for face dofs
 NEW_PROP_TAG(IntersectionMapper);                  //!< Specifies the intersection mapper
@@ -198,7 +196,9 @@ NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary varia
 NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data
 NEW_PROP_TAG(BoundaryValues);                      //!< Class containing local boundary data
-NEW_PROP_TAG(EnableGlobalFaceVariablesCache);      //!< If the face variables are cached on the gridview
+NEW_PROP_TAG(StaggeredFaceSolution);               //!< A vector containing the solution for a face (similar to ElementSolution)
+NEW_PROP_TAG(ElementFaceVariables);                //!< Face related varibles (similar to volume variables)
+NEW_PROP_TAG(EnableGridFaceVariablesCache);      //!< Switch on/off caching of face variables
 
 /////////////////////////////////////////////////////////////
 // Properties used by the mpnc model
@@ -224,6 +224,13 @@ NEW_PROP_TAG(AwsSurface);
 NEW_PROP_TAG(AnsSurface);
 NEW_PROP_TAG(NusseltFormulation);
 NEW_PROP_TAG(SherwoodFormulation);
+
+/////////////////////////////////////////////////////////////
+// Properties used by free flow models
+/////////////////////////////////////////////////////////////
+
+NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
+NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 
 } // end namespace Properties
 } // end namespace Dumux

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Velocity output for staggered free-flow models
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredFreeFlowVelocityOutput
  */
 #ifndef DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
 #define DUMUX_STAGGERED_FF_VELOCITYOUTPUT_HH
@@ -32,6 +32,7 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup StaggeredDiscretization
  * \brief Velocity output for staggered free-flow models
  */
 template<class TypeTag>
@@ -78,9 +79,11 @@ public:
         velocityOutput_ = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Vtk.AddVelocity");
     }
 
+    //! Returns whether to enable the velocity output or not
     bool enableOutput()
     { return velocityOutput_; }
 
+    //! Return the problem boundary types
     auto problemBoundaryTypes(const Element& element, const SubControlVolumeFace& scvf) const
     { return problem_.boundaryTypes(element, scvf); }
 

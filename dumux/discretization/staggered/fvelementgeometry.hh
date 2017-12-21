@@ -18,9 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a local finite volume geometry for staggered models
- *        This builds up the sub control volumes and sub control volume faces
- *        for each element in the local scope we are restricting to, e.g. stencil or element.
+ * \ingroup StaggeredDiscretization
+ * \copydoc Dumux::StaggeredFVElementGeometry
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_ELEMENT_GEOMETRY_HH
@@ -33,22 +32,27 @@
 namespace Dumux
 {
 
-//! forward declaration of the global finite volume geometry
+// forward declaration
 template<class TypeTag, bool EnableFVGridGeometryCache>
 class StaggeredFVGridGeometry;
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup StaggeredDiscretization
  * \brief Base class for the finite volume geometry vector for staggered models
- *        This builds up the sub control volumes and sub control volume faces
+ *        This locally builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
 template<class TypeTag, bool EnableFVGridGeometryCache>
 class StaggeredFVElementGeometry
 {};
 
-//! specialization in case the FVElementGeometries are stored globally
-//! In this case we just forward internally to the global object
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the finite volume geometry vector for staggered models
+ *        This locally builds up the sub control volumes and sub control volume faces
+ *        for each element. Specialization in case the FVElementGeometries are stored globally.
+          In this case we just forward internally to the global object.
+ */
 template<class TypeTag>
 class StaggeredFVElementGeometry<TypeTag, true>
 {
@@ -149,7 +153,12 @@ private:
     const FVGridGeometry* fvGridGeometryPtr_;
 };
 
-//! specialization in case the FVElementGeometries are not stored
+/*!
+ * \ingroup StaggeredDiscretization
+ * \brief Class for the finite volume geometry vector for staggered models
+ *        This locally builds up the sub control volumes and sub control volume faces
+ *        for each element. Specialization in case the FVElementGeometries are not stored globally.
+ */
 template<class TypeTag>
 class StaggeredFVElementGeometry<TypeTag, false>
 {

@@ -18,8 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief This file contains the data which is required to calculate
- *        diffusive mass fluxes due to molecular diffusion with Fourier's law.
+ * \ingroup StaggeredDiscretization
+ * \brief Specialization of Fourier's Law for the staggered free flow method.
  */
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FOURIERS_LAW_HH
@@ -37,7 +37,7 @@ template<class TypeTag, DiscretizationMethods discMethod>
 class FouriersLawImplementation;
 
 /*!
- * \ingroup StaggeredFouriersLaw
+ * \ingroup StaggeredDiscretization
  * \brief Specialization of Fourier's Law for the staggered free flow method.
  */
 template <class TypeTag>
@@ -63,6 +63,7 @@ public:
     //! We don't cache anything for this law
     using Cache = FluxVariablesCaching::EmptyDiffusionCache<TypeTag>;
 
+    //! calculate the molecular diffusive fluxes
     static Scalar diffusiveFluxForCellCenter(const Problem& problem,
                                              const Element& element,
                                              const FVElementGeometry& fvGeometry,
