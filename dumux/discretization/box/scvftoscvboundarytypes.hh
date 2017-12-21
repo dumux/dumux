@@ -24,6 +24,7 @@
 #define DUMUX_SCVF_TO_SCV_BCTYPES_HH
 
 #include <vector>
+#include <dune/common/exceptions.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux

@@ -24,15 +24,10 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_FREEFLOW_FACEVARIABLES_HH
 
-#include<dumux/common/properties.hh>
+#include <dune/common/fvector.hh>
+#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
-
-namespace Properties
-{
-    NEW_PROP_TAG(StaggeredFaceSolution);
-}
+namespace Dumux {
 
 template<class TypeTag>
 class StaggeredFaceVariables

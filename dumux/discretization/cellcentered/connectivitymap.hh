@@ -28,11 +28,12 @@
 
 #include <vector>
 #include <utility>
+#include <algorithm>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCDiscretization

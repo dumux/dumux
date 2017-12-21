@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEDATAHANDLE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEDATAHANDLE_HH
 
+#include <dune/common/exceptions.hh>
 #include <dumux/common/properties.hh>
 
 namespace Dumux

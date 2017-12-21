@@ -27,6 +27,8 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
+#include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {

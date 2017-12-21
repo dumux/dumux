@@ -24,10 +24,11 @@
 #ifndef DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
 #define DUMUX_DISCRETIZATION_FOURIERS_LAW_NONEQUILIBRIUM_HH
 
+#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 // forward declaration
 template <class TypeTag, DiscretizationMethods Method>
 class FouriersLawNonEquilibriumImplementation
