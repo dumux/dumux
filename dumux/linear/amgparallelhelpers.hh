@@ -27,6 +27,7 @@
 
 #include <dune/geometry/dimension.hh>
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/partitionset.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dumux/common/properties.hh>

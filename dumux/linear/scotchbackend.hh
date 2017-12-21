@@ -31,6 +31,9 @@
 #include <iostream>
 
 #if HAVE_PTSCOTCH
+#if HAVE_MPI
+#include <mpi.h>
+#endif
 extern "C"
 {
 #include <stdint.h>
