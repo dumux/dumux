@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material params for the van Genuchten
  *        capillary pressure model.
  *
@@ -34,7 +34,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Reference implementation of a van Genuchten params
  */
 template<class ScalarT>

@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization uses a maximum value of capillary pressure.
  */
@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of an interfacial area surface.
  *
  * The idea here is to make sure that interfacial area be zero for Sw=1 and pc=pcmax.

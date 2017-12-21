@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of van Genuchten's capillary pressure-saturation relation for three phases.
  */
 #ifndef PARKERVANGEN_3P_HH
@@ -31,7 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of van Genuchten's capillary pressure <->
  *        saturation relation. This class bundles the "raw" curves
  *        as static members and doesn't concern itself converting

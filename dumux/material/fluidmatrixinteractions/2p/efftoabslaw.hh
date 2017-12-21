@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on
  *        absolute saturations.
@@ -31,7 +31,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  *
  * \brief This material law takes a material law defined for effective
  *        saturations and converts it to a material law defined on absolute

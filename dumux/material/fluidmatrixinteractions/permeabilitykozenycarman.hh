@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief The Kozeny-Carman relationship for the calculation of a porosity-dependent permeability.
  */
 #ifndef DUMUX_PERMEABILITY_KOZENY_CARMAN_HH
@@ -31,7 +31,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief The Kozeny-Carman relationship for the calculation of a porosity-dependent permeability.
  *        When the porosity is implemented as solution-independent, using this relationship for the
  *        permeability leads to unnecessary overhead.

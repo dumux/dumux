@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective diffusion coefficient
  */
 #ifndef DIFFUSIVITY_MILLINGTON_QUIRK_HH
@@ -29,7 +29,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Relation for the saturation-dependent effective diffusion coefficient
  *
  * The material law is:

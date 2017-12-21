@@ -19,7 +19,7 @@
 
 /*!
  * \file
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters
  *       for the Brooks Corey constitutive relations.
  */
@@ -35,7 +35,7 @@ namespace Dumux
  * \brief Specification of the material parameters
  *       for the Brooks Corey constitutive relations.
  *
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  *
  *\see BrooksCorey
  */

@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Class for the evaluation of the porosity subject to precipitation.
  */
 #ifndef DUMUX_POROSITY_REACTIVE_BED_HH
@@ -30,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Calculates the porosity depeding on the volume fractions of different solid species.
  */
 template<class TypeTag>

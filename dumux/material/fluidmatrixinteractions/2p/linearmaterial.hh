@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief   Linear capillary pressure and
  *          relative permeability <-> saturation relations
  */
@@ -32,7 +32,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Linear capillary pressure and
  * relative permeability <-> saturation relations
  *

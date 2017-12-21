@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief This material law takes a material law (interfacial area surface)
  *        defined for effective saturations and converts it to a material law defined on
  *        absolute saturations.
@@ -33,7 +33,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief This material law takes a material law (interfacial area surface) defined for effective
  *        saturations and converts it to a material (interfacial area surface) law defined on absolute
  *        saturations.

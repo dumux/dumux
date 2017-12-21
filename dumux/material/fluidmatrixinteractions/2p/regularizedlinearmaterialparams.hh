@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief   Parameters that are necessary for the \em regularization of
  *          the linear constitutive relations.
  */
@@ -30,7 +30,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief   Parameters that are necessary for the \em regularization of
  *          the linear constitutive relations.
  */

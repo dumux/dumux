@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
 #ifndef THERMALCONDUCTIVITY_SOMERTON_3P_HH
@@ -38,7 +38,7 @@ struct SimpleThreePIndices
 };
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Relation for the saturation-dependent effective thermal conductivity
  *
  *  The Somerton method computes the thermal conductivity of dry and the wet soil material.

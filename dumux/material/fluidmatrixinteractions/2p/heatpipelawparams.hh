@@ -28,7 +28,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Reference implementation of a params for the heat pipe's
  *        material law
  */

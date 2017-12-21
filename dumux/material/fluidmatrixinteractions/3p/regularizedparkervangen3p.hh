@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of a regularized version of van Genuchten's capillary
  *        pressure-saturation relation for three phases.
  */
@@ -32,7 +32,7 @@
 
 namespace Dumux
 {
-/*!\ingroup fluidmatrixinteractionslaws
+/*!\ingroup Fluidmatrixinteractions
  *
  * \brief Implementation of the regularized van Genuchten's
  *        capillary pressure <-> saturation relation.

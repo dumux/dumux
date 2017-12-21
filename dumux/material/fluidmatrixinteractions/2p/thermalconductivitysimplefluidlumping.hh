@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  */
 #ifndef THERMALCONDUCTIVITY_SIMPLE_FLUID_LUMPING_HH
@@ -36,7 +36,7 @@ struct SimpleLumpingIndices
 };
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the saturation-dependent effective thermal conductivity
  * \todo This shouldn't depend on TypeTag!!
  */

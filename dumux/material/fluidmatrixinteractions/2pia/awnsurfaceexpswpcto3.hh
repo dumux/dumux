@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This function is of third order in pc.
  */
@@ -35,7 +35,7 @@ namespace Dumux
 {
 /*!
  * \ingroup material
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of a exponential function relating
  * specific interfacial  area to wetting phase saturation and capillary pressure.
  */

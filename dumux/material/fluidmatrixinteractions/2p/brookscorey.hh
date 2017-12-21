@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the capillary pressure and
  * relative permeability <-> saturation relations according to Brooks and Corey.
  *
@@ -34,7 +34,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  *
  * \brief Implementation of the Brooks-Corey capillary pressure <->
  *        saturation relation. This class bundles the "raw" curves

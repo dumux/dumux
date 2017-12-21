@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implements a linear saturation-capillary pressure relation
  *
  * Implements a linear saturation-capillary pressure relation for
@@ -34,7 +34,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implements a linear saturation-capillary pressure relation
  *
  * Implements a linear saturation-capillary pressure relation for

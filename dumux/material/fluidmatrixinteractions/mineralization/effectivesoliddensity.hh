@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup Fluidmatrixinteractions
  * \brief Class for the evaluation of the porosity subject to precipitation.
  */
 #ifndef DUMUX_EFFECTIVE_SOLID_DENSITY_HH
@@ -31,9 +31,6 @@ namespace Dumux
 
 /*!
  * \ingroup Fluidmatrixinteractions
- */
-
-/**
  * \brief Calculates the effective solid density
  */
 template<class TypeTag>

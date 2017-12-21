@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief   Relation for the effective permeability
  */
 #ifndef PERMEABILITYRUTQVISTSTANG_HH
@@ -31,7 +31,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Relation for the effective permeability
  *
  *  After Rutqvist and Tsang (2002) \cite rutqvist2002, the effective permeability can be

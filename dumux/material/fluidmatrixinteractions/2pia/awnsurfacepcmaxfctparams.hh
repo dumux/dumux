@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of the parameters for a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization uses a maximum value of capillary pressure.
  */
@@ -26,7 +26,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief implementation of interfacial area surface params
  */
 template<class ScalarT>

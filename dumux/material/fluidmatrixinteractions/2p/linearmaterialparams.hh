@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief   Parameters for the linear capillary pressure and
  *          relative permeability <-> saturation relations
  */
@@ -30,7 +30,7 @@ namespace Dumux
 /*!
  * \brief Reference implementation of params for the linear material
  *        law.
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  */
 template<class ScalarT>
 class LinearMaterialParams

@@ -16,7 +16,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of a function relating volume specific interfacial area to capillary pressure and saturation.
  * This parametrization is a second order polynomial which is zero for saturations of zero and one.
  */
@@ -34,7 +34,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the polynomial of second order relating
  *             specific interfacial  area to wetting phase saturation and capillary pressure.
  */

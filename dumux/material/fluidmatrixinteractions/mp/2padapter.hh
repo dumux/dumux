@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Makes the twophase capillary pressure-saturation relations available under the M-phase API for material laws
  *
  * Makes the twophase capillary pressure-saturation relations
@@ -32,7 +32,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implements a brookscorey saturation-capillary pressure relation
  *
  * Implements a brookscorey saturation-capillary pressure relation for

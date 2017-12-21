@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the capillary pressure <-> saturation relation
  *        for the heatpipe problem.
  */
@@ -37,7 +37,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Implementation of the capillary pressure <-> saturation
  *        relation for the heatpipe problem.
  *

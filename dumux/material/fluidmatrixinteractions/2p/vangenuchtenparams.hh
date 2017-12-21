@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters
  *       for the van Genuchten constitutive relations.
  */
@@ -28,7 +28,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionsparams
+ * \ingroup Fluidmatrixinteractions
  * \brief Specification of the material parameters
  *       for the van Genuchten constitutive relations.
  *

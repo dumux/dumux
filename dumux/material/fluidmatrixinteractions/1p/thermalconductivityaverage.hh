@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Reation for a simple effective thermal conductivity
  */
 #ifndef THERMALCONDUCTIVITY_AVERAGE_HH
@@ -30,7 +30,7 @@
 namespace Dumux
 {
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Relation for a simple effective thermal conductivity
  */
 template<class Scalar>

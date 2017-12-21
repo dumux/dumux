@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Class for the evaluation of the porosity subject to precipitation.
  */
 #ifndef DUMUX_POROSITY_PRECIPITATION_HH
@@ -30,7 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
+ * \ingroup Fluidmatrixinteractions
  * \brief Calculates the porosity depending on the volume fractions of precipitated minerals.
  */
 template<class TypeTag>
