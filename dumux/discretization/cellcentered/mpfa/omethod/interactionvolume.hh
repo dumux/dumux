@@ -83,6 +83,8 @@ public:
     using Matrix = Dune::DynamicMatrix< Scalar >;
     //! export the type used for iv-local vectors
     using Vector = Dune::DynamicVector< Scalar >;
+    //! export the type used for the iv-stencils
+    using Stencil = std::vector< GridIndexType >;
     //! export the data handle type for this iv
     using DataHandle = InteractionVolumeDataHandle< TypeTag, InteractionVolumeType >;
 };
@@ -116,6 +118,7 @@ class CCMpfaInteractionVolumeImplementation< TypeTag, MpfaMethods::oMethod >
     using IndexSet = typename TraitsType::IndexSet;
     using GridIndexType = typename TraitsType::GridIndexType;
     using LocalIndexType = typename TraitsType::LocalIndexType;
+    using Stencil = typename TraitsType::Stencil;
 
     //! Data attached to scvf touching Dirichlet boundaries.
     //! For the default o-scheme, we only store the corresponding vol vars index.
@@ -144,6 +147,10 @@ public:
                          const Problem& problem,
                          const FVElementGeometry& fvGeometry)
     {
+        // for the o-scheme, the stencil is equal to the scv
+        // index set of the dual grid's nodal index set
+        stencil_ = &indexSet.nodalIndexSet().globalScvIndices();
+
         // number of interaction-volume-local (= node-local for o-scheme) scvs/scvf
         numFaces_ = indexSet.numFaces();
         const auto numLocalScvs = indexSet.numScvs();
@@ -258,6 +265,9 @@ public:
     //! returns the number of scvfs embedded in this interaction volume
     std::size_t numScvfs() const { return scvfs_.size(); }
 
+    //! returns the cell-stencil of this interaction volume
+    const Stencil& stencil() const { return *stencil_; }
+
     //! returns the grid element corresponding to a given iv-local scv idx
     const Element& element(const LocalIndexType ivLocalScvIdx) const { return elements_[ivLocalScvIdx]; }
 
@@ -313,6 +323,9 @@ public:
     }
 
 private:
+    // pointer to cell stencil (in iv index set)
+    const Stencil* stencil_;
+
     // Variables defining the local scope
     std::vector<Element> elements_;
     std::vector<LocalScvType> scvs_;

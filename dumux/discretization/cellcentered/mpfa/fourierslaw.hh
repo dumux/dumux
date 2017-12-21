@@ -95,26 +95,34 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //       is implemented. One idea to overcome the performance drop could be only
         //       storing the iv-local index here and obtain tij always from the datahandle
         //       of the fluxVarsCacheContainer
+        using GridIndexType = typename GridView::IndexSet::IndexType;
         using Vector = Dune::DynamicVector< Scalar >;
         using Matrix = Dune::DynamicMatrix< Scalar >;
+        using Stencil = std::vector< GridIndexType >;
 
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
+        using PrimaryStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         static_assert( std::is_convertible<PrimaryIvVector*, Vector*>::value,
                        "The vector type used in primary interaction volumes is not convertible to Dune::DynamicVector!" );
         static_assert( std::is_convertible<PrimaryIvMatrix*, Matrix*>::value,
                        "The matrix type used in primary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<PrimaryStencil*, Stencil*>::value,
+                       "The stencil type used in primary interaction volumes is not convertible to std::vector<GridIndexType>!" );
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
+        using SecondaryStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
         static_assert( std::is_convertible<SecondaryIvVector*, Vector*>::value,
                        "The vector type used in secondary interaction volumes is not convertible to Dune::DynamicVector!" );
         static_assert( std::is_convertible<SecondaryIvMatrix*, Matrix*>::value,
                        "The matrix type used in secondary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<SecondaryStencil*, Stencil*>::value,
+                       "The stencil type used in secondary interaction volumes is not convertible to std::vector<GridIndexType>!" );
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
@@ -141,6 +149,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                                   const DataHandle& dataHandle,
                                   const SubControlVolumeFace &scvf)
         {
+            stencil_ = &iv.stencil();
             switchFluxSign_ = localFaceData.isOutside();
 
             // store pointer to the temperature vector of this iv
@@ -157,6 +166,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions
         const Vector& heatConductionTij() const { return *Tij_; }
 
+        //! The stencil corresponding to the transmissibilities
+        const Stencil& heatConductionStencil() const { return *stencil_; }
+
         //! In the interaction volume-local system of eq we have one unknown per face.
         //! On scvfs on this face, but in "outside" (neighbor) elements of it, we have
         //! to take the negative value of the fluxes due to the flipped normal vector.
@@ -168,8 +180,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     private:
         bool switchFluxSign_;
-        const Vector* Tij_;   //!< The transmissibilities such that f = Tij*Tj
-        const Vector* Tj_;    //!< The interaction-volume wide temperature Tj
+        const Stencil* stencil_; //!< The stencil, i.e. the grid indices j
+        const Vector* Tij_;      //!< The transmissibilities such that f = Tij*Tj
+        const Vector* Tj_;       //!< The interaction-volume wide temperature Tj
     };
 
 public:

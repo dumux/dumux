@@ -93,6 +93,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+        using GridIndexType = typename GridView::IndexSet::IndexType;
 
         // In the current implementation of the flux variables cache we cannot
         // make a disctinction between dynamic (mpfa-o) and static (mpfa-l)
@@ -106,24 +107,31 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //       of the fluxVarsCacheContainer
         using Vector = Dune::DynamicVector< Scalar >;
         using Matrix = Dune::DynamicMatrix< Scalar >;
+        using Stencil = std::vector< GridIndexType >;
 
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
+        using PrimaryStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         static_assert( std::is_convertible<PrimaryIvVector*, Vector*>::value,
                        "The vector type used in primary interaction volumes is not convertible to Dune::DynamicVector!" );
         static_assert( std::is_convertible<PrimaryIvMatrix*, Matrix*>::value,
                        "The matrix type used in primary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<PrimaryStencil*, Stencil*>::value,
+                       "The stencil type used in primary interaction volumes is not convertible to std::vector<GridIndexType>!" );
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
+        using SecondaryStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
         static_assert( std::is_convertible<SecondaryIvVector*, Vector*>::value,
                        "The vector type used in secondary interaction volumes is not convertible to Dune::DynamicVector!" );
         static_assert( std::is_convertible<SecondaryIvMatrix*, Matrix*>::value,
                        "The matrix type used in secondary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<SecondaryStencil*, Stencil*>::value,
+                       "The stencil type used in secondary interaction volumes is not convertible to std::vector<GridIndexType>!" );
 
     public:
         // export the filler type
@@ -147,6 +155,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                              const DataHandle& dataHandle,
                              const SubControlVolumeFace &scvf)
         {
+            stencil_ = &iv.stencil();
             switchFluxSign_ = localFaceData.isOutside();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
@@ -188,6 +197,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
             }
         }
 
+        //! The stencil corresponding to the transmissibilities
+        const Stencil& advectionStencil() const { return *stencil_; }
+
         //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions
         const Vector& advectionTij() const { return *Tij_; }
 
@@ -205,6 +217,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     private:
         bool switchFluxSign_;
+        const Stencil* stencil_;                  //!< The stencil, i.e. the grid indices j
         const Vector* Tij_;                       //!< The transmissibilities such that f = Tij*pj
         std::array< Scalar, numPhases > g_;       //!< Gravitational flux contribution on this face
         std::array<const Vector*, numPhases> pj_; //!< The interaction-volume wide phase pressures pj

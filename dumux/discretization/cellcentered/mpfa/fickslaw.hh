@@ -100,26 +100,34 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //       is implemented. One idea to overcome the performance drop could be only
         //       storing the iv-local index here and obtain tij always from the datahandle
         //       of the fluxVarsCacheContainer
+        using GridIndexType = typename GridView::IndexSet::IndexType;
         using Vector = Dune::DynamicVector< Scalar >;
         using Matrix = Dune::DynamicMatrix< Scalar >;
+        using Stencil = std::vector< GridIndexType >;
 
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
+        using PrimaryStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         static_assert( std::is_convertible<PrimaryIvVector*, Vector*>::value,
                        "The vector type used in primary interaction volumes is not convertible to Dune::DynamicVector!" );
         static_assert( std::is_convertible<PrimaryIvMatrix*, Matrix*>::value,
                        "The matrix type used in primary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<PrimaryStencil*, Stencil*>::value,
+                       "The stencil type used in primary interaction volumes is not convertible to std::vector<GridIndexType>!" );
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
+        using SecondaryStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
         static_assert( std::is_convertible<SecondaryIvVector*, Vector*>::value,
                        "The vector type used in secondary interaction volumes is not convertible to Dune::DynamicVector!" );
         static_assert( std::is_convertible<SecondaryIvMatrix*, Matrix*>::value,
                        "The matrix type used in secondary interaction volumes is not convertible to Dune::DynamicMatrix!" );
+        static_assert( std::is_convertible<SecondaryStencil*, Stencil*>::value,
+                       "The stencil type used in secondary interaction volumes is not convertible to std::vector<GridIndexType>!" );
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
@@ -148,6 +156,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                              const SubControlVolumeFace &scvf,
                              unsigned int phaseIdx, unsigned int compIdx)
         {
+            stencil_[phaseIdx][compIdx] = &iv.stencil();
             switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
 
             // store pointer to the mole fraction vector of this iv
@@ -176,10 +185,15 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const Vector& moleFractions(unsigned int phaseIdx, unsigned int compIdx) const
         { return *xj_[phaseIdx][compIdx]; }
 
+        //! The stencils corresponding to the transmissibilities
+        const Stencil& diffusionStencil(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *stencil_[phaseIdx][compIdx]; }
+
     private:
         std::array< std::array<bool, numComponents>, numPhases > switchFluxSign_;
-        std::array< std::array<const Vector*, numComponents>, numPhases > Tij_; //!< The transmissibilities such that f = Tij*xj
-        std::array< std::array<const Vector*, numComponents>, numPhases > xj_;  //!< The interaction-volume wide mole fractions xj
+        std::array< std::array<const Stencil*, numComponents>, numPhases > stencil_;  //!< The stencils, i.e. the grid indices j
+        std::array< std::array<const Vector*, numComponents>, numPhases > Tij_;       //!< The transmissibilities such that f = Tij*xj
+        std::array< std::array<const Vector*, numComponents>, numPhases > xj_;        //!< The interaction-volume wide mole fractions xj
     };
 
 public:
