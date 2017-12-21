@@ -47,7 +47,6 @@ class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineraliz
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     using Element = typename GridView::template Codim<0>::Entity;
 
     enum
