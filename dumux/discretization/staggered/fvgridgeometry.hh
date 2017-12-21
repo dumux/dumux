@@ -21,8 +21,8 @@
  * \ingroup StaggeredDiscretization
  * \copydoc Dumux::StaggeredFVGridGeometry
  */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FVGEOMETRY_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FVGEOMETRY_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
+#define DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>

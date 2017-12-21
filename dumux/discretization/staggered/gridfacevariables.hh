@@ -21,8 +21,8 @@
   * \ingroup StaggeredDiscretization
   * \copydoc Dumux::StaggeredGridFaceVariables
   */
-#ifndef DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
-#define DUMUX_DISCRETIZATION_STAGGERED_GLOBAL_FACEVARIABLES_HH
+#ifndef DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
+#define DUMUX_DISCRETIZATION_STAGGERED_GRID_FACEVARIABLES_HH
 
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
