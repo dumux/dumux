@@ -21,8 +21,8 @@
  * \ingroup ThreePWaterOilModel
  * \brief Adds vtk output fields specific to the twop model
  */
-#ifndef DUMUX_THREEPWATEROIL_VTK_OUTPUT_FIELDS_HH
-#define DUMUX_THREEPWATEROIL_VTK_OUTPUT_FIELDS_HH
+#ifndef DUMUX_3P2CNI_VTK_OUTPUT_FIELDS_HH
+#define DUMUX_3P2CNI_VTK_OUTPUT_FIELDS_HH
 
 #include <dumux/common/properties.hh>
 

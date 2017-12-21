@@ -21,8 +21,8 @@
  * \ingroup ThreePWaterOilModel
  * \brief The primary variable switch for the 3p3c model
  */
-#ifndef DUMUX_3P3C_PRIMARY_VARIABLE_SWITCH_HH
-#define DUMUX_3P3C_PRIMARY_VARIABLE_SWITCH_HH
+#ifndef DUMUX_3P2CNI_PRIMARY_VARIABLE_SWITCH_HH
+#define DUMUX_3P2CNI_PRIMARY_VARIABLE_SWITCH_HH
 
 #include <dumux/porousmediumflow/compositional/primaryvariableswitch.hh>
 

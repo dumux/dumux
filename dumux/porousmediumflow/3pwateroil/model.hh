@@ -68,8 +68,8 @@
  * </ul>
  */
 
-#ifndef DUMUX_3PWATEROIL_MODEL_HH
-#define DUMUX_3PWATEROIL_MODEL_HH
+#ifndef DUMUX_3P2CNI_MODEL_HH
+#define DUMUX_3P2CNI_MODEL_HH
 
 #include <dumux/common/properties.hh>
 
