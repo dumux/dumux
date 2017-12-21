@@ -1,30 +1,19 @@
-# isothermal tests
-
 add_input_file_links()
 
-# add_executable(test_box1pncmin test_box1pncmin.cc)
-# add_executable(test_cc1pncmin test_cc1pncmin.cc)
+dune_add_test(NAME test_1pncminni_box
+              SOURCES test_1pncminni_fv.cc
+              COMPILE_DEFINITIONS TYPETAG=ThermoChemBoxProblem
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS  --script fuzzy
+                        --files ${CMAKE_SOURCE_DIR}/test/references/test_1pncmin-00064_batch.vtu
+                                ${CMAKE_CURRENT_BINARY_DIR}/1pncmintest_batch_box-00065.vtu
+                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_1pncminni_box test_1pncminni_fv.input -Problem.Name 1pncmintest_batch_box"
+                        --zeroThreshold {"precipVolFrac_CaOH2":5e-6})
 
-add_dumux_test(test_box1pncmin test_box1pncmin test_box1pncmin.cc
-               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/box1pncmin-00042.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/box1pncmin-00042.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_box1pncmin"
-                 --zeroThreshold {"temperature":5e-6})
-
-add_dumux_test(test_cc1pncmin test_cc1pncmin test_cc1pncmin.cc
-               ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
-                 --script fuzzy
-                 --files ${CMAKE_SOURCE_DIR}/test/references/cc1pncmin-00042.vtu
-                         ${CMAKE_CURRENT_BINARY_DIR}/cc1pncmin-00042.vtu
-                 --command "${CMAKE_CURRENT_BINARY_DIR}/test_cc1pncmin"
-                 --zeroThreshold {"temperature":5e-6})
-#
-# #install sources
+#install sources
 install(FILES
-thermochempatialparams.hh
 thermochemproblem.hh
-test_box1pncmin.cc
-test_cc1pncmin.cc
+thermochemspatialparams.hh
+thermochemreaction.hh
+test_1pncminni_fv.cc
 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dumux/test/implicit/1pncmin)

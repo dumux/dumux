@@ -18,23 +18,22 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Definition of a problem for thermochemical heat storage using CaO, Ca(OH)2.
+ * \ingroup OnePNCMinTests
+ * \brief Definition of a problem for thermochemical heat storage using \f$ \textnormal{CaO},   \textnormal{Ca} \left( \textnormal{OH} \right)_2\f$.
  */
 #ifndef DUMUX_THERMOCHEM_PROBLEM_HH
 #define DUMUX_THERMOCHEM_PROBLEM_HH
 
-#include <dumux/porousmediumflow/1pncmin/implicit/model.hh>
-#include <dumux/implicit/box/properties.hh>
-#include <dumux/implicit/cellcentered/tpfa/properties.hh>
-#include <dumux/implicit/cellcentered/mpfa/properties.hh>
-#include <dumux/porousmediumflow/implicit/problem.hh>
-#include <dumux/material/fluidsystems/simplesteamaircao2h2.hh>
+#include <dumux/porousmediumflow/1pncmin/model.hh>
+#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/properties.hh>
+#include <dumux/porousmediumflow/problem.hh>
+#include <dumux/material/fluidsystems/steamn2cao2h2.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
 #include "thermochemspatialparams.hh"
-
-#define NONISOTHERMAL 1
+#include "thermochemreaction.hh"
 
 
 namespace Dumux
@@ -45,15 +44,9 @@ class ThermoChemProblem;
 
 namespace Properties
 {
-#if NONISOTHERMAL
 NEW_TYPE_TAG(ThermoChemProblem, INHERITS_FROM(OnePNCMinNI, ThermoChemSpatialParams));
 NEW_TYPE_TAG(ThermoChemBoxProblem, INHERITS_FROM(BoxModel, ThermoChemProblem));
-NEW_TYPE_TAG(ThermoChemCCProblem, INHERITS_FROM(CCTpfaModel, ThermoChemProblem));
-#else
-NEW_TYPE_TAG(ThermoChemProblem, INHERITS_FROM(OnePNCMin, ThermoChemSpatialParams));
-NEW_TYPE_TAG(ThermoChemBoxProblem, INHERITS_FROM(BoxModel, ThermoChemProblem));
-NEW_TYPE_TAG(ThermoChemCCProblem, INHERITS_FROM(CCTpfaModel, ThermoChemProblem));
-#endif
+
 // Set the grid type
 SET_TYPE_PROP(ThermoChemProblem, Grid, Dune::YaspGrid<2>);
 // Set the problem property
@@ -62,35 +55,54 @@ SET_TYPE_PROP(ThermoChemProblem, Problem, ThermoChemProblem<TypeTag>);
 SET_PROP(ThermoChemProblem, FluidSystem)
 { /*private:*/
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::SteamAirCaO2H2<Scalar>;
+    using type = FluidSystems::SteamN2CaO2H2<Scalar>;
 };
 
-// Enable velocity output
-SET_BOOL_PROP(ThermoChemProblem, VtkAddVelocity, false);
+// // Enable velocity output
+// SET_BOOL_PROP(ThermoChemProblem, VtkAddVelocity, false);
 
 // Set the spatial parameters
 SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialParams<TypeTag>);
+
+// Define whether mole(true) or mass (false) fractions are used
+SET_BOOL_PROP(ThermoChemProblem, UseMoles, true);
 }
 
 /*!
- * \ingroup OnePNCModel
- * \ingroup ImplicitTestProblems
- * \brief Problem or water management in PEM fuel cells.
+ * \ingroup OnePNCMinTests
+ *
+ * \brief Test for the 1pncmin model in combination with the NI model for a quasi batch
+ * reaction of Calciumoxyde to Calciumhydroxide.
+ *
+ * The boundary conditions of the batch test are such, that there are no gradients for temperature, pressure and gas water concentration within the reactor.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_box1pncmin</tt>
- * <tt>./test_cc1pncmin</tt>
+ * <tt>./test_1pncminni_box -ParameterFile </tt>
+ * The test only runs for the box discretization.
  */
 template <class TypeTag>
-class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
+class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
 {
-    using ParentType = ImplicitPorousMediaProblem<TypeTag>;
+    using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);;
+    using Element = typename GridView::template Codim<0>::Entity;
+    using Intersection = typename GridView::Intersection;
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ReactionRate =ThermoChemReaction<TypeTag>;
+
 
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
@@ -98,7 +110,6 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
     enum
     {
         numComponents = FluidSystem::numComponents,
-        numSComponents = FluidSystem::numSComponents,
 
         // Indices of the primary variables
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
@@ -116,34 +127,33 @@ class ThermoChemProblem : public ImplicitPorousMediaProblem<TypeTag>
         cPhaseIdx = FluidSystem::cPhaseIdx,
         hPhaseIdx = FluidSystem::hPhaseIdx,
 
-#if NONISOTHERMAL
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx
-#endif
     };
 
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+
 
 public:
     /*!
      * \brief The constructor
      *
-     * \param timeManager The time manager
-     * \param gridView The grid view
+     * \param fvGridGeometry The finite volume grid geometry
      */
-    ThermoChemProblem(TimeManager &timeManager, const GridView &gridView)
-        : ParentType(timeManager, gridView)
+    ThermoChemProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
+        : ParentType(fvGridGeometry)
     {
-        name_      = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
-        isCharge_  = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
+        name_      = getParam<std::string>("Problem.Name");
+
+        // obtain BCs
+        boundaryPressure_ = getParam<Scalar>("Problem.BoundaryPressure");
+        boundaryVaporMoleFrac_ = getParam<Scalar>("Problem.BoundaryMoleFraction");
+        boundaryTemperature_ = getParam<Scalar>("Problem.BoundaryTemperature");
+
+        unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0;
+        permeability_.resize(fvGridGeometry->gridView().size(codim));
+        porosity_.resize(fvGridGeometry->gridView().size(codim));
+        reactionRate_.resize(fvGridGeometry->gridView().size(codim));
     }
 
     /*!
@@ -155,12 +165,14 @@ public:
     { return name_; }
 
     /*!
-     * \brief Returns the temperature within the domain.
+     * \brief Sets the currently used time step size.
      *
-     * This problem assumes a temperature of 10 degrees Celsius.
+     * This is necessary to limit the source terms to the maximum possible rate.
      */
-    Scalar temperature() const
-    { return temperature_; }
+    void setTimeStepSize( Scalar timeStepSize )
+     {
+        timeStepSize_ = timeStepSize;
+     }
 
     /*!
      * \name Boundary conditions
@@ -174,20 +186,11 @@ public:
     {
         BoundaryTypes values;
 
-        values.setAllNeumann();
+        // we don't set any BCs for the solid phases
+        values.setDirichlet(pressureIdx);
+        values.setDirichlet(firstMoleFracIdx);
+        values.setDirichlet(temperatureIdx);
 
-        if(globalPos[0] < eps_ )
-        {
-            values.setDirichlet(pressureIdx);
-            values.setDirichlet(firstMoleFracIdx);
-            values.setDirichlet(temperatureIdx);
-        }
-
-        if (globalPos[0] > this->bBoxMax()[0] - eps_){
-            values.setDirichlet(pressureIdx);
-            values.setDirichlet(firstMoleFracIdx);
-            values.setDirichlet(temperatureIdx);
-        }
         return values;
     }
 
@@ -195,51 +198,17 @@ public:
      * \brief Evaluates the boundary conditions for a Dirichlet
      *        boundary segment
      *
-     * \param values Stores the Dirichlet values for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} ] \f$
      * \param globalPos The global position
      */
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
 
-        //input parameters
-        Scalar pIn;
-        Scalar pOut;
-        Scalar tIn;
-        Scalar tOut;
-        Scalar vaporIn;
-
-      // read input parameters
-        if (isCharge_ == true){
-            pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureIn);
-            pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureOut);
-            tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureIn);
-            tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureOut);
-            vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporIn);
-        }
-
-      else{
-            pIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureIn);
-            pOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureOut);
-            tIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureIn);
-            tOut = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureOut);
-            vaporIn = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporIn);
-        }
-
-        if(globalPos[0] < eps_)
-        {
-            priVars[pressureIdx] = pIn;
-            priVars[firstMoleFracIdx]     = vaporIn; // Saturation outer boundary
-            priVars[temperatureIdx] = tIn;
-        }
-
-        if(globalPos[0] > this->bBoxMax()[0] - eps_)
-        {
-            priVars[pressureIdx] = pOut;
-            priVars[firstMoleFracIdx] = 0.01; // Saturation inner boundary
-            priVars[temperatureIdx] = tOut;
-        }
+        priVars[pressureIdx] = boundaryPressure_;
+        priVars[firstMoleFracIdx] = boundaryVaporMoleFrac_;
+        priVars[temperatureIdx] = boundaryTemperature_;
+        priVars[CaO2H2Idx] = 0.0;
+        priVars[CaOIdx] = 0.2;
 
         return priVars;
     }
@@ -248,27 +217,28 @@ public:
      * \brief Evaluates the boundary conditions for a Neumann
      *        boundary segment in dependency on the current solution.
      *
-     * \param priVars stores the Neumann values for the conservation equations in
+     * \param element The element
+     * \param fvGeometry The finite volume geometry
+     * \param elemVolVars The element volume variables
+     * \param scvf The subcontrolvolume face
+     *
      * \f$ [ \textnormal{unit of conserved quantity} / (m^(dim-1) \cdot s )] \f$
-     * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
 
-        PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
+    ResidualVector neumann(const Element& element,
+                           const FVElementGeometry& fvGeometry,
+                           const ElementVolumeVariables& elemVolVars,
+                           const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables priVars(0.0);
-        return priVars;
+        ResidualVector flux(0.0);
+        return flux;
     }
 
     /*!
-     * \name Volume terms
-     */
-
-    /*!
-     * \brief Evaluates the initial values for a control volume
-     *
-     * \param priVars Stores the initial values for the conservation equations in
+     * \brief Evaluates the initial values for a control volume in
      *               \f$ [ \textnormal{unit of primary variables} ] \f$
+     *
      * \param globalPos The global position
      */
     PrimaryVariables initialAtPos(const GlobalPosition& globalPos) const
@@ -281,27 +251,19 @@ public:
         Scalar CaOInit;
         Scalar CaO2H2Init;
 
-        if (isCharge_ == true){
-            pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, PressureInitial);
-            tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, TemperatureInitial);
-            h2oInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, VaporInitial);
-            CaOInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaOInitial);
-            CaO2H2Init = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Charge, CaO2H2Initial);
-        }
-
-        else {
-            pInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, PressureInitial);
-            tInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, TemperatureInitial);
-            h2oInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, VaporInitial);
-            CaOInit = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaOInitial);
-            CaO2H2Init = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Discharge, CaO2H2Initial);
-        }
+        pInit = getParam<Scalar>("Problem.PressureInitial");
+        tInit = getParam<Scalar>("Problem.TemperatureInitial");
+        h2oInit = getParam<Scalar>("Problem.VaporInitial");
+        CaOInit = getParam<Scalar>("Problem.CaOInitial");
+        CaO2H2Init = getParam<Scalar>("Problem.CaO2H2Initial");
 
         priVars[pressureIdx] = pInit;
         priVars[firstMoleFracIdx]   = h2oInit;
-#if NONISOTHERMAL
         priVars[temperatureIdx] = tInit;
-#endif
+
+        // these values are not used, as we didn't set BCs
+        // for the solid phases. For cell-centered models it is
+        // important to set the values to fully define Dirichlet BCs
         priVars[CaOIdx] = CaOInit;
         priVars[CaO2H2Idx]   = CaO2H2Init;
 
@@ -310,14 +272,12 @@ public:
 
     /*!
      * \brief Evaluate the source term for all phases within a given
-     *        sub-control-volume.
+     *        sub-control-volume in units of \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$.
      *
      * This is the method for the case where the source term is
      * potentially solution dependent and requires some quantities that
      * are specific to the fully-implicit method.
      *
-     * \param values The source and sink values for the conservation equations in units of
-     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^3 \cdot s )] \f$
      * \param element The finite element
      * \param fvGeometry The finite-volume geometry
      * \param elemVolVars All volume variables for the element
@@ -337,124 +297,94 @@ public:
         PrimaryVariables source(0.0);
         const auto& volVars = elemVolVars[scv];
 
-        // calculate the equilibrium temperature Teq
-        Scalar T= volVars.temperature();
-        Scalar Teq = 0;
+        Scalar qMass = rrate_.thermoChemReaction(volVars);
 
-        Scalar moleFractionVapor = 1e-3;
+        ElementSolutionVector elemSol(element, elemVolVars, fvGeometry);
+        Scalar qMole = qMass/FluidSystem::molarMass(firstMoleFracIdx)*(1-this->spatialParams().porosity(element, scv, elemSol));
 
-        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) > 1e-3)
-            moleFractionVapor = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
-
-        if(volVars.moleFraction(phaseIdx, firstMoleFracIdx) >= 1.0) moleFractionVapor = 1;
-
-        Scalar vaporPressure = volVars.pressure(phaseIdx) *moleFractionVapor;
-        vaporPressure *= 1.0e-5;
-        Scalar pFactor = log(vaporPressure);
-
-        Teq = -12845;
-        Teq /= (pFactor - 16.508);        //the equilibrium temperature
-
-        Scalar moleFracH2O_fPhase = volVars.moleFraction(phaseIdx, firstMoleFracIdx);
-
-        // reaction kinetics according to Shao et al. 2013
-        Scalar moleFracCaO_sPhase = volVars.precipitateVolumeFraction(cPhaseIdx)
-                                    *volVars.molarDensity(cPhaseIdx)
-                                    /(volVars.precipitateVolumeFraction(hPhaseIdx)
-                                      *volVars.molarDensity(hPhaseIdx)
-                                        + volVars.precipitateVolumeFraction(cPhaseIdx)
-                                        *volVars.molarDensity(cPhaseIdx));
-
-        Scalar moleFracCaO2H2_sPhase = volVars.precipitateVolumeFraction(hPhaseIdx)
-                                       *volVars.molarDensity(hPhaseIdx)
-                                       /(volVars.precipitateVolumeFraction(hPhaseIdx)
-                                         *volVars.molarDensity(hPhaseIdx)
-                                          + volVars.precipitateVolumeFraction(cPhaseIdx)
-                                          *volVars.molarDensity(cPhaseIdx));
-
-        Scalar deltaH = 112e3; // J/mol
-
-        Scalar solidDensityAverage = moleFracCaO_sPhase*volVars.molarDensity(cPhaseIdx)
-                                     + moleFracCaO2H2_sPhase* volVars.molarDensity(hPhaseIdx);
-
-         //discharge or hydration
-        if (T < Teq){
-
-            Scalar krh =0.08;  //0.006
-
-            Scalar rHydration = - moleFracH2O_fPhase* (volVars.molarDensity(hPhaseIdx)- solidDensityAverage)
-                                                     * krh * (T-Teq)/ Teq;
-
-            Scalar q = - rHydration ;
-
-            // make sure not more CaO reacts than present
-
-            if (- q*this->timeManager().timeStepSize() + moleFracCaO_sPhase* volVars.molarDensity(cPhaseIdx) < 0 + eps_)
-            {
-                q = moleFracCaO_sPhase/this->timeManager().timeStepSize();
-            }
-
-            source[conti0EqIdx+CaO2H2Idx] = q;
-
-            source[conti0EqIdx+CaOIdx] = -q;
-
-            source[conti0EqIdx+firstMoleFracIdx] = -q;
-
-#if NONISOTHERMAL
-            source[energyEqIdx] = q * deltaH;
-#endif
+        // make sure not more solid reacts than present
+        // In this test, we only consider discharge. Therefore, we use the cPhaseIdx for CaO.
+        if (-qMole*timeStepSize_ + volVars.precipitateVolumeFraction(cPhaseIdx)* volVars.molarDensity(cPhaseIdx) < 0 + eps_)
+        {
+            qMole = -volVars.precipitateVolumeFraction(cPhaseIdx)* volVars.molarDensity(cPhaseIdx)/timeStepSize_;
         }
 
-        // charge or dehydration
-        else if(T > Teq){
+        source[conti0EqIdx+CaO2H2Idx] = qMole;
+        source[conti0EqIdx+CaOIdx] = - qMole;
+        source[conti0EqIdx+firstMoleFracIdx] = - qMole;
 
-            Scalar krd = 0.03; //0.05;
-
-            Scalar rDehydration = (volVars.molarDensity(cPhaseIdx)- solidDensityAverage)
-                                                     * krd * (Teq-T)/ Teq;
-
-            Scalar q =  -rDehydration;
-
-            if (- q*this->timeManager().timeStepSize() + moleFracCaO2H2_sPhase*volVars.molarDensity(hPhaseIdx) < 0)
-            {
-                q = moleFracCaO2H2_sPhase/this->timeManager().timeStepSize();
-            }
-
-            source[conti0EqIdx+CaO2H2Idx] = -q;
-
-            source[conti0EqIdx+CaOIdx] = q;
-
-            source[conti0EqIdx+firstMoleFracIdx] = q;
-#if NONISOTHERMAL
-            source[energyEqIdx] = -q * deltaH;
-
-#endif
-        }
-
-        else
-        source = 0.0;
+        Scalar deltaH = 108e3; // J/mol
+        source[energyEqIdx] = qMole * deltaH;
 
         return source;
     }
 
-private:
-    int nTemperature_;
-    int nPressure_;
 
+   /*!
+     * \brief Return the permeability
+     */
+    const std::vector<Scalar>& getPerm()
+    {
+        return permeability_;
+    }
+
+   /*!
+     * \brief Return the porosity
+     */
+    const std::vector<Scalar>& getPoro()
+    {
+        return porosity_;
+    }
+
+     /*!
+     * \brief Return the reaction rate
+     */
+    const std::vector<Scalar>& getRRate()
+    {
+        return reactionRate_;
+    }
+
+    /*!
+     * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     */
+    void updateVtkOutput(const SolutionVector& curSol)
+    {
+        for (const auto& element : elements(this->fvGridGeometry().gridView()))
+        {
+            ElementSolutionVector elemSol(element, curSol, this->fvGridGeometry());
+
+            auto fvGeometry = localView(this->fvGridGeometry());
+            fvGeometry.bindElement(element);
+
+            for (auto&& scv : scvs(fvGeometry))
+            {
+                VolumeVariables volVars;
+                volVars.update(elemSol, *this, element, scv);
+                const auto dofIdxGlobal = scv.dofIndex();
+                permeability_[dofIdxGlobal] = this->spatialParams().permeability(element, scv, elemSol);
+                porosity_[dofIdxGlobal] = this->spatialParams().porosity(element, scv, elemSol);
+                PrimaryVariables reactionRate;
+                reactionRate_[dofIdxGlobal] = rrate_.thermoChemReaction(volVars);
+            }
+        }
+    }
+
+private:
     std::string name_;
 
-    Scalar pressureLow_, pressureHigh_;
-    Scalar temperatureLow_, temperatureHigh_;
-    Scalar reservoirPressure_;
-    Scalar innerPressure_;
-    Scalar outerPressure_;
-    Scalar temperature_;
-
     static constexpr Scalar eps_ = 1e-6;
-    Scalar reservoirSaturation_;
-    std::ofstream outfile;
 
-    bool isCharge_ ;
+    // boundary conditions
+    Scalar boundaryPressure_;
+    Scalar boundaryVaporMoleFrac_;
+    Scalar boundaryTemperature_;
+
+    std::vector<double> permeability_;
+    std::vector<double> porosity_;
+    std::vector<double> reactionRate_;
+
+    ReactionRate rrate_;
+    Scalar timeStepSize_;
 };
 
 } //end namespace
