@@ -122,29 +122,20 @@ $\boldsymbol{v}_\alpha$ & velocity (Darcy or free flow)& & \\
   \label{fig:phaseMassEnergyTransfer}
 \end{figure}
 
-
-
 \subsection{Available Models}
-We distinguish fully-implicit and sequential models. A list of all available models can be found
+A list of all available models can be found
 in the Doxygen documentation at
 \url{http://www.dumux.org/doxygen-stable/html-\DumuxVersion/modules.php}.
 The documentation includes a detailed description for every model.
 
-\subsubsection{Fully-Implicit Models}
-The fully-implicit models are using the box or the
-cell-centered finite volume method as described in section \ref{box} and \ref{cc}
-for spatial and the implicit Euler
-method as temporal discretization. The fully-implicit models are located in
-subdirectories of \texttt{dumux/freeflow}, \texttt{dumux/geomechanics}, 
-and \texttt{dumux/porousmediumflow}.
+\subsubsection{Temporal discretization}
+We discretize time with an explicit or implicit Euler
+method.
+% TODO: make section with more details on temporal discretization
 
-Grid adaption is available for both discretization schemes, box and cc.  The \texttt{adaptionhelper}-method has to be adjusted to the respective model.
-Note that the current implementation only ensures mass conservation for incompressible fluids.
-In general, the spatial  parameters, especially the porosity, have to be assigned on
-the coarsest level of discretization.
-
-\subsubsection{Sequential Models}
-The basic idea of the sequential models is to reformulate the
+\subsubsection{Algorithms to solve equations}
+The governing equations of each model can be solved monolithically or sequentially.
+The basic idea of the sequential algorithm is to reformulate the
 equations of multi-phase flow into one equation for
 pressure and equations for phase/component/... transport. The pressure equation
 is the sum of the mass balance equations and thus considers the total flow of the
@@ -152,12 +143,9 @@ fluid system. The new set of equations is considered as decoupled (or weakly cou
 and can thus be solved sequentially. The most popular sequential model is the
 fractional flow formulation for two-phase flow which is usually implemented applying
 an IMplicit Pressure Explicit Saturation algorithm (IMPES).
-In comparison to a fully implicit model, the sequential structure allows the use of
+In comparison to solving the equations monolothically, the sequential structure allows the use of
 different discretization methods for the different equations. The standard method
-used in the sequential models is a cell-centered finite volume method. Further schemes,
+used in the sequential algorithm is a cell-centered finite volume method. Further schemes,
 so far only available for the two-phase pressure equation, are cell-centered finite
 volumes with multi-point flux approximation (MPFA O-method) and mimetic finite differences.
-
-An $h$-adaptive implementation of both sequential models is provided for two dimensions.
-The sequential models are located in
-subdirectories of \texttt{dumux/porousmediumflow}.
+An $h$-adaptive implementation of both sequential algorithms is provided for two dimensions.

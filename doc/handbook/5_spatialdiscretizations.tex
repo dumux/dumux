@@ -1,9 +1,12 @@
 \section{Spatial Discretization Schemes}
 \label{spatialdiscretization}
 
-For the implicit models there are two spatial discretization schemes (box and Cell
-Centered Finite Volume Method) available which are shortly introduced
-in this subsection.
+We discretize space with the cell-centered finite volume method (\ref{box} ), the box method (\ref{cc})
+or a staggered grid scheme.
+Grid adaption is available for both box and cell-centered finite volume method.
+Note that the current implementation only ensures mass conservation for incompressible fluids.
+In general, the spatial  parameters, especially the porosity, have to be assigned on
+the coarsest level of discretization.
 
 \subsection{Box Method -- A Short Introduction}\label{box}
 
@@ -198,4 +201,12 @@ should only be applied for structured grids
 (the control volume face normal vector ($n_{ij}$) should be parallel to the
 direction of the gradient between the two element/control
 volume centers).
+
+% \subsubsection{MPFA}\label{staggered}
+% TODO
+% \subsubsection{NLTPFA}\label{staggered}
+% TODO
+
+% \subsection{Staggered Grid -- A Short Introduction}\label{staggered}
+% TODO
 
