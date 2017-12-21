@@ -4,11 +4,11 @@
  * \brief documentation for the doxygen main page
  */
 
-/** \mainpage DuMu<sup>x</sup> Documentation
+/** \mainpage DuMu<sup>X</sup> Documentation
 
 \section intro Introduction
 
-Welcome to the DuMu<sup>x</sup> documentation pages. This documentation has been
+Welcome to the DuMu<sup>X</sup> documentation pages. This documentation has been
 generated using <a href="http://www.doxygen.org/index.html">Doxygen</a>, a free source code documentation system for
 documenting C/C++ code.
 
@@ -23,6 +23,6 @@ An overview of all availabe parameters is given in \ref parameterlist.txt.
 
 \section features Features
 
-An overview of special features implemented in the DuMu<sup>x</sup>-test-problems is given in \ref featurelist.txt.
+An overview of special features implemented in the DuMu<sup>X</sup>-test-problems is given in \ref featurelist.txt.
 
 */
