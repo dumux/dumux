@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup NavierStokesTests
  * \brief Test for the staggered grid Navier-Stokes model with analytical solution (Kovasznay 1947)
  */
 #ifndef DUMUX_KOVASZNAY_TEST_PROBLEM_HH
@@ -62,7 +62,7 @@ SET_BOOL_PROP(KovasznayTestProblem, EnableInertiaTerms, true);
 }
 
 /*!
- * \ingroup ImplicitTestProblems
+ * \ingroup NavierStokesTests
  * \brief  Test problem for the staggered grid (Kovasznay 1947)
  * \todo doc me!
  */
@@ -130,7 +130,7 @@ public:
         createAnalyticalSolution_();
     }
 
-    /*!
+   /*!
      * \name Problem parameters
      */
     // \{
@@ -157,7 +157,7 @@ public:
         }
     }
 
-    /*!
+   /*!
      * \brief Return the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
@@ -166,7 +166,7 @@ public:
     { return 298.0; }
 
 
-    /*!
+   /*!
      * \brief Return the sources within the domain.
      *
      * \param globalPos The global position
@@ -177,12 +177,12 @@ public:
     }
 
     // \}
-    /*!
+   /*!
      * \name Boundary conditions
      */
     // \{
 
-    /*!
+   /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
@@ -204,7 +204,7 @@ public:
         return values;
     }
 
-    /*!
+   /*!
      * \brief Return dirichlet boundary values at a given position
      *
      * \param globalPos The global position
@@ -215,7 +215,7 @@ public:
         return analyticalSolution(globalPos);
     }
 
-     /*!
+   /*!
      * \brief Return the analytical solution of the problem at a given position
      *
      * \param globalPos The global position
@@ -235,12 +235,12 @@ public:
 
     // \}
 
-    /*!
+   /*!
      * \name Volume terms
      */
     // \{
 
-    /*!
+   /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param globalPos The global position
@@ -256,9 +256,10 @@ public:
     }
 
 
-    /*!
+   /*!
      * \brief Calculate the L2 error between the analytical solution and the numerical approximation.
      *
+     * \param curSol Vector containing the current solution
      */
     auto calculateL2Error(const SolutionVector& curSol) const
     {
@@ -328,7 +329,7 @@ public:
         return std::make_pair(l2NormAbs, l2NormRel);
     }
 
-    /*!
+   /*!
      * \brief Returns the analytical solution for the pressure
      */
     auto& getAnalyticalPressureSolution() const
@@ -336,7 +337,7 @@ public:
         return analyticalPressure_;
     }
 
-    /*!
+   /*!
      * \brief Returns the analytical solution for the velocity
      */
     auto& getAnalyticalVelocitySolution() const
@@ -344,7 +345,7 @@ public:
         return analyticalVelocity_;
     }
 
-    /*!
+   /*!
      * \brief Returns the analytical solution for the velocity at the faces
      */
     auto& getAnalyticalVelocitySolutionOnFace() const
@@ -354,7 +355,7 @@ public:
 
 private:
 
-    /*!
+   /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
     void createAnalyticalSolution_()

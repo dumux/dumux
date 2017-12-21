@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup NavierStokesNCTests
  * \brief Channel flow test for the multi-component staggered grid (Navier-)Stokes model
  */
 #ifndef DUMUX_CHANNEL_NC_TEST_PROBLEM_HH
@@ -86,8 +86,9 @@ SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, true);
 }
 
 /*!
- * \brief  Test problem for the one-phase model:
-   \todo doc me!
+ * \ingroup NavierStokesNCTests
+ * \brief  Test problem for the one-phase model.
+ * \todo doc me!
  */
 template <class TypeTag>
 class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
@@ -149,7 +150,7 @@ public:
         deltaP_.resize(this->fvGridGeometry().numCellCenterDofs());
     }
 
-    /*!
+   /*!
      * \name Problem parameters
      */
     // \{
@@ -160,7 +161,7 @@ public:
         return false;
     }
 
-    /*!
+   /*!
      * \brief Return the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
@@ -168,7 +169,7 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-    /*!
+   /*!
      * \brief Return the sources within the domain.
      *
      * \param globalPos The global position
@@ -178,12 +179,12 @@ public:
         return SourceValues(0.0);
     }
     // \}
-    /*!
+   /*!
      * \name Boundary conditions
      */
     // \{
 
-    /*!
+   /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
@@ -226,7 +227,7 @@ public:
         return values;
     }
 
-    /*!
+   /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
@@ -253,12 +254,12 @@ public:
 
     // \}
 
-    /*!
+   /*!
      * \name Volume terms
      */
     // \{
 
-    /*!
+   /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param globalPos The global position
@@ -281,8 +282,11 @@ public:
         return values;
     }
 
-    /*!
+   /*!
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
+     *
+     * \param gridVariables The grid variables
+     * \param sol The solution vector
      */
     void calculateDeltaP(const GridVariables& gridVariables, const SolutionVector& sol)
     {

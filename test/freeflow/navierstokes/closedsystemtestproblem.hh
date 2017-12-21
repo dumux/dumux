@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup NavierStokesTests
  * \brief A test problem for the staggered (Navier-) Stokes model
  */
 #ifndef DUMUX_CLOSEDSYSTEM_TEST_PROBLEM_HH
@@ -61,8 +61,9 @@ SET_BOOL_PROP(ClosedSystemTestProblem, EnableGridVolumeVariablesCache, true);
 }
 
 /*!
- * \brief  Test problem for the one-phase model:
-   \todo doc me!
+ * \ingroup NavierStokesTests
+ * \brief  Test problem for the one-phase model.
+ * \todo doc me!
  */
 template <class TypeTag>
 class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
@@ -119,7 +120,7 @@ public:
         cellSizeX_ = this->fvGridGeometry().bBoxMax()[0] / numCells[0];
     }
 
-    /*!
+   /*!
      * \name Problem parameters
      */
     // \{
@@ -130,7 +131,7 @@ public:
         return false;
     }
 
-    /*!
+   /*!
      * \brief Return the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
@@ -138,7 +139,7 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-    /*!
+   /*!
      * \brief Return the sources within the domain.
      *
      * \param values Stores the source values, acts as return value
@@ -149,12 +150,12 @@ public:
         return SourceValues(0.0);
     }
     // \}
-    /*!
+   /*!
      * \name Boundary conditions
      */
     // \{
 
-    /*!
+   /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
@@ -177,7 +178,7 @@ public:
         return values;
     }
 
-    /*!
+   /*!
      * \brief Return dirichlet boundary values at a given position
      *
      * \param globalPos The global position
@@ -195,7 +196,7 @@ public:
         return values;
     }
 
-    /*!
+   /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param globalPos The global position
