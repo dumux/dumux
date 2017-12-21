@@ -36,7 +36,7 @@
 #include <dumux/material/components/h2o.hh>
 // #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/CaO2H2.hh>
-#include <dumux/material/components/CaO.hh>
+#include <dumux/material/components/CaOtest.hh>
 #include <dumux/material/binarycoefficients/h2o_n2.hh>
 #include <dumux/material/components/tabulatedcomponent.hh>
 
@@ -73,7 +73,7 @@ public:
     typedef Dumux::BinaryCoeff::H2O_N2 H2O_N2;
     typedef Dumux::N2<Scalar> N2;
 
-    typedef Dumux::CaO<Scalar> CaO;
+    typedef Dumux::CaOTest<Scalar> CaO;
     typedef Dumux::CaO2H2<Scalar> CaO2H2;
 
     // the type of parameter cache objects. this fluid system does not

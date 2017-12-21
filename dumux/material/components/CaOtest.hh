@@ -19,59 +19,39 @@
 /*!
  * \file
  * \ingroup Components
- * \brief Material properties of pure Calcium-Oxide \f$CaO\f$.
+ * \brief Corrected material properties of pure Calcium-Oxide \f$CaO\f$ withouf considering a porosity
+ * change in the reaction of Calciumoxyde and Calciumhydroxyde.
  */
-#ifndef DUMUX_CAO_HH
-#define DUMUX_CAO_HH
+#ifndef DUMUX_CAO_TEST_HH
+#define DUMUX_CAO_TEST_HH
 
-#include <dumux/common/exceptions.hh>
-#include <dune/common/deprecated.hh>
-#include <dumux/material/components/component.hh>
 
-#include <cmath>
-#include <iostream>
+#include <dumux/material/components/CaO.hh>
 
 namespace Dumux
 {
 /*!
  * \ingroup Components
- * \brief A class for the CaO properties
+ * \brief A class for the CaOtest properties
+ *
+ * This class uses a different CaO density. It is to be  used for calculating the chemical
+ * reaction of CaO to Ca(OH)2 without considering the porosity change according to See Shao et
+ * al. (2013).
  */
 template <class Scalar>
-class CaO : public Component<Scalar, CaO<Scalar> >
+class CaOTest : public  CaO<Scalar>
 {
 public:
-    /*!
-     * \brief A human readable name for the CaO.
-     */
-    static const char *name()
-    {
-        return "CaO";
-    }
 
     /*!
-     * \brief The molar mass of CaOH2 in \f$\mathrm{[kg/mol]}\f$.
-     */
-    static Scalar molarMass()
-    {
-        return 56.0774e-3;
-    }
-
-    /*!
-     * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of CaO.
+     * \brief The corrected mass density \f$\mathrm{[kg/m^3]}\f$ of CaO.
      */
     static Scalar density()
     {
-        return 3370;
+        return 1656;
+        // This density is to be used for calculating the chemical reaction of CaO to Ca(OH)2 without considering the solid volume change. See Shao et al. (2013)
     }
 
-    /*!
-     * \brief The specific heat capacity \f$\mathrm{[J/kg K]}\f$ of CaO.
-     */
-    static Scalar heatCapacity()
-    {
-        return 934;  //Nagel et al. (2014) : 934 J/kgK
-    }
 };
 
 } // end namespace
