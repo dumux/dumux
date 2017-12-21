@@ -32,6 +32,8 @@ in the root directory of the respective module. This should not be changed by th
 Two possibilities exist to get the source code of \Dune and \Dumux.
 Firstly, \Dune and \Dumux can be downloaded as tar files from the respective \Dune and \Dumux website.
 They have to be extracted as described in the next paragraph.
+% TODO: alpha version was not released with a tarball. For the next releases the following lines need to be deleted again
+There is no tar file for the current \DumuxVersion~release.
 Secondly, a method to obtain the most recent source code (or, more generally, any of its previous revisions) by direct access
 to the software repositories of the revision control system is described in the subsequent part.
 Be aware that you cannot get \texttt{dumux-devel} or the external libraries from \texttt{dumux-external} unless
@@ -40,34 +42,35 @@ you have an GitLab account with the right privileges.
 In section \ref{sec:prerequisites} we list some prerequisites for running \Dune and \Dumux.
 Please check in said paragraph whether you can fulfill them before continuing.
 
-\paragraph{Obtaining the software by installing tar files}
-The slightly old-fashionedly named tape-archive-file, shortly named tar file or
-tarball, is a common file format for distributing collections of files contained
-within these archives.
-The extraction from the tar files is done as follows:
-Download the tarballs from the respective \Dune (version 2.5) and \Dumux websites
-to a certain folder in your file system.
-Create the common root directory, named \texttt{DUMUX} in the example below.
-Then extract the content of the tar files, e.\,g. with the command-line program
-\texttt{tar}.
-This can be achieved by the following shell commands. Replace \texttt{path\_to\_tarball}
-with the directory name where the downloaded files are actually located.
-After extraction, the actual name of the dumux subdirectory is \texttt{dumux-\DumuxVersion}
-(or whatever version you downloaded).
-
-\begin{lstlisting}[style=Bash]
-$ mkdir DUMUX
-$ cd DUMUX
-$ tar xzvf path_to_tarball_of/dune-common-2.5.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-geometry-2.5.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-grid-2.5.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-istl-2.5.0.tar.gz
-$ tar xzvf path_to_tarball_of/dune-localfunctions-2.5.0.tar.gz
-$ tar xzvf path_to_tarball_of/dumux-3.0-alpha.tar.gz
-\end{lstlisting}
-
-Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
-on the Dune grid interface, act similar.
+% TODO: alpha version was not released with a tarball. For the next releases the following lines need to be uncommented again
+% \paragraph{Obtaining the software by installing tar files}
+% The slightly old-fashionedly named tape-archive-file, shortly named tar file or
+% tarball, is a common file format for distributing collections of files contained
+% within these archives.
+% The extraction from the tar files is done as follows:
+% Download the tarballs from the respective \Dune (version 2.5) and \Dumux websites
+% to a certain folder in your file system.
+% Create the common root directory, named \texttt{DUMUX} in the example below.
+% Then extract the content of the tar files, e.\,g. with the command-line program
+% \texttt{tar}.
+% This can be achieved by the following shell commands. Replace \texttt{path\_to\_tarball}
+% with the directory name where the downloaded files are actually located.
+% After extraction, the actual name of the dumux subdirectory is \texttt{dumux-\DumuxVersion}
+% (or whatever version you downloaded).
+%
+% \begin{lstlisting}[style=Bash]
+% $ mkdir DUMUX
+% $ cd DUMUX
+% $ tar xzvf path_to_tarball_of/dune-common-2.5.0.tar.gz
+% $ tar xzvf path_to_tarball_of/dune-geometry-2.5.0.tar.gz
+% $ tar xzvf path_to_tarball_of/dune-grid-2.5.0.tar.gz
+% $ tar xzvf path_to_tarball_of/dune-istl-2.5.0.tar.gz
+% $ tar xzvf path_to_tarball_of/dune-localfunctions-2.5.0.tar.gz
+% $ tar xzvf path_to_tarball_of/dumux-3.0-alpha.tar.gz
+% \end{lstlisting}
+%
+% Furthermore, if you wish to install the optional \Dune Grid-Howto which provides a tutorial
+% on the Dune grid interface, act similar.
 
 \paragraph{Obtaining \Dune and \Dumux from software repositories}
 Direct access to a software revision control system for downloading code can be of advantage later on.
@@ -95,7 +98,7 @@ $ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-geometry.g
 $ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-grid.git
 $ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-istl.git
 $ git clone -b releases/2.5 https://gitlab.dune-project.org/core/dune-localfunctions.git
-$ git clone -b releases/3.0-alpha https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+$ git clone -b 3.0.0-alpha https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 \end{lstlisting}
 
 The newest and maybe unstable developments of \Dune and \Dumux are also provided in these repositories and can be found in the \emph{master} branch.

@@ -17,8 +17,8 @@ of the DGF format and some examples can be found in the \Dune doxygen documentat
 complex DGF files, we recommend to write your own scripts, e.g in \Cplusplus, Matlab or Python.
 
 The DGF format can also used to read in spatial parameters defined on the grid. These parameters can
-be defined on nodes as well as on the elements. An example for predefined parameters on a grid is
-the \texttt{test\_boxco2} or \texttt{test\_cco2} in the  \texttt{dumux/test/porousmediumflow/co2/implicit/} folder.
+be defined on nodes as well as on the elements. An example for predefined parameters on a grid 
+can be found in the  \texttt{dumux/test/porousmediumflow/co2/implicit/} folder.
 
 \subsubsection{Gmsh Mesh Format}
 Gmsh is an open-source flexible grid generator for unstructured finite-element meshes (\cite{GEUZAINE2009}, \url{http://geuz.org/gmsh/}).
@@ -93,8 +93,8 @@ For all available parameters see the Doxygen documentation.
 
 \subsection{Other grid formats and customized grid creators}
 Other grid formats than DGF and MSH have to be converted to DGF or MSH to be read into \Dumux. A second possiblity (advanced \Cplusplus) is to write your own
-\texttt{GridCreator}. For examples have a look at the \texttt{CubeGridCreator} for a simple and the \texttt{ArtGridCreator} for a more complex example.
-It follows a (non-comprehensive) list of hints for some other common grid formats.
+\texttt{GridCreator}.
+A (non-comprehensive) list of hints for some other common grid formats follows.
 
 \subsubsection{Petrel}
 Grids from Petrel (in ASCII format with the extension *.GRDECL) can be imported into \Dumux in two ways:
@@ -132,3 +132,6 @@ For complex geometries a graphical tool to create grids might be appropriate. On
 geometry data is the commercial software \href{http://www.ansys.com/Products/Other+Products/ANSYS+ICEM+CFD/}{ANSYS ICEM
 CFD}. A very detailed, but outdated description can be found at the LH2 internal wiki. A more recent best practice guide is available
 in dumux-devel at dumux-devel/util/gridconverters/Documentation\_ICEM\_CFD\_create\_mesh.odt. At LH2 exists a script which converts the ICEM mesh into the DGF.
+
+% \subsubsection{Cornerpoint grids}
+% TODO

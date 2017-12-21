@@ -22,11 +22,11 @@ done
 
 # dumux
 if [ ! -d "dumux" ]; then
-    git clone -b releases/3.0-alpha https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
+    git clone -b 3.0.0-alpha https://git.iws.uni-stuttgart.de/dumux-repositories/dumux.git
 else
     echo "Skip cloning dumux because the folder already exists."
     cd dumux
-    git checkout releases/3.0-alpha
+    git checkout 3.0.0-alpha
     cd ..
 fi
 
