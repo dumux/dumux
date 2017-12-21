@@ -210,7 +210,8 @@ public:
         return normalInPosCoordDir_;
     }
 
-    Scalar outerNormalScalar() const
+    //! Returns the sign of the unit outer normal's vector
+    Scalar directionSign() const
     {
         return outerNormalScalar_;
     }
