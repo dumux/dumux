@@ -56,7 +56,19 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += " [options]\n";
                     errorMessageOut += errorMsg;
                     errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-ParameterFile Parameter file (Input file) \n";
+                                        "\t-TimeLoop.TEnd                  End of the simulation [s] \n"
+                                        "\t-TimeLoop.DtInitial            Initial timestep size [s] \n"
+                                        "\t-Grid.UpperRight                Upper right corner coordinates\n"
+                                        "\t-Grid.Cells                     Number of cells in respective coordinate directions\n"
+                                        "\t-Problem.Name                   Name for the vtk files \n"
+                                        "\t-Problem.PressureInitial        Initial Pressure [Pa] \n"
+                                        "\t-Problem.TemperatureInitial     Initial Temperature [K] \n"
+                                        "\t-Problem.VaporInitial           Initial vapor mole fraction [-] \n"
+                                        "\t-Problem.CaOInitial             Initial volumefraction of CaO [-] \n"
+                                        "\t-Problem.CaO2H2Initial          Initial volumefraction of Ca(OH)2 [-] \n"
+                                        "\t-Problem.BoundaryPressure       Pressure at the boundary [Pa] \n"
+                                        "\t-Problem.BoundaryTemperature    Temperature at the boundary [K] \n"
+                                        "\t-Problem.BoundaryMoleFraction   Vapor molefraction at the boundary [K] \n";
 
         std::cout << errorMessageOut
                   << "\n";
@@ -160,7 +172,6 @@ int main(int argc, char** argv) try
     timeLoop->start(); do
     {
         // set time for problem for implicit Euler scheme
-//         problem->setTime( timeLoop->time() + timeLoop->timeStepSize() );
         problem->setTimeStepSize( timeLoop->timeStepSize() );
 
         // set previous solution for storage evaluations
