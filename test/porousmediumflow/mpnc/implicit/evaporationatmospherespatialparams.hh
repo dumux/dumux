@@ -17,7 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file evaporationatmospherespatialparams.hh
+ * \file
+ * \ingroup MPNCTests
  * \brief spatialparameters for the kinetic test-case of the mpnc model. "Poor-mans" coupling of free-flow and porous medium.
  *
  */
@@ -45,7 +46,11 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup MPNCTests
+ * \brief spatialparameters for the kinetic test-case of the mpnc model. "Poor-mans" coupling of free-flow and porous medium.
+ *
+ */
 //forward declaration
 template<class TypeTag>
 class EvaporationAtmosphereSpatialParams;

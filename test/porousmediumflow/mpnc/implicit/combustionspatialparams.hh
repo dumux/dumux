@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file combustionspatialparams.hh
- *
+ * \file
+ * \ingroup MPNCTests
  * \brief Spatialparameters for the combustionproblem1c. Parameters for the actual simulation domain and an outflow region are provided.
  */
 #ifndef DUMUX_COMBUSTION_SPATIALPARAMS_HH
@@ -34,7 +34,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup MPNCTests
+ * \brief Spatialparameters for the combustionproblem1c. Parameters for the actual simulation domain and an outflow region are provided.
+ */
 //forward declaration
 template<class TypeTag>
 class CombustionSpatialParams;

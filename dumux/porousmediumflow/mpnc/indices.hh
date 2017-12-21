@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MPNCModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
 #ifndef DUMUX_MPNC_INDICES_HH
@@ -30,7 +31,6 @@ namespace Dumux
 
 /*!
  * \ingroup MPNCModel
- * \ingroup ImplicitIndices
  * \brief Enumerates the formulations which the MpNc model accepts.
  */
 struct MpNcPressureFormulation
@@ -43,7 +43,6 @@ struct MpNcPressureFormulation
 
 /*!
  * \ingroup MPNCModel
- * \ingroup ImplicitIndices
  * \brief The primary variable and equation indices for the MpNc model.
  */
 template <class TypeTag, int BasePVOffset = 0>

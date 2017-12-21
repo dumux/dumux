@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief Class storing scv and scvf variables
  */
 #ifndef DUMUX_NONEQUILIBRIUM_GRID_VARIABLES_HH
@@ -28,9 +29,8 @@
 
 namespace Dumux
 {
-
 /*!
- * \ingroup NonEquilbriumModel
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief This class stores the velocities which are used to compute reynoldsnumbers for the source terms of nonequilibrium models
  */
 template<class TypeTag>

@@ -17,10 +17,9 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PorousmediumThermalNonEquilibriumModel
  * \brief This file contains the parts of the local residual to
- *        calculate the heat conservation in the thermal non-equilibrium M-phase
- *        N-component model.
+ *        calculate the heat conservation in the thermal non-equilibrium model.
  */
 #ifndef DUMUX_ENERGY_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
 #define DUMUX_ENERGY_NONEQUILIBRIUM_LOCAL_RESIDUAL_HH
@@ -30,7 +29,11 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup PorousmediumThermalNonEquilibriumModel
+ * \brief This file contains the parts of the local residual to
+ *        calculate the heat conservation in the thermal non-equilibrium  model.
+ */
 // forward declaration
 template <class TypeTag, int numEnergyEqFluid>
 class EnergyLocalResidualNonEquilibrium;

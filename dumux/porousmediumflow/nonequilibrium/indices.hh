@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
 #ifndef DUMUX_NONEQUILIBRIUM_INDICES_HH
@@ -29,8 +30,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup NonEquilibrium
- * \ingroup ImplicitIndices
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief The primary variable and equation indices for the MpNc model.
  */
 template <class TypeTag, int BasePVOffset = 0>

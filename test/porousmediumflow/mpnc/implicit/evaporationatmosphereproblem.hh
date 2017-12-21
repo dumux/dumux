@@ -17,8 +17,8 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file evaporationatmosphereproblem.hh
- * \ingroup MpNcBoxproblems
+ * \file
+ * \ingroup MPNCTests
  *
  * \brief Problem showcasing the capabilities of the kinetic model.
  *
@@ -27,10 +27,6 @@
  *        the main characteristics a porous and a free-flow domain are depicted.
  *
  *        The porous domain is bypassed with dry air. This way the equilibration process on top of the porous domain can be studied.
- *
- *        The Problem is written, such that the kinetic consideration for mass and energy can
- *        be switched of by merely setting kinetic, kineticenergy respectivly to false.
- *        Boundary and initial conditions are specified for all cases.
  *
  * \author Philipp Nuske
  */
@@ -58,7 +54,11 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup MPNCTests
+ *
+ * \brief Problem showcasing the capabilities of the kinetic model.
+ */
 template <class TypeTag>
 class EvaporationAtmosphereProblem;
 

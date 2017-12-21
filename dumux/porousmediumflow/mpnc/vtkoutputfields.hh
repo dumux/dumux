@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MPNCModel
  * \brief Adds vtk output fields specific to the twop model
  */
 #ifndef DUMUX_MPNC_VTK_OUTPUT_FIELDS_HH
@@ -27,7 +28,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup TwoP, InputOutput
+ * \ingroup MPNCModel
  * \brief Adds vtk output fields specific to the twop model
  */
 template<class TypeTag>

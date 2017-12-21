@@ -18,9 +18,9 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief A MpNc specific controller for the newton solver.
- *
- *        This controller calls the velocity averaging in the model after each iteration.
+ *  This controller calls the velocity averaging in the model after each iteration.
  */
 #ifndef DUMUX_NONEQUILIBRIUM_NEWTON_CONTROLLER_HH
 #define DUMUX_NONEQUILIBRIUM_NEWTON_CONTROLLER_HH
@@ -31,11 +31,9 @@
 
 namespace Dumux {
 /*!
- * \brief A kinetic-nonequilibrium specific controller for the newton solver.
- *
+ * \ingroup PorousmediumNonEquilibriumModel
+ * \brief A nonequilibrium specific controller for the newton solver.
  * This controller calls the velocity averaging in the problem after each iteration.
- *
- * Everything else is taken from the standard mpnc newtoncontroller.
  */
 template <class TypeTag>
 class NonEquilibriumNewtonController : public NewtonController<TypeTag>

@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief The local residual for the kinetic mass transfer module of
  *        the compositional multi-phase model.
  */
@@ -38,6 +39,7 @@ template <class TypeTag>
 using NonEquilibriumLocalResidual = NonEquilibriumLocalResidualImplementation<TypeTag, GET_PROP_VALUE(TypeTag, EnableThermalNonEquilibrium), GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium)>;
 
 /*!
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief The mass conservation part of the nonequilibrium model for a model without chemical non-equilibrium
  */
 template<class TypeTag>
