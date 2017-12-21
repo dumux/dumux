@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_HELPER_HH
 
 #include <dune/common/version.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -33,7 +34,6 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
-#include "methods.hh"
 
 namespace Dumux {
 
@@ -551,7 +551,7 @@ public:
  * \brief Helper class to get the required information on an interaction volume.
  *        Specializations depending on the method and dimension are provided.
  */
-template<class TypeTag, MpfaMethods Method, int dim, int dimWorld>
+template<class TypeTag, int dim, int dimWorld>
 class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimWorld>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -640,7 +640,6 @@ public:
  */
 template<class TypeTag>
 using CCMpfaHelper = CCMpfaHelperImplementation<TypeTag,
-                                                GET_PROP_VALUE(TypeTag, MpfaMethod),
                                                 GET_PROP_TYPE(TypeTag, GridView)::dimension,
                                                 GET_PROP_TYPE(TypeTag, GridView)::dimensionworld>;
 
