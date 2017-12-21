@@ -1,12 +1,12 @@
 [TimeManager]
 DtInitial 		= 1e-2 	# [s] initial TimeStep size
-TEnd 			= 1e5 	# [s] End Time
-MaxTimeStepSize = 1000  # maximum time step size
+TEnd 			= 1e7 	# [s] End Time
+MaxTimeStepSize = 10000  # maximum time step size
 
 [Grid]
 LowerLeft 	= 0 0
 UpperRight 	= 0.0525 0.34
-Cells 		= 50 1
+Cells 		= 1 50
 
 [Problem]
 Name 				= outflowNoAds	# name passed to the output routines
