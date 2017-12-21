@@ -228,13 +228,13 @@ public:
 
             Scalar krd = 0.05;
 
-            Scalar rDehydration = (volVars.density(cPhaseIdx)- realSolidDensityAverage)
+            Scalar rDehydration = -(volVars.density(cPhaseIdx)- realSolidDensityAverage)
                                                      * krd * (Teq-T)/ Teq;
 
             qMass =  rDehydration;
         }
 
-        if(Teq -T <= 0) qMass = 0;
+        if(Teq -T == 0) qMass = 0;
 
         return qMass;
     }
