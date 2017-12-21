@@ -16,6 +16,13 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
+
+/*!
+ * \file
+ * \ingroup PorousmediumNonEquilibriumModel
+ * \brief This is the specialization that is able to capture non-equilibrium mass and / or energy transfer.
+ * \todo DocMe
+ */
 #ifndef DUMUX_NONEQUILIBRIUM_MODEL_HH
 #define DUMUX_NONEQUILIBRIUM_MODEL_HH
 
@@ -30,12 +37,8 @@
 #include "vtkoutputfields.hh"
 
 /*!
- * \ingroup Properties
- * \ingroup ImplicitProperties
- * \ingroup NonEquilibriumModel
- * \file
- * \brief This is the specialization that is able to capture non-equilibrium mass and / or energy transfer.
- *
+ * \ingroup \ingroup PorousmediumNonEquilibriumModel
+ * \brief Defines the properties required for non-equilibrium models
  */
 namespace Dumux
 {

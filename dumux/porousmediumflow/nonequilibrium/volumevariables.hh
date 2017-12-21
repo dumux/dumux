@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup PorousmediumNonEquilibriumModel
  * \brief This class contains the volume variables required for the
  *        modules which require the specific interfacial area between
  *        fluid phases.
@@ -40,7 +40,13 @@
 
 namespace Dumux
 {
-
+/*!
+ * \file
+ * \ingroup PorousmediumNonEquilibriumModel
+ * \brief This class contains the volume variables required for the
+ *        modules which require the specific interfacial area between
+ *        fluid phases.
+ */
 // forward declaration
 template <class TypeTag, bool enableChemicalNonEquilibrium ,bool enableThermalNonEquilibrium>
 class NonEquilibriumVolumeVariablesImplementation;
