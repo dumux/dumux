@@ -16,9 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
- *
+ * \ingroup MPNCTests
  * \brief The spatial parameters for the ObstacleProblem
  */
 
@@ -34,7 +34,10 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup MPNCTests
+ * \brief The spatial parameters for the ObstacleProblem
+ */
 //forward declaration
 template<class TypeTag>
 class ObstacleSpatialParams;

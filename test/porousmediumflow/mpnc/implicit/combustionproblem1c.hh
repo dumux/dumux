@@ -15,14 +15,12 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
 /*!
- * \file combustionproblem1c.hh
- *
+ * \file
+ * \ingroup MPNCTests
  * \brief Problem where hot, pure liquid water is injected from the left hand side into a initially
  *        isotherm domain. The water is fully evaporated by a strong heat source.
  *        A local thermal non-equilibrium model is used: i.e. two different (fluid, solid)
  *        temperatures are primary variables.
- *
- * \ingroup MpNcBoxproblems
  *
  * \author Philipp Nuske
  */
@@ -106,8 +104,7 @@ SET_INT_PROP(CombustionProblemOneComponent, NumEqBalance, GET_PROP_VALUE(TypeTag
 
 }
 /*!
- * \ingroup MpNcBoxproblems
- *
+ * \ingroup MPNCTests
  * \brief Problem where water is injected from the left hand side into a porous media filled domain,
  *        which is supplied with energy from the right hand side to evaporate the water.
  */

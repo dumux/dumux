@@ -16,8 +16,9 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-/**
+/*!
  * \file
+ * \ingroup MPNCTests
  * \brief Problem where liquid water is injected -- by means of a
  *        Dirichlet condition on the lower right of the domain -- which has to go
  *        around an obstacle with \f$10^3\f$ lower permeability.
@@ -41,7 +42,12 @@
 
 namespace Dumux
 {
-
+/*!
+ * \ingroup MPNCTests
+ * \brief Problem where liquid water is injected -- by means of a
+ *        Dirichlet condition on the lower right of the domain -- which has to go
+ *        around an obstacle with \f$10^3\f$ lower permeability.
+ */
 template <class TypeTag>
 class ObstacleProblem;
 
