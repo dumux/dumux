@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- *
+ * \ingroup NavierStokesTests
  * \brief Channel flow test for the staggered grid (Navier-)Stokes model
  */
 #ifndef DUMUX_CHANNEL_TEST_PROBLEM_HH
@@ -77,8 +77,9 @@ SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
 }
 
 /*!
- * \brief  Test problem for the one-phase (Navier-) Stokes problem in a channel:
-   \todo doc me!
+ * \ingroup NavierStokesTests
+ * \brief  Test problem for the one-phase (Navier-) Stokes problem in a channel.
+ * \todo doc me!
  */
 template <class TypeTag>
 class ChannelTestProblem : public NavierStokesProblem<TypeTag>
@@ -132,7 +133,7 @@ public:
         inletVelocity_ = getParam<Scalar>("Problem.InletVelocity");
     }
 
-    /*!
+   /*!
      * \name Problem parameters
      */
     // \{
@@ -143,7 +144,7 @@ public:
         return false;
     }
 
-    /*!
+   /*!
      * \brief Return the temperature within the domain in [K].
      *
      * This problem assumes a temperature of 10 degrees Celsius.
@@ -151,7 +152,7 @@ public:
     Scalar temperature() const
     { return 273.15 + 10; } // 10C
 
-    /*!
+   /*!
      * \brief Return the sources within the domain.
      *
      * \param globalPos The global position
@@ -161,12 +162,12 @@ public:
         return SourceValues(0.0);
     }
     // \}
-    /*!
+   /*!
      * \name Boundary conditions
      */
     // \{
 
-    /*!
+   /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary control volume.
      *
@@ -198,7 +199,7 @@ public:
         return values;
     }
 
-    /*!
+   /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        control volume.
      *
@@ -223,12 +224,12 @@ public:
 
     // \}
 
-    /*!
+   /*!
      * \name Volume terms
      */
     // \{
 
-    /*!
+   /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * \param globalPos The global position
