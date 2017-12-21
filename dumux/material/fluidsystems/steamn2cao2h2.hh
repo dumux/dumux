@@ -18,54 +18,61 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup Fluidsystems
- * \brief @copybrief Dumux::FluidSystems::SteamAirCaO2H2
+ *
+ * \brief @copybrief Dumux::FluidSystems::SteamN2CaO2H2
  */
-#ifndef DUMUX_STEAM_AIR_CAO2H2_SYSTEM_HH
-#define DUMUX_STEAM_AIR_CAO2H2_SYSTEM_HH
+#ifndef DUMUX_STEAM_N2_CAO2H2_SYSTEM_HH
+#define DUMUX_STEAM_N2_CAO2H2_SYSTEM_HH
 
 #include <cassert>
-#include <dumux/material/idealgas.hh>
 
-#include <dumux/material/fluidsystems/base.hh>
-#include <dumux/material/components/air.hh>
-#include <dumux/material/components/simpleh2o.hh>
-#include <dumux/material/components/cao2h2.hh>
-#include <dumux/material/components/cao.hh>
-#include <dumux/material/binarycoefficients/h2o_air.hh>
-#include <dumux/material/components/tabulatedcomponent.hh>
+#include <dune/common/exceptions.hh>
 
 #include <dumux/common/valgrind.hh>
-#include <dumux/common/exceptions.hh>
 
-namespace Dumux {
-namespace FluidSystems {
+#include <dumux/material/idealgas.hh>
+#include <dumux/material/fluidsystems/base.hh>
+#include <dumux/material/components/n2.hh>
+#include <dumux/material/components/h2o.hh>
+#include <dumux/material/components/cao2h2.hh>
+#include <dumux/material/components/cao.hh>
+#include <dumux/material/binarycoefficients/h2o_n2.hh>
+#include <dumux/material/components/tabulatedcomponent.hh>
+
+namespace Dumux
+{
+namespace FluidSystems
+{
 /*!
  * \ingroup Fluidsystems
- * \brief A compositional one-phase fluid system with \f$H_2O\f$ \f$Air\f$ as gaseous components
- *              and \f$CaO\f$  and \f$Ca(OH)_2\f$ as solid components drawn for thermo-chemical
+ *
+ * \brief A compositional one-phase fluid system with \f$H_2O\f$ \f$N_2\f$ as gaseous components
+ *              and \f$CaO\f$  and \f$Ca(OH)_2/f$ as solid components drawn for thermo-chemical
  *              heat storage.
  *
- *  This fluidsystem is applied by default to the simpleh2o, as the IAPWS-formulation has to be
- *  adapted to high temperatures and high pressures first.
+ *  This fluidsystem is applied by default with the tabulated version of
+ *  water of the IAPWS-formulation. However, the IAPWS-formulation has to be
+ *  adapted, if to higher temperatures and higher pressures occur.
  */
 
-template <class Scalar, bool useComplexRelations=true>
-class SteamAirCaO2H2
-: public BaseFluidSystem<Scalar, SteamAirCaO2H2<Scalar, /*H2Otype,*/ useComplexRelations> >
+template <class Scalar,
+           class H2Otype = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar>>,
+          bool useComplexRelations=true>
+class SteamN2CaO2H2
+: public BaseFluidSystem<Scalar, SteamN2CaO2H2<Scalar, H2Otype, useComplexRelations> >
 {
-    using ThisType = SteamAirCaO2H2<Scalar, /*H2Otype,*/ useComplexRelations>;
-    using Base = BaseFluidSystem<Scalar, ThisType>;
+    using ThisType = SteamN2CaO2H2<Scalar, H2Otype, useComplexRelations>;
+    using Base =  BaseFluidSystem <Scalar, ThisType>;
 
     using IdealGas = Dumux::IdealGas<Scalar>;
 
 public:
-    using H2O = Dumux::SimpleH2O<Scalar>;
-    using H2O_Air = Dumux::BinaryCoeff::H2O_Air;
-    using Air = Dumux::Air<Scalar>;
+    using H2O = H2Otype;
+    using H2O_N2 = Dumux::BinaryCoeff::H2O_N2;
+    using N2 = Dumux::N2<Scalar>;
 
     using CaO = Dumux::CaO<Scalar>;
-    using CaO2H2 = Dumux::CaO2H2<Scalar>;
+    using CaO2H2 =  Dumux::CaO2H2<Scalar>;
 
     // the type of parameter cache objects. this fluid system does not
     using ParameterCache = Dumux::NullParameterCache;
@@ -75,11 +82,10 @@ public:
      ****************************************/
 
     //! Number of phases in the fluid system
-    static constexpr int numPhases = 1; //gas phase: air and steam
+    static constexpr int numPhases = 1; //gas phase: N2 and steam
     static const int numSPhases = 2;//  solid phases CaO and CaO2H2
 
     static constexpr int gPhaseIdx = 0;
-//     static constexpr int gPhaseIdx = phaseIdx;
     static const int nPhaseIdx = gPhaseIdx; // index of the gas phase
 
     static constexpr int cPhaseIdx = 1; // CaO-phaseIdx
@@ -91,7 +97,7 @@ public:
      *
      * \param phaseIdx The index of the fluid phase to consider
      */
-     static std::string phaseName(int phaseIdx)
+    static std::string phaseName(int phaseIdx)
     {
         switch (phaseIdx) {
         case nPhaseIdx: return "gas";
@@ -101,7 +107,7 @@ public:
         DUNE_THROW(Dune::InvalidStateException, "Invalid phase index " << phaseIdx);
     }
 
-    /*!
+     /*!
      * \brief Return whether a phase is liquid
      *
      * \param phaseIdx The index of the fluid phase to consider
@@ -161,19 +167,19 @@ public:
         assert(0 <= phaseIdx && phaseIdx < numPhases);
 
         // let the fluid decide
-        return H2O::gasIsIdeal() && Air::gasIsIdeal();
+        return H2O::gasIsIdeal() && N2::gasIsIdeal();
     }
 
-     /****************************************
-     * Component related static parameters
-     ****************************************/
+    /****************************************
+    * Component related static parameters
+    ****************************************/
 
-    static const int numComponents = 2;//3; // H2O, Air
+    static const int numComponents = 2; // H2O, Air
     static const int numMajorComponents = 2;// H2O, Air
     static const int numSComponents = 2;// CaO2H2, CaO
 
 
-    static const int AirIdx = 0;
+    static const int N2Idx = 0;
     static const int H2OIdx = 1;
     static const int CaOIdx  = 2;
     static const int CaO2H2Idx  = 3;
@@ -188,8 +194,8 @@ public:
     {
         switch (compIdx)
         {
-        case H2OIdx: return H2O::name();
-        case AirIdx: return Air::name();
+        case H2OIdx: return "H2O";
+        case N2Idx: return "N2";
         case CaOIdx:return "CaO";
         case CaO2H2Idx:return "CaO2H2";
 
@@ -207,7 +213,7 @@ public:
         switch (compIdx)
         {
         case H2OIdx: return H2O::molarMass();
-        case AirIdx: return Air::molarMass();
+        case N2Idx: return N2::molarMass();
         case CaOIdx: return CaO::molarMass();
         case CaO2H2Idx: return CaO2H2::molarMass();
         }
@@ -228,16 +234,13 @@ public:
       else
         DUNE_THROW(Dune::InvalidStateException, "Invalid solid index " << phaseIdx);
         return 1;
-
-//        if(phaseIdx != sPhaseIdx)
-//            DUNE_THROW(Dune::InvalidStateException, "Invalid solid phase index " << sPhaseIdx);
     }
 
-    /*!
-     * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
-     *
-     * \param phaseIdx The index of the solid phase to consider
-     */
+     /*!
+      * \brief Return the salt specific heat capacity \f$\mathrm{[J/molK]}\f$.
+      *
+      * \param phaseIdx The index of the solid phase to consider
+      */
      static Scalar precipitateHeatCapacity(int phaseIdx)
      {
       if(phaseIdx==cPhaseIdx)
@@ -284,24 +287,24 @@ public:
              /*pressureSteps=*/200);
     }
 
-    /*!
-     * \brief Initialize the fluid system's static parameters using
-     *        problem specific temperature and pressure ranges
-     *
-     * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
-     * \param tempMax The maximum temperature used for tabulation of water \f$\mathrm{[K]}\f$
-     * \param nTemp The number of ticks on the temperature axis of the  table of water
-     * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
-     * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
-     * \param nPress The number of ticks on the pressure axis of the  table of water
-     */
+   /*!
+    * \brief Initialize the fluid system's static parameters using
+    *        problem specific temperature and pressure ranges
+    *
+    * \param tempMin The minimum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+    * \param tempMax The maximum temperature used for tabulation of water \f$\mathrm{[K]}\f$
+    * \param nTemp The number of ticks on the temperature axis of the  table of water
+    * \param pressMin The minimum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+    * \param pressMax The maximum pressure used for tabulation of water \f$\mathrm{[Pa]}\f$
+    * \param nPress The number of ticks on the pressure axis of the  table of water
+    */
     static void init(Scalar tempMin, Scalar tempMax, unsigned nTemp,
                       Scalar pressMin, Scalar pressMax, unsigned nPress)
     {
         if (useComplexRelations)
-            std::cout << "Using complex H2O-Air-CaO2H2 fluid system\n";
+            std::cout << "Using complex H2O-N2-CaO2H2 fluid system\n";
         else
-            std::cout << "Using fast H2O-Air-CaO2H2 fluid system\n";
+            std::cout << "Using fast H2O-N2-CaO2H2 fluid system\n";
 
         if (H2O::isTabulated) {
             std::cout << "Initializing tables for the H2O fluid properties ("
@@ -342,17 +345,17 @@ public:
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
             sumMoleFrac += fluidState.moleFraction(phaseIdx, compIdx);
 
-        if (!useComplexRelations){
+        if (!useComplexRelations)
             // for the gas phase assume an ideal gas
             return
                 IdealGas::molarDensity(T, p)
                 * fluidState.averageMolarMass(nPhaseIdx)
-                / std::max(1e-5, sumMoleFrac);}
+                / std::max(1e-5, sumMoleFrac);
         else
         {
             return
-                H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
-                Air::gasDensity(T, fluidState.partialPressure(nPhaseIdx, AirIdx));
+                (H2O::gasDensity(T, fluidState.partialPressure(nPhaseIdx, H2OIdx)) +
+                N2::gasDensity(T, fluidState.partialPressure(nPhaseIdx, N2Idx)));
         }
       }
 
@@ -380,7 +383,12 @@ public:
         Scalar muResult = 0;
         const Scalar mu[numComponents] = {
             H2O::gasViscosity(T, H2O::vaporPressure(T)),
-            Air::gasViscosity(T, p)
+            N2::gasViscosity(T, p)
+        };
+
+        const Scalar M[numComponents] = {
+            H2O::molarMass(),
+            N2::molarMass()
         };
 
         Scalar sumx = 0.0;
@@ -392,9 +400,9 @@ public:
         for (int i = 0; i < numComponents; ++i) {
             Scalar divisor = 0;
             for (int j = 0; j < numComponents; ++j) {
-                Scalar phiIJ = 1 + sqrt(mu[i]/mu[j]) * pow(molarMass(j)/molarMass(i), 1/4.0);
+                Scalar phiIJ = 1 + sqrt(mu[i]/mu[j]) * pow(M[j]/M[i], 1/4.0);
                 phiIJ *= phiIJ;
-                phiIJ /= sqrt(8*(1 + molarMass(i)/molarMass(j)));
+                phiIJ /= sqrt(8*(1 + M[i]/M[j]));
                 divisor += fluidState.moleFraction(phaseIdx, j)/sumx * phiIJ;
             }
             muResult += fluidState.moleFraction(phaseIdx, i)/sumx * mu[i] / divisor;
@@ -428,12 +436,13 @@ public:
 
         assert(phaseIdx == gPhaseIdx);
 
-        if (compIIdx != AirIdx)
+        if (compIIdx != N2Idx)
             std::swap(compIIdx, compJIdx);
 
         Scalar result = 0.0;
         if(compJIdx == H2OIdx)
-        result = H2O_Air::gasDiffCoeff(temperature, pressure);
+        result = H2O_N2::gasDiffCoeff(temperature, pressure);
+
         else
             DUNE_THROW(Dune::NotImplemented, "Binary diffusion coefficient of components "
                                                  << compIIdx << " and " << compJIdx
@@ -466,22 +475,23 @@ public:
         Scalar T = fluidState.temperature(phaseIdx);
         Scalar p = fluidState.pressure(phaseIdx);
 
-        Scalar XAir = fluidState.massFraction(gPhaseIdx, AirIdx);
+        Scalar XN2 = fluidState.massFraction(gPhaseIdx, N2Idx);
         Scalar XH2O = fluidState.massFraction(gPhaseIdx, H2OIdx);
 
         Scalar result = 0;
         result += XH2O * H2O::gasEnthalpy(T, p);
-        result += XAir * Air::gasEnthalpy(T, p);
+        result += XN2 * N2::gasEnthalpy(T, p);
         Valgrind::CheckDefined(result);
+
         return result;
     }
 
     /*!
-     * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
-     * \param fluidState The fluid state
-     * \param phaseIdx The index of the phase
-     * \param componentIdx The index of the component
-     */
+    * \brief Returns the specific enthalpy \f$\mathrm{[J/kg]}\f$ of a component in a specific phase
+    * \param fluidState The fluid state
+    * \param phaseIdx The index of the phase
+    * \param componentIdx The index of the component
+    */
     template <class FluidState>
     static Scalar componentEnthalpy(const FluidState &fluidState,
                                     int phaseIdx,
@@ -496,9 +506,30 @@ public:
         {
             return H2O::gasEnthalpy(T, p);
         }
-        else if (componentIdx == AirIdx)
+        else if (componentIdx == N2Idx)
         {
-            return Air::gasEnthalpy(T, p);
+            return N2::gasEnthalpy(T, p);
+        }
+    }
+
+    //for the boundary condition T = 573.15 K;
+    template <class FluidState>
+    static Scalar componentEnthalpyBorder(const FluidState &fluidState,
+                                    int phaseIdx,
+                                    int componentIdx)
+    {
+        Scalar T = 573.15;
+        Scalar p = fluidState.pressure(nPhaseIdx);
+        Valgrind::CheckDefined(T);
+        Valgrind::CheckDefined(p);
+
+        if (componentIdx ==  H2OIdx)
+        {
+            return H2O::gasEnthalpy(T, p);
+        }
+        else if (componentIdx == N2Idx)
+        {
+            return N2::gasEnthalpy(T, p);
         }
     }
 
@@ -524,20 +555,23 @@ public:
         // W.G. Mallard evaluated at p=.1 MPa, does not
         // change dramatically with p
         // and can be interpolated linearly with temperature
-        Scalar lambdaPureAir = 6.525e-5 * temperature + 0.024031;
+        Scalar lambdaPureN2 = N2::gasThermalConductivity(temperature, pressure);
 
         if (useComplexRelations){
-            Scalar xAir = fluidState.moleFraction(phaseIdx, AirIdx);
+            Scalar xN2 = fluidState.moleFraction(phaseIdx, N2Idx);
             Scalar xH2O = fluidState.moleFraction(phaseIdx, H2OIdx);
-            Scalar lambdaAir = xAir * lambdaPureAir;
+            Scalar lambdaN2 = xN2 * lambdaPureN2;
                 // Assuming Raoult's, Daltons law and ideal gas
                 // in order to obtain the partial density of water in the air phase
-                Scalar partialPressure  = pressure * xH2O;
-                Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
-                return lambdaAir + lambdaH2O;
-            }
-            else
-                return lambdaPureAir; // conductivity of Air [W / (m K ) ]
+            if(xH2O <= 0+ 1e-6) return lambdaN2;
+
+            Scalar partialPressure  = pressure * xH2O;
+            Scalar lambdaH2O = xH2O * H2O::gasThermalConductivity(temperature, partialPressure);
+
+            return lambdaN2 + lambdaH2O;
+        }
+        else
+        return lambdaPureN2; // conductivity of Air [W / (m K ) ]
     }
 
     /*!
@@ -558,65 +592,23 @@ public:
         const Scalar temperature  = fluidState.temperature(phaseIdx);
         const Scalar pressure = fluidState.pressure(phaseIdx);
 
-        Scalar c_pAir;
+        Scalar c_pN2;
         Scalar c_pH2O;
         // let the water and air components do things their own way
-        if (useComplexRelations) {
-            c_pAir = Air::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                        fluidState.pressure(phaseIdx)
-                                        * fluidState.moleFraction(phaseIdx, AirIdx));
+        c_pN2= N2::gasHeatCapacity(fluidState.temperature(phaseIdx),
+                                    fluidState.pressure(phaseIdx)
+                                    * fluidState.moleFraction(phaseIdx, N2Idx));
 
-            c_pH2O = H2O::gasHeatCapacity(fluidState.temperature(phaseIdx),
-                                          fluidState.pressure(phaseIdx)
-                                          * fluidState.moleFraction(phaseIdx, H2OIdx));
-        }
-        else {
-            // assume an ideal gas for both components. See:
-            //
-            // http://en.wikipedia.org/wiki/Heat_capacity
-            Scalar c_vAirmolar = Dumux::Constants<Scalar>::R*2.39;
-            Scalar c_pAir = Dumux::Constants<Scalar>::R + c_vAirmolar;
+        c_pH2O = H2O::gasHeatCapacity(fluidState.temperature(phaseIdx),
+                                    fluidState.pressure(phaseIdx)
+                                    * fluidState.moleFraction(phaseIdx, H2OIdx));
 
-            Scalar c_vH2Omolar = Dumux::Constants<Scalar>::R*3.37; // <- correct??
-            Scalar c_pH2O = Dumux::Constants<Scalar>::R + c_vH2Omolar;
-        }
-
-        // mangle all components together
-        return
-            c_pH2O*fluidState.moleFraction(nPhaseIdx, H2OIdx) + c_pAir*fluidState.moleFraction(nPhaseIdx, AirIdx);
+        return c_pH2O*fluidState.moleFraction(nPhaseIdx, H2OIdx) + c_pN2*fluidState.moleFraction(nPhaseIdx, N2Idx);
     }
 
-
-    static Scalar saltDensity(int phaseIdx)
-    {
-        DUNE_THROW(Dune::NotImplemented, "saltDensity");
-    }
-
-    static Scalar saltMolarDensity(int phaseIdx)
-     {
-        DUNE_THROW(Dune::NotImplemented, "saltMolarDensity");
-     }
-
-    static Scalar solubilityLimit(int compIdx)
-    {
-        DUNE_THROW(Dune::NotImplemented, "solubilityLimit");
-    }
-
-private:
-    static Scalar gasDensity_(Scalar T, Scalar pg, Scalar xgH2O)
-    {
-        //Dalton' Law
-        const Scalar pH2O = xgH2O*pg;
-        const Scalar pAir = pg - pH2O;
-        const Scalar gasDensityAir = Air::gasDensity(T, pAir);
-        const Scalar gasDensityH2O = H2O::gasDensity(T, pH2O);
-        const Scalar gasDensity = gasDensityAir + gasDensityH2O;
-
-        return gasDensity;
-    }
 };
 
-} // end namespace FluidSystems
-} // end namespace Dumux
+} // end namespace
+} // end namespace
 
 #endif

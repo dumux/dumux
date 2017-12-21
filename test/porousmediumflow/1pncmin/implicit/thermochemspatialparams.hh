@@ -18,18 +18,20 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Definition of the spatial parameters for the fuel cell
- *        problem which uses the isothermal/non-insothermal 2pnc box model
+ * \ingroup OnePNCMinTests
+ * \brief Definition of the spatial parameters for the thermochemistry
+ *        problem which uses the non-insothermal 1pncmin model
  */
 
 #ifndef DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 #define DUMUX_THERMOCHEM_SPATIAL_PARAMS_HH
 
 #include <dumux/material/spatialparams/fv1p.hh>
-#include <dumux/porousmediumflow/1pncmin/implicit/indices.hh>
+
 #include <dumux/material/fluidmatrixinteractions/porosityreactivebed.hh>
 #include <dumux/material/fluidmatrixinteractions/permeabilitykozenycarman.hh>
+#include <dumux/material/fluidmatrixinteractions/mineralization/effectivesoliddensity.hh>
+#include <dumux/material/fluidmatrixinteractions/mineralization/effectivesolidheatcapacity.hh>
 
 namespace Dumux
 {
@@ -65,10 +67,18 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using CoordScalar = typename GridView::ctype;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     enum {
         dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
+
+        numSPhases =  GET_PROP_VALUE(TypeTag, NumSPhases),
+        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
+        phaseIdx = FluidSystem::gPhaseIdx,
+        cPhaseIdx = FluidSystem::cPhaseIdx,
+        hPhaseIdx = FluidSystem::hPhaseIdx
     };
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
@@ -78,6 +88,8 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
 
     using PorosityLaw = PorosityReactiveBed<TypeTag>;
     using PermeabilityLaw = PermeabilityKozenyCarman<TypeTag>;
+    using EffectiveSolidRho = EffectiveSolidDensity<TypeTag>;
+    using EffectiveSolidCp = EffectiveSolidHeatCapacity<TypeTag>;
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
@@ -85,28 +97,22 @@ public:
     /*!
      * \brief The constructor
      *
-     * \param gridView The grid view
+     * \param problem The Problem
      */
-    ThermoChemSpatialParams(const Problem& problem, const GridView &gridView)
-    : ParentType(problem, gridView)
+    ThermoChemSpatialParams(const Problem& problem)
+    : ParentType(problem)
     {
         //thermal conductivity of CaO
         lambdaSolid_ = 0.4; //[W/(m*K)] Nagel et al [2013b]
-
+        rho_[cPhaseIdx-numPhases] = 1656; //[kg/m^3] density of CaO (see Shao et al. 2014)
+        rho_[hPhaseIdx-numPhases] = 2200; //[kg/m^3] density of Ca(OH)_2 (see Shao et al. 2014)
+        cp_[cPhaseIdx-numPhases] = 934; //[J/kgK] heat capacity of CaO (see Shao et al. 2014)
+        cp_[hPhaseIdx-numPhases] = 1530; //[J/kgK] heat capacity of Ca(OH)_2 (see Shao et al. 2014)
         eps_ = 1e-6;
-    }
-
-    ~ThermoChemSpatialParams()
-    {}
-
-    /*!
-     * \brief Called by the Problem to initialize the spatial params.
-     */
-    void init()
-    {
-        //! Intitialize the parameter laws
         poroLaw_.init(*this);
         permLaw_.init(*this);
+        effSolRho_.init(*this);
+        effSolCp_.init(*this);
     }
 
     /*!
@@ -116,7 +122,7 @@ public:
      *  \param scv The sub-control volume
      */
     Scalar initialPermeability(const Element& element, const SubControlVolume &scv) const
-    { return 5e-12; }
+    { return 8.53e-12; }
 
     /*!
      *  \brief Define the initial porosity \f$[-]\f$ distribution
@@ -126,14 +132,7 @@ public:
      */
     Scalar initialPorosity(const Element& element, const SubControlVolume &scv) const
     {
-         Scalar phi;
-
-         if(isCharge_==true) phi = 0.8;  //direct charging acc. to Nagel et al 2014
-
-         else
-          phi = 0.604;  //direct charging acc. to Nagel et al 2014
-
-         return phi;
+        return  0.8;
     }
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
@@ -141,6 +140,7 @@ public:
      *
      *  \param element The finite volume element
      *  \param scv The sub-control volume
+     *  \param elemSol The element solution
      *
      *  Solution dependent permeability function
      */
@@ -157,7 +157,8 @@ public:
      */
     Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
     {
-        return 0.604; //intrinsic porosity of CaO2H2 (see Nagel et al. 2014)
+//         return 0.604; //intrinsic porosity of CaO2H2 (see Nagel et al. 2014)
+        return 0.8;
     }
 
     /*!
@@ -165,19 +166,18 @@ public:
      *
      *  \param element The finite element
      *  \param scv The sub-control volume
+     *  \param elemSol The element solution
      */
     Scalar porosity(const Element& element,
                     const SubControlVolume& scv,
                     const ElementSolutionVector& elemSol) const
-    { return poroLaw_.evaluatePorosity(element, scv, elemSol); }
-
-
-
-    Scalar solidity(const SubControlVolume &scv) const
-    { return 1.0 - porosityAtPos(scv.center()); }
+    {
+//         return poroLaw_.evaluatePorosity(element, scv, elemSol);
+        return 0.8;
+    }
 
     /*!
-     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the rock matrix.
+     * \brief Returns the average heat capacity \f$[J / (kg K)]\f$ of solid phases.
      *
      * This is only required for non-isothermal models.
      *
@@ -189,11 +189,22 @@ public:
                              const SubControlVolume& scv,
                              const ElementSolutionVector& elemSol) const
     {
-        return 790;
+        return effSolCp_.effectiveSolidHeatCapacity(element, scv, elemSol);
     }
 
     /*!
-     * \brief Returns the mass density \f$[kg / m^3]\f$ of the rock matrix.
+     * \brief Returns the heat capacity \f$[J / (kg K)]\f$ of the pure solid phases.
+     */
+     Scalar solidPhaseHeatCapacity(const Element &element,
+                                    const SubControlVolume& scv,
+                                    const ElementSolutionVector& elemSol,
+                                    int sPhaseIdx) const
+     {
+         return cp_[sPhaseIdx];
+     }
+
+    /*!
+     * \brief Returns the average mass density \f$[kg / m^3]\f$ of the solid phases.
      *
      * This is only required for non-isothermal models.
      *
@@ -205,7 +216,18 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     {
-        return 2600; //(see Nagel et al. 2014)
+        return effSolRho_.effectiveSolidDensity(element, scv, elemSol);
+    }
+
+    /*!
+     * \brief Returns the mass density \f$[kg / m^3]\f$ of the pure solid phases.
+     */
+    Scalar solidPhaseDensity(const Element &element,
+                             const SubControlVolume& scv,
+                             const ElementSolutionVector& elemSol,
+                             int sPhaseIdx) const
+    {
+        return rho_[sPhaseIdx];
     }
 
     /*!
@@ -224,9 +246,12 @@ private:
 
    Scalar eps_;
    Scalar lambdaSolid_;
-   bool isCharge_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, IsCharge);
+   std::array<Scalar, numSPhases> rho_;
+   std::array<Scalar, numSPhases> cp_;
    PorosityLaw poroLaw_;
    PermeabilityLaw permLaw_;
+   EffectiveSolidRho effSolRho_;
+   EffectiveSolidCp effSolCp_;
 };
 
 }//end namespace

@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ *
  * \brief Class for the evaluation of the porosity subject to precipitation.
  */
-#ifndef DUMUX_POROSITY_REACTIVE_BED_HH
-#define DUMUX_POROSITY_REACTIVE_BED_HH
+#ifndef DUMUX_EFFECTIVE_SOLID_DENSITY_HH
+#define DUMUX_EFFECTIVE_SOLID_DENSITY_HH
 
 #include <dumux/discretization/evalsolution.hh>
 
@@ -30,11 +30,14 @@ namespace Dumux
 {
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
- * \brief Calculates the porosity depeding on the volume fractions of different solid species.
+ * \ingroup Fluidmatrixinteractions
+ */
+
+/**
+ * \brief Calculates the effective solid density
  */
 template<class TypeTag>
-class PorosityReactiveBed
+class EffectiveSolidDensity
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -56,24 +59,23 @@ public:
         spatialParamsPtr_ = &spatialParams;
     }
 
-    /*!
-     * \brief Calculates the porosity in a sub-control volume.
-     *
-     * \param element element
-     * \param elemSol the element solution
-     * \param scv sub control volume
-     */
-    Scalar evaluatePorosity(const Element& element,
+    // calculates the effective solid density of multiple solid phases according to
+    // their volume fractions
+    Scalar effectiveSolidDensity(const Element& element,
                             const SubControlVolume& scv,
                             const ElementSolution& elemSol) const
     {
         auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
 
         Scalar sumPrecipitates = 0.0;
+        Scalar effRhoS = 0.0;
         for (unsigned int solidPhaseIdx = 0; solidPhaseIdx < numSolidPhases; ++solidPhaseIdx)
+        {
             sumPrecipitates += priVars[numComponents + solidPhaseIdx];
+            effRhoS += priVars[numComponents + solidPhaseIdx]*spatialParams_().solidPhaseDensity(element, scv, elemSol, solidPhaseIdx);
+        }
 
-        return (1 - sumPrecipitates);
+        return effRhoS/sumPrecipitates;
     }
 
 private:

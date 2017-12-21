@@ -16,31 +16,44 @@
  *   You should have received a copy of the GNU General Public License       *
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  *****************************************************************************/
-
 /*!
  * \file
- * \brief Defines the indices required for the one-phase n-component mineralization
- *        fully implicit model.
+ * \ingroup OnePNCMinTests
+ * \brief Corrected material properties of pure Calcium-Oxide \f$CaO\f$ without considering a porosity
+ * change in the reaction of Calciumoxyde and Calciumhydroxyde.
  */
-#ifndef DUMUX_1PNCMIN_INDICES_HH
-#define DUMUX_1PNCMIN_INDICES_HH
+#ifndef DUMUX_MODIFIED_CAO_HH
+#define DUMUX_MODIFIED_CAO_HH
 
-#include <dumux/porousmediumflow/1pnc/indices.hh>
+
+#include <dumux/material/components/cao.hh>
 
 namespace Dumux
 {
 /*!
- * \ingroup OnePNCMinModel
- * \ingroup ImplicitIndices
- * \brief The indices for the isothermal one-phase n-component mineralization model.
+ * \ingroup OnePNCMinTests
+ * \brief A class for the ModifiedCaO properties
  *
- * \tparam PVOffset The first index in a primary variable vector.
+ * This class uses a different CaO density. It is to be  used for calculating the chemical
+ * reaction of CaO to Ca(OH)2 without considering the porosity change according to See Shao et
+ * al. (2013).
  */
-template <class TypeTag, int PVOffset = 0>
-    class OnePNCMinIndices: public OnePNCIndices<TypeTag, PVOffset>
+template <class Scalar>
+class ModifiedCaO : public  CaO<Scalar>
 {
+public:
+
+    /*!
+     * \brief The corrected mass density \f$\mathrm{[kg/m^3]}\f$ of CaO.
+     */
+    static Scalar density()
+    {
+        return 1656;
+        // This density is to be used for calculating the chemical reaction of CaO to Ca(OH)2 without considering the solid volume change. See Shao et al. (2013)
+    }
+
 };
 
-}
+} // end namespace
 
 #endif

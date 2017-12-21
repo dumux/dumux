@@ -62,7 +62,7 @@ public:
      */
     static Scalar density()
     {
-        return 3370.0; //at 293 K ; Shao et al. (2013)
+        return 3370;
     }
 
     /*!

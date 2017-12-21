@@ -1,0 +1,44 @@
+# Parameter file for test case 1pncmin.
+# Everything behind a '#' is a comment.
+# Type "./test_1pncmin --help" for more information.
+
+[TimeLoop]
+DtInitial = 0.5                      # [s] initial time step size
+MaxTimeStepSize =1               # [s] maximum time step size
+TEnd= 150                        # [s] duration of the simulation
+FreqOutput          = 10           # frequency of VTK output
+WriteRestartFile    = 1            # Boolean. Should restart files be written? (1) Yes (0) No
+
+[Grid]
+UpperRight = 0.02 0.01 #20 10 #     # [m] upper right corner coordinates
+Cells =  2 1 # 21 6                # [-] number of cells in x,y-direction
+
+[FluidSystem]
+NTemperature = 10                   # [-] number of tabularization entries
+NPressure = 100                     # [-] number of tabularization entries
+PressureLow = 1E5                   # [Pa]low end for tabularization of fluid properties
+PressureHigh = 1E6                  # [Pa]high end for tabularization of fluid properties
+TemperatureLow = 373.15             # [Pa]low end for tabularization of fluid properties
+TemperatureHigh = 873.15            # [Pa]high end for tabularization of fluid properties
+
+[Problem]
+Name = 1pncmin_test
+PressureInitial = 2E5              # [Pa] Initial reservoir pressure
+TemperatureInitial = 573.15        # [K]  reservoir temperature
+VaporInitial = 0.464                # [-]  initial mole fraction of water
+CaOInitial = 0.2                   # [-]  molefraction in the solid phase;  0 dehydration/charge, 1  hydration/discharge
+CaO2H2Initial = 0.0
+BoundaryPressure= 2e5                  # [Pa] outlet pressure
+BoundaryTemperature = 573.15             # [K] inlet temperature: charge: 873 K ; discharge: 473K
+BoundaryMoleFraction = 0.464                     # [] molefraction
+
+[Vtk]
+#AddVelocity         = 0            # Add extra information
+VtuWritingFreq      = 1            # 1: write a vtu file at every timestep, 2: write a vtu file every second timestep ...
+
+[LinearSolver]
+ResidualReduction = 1e-6
+
+[Newton]
+MaxRelativeShift = 1e-6
+

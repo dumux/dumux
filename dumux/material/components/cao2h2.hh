@@ -18,38 +18,62 @@
  *****************************************************************************/
 /*!
  * \file
- *
- * \brief Test for the 2pnc box model used for water management in PEM fuel cells.
+ * \ingroup Components
+ * \brief Material properties of pure Calciumhydroxide \f$CaO2H2\f$.
  */
-#include <config.h>
-#include "thermochemproblem.hh"
-#include <dumux/common/start.hh>
+#ifndef DUMUX_CAO2H2_HH
+#define DUMUX_CAO2H2_HH
 
+#include <dumux/common/exceptions.hh>
+#include <dune/common/deprecated.hh>
+#include <dumux/material/components/component.hh>
+
+#include <cmath>
+#include <iostream>
+
+namespace Dumux
+{
 /*!
- * \brief Provides an interface for customizing error messages associated with
- *        reading in parameters.
- *
- * \param progName  The name of the program, that was tried to be started.
- * \param errorMsg  The error message that was issued by the start function.
- *                  Comprises the thing that went wrong and a general help message.
+ * \ingroup Components
+ * \brief A class for the CaO2H2 properties
  */
-void usage(const char *progName, const std::string &errorMsg)
+template <class Scalar>
+class CaO2H2 : public Component<Scalar, CaO2H2<Scalar> >
 {
-    if (errorMsg.size() > 0) {
-        std::string errorMessageOut = "\nUsage: ";
-                    errorMessageOut += progName;
-                    errorMessageOut += " [options]\n";
-                    errorMessageOut += errorMsg;
-                    errorMessageOut += "\n\nThe list of mandatory options for this program is:\n"
-                                        "\t-ParameterFile Parameter file (Input file) \n";
-
-        std::cout << errorMessageOut
-                  << "\n";
+public:
+    /*!
+     * \brief A human readable name for the CaO2H2.
+     */
+    static const char *name()
+    {
+        return "CaO2H2";
     }
-}
 
-int main(int argc, char** argv)
-{
-    using ProblemTypeTag = TTAG(ThermoChemBoxProblem);
-    return Dumux::start<ProblemTypeTag>(argc, argv, usage);
-}
+    /*!
+     * \brief The molar mass of CaOH2 in \f$\mathrm{[kg/mol]}\f$.
+     */
+    static Scalar molarMass()
+    {
+        return 74.093e-3 ;
+    }
+
+    /*!
+     * \brief The mass density \f$\mathrm{[kg/m^3]}\f$ of CaO2H2.
+     */
+    static Scalar density()
+    {
+        return 2200.0; //at 293 K ; Shao et al. (2013)
+    }
+
+    /*!
+     * \brief The specific heat capacity \f$\mathrm{[J/kgK]}\f$ of CaO2H2.
+     */
+    static Scalar heatCapacity()
+    {
+        return 1530;  //Nagel et al. (2014) : 1530 J/kgK
+    }
+};
+
+} // end namespace
+
+#endif

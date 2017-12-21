@@ -18,11 +18,11 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup fluidmatrixinteractionslaws
+ *
  * \brief Class for the evaluation of the porosity subject to precipitation.
  */
-#ifndef DUMUX_POROSITY_REACTIVE_BED_HH
-#define DUMUX_POROSITY_REACTIVE_BED_HH
+#ifndef DUMUX_EFFECTIVE_SOLID_HEATCAPACITY_HH
+#define DUMUX_EFFECTIVE_SOLID_HEATCAPACITY_HH
 
 #include <dumux/discretization/evalsolution.hh>
 
@@ -30,11 +30,14 @@ namespace Dumux
 {
 
 /*!
- * \ingroup fluidmatrixinteractionslaws
- * \brief Calculates the porosity depeding on the volume fractions of different solid species.
+ * \ingroup Fluidmatrixinteractions
+ */
+
+/**
+ * \brief Calculates the effective solid heat capacity
  */
 template<class TypeTag>
-class PorosityReactiveBed
+class EffectiveSolidHeatCapacity
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -56,24 +59,23 @@ public:
         spatialParamsPtr_ = &spatialParams;
     }
 
-    /*!
-     * \brief Calculates the porosity in a sub-control volume.
-     *
-     * \param element element
-     * \param elemSol the element solution
-     * \param scv sub control volume
-     */
-    Scalar evaluatePorosity(const Element& element,
+    // calculates the effective solid heat capacity of multiple solid phases accordin to
+    // their volume fractions
+    Scalar effectiveSolidHeatCapacity(const Element& element,
                             const SubControlVolume& scv,
                             const ElementSolution& elemSol) const
     {
         auto priVars = evalSolution(element, element.geometry(), elemSol, scv.center());
 
         Scalar sumPrecipitates = 0.0;
+        Scalar effCp = 0.0;
         for (unsigned int solidPhaseIdx = 0; solidPhaseIdx < numSolidPhases; ++solidPhaseIdx)
+        {
             sumPrecipitates += priVars[numComponents + solidPhaseIdx];
+            effCp += priVars[numComponents + solidPhaseIdx]*spatialParams_().solidPhaseHeatCapacity(element, scv, elemSol, solidPhaseIdx);
+        }
 
-        return (1 - sumPrecipitates);
+        return effCp/sumPrecipitates;
     }
 
 private:

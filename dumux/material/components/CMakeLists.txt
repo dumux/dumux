@@ -5,8 +5,8 @@ install(FILES
 air.hh
 benzene.hh
 brine.hh
-CaO.hh
-CaO2H2.hh
+cao.hh
+cao2h2.hh
 ch4.hh
 co2.hh
 co2tablereader.hh
