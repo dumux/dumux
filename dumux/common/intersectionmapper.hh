@@ -30,7 +30,7 @@
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/common/version.hh>
-
+#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
@@ -39,6 +39,7 @@ namespace Dumux
  * \ingroup Common
  * \brief defines a standard intersection mapper for mapping of global DOFs assigned
  *        to faces. It only works for conforming grids, without hanging nodes.
+ * \todo This shouldn't depend on type tag but gridview only
  */
 template<class TypeTag>
 class ConformingGridIntersectionMapper
@@ -84,6 +85,7 @@ private:
  * \ingroup Common
  * \brief defines an intersection mapper for mapping of global DOFs assigned
  *        to faces which also works for non-conforming grids and corner-point grids.
+ * \todo This shouldn't depend on type tag but gridview only
  */
 template<class TypeTag>
 class NonConformingGridIntersectionMapper

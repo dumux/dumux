@@ -32,8 +32,10 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <type_traits>
+#include <iostream>
 
 #include <dune/common/promotiontraits.hh>
 #include <dune/common/timer.hh>
