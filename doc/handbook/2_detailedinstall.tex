@@ -202,8 +202,8 @@ If not given differently in the input files, this is \texttt{build-cmake} as def
       in order to compile the application\\ \texttt{test{\_}2p{\_}incompressible{\_}tpfa}. To run the simulation, 
       type \texttt{./test{\_}2p{\_}incompressible{\_}tpfa}
       into the console. If you explicitly want to state a parameter file, type\\ 
-      \texttt{./test{\_}2p{\_}incompressible{\_}tpfa -parameterFile ./test\_2p.input}.
-      The parameter\\ \texttt{-parameterFile} specifies that all
+      \texttt{./test{\_}2p{\_}incompressible{\_}tpfa test\_2p.input}.
+      Adding \texttt{test\_2p.input} specifies that all
       important parameters (like first timestep size, end of simulation and location
       of the grid file) can be found in a text file in the same directory  with the
       name \texttt{test\_2p.input}.
