@@ -26,7 +26,6 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/porousmediumflow/1p/sequential/diffusion/cellcentered/pressureproperties.hh>
 #include <dumux/porousmediumflow/1p/sequential/diffusion/problem.hh>
@@ -54,7 +53,7 @@ SET_TYPE_PROP(TestProblemOneP, Grid, Dune::YaspGrid<2>);
 SET_PROP(TestProblemOneP, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
+    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the spatial parameters

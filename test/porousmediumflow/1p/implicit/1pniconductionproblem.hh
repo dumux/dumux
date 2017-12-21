@@ -34,7 +34,6 @@
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/components/h2o.hh>
-#include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/fluidmatrixinteractions/1p/thermalconductivityaverage.hh>
 
@@ -62,9 +61,8 @@ SET_TYPE_PROP(OnePNIConductionProblem, Problem,
 
 // Set the fluid system
 SET_TYPE_PROP(OnePNIConductionProblem, FluidSystem,
-              FluidSystems::OneP<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                 FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
-                                                           H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> > >);
+            FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
+                                                           H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 // Set the spatial parameters
 SET_TYPE_PROP(OnePNIConductionProblem,
               SpatialParams,

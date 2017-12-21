@@ -27,7 +27,6 @@
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
@@ -51,9 +50,9 @@ SET_PROP(ChannelTestProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 #if NONISOTHERMAL
-    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> > >;
+    using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
 #else
-    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
+    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 #endif
 };
 

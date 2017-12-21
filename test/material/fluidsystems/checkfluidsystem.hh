@@ -31,7 +31,6 @@
 #include <dune/common/classname.hh>
 
 // include all fluid systems in dumux-stable
-#include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brineair.hh>

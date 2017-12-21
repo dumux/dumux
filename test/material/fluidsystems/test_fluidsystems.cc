@@ -27,7 +27,6 @@
 #include "checkfluidsystem.hh"
 
 // include all fluid systems in dumux-stable
-#include <dumux/material/fluidsystems/1p.hh>
 #include <dumux/material/fluidsystems/2pimmiscible.hh>
 #include <dumux/material/fluidsystems/base.hh>
 #include <dumux/material/fluidsystems/brineair.hh>
@@ -119,12 +118,6 @@ int main()
 
     //////////////////////////
     // check all fluid systems
-
-    // 1p
-    {   using FluidSystem = Dumux::FluidSystems::OneP<Scalar, Liquid>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
-    {   using FluidSystem = Dumux::FluidSystems::OneP<Scalar, Gas>;
-        success += Dumux::checkFluidSystem<Scalar, FluidSystem>(); }
 
     // 2p-immiscible
     {   using FluidSystem = Dumux::FluidSystems::TwoPImmiscible<Scalar, Liquid, Liquid>;

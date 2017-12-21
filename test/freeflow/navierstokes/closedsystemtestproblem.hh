@@ -26,7 +26,6 @@
 
 #include <dumux/material/fluidsystems/liquidphase.hh>
 #include <dumux/material/components/constant.hh>
-#include <dumux/material/fluidsystems/1p.hh>
 
 #include <dumux/freeflow/navierstokes/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
@@ -45,7 +44,7 @@ NEW_TYPE_TAG(ClosedSystemTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, Navi
 SET_PROP(ClosedSystemTestProblem, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using type = FluidSystems::OneP<Scalar, FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> > >;
+    using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
