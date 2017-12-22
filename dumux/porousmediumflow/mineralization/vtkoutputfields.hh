@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup MineralizationModel
  * \brief Adds vtk output fields specific to the models considering
  *        mineralization processes.
  */
@@ -30,8 +31,8 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Mineralization
- * \brief Adds vtk output fields specific to the a NCMin model
+ * \ingroup MineralizationModel
+ * \brief Adds vtk output fields specific to a NCMin model
  */
 template<class TypeTag>
 class MineralizationVtkOutputFields

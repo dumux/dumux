@@ -33,7 +33,7 @@ namespace Dumux
 {
 
 /*!
- * \ingroup Mineralization
+ * \ingroup MineralizationModel
  * \brief Contains the quantities which are are constant within a sub-control volume
  *        of the finite volume grid in an m-phase, n-component, mineralization model.
  */
