@@ -18,7 +18,6 @@ gridinteractionvolumeindexsets.hh
 helper.hh
 interactionvolumebase.hh
 interactionvolumedatahandle.hh
-interactionvolume.hh
 localassembler.hh
 localfacedata.hh
 methods.hh

@@ -33,7 +33,6 @@
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
-#include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
@@ -43,37 +42,37 @@
 
 namespace Dumux
 {
-//! Forward declaration of the interaction volume specialization for the mpfa-o scheme
-template< class TypeTag >
-class CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
+//! Forward declaration of the o-method's interaction volume
+template< class Traits > class CCMpfaOInteractionVolume;
 
-//! Specialization of the interaction volume traits class for the mpfa-o method
+//! Specialization of the default interaction volume traits class for the mpfa-o method
 template< class TypeTag >
-struct CCMpfaInteractionVolumeTraits< CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> >
+struct CCMpfaODefaultInteractionVolumeTraits
 {
 private:
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-    using InteractionVolumeType = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
+    using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
+    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
+    static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
 
 public:
-    //! Per default, we use the same interaction volume everywhere (also on boundaries etc...)
-    using SecondaryInteractionVolume = InteractionVolumeType;
-
+    //! export the problem type (needed for iv-local assembly)
+    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    //! export the type of the local view on the finite volume grid geometry
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    //! export the type of the local view on the grid volume variables
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    //! export the type of grid view
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    //! export the type used for scalar values
+    using ScalarType = typename GET_PROP_TYPE(TypeTag, Scalar);
+    //! export the type of the mpfa helper class
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     //! export the type used for local indices
     using LocalIndexType = std::uint8_t;
-    //! export the type used for indices on the grid
-    using GridIndexType = typename GridView::IndexSet::IndexType;
     //! export the type for the interaction volume index set
     using IndexSet = CCMpfaOInteractionVolumeIndexSet< DualGridNodalIndexSet<GridIndexType, LocalIndexType, dim> >;
-    //! export the type used for global coordinates
-    using GlobalPosition = Dune::FieldVector< typename GridView::ctype, dimWorld >;
     //! export the type of interaction-volume local scvs
-    using LocalScvType = CCMpfaOInteractionVolumeLocalScv< IndexSet, GlobalPosition, dim >;
+    using LocalScvType = CCMpfaOInteractionVolumeLocalScv< IndexSet, ScalarType, dim, dimWorld >;
     //! export the type of interaction-volume local scvfs
     using LocalScvfType = CCMpfaOInteractionVolumeLocalScvf< IndexSet >;
     //! export the type of used for the iv-local face data
@@ -81,45 +80,45 @@ public:
     //! export the type of face data container (use dynamic container here)
     using LocalFaceDataContainer = std::vector< LocalFaceData >;
     //! export the type used for iv-local matrices
-    using Matrix = Dune::DynamicMatrix< Scalar >;
+    using Matrix = Dune::DynamicMatrix< ScalarType >;
     //! export the type used for iv-local vectors
-    using Vector = Dune::DynamicVector< Scalar >;
+    using Vector = Dune::DynamicVector< ScalarType >;
     //! export the type used for the iv-stencils
     using Stencil = std::vector< GridIndexType >;
     //! export the data handle type for this iv
-    using DataHandle = InteractionVolumeDataHandle< TypeTag, InteractionVolumeType >;
+    using DataHandle = InteractionVolumeDataHandle< TypeTag, Matrix, Vector, LocalIndexType >;
 };
 
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Class for the interaction volume of the mpfa-o method.
  */
-template<class TypeTag>
-class CCMpfaInteractionVolumeImplementation< TypeTag, MpfaMethods::oMethod >
-           : public CCMpfaInteractionVolumeBase< TypeTag,
-                                                 CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> >
+template< class Traits >
+class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >
 {
-    using ThisType = CCMpfaInteractionVolumeImplementation< TypeTag, MpfaMethods::oMethod >;
-    using ParentType = CCMpfaInteractionVolumeBase< TypeTag, ThisType >;
+    using ThisType = CCMpfaOInteractionVolume< Traits >;
+    using ParentType = CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Helper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Scalar = typename Traits::ScalarType;
+    using Helper = typename Traits::MpfaHelper;
+    using Problem = typename Traits::Problem;
+    using FVElementGeometry = typename Traits::FVElementGeometry;
+
+    using GridView = typename Traits::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static constexpr int dim = GridView::dimension;
     using DimVector = Dune::FieldVector<Scalar, dim>;
 
-    using TraitsType = CCMpfaInteractionVolumeTraits< ThisType >;
-    using Matrix = typename TraitsType::Matrix;
-    using LocalScvType = typename TraitsType::LocalScvType;
-    using LocalScvfType = typename TraitsType::LocalScvfType;
-    using LocalFaceData = typename TraitsType::LocalFaceData;
+    using Matrix = typename Traits::Matrix;
+    using LocalScvType = typename Traits::LocalScvType;
+    using LocalScvfType = typename Traits::LocalScvfType;
+    using LocalFaceData = typename Traits::LocalFaceData;
 
-    using IndexSet = typename TraitsType::IndexSet;
-    using GridIndexType = typename TraitsType::GridIndexType;
-    using LocalIndexType = typename TraitsType::LocalIndexType;
-    using Stencil = typename TraitsType::Stencil;
+    using IndexSet = typename Traits::IndexSet;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using LocalIndexType = typename Traits::LocalIndexType;
+    using Stencil = typename Traits::Stencil;
 
     //! Data attached to scvf touching Dirichlet boundaries.
     //! For the default o-scheme, we only store the corresponding vol vars index.
@@ -138,10 +137,6 @@ class CCMpfaInteractionVolumeImplementation< TypeTag, MpfaMethods::oMethod >
 public:
     //! publicly state the mpfa-scheme this interaction volume is associated with
     static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
-
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     //! Sets up the local scope for a given iv index set
     void setUpLocalScope(const IndexSet& indexSet,

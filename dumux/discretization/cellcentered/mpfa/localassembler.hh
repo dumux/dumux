@@ -48,16 +48,16 @@ using InteractionVolumeAssembler = InteractionVolumeAssemblerImpl< InteractionVo
  * \tparam Interaction Volume The interaction volume implementation
  *                            used by the mpfa scheme
  */
-template<class InteractionVolume>
+template< class InteractionVolume >
 class InteractionVolumeAssemblerBase
 {
-    using Problem = typename InteractionVolume::Problem;
-    using FVElementGeometry = typename InteractionVolume::FVElementGeometry;
-    using ElementVolumeVariables = typename InteractionVolume::ElementVolumeVariables;
-
     using Traits = typename InteractionVolume::Traits;
     using Matrix = typename Traits::Matrix;
     using Vector = typename Traits::Vector;
+
+    using Problem = typename Traits::Problem;
+    using FVElementGeometry = typename Traits::FVElementGeometry;
+    using ElementVolumeVariables = typename Traits::ElementVolumeVariables;
 
   public:
     /*!

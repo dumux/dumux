@@ -36,10 +36,10 @@ namespace Dumux
  *        in the mpfa-o scheme.
  *
  * \tparam IvIndexSet The type used for index sets within interaction volumes
- * \tparam GC The type used for global coordinates
  * \tparam dim The dimensionality of the grid
+ * \tparam dimWorld The dimension of the world the grid is embedded in
  */
-template< class IvIndexSet, class GC, int dim >
+template< class IvIndexSet, class Scalar, int dim, int dimWorld>
 class CCMpfaOInteractionVolumeLocalScv
 {
 
@@ -47,12 +47,12 @@ public:
     // export some types
     using GridIndexType = typename IvIndexSet::GridIndexType;
     using LocalIndexType = typename IvIndexSet::LocalIndexType;
-    using GlobalCoordinate = GC;
+    using GlobalCoordinate = Dune::FieldVector<Scalar, dimWorld>;
     using ctype = typename GlobalCoordinate::value_type;
     using LocalBasis = std::array< GlobalCoordinate, dim >;
 
     static constexpr int myDimension = dim;
-    static constexpr int worldDimension = GlobalCoordinate::dimension;
+    static constexpr int worldDimension = dimWorld;
 
     /*!
      * \brief The constructor

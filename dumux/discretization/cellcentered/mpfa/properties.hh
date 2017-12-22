@@ -40,7 +40,6 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
@@ -49,7 +48,8 @@
 #include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
-#include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
+
+#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
 namespace Dumux
 {
@@ -64,22 +64,29 @@ SET_PROP(CCMpfaModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
 };
 
-//! By default we set the o-method as the Mpfa method of choice
+//! Extract the used mpfa method from the primary interaction volume
 SET_PROP(CCMpfaModel, MpfaMethod)
 {
-    static const MpfaMethods value = MpfaMethods::oMethod;
+    static const MpfaMethods value = GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume)::MpfaMethod;
 };
 
 //! The mpfa helper class
 SET_TYPE_PROP(CCMpfaModel, MpfaHelper, CCMpfaHelper<TypeTag>);
 
-//! The interaction volume class
-SET_TYPE_PROP(CCMpfaModel, PrimaryInteractionVolume, CCMpfaInteractionVolume<TypeTag>);
+//! Per default, we use the mpfa-o interaction volume
+SET_PROP(CCMpfaModel, PrimaryInteractionVolume)
+{
+private:
+    //! use the default traits
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< TypeTag >;
+public:
+    using type = CCMpfaOInteractionVolume< Traits >;
+};
 
-//! The secondary interaction volume class (exported from the traits)
+//! Per default, we use the mpfa-o interaction volume everywhere (pure mpfa-o scheme)
 SET_TYPE_PROP(CCMpfaModel,
               SecondaryInteractionVolume,
-              typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume)::Traits::SecondaryInteractionVolume);
+              typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume));
 
 //! Set the default for the global finite volume geometry
 SET_TYPE_PROP(CCMpfaModel,
@@ -134,7 +141,6 @@ private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     static const int dim = Grid::dimension;
     static const int dimWorld = Grid::dimensionworld;
-    static const MpfaMethods method = GET_PROP_VALUE(TypeTag, MpfaMethod);
 
     // we use geometry traits that use static corner vectors to and a fixed geometry type
     template <class ct>
@@ -168,7 +174,7 @@ private:
     };
 
 public:
-    using type = Dumux::CCMpfaSubControlVolumeFace<method, ScvfGeometryTraits>;
+    using type = Dumux::CCMpfaSubControlVolumeFace< ScvfGeometryTraits>;
 };
 
 //! Set the solution vector type for an element

@@ -28,10 +28,9 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
 
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassembler.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
-#include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
+#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
 namespace Dumux
 {
@@ -40,24 +39,22 @@ namespace Dumux
  * \ingroup CCMpfaDiscretization
  * \brief Specialization of the interaction volume-local
  *        assembler class for the mpfa-o scheme.
+ *
+ * \tparam IVTraits The traits class of the interaction volume
  */
-template< class TypeTag >
-class InteractionVolumeAssemblerImpl< CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> >
-      : public InteractionVolumeAssemblerBase< CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod> >
+template< class IVTraits >
+class InteractionVolumeAssemblerImpl< CCMpfaOInteractionVolume<IVTraits> >
+      : public InteractionVolumeAssemblerBase< CCMpfaOInteractionVolume<IVTraits> >
 {
-    using InteractionVolume = CCMpfaInteractionVolumeImplementation<TypeTag, MpfaMethods::oMethod>;
+    using InteractionVolume = CCMpfaOInteractionVolume< IVTraits >;
     using ParentType = InteractionVolumeAssemblerBase< InteractionVolume >;
 
-    using Traits = typename InteractionVolume::Traits;
-    using LocalIndexType = typename Traits::LocalIndexType;
-    using Matrix = typename Traits::Matrix;
-    using Vector = typename Traits::Vector;
+    using LocalIndexType = typename IVTraits::LocalIndexType;
+    using Matrix = typename IVTraits::Matrix;
+    using Vector = typename IVTraits::Vector;
 
-    static constexpr int dim = Traits::LocalScvType::myDimension;
-    static constexpr int dimWorld = Traits::LocalScvType::worldDimension;
-
-    // obtain the number of phases via the property system
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int dim = IVTraits::LocalScvType::myDimension;
+    static constexpr int dimWorld = IVTraits::LocalScvType::worldDimension;
 
 public:
     //! Use the constructor of the base class
@@ -315,9 +312,13 @@ public:
                          const Matrix& CA,
                          const GetTensorFunction& getTensor)
     {
-        // we require the CA matrix and the g vector to have the correct size already
-        assert(g.size() == numPhases && "Provided gravity container does not have NumPhases entries");
-        assert(g[0].size() == iv.numFaces() && "Gravitation vector g does not have the correct size");
+        //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
+        //! - first index adresses the respective phases
+        //! - second index adresses the face within the interaction volume
+
+        // make sure CA matrix and the g vector to have the correct size already
+        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); })
+               && "size of gravity vector does not match the number of iv-local faces!");
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns() && "Matrix CA does not have the correct size");
 
         //! For each face, we...
@@ -326,12 +327,10 @@ public:
         //! - compute \f$ \alpha^* = \alpha_{outside} - \alpha_{inside} \f$
         using Scalar = typename Vector::value_type;
 
-        std::array< Vector, numPhases > sum_alphas;
-        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-        {
-            g[pIdx] = 0.0;
-            sum_alphas[pIdx].resize(iv.numUnknowns(), 0.0);
-        }
+        // reset gravity containers to zero
+        const auto numPhases = g.size();
+        std::vector< Vector > sum_alphas(numPhases, Vector(iv.numUnknowns(), 0.0));
+        std::for_each(g.begin(), g.end(), [&iv](auto& v) { v = 0.0; });
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
@@ -352,7 +351,7 @@ public:
             // for which there is the specialization of this function below
             assert(neighborScvIndices.size() <= 2 && "Scvf seems to have more than one outside scv!");
 
-            std::array< Scalar, numPhases > rho;
+            std::vector< Scalar > rho(numPhases);
             const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(), tensor, gravity);
             if (!curLocalScvf.isDirichlet())
             {
@@ -431,14 +430,20 @@ public:
                          const Matrix& A,
                          const GetTensorFunction& getTensor)
     {
+        //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
+        //! - first index adresses the respective phases
+        //! - second index adresses the face within the interaction volume
+        //! We require the outside gravity container to be a three-dimensional vector/array type, structured as follows:
+        //! - first index adresses the respective phases
+        //! - second index adresses the face within the interaction volume
+        //! - third index adresses the i-th "outside" face of the current face
+
         // we require the CA matrix and the gravity containers to have the correct size already
         assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns() && "Matrix CA does not have the correct size");
-        assert(g.size() == numPhases && "Provided gravity container does not have NumPhases entries");
-        assert(outsideG.size() == numPhases && "Provided outside gravity container does not have NumPhases entries");
-        assert(std::all_of(g.cbegin(), g.cend(), [&iv](const auto& d) { return d.size() == iv.numFaces(); })
-               && "Gravitation vector g does not have the correct size");
-        assert(std::all_of(outsideG.cbegin(), outsideG.cend(), [&iv](const auto& d) { return d.size() == iv.numFaces(); })
-               && "Outside gravity container does not have the correct size");
+        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); })
+               && "size of gravity container does not match the number of iv-local faces!");
+        assert(std::all_of(outsideG.begin(), outsideG.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); })
+               && "Outside gravity container does not match the number of iv-local faces!");
 
         //! For each face, we...
         //! - arithmetically average the phase densities
@@ -447,12 +452,13 @@ public:
         using Scalar = typename Vector::value_type;
 
         // reset everything to zero
-        std::array< Vector, numPhases > sum_alphas;
+        const auto numPhases = g.size();
+        std::vector< Vector > sum_alphas(numPhases, Vector(iv.numUnknowns(), 0.0));
+
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
         {
             g[pIdx] = 0.0;
             std::for_each(outsideG[pIdx].begin(), outsideG[pIdx].end(), [] (auto& v) { v = 0.0; });
-            sum_alphas[pIdx].resize(iv.numUnknowns(), 0.0);
         }
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
@@ -473,7 +479,7 @@ public:
             const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(), tensor, gravity);
             const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
             std::vector< Scalar > alpha_outside(numOutsideFaces);
-            std::array< Scalar, numPhases > rho;
+            std::vector< Scalar > rho(numPhases);
 
             if (!curLocalScvf.isDirichlet())
             {

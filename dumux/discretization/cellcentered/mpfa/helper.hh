@@ -567,7 +567,7 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
 
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
-    using GlobalPosition = typename InteractionVolume::Traits::GlobalPosition;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using CoordScalar = typename GridView::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;

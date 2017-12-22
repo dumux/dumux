@@ -28,17 +28,18 @@
 #include <dune/common/version.hh>
 #include <dune/geometry/type.hh>
 
-#include "methods.hh"
-
 namespace Dumux
 {
 
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief Default implementation of the class for a sub-control volume face in mpfa methods.
+ * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
+ *        of a control volume we compute fluxes on.
+ *
+ * \param ScvfGeometryTraits the traits class for the geometry type
  */
 template<class ScvfGeometryTraits>
-class CCMpfaDefaultSubControlVolumeFace
+class CCMpfaSubControlVolumeFace
 {
     using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
     using Scalar = typename ScvfGeometryTraits::Scalar;
@@ -65,16 +66,16 @@ public:
      * \param boundary Boolean to specify whether or not the scvf is on a boundary
      */
     template<class MpfaHelper>
-    CCMpfaDefaultSubControlVolumeFace(const MpfaHelper& helper,
-                                      CornerStorage&& corners,
-                                      GlobalPosition&& unitOuterNormal,
-                                      GridIndexType vIdxGlobal,
-                                      unsigned int vIdxLocal,
-                                      GridIndexType scvfIndex,
-                                      GridIndexType insideScvIdx,
-                                      const std::vector<GridIndexType>& outsideScvIndices,
-                                      Scalar q,
-                                      bool boundary)
+    CCMpfaSubControlVolumeFace(const MpfaHelper& helper,
+                               CornerStorage&& corners,
+                               GlobalPosition&& unitOuterNormal,
+                               GridIndexType vIdxGlobal,
+                               unsigned int vIdxLocal,
+                               GridIndexType scvfIndex,
+                               GridIndexType insideScvIdx,
+                               const std::vector<GridIndexType>& outsideScvIndices,
+                               Scalar q,
+                               bool boundary)
     : boundary_(boundary)
     ,   vertexIndex_(vIdxGlobal)
     ,   scvfIndex_(scvfIndex)
@@ -169,19 +170,6 @@ private:
     GlobalPosition unitOuterNormal_;
     Scalar area_;
 };
-
-/*!
- * \ingroup CCMpfaDiscretization
- * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
- *        of a control volume we compute fluxes on. Per default, we use the default
- *        implementation of the mpfa scvf class. If a scheme requires a different implementation,
- *        provide a specialization for it.
- *
- * \param M the mpfa method used
- * \param GT the traits class for the geometry type
- */
-template<MpfaMethods M, class GT>
-using CCMpfaSubControlVolumeFace = CCMpfaDefaultSubControlVolumeFace< GT >;
 
 } // end namespace Dumux
 
