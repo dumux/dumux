@@ -32,6 +32,9 @@
 
 namespace Dumux {
 
+template<class Scalar, int dim>
+class PointCloudVtkWriter;
+
 /*!
  * \ingroup InputOutput
  * \brief A VTK output module to simplify writing dumux simulation data to VTK format

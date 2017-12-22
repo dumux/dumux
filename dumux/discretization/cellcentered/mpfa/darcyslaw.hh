@@ -25,8 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_DARCYS_LAW_HH
 
-#include <dune/common/densevector.hh>
-#include <dune/common/densematrix.hh>
+#include <dune/common/dynvector.hh>
+#include <dune/common/dynmatrix.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
