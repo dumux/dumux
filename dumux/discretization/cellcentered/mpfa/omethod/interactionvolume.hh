@@ -33,6 +33,7 @@
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>

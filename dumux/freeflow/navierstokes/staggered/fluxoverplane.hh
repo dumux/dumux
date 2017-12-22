@@ -26,6 +26,7 @@
 
 #include <numeric>
 
+#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
 #include <dune/geometry/affinegeometry.hh>
@@ -210,7 +211,11 @@ public:
     static PlaneGeometryType makePlane(const GlobalPosition& p0, const GlobalPosition& p1)
     {
         const std::vector< Dune::FieldVector< Scalar, dim > > corners = {p0, p1};
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return PlaneGeometryType(Dune::GeometryTypes::line, corners);
+#else
+        return PlaneGeometryType(Dune::GeometryType::simplex, corners);
+#endif
     }
 
     /*!
@@ -228,7 +233,11 @@ public:
                                        const GlobalPosition& p3)
     {
         const std::vector< Dune::FieldVector< Scalar, dim > > corners = {p0, p1, p2, p3};
-        return PlaneGeometryType(Dune::GeometryTypes::quadrilateral, corners);
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        return PlaneGeometryType(Dune::GeometryTypes::quadrilaterial, corners);
+#else
+        return PlaneGeometryType(Dune::GeometryType::cube, corners);
+#endif
     }
 
     /*!

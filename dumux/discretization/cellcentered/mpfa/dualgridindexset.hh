@@ -24,6 +24,10 @@
 #ifndef DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEX_SET_HH
 #define DUMUX_DISCRETIZATION_MPFA_DUALGRID_INDEX_SET_HH
 
+#include <cassert>
+#include <vector>
+#include <algorithm>
+
 namespace Dumux
 {
 

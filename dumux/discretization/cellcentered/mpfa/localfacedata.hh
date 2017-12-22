@@ -25,6 +25,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_FACE_DATA_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_LOCAL_FACE_DATA_HH
 
+#include <cassert>
+
 namespace Dumux
 {
 /*!

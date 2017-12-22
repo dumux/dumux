@@ -24,6 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FOURIERS_LAW_HH
 
+#include <dune/common/dynvector.hh>
+#include <dune/common/dynmatrix.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 

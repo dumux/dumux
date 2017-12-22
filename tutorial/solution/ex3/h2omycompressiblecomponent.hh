@@ -277,7 +277,8 @@ public:
                                              int compJIdx)
     {
         assert(0 <= phaseIdx  && phaseIdx < numPhases);
-        assert(0 <= compIdx  && compIdx < numComponents);
+        assert(0 <= compIIdx  && compIIdx < numComponents);
+        assert(0 <= compJIdx  && compJIdx < numComponents);
 
         const Scalar T = fluidState.temperature(phaseIdx);
         const Scalar p = fluidState.pressure(phaseIdx);

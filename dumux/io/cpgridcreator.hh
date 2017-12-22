@@ -30,7 +30,8 @@
 #include <opm/parser/eclipse/Parser/ParseContext.hpp>
 #include <opm/parser/eclipse/Deck/Deck.hpp>
 
-#include <dumux/common/basicproperties.hh>
+#include <dumux/common/properties.hh>
+#include <dumux/common/parameters.hh>
 
 namespace Dumux
 {

@@ -25,6 +25,7 @@
 #define THERMALCONDUCTIVITY_JOHANSEN_HH
 
 #include <cmath>
+#include <algorithm>
 
 namespace Dumux
 {
