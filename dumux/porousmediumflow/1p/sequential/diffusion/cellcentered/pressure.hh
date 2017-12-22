@@ -62,7 +62,7 @@ template<class TypeTag> class FVPressure1P: public FVPressure<TypeTag>
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    using Fluid = typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
@@ -200,8 +200,8 @@ public:
         Scalar temperature = problem_.temperature(element);
         Scalar referencePress = problem_.referencePressure(element);
 
-        density_ = Fluid::density(temperature, referencePress);
-        viscosity_ = Fluid::viscosity(temperature, referencePress);
+        density_ = FluidSystem::density(temperature, referencePress);
+        viscosity_ = FluidSystem::viscosity(temperature, referencePress);
     }
 
 private:

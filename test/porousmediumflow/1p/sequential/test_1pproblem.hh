@@ -76,7 +76,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    using Fluid = typename GET_PROP_TYPE(TypeTag, FluidSystem)::Fluid;
+    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
@@ -252,7 +252,7 @@ private:
         Scalar fx = dkxxdx * dpdx + kxx * dppdxx + dkxydx * dpdy + kxy * dppdyx;
         Scalar fy = dkxydy * dpdx + kxy * dppdxy + dkyydy * dpdy + kyy * dppdyy;
 
-        return -(fx + fy) / Fluid::viscosity(temp, referencePress) * Fluid::density(temp, referencePress);
+        return -(fx + fy) / FluidSystem::viscosity(temp, referencePress) * FluidSystem::density(temp, referencePress);
     }
 
     double delta_;
