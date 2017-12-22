@@ -26,6 +26,7 @@
 #ifndef DUMUX_MPNC_LOCAL_RESIDUAL_HH
 #define DUMUX_MPNC_LOCAL_RESIDUAL_HH
 
+#include <dune/istl/bvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/porousmediumflow/compositional/localresidual.hh>
