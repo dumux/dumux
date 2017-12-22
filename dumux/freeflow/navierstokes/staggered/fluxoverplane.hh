@@ -18,7 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup FreeflowModels
+ * \ingroup NavierStokesModel
  * \copydoc Dumux::FluxOverPlane
  */
 #ifndef DUMUX_FLUX_OVER_PLANE_STAGGERED_HH
@@ -38,7 +38,7 @@
 namespace Dumux {
 
 /*!
- * \ingroup FreeflowModels
+ * \ingroup NavierStokesModel
  * \brief  Class used to calculate fluxes over planes. This only works for the staggered grid discretization.
  */
 template <class TypeTag>
