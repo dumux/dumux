@@ -24,7 +24,8 @@
 #ifndef DUMUX_FV_LOCAL_RESIDUAL_HH
 #define DUMUX_FV_LOCAL_RESIDUAL_HH
 
-#include <dune/istl/matrix.hh>
+#include <dune/common/exceptions.hh>
+#include <dune/istl/bvector.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
