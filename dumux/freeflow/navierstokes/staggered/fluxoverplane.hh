@@ -234,7 +234,7 @@ public:
     {
         const std::vector< Dune::FieldVector< Scalar, dim > > corners = {p0, p1, p2, p3};
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-        return PlaneGeometryType(Dune::GeometryTypes::quadrilaterial, corners);
+        return PlaneGeometryType(Dune::GeometryTypes::quadrilateral, corners);
 #else
         return PlaneGeometryType(Dune::GeometryType::cube, corners);
 #endif
