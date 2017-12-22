@@ -19,10 +19,10 @@ you access to the documentation by category.
 
 \section params Parameters
 
-An overview of all availabe parameters is given in \ref parameterlist.txt.
+An overview of all availabe parameters will be available soon.
 
 \section features Features
 
-An overview of special features implemented in the DuMu<sup>X</sup>-test-problems is given in \ref featurelist.txt.
+An overview of special features implemented in the DuMu<sup>X</sup>-test-problems will be available soon.
 
 */
