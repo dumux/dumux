@@ -16,3 +16,4 @@ CoarsenTolerance = 0.001 # threshold for coarsening criterion
 
 [Problem]
 Name = test_2padaptive # name passed to the output routines
+EnableGravity = false

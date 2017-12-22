@@ -56,11 +56,6 @@ NEW_TYPE_TAG(TestIMPESAdaptiveRestartProblem, INHERITS_FROM(TestIMPESAdaptivePro
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 #endif
 
-#if HAVE_DUNE_ALUGRID
-// reset the GridCreator to the standard one for testing the restart functionality
-SET_TYPE_PROP(TestIMPESAdaptiveRestartProblem, GridCreator, GridCreator<TypeTag>);
-#endif
-
 // Set the problem property
 SET_TYPE_PROP(TestIMPESAdaptiveProblem, Problem, TestIMPESAdaptiveProblem<TypeTag>);
 
@@ -134,9 +129,8 @@ public:
         // Refine the grid provided that no restart occurs. Otherwise, an
         // already refined grid will be read.
         if (!(haveParam("Restart") || haveParam("TimeManager.Restart")))
-        {
-            GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
-        }
+            GridCreator::grid().globalRefine(getParam<int>("GridAdapt.MaxLevel"));
+
         this->setGrid(GridCreator::grid());
 
         this->setOutputInterval(10);

@@ -1060,9 +1060,17 @@ public:
     static void makeGrid(const std::string& modelParamGroup = "", bool adaptiveRestart = false)
     {
         // restarting an adaptive grid using Dune's BackupRestoreFacility
-        if (adaptiveRestart)
+        // TODO: the part after first || is backward compatibilty with old sequential models remove once sequential adpative restart is replaced
+        if (adaptiveRestart || haveParam("Restart") || haveParam("TimeManager.Restart"))
         {
-            const auto restartTime = getParamFromGroup<double>(modelParamGroup, "TimeLoop.Restart");
+            auto restartTime = getParamFromGroup<double>(modelParamGroup, "TimeLoop.Restart", 0.0);
+            // TODO: backward compatibilty with old sequential models remove once sequential adpative restart is replaced
+            if (haveParam("Restart") || haveParam("TimeManager.Restart"))
+            {
+                restartTime = getParamFromGroup<double>("TimeManager", "Restart");
+                std::cerr << "Warning: You are using a deprecated restart mechanism. The usage will change in the future.\n";
+            }
+
             const int rank = Dune::MPIHelper::getCollectiveCommunication().rank();
             const std::string name = getParamFromGroup<std::string>(modelParamGroup, "Problem.Name");
             std::ostringstream oss;
