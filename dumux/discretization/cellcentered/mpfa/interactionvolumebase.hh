@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 
 namespace Dumux
@@ -59,8 +61,6 @@ namespace Dumux
  * using LocalScvfType = ...;
  * //! export the type of used for the iv-local face data
  * using LocalFaceData = ...;
- * //! export the type of face data container
- * using LocalFaceDataContainer = ...;
  * //! export the type used for iv-local matrices
  * using Matrix = ...;
  * //! export the type used for iv-local vectors
@@ -84,8 +84,8 @@ template< class Impl, class T>
 class CCMpfaInteractionVolumeBase
 {
     // Curiously recurring template pattern
-    Impl & asImp() { return static_cast<Impl&>(*this); }
-    const Impl & asImp() const { return static_cast<const Impl&>(*this); }
+    Impl& asImp() { return static_cast<Impl&>(*this); }
+    const Impl& asImp() const { return static_cast<const Impl&>(*this); }
 
     using Problem = typename T::Problem;
     using FVElementGeometry = typename T::FVElementGeometry;
@@ -116,11 +116,11 @@ public:
     //! returns the number of scvs embedded in this interaction volume
     std::size_t numScvs() const { return asImp().numScvs(); }
 
-    //! returns the number of scvfs embedded in this interaction volume
-    std::size_t numScvfs() const { return asImp().numScvfs(); }
-
-    //! returns a reference to the container with the local face data
-    const typename Traits::LocalFaceDataContainer& localFaceData() const { asImp().localFaceData(); }
+    //! Returns a reference to the container with the local face data. The actual type of
+    //! the container depends on the interaction volume implementation. At this point we throw
+    //! an exception and force the implementation to overload this function.
+    const std::vector<typename Traits::LocalFaceData>& localFaceData() const
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() funtion"); }
 
     //! returns the cell-stencil of this interaction volume
     const typename Traits::Stencil& stencil() const { return asImp().stencil(); }

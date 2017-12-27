@@ -123,7 +123,7 @@ class CCMpfaElementFluxVariablesCache<TypeTag, false>
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
     using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-    using SecondaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
+    using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
 
 public:
     CCMpfaElementFluxVariablesCache(const GridFluxVariablesCache& global)

@@ -28,6 +28,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/matrixvectorhelper.hh>
 
 namespace Dumux
 {
@@ -63,17 +64,17 @@ public:
     void resize(const InteractionVolume& iv)
     {
         // resize transmissibility matrix & pressure vectors
-        T_.resize(iv.numFaces(), iv.numKnowns());
+        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-            p_[pIdx].resize(iv.numKnowns());
+            resizeVector(p_[pIdx], iv.numKnowns());
 
         // maybe resize gravity container
         static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
         if (enableGravity)
         {
-            CA_.resize(iv.numFaces(), iv.numUnknowns());
+            resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                g_[pIdx].resize(iv.numFaces());
+                resizeVector(g_[pIdx], iv.numFaces());
         }
     }
 
@@ -86,31 +87,31 @@ public:
 
         if (!enableGravity)
         {
-            T_.resize(iv.numFaces(), iv.numKnowns());
+            resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
             outsideT_.resize(iv.numFaces());
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                p_[pIdx].resize(iv.numKnowns());
 
+            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
+                resizeVector(p_[pIdx], iv.numKnowns());
             for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
             {
                 const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
                 outsideT_[i].resize(numNeighbors);
                 for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                    outsideT_[i][j].resize(iv.numKnowns());
+                    resizeVector(outsideT_[i][j], iv.numKnowns());
             }
         }
 
         else
         {
-            T_.resize(iv.numFaces(), iv.numKnowns());
-            CA_.resize(iv.numFaces(), iv.numUnknowns());
-            A_.resize(iv.numUnknowns(), iv.numUnknowns());
+            resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
+            resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
+            resizeMatrix(A_, iv.numUnknowns(), iv.numUnknowns());
             outsideT_.resize(iv.numFaces());
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
             {
-                p_[pIdx].resize(iv.numKnowns());
-                g_[pIdx].resize(iv.numFaces());
+                resizeVector(p_[pIdx], iv.numKnowns());
+                resizeVector(g_[pIdx], iv.numFaces());
                 outsideG_[pIdx].resize(iv.numFaces());
             }
 
@@ -120,12 +121,10 @@ public:
                 outsideT_[i].resize(numNeighbors);
 
                 for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    outsideG_[pIdx][i].resize(numNeighbors);
-
+                    resizeVector(outsideG_[pIdx][i], numNeighbors);
                 for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                    outsideT_[i][j].resize(iv.numKnowns());
+                    resizeVector(outsideT_[i][j], iv.numKnowns());
             }
-
         }
     }
 
@@ -208,8 +207,8 @@ public:
                     continue;
 
                 // resize transmissibility matrix & mole fraction vector
-                T_[pIdx][cIdx].resize(iv.numFaces(), iv.numKnowns());
-                xj_[pIdx][cIdx].resize(iv.numKnowns());
+                resizeMatrix(T_[pIdx][cIdx], iv.numFaces(), iv.numKnowns());
+                resizeVector(xj_[pIdx][cIdx], iv.numKnowns());
 
                 // resize outsideTij on surface grids
                 if (dim < dimWorld)
@@ -218,7 +217,12 @@ public:
 
                     using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
                     for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-                      outsideT_[pIdx][cIdx][i].resize(iv.localScvf(i).neighboringLocalScvIndices().size()-1);
+                    {
+                        const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
+                        outsideT_[pIdx][cIdx][i].resize(numNeighbors);
+                        for (LocalIndexType j = 0; j < numNeighbors; ++j)
+                            resizeVector(outsideT_[pIdx][cIdx][i][j], iv.numKnowns());
+                    }
                 }
             }
         }
@@ -261,8 +265,8 @@ public:
     void resize(const InteractionVolume& iv)
     {
         //! resize transmissibility matrix & temperature vector
-        T_.resize(iv.numFaces(), iv.numKnowns());
-        Tj_.resize(iv.numKnowns());
+        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
+        resizeVector(Tj_, iv.numKnowns());
 
         //! resize outsideTij on surface grids
         if (dim < dimWorld)
@@ -271,7 +275,12 @@ public:
 
             using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
             for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-              outsideT_[i].resize(iv.localScvf(i).neighboringLocalScvIndices().size()-1);
+            {
+                const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
+                outsideT_[i].resize(numNeighbors);
+                for (LocalIndexType j = 0; j < numNeighbors; ++j)
+                    resizeVector(outsideT_[i][j], iv.numKnowns());
+            }
         }
     }
 

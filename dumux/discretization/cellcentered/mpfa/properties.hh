@@ -50,6 +50,7 @@
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
+#include <dumux/discretization/cellcentered/mpfa/omethod/staticinteractionvolume.hh>
 
 namespace Dumux
 {
@@ -73,7 +74,7 @@ SET_PROP(CCMpfaModel, MpfaMethod)
 //! The mpfa helper class
 SET_TYPE_PROP(CCMpfaModel, MpfaHelper, CCMpfaHelper<TypeTag>);
 
-//! Per default, we use the mpfa-o interaction volume
+//! Per default, we use the dynamic mpfa-o interaction volume
 SET_PROP(CCMpfaModel, PrimaryInteractionVolume)
 {
 private:
@@ -83,10 +84,15 @@ public:
     using type = CCMpfaOInteractionVolume< Traits >;
 };
 
-//! Per default, we use the mpfa-o interaction volume everywhere (pure mpfa-o scheme)
-SET_TYPE_PROP(CCMpfaModel,
-              SecondaryInteractionVolume,
-              typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume));
+//! Per default, we use the dynamic mpfa-o interaction volume as secondary type
+SET_PROP(CCMpfaModel, SecondaryInteractionVolume)
+{
+private:
+    //! use the default traits
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< TypeTag >;
+public:
+    using type = CCMpfaOInteractionVolume< Traits >;
+};
 
 //! Set the default for the global finite volume geometry
 SET_TYPE_PROP(CCMpfaModel,

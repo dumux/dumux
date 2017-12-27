@@ -124,21 +124,16 @@ public:
     //! Get an element from a sub control volume contained in it
     Element element(const SubControlVolume& scv) const { return this->elementMap()[scv.elementIndex()]; }
 
-    //! Returns true if primary interaction volumes are used around a given vertex.
-    bool vertexUsesPrimaryInteractionVolume(const Vertex& v) const
-    { return primaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
-
-    //!Returns true if primary interaction volumes are used around a vertex (index).
-    bool vertexUsesPrimaryInteractionVolume(GridIndexType vIdxGlobal) const
-    { return primaryInteractionVolumeVertices_[vIdxGlobal]; }
-
-    //! Returns if primary interaction volumes are used around a given vertex.
-    bool vertexUsesSecondaryInteractionVolume(const Vertex& v) const
-    { return secondaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
-
-    //! Returns true if primary interaction volumes are used around a given vertex index.
+    //! Returns true if secondary interaction volumes are used around a given vertex (index).
+    //! This specialization is enabled if the use of secondary interaction volumes is active.
+    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<useSecondary, int> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
+
+    //! Returns true if secondary interaction volumes are used around a given vertex (index).
+    //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
+    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<!useSecondary, int> = 0>
+    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
 
     //! update all fvElementGeometries (do this again after grid adaption)
     void update()
@@ -163,7 +158,6 @@ public:
 
         // Some methods require to use a second type of interaction volume, e.g.
         // around vertices on the boundary or branching points (surface grids)
-        primaryInteractionVolumeVertices_.resize(numVert, true);
         secondaryInteractionVolumeVertices_.resize(numVert, false);
 
         // find vertices on processor boundaries
@@ -245,10 +239,7 @@ public:
 
                     // if this vertex is tagged to use the secondary IVs, store info
                     if (usesSecondaryIV)
-                    {
-                        primaryInteractionVolumeVertices_[vIdxGlobal] = false;
                         secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
-                    }
 
                     // the quadrature point parameterizarion to be used on scvfs
                     static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
@@ -381,7 +372,6 @@ private:
 
     // containers storing the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
-    std::vector<bool> primaryInteractionVolumeVertices_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
     std::size_t numBoundaryScvf_;
 
@@ -472,21 +462,16 @@ public:
     //! Gets an element from a sub control volume contained in it.
     Element element(const SubControlVolume& scv) const { return this->elementMap()[scv.elementIndex()]; }
 
-    //! Returns true if primary interaction volumes are used around a given vertex.
-    bool vertexUsesPrimaryInteractionVolume(const Vertex& v) const
-    { return primaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
-
-    //! Returns true if primary interaction volumes are used around a given vertex (index).
-    bool vertexUsesPrimaryInteractionVolume(GridIndexType vIdxGlobal) const
-    { return primaryInteractionVolumeVertices_[vIdxGlobal]; }
-
-    //! Returns if primary interaction volumes are used around a given vertex.
-    bool vertexUsesSecondaryInteractionVolume(const Vertex& v) const
-    { return secondaryInteractionVolumeVertices_[this->vertexMapper().index(v)]; }
-
-    //! Returns true if primary interaction volumes are used around a given vertex (index).
+    //! Returns true if secondary interaction volumes are used around a given vertex (index).
+    //! This specialization is enabled if the use of secondary interaction volumes is active.
+    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<useSecondary, int> = 0>
     bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const
     { return secondaryInteractionVolumeVertices_[vIdxGlobal]; }
+
+    //! Returns true if secondary interaction volumes are used around a given vertex (index).
+    //! If the use of secondary interaction volumes is disabled, this can be evaluated at compile time.
+    template<bool useSecondary = MpfaHelper::considerSecondaryIVs(), std::enable_if_t<!useSecondary, int> = 0>
+    constexpr bool vertexUsesSecondaryInteractionVolume(GridIndexType vIdxGlobal) const { return false; }
 
     //! Returns true if a given vertex lies on a processor boundary inside a ghost element.
     bool isGhostVertex(const Vertex& v) const { return isGhostVertex_[this->vertexMapper().index(v)]; }
@@ -510,7 +495,6 @@ public:
         // Some methods require to use a second type of interaction volume, e.g.
         // around vertices on the boundary or branching points (surface grids)
         const auto numVert = this->gridView().size(dim);
-        primaryInteractionVolumeVertices_.resize(numVert, true);
         secondaryInteractionVolumeVertices_.resize(numVert, false);
 
         // find vertices on processor boundaries HERE!!
@@ -588,10 +572,7 @@ public:
 
                     // if this vertex is tagged to use the secondary IVs, store info
                     if (usesSecondaryIV)
-                    {
-                        primaryInteractionVolumeVertices_[vIdxGlobal] = false;
                         secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
-                    }
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     const auto& outsideScvIndices = [&] ()
@@ -665,7 +646,6 @@ private:
     // containers storing the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
     std::vector< std::vector< std::vector<GridIndexType> > > neighborVolVarIndices_;
-    std::vector<bool> primaryInteractionVolumeVertices_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
     std::vector<bool> isGhostVertex_;
     std::size_t numScvs_;

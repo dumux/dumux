@@ -20,17 +20,18 @@
  * \file
  * \ingroup CCMpfaDiscretization
  * \brief Class for the assembly of the local systems of equations
- *        involved in the transmissibility computaion in the mpfa-o scheme.
+ *        involved in the transmissibility computaion in an mpfa-o type manner.
  */
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_LOCAL_ASSEMBLER_HH
 
 #include <dumux/common/math.hh>
 #include <dumux/common/properties.hh>
+#include <dumux/common/matrixvectorhelper.hh>
 
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/localassembler.hh>
 #include <dumux/discretization/cellcentered/mpfa/computetransmissibility.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
 namespace Dumux
 {
@@ -38,16 +39,15 @@ namespace Dumux
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Specialization of the interaction volume-local
- *        assembler class for the mpfa-o scheme.
+ *        assembler class for the schemes using an mpfa-o type assembly.
  *
- * \tparam IVTraits The traits class of the interaction volume
+ * \tparam IVTraits The traits class used by the interaction volume implemetation
  */
 template< class IVTraits >
-class InteractionVolumeAssemblerImpl< CCMpfaOInteractionVolume<IVTraits> >
-      : public InteractionVolumeAssemblerBase< CCMpfaOInteractionVolume<IVTraits> >
+class InteractionVolumeAssemblerImpl< IVTraits, MpfaMethods::oMethod >
+      : public InteractionVolumeAssemblerBase< IVTraits >
 {
-    using InteractionVolume = CCMpfaOInteractionVolume< IVTraits >;
-    using ParentType = InteractionVolumeAssemblerBase< InteractionVolume >;
+    using ParentType = InteractionVolumeAssemblerBase< IVTraits >;
 
     using LocalIndexType = typename IVTraits::LocalIndexType;
     using Matrix = typename IVTraits::Matrix;
@@ -61,15 +61,19 @@ public:
     using ParentType::ParentType;
 
     /*!
-     * \brief Assembles the transmissibility matrix
-     *        within an interaction volume for the mpfa-o scheme.
+     * \brief Assembles the transmissibility matrix within an
+     *        interaction volume in an mpfa-o type way.
+     *
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
      *
      * \param T The transmissibility matrix to be assembled
-     * \param iv The mpfa-o interaction volume
+     * \param iv The interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class GetTensorFunction >
-    void assemble(Matrix& T, InteractionVolume& iv, const GetTensorFunction& getTensor)
+    template< class IV, class GetTensor >
+    void assemble(Matrix& T, IV& iv, const GetTensor& getTensor)
     {
         // assemble D into T directly
         assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
@@ -89,13 +93,18 @@ public:
      *        matrix for surface grids. The transmissibilities associated
      *        with "outside" faces are stored in a separate container.
      *
+     * \tparam TOutside Container to store the "outside" transmissibilities
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param outsideTij tij on "outside" faces to be assembled
      * \param T The transmissibility matrix tij to be assembled
-     * \param iv The mpfa-o interaction volume
+     * \param iv The interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class OutsideTijContainer, class GetTensorFunction >
-    void assemble(OutsideTijContainer& outsideTij, Matrix& T, InteractionVolume& iv, const GetTensorFunction& getTensor)
+    template< class TOutside, class IV, class GetTensor >
+    void assemble(TOutside& outsideTij, Matrix& T, IV& iv, const GetTensor& getTensor)
     {
         // assemble D into T directly
         assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
@@ -154,18 +163,20 @@ public:
      *        computation in the case that gravity is to be considered in
      *        the local system of equations.
      *
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param T The transmissibility matrix to be assembled
      * \param g Container to assemble gravity per scvf & phase
      * \param CA Matrix to store matrix product C*A^-1
      * \param iv The mpfa-o interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class GravityContainer, class GetTensorFunction >
-    void assembleWithGravity(Matrix& T,
-                             GravityContainer& g,
-                             Matrix& CA,
-                             InteractionVolume& iv,
-                             const GetTensorFunction& getTensor)
+    template< class GC, class IV, class GetTensor >
+    void assembleWithGravity(Matrix& T, GC& g, Matrix& CA, IV& iv, const GetTensor& getTensor)
     {
         // assemble D into T & C into CA directly
         assembleLocalMatrices_(iv.A(), iv.B(), CA, T, iv, getTensor);
@@ -190,6 +201,14 @@ public:
      *        on surface grids, where the gravitational flux contributions
      *        on "outside" faces are stored in a separate container.
      *
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam GOut Type of container used to store gravity on "outside" faces
+     * \tparam TOutside Container to store the "outside" transmissibilities
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param outsideTij tij on "outside" faces to be assembled
      * \param T The transmissibility matrix to be assembled
      * \param outsideG Container to assemble gravity on "outside" faces
@@ -199,18 +218,15 @@ public:
      * \param iv The mpfa-o interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class GravityContainer,
-              class OutsideGravityContainer,
-              class OutsideTijContainer,
-              class GetTensorFunction >
-    void assembleWithGravity(OutsideTijContainer& outsideTij,
+    template< class GC, class GOut, class TOutside, class IV, class GetTensor >
+    void assembleWithGravity(TOutside& outsideTij,
                              Matrix& T,
-                             OutsideGravityContainer& outsideG,
-                             GravityContainer& g,
+                             GOut& outsideG,
+                             GC& g,
                              Matrix& CA,
                              Matrix& A,
-                             InteractionVolume& iv,
-                             const GetTensorFunction& getTensor)
+                             IV& iv,
+                             const GetTensor& getTensor)
     {
         // assemble D into T directly
         assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
@@ -271,18 +287,17 @@ public:
      * \brief Assembles the vector of primary (cell) unknowns and (maybe)
      *        Dirichlet boundary conditions within an interaction volume.
      *
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetU Lambda to obtain the cell unknowns from grid indices
+     *
      * \param u The vector to be filled with the cell unknowns
      * \param iv The mpfa-o interaction volume
      * \param getU Lambda to obtain the desired cell/Dirichlet value from grid index
      */
-    template< class GetU >
-    void assemble(Vector& u, const InteractionVolume& iv, const GetU& getU)
+    template< class IV, class GetU >
+    void assemble(Vector& u, const IV& iv, const GetU& getU)
     {
-        // resize given container
-        u.resize(iv.numKnowns());
-
         // put the cell pressures first
-
         for (LocalIndexType i = 0; i < iv.numScvs(); ++i)
             u[i] = getU( iv.localScv(i).globalScvIndex() );
 
@@ -300,17 +315,19 @@ public:
      *        evaluated. Thus, make sure to only call this with a lambda that returns the
      *        hydraulic conductivity.
      *
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param g Container to assemble gravity per scvf & phase
      * \param iv The mpfa-o interaction volume
      * \param CA Projection matrix transforming the gravity terms in the local system of
      *        equations to the entire set of faces within the interaction volume
      * \param getTensor Lambda to evaluate scv-wise hydraulic conductivities
      */
-    template< class GravityContainer, class GetTensorFunction >
-    void assembleGravity(GravityContainer& g,
-                         const InteractionVolume& iv,
-                         const Matrix& CA,
-                         const GetTensorFunction& getTensor)
+    template< class GC, class IV, class GetTensor >
+    void assembleGravity(GC& g, const IV& iv, const Matrix& CA, const GetTensor& getTensor)
     {
         //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
         //! - first index adresses the respective phases
@@ -329,8 +346,14 @@ public:
 
         // reset gravity containers to zero
         const auto numPhases = g.size();
-        std::vector< Vector > sum_alphas(numPhases, Vector(iv.numUnknowns(), 0.0));
-        std::for_each(g.begin(), g.end(), [&iv](auto& v) { v = 0.0; });
+        std::vector< Vector > sum_alphas(numPhases);
+
+        for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
+        {
+            resizeVector(sum_alphas[pIdx], iv.numUnknowns());
+            sum_alphas[pIdx] = 0.0;
+            g[pIdx] = 0.0;
+        }
 
         for (LocalIndexType faceIdx = 0; faceIdx < iv.numFaces(); ++faceIdx)
         {
@@ -412,6 +435,13 @@ public:
      *        evaluated. Thus, make sure to only call this with a lambda that returns the
      *        hydraulic conductivity.
      *
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam GOut Type of container used to store gravity on "outside" faces
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param g Container to store gravity per scvf & phase
      * \param outsideG Container to store gravity per "outside" scvf & phase
      * \param iv The mpfa-o interaction volume
@@ -420,15 +450,13 @@ public:
      * \param A Matrix needed for the "reconstruction" of face unknowns as a function of gravity
      * \param getTensor Lambda to evaluate scv-wise hydraulic conductivities
      */
-    template< class GravityContainer,
-              class OutsideGravityContainer,
-              class GetTensorFunction >
-    void assembleGravity(GravityContainer& g,
-                         OutsideGravityContainer& outsideG,
-                         const InteractionVolume& iv,
+    template< class GC, class GOut, class IV, class GetTensor >
+    void assembleGravity(GC& g,
+                         GOut& outsideG,
+                         const IV& iv,
                          const Matrix& CA,
                          const Matrix& A,
-                         const GetTensorFunction& getTensor)
+                         const GetTensor& getTensor)
     {
         //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
         //! - first index adresses the respective phases
@@ -453,10 +481,12 @@ public:
 
         // reset everything to zero
         const auto numPhases = g.size();
-        std::vector< Vector > sum_alphas(numPhases, Vector(iv.numUnknowns(), 0.0));
+        std::vector< Vector > sum_alphas(numPhases);
 
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
         {
+            resizeVector(sum_alphas[pIdx], iv.numUnknowns());
+            sum_alphas[pIdx] = 0.0;
             g[pIdx] = 0.0;
             std::for_each(outsideG[pIdx].begin(), outsideG[pIdx].end(), [] (auto& v) { v = 0.0; });
         }
@@ -585,6 +615,10 @@ private:
      *
      * \note  The matrices are expected to have been resized beforehand.
      *
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param A The A matrix of the iv-local equation system
      * \param B The B matrix of the iv-local equation system
      * \param C The C matrix of the iv-local flux expressions
@@ -592,10 +626,9 @@ private:
      * \param iv The mpfa-o interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class GetTensorFunction >
+    template< class IV, class GetTensor >
     void assembleLocalMatrices_(Matrix& A, Matrix& B,  Matrix& C, Matrix& D,
-                                InteractionVolume& iv,
-                                const GetTensorFunction& getTensor)
+                                IV& iv, const GetTensor& getTensor)
     {
         // Matrix D is assumed to have the right size already
         assert(D.rows() == iv.numFaces() && D.cols() == iv.numKnowns() && "Matrix D does not have the correct size");

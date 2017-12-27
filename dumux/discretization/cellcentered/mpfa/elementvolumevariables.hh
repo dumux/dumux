@@ -194,7 +194,7 @@ public:
             // Update boundary volume variables in the neighbors
             for (const auto& scvf : scvfs(fvGeometry))
             {
-                if (fvGridGeometry.vertexUsesPrimaryInteractionVolume(scvf.vertexIndex()))
+                if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 {
                     const auto& nodalIndexSet = gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet();
                     // if present, insert boundary vol vars
@@ -298,7 +298,7 @@ private:
         std::size_t numBoundaryVolVars = 0;
         for (const auto& scvf : scvfs(fvGeometry))
         {
-            if (fvGridGeometry.vertexUsesPrimaryInteractionVolume(scvf.vertexIndex()))
+            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(scvf.vertexIndex()))
                 numBoundaryVolVars += gridIvIndexSets.primaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();
             else
                 numBoundaryVolVars += gridIvIndexSets.secondaryIndexSet(scvf).nodalIndexSet().numBoundaryScvfs();

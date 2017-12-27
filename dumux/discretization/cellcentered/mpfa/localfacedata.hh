@@ -47,6 +47,9 @@ class InteractionVolumeLocalFaceData
     bool isOutside_;                           //!< indicates if this face maps to the iv-local index from "outside"
 
 public:
+    //! Default constructor
+    InteractionVolumeLocalFaceData() = default;
+
     //! Constructor
     InteractionVolumeLocalFaceData(LocalIndexType faceIndex,
                                    LocalIndexType scvIndex,

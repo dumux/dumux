@@ -123,21 +123,40 @@ public:
         static_assert(FluidSystem::viscosityIsConstant(0),
                       "1p/incompressiblelocalresidual.hh: Only fluids with constant viscosities are allowed!");
 
-        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& volVarIndices = fluxVarsCache.advectionStencil();
-        const auto& tij = fluxVarsCache.advectionTij();
-
         // we know the "upwind factor" is constant, get inner one here and compute derivatives
         static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
 
-        // add partial derivatives to the respective given matrices
-        for (unsigned int i = 0; i < volVarIndices.size();++i)
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        if (fluxVarsCache.usesSecondaryIv())
         {
-            if (fluxVarsCache.advectionSwitchFluxSign())
-                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
-            else
-                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+            const auto& stencil = fluxVarsCache.advectionStencilSecondaryIv();
+            const auto& tij = fluxVarsCache.advectionTijSecondaryIv();
+            assert(stencil.size() == tij.size());
+
+            // add partial derivatives to the respective given matrices
+            for (unsigned int i = 0; i < stencil.size();++i)
+            {
+                if (fluxVarsCache.advectionSwitchFluxSign())
+                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
+                else
+                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+            }
+        }
+        else
+        {
+            const auto& stencil = fluxVarsCache.advectionStencilPrimaryIv();
+            const auto& tij = fluxVarsCache.advectionTijPrimaryIv();
+            assert(stencil.size() == tij.size());
+
+            // add partial derivatives to the respective given matrices
+            for (unsigned int i = 0; i < stencil.size();++i)
+            {
+                if (fluxVarsCache.advectionSwitchFluxSign())
+                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
+                else
+                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+            }
         }
     }
 
@@ -210,22 +229,7 @@ public:
                                   const ElementFluxVariablesCache& elemFluxVarsCache,
                                   const SubControlVolumeFace& scvf) const
     {
-        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& volVarIndices = fluxVarsCache.advectionStencil();
-        const auto& tij = fluxVarsCache.advectionTij();
-
-        // we know the "upwind factor" is constant, get inner one here and compute derivatives
-        static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
-                                 / curElemVolVars[scvf.insideScvIdx()].viscosity();
-
-        // add partial derivatives to the respective given matrices
-        for (unsigned int i = 0; i < volVarIndices.size();++i)
-        {
-            if (fluxVarsCache.advectionSwitchFluxSign())
-                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
-            else
-                derivativeMatrices[volVarIndices[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
-        }
+        addFluxDerivatives(derivativeMatrices, problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
     }
 
     //! Robin-type flux derivatives

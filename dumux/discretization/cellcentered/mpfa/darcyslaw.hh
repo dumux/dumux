@@ -44,7 +44,7 @@ class DarcysLawImplementation;
  * \ingroup CCMpfaDiscretization
  * \brief Darcy's law for cell-centered finite volume schemes with multi-point flux approximation.
  */
-template <class TypeTag>
+template<class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -93,73 +93,55 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-        using GridIndexType = typename GridView::IndexSet::IndexType;
 
-        // In the current implementation of the flux variables cache we cannot
-        // make a disctinction between dynamic (mpfa-o) and static (mpfa-l)
+        using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+        static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
+
+        // In the current implementation of the flux variables cache we cannot make a
+        // disctinction between dynamic (e.g. mpfa-o unstructured) and static (e.g.mpfa-l)
         // matrix and vector types, as currently the cache class can only be templated
-        // by a type tag (and there can only be one). We use a dynamic vector here to
-        // make sure it works in case one of the two used interaction volume types uses
-        // dynamic types performance is thus lowered for schemes using static types.
-        // TODO: this has to be checked thoroughly as soon as a scheme using static types
-        //       is implemented. One idea to overcome the performance drop could be only
-        //       storing the iv-local index here and obtain tij always from the datahandle
-        //       of the fluxVarsCacheContainer
-        using Vector = Dune::DynamicVector< Scalar >;
-        using Matrix = Dune::DynamicMatrix< Scalar >;
-        using Stencil = std::vector< GridIndexType >;
-
+        // by a type tag (and there can only be one). Currently, pointers to both the
+        // primary and secondary iv data is stored. Before accessing it has to be checked
+        // whether or not the scvf is embedded in a secondary interaction volume.
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
+        using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
-        using PrimaryStencil = typename PrimaryInteractionVolume::Traits::Stencil;
-
-        static_assert( std::is_convertible<PrimaryIvVector*, Vector*>::value,
-                       "The vector type used in primary interaction volumes is not convertible to Dune::DynamicVector!" );
-        static_assert( std::is_convertible<PrimaryIvMatrix*, Matrix*>::value,
-                       "The matrix type used in primary interaction volumes is not convertible to Dune::DynamicMatrix!" );
-        static_assert( std::is_convertible<PrimaryStencil*, Stencil*>::value,
-                       "The stencil type used in primary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+        using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
+        using PrimaryIvStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+        using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
+        using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
-        using SecondaryStencil = typename SecondaryInteractionVolume::Traits::Stencil;
-
-        static_assert( std::is_convertible<SecondaryIvVector*, Vector*>::value,
-                       "The vector type used in secondary interaction volumes is not convertible to Dune::DynamicVector!" );
-        static_assert( std::is_convertible<SecondaryIvMatrix*, Matrix*>::value,
-                       "The matrix type used in secondary interaction volumes is not convertible to Dune::DynamicMatrix!" );
-        static_assert( std::is_convertible<SecondaryStencil*, Stencil*>::value,
-                       "The stencil type used in secondary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+        using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
+        using SecondaryIvStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
     public:
         // export the filler type
         using Filler = MpfaDarcysLawCacheFiller;
 
         /*!
-         * \brief Update cached objects (transmissibilities and gravity)
-         *
-         * \tparam InteractionVolume The (mpfa scheme-specific) interaction volume
-         * \tparam LocalFaceData The object used to store iv-local info on an scvf
-         * \tparam DataHandle The object used to store transmissibility matrices etc.
+         * \brief Update cached objects (transmissibilities and gravity).
+         *        This is used for updates with primary interaction volumes.
          *
          * \param iv The interaction volume this scvf is embedded in
          * \param localFaceData iv-local info on this scvf
          * \param dataHandle Transmissibility matrix & gravity data of this iv
          * \param scvf The sub-control volume face
          */
-        template< class InteractionVolume, class LocalFaceData, class DataHandle >
-        void updateAdvection(const InteractionVolume& iv,
-                             const LocalFaceData& localFaceData,
-                             const DataHandle& dataHandle,
+        void updateAdvection(const PrimaryInteractionVolume& iv,
+                             const PrimaryIvLocalFaceData& localFaceData,
+                             const PrimaryIvDataHandle& dataHandle,
                              const SubControlVolumeFace &scvf)
         {
-            stencil_ = &iv.stencil();
             switchFluxSign_ = localFaceData.isOutside();
+            primaryStencil_ = &iv.stencil();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                pj_[pIdx] = &dataHandle.pressures(pIdx);
+                primaryPj_[pIdx] = &dataHandle.pressures(pIdx);
 
             static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
@@ -167,20 +149,17 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
             // standard grids
             if (dim == dimWorld)
             {
-                Tij_ = &dataHandle.advectionT()[ivLocalIdx];
-
+                primaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
                 if (enableGravity)
                     for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                         g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
             }
-
             // surface grids
             else
             {
                 if (!localFaceData.isOutside())
                 {
-                    Tij_ = &dataHandle.advectionT()[ivLocalIdx];
-
+                    primaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
                     if (enableGravity)
                         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                             g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
@@ -188,8 +167,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                 else
                 {
                     const auto idxInOutsideFaces = localFaceData.scvfLocalOutsideScvfIndex();
-                    Tij_ = &dataHandle.advectionTout()[ivLocalIdx][idxInOutsideFaces];
-
+                    primaryTij_ = &dataHandle.advectionTout()[ivLocalIdx][idxInOutsideFaces];
                     if (enableGravity)
                         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
                             g_[phaseIdx] = dataHandle.gravityOutside(phaseIdx)[ivLocalIdx][idxInOutsideFaces];
@@ -197,14 +175,76 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
             }
         }
 
-        //! The stencil corresponding to the transmissibilities
-        const Stencil& advectionStencil() const { return *stencil_; }
+        /*!
+         * \brief Update cached objects (transmissibilities and gravity).
+         *        This is used for updates with secondary interaction volumes.
+         *
+         * \param iv The interaction volume this scvf is embedded in
+         * \param localFaceData iv-local info on this scvf
+         * \param dataHandle Transmissibility matrix & gravity data of this iv
+         * \param scvf The sub-control volume face
+         */
+        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int > = 0 >
+        void updateAdvection(const SecondaryInteractionVolume& iv,
+                             const SecondaryIvLocalFaceData& localFaceData,
+                             const SecondaryIvDataHandle& dataHandle,
+                             const SubControlVolumeFace &scvf)
+        {
+            switchFluxSign_ = localFaceData.isOutside();
+            secondaryStencil_ = &iv.stencil();
 
-        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions
-        const Vector& advectionTij() const { return *Tij_; }
+            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
+                secondaryPj_[pIdx] = &dataHandle.pressures(pIdx);
 
-        //! The cell (& Dirichlet) pressures within this interaction volume
-        const Vector& pressures(unsigned int phaseIdx) const { return *pj_[phaseIdx]; }
+            static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+            const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
+
+            // standard grids
+            if (dim == dimWorld)
+            {
+                secondaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+                if (enableGravity)
+                    for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                        g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
+            }
+            // surface grids
+            else
+            {
+                if (!localFaceData.isOutside())
+                {
+                    secondaryTij_ = &dataHandle.advectionT()[ivLocalIdx];
+                    if (enableGravity)
+                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                            g_[phaseIdx] = dataHandle.gravity(phaseIdx)[ivLocalIdx];
+                }
+                else
+                {
+                    const auto idxInOutsideFaces = localFaceData.scvfLocalOutsideScvfIndex();
+                    secondaryTij_ = &dataHandle.advectionTout()[ivLocalIdx][idxInOutsideFaces];
+                    if (enableGravity)
+                        for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                            g_[phaseIdx] = dataHandle.gravityOutside(phaseIdx)[ivLocalIdx][idxInOutsideFaces];
+                }
+            }
+        }
+
+        //! The stencil corresponding to the transmissibilities (primary type)
+        const PrimaryIvStencil& advectionStencilPrimaryIv() const { return *primaryStencil_; }
+
+        //! The stencil corresponding to the transmissibilities (secondary type)
+        const SecondaryIvStencil& advectionStencilSecondaryIv() const { return *secondaryStencil_; }
+
+        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (primary type)
+        const PrimaryIvTij& advectionTijPrimaryIv() const { return *primaryTij_; }
+
+        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (secondary type)
+        const SecondaryIvTij& advectionTijSecondaryIv() const { return *secondaryTij_; }
+
+        //! The cell (& Dirichlet) pressures within this interaction volume (primary type)
+        const PrimaryIvVector& pressuresPrimaryIv(unsigned int phaseIdx) const { return *primaryPj_[phaseIdx]; }
+
+        //! The cell (& Dirichlet) pressures within this interaction volume (secondary type)
+        const SecondaryIvVector& pressuresSecondaryIv(unsigned int phaseIdx) const { return *secondaryPj_[phaseIdx]; }
 
         //! The gravitational acceleration for a phase on this scvf
         Scalar gravity(unsigned int phaseIdx) const { return g_[phaseIdx]; }
@@ -217,10 +257,21 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
 
     private:
         bool switchFluxSign_;
-        const Stencil* stencil_;                  //!< The stencil, i.e. the grid indices j
-        const Vector* Tij_;                       //!< The transmissibilities such that f = Tij*pj
-        std::array< Scalar, numPhases > g_;       //!< Gravitational flux contribution on this face
-        std::array<const Vector*, numPhases> pj_; //!< The interaction-volume wide phase pressures pj
+
+        //! The stencil, i.e. the grid indices j
+        const PrimaryIvStencil* primaryStencil_;
+        const SecondaryIvStencil* secondaryStencil_;
+
+        //! The transmissibilities such that f = Tij*pj
+        const PrimaryIvTij* primaryTij_;
+        const SecondaryIvTij* secondaryTij_;
+
+        //! The interaction-volume wide phase pressures pj
+        std::array<const PrimaryIvVector*, numPhases> primaryPj_;
+        std::array<const SecondaryIvVector*, numPhases> secondaryPj_;
+
+        //! Gravitational flux contribution on this face
+        std::array< Scalar, numPhases > g_;
     };
 
 public:
@@ -240,11 +291,21 @@ public:
                        const ElementFluxVariablesCache& elemFluxVarsCache)
     {
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-        const auto& tij = fluxVarsCache.advectionTij();
-        const auto& pj = fluxVarsCache.pressures(phaseIdx);
 
         // compute t_ij*p_j
-        Scalar scvfFlux = tij*pj;
+        Scalar scvfFlux;
+        if (fluxVarsCache.usesSecondaryIv())
+        {
+            const auto& tij = fluxVarsCache.advectionTijSecondaryIv();
+            const auto& pj = fluxVarsCache.pressuresSecondaryIv(phaseIdx);
+            scvfFlux = tij*pj;
+        }
+        else
+        {
+            const auto& tij = fluxVarsCache.advectionTijPrimaryIv();
+            const auto& pj = fluxVarsCache.pressuresPrimaryIv(phaseIdx);
+            scvfFlux = tij*pj;
+        }
 
         // maybe add gravitational acceleration
         static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");

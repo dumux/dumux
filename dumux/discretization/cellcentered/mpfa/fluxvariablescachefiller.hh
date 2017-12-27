@@ -43,6 +43,7 @@ template<class TypeTag>
 class CCMpfaFluxVariablesCacheFiller
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -208,6 +209,10 @@ private:
                                         unsigned int ivIndexInContainer,
                                         bool forceUpdateAll = false)
     {
+        // determine if secondary interaction volumes are used here
+        static constexpr bool isSecondary = MpfaHelper::considerSecondaryIVs()
+                                            && std::is_same<InteractionVolume, SecondaryInteractionVolume>::value;
+
         // First we upate data which are not dependent on the physical processes.
         // We store pointers to the other flux var caches, so that we have to obtain
         // this data only once and can use it again in the sub-cache fillers.
@@ -224,6 +229,7 @@ private:
             ivFluxVarCaches[i] = &fluxVarsCacheContainer[scvfJ];
             ivFluxVarCaches[i]->setIvIndexInContainer(ivIndexInContainer);
             ivFluxVarCaches[i]->setUpdateStatus(true);
+            ivFluxVarCaches[i]->setSecondaryIvUsage(isSecondary);
             i++;
         }
 
@@ -253,7 +259,8 @@ private:
         if (AdvectionMethod == DiscretizationMethods::CCMpfa)
         {
             // get instance of the interaction volume-local assembler
-            using IvLocalAssembler = InteractionVolumeAssembler< InteractionVolume >;
+            using IVTraits = typename InteractionVolume::Traits;
+            using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
             IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
             // Use different assembly if gravity is enabled
@@ -384,7 +391,8 @@ private:
         static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
         // get instance of the interaction volume-local assembler
-        using IvLocalAssembler = InteractionVolumeAssembler< InteractionVolume >;
+        using IVTraits = typename InteractionVolume::Traits;
+        using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
@@ -486,7 +494,8 @@ private:
         if (HeatConductionMethod == DiscretizationMethods::CCMpfa)
         {
             // get instance of the interaction volume-local assembler
-            using IvLocalAssembler = InteractionVolumeAssembler< InteractionVolume >;
+            using IVTraits = typename InteractionVolume::Traits;
+            using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
             IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
             if (forceUpdateAll || soldependentAdvection)
