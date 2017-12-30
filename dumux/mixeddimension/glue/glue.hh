@@ -34,6 +34,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dune/geometry/affinegeometry.hh>
+#include <dune/geometry/type.hh>
 
 #include <dumux/common/geometry/geometricentityset.hh>
 #include <dumux/common/geometry/boundingboxtree.hh>
@@ -106,7 +107,7 @@ public:
 
     //! get the intersection geometry
     Geometry geometry() const
-    { return Geometry(GeometryTypes::simplex(dimIs), corners_); }
+    { return Geometry(Dune::GeometryTypes::simplex(dimIs), corners_); }
 
     //! get the number of neigbors
     std::size_t neighbor(unsigned int side) const
@@ -153,6 +154,12 @@ public:
     // export intersection container type
     using Intersections = std::vector<Glue::Intersection<BulkGridView, LowDimGridView>>;
 
+
+    /*!
+     * \brief Default constructor
+     */
+    CCMixedDimensionGlue() = default;
+
     /*!
      * \brief Constructor
      */
@@ -169,8 +176,8 @@ public:
         // create a map to check whether intersection geometries were already inserted
         std::vector<std::vector<std::vector<GlobalPosition>>> intersectionMap;
         std::vector<std::vector<std::size_t>> intersectionIndex;
-        intersectionMap.resize(lowDimTree.entitySet().size(0));
-        intersectionIndex.resize(lowDimTree.entitySet().size(0));
+        intersectionMap.resize(lowDimTree.entitySet().size());
+        intersectionIndex.resize(lowDimTree.entitySet().size());
 
         for (const auto& rawIntersection : rawIntersections)
         {
