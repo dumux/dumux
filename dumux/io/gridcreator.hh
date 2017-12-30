@@ -1209,7 +1209,7 @@ public:
         // The required parameters
         using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
         const auto upperRight = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight");
-        const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.UpperRight", GlobalPosition(0.0));
+        const auto lowerLeft = getParamFromGroup<GlobalPosition>(modelParamGroup, "Grid.LowerLeft", GlobalPosition(0.0));
         using CellArray = std::array<unsigned int, 1>;
         const auto cells = getParamFromGroup<CellArray>(modelParamGroup, "Grid.Cells", std::array<unsigned int, 1>{{1}});
 
