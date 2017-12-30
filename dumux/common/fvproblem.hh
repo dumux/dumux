@@ -393,7 +393,7 @@ public:
     {
         ResidualVector source(0);
         auto scvIdx = scv.indexInElement();
-        auto key = std::make_pair(fvGridGeometry_->gridView().indexSet().index(element), scvIdx);
+        auto key = std::make_pair(fvGridGeometry_->elementMapper().index(element), scvIdx);
         if (pointSourceMap_.count(key))
         {
             // call the solDependent function. Herein the user might fill/add values to the point sources
