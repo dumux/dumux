@@ -276,7 +276,6 @@ class BoundingBoxTreePointSourceHelper
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
 
     static constexpr int dim = GridView::dimension;
