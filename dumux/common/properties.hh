@@ -193,6 +193,11 @@ NEW_PROP_TAG(SherwoodFormulation);
 NEW_PROP_TAG(EnableInertiaTerms); //!< Returns whether to include inertia terms in the momentum balance eq or not (Stokes / Navier-Stokes)
 NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 
+/////////////////////////////////////////////////////////////
+// Properties used by mixeddimension simulations
+/////////////////////////////////////////////////////////////
+NEW_PROP_TAG(CouplingManager);
+
 } // end namespace Properties
 } // end namespace Dumux
 
