@@ -28,7 +28,7 @@
 #include <dumux/porousmediumflow/implicit/problem.hh>
 
 #include <dumux/porousmediumflow/3pwateroil/model.hh>
-#include <dumux/material/fluidsystems/h2oheavyoilfluidsystem.hh>
+#include <dumux/material/fluidsystems/h2oheavyoil.hh>
 #include "3pwateroilsagdspatialparams.hh"
 
 namespace Dumux

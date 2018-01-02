@@ -10,6 +10,7 @@ install(FILES
   h2oair.hh
   h2oairmesitylene.hh
   h2oairxylene.hh
+  h2oheavyoil.hh
   h2oheavyoilfluidsystem.hh
   h2on2.hh
   h2on2kinetic.hh

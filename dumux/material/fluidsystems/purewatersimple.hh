@@ -388,7 +388,7 @@ public:
 
     using Base::fugacityCoefficient;
     /*!
-     * \brief Calculate the fugacity coefficient \f$\mathrm{[Pa]}\f$ of an individual
+     * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
      *        component in a fluid phase
      *
      * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ of

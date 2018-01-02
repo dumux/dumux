@@ -41,10 +41,8 @@ public:
     /*!
      * \brief Henry coefficient \f$[N/m^2]\f$  for heavy oil in liquid water.
      *
-     * See:
-     *
+     * \todo values copied from TCE, please improve it
      */
-
     template <class Scalar>
     static Scalar henryOilInWater(Scalar temperature)
     {
@@ -57,10 +55,8 @@ public:
     /*!
      * \brief Henry coefficient \f$[N/m^2]\f$  for water in liquid heavy oil.
      *
-     * See:
-     *
+     * \todo arbitrary value, please improve it
      */
-
     template <class Scalar>
     static Scalar henryWaterInOil(Scalar temperature)
     {
@@ -72,17 +68,18 @@ public:
     /*!
      * \brief Binary diffusion coefficient [m^2/s] for molecular water and heavy oil.
      *
+     * \todo value is just an order of magnitude, please improve it
      */
     template <class Scalar>
     static Scalar gasDiffCoeff(Scalar temperature, Scalar pressure)
     {
-        return 1e-6; // [m^2/s] This is just an order of magnitude. Please improve it!
+        return 1e-6; // [m^2/s] TODO: This is just an order of magnitude. Please improve it!
     }
 
     /*!
      * \brief Diffusion coefficient [m^2/s] for tce in liquid water.
      *
-     * \todo
+     * \todo value is just an order of magnitude, please improve it
      */
     template <class Scalar>
     static Scalar liquidDiffCoeff(Scalar temperature, Scalar pressure)
