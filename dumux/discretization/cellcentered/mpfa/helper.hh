@@ -366,12 +366,12 @@ public:
         assert(gridView.size(Dune::GeometryTypes::tetrahedron)
                + gridView.size(Dune::GeometryTypes::pyramid)
                + gridView.size(Dune::GeometryTypes::prism)
-               + gridView.size(Dune::GeometryTypes::cube) == gridView.size(0));
+               + gridView.size(Dune::GeometryTypes::hexahedron) == gridView.size(0));
 
         return gridView.size(Dune::GeometryTypes::tetrahedron)*12
                + gridView.size(Dune::GeometryTypes::pyramid)*16
                + gridView.size(Dune::GeometryTypes::prism)*18
-               + gridView.size(Dune::GeometryTypes::cube)*24;
+               + gridView.size(Dune::GeometryTypes::hexahedron)*24;
 #else
         assert(gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 3))
                + gridView.size(Dune::GeometryType(Dune::GeometryType::pyramid, 3))
