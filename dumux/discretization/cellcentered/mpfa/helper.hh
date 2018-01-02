@@ -121,8 +121,10 @@ public:
         assert(gridView.size(Dune::GeometryTypes::triangle)
                + gridView.size(Dune::GeometryTypes::quadrilateral) == gridView.size(0));
 
-        return gridView.size(Dune::GeometryTypes::triangle)*6
-               + gridView.size(Dune::GeometryTypes::quadrilateral)*8;
+        return gridView.size(Dune::GeometryTypes::triangle)
+                 * getNumLocalScvfs(Dune::GeometryTypes::triangle)
+               + gridView.size(Dune::GeometryTypes::quadrilateral)
+                 * getNumLocalScvfs(Dune::GeometryTypes::quadrilateral);
 #else
         assert(gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 2))
                + gridView.size(Dune::GeometryType(Dune::GeometryType::cube, 2)) == gridView.size(0));
@@ -368,10 +370,14 @@ public:
                + gridView.size(Dune::GeometryTypes::prism)
                + gridView.size(Dune::GeometryTypes::hexahedron) == gridView.size(0));
 
-        return gridView.size(Dune::GeometryTypes::tetrahedron)*12
-               + gridView.size(Dune::GeometryTypes::pyramid)*16
-               + gridView.size(Dune::GeometryTypes::prism)*18
-               + gridView.size(Dune::GeometryTypes::hexahedron)*24;
+        return gridView.size(Dune::GeometryTypes::tetrahedron)
+                 * getNumLocalScvfs(Dune::GeometryTypes::tetrahedron)
+               + gridView.size(Dune::GeometryTypes::pyramid)
+                 * getNumLocalScvfs(Dune::GeometryTypes::pyramid)
+               + gridView.size(Dune::GeometryTypes::prism)
+                 * getNumLocalScvfs(Dune::GeometryTypes::prism)
+               + gridView.size(Dune::GeometryTypes::hexahedron)
+                 * getNumLocalScvfs(Dune::GeometryTypes::hexahedron);
 #else
         assert(gridView.size(Dune::GeometryType(Dune::GeometryType::simplex, 3))
                + gridView.size(Dune::GeometryType(Dune::GeometryType::pyramid, 3))
