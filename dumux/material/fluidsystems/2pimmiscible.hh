@@ -287,17 +287,20 @@ public:
 
     using Base::fugacityCoefficient;
     /*!
-     * \brief Calculate the fugacity coefficient \f$\mathrm{[Pa]}\f$ of an individual
+     * \brief Calculate the fugacity coefficient \f$\mathrm{[-]}\f$ of an individual
      *        component in a fluid phase
+     *
+     * The fugacity coefficient \f$\mathrm{\phi_\kappa_\alpha}\f$ is connected to the
+     * fugacity \f$\mathrm{f^\kappa_\alpha}\f$ and the component's mole
+     * fraction \f$\mathrm{x^\kappa_\alpha}\f$ by means of the relation
+     *
+     * \f[
+     f^\kappa_\alpha = \phi^\kappa_\alpha\;x^\kappa_\alpha\;p_\alpha
+     * \f]
+     *
      * \param fluidState The fluid state of the two-phase model
      * \param phaseIdx Index of the fluid phase
      * \param compIdx index of the component
-     *
-     * The fugacity coefficient \f$\mathrm{\phi_\kappa}\f$ is connected to the
-     * fugacity \f$\mathrm{f_\kappa}\f$ and the component's molarity
-     * \f$\mathrm{x_\kappa}\f$ by means of the relation
-     *
-     * \f[ f_\kappa = \phi_\kappa * x_{\kappa} \f]
      */
     template <class FluidState>
     static Scalar fugacityCoefficient(const FluidState &fluidState,
