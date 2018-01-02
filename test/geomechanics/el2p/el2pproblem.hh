@@ -485,7 +485,10 @@ public:
         // Lower boundary closed for brine and CO2 flux, uz is fixed.
         if(globalPos[dimWorld-1] < eps_)
         {
-            values.setDirichlet(uzIdx);
+            if(dim == 2)
+                values.setDirichlet(uyIdx);
+            if(dim == 3)
+                values.setDirichlet(uzIdx);
         }
 
         // for the initialization run the pressure and saturation
