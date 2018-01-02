@@ -533,6 +533,16 @@ public:
      */
     static std::size_t getNumLocalScvfs(const Dune::GeometryType gt)
     {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        if (gt == Dune::GeometryTypes::tetrahedron)
+            return 12;
+        else if (gt == Dune::GeometryTypes::pyramid)
+            return 16;
+        else if (gt == Dune::GeometryTypes::prism)
+            return 18;
+        else if (gt == Dune::GeometryTypes::hexahedron)
+            return 24;
+#else
         if (gt == Dune::GeometryType(Dune::GeometryType::simplex, 3))
             return 12;
         else if (gt == Dune::GeometryType(Dune::GeometryType::pyramid, 3))
@@ -541,6 +551,7 @@ public:
             return 18;
         else if (gt == Dune::GeometryType(Dune::GeometryType::cube, 3))
             return 24;
+#endif
         else
             DUNE_THROW(Dune::NotImplemented, "Mpfa for 3d geometry type " << gt);
     }
