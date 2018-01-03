@@ -124,58 +124,61 @@ public:
                                                          problem, fvGridGeometry);
 
         Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>(),
-        [&](auto IF) {
+        [&](auto&& _if)
+        {
+            DUNE_THROW(Dune::NotImplemented, "Privar switch and volume varaible caching! Please implement!");
 
-            std::cout << "blub";
-
-            // update the secondary variables if global caching is enabled
-            // \note we only updated if phase presence changed as the volume variables
-            //       are already updated once by the switch
-            for (const auto& element : elements(fvGridGeometry.gridView()))
-            {
-                // make sure FVElementGeometry & vol vars are bound to the element
-                auto fvGeometry = localView(fvGridGeometry);
-                fvGeometry.bindElement(element);
-
-                if (switchedInLastIteration_)
-                {
-                    for (auto&& scv : scvs(fvGeometry))
-                    {
-                        const auto dofIdxGlobal = scv.dofIndex();
-                        if (priVarSwitch_->wasSwitched(dofIdxGlobal))
-                        {
-                            const auto eIdx = fvGridGeometry.elementMapper().index(element);
-                            const ElementSolution elemSol(element, this->curSol(), fvGridGeometry);
-                            this->nonConstCurGridVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
-                                                                                                        problem,
-                                                                                                        element,
-                                                                                                        scv);
-                        }
-                    }
-                }
-
-                // handle the boundary volume variables for cell-centered models
-                if(!isBox)
-                {
-                    for (auto&& scvf : scvfs(fvGeometry))
-                    {
-                        // if we are not on a boundary, skip the rest
-                        if (!scvf.boundary())
-                            continue;
-
-                        // check if boundary is a pure dirichlet boundary
-                        const auto bcTypes = problem.boundaryTypes(element, scvf);
-                        if (bcTypes.hasOnlyDirichlet())
-                        {
-                            const auto insideScvIdx = scvf.insideScvIdx();
-                            const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                            const ElementSolution elemSol(problem.dirichlet(element, scvf));
-
-                            this->nonConstCurGridVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, problem, element, insideScv);
-                        }
-                    }
-                }
-            }
+            // TODO:
+            // std::cout << "blub";
+            //
+            // // update the secondary variables if global caching is enabled
+            // // \note we only updated if phase presence changed as the volume variables
+            // //       are already updated once by the switch
+            // for (const auto& element : elements(fvGridGeometry.gridView()))
+            // {
+            //     // make sure FVElementGeometry & vol vars are bound to the element
+            //     auto fvGeometry = localView(fvGridGeometry);
+            //     fvGeometry.bindElement(element);
+            //
+            //     if (switchedInLastIteration_)
+            //     {
+            //         for (auto&& scv : scvs(fvGeometry))
+            //         {
+            //             const auto dofIdxGlobal = scv.dofIndex();
+            //             if (priVarSwitch_->wasSwitched(dofIdxGlobal))
+            //             {
+            //                 const auto eIdx = fvGridGeometry.elementMapper().index(element);
+            //                 const ElementSolution elemSol(element, this->curSol(), fvGridGeometry);
+            //                 this->nonConstCurGridVolVars().volVars(eIdx, scv.indexInElement()).update(elemSol,
+            //                                                                                             problem,
+            //                                                                                             element,
+            //                                                                                             scv);
+            //             }
+            //         }
+            //     }
+            //
+            //     // handle the boundary volume variables for cell-centered models
+            //     if(!isBox)
+            //     {
+            //         for (auto&& scvf : scvfs(fvGeometry))
+            //         {
+            //             // if we are not on a boundary, skip the rest
+            //             if (!scvf.boundary())
+            //                 continue;
+            //
+            //             // check if boundary is a pure dirichlet boundary
+            //             const auto bcTypes = problem.boundaryTypes(element, scvf);
+            //             if (bcTypes.hasOnlyDirichlet())
+            //             {
+            //                 const auto insideScvIdx = scvf.insideScvIdx();
+            //                 const auto& insideScv = fvGeometry.scv(insideScvIdx);
+            //                 const ElementSolution elemSol(problem.dirichlet(element, scvf));
+            //
+            //                 this->nonConstCurGridVolVars().volVars(scvf.outsideScvIdx(), 0/*indexInElement*/).update(elemSol, problem, element, insideScv);
+            //             }
+            //         }
+            //     }
+            // }
         });
     }
 
