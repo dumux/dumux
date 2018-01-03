@@ -46,12 +46,12 @@ namespace FluidSystems
  * \brief A compositional fluid consisting of two liquid phases,
  *        which are water and a ficitious component from tutorial exercise 3a.
  */
-template <class TypeTag, class Scalar,
+template <class Scalar,
           class H2OType = Dumux::TabulatedComponent<Scalar, Dumux::H2O<Scalar> > >
 class H2OMyCompressibleComponent
-    : public BaseFluidSystem< Scalar, H2OMyCompressibleComponent<TypeTag, Scalar, H2OType> >
+    : public BaseFluidSystem< Scalar, H2OMyCompressibleComponent<Scalar, H2OType> >
 {
-    typedef H2OMyCompressibleComponent<TypeTag, Scalar, H2OType> ThisType;
+    typedef H2OMyCompressibleComponent<Scalar, H2OType> ThisType;
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
 public:
