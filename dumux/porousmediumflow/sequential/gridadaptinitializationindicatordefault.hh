@@ -100,11 +100,11 @@ public:
      */
     GridAdaptInitializationIndicatorDefault(Problem& problem, AdaptionIndicator& adaptionIndicator)
     {
-        maxLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
+        maxLevel_ = getParam<int>("GridAdapt.MaxLevel");
     }
 
 private:
-    int maxLevel_;
+    int maxLevel_; //!< maximum allowed level
 };
 }
 

@@ -54,13 +54,6 @@ namespace Properties
 //////////////////////////////////////////////////////////////////
 //! The type tag for the compositional two-phase problems
 NEW_TYPE_TAG(SequentialTwoPTwoCAdaptive, INHERITS_FROM(SequentialTwoPTwoC));
-
-//////////////////////////////////////////////////////////////////
-// Property tags
-//////////////////////////////////////////////////////////////////
-
-NEW_PROP_TAG( GridAdaptEnableMultiPointFluxApproximation); //!< HangingNode: Two-point flux approximation (false) or mpfa (true)
-NEW_PROP_TAG(GridAdaptMaxInteractionVolumes); //!< Maximum number of interaction regions (2D and 3D)
 }}
 
 //Dumux includes
@@ -78,8 +71,6 @@ namespace Properties {
 //////////////////////////////////////////////////////////////////
 SET_BOOL_PROP(SequentialTwoPTwoCAdaptive, AdaptiveGrid, true);
 SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, GridTypeIndices, GridTypes); //!< Property not used but default necessary for mpfa2p
-SET_BOOL_PROP(SequentialTwoPTwoCAdaptive, GridAdaptEnableMultiPointFluxApproximation, true); //!< applies an mpfa method around hanging nodes
-SET_INT_PROP(SequentialTwoPTwoCAdaptive, GridAdaptMaxInteractionVolumes, 4); //!< Uses up to 4 interaction regions as default
 
 SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, CellData, CellData2P2CAdaptive<TypeTag>);
 SET_TYPE_PROP(SequentialTwoPTwoCAdaptive, Variables, VariableClass2P2CAdaptive<TypeTag>);

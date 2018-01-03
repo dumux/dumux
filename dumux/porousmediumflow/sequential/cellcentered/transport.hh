@@ -32,13 +32,6 @@
 
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG( TimeManagerSubTimestepVerbosity );
-
-SET_INT_PROP(SequentialModel, TimeManagerSubTimestepVerbosity, 0);
-}
-
 //! \ingroup IMPET
 /*!\brief The finite volume discretization of a transport equation
  *
@@ -218,15 +211,15 @@ public:
      * \param problem A problem class object
      */
     FVTransport(Problem& problem) :
-        problem_(problem), switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)),
+        problem_(problem), switchNormals_(getParam<bool>("Impet.SwitchNormals")),
         subCFLFactor_(1.0), accumulatedDt_(0), dtThreshold_(1e-6)
     {
         evalCflFluxFunction_ = std::make_shared<EvalCflFluxFunction>(problem);
 
-        Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+        Scalar cFLFactor = getParam<Scalar>("Impet.CFLFactor");
         using std::min;
-        subCFLFactor_ = min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
-        verbosity_ = GET_PARAM_FROM_GROUP(TypeTag, int, TimeManager, SubTimestepVerbosity);
+        subCFLFactor_ = min(getParam<Scalar>("Impet.SubCFLFactor"), cFLFactor);
+        verbosity_ = getParam<int>("TimeManager.SubTimestepVerbosity");
 
         localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
 

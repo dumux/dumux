@@ -192,7 +192,7 @@ public:
         density_[wPhaseIdx] = 0.;
         density_[nPhaseIdx] = 0.;
 
-        porosityThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, PorosityThreshold);
+        porosityThreshold_ = getParam<Scalar>("Impet.PorosityThreshold");
     }
 
 private:

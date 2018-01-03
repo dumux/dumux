@@ -6,6 +6,9 @@ DtInitial = 0 # [s]
 Name = test_2padaptive # name passed to the output routines
 EnableGravity = 0
 
+[Impet]
+CFLFactor = 0.95
+
 [Grid]
 Cells = 2 1
 

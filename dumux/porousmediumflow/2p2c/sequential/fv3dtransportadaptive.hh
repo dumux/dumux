@@ -121,7 +121,7 @@ public:
     FV3dTransport2P2CAdaptive(Problem& problem) : FVTransport2P2C<TypeTag>(problem),
         problem_(problem), enableMPFA(false)
     {
-        enableMPFA = GET_PARAM_FROM_GROUP(TypeTag,bool,GridAdapt, EnableMultiPointFluxApproximation);
+        enableMPFA = getParam<bool>("GridAdapt.EnableMultiPointFluxApproximation");
     }
 
     virtual ~FV3dTransport2P2CAdaptive()
@@ -315,7 +315,7 @@ void FV3dTransport2P2CAdaptive<TypeTag>::update(const Scalar t, Scalar& dt,
     if(impet)
     {
         Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "
-                <<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar,Impet, CFLFactor)<< std::endl;
+                <<dt * getParam<Scalar>("Impet.CFLFactor")<< std::endl;
         if(this->averagedFaces_ != 0)
             Dune::dwarn  << " Averageing done for " << this->averagedFaces_ << " faces. "<< std::endl;
     }

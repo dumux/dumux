@@ -216,8 +216,31 @@ SET_PROP(SequentialModel, ModelDefaultParameters)
 {
     static void defaultParams(Dune::ParameterTree& params, const std::string& group = "")
     {
-        params["Vtk.OutputLevel"] = "0";
+        params["GridAdapt.CoarsenTolerance"] = "0.001"; //!< tolerance for coarsening
+        params["GridAdapt.EnableInitializationIndicator"] = "false"; //!< switch for using initial grid adaption
+        params["GridAdapt.EnableMultiPointFluxApproximation"] = "true"; //!< apply an mpfa method around hanging nodes
+        params["GridAdapt.MaxLevel"] = "1"; //!< maximum allowed level
+        params["GridAdapt.MaxInteractionVolumes"] = "4"; //!< use up to four interaction regions
+        params["GridAdapt.MinLevel"] = "0"; //!< minimum allowed level
+        params["GridAdapt.RefineAtDirichletBC"] = "false"; //!< switch for refinement at Dirichlet BCs
+        params["GridAdapt.RefineAtFluxBC"] = "false"; //!< switch for refinement at Neumann BCs
+        params["GridAdapt.RefineAtSource"] = "false"; //!< switch for refinement at sources
+        params["GridAdapt.RefineTolerance"] = "0.05"; //!< tolerance for refinement
 
+        params["Impet.CFLFactor"] = "1.0"; //!< scalar factor for additional scaling of the time step
+        params["Impet.EnableVolumeIntegral"] = "true"; //!< regard volume integral in pressure equation
+        params["Impet.ErrorTermFactor"] = "0.5"; //!< scaling factor for the error term
+        params["Impet.ErrorTermLowerBound"] = "0.1"; //!< lower threshold used for the error term evaluation
+        params["Impet.ErrorTermUpperBound"] = "0.9"; //!< upper threshold used for the error term evaluation
+        params["Impet.PorosityThreshold"] = "1e-6"; //!< porosity will be set to max(given value, threshold)
+        params["Impet.SubCFLFactor"] = "1.0"; //!< scalar factor for scaling of local sub-time-step
+        params["Impet.SwitchNormals"] = "false"; //!< don't switch direction of face normal vectors
+
+        params["MPFA.CalcVelocityInTransport"] = "false"; //!< disable facewise velocity calculation
+
+        params["TimeManager.SubTimestepVerbosity"] = "0"; //!< don't be verbose in local sub-time-steps
+
+        params["Vtk.OutputLevel"] = "0"; //!< VTK output contains only the basic values
     }
 };
 

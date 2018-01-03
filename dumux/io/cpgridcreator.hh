@@ -60,7 +60,7 @@ public:
      */
     static void makeGrid()
     {
-        std::string fileName = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Grid, File);
+        auto fileName = getParam<std::string>("Grid.File");
 
         deck() = Opm::Parser().parseFile(fileName);
         Opm::EclipseGrid ecl_grid(deck());

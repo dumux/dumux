@@ -30,28 +30,6 @@
 namespace Dumux
 {
 
-namespace Properties
-{
-NEW_PROP_TAG(GridAdaptRefineThresholdFlux);
-NEW_PROP_TAG(GridAdaptCoarsenThresholdFlux);
-NEW_PROP_TAG(GridAdaptRefineThresholdSat);
-NEW_PROP_TAG(GridAdaptCoarsenThresholdSat);
-NEW_PROP_TAG(GridAdaptRefinePercentileFlux);
-NEW_PROP_TAG(GridAdaptCoarsenPercentileFlux);
-NEW_PROP_TAG(GridAdaptRefinePercentileSat);
-NEW_PROP_TAG(GridAdaptCoarsenPercentileSat);
-
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefineThresholdFlux, 0.8);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenThresholdFlux, 0.2);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefineThresholdSat, 0.8);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenThresholdSat, 0.2);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefinePercentileFlux, 0.8);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenPercentileFlux, 0.2);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptRefinePercentileSat, 0.8);
-SET_SCALAR_PROP(GridAdaptTypeTag, GridAdaptCoarsenPercentileSat, 0.2);
-
-}
-
 /*!
  * \brief  Class defining a standard, saturation dependent indicator for grid adaption
  * \ingroup SequentialTwoPModel
@@ -645,19 +623,19 @@ public:
     GridAdaptionIndicator2PLocalFlux (Problem& problem):
         problem_(problem), lowerPressureBound_(0.0), upperPressureBound_(std::numeric_limits<Scalar>::max())
     {
-        refineThresholdSat_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineThresholdSat);
-        coarsenThresholdSat_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenThresholdSat);
+        refineThresholdSat_ = getParam<Scalar>("GridAdapt.RefineThresholdSat", 0.8);
+        coarsenThresholdSat_ = getParam<Scalar>("GridAdapt.CoarsenThresholdSat", 0.2);
         refineBound_ = 2.0;
         coarsenBound_ = 1.0;
-        refineThresholdFlux_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineThresholdFlux);
-        coarsenThresholdFlux_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenThresholdFlux);
-        refinePercentileFlux_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefinePercentileFlux);
-        coarsenPercentileFlux_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenPercentileFlux);
-        refinePercentileSat_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefinePercentileSat);
-        coarsenPercentileSat_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenPercentileSat);
-        refineAtDirichletBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtDirichletBC);
-        refineAtFluxBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtFluxBC);
-        refineAtSource_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtSource);
+        refineThresholdFlux_ = getParam<Scalar>("GridAdapt.RefineThresholdFlux", 0.8);
+        coarsenThresholdFlux_ = getParam<Scalar>("GridAdapt.CoarsenThresholdFlux", 0.2);
+        refinePercentileFlux_ = getParam<Scalar>("GridAdapt.RefinePercentileFlux", 0.8);
+        coarsenPercentileFlux_ = getParam<Scalar>("GridAdapt.CoarsenPercentileFlux", 0.2);
+        refinePercentileSat_ = getParam<Scalar>("GridAdapt.RefinePercentileSat", 0.8);
+        coarsenPercentileSat_ = getParam<Scalar>("GridAdapt.CoarsenPercentileSat", 0.2);
+        refineAtDirichletBC_ = getParam<bool>("GridAdapt.RefineAtDirichletBC");
+        refineAtFluxBC_ = getParam<bool>("GridAdapt.RefineAtFluxBC");
+        refineAtSource_ = getParam<bool>("GridAdapt.RefineAtSource");
 
         useSatInd_ = (refineThresholdSat_ < 1.0 || coarsenThresholdSat_ > 0.0);
         useFluxInd_ = (refineThresholdFlux_ < 1.0 || coarsenThresholdFlux_ > 0.0);

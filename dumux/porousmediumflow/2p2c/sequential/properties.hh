@@ -72,13 +72,8 @@ NEW_PROP_TAG( VelocityFormulation); //!< The formulation of the model
 NEW_PROP_TAG( EnableCompressibility); //!< Returns whether compressibility is allowed
 NEW_PROP_TAG( EnableCapillarity); //!< Returns whether capillarity is regarded
 NEW_PROP_TAG( BoundaryMobility ); //!< Returns whether mobility or saturation is used for Dirichlet B.C.
-NEW_PROP_TAG( ImpetRestrictFluxInTransport ); //!< Restrict flux if direction reverses after pressure equation
-NEW_PROP_TAG( ImpetErrorTermFactor ); //!< Damping factor \f$ \alpha \f$ in pressure equation
-NEW_PROP_TAG( ImpetErrorTermLowerBound ); //!< Upper bound for regularized error damping
-NEW_PROP_TAG( ImpetErrorTermUpperBound ); //!< Lower bound where error is not corrected
 NEW_PROP_TAG( FluidSystem ); //!< The fluid system
 NEW_PROP_TAG( FluidState ); //!< The fluid state
-NEW_PROP_TAG( ImpetEnableVolumeIntegral ); //!< Enables volume integral in the pressure equation (volume balance formulation)
 //! A minimum permeability can be assigned via the runtime-Parameter SpatialParams.minBoundaryPermeability
 NEW_PROP_TAG( RegulateBoundaryPermeability );
 }}
@@ -144,8 +139,6 @@ SET_PROP(SequentialTwoPTwoC, TransportSolutionType)
 SET_BOOL_PROP(SequentialTwoPTwoC, EnableCompressibility, true); //!< Compositional models are very likely compressible
 SET_BOOL_PROP(SequentialTwoPTwoC, VisitFacesOnlyOnce, false); //!< Faces are regarded from both sides
 SET_BOOL_PROP(SequentialTwoPTwoC, EnableCapillarity, false); //!< Capillarity is enabled
-//! Restrict (no upwind) flux in transport step if direction reverses after pressure equation
-SET_INT_PROP(SequentialTwoPTwoC, ImpetRestrictFluxInTransport, 0);
 
 SET_PROP(SequentialTwoPTwoC, BoundaryMobility) //!< Saturation scales flux on Dirichlet B.C.
 {    static const int value = SequentialTwoPTwoCIndices<TypeTag>::satDependent;};
@@ -159,12 +152,6 @@ SET_TYPE_PROP(SequentialTwoPTwoC, FluidState, TwoPTwoCFluidState<typename GET_PR
 SET_TYPE_PROP(SequentialTwoPTwoC, SpatialParams, SequentialFVSpatialParams<TypeTag>);
 //! Switch off permeability regularization at Dirichlet boundaries by default.
 SET_BOOL_PROP(SequentialTwoPTwoC, RegulateBoundaryPermeability, false);
-
-SET_BOOL_PROP(SequentialTwoPTwoC, ImpetEnableVolumeIntegral, true); //!< Regard volume integral in pressure equation
-
-SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermFactor, 0.5); //!< Damping factor \f$ \alpha \f$ in pressure equation
-SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermLowerBound, 0.2); //!< Lower bound where error is not corrected
-SET_SCALAR_PROP(SequentialTwoPTwoC, ImpetErrorTermUpperBound, 0.9); //!< Upper bound for regularized error damping
 }
 
 /*!

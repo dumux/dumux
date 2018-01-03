@@ -67,8 +67,6 @@ SET_PROP(TestIMPESAdaptiveProblem, FluidSystem)
     using NonwettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
-
-SET_SCALAR_PROP(TestIMPESAdaptiveProblem, ImpetCFLFactor, 0.95);
 }
 
 /*!
@@ -124,7 +122,7 @@ public:
     TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
             ParentType(timeManager, gridView)
     {
-        name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+        name_ = getParam<std::string>("Problem.Name");
 
         // Refine the grid provided that no restart occurs. Otherwise, an
         // already refined grid will be read.

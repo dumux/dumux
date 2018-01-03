@@ -121,7 +121,7 @@ public:
     EvalCflFluxDefault (Problem& problem)
     : problem_(problem)
     {
-        porosityThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, PorosityThreshold);
+        porosityThreshold_ = getParam<Scalar>("Impet.PorosityThreshold");
         reset();
     }
 

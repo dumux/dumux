@@ -164,10 +164,10 @@ public:
     FV2dPressure2P2CAdaptive(Problem& problem) : FVPressure2P2C<TypeTag>(problem),
             problem_(problem), transmissibilityCalculator_(problem)
     {
-        enableVolumeIntegral = GET_PARAM_FROM_GROUP(TypeTag,bool, Impet, EnableVolumeIntegral);
-        enableMPFA= GET_PARAM_FROM_GROUP(TypeTag,bool, GridAdapt, EnableMultiPointFluxApproximation);
+        enableVolumeIntegral = getParam<bool>("Impet.EnableVolumeIntegral");
+        enableMPFA = getParam<bool>("GridAdapt.EnableMultiPointFluxApproximation");
 
-        if(GET_PARAM_FROM_GROUP(TypeTag,int, GridAdapt, MaxInteractionVolumes) != 1)
+        if(getParam<int>("GridAdapt.MaxInteractionVolumes") != 1)
             enableSecondHalfEdge = true;
         else
             enableSecondHalfEdge = false;

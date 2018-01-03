@@ -162,15 +162,15 @@ public:
     FVPressure2P2C(Problem& problem) : FVPressureCompositional<TypeTag>(problem),
         problem_(problem)
     {
-        ErrorTermFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermFactor);
-        ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
-        ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
+        ErrorTermFactor_ = getParam<Scalar>("Impet.ErrorTermFactor");
+        ErrorTermLowerBound_ = getParam<Scalar>("Impet.ErrorTermLowerBound", 0.2);
+        ErrorTermUpperBound_ = getParam<Scalar>("Impet.ErrorTermUpperBound");
 
-        enableVolumeIntegral = GET_PARAM_FROM_GROUP(TypeTag,bool, Impet, EnableVolumeIntegral);
+        enableVolumeIntegral = getParam<bool>("Impet.EnableVolumeIntegral");
         regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
         if(regulateBoundaryPermeability)
         {
-            minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
+            minimalBoundaryPermeability = getParam<Scalar>("SpatialParams.MinBoundaryPermeability");
             Dune::dinfo << " Warning: Regulating Boundary Permeability requires correct subface indices on reference elements!"
                         << std::endl;
         }

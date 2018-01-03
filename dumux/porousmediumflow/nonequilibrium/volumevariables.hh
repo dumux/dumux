@@ -632,7 +632,6 @@ public:
                                                           scv,
                                                           elemSol);
         // I know the solid surface from the pore network. But it is more consistent to use the fit value.
-        // solidSurface_   = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.soil.specificSolidsurface);
         solidSurface_   = AnsSurface::interfacialArea(aNonWettingSolidSurfaceParams, materialParams, /*Sw=*/0., pcMax );
         Valgrind::CheckDefined(solidSurface_);
 #endif

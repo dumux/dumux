@@ -155,36 +155,18 @@ public:
 
         //parameters for Brooks-Corey law
 
-        // entry pressures function
-        materialLawParamsBackground_.setPe(0.);
-        if (haveParam("SpatialParams.BackgroundEntryPressure"))
-        {
-            materialLawParamsBackground_.setPe(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundEntryPressure));
-        }
-
-        materialLawParamsLenses_.setPe(0.);
-        if (haveParam("SpatialParams.LenseEntryPressure"))
-        {
-            materialLawParamsLenses_.setPe(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LenseEntryPressure));
-        }
+        // entry pressures
+        materialLawParamsBackground_.setPe(getParam<Scalar>("SpatialParams.BackgroundEntryPressure", 0.0));
+        materialLawParamsLenses_.setPe(getParam<Scalar>("SpatialParams.LenseEntryPressure", 0.0));
 #endif
 
         // Brooks-Corey shape parameters
-
 #if PROBLEM == 2
-        materialLawParamsBackground_.setLambda(3);
-        if (haveParam("SpatialParams.BackgroundLambda"))
-        {
-            materialLawParamsBackground_.setLambda(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundLambda));
-        }
-        materialLawParamsLenses_.setLambda(2);
-        if (haveParam("SpatialParams.LenseLambda"))
-        {
-            materialLawParamsLenses_.setLambda(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LenseLambda));
-        }
+        materialLawParamsBackground_.setLambda(getParam<Scalar>("SpatialParams.BackgroundLambda", 3.0));
+        materialLawParamsLenses_.setLambda(getParam<Scalar>("SpatialParams.LenseLambda", 2.0));
 #else
-        materialLawParamsBackground_.setLambda(2);
-        materialLawParamsLenses_.setLambda(2);
+        materialLawParamsBackground_.setLambda(2.0);
+        materialLawParamsLenses_.setLambda(2.0);
 #endif
 
 #if PROBLEM == 0
@@ -192,84 +174,27 @@ public:
         permBackground_[1][1] = 1e-7;
         permLenses_[0][0] = 1e-7;
         permLenses_[1][1] = 1e-7;
-#else
+#elif PROBLEM == 1
         permBackground_[0][0] = 1e-10;
         permBackground_[1][1] = 1e-10;
         permLenses_[0][0] = 1e-10;
         permLenses_[1][1] = 1e-10;
-#endif
+#else
+        permBackground_[0][0] = getParam<Scalar>("SpatialParams.BackgroundPermeabilityXX", 1e-10);
+        permBackground_[0][1] = getParam<Scalar>("SpatialParams.BackgroundPermeabilityXY", 0.0);
+        permBackground_[1][0] = getParam<Scalar>("SpatialParams.BackgroundPermeabilityYX", 0.0);
+        permBackground_[1][1] = getParam<Scalar>("SpatialParams.BackgroundPermeabilityYY", 1e-10);
+        permLenses_[0][0] = getParam<Scalar>("SpatialParams.LensPermeabilityXX", 1e-10);
+        permLenses_[0][1] = getParam<Scalar>("SpatialParams.LensPermeabilityXY", 0.0);
+        permLenses_[1][0] = getParam<Scalar>("SpatialParams.LensPermeabilityYX", 0.0);
+        permLenses_[1][1] = getParam<Scalar>("SpatialParams.LensPermeabilityYY", 1e-10);
 
-
-#if PROBLEM == 2
-        if (haveParam("SpatialParams.BackgroundPermeabilityXX"))
-        {
-            permBackground_[0][0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundPermeabilityXX);
-        }
-        if (haveParam("SpatialParams.BackgroundPermeabilityXY"))
-        {
-            permBackground_[0][1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundPermeabilityXY);
-        }
-        if (haveParam("SpatialParams.BackgroundPermeabilityYX"))
-        {
-            permBackground_[1][0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundPermeabilityYX);
-        }
-        if (haveParam("SpatialParams.BackgroundPermeabilityYY"))
-        {
-            permBackground_[1][1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, BackgroundPermeabilityYY);
-        }
-
-        if (haveParam("SpatialParams.LensPermeabilityXX"))
-        {
-            permLenses_[0][0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensPermeabilityXX);
-        }
-        if (haveParam("SpatialParams.LensPermeabilityXY"))
-        {
-            permLenses_[0][1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensPermeabilityXY);
-        }
-        if (haveParam("SpatialParams.LensPermeabilityYX"))
-        {
-            permLenses_[1][0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensPermeabilityYX);
-        }
-        if (haveParam("SpatialParams.LensPermeabilityYY"))
-        {
-            permLenses_[1][1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, SpatialParams, LensPermeabilityYY);
-        }
-
-        if (haveParam("SpatialParams.LensOneLowerLeft"))
-        {
-            lensOneLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneLowerLeft)[0];
-            lensOneLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneLowerLeft)[1];
-        }
-
-        if (haveParam("SpatialParams.LensOneUpperRight"))
-        {
-            lensOneUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneUpperRight)[0];
-            lensOneUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensOneUpperRight)[1];
-        }
-
-        if (haveParam("SpatialParams.LensTwoLowerLeft"))
-        {
-            lensTwoLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoLowerLeft)[0];
-            lensTwoLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoLowerLeft)[1];
-        }
-
-        if (haveParam("SpatialParams.LensTwoUpperRight"))
-        {
-            lensTwoUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoUpperRight)[0];
-            lensTwoUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensTwoUpperRight)[1];
-        }
-
-        if (haveParam("SpatialParams.LensThreeLowerLeft"))
-        {
-            lensThreeLowerLeft_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeLowerLeft)[0];
-            lensThreeLowerLeft_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeLowerLeft)[1];
-        }
-
-        if (haveParam("SpatialParams.LensThreeUpperRight"))
-        {
-            lensThreeUpperRight_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeUpperRight)[0];
-            lensThreeUpperRight_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, SpatialParams, LensThreeUpperRight)[1];
-        }
+        lensOneLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensOneLowerLeft", GlobalPosition(0.0));
+        lensOneUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensOneUpperRight", GlobalPosition(0.0));
+        lensTwoLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensTwoLowerLeft", GlobalPosition(0.0));
+        lensTwoUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensTwoUpperRight", GlobalPosition(0.0));
+        lensThreeLowerLeft_ = getParam<GlobalPosition>("SpatialParams.LensThreeLowerLeft", GlobalPosition(0.0));
+        lensThreeUpperRight_ = getParam<GlobalPosition>("SpatialParams.LensThreeUpperRight", GlobalPosition(0.0));
 #endif
     }
 

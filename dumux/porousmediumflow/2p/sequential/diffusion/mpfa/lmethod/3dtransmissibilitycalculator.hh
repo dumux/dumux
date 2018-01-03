@@ -131,9 +131,9 @@ public:
             DUNE_THROW(Dune::NotImplemented, "Dimension not supported!");
         }
 
-        enableSimpleLStencil_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPFA, EnableSimpleLStencil);
-        enableComplexLStencil_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPFA, EnableComplexLStencil);
-        enableTPFA_= GET_PARAM_FROM_GROUP(TypeTag, bool, MPFA, EnableTPFA);
+        enableSimpleLStencil_ = getParam<bool>("MPFA.EnableSimpleLStencil", true);
+        enableComplexLStencil_ = getParam<bool>("MPFA.EnableComplexLStencil", true);
+        enableTPFA_= getParam<bool>("MPFA.EnableTPFA", false);
 
         if (!enableSimpleLStencil_ && !enableComplexLStencil_)
         {
@@ -141,9 +141,9 @@ public:
             enableTPFA_ = true;
         }
 
-        transChoiceThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, MPFA, TransmissibilityCriterionThreshold);
+        transChoiceThreshold_ = getParam<Scalar>("MPFA.TransmissibilityCriterionThreshold", 1e-8);
 
-        transCriterion_ = GET_PARAM_FROM_GROUP(TypeTag, int, MPFA, TransmissibilityCriterion);
+        transCriterion_ = getParam<int>("MPFA.TransmissibilityCriterion", 0);
         if (transCriterion_ == sDiff)
         {
             std::cout << "MPFAL 3D: Using standard transmissibility criterion\n";

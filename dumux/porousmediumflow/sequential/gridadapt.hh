@@ -66,9 +66,9 @@ public:
     GridAdapt (Problem& problem)
         : problem_(problem), adaptionIndicator_(problem), marked_(0), coarsened_(0)
     {
-        levelMin_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
-        levelMax_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
-        adaptationInterval_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, AdaptionInterval);
+        levelMin_ = getParam<int>("GridAdapt.MinLevel");
+        levelMax_ = getParam<int>("GridAdapt.MaxLevel");
+        adaptationInterval_ = getParam<int>("GridAdapt.AdaptionInterval", 1);
 
         if (levelMin_ < 0)
             Dune::dgrave <<  __FILE__<< ":" <<__LINE__
@@ -86,7 +86,7 @@ public:
     {
         adaptionIndicator_.init();
 
-        if (!GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, EnableInitializationIndicator))
+        if (!getParam<bool>("GridAdapt.EnableInitializationIndicator"))
             return;
 
         AdaptionInitializationIndicator adaptionInitIndicator(problem_, adaptionIndicator_);
@@ -440,10 +440,10 @@ private:
     int marked_;
     int coarsened_;
 
-    int levelMin_;
-    int levelMax_;
+    int levelMin_; //!< minimum allowed level
+    int levelMax_; //!< maximum allowed level
 
-    int adaptationInterval_;
+    int adaptationInterval_; //!< time step interval for adaption
 };
 
 /*!
