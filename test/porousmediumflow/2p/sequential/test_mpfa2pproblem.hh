@@ -87,7 +87,6 @@ SET_INT_PROP(MPFATwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pnsw
 #endif
 
 SET_TYPE_PROP(MPFATwoPTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
-SET_SCALAR_PROP(MPFATwoPTestProblem, ImpetCFLFactor, 1.0);
 SET_TYPE_PROP(MPFATwoPTestProblem, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
 
 NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
@@ -171,19 +170,10 @@ ParentType(timeManager, gridView)
 {
     this->setGrid(GridCreator::grid());
 
-    int refinementFactor = 0;
-    if (haveParam("Grid.RefinementFactor"))
-    {
-        refinementFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RefinementFactor);
-    }
-
+    int refinementFactor = getParam<Scalar>("Grid.RefinementFactor", 0);
     this->grid().globalRefine(refinementFactor);
 
-    Scalar inletWidth = 1.0;
-    if (haveParam("Problem.InletWidth"))
-    {
-        inletWidth = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InletWidth);
-    }
+    Scalar inletWidth = getParam<Scalar>("Problem.InletWidth", 1.0);
     GlobalPosition inletCenter = this->bBoxMax();
     inletCenter[0] *= 0.5;
 
@@ -192,24 +182,12 @@ ParentType(timeManager, gridView)
     inletRightCoord_ = inletCenter;
     inletRightCoord_[0] +=0.5*inletWidth;
 
-    inFlux_ = 1e-4;
-    if (haveParam("Problem.InjectionFlux"))
-    {
-        inFlux_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, InjectionFlux);
-    }
+    inFlux_ = getParam<Scalar>("Problem.InjectionFlux", 1e-4);
 
-    int outputInterval = 0;
-    if (haveParam("Problem.OutputInterval"))
-    {
-        outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
-    }
+    int outputInterval = getParam<int>("Problem.OutputInterval", 0);
     this->setOutputInterval(outputInterval);
 
-    Scalar outputTimeInterval = 1e6;
-    if (haveParam("Problem.OutputTimeInterval"))
-    {
-        outputTimeInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OutputTimeInterval);
-    }
+    Scalar outputTimeInterval = getParam<Scalar>("Problem.OutputTimeInterval", 1e6);
     this->setOutputTimeInterval(outputTimeInterval);
 }
 

@@ -209,20 +209,20 @@ public:
     IMPET(Problem& problem) :
         problem_(problem)
     {
-        cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
-        iterFlag_ = GET_PARAM_FROM_GROUP(TypeTag, int, Impet, IterationFlag);
-        nIter_ = GET_PARAM_FROM_GROUP(TypeTag, int, Impet, IterationNumber);
-        maxDefect_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, MaximumDefect);
-        omega_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, RelaxationFactor);
+        cFLFactor_ = getParam<Scalar>("Impet.CFLFactor");
+        iterFlag_ = getParam<int>("Impet.IterationFlag", 0);
+        nIter_ = getParam<int>("Impet.IterationNumber", 2);
+        maxDefect_ = getParam<Scalar>("Impet.MaximumDefect", 1e-5);
+        omega_ = getParam<Scalar>("Impet.RelaxationFactor", 1.0);
     }
 
 private:
     Problem& problem_; //!< object of type Problem including problem
     Scalar cFLFactor_;
-    int iterFlag_;
-    int nIter_;
-    Scalar maxDefect_;
-    Scalar omega_;
+    int iterFlag_; //!< flag to switch the iteration type of the IMPET scheme
+    int nIter_; //!< number of iterations if IMPET iterations are enabled by IterationFlag
+    Scalar maxDefect_; //!< maximum defect if IMPET iterations are enabled by IterationFlag
+    Scalar omega_; //!< 1 = new solution is new solution, 0 = old solution is new solution
 };
 }
 #endif

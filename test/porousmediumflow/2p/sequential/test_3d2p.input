@@ -18,7 +18,7 @@ OutputInterval = 0
 OutputTimeInterval = 1e3
 
 [Impet]
-#CFLFactor = 5.0
+CFLFactor = 0.95
 #SubCFLFactor = 0.8
 
 [GridAdapt]

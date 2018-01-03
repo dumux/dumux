@@ -289,11 +289,11 @@ public:
     GridAdaptionIndicator2PLocal (Problem& problem):
         problem_(problem)
     {
-        refinetol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineTolerance);
-        coarsentol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenTolerance);
-        refineAtDirichletBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtDirichletBC);
-        refineAtFluxBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtFluxBC);
-        refineAtSource_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtSource);
+        refinetol_ = getParam<Scalar>("GridAdapt.RefineTolerance");
+        coarsentol_ = getParam<Scalar>("GridAdapt.CoarsenTolerance");
+        refineAtDirichletBC_ = getParam<bool>("GridAdapt.RefineAtDirichletBC");
+        refineAtFluxBC_ = getParam<bool>("GridAdapt.RefineAtFluxBC");
+        refineAtSource_ = getParam<bool>("GridAdapt.RefineAtSource");
     }
 
 private:
@@ -304,9 +304,9 @@ private:
     Scalar coarsenBound_;
     ScalarSolutionType indicatorVector_;
     static const int saturationType_ = GET_PROP_VALUE(TypeTag, SaturationFormulation);
-    bool refineAtDirichletBC_;
-    bool refineAtFluxBC_;
-    bool refineAtSource_;
+    bool refineAtDirichletBC_; //!< switch for refinement at Dirichlet BC's
+    bool refineAtFluxBC_; //!< switch for refinement at Neumann BC's
+    bool refineAtSource_; //!< switch for refinement at sources
 };
 }
 

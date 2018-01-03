@@ -19,7 +19,7 @@ InletWidth = 2
 InjectionFlux = 0.1
 
 [Impet]
-#CFLFactor = 10.0 # Use larger time steps and
+CFLFactor = 1.0
 #SubCFLFactor = 0.95 # enable local time-stepping
 
 [Vtk]

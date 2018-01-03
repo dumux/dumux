@@ -202,8 +202,8 @@ public:
     GridAdaptionIndicator2P (Problem& problem):
         problem_(problem)
     {
-        refinetol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, RefineTolerance);
-        coarsentol_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, GridAdapt, CoarsenTolerance);
+        refinetol_ = getParam<Scalar>("GridAdapt.RefineTolerance");
+        coarsentol_ = getParam<Scalar>("GridAdapt.CoarsenTolerance");
     }
 
 protected:

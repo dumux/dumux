@@ -133,8 +133,8 @@ Adaptive2p2c2d(TimeManager &timeManager, const GridView& gridView) :
             debugWriter_(gridView, "gridAfterAdapt")
 {
     this->setGrid(GridCreator::grid());
-    this->setName(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, SimulationName));
-    this->setOutputInterval(GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval));
+    this->setName(getParam<std::string>("Problem.SimulationName"));
+    this->setOutputInterval(getParam<int>("Problem.OutputInterval"));
 }
 
 /*!

@@ -133,7 +133,7 @@ public:
             gridAdapt_ = std::make_shared<GridAdaptModel>(asImp_());
 
         vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
-        dtVariationRestrictionFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, DtVariationRestrictionFactor);
+        dtVariationRestrictionFactor_ = getParam<Scalar>("Impet.DtVariationRestrictionFactor", std::numeric_limits<Scalar>::max());
         maxTimeStepSize_ = getParam<Scalar>("TimeManager.MaxTimeStepSize", std::numeric_limits<Scalar>::max());
     }
 

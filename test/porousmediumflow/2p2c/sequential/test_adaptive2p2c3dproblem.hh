@@ -132,15 +132,15 @@ Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
     ParentType(timeManager, gridView),
             debugWriter_(gridView, "gridAfterAdapt")
 {
-    GridCreator::grid().globalRefine(GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel));
+    GridCreator::grid().globalRefine(getParam<int>("GridAdapt.MaxLevel"));
     this->setGrid(GridCreator::grid());
 
     //Process parameter file
     //Simulation Control
-    const int outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
+    const int outputInterval = getParam<int>("Problem.OutputInterval");
     this->setOutputInterval(outputInterval);
 
-    injectionrate_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, double, BoundaryConditions, Injectionrate);
+    injectionrate_ = getParam<Scalar>("BoundaryConditions.Injectionrate");
 }
 
 /*!
@@ -150,7 +150,7 @@ Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
 //! @copydoc TestDecTwoPTwoCProblem::name()
 std::string name() const
 {
-    return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
+    return getParam<std::string>("Problem.Name");
 }
 
 //! @copydoc TestDecTwoPTwoCProblem::shouldWriteRestartFile()

@@ -469,7 +469,7 @@ public:
      */
     FVSaturation2P(Problem& problem) :
             ParentType(problem), problem_(problem), threshold_(1e-6),
-            switchNormals_(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals))
+            switchNormals_(getParam<bool>("Impet.SwitchNormals"))
     {
         if (compressibility_ && velocityType_ == vt)
         {
@@ -494,7 +494,7 @@ public:
         velocity_ = std::make_shared<Velocity>(problem);
 
         vtkOutputLevel_ = getParam<int>("Vtk.OutputLevel");
-        porosityThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, PorosityThreshold);
+        porosityThreshold_ = getParam<Scalar>("Impet.PorosityThreshold");
     }
 
 private:

@@ -37,13 +37,6 @@
 
 namespace Dumux
 {
-namespace Properties
-{
-NEW_PROP_TAG( TimeManagerSubTimestepVerbosity );
-
-SET_INT_PROP(SequentialModel, TimeManagerSubTimestepVerbosity, 0);
-}
-
 //! Compositional transport step in a Finite Volume discretization
 /*! \ingroup multiphase
  *  The finite volume model for the solution of the transport equation for compositional
@@ -270,18 +263,18 @@ public:
      */
     FVTransport2P2C(Problem& problem) :
         totalConcentration_(0.), problem_(problem),
-        switchNormals(GET_PARAM_FROM_GROUP(TypeTag, bool, Impet, SwitchNormals)), accumulatedDt_(0),
+        switchNormals(getParam<bool>("Impet.SwitchNormals")), accumulatedDt_(0),
         dtThreshold_(1e-6), subCFLFactor_(1.0)
     {
-        restrictFluxInTransport_ = GET_PARAM_FROM_GROUP(TypeTag,int, Impet, RestrictFluxInTransport);
+        restrictFluxInTransport_ = getParam<int>("Impet.RestrictFluxInTransport", 0);
         regulateBoundaryPermeability = GET_PROP_VALUE(TypeTag, RegulateBoundaryPermeability);
         if(regulateBoundaryPermeability)
-            minimalBoundaryPermeability = GET_RUNTIME_PARAM(TypeTag, Scalar, SpatialParams.MinBoundaryPermeability);
+            minimalBoundaryPermeability = getParam<Scalar>("SpatialParams.MinBoundaryPermeability");
 
-        Scalar cFLFactor = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+        Scalar cFLFactor = getParam<Scalar>("Impet.CFLFactor");
         using std::min;
-        subCFLFactor_ = min(GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, SubCFLFactor), cFLFactor);
-        verbosity_ = GET_PARAM_FROM_GROUP(TypeTag, int, TimeManager, SubTimestepVerbosity);
+        subCFLFactor_ = min(getParam<Scalar>("Impet.SubCFLFactor"), cFLFactor);
+        verbosity_ = getParam<int>("TimeManager.SubTimestepVerbosity");
 
         localTimeStepping_ = subCFLFactor_/cFLFactor < 1.0 - dtThreshold_;
 
@@ -501,7 +494,7 @@ void FVTransport2P2C<TypeTag>::update(const Scalar t, Scalar& dt,
     if(impet)
     {
         Dune::dinfo << "Timestep restricted by CellIdx " << restrictingCell << " leads to dt = "
-                <<dt * GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor)<< std::endl;
+                <<dt * getParam<Scalar>("Impet.CFLFactor")<< std::endl;
         if (averagedFaces_ != 0)
             Dune::dinfo  << " Averageing done for " << averagedFaces_ << " faces. "<< std::endl;
     }

@@ -102,7 +102,7 @@ public:
         viscosity_[wPhaseIdx] = 0.;
         viscosity_[nPhaseIdx] = 0.;
 
-        calcVelocityInTransport_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPFA, CalcVelocityInTransport);
+        calcVelocityInTransport_ = getParam<bool>("MPFA.CalcVelocityInTransport");
     }
 
     void calculateVelocity();

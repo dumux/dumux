@@ -251,9 +251,9 @@ public:
             interactionVolumesContainer_(0), mpfal3DTransmissibilityCalculator_(problem)
     {
         enableVolumeIntegral_ = this->enableVolumeIntegral;
-        enableMPFA= GET_PARAM_FROM_GROUP(TypeTag,bool, GridAdapt, EnableMultiPointFluxApproximation);
+        enableMPFA = getParam<bool>("GridAdapt.EnableMultiPointFluxApproximation");
 
-        maxInteractionVolumes = GET_PARAM_FROM_GROUP(TypeTag,int, GridAdapt, MaxInteractionVolumes);
+        maxInteractionVolumes = getParam<int>("GridAdapt.MaxInteractionVolumes");
     }
 
 private:
@@ -1853,10 +1853,6 @@ int FV3dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     std::vector<Dune::FieldVector<Scalar, dim> > lambda
         = {unity, unity, unity, unity, unity, unity, unity, unity};
     Dune::FieldVector<bool, 4> useCases(false);
-
-//    static Scalar transChoiceThreshold_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, MPFA, TransmissibilityCriterionThreshold);
-//    if(!properFluxDirection)
-//        mpfal3DTransmissibilityCalculator_.setTransChoiceThreshold(-transChoiceThreshold_);
 
     /*********** calculate transmissibility for that case ******/
     switch(subVolumeFaceIdx)

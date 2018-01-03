@@ -370,12 +370,12 @@ public:
     GridAdaptInitializationIndicator(Problem& problem, AdaptionIndicator& adaptionIndicator):
         problem_(problem), adaptionIndicator_(adaptionIndicator), maxLevel_(0), nextMaxLevel_(0)
     {
-        minAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MinLevel);
-        maxAllowedLevel_ = GET_PARAM_FROM_GROUP(TypeTag, int, GridAdapt, MaxLevel);
-        enableInitializationIndicator_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, EnableInitializationIndicator);
-        refineAtDirichletBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtDirichletBC);
-        refineAtFluxBC_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtFluxBC);
-        refineAtSource_ = GET_PARAM_FROM_GROUP(TypeTag, bool, GridAdapt, RefineAtSource);
+        minAllowedLevel_ = getParam<int>("GridAdapt.MinLevel");
+        maxAllowedLevel_ = getParam<int>("GridAdapt.MaxLevel");
+        enableInitializationIndicator_ = getParam<bool>("GridAdapt.EnableInitializationIndicator");
+        refineAtDirichletBC_ = getParam<bool>("GridAdapt.RefineAtDirichletBC");
+        refineAtFluxBC_ = getParam<bool>("GridAdapt.RefineAtFluxBC");
+        refineAtSource_ = getParam<bool>("GridAdapt.RefineAtSource");
 
         if (!refineAtDirichletBC_ && !refineAtFluxBC_ && !refineAtSource_)
         {
@@ -390,8 +390,8 @@ private:
     Dune::DynamicVector<int> indicatorVector_;
     int maxLevel_;
     int nextMaxLevel_;
-    int minAllowedLevel_;
-    int maxAllowedLevel_;
+    int minAllowedLevel_; //!< minimum allowed level
+    int maxAllowedLevel_; //!< maximum allowed level
     bool enableInitializationIndicator_;
     bool refineAtDirichletBC_;
     bool refineAtFluxBC_;

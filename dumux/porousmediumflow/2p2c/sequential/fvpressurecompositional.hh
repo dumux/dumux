@@ -138,7 +138,7 @@ public:
         // estimate then the size of the last time step
         if(Dune::FloatCmp::eq<Scalar>(problem_.timeManager().time(), problem_.timeManager().episodeStartTime())
                 && problem_.timeManager().episodeIndex() > 1)
-            problem_.timeManager().setTimeStepSize(dt_estimate*GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor));
+            problem_.timeManager().setTimeStepSize(dt_estimate*getParam<Scalar>("Impet.CFLFactor"));
 
         updateEstimate_ *= problem_.timeManager().timeStepSize();
 
@@ -374,9 +374,9 @@ public:
         for  (int i=0; i<GET_PROP_VALUE(TypeTag, NumPhases); i++)
             updateEstimate_[i].resize(problem.gridView().size(0));
 
-        ErrorTermFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermFactor);
-        ErrorTermLowerBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermLowerBound);
-        ErrorTermUpperBound_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, ErrorTermUpperBound);
+        ErrorTermFactor_ = getParam<Scalar>("Impet.ErrorTermFactor");
+        ErrorTermLowerBound_ = getParam<Scalar>("Impet.ErrorTermLowerBound", 0.2);
+        ErrorTermUpperBound_ = getParam<Scalar>("Impet.ErrorTermUpperBound");
 
         if (pressureType == Indices::pressureGlobal)
         {

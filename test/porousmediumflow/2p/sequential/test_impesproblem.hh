@@ -155,7 +155,7 @@ public:
 IMPESTestProblem(TimeManager &timeManager, const GridView &gridView) :
 ParentType(timeManager, gridView)
 {
-    name_ = GET_RUNTIME_PARAM(TypeTag, std::string, Problem.Name);
+    name_ = getParam<std::string>("Problem.Name");
 }
 
 /*!

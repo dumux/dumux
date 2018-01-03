@@ -61,15 +61,6 @@ NEW_PROP_TAG( VelocityFormulation); //!< The type of velocity reconstructed for 
 NEW_PROP_TAG( EnableCompressibility);//!< Returns whether compressibility is allowed
 NEW_PROP_TAG( FluidSystem ); //!< Defines the fluid system
 NEW_PROP_TAG( FluidState );//!< Defines the fluid state
-
-//! Scaling factor for the error term (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ImpetErrorTermFactor );
-
-//! Lower threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ImpetErrorTermLowerBound );
-
-//! Upper threshold used for the error term evaluation (term to damp unphysical saturation overshoots via pressure correction)
-NEW_PROP_TAG( ImpetErrorTermUpperBound );
 }
 }
 
@@ -139,13 +130,6 @@ public:
 
 //! The spatial parameters to be employed. Use SequentialFVSpatialParams by default.
 SET_TYPE_PROP(SequentialTwoP, SpatialParams, SequentialFVSpatialParams<TypeTag>);
-
-//! Default error term factor
-SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermFactor, 0.5);
-//! Default lower threshold for evaluation of an error term
-SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermLowerBound, 0.1);
-//! Default upper threshold for evaluation of an error term
-SET_SCALAR_PROP(SequentialTwoP, ImpetErrorTermUpperBound, 0.9);
 // \}
 }
 

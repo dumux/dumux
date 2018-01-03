@@ -94,9 +94,6 @@ public:
 
 #if PROBLEM == 1
 SET_TYPE_PROP(ThreeDTwoPTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
-SET_SCALAR_PROP(ThreeDTwoPTestProblem, ImpetCFLFactor, 1.0);
-#else
-SET_SCALAR_PROP(ThreeDTwoPTestProblem, ImpetCFLFactor, 0.95);
 #endif
 
 SET_TYPE_PROP(ThreeDTwoPTestProblem, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
@@ -175,7 +172,7 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
     int refinementFactor = 0;
     if (haveParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
     {
-        refinementFactor = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Grid, RefinementFactor);
+        refinementFactor = getParam<Scalar>("Grid.RefinementFactor");
         this->grid().globalRefine(refinementFactor);
     }
 
@@ -202,14 +199,14 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
     int outputInterval = 0;
     if (haveParam("Problem.OutputInterval"))
     {
-        outputInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, Problem, OutputInterval);
+        outputInterval = getParam<int>("Problem.OutputInterval");
     }
     this->setOutputInterval(outputInterval);
 
     Scalar outputTimeInterval = 1e6;
     if (haveParam("Problem.OutputTimeInterval"))
     {
-        outputTimeInterval = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, OutputTimeInterval);
+        outputTimeInterval = getParam<Scalar>("Problem.OutputTimeInterval");
     }
     this->setOutputTimeInterval(outputTimeInterval);
 }
@@ -226,10 +223,7 @@ ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
  */
 std::string name() const
 {
-    if (haveParam("Problem.OutputName"))
-        return GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, OutputName);
-    else
-        return "test_3d2p";
+    return getParam<std::string>("Problem.OutputName", "test_3d2p");
 }
 
 bool shouldWriteRestartFile() const

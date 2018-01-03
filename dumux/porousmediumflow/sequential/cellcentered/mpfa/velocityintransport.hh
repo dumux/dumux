@@ -55,7 +55,7 @@ public:
     FvMpfaVelocityInTransport(Problem& problem):
         problem_(problem)
     {
-        calcVelocityInTransport_ = GET_PARAM_FROM_GROUP(TypeTag, bool, MPFA, CalcVelocityInTransport);
+        calcVelocityInTransport_ = getParam<bool>("MPFA.CalcVelocityInTransport");
     }
 
     //! For initialization

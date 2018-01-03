@@ -96,7 +96,7 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0)
     {
-        cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+        cFLFactor_ = getParam<Scalar>("Impet.CFLFactor");
 
         spatialParams_ = std::make_shared<SpatialParams>(gridView);
 
@@ -116,7 +116,7 @@ public:
         : ParentType(timeManager, gridView),
         gravity_(0)
     {
-        cFLFactor_ = GET_PARAM_FROM_GROUP(TypeTag, Scalar, Impet, CFLFactor);
+        cFLFactor_ = getParam<Scalar>("Impet.CFLFactor");
 
         spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
 
