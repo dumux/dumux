@@ -111,27 +111,8 @@ public:
         CellCenterPrimaryVariables flux = fluxVars.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars,
                                                  elemFaceVars, scvf, elemFluxVarsCache[scvf]);
 
-        // add energy fluxes for non-isothermal models
-        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
-        [&](auto IF)
-        {
-            // if we are on an inflow/outflow boundary, use the volVars of the element itself
-            // TODO: catch neumann and outflow in localResidual's evalBoundary_()
-            bool isOutflow = false;
-            if(scvf.boundary())
-            {
-                const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
-                    if(bcTypes.isOutflow(Indices::energyBalanceIdx))
-                        isOutflow = true;
-            }
-
-            auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
-            using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
-
-            flux[Indices::energyBalanceIdx] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
-            flux[Indices::energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
-
-        });
+        computeFluxForCellCenterNonIsothermal_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>(),
+                                               problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache, flux);
 
         return flux;
     }
@@ -165,12 +146,8 @@ public:
         CellCenterPrimaryVariables storage;
         storage[Indices::massBalanceIdx] = volVars.density();
 
-        // add energy storage for non-isothermal models
-        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
-        [&](auto IF)
-        {
-            storage[Indices::energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
-        });
+        computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+                                                  problem, scv, volVars, storage);
 
         return storage;
     }
@@ -344,6 +321,51 @@ protected:
         }
     }
 
+    //! Evaluate energy fluxes entering or leaving the cell center control volume for non isothermal models
+    void computeFluxForCellCenterNonIsothermal_(std::true_type,
+                                                const Problem& problem,
+                                                const Element &element,
+                                                const FVElementGeometry& fvGeometry,
+                                                const ElementVolumeVariables& elemVolVars,
+                                                const ElementFaceVariables& elemFaceVars,
+                                                const SubControlVolumeFace &scvf,
+                                                const ElementFluxVariablesCache& elemFluxVarsCache,
+                                                CellCenterPrimaryVariables& flux) const
+    {
+        // if we are on an inflow/outflow boundary, use the volVars of the element itself
+        // TODO: catch neumann and outflow in localResidual's evalBoundary_()
+        bool isOutflow = false;
+        if(scvf.boundary())
+        {
+            const auto bcTypes = problem.boundaryTypesAtPos(scvf.center());
+                if(bcTypes.isOutflow(Indices::energyBalanceIdx))
+                    isOutflow = true;
+        }
+
+        auto upwindTerm = [](const auto& volVars) { return volVars.density() * volVars.enthalpy(); };
+        using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
+
+        flux[Indices::energyBalanceIdx] = FluxVariables::advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
+        flux[Indices::energyBalanceIdx] += HeatConductionType::diffusiveFluxForCellCenter(problem, element, fvGeometry, elemVolVars, scvf);
+    }
+
+    //! Evaluate energy fluxes entering or leaving the cell center control volume for non isothermal models
+    template <typename... Args>
+    void computeFluxForCellCenterNonIsothermal_(std::false_type, Args&&... args) const {}
+
+    //! Evaluate energy storage for non isothermal models
+    void computeStorageForCellCenterNonIsothermal_(std::true_type,
+                                                   const Problem& problem,
+                                                   const SubControlVolume& scv,
+                                                   const VolumeVariables& volVars,
+                                                   CellCenterPrimaryVariables& storage) const
+    {
+        storage[Indices::energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
+    }
+
+    //! Evaluate energy storage for isothermal models
+    template <typename... Args>
+    void computeStorageForCellCenterNonIsothermal_(std::false_type, Args&&... args) const {}
 
 private:
 

@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_BOX_GEOMETRY_HELPER_HH
 #define DUMUX_DISCRETIZATION_BOX_GEOMETRY_HELPER_HH
 
+#include <array>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -110,7 +111,7 @@ public:
 private:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
-    GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
+    std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -325,7 +326,7 @@ public:
 private:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
-    GlobalPosition p[maxPoints]; // the points needed for construction of the geometries
+    std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the geometries
 };
 
 //! A class to create sub control volume and sub control volume face geometries per element
@@ -594,7 +595,7 @@ public:
 private:
     const typename Element::Geometry& elementGeometry_; //!< Reference to the element geometry
     std::size_t corners_; // number of element corners
-    GlobalPosition p[maxPoints]; // the points needed for construction of the scv/scvf geometries
+    std::array<GlobalPosition, maxPoints> p; // the points needed for construction of the scv/scvf geometries
 };
 
 } // end namespace Dumux

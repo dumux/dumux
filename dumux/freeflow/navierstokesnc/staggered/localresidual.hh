@@ -102,12 +102,8 @@ public:
         if(replaceCompEqIdx < numComponents)
             storage[replaceCompEqIdx] = density;
 
-        // add energy storage for non-isothermal models
-        Dune::Hybrid::ifElse(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
-        [&](auto IF)
-        {
-            storage[Indices::energyBalanceIdx] = volVars.density() * volVars.internalEnergy();
-        });
+        this->computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
+                                                        problem, scv, volVars, storage);
 
         return storage;
     }
