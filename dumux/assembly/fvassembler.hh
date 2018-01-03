@@ -122,7 +122,7 @@ public:
         try
         {
             // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
+            for (const auto& element : elements(gridView()))
                 LocalAssembler::assemble(*this, *jacobian_, *residual_, element, curSol);
 
             // if we get here, everything worked well
@@ -166,7 +166,7 @@ public:
         try
         {
             // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
+            for (const auto& element : elements(gridView()))
                 LocalAssembler::assemble(*this, *jacobian_, element, curSol);
 
             // if we get here, everything worked well
@@ -210,7 +210,7 @@ public:
         gridVariables_->update(curSol);
 
         // let the local assembler add the element contributions
-        for (const auto element : elements(gridView()))
+        for (const auto& element : elements(gridView()))
             LocalAssembler::assemble(*this, r, element, curSol);
     }
 

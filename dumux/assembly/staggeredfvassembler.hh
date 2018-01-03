@@ -128,7 +128,7 @@ public:
         try
         {
             // let the local assembler add the element contributions
-            for (const auto element : elements(gridView()))
+            for (const auto& element : elements(gridView()))
                 LocalAssembler::assembleJacobianAndResidual(*this, *jacobian_, *residual_, element, curSol);
 
             // if we get here, everything worked well
@@ -170,7 +170,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
 
         // let the local assembler add the element contributions
-        for (const auto element : elements(gridView()))
+        for (const auto& element : elements(gridView()))
             LocalAssembler::assembleResidual(*this, r, element, curSol);
     }
 
