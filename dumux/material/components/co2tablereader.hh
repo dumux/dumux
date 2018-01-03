@@ -41,7 +41,8 @@ class TabulatedCO2Properties
     enum { numTempSteps = Traits::numTempSteps, numPressSteps = Traits::numPressSteps };
 
 public:
-    TabulatedCO2Properties() = default;
+    // user default constructor (we can't use "= default" here to satisfy older clang compilers since this class is used as a static data member)
+    TabulatedCO2Properties() {}
 
     Scalar minTemp() const
     { return Traits::minTemp; }
