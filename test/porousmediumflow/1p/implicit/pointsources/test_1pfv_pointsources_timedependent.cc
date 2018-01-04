@@ -88,6 +88,7 @@ int main(int argc, char** argv) try
     // the problem (initial and boundary conditions)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     auto problem = std::make_shared<Problem>(fvGridGeometry);
+    problem->computePointSourceMap(); // enable point sources
 
     // the solution vector
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

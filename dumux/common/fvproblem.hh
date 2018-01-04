@@ -87,9 +87,6 @@ public:
     {
         // set a default name for the problem
         problemName_ = getParamFromGroup<std::string>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.Name");
-
-        // compute which scvs contain point sources
-        computePointSourceMap();
     }
 
     /*!
@@ -432,7 +429,11 @@ public:
         return source;
     }
 
-    //! Compute the point source map, i.e. which scvs have point source contributions
+    /*!
+     * \brief Compute the point source map, i.e. which scvs have point source contributions
+     * \note Call this on the problem before assembly if you want to enable point sources set
+     *       via the addPointSources member function.
+    */
     void computePointSourceMap()
     {
         // clear the given point source maps in case it's not empty
