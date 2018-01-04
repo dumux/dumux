@@ -24,6 +24,7 @@
  */
 #include <config.h>
 
+#include <cmath>
 #include <iostream>
 #include <utility>
 
@@ -49,6 +50,9 @@ SET_BOOL_PROP(TestCachedFVGeometryNonConforming, EnableFVGridGeometryCache, true
 } // end namespace Properties
 } // end namespace Dumux
 
+
+namespace Dumux {
+
 //! epsilon for checking direction of scvf normals
 constexpr double eps = 1e-6;
 
@@ -62,35 +66,35 @@ bool isInCentralElement(const Dune::FieldVector<double, 2>& pos)
 bool isCornerElement(const Dune::FieldVector<double, 2>& center)
 {
     const auto distVec = center - Dune::FieldVector<double, 2>({1.5, 1.5});
-    return (abs(distVec[0]) > 1.0 - eps && abs(distVec[1]) > 1.0 - eps);
+    return (std::abs(distVec[0]) > 1.0 - eps && std::abs(distVec[1]) > 1.0 - eps);
 }
 
 //! returns if the element is middle left element
 bool isMiddleLeftElement(const Dune::FieldVector<double, 2>& center)
 {
     const auto distVec = center - Dune::FieldVector<double, 2>({1.5, 1.5});
-    return distVec[0] < -1.0 + eps && abs(distVec[1]) < eps;
+    return distVec[0] < -1.0 + eps && std::abs(distVec[1]) < eps;
 }
 
 //! returns if the element is middle right element
 bool isMiddleRightElement(const Dune::FieldVector<double, 2>& center)
 {
     const auto distVec = center - Dune::FieldVector<double, 2>({1.5, 1.5});
-    return distVec[0] > 1.0 - eps && abs(distVec[1]) < eps;
+    return distVec[0] > 1.0 - eps && std::abs(distVec[1]) < eps;
 }
 
 //! returns if the element is middle upper element
 bool isMiddleUpperElement(const Dune::FieldVector<double, 2>& center)
 {
     const auto distVec = center - Dune::FieldVector<double, 2>({1.5, 1.5});
-    return distVec[1] > 1.0 - eps && abs(distVec[0]) < eps;
+    return distVec[1] > 1.0 - eps && std::abs(distVec[0]) < eps;
 }
 
 //! returns if the element is middle lower element
 bool isMiddleLowerElement(const Dune::FieldVector<double, 2>& center)
 {
     const auto distVec = center - Dune::FieldVector<double, 2>({1.5, 1.5});
-    return distVec[1] < -1.0 + eps && abs(distVec[0]) < eps;
+    return distVec[1] < -1.0 + eps && std::abs(distVec[0]) < eps;
 }
 
 //! returns for a given element center the element type name used in this test
@@ -111,6 +115,7 @@ std::string elementTypeName(const Dune::FieldVector<double, 2>& center)
 
     DUNE_THROW(Dune::InvalidStateException, "Element center position could not be interpreted.");
 }
+} // end namespace Dumux
 
 int main (int argc, char *argv[]) try
 {
@@ -118,6 +123,8 @@ int main (int argc, char *argv[]) try
     Dune::MPIHelper::instance(argc, argv);
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces on a non-conforming grid" << std::endl;
+
+    using namespace Dumux;
 
     //! aliases
     using TypeTag = TTAG(TYPETAG);
@@ -199,7 +206,7 @@ int main (int argc, char *argv[]) try
 
             //! the normal vector should point either in x- or y-direction with length 1
             using std::abs;
-            if (abs(n[0]) > eps && abs(n[1]) > eps)
+            if (std::abs(n[0]) > eps && std::abs(n[1]) > eps)
                 DUNE_THROW(Dune::InvalidStateException, "Wrong unit outer normal vector");
 
             //! Outer normal must be pointing outwards
