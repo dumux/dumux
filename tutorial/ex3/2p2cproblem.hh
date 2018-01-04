@@ -66,7 +66,7 @@ SET_PROP(ExerciseThreeProblemTwoPTwoC, FluidSystem)
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 public:
-    using type = FluidSystems::H2OMyCompressibleComponent<TypeTag, Scalar>;
+    using type = FluidSystems::H2OMyCompressibleComponent<Scalar>;
 };
 
 }
