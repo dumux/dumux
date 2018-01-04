@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_BOX_GEOMETRY_HELPER_HH
 
 #include <array>
+#include <dune/common/version.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
@@ -139,7 +140,11 @@ public:
     : elementGeometry_(geometry), corners_(geometry.corners())
     {
         // extract the corners of the sub control volumes
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = ReferenceElements::general(geometry.type());
+#else
         const auto& referenceElement = ReferenceElements::general(geometry.type());
+#endif
 
         // the element center
         p[0] = geometry.center();
@@ -354,7 +359,11 @@ public:
     : elementGeometry_(geometry), corners_(geometry.corners())
     {
         // extract the corners of the sub control volumes
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = ReferenceElements::general(geometry.type());
+#else
         const auto& referenceElement = ReferenceElements::general(geometry.type());
+#endif
 
         // the element center
         p[0] = geometry.center();
@@ -499,7 +508,11 @@ public:
                                              unsigned int indexInIntersection) const
     {
         // extract the corners of the sub control volumes
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = FaceReferenceElements::general(geometry.type());
+#else
         const auto& referenceElement = FaceReferenceElements::general(geometry.type());
+#endif
 
         GlobalPosition pi[9];
         auto corners = geometry.corners();

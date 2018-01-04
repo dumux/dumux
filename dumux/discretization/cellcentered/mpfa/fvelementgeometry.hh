@@ -26,6 +26,7 @@
 #ifndef DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCMPFA_FV_ELEMENT_GEOMETRY_HH
 
+#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -375,7 +376,11 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto refElement = ReferenceElements::general(eg.type());
+#else
             const auto& refElement = ReferenceElements::general(eg.type());
+#endif
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();
@@ -455,7 +460,11 @@ private:
             const auto& e = useNeighbor ? is.outside() : element;
             const auto indexInElement = useNeighbor ? is.indexInOutside() : is.indexInInside();
             const auto eg = e.geometry();
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto refElement = ReferenceElements::general(eg.type());
+#else
             const auto& refElement = ReferenceElements::general(eg.type());
+#endif
 
             // Set up a container with all relevant positions for scvf corner computation
             const auto numCorners = is.geometry().corners();

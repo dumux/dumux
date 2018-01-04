@@ -24,6 +24,8 @@
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_ADAPTIVE_HH
 
+#include <dune/common/version.hh>
+
 // dumux environment
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
@@ -58,7 +60,6 @@ class FvMpfaL3dInteractionVolumeContainerAdaptive: public FvMpfaL3dInteractionVo
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -189,7 +190,11 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
 
             const ElementGeometry& geometry = element.geometry();
 
-            const ReferenceElement& referenceElement = ReferenceElements::general(geometry.type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto referenceElement = ReferenceElements::general(geometry.type());
+#else
+            const auto& referenceElement = ReferenceElements::general(geometry.type());
+#endif
 
             switch (idx)
             {
@@ -350,7 +355,11 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
         const ElementGeometry& geometry = element.geometry();
 
-        const ReferenceElement& referenceElement = ReferenceElements::general(geometry.type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = ReferenceElements::general(geometry.type());
+#else
+        const auto& referenceElement = ReferenceElements::general(geometry.type());
+#endif
 
         switch (idx)
         {
@@ -1122,7 +1131,11 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
 
                 const ElementGeometry& geometry = element5.geometry();
 
-                const ReferenceElement& referenceElement = ReferenceElements::general(geometry.type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                const auto referenceElement = ReferenceElements::general(geometry.type());
+#else
+                const auto& referenceElement = ReferenceElements::general(geometry.type());
+#endif
 
                 int oldSubVolumElemIdx = IndexTranslator::getOldElemIdxFromNewFaceIdxto0(zeroFaceIdx, 4);
                 int oldEdgeIdx = IndexTranslator::getOldEdgeIdxFromNewFaceIdxto0(zeroFaceIdx, 1);

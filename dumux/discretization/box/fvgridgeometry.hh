@@ -126,7 +126,11 @@ public:
 
             // get the element geometry
             auto elementGeometry = element.geometry();
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto referenceElement = ReferenceElements::general(elementGeometry.type());
+#else
             const auto& referenceElement = ReferenceElements::general(elementGeometry.type());
+#endif
 
             // instantiate the geometry helper
             GeometryHelper geometryHelper(elementGeometry);
@@ -303,7 +307,11 @@ public:
             numScvf_ += element.subEntities(dim-1);
 
             const auto elementGeometry = element.geometry();
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto referenceElement = ReferenceElements::general(elementGeometry.type());
+#else
             const auto& referenceElement = ReferenceElements::general(elementGeometry.type());
+#endif
 
             // store the sub control volume face indices on the domain boundary
             for (const auto& intersection : intersections(this->gridView(), element))

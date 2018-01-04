@@ -22,6 +22,7 @@
 #ifndef DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 #define DUMUX_MPFAL2DPRESSUREVELOCITIES2P_ADAPTIVE_HH
 
+#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 
 #include "2dpressureadaptive.hh"
@@ -63,7 +64,6 @@ template<class TypeTag> class FvMpfaL2dPressureVelocity2pAdaptive: public FvMpfa
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
@@ -342,7 +342,11 @@ void FvMpfaL2dPressureVelocity2pAdaptive<TypeTag>::calculateVelocity(const Inter
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-    const ReferenceElement& referenceElement = ReferenceElements::general(elementI.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
+#else
+    const auto& referenceElement = ReferenceElements::general(elementI.geometry().type());
+#endif
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

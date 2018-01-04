@@ -56,9 +56,6 @@ class FvMpfaL3d2P2CInteractionVolumeContainerAdaptive : public FvMpfaL3dInteract
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
-
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);

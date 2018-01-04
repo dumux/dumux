@@ -83,7 +83,11 @@ class CROperatorAssemblerTwoP
     using coliterator = typename MatrixType::ColIterator;
     using BCBlockType = std::array<BoundaryConditions::Flags, 1>;     // componentwise boundary conditions
     using SatType = Dune::BlockVector< Dune::FieldVector<double, 1> >;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
     using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, FaceLayout>;
+#endif
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum
@@ -101,8 +105,15 @@ public:
     using RepresentationType = MatrixType;
 
     CROperatorAssemblerTwoP (const GridView& gridview)
-    : gridView_(gridview), faceMapper_(gridView_), size_(faceMapper_.size()),
-      A_(size_, size_, nnz(), RepresentationType::random)
+    : gridView_(gridview)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    , faceMapper_(gridView_, Dune::mcmgLayout(Dune::Codim<dim - 1>()))
+#else
+    , faceMapper_(gridView_)
+#endif
+    , size_(faceMapper_.size())
+    , A_(size_, size_, nnz()
+    , RepresentationType::random)
     {}
 
     //! initialize the CR operator assembler

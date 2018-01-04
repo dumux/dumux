@@ -86,8 +86,12 @@ public:
         using Geometry = typename Entity::Geometry;
         using GV = typename Grid::LevelGridView;
         using IS = typename GV::IndexSet;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        using Mapper = Dune::MultipleCodimMultipleGeomTypeMapper<GV>;
+#else
         using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GV, Dune::MCMGElementLayout>;
         using FaceMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GV, FaceLayout>;
+#endif
         using ct = typename Grid::ctype;
 
         enum{dim = Grid::dimension};
@@ -96,8 +100,13 @@ public:
         using ReferenceElements = Dune::ReferenceElements<ct, dim>;
         const GV& gridview(grid.levelGridView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        Mapper elementMapper(gridview, Dune::mcmgElementLayout());
+        Mapper faceMapper(gridview, Dune::mcmgLayout(Dune::Codim<dim - 1>()));
+#else
         ElementMapper elementMapper(gridview);
         FaceMapper faceMapper(gridview);
+#endif
         SolutionType& exactSol(grid.levelGridView(grid.maxLevel()));
 
         uMean = 0;
@@ -423,12 +432,20 @@ public:
         enum {dim=Grid::dimension};
         using Element = typename Grid::template Codim<0>::Entity;
         using Geometry = typename Element::Geometry;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
         using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
+#endif
         using SolVector = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
         using JacobianInverseTransposed = typename Geometry::JacobianInverseTransposed;
         using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        ElementMapper elementMapper(gridView, Dune::mcmgElementLayout());
+#else
         ElementMapper elementMapper(gridView);
+#endif
         SolVector exactSol(gridView.size(0));
 
 
@@ -709,11 +726,19 @@ public:
         enum {dim=Grid::dimension, maxIntersections = 12};
         using Element = typename Grid::template Codim<0>::Entity;
         using Geometry = typename Element::Geometry;
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
         using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
+#endif
         using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
         using ReferenceFaces = Dune::ReferenceElements<Scalar, dim-1>;
 
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        ElementMapper elementMapper(gridView, Dune::mcmgElementLayout());
+#else
         ElementMapper elementMapper(gridView);
+#endif
 
         uMinExact = 1e100;
         uMaxExact = -1e100;

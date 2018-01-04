@@ -624,7 +624,11 @@ public:
             {
                 if (!is.neighbor() && !is.boundary())
                 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                    const auto refElement = ReferenceElements::general(element.geometry().type());
+#else
                     const auto& refElement = ReferenceElements::general(element.geometry().type());
+#endif
                     for (int isVertex = 0; isVertex < is.geometry().corners(); ++isVertex)
                     {
                         const auto vIdxLocal = refElement.subEntity(is.indexInInside(), 1, isVertex, dim);

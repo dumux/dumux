@@ -24,6 +24,7 @@
 #ifndef DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 #define DUMUX_POROUSMEDIUMFLOW_VELOCITYOUTPUT_HH
 
+#include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/geometry/referenceelements.hh>
@@ -184,7 +185,11 @@ public:
         }
 
         // get the transposed Jacobian of the element mapping
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = ReferenceElements::general(geomType);
+#else
         const auto& referenceElement = ReferenceElements::general(geomType);
+#endif
         const auto& localPos = referenceElement.position(0, 0);
         const auto jacobianT2 = geometry.jacobianTransposed(localPos);
 

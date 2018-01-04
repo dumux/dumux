@@ -201,8 +201,15 @@ class IntersectionMapper
 
 public:
     IntersectionMapper(const GridView& gridview)
-    : gridView_(gridview), elementMapper_(gridView_), size_(gridView_.size(1)),
-      intersectionMapGlobal_(gridView_.size(0)), intersectionMapLocal_(gridView_.size(0))
+    : gridView_(gridview)
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    , elementMapper_(gridView_, Dune::mcmgElementLayout())
+#else
+    , elementMapper_(gridView_)
+#endif
+    , size_(gridView_.size(1))
+    , intersectionMapGlobal_(gridView_.size(0))
+    , intersectionMapLocal_(gridView_.size(0))
     {
         const auto element = *gridView_.template begin<0>();
 

@@ -24,6 +24,8 @@
 #ifndef DUMUX_GRIDADAPTIONINDICATOR2PLOCALFLUX_HH
 #define DUMUX_GRIDADAPTIONINDICATOR2PLOCALFLUX_HH
 
+#include <dune/common/version.hh>
+
 #include <dumux/porousmediumflow/sequential/impetproperties.hh>
 #include <dumux/porousmediumflow/2p/sequential/properties.hh>
 
@@ -75,7 +77,6 @@ private:
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases)
     };
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimVector = Dune::FieldVector<Scalar, dim>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
@@ -191,8 +192,11 @@ public:
             const typename Element::Geometry& geometry = element.geometry();
             // get corresponding reference element
             using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-            const Dune::ReferenceElement< Scalar , dim > & refElement =
-                    ReferenceElements::general( geometry.type() );
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto refElement = ReferenceElements::general(geometry.type());
+#else
+            const auto& refElement = ReferenceElements::general(geometry.type());
+#endif
             const int numberOfFaces=refElement.size(1);
 
             std::vector<Scalar> flux(numberOfFaces,0);
