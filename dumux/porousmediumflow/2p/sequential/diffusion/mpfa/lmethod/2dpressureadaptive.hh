@@ -22,6 +22,8 @@
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_ADAPTIVE_HH
 
+#include <dune/common/version.hh>
+
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume.hh>
@@ -85,7 +87,6 @@ class FvMpfaL2dPressure2pAdaptive: public FVPressure<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
@@ -777,7 +778,11 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::storeInteractionVolumeInfo()
         // get index
         int eIdxGlobal1 = problem_.variables().index(element);
 
-        const ReferenceElement& referenceElement = ReferenceElements::general(element.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = ReferenceElements::general(element.geometry().type());
+#else
+        const auto& referenceElement = ReferenceElements::general(element.geometry().type());
+#endif
 
         const auto isEndIt12 = problem_.gridView().iend(element);
         for (auto isIt12 = problem_.gridView().ibegin(element); isIt12 != isEndIt12; ++isIt12)
@@ -2351,8 +2356,11 @@ void FvMpfaL2dPressure2pAdaptive<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                            const ReferenceElement& referenceElement = ReferenceElements::general(
-                                    element.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                            const auto referenceElement = ReferenceElements::general(element.geometry().type());
+#else
+                            const auto& referenceElement = ReferenceElements::general(element.geometry().type());
+#endif
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

@@ -24,6 +24,8 @@
 #ifndef DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 #define DUMUX_MIMETICPRESSURE2PADAPTIVE_HH
 
+#include <dune/common/version.hh>
+
 // dumux environment
 #include <dumux/porousmediumflow/sequential/mimetic/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
@@ -116,9 +118,6 @@ template<class TypeTag> class MimeticPressure2PAdaptive
 
     using Matrix = typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix);
     using Vector = typename GET_PROP_TYPE(TypeTag, PressureRHSVector);
-
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     //! initializes the matrix to store the system of equations
     void initializeMatrix();
@@ -307,8 +306,11 @@ public:
                 const typename Element::Geometry& geometry = element.geometry();
                 // get corresponding reference element
                 using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-                const Dune::ReferenceElement< Scalar , dim > & refElement =
-                        ReferenceElements::general( geometry.type() );
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                const auto refElement = ReferenceElements::general(geometry.type());
+#else
+                const auto& refElement = ReferenceElements::general(geometry.type());
+#endif
                 const int numberOfFaces=refElement.size(1);
 
                 std::vector<Scalar> fluxW(numberOfFaces,0);

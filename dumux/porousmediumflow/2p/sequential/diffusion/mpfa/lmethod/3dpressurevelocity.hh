@@ -24,6 +24,7 @@
 #ifndef DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 #define DUMUX_FVMPFAL2PFABOUND3DVELOCITIES2P_HH
 
+#include <dune/common/version.hh>
 #include <dune/common/float_cmp.hh>
 #include "3dpressure.hh"
 #include "3dvelocity.hh"
@@ -81,7 +82,6 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2p: public FvMpfaL3dPress
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
     using Intersection = typename GridView::Intersection;
@@ -305,7 +305,11 @@ void FvMpfaL3dPressureVelocity2p<TypeTag>::calculateVelocity(const Intersection&
 
     CellData& cellDataJ = problem_.variables().cellData(eIdxGlobalJ);
 
-    const ReferenceElement& referenceElement = ReferenceElements::general(elementI.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    const auto referenceElement = ReferenceElements::general(elementI.geometry().type());
+#else
+    const auto& referenceElement = ReferenceElements::general(elementI.geometry().type());
+#endif
 
     int indexInInside = intersection.indexInInside();
     int indexInOutside = intersection.indexInOutside();

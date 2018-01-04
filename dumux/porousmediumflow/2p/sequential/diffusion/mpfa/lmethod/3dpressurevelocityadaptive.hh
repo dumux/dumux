@@ -81,9 +81,6 @@ template<class TypeTag> class FvMpfaL3dPressureVelocity2pAdaptive: public FvMpfa
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
 
-    using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
-
     using InteractionVolume = typename GET_PROP_TYPE(TypeTag, MPFAInteractionVolume);
     using Intersection = typename GridView::Intersection;
 

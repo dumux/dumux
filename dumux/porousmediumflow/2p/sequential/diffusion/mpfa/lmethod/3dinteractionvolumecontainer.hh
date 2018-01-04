@@ -24,6 +24,8 @@
 #ifndef DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 #define DUMUX_FVMPFAL3D_INTERACTIONVOLUMECONTAINER_HH
 
+#include <dune/common/version.hh>
+
 // dumux environment
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
@@ -61,7 +63,6 @@ class FvMpfaL3dInteractionVolumeContainer
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -380,7 +381,11 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeIntersectionInfo(const E
 
     const ElementGeometry& geometry = element.geometry();
 
-    const ReferenceElement& referenceElement = ReferenceElements::general(geometry.type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    const auto referenceElement = ReferenceElements::general(geometry.type());
+#else
+    const auto& referenceElement = ReferenceElements::general(geometry.type());
+#endif
 
     int levelI = element.level();
 
@@ -1356,7 +1361,11 @@ void FvMpfaL3dInteractionVolumeContainer<TypeTag>::storeInnerInteractionVolume(I
         const ElementGeometry& geometry1 = element1.geometry();
         const ElementGeometry& geometry8 = element8.geometry();
 
-        const ReferenceElement& referenceElement = ReferenceElements::general(geometry1.type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+        const auto referenceElement = ReferenceElements::general(geometry1.type());
+#else
+        const auto& referenceElement = ReferenceElements::general(geometry1.type());
+#endif
 
         DimVector edgeCoord(geometry1.global(referenceElement.position(9, dim - 1)));
         interactionVolume.setEdgePosition(edgeCoord, 2);

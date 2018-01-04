@@ -24,6 +24,7 @@
 #ifndef DUMUX_FVMPFAO2DVELOCITY2P_HH
 #define DUMUX_FVMPFAO2DVELOCITY2P_HH
 
+#include <dune/common/version.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dumux/porousmediumflow/2p/sequential/diffusion/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
@@ -65,7 +66,6 @@ template<class TypeTag> class FvMpfaO2dVelocity2P
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
@@ -587,8 +587,11 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                    const ReferenceElement& referenceElement = ReferenceElements::general(
-                            element.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                    const auto referenceElement = ReferenceElements::general(element.geometry().type());
+#else
+                    const auto& referenceElement = ReferenceElements::general(element.geometry().type());
+#endif
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 
@@ -697,8 +700,11 @@ void FvMpfaO2dVelocity2P<TypeTag>::calculateBoundaryInteractionVolumeVelocity(In
                 {
                     int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                    const ReferenceElement& referenceElement = ReferenceElements::general(
-                            element.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                    const auto referenceElement = ReferenceElements::general(element.geometry().type());
+#else
+                    const auto& referenceElement = ReferenceElements::general(element.geometry().type());
+#endif
 
                     const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

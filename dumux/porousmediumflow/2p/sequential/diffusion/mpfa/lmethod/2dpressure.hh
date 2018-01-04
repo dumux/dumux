@@ -22,6 +22,8 @@
 #ifndef DUMUX_FVMPFAL2DPRESSURE2P_HH
 #define DUMUX_FVMPFAL2DPRESSURE2P_HH
 
+#include <dune/common/version.hh>
+
 // dumux environment
 #include <dumux/porousmediumflow/sequential/cellcentered/pressure.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume.hh>
@@ -82,7 +84,6 @@ class FvMpfaL2dPressure2p: public FVPressure<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     using ReferenceElements = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using MaterialLaw = typename SpatialParams::MaterialLaw;
@@ -732,7 +733,11 @@ void FvMpfaL2dPressure2p<TypeTag>::storeInteractionVolumeInfo()
 
             // get the intersection node /bar^{x_3} between 'intersection12'
             // and 'intersection14', denoted as 'corner1234'
-            const ReferenceElement& referenceElement = ReferenceElements::general(element.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+            const auto referenceElement = ReferenceElements::general(element.geometry().type());
+#else
+            const auto& referenceElement = ReferenceElements::general(element.geometry().type());
+#endif
 
             GlobalPosition corner1234(0);
 
@@ -1634,8 +1639,11 @@ void FvMpfaL2dPressure2p<TypeTag>::assemble()
                         {
                             int boundaryFaceIdx = interactionVolume.getIndexOnElement(elemIdx, fIdx);
 
-                            const ReferenceElement& referenceElement = ReferenceElements::general(
-                                    element.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                            const auto referenceElement = ReferenceElements::general(element.geometry().type());
+#else
+                            const auto& referenceElement = ReferenceElements::general(element.geometry().type());
+#endif
 
                             const LocalPosition& localPos = referenceElement.position(boundaryFaceIdx, 1);
 

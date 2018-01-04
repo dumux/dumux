@@ -20,6 +20,7 @@
 #define DUMUX_FV3DPRESSURE2P2C_ADAPTIVE_HH
 
 // dune environent:
+#include <dune/common/version.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
@@ -125,7 +126,6 @@ template<class TypeTag> class FV3dPressure2P2CAdaptive
     using Vertex = typename GridView::Traits::template Codim<dim>::Entity;
     using Element = typename GridView::Traits::template Codim<0>::Entity;
     using ReferenceElementContainer = Dune::ReferenceElements<Scalar, dim>;
-    using ReferenceElement = Dune::ReferenceElement<Scalar, dim>;
 
     using Grid = typename GridView::Grid;
     using Intersection = typename GridView::Intersection;
@@ -1430,7 +1430,11 @@ int FV3dPressure2P2CAdaptive<TypeTag>::computeTransmissibilities(const Intersect
     int localFace24 = face24->indexInInside();
     int localFace26 = face26->indexInInside();
 
-    const ReferenceElement& referenceElement = ReferenceElementContainer::general(neighbor.geometry().type());
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    const auto referenceElement = ReferenceElementContainer::general(neighbor.geometry().type());
+#else
+    const auto& referenceElement = ReferenceElementContainer::general(neighbor.geometry().type());
+#endif
     //find 'x'5 = edgeCoord1226
     int edge1226;
     // search through edges of face 12
