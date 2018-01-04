@@ -168,7 +168,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
     using CO2 = Dumux::CO2<Scalar, HeterogeneousCO2Tables::CO2Tables>;
 
     //! property that defines whether mole or mass fractions are used
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
     // the discretization method we are using
     static constexpr auto discMethod = GET_PROP_VALUE(TypeTag, DiscretizationMethod);

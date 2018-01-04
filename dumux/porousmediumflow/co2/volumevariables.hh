@@ -82,7 +82,7 @@ class TwoPTwoCCO2VolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
 
 public:
     //! The type of the object returned by the fluidState() method

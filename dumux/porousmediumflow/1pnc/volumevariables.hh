@@ -78,7 +78,7 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     };
 
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
 

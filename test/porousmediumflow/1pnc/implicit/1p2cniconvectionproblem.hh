@@ -134,7 +134,7 @@ class OnePTwoCNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     //! property that defines whether mole or mass fractions are used
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
     static const bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 

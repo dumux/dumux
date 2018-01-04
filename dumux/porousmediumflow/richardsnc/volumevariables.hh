@@ -330,7 +330,7 @@ class RichardsNCVolumeVariables : public RichardsBaseVolumeVariables<TypeTag>
         pressureIdx = Indices::pressureIdx
     };
 
-    static const bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
