@@ -57,9 +57,6 @@ class NavierStokesNCResidualImpl<TypeTag, DiscretizationMethods::Staggered>
 
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-
     enum {
         conti0EqIdx = Indices::conti0EqIdx,
         phaseIdx = Indices::phaseIdx,

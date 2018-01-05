@@ -53,7 +53,6 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -62,13 +61,10 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
-        dim = GridView::dimension,
-
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
         numMajorComponents = GET_PROP_VALUE(TypeTag, NumMajorComponents),
@@ -97,13 +93,10 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using CoordScalar = typename Grid::ctype;
     using Miscible2pNCComposition = Dumux::Miscible2pNCComposition<Scalar, FluidSystem>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static_assert(useMoles, "use moles has to be set true in the 2pnc model");
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
-    enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
@@ -130,7 +123,7 @@ public:
         /////////////
         // calculate the remaining quantities
         /////////////
-        const MaterialLawParams &materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
+        const auto &materialParams = problem.spatialParams().materialLawParams(element, scv, elemSol);
 
         // Second instance of a parameter cache.
         // Could be avoided if diffusion coefficients also

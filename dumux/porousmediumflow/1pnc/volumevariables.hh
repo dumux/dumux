@@ -56,7 +56,6 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -65,12 +64,10 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     enum
     {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         phaseIdx = Indices::phaseIdx,
         phaseCompIdx = Indices::phaseCompIdx,
-        firstTransportEqIdx = Indices::firstTransportEqIdx,
 
         // primary variable indices
         pressureIdx = Indices::pressureIdx,
@@ -78,13 +75,7 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     };
 
-    static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
     using Element = typename GridView::template Codim<0>::Entity;
-    using DimVector = Dune::FieldVector<Scalar,dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
 
 public:
 

@@ -47,7 +47,6 @@ class MPNCVolumeVariables
     , public NonEquilibriumVolumeVariables<TypeTag>
 {
     using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
-    using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);

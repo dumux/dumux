@@ -43,17 +43,13 @@ class TwoPTwoCCO2VolumeVariables : public TwoPTwoCVolumeVariables<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum {
-        numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
-    };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
     enum {
         wCompIdx = Indices::wCompIdx,

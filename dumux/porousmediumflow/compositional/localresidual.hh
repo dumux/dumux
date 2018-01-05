@@ -44,12 +44,10 @@ class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidua
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -57,7 +55,6 @@ class CompositionalLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidua
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using MolecularDiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
 
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);

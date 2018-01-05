@@ -45,12 +45,10 @@ class ThreePThreeCLocalResidual: public GET_PROP_TYPE(TypeTag, BaseLocalResidual
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;

@@ -59,7 +59,6 @@ template <class TypeTag>
 class NonEquilibriumVolumeVariablesImplementation<TypeTag, false/*enableChemicalNonEquilibrium*/, false/*enableThermalNonEquilibrium*/>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -103,32 +102,19 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, /*enableChemicalNonEq
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
 
-    enum { numComponents = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
-    enum { wPhaseIdx = FluidSystem::wPhaseIdx };
-    enum { nPhaseIdx = FluidSystem::nPhaseIdx };
-    enum { sPhaseIdx = FluidSystem::sPhaseIdx };
-    enum { nCompIdx = FluidSystem::nCompIdx } ;
-    enum { wCompIdx = FluidSystem::wCompIdx } ;
-    enum { dim = GridView::dimension};
-    enum { dimWorld = GridView::dimensionworld};
     enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
-    enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
     enum { temperature0Idx = Indices::temperature0Idx };
-    enum { moleFrac00Idx = Indices::conti0EqIdx };
 
     static_assert((numEnergyEqFluid < 2),
                    "This model is a specialization for a energy transfer of a fluid  mixture and a solid");
@@ -289,17 +275,13 @@ private:
 template <class TypeTag>
 class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalNonEquilibrium*/, false/*enableThermalNonEquilibrium*/>
 {
-    using BaseType = PorousMediumFlowVolumeVariables<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
@@ -309,24 +291,14 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { wPhaseIdx = FluidSystem::wPhaseIdx };
     enum { nPhaseIdx = FluidSystem::nPhaseIdx };
-    enum { sPhaseIdx = FluidSystem::sPhaseIdx };
     enum { nCompIdx = FluidSystem::nCompIdx } ;
     enum { wCompIdx = FluidSystem::wCompIdx } ;
     enum { dim = GridView::dimension};
-    enum { dimWorld = GridView::dimensionworld};
-    enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
-    enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
-    enum { temperature0Idx = Indices::temperature0Idx };
     enum { moleFrac00Idx = Indices::conti0EqIdx };
 
     using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
     using AwnSurfaceParams = typename  AwnSurface::Params;
-    using AwsSurface = typename GET_PROP_TYPE(TypeTag, AwsSurface);
-    using AwsSurfaceParams = typename  AwsSurface::Params;
-    using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
-    using AnsSurfaceParams = typename  AnsSurface::Params;
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
     //TODO: write a good constraint solver which does that right
@@ -524,12 +496,9 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ParameterCache = typename FluidSystem::ParameterCache;
@@ -542,8 +511,6 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     enum { sPhaseIdx = FluidSystem::sPhaseIdx };
     enum { nCompIdx = FluidSystem::nCompIdx } ;
     enum { wCompIdx = FluidSystem::wCompIdx } ;
-    enum { dim = GridView::dimension};
-    enum { dimWorld = GridView::dimensionworld};
     enum { nusseltFormulation = GET_PROP_VALUE(TypeTag, NusseltFormulation)} ;
     enum { sherwoodFormulation = GET_PROP_VALUE(TypeTag, SherwoodFormulation)} ;
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
@@ -554,7 +521,6 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     static_assert((numEnergyEqFluid > 1),
                    "This model only deals with energy transfer between two fluids and one solid phase");
     using DimLessNum = DimensionlessNumbers<Scalar>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using AwnSurface = typename GET_PROP_TYPE(TypeTag, AwnSurface);
     using AwnSurfaceParams = typename  AwnSurface::Params;
@@ -563,7 +529,6 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
     using AnsSurfaceParams = typename  AnsSurface::Params;
 
-    using ConstraintReferencePhaseSolver = Dumux::FluidSystemComputeFromReferencePhase<Scalar, FluidSystem>;
     using ConstraintSolver = Dumux::FluidSystemConstraintSolver<Scalar, FluidSystem>;
 
 

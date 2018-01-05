@@ -49,25 +49,18 @@ class MPNCLocalResidual : public CompositionalLocalResidual<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {phase0NcpIdx = Indices::phase0NcpIdx};
 
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 public:
     using ParentType::ParentType;
 

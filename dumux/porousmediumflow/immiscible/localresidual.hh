@@ -40,7 +40,6 @@ class ImmiscibleLocalResidual : public GET_PROP_TYPE(TypeTag, BaseLocalResidual)
     using ParentType = typename GET_PROP_TYPE(TypeTag, BaseLocalResidual);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);

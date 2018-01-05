@@ -59,22 +59,15 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    // constraint solvers
-    using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
-    using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     enum {
-        dim = GridView::dimension,
-
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         wCompIdx = Indices::wCompIdx,
         nCompIdx = Indices::nCompIdx,
-        gCompIdx = Indices::gCompIdx,
 
         wPhaseIdx = Indices::wPhaseIdx,
         gPhaseIdx = Indices::gPhaseIdx,
@@ -96,11 +89,6 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-
-    static const Scalar R; // universial gas constant
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
-    enum { dofCodim = isBox ? dim : 0 };
 
 public:
     //! The type of the object returned by the fluidState() method
@@ -857,10 +845,6 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
-
-template <class TypeTag>
-const typename ThreePWaterOilVolumeVariables<TypeTag>::Scalar ThreePWaterOilVolumeVariables<TypeTag>::R = Constants<typename GET_PROP_TYPE(TypeTag, Scalar)>::R;
-
 } // end namespace
 
 #endif

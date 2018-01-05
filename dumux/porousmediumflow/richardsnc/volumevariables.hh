@@ -49,8 +49,6 @@ class RichardsBaseVolumeVariables : public PorousMediumFlowVolumeVariables<TypeT
     using PermeabilityType = typename SpatialParams::PermeabilityType;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
@@ -58,8 +56,7 @@ class RichardsBaseVolumeVariables : public PorousMediumFlowVolumeVariables<TypeT
 
     enum{
          pressureIdx = Indices::pressureIdx,
-         wPhaseIdx = Indices::wPhaseIdx,
-         nPhaseIdx = Indices::nPhaseIdx
+         wPhaseIdx = Indices::wPhaseIdx
     };
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -318,25 +315,20 @@ class RichardsNCVolumeVariables : public RichardsBaseVolumeVariables<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using PermeabilityType = typename SpatialParams::PermeabilityType;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum
     {
         wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
         pressureIdx = Indices::pressureIdx
     };
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     static const int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using GlobalPosition = Dune::FieldVector<Scalar,dimWorld>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:

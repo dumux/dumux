@@ -50,22 +50,16 @@ class ThreePThreeCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeT
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename MaterialLaw::Params;
-
-    // constraint solvers
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using PermeabilityType = typename SpatialParams::PermeabilityType;
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
     using ComputeFromReferencePhase = Dumux::ComputeFromReferencePhase<Scalar, FluidSystem>;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
-        dim = GridView::dimension,
-
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
@@ -94,9 +88,6 @@ class ThreePThreeCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeT
 
     using Element = typename GridView::template Codim<0>::Entity;
 
-    // universial gas constant
-    static constexpr Scalar R = Dumux::Constants<Scalar>::R;
-
 public:
 
    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
@@ -122,7 +113,7 @@ public:
         bool useConstraintSolver = GET_PROP_VALUE(TypeTag, UseConstraintSolver);
 
         // capillary pressure parameters
-        const MaterialLawParams &materialParams =
+        const auto &materialParams =
             problem.spatialParams().materialLawParams(element, scv, elemSol);
 
 
