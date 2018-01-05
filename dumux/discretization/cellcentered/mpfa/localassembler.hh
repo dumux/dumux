@@ -28,14 +28,16 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
+
 namespace Dumux
 {
 //! Forward declaration of the implementation
-template< class InteractionVolume > class InteractionVolumeAssemblerImpl;
+template< class IVTraits, MpfaMethods M > class InteractionVolumeAssemblerImpl;
 
 //! Alias to select the right implementation.
-template< class InteractionVolume >
-using InteractionVolumeAssembler = InteractionVolumeAssemblerImpl< InteractionVolume >;
+template< class IVTraits, MpfaMethods M >
+using InteractionVolumeAssembler = InteractionVolumeAssemblerImpl< IVTraits, M >;
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -45,19 +47,17 @@ using InteractionVolumeAssembler = InteractionVolumeAssemblerImpl< InteractionVo
  *        for the available interaction volume implementations. these
  *        should derive from this base clases.
  *
- * \tparam Interaction Volume The interaction volume implementation
- *                            used by the mpfa scheme
+ * \tparam IVTraits The Traits class used by the interaction volume
  */
-template<class InteractionVolume>
+template< class IVTraits >
 class InteractionVolumeAssemblerBase
 {
-    using Problem = typename InteractionVolume::Problem;
-    using FVElementGeometry = typename InteractionVolume::FVElementGeometry;
-    using ElementVolumeVariables = typename InteractionVolume::ElementVolumeVariables;
+    using Matrix = typename IVTraits::Matrix;
+    using Vector = typename IVTraits::Vector;
 
-    using Traits = typename InteractionVolume::Traits;
-    using Matrix = typename Traits::Matrix;
-    using Vector = typename Traits::Vector;
+    using Problem = typename IVTraits::Problem;
+    using FVElementGeometry = typename IVTraits::FVElementGeometry;
+    using ElementVolumeVariables = typename IVTraits::ElementVolumeVariables;
 
   public:
     /*!
@@ -86,15 +86,16 @@ class InteractionVolumeAssemblerBase
      * \brief General interface of a function assembling the
      *        interaction volume-local transmissibility matrix.
      *
-     * \tparam GetTensorFunction Lambda to obtain the tensor w.r.t.
-     *                           which the local system is to be solved
+     * \tparam IV Interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
      *
      * \param T The transmissibility matrix to be assembled
      * \param iv The interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class GetTensorFunction >
-    void assemble(Matrix& T, InteractionVolume& iv, const GetTensorFunction& getTensor)
+    template< class IV, class GetTensor >
+    void assemble(Matrix& T, IV& iv, const GetTensor& getTensor)
     {
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assemble() function");
     }
@@ -102,16 +103,21 @@ class InteractionVolumeAssemblerBase
     /*!
      * \brief General interface of a function assembling the interaction
      *        volume-local transmissibilities matrix for surface grids. The
-     *        transmissibility associated with "outside" faces are stored
+     *        transmissibilities associated with "outside" faces are stored
      *        in a separate container.
+     *
+     * \tparam TOutside Container to store the "outside" transmissibilities
+     * \tparam IV Interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
      *
      * \param outsideTij tij on "outside" faces to be assembled
      * \param T The transmissibility matrix tij to be assembled
      * \param iv The mpfa-o interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class OutsideTijContainer, class GetTensorFunction >
-    void assemble(OutsideTijContainer& outsideTij, Matrix& T, InteractionVolume& iv, const GetTensorFunction& getTensor)
+    template< class TOutside, class IV, class GetTensor >
+    void assemble(TOutside& outsideTij, Matrix& T, IV& iv, const GetTensor& getTensor)
     {
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assemble() function to be used on surface grids");
     }
@@ -121,10 +127,11 @@ class InteractionVolumeAssemblerBase
      *        volume-local transmissibility matrix in the case that gravity
      *        is to be considered in the local system of equations.
      *
-     * \tparam GravityContainer The type of container used to store the
-     *                          gravitational acceleration per scvf & phase
-     * \tparam GetTensorFunction Lambda to obtain the tensor w.r.t.
-     *                           which the local system is to be solved
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
      *
      * \param T The transmissibility matrix to be assembled
      * \param g Container to assemble gravity per scvf & phase
@@ -132,12 +139,8 @@ class InteractionVolumeAssemblerBase
      * \param iv The interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class GravityContainer, class GetTensorFunction >
-    void assembleWithGravity(Matrix& T,
-                             GravityContainer& g,
-                             Matrix& CA,
-                             InteractionVolume& iv,
-                             const GetTensorFunction& getTensor)
+    template< class GC, class IV, class GetTensor >
+    void assembleWithGravity(Matrix& T, GC& g, Matrix& CA, IV& iv, const GetTensor& getTensor)
     {
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assembleWithGravity() function");
     }
@@ -150,6 +153,14 @@ class InteractionVolumeAssemblerBase
      *        gravitational flux contributions on "outside" faces are stored
      *        in a separate container.
      *
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam GOut Type of container used to store gravity on "outside" faces
+     * \tparam TOutside Container to store the "outside" transmissibilities
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param outsideTij tij on "outside" faces to be assembled
      * \param T The transmissibility matrix to be assembled
      * \param outsideG Container to assemble gravity on "outside" faces
@@ -159,18 +170,15 @@ class InteractionVolumeAssemblerBase
      * \param iv The interaction volume
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
-    template< class GravityContainer,
-              class OutsideGravityContainer,
-              class OutsideTijContainer,
-              class GetTensorFunction >
-    void assembleWithGravity(OutsideTijContainer& outsideTij,
+    template< class GC, class GOut, class TOutside, class IV, class GetTensor >
+    void assembleWithGravity(TOutside& outsideTij,
                              Matrix& T,
-                             OutsideGravityContainer& outsideG,
-                             GravityContainer& g,
+                             GOut& outsideG,
+                             GC& g,
                              Matrix& CA,
                              Matrix& A,
-                             InteractionVolume& iv,
-                             const GetTensorFunction& getTensor)
+                             IV& iv,
+                             const GetTensor& getTensor)
     {
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assembleWithGravity() function to be used on surface grids");
     }
@@ -180,14 +188,15 @@ class InteractionVolumeAssemblerBase
      *        primary (cell) unknowns and (maybe) Dirichlet boundary
      *        conditions within an interaction volume.
      *
+     * \tparam IV The interaction volume type implementation
      * \tparam GetU Lambda to obtain the cell unknowns from grid indices
      *
      * \param u The vector to be filled with the cell unknowns
      * \param iv The interaction volume
      * \param getU Lambda to obtain the desired cell value from grid indices
      */
-    template< class GetU >
-    void assemble(Vector& u, const InteractionVolume& iv, const GetU& getU)
+    template< class IV, class GetU >
+    void assemble(Vector& u, const IV& iv, const GetU& getU)
     {
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assemble() function for the cell unknowns");
     }
@@ -200,17 +209,19 @@ class InteractionVolumeAssemblerBase
      *        evaluated. Thus, make sure to only call this with a lambda that returns the
      *        hydraulic conductivity.
      *
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param g Container to assemble gravity per scvf & phase
      * \param iv The interaction volume
      * \param CA Projection matrix transforming the gravity terms in the local system of
      *        equations to the entire set of faces within the interaction volume
      * \param getTensor Lambda to evaluate scv-wise hydraulic conductivities
      */
-    template< class GravityContainer, class GetTensorFunction >
-    void assembleGravity(GravityContainer& g,
-                         const InteractionVolume& iv,
-                         const Matrix& CA,
-                         const GetTensorFunction& getTensor)
+    template< class GC, class IV, class GetTensor >
+    void assembleGravity(GC& g, const IV& iv, const Matrix& CA, const GetTensor& getTensor)
     {
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assembleGravity() function");
     }
@@ -225,6 +236,13 @@ class InteractionVolumeAssemblerBase
      *        evaluated. Thus, make sure to only call this with a lambda that returns the
      *        hydraulic conductivity.
      *
+     * \tparam GC The type of container used to store the
+     *            gravitational acceleration per scvf & phase
+     * \tparam GOut Type of container used to store gravity on "outside" faces
+     * \tparam IV The interaction volume type implementation
+     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     *                   which the local system is to be solved
+     *
      * \param g Container to store gravity per scvf & phase
      * \param outsideG Container to store gravity per "outside" scvf & phase
      * \param iv The mpfa-o interaction volume
@@ -233,15 +251,13 @@ class InteractionVolumeAssemblerBase
      * \param A Matrix needed for the "reconstruction" of face unknowns as a function of gravity
      * \param getTensor Lambda to evaluate scv-wise hydraulic conductivities
      */
-    template< class GravityContainer,
-              class OutsideGravityContainer,
-              class GetTensorFunction >
-    void assembleGravity(GravityContainer& g,
-                         OutsideGravityContainer& outsideG,
-                         const InteractionVolume& iv,
+    template< class GC, class GOut, class IV, class GetTensor >
+    void assembleGravity(GC& g,
+                         GOut& outsideG,
+                         const IV& iv,
                          const Matrix& CA,
                          const Matrix& A,
-                         const GetTensorFunction& getTensor)
+                         const GetTensor& getTensor)
     {
         DUNE_THROW(Dune::NotImplemented, "Implementation does not provide a assembleGravity() function to be used on surface grids");
     }

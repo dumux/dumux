@@ -36,10 +36,10 @@ namespace Dumux
  *        in the mpfa-o scheme.
  *
  * \tparam IvIndexSet The type used for index sets within interaction volumes
- * \tparam GC The type used for global coordinates
  * \tparam dim The dimensionality of the grid
+ * \tparam dimWorld The dimension of the world the grid is embedded in
  */
-template< class IvIndexSet, class GC, int dim >
+template< class IvIndexSet, class Scalar, int dim, int dimWorld>
 class CCMpfaOInteractionVolumeLocalScv
 {
 
@@ -47,12 +47,15 @@ public:
     // export some types
     using GridIndexType = typename IvIndexSet::GridIndexType;
     using LocalIndexType = typename IvIndexSet::LocalIndexType;
-    using GlobalCoordinate = GC;
+    using GlobalCoordinate = Dune::FieldVector<Scalar, dimWorld>;
     using ctype = typename GlobalCoordinate::value_type;
     using LocalBasis = std::array< GlobalCoordinate, dim >;
 
     static constexpr int myDimension = dim;
-    static constexpr int worldDimension = GlobalCoordinate::dimension;
+    static constexpr int worldDimension = dimWorld;
+
+    //! The default constructor
+    CCMpfaOInteractionVolumeLocalScv() = default;
 
     /*!
      * \brief The constructor
@@ -69,7 +72,7 @@ public:
                                      const SubControlVolume& scv,
                                      const LocalIndexType localIndex,
                                      const IvIndexSet& indexSet)
-    : indexSet_(indexSet)
+    : indexSet_(&indexSet)
     , globalScvIndex_(scv.dofIndex())
     , localDofIndex_(localIndex)
     {
@@ -103,7 +106,7 @@ public:
     LocalIndexType scvfIdxLocal(unsigned int coordDir) const
     {
         assert(coordDir < myDimension);
-        return indexSet_.scvfIdxLocal(localDofIndex_, coordDir);
+        return indexSet_->scvfIdxLocal(localDofIndex_, coordDir);
     }
 
     //! the nu vectors are needed for setting up the omegas of the iv
@@ -114,7 +117,7 @@ public:
     }
 
 private:
-    const IvIndexSet& indexSet_;
+    const IvIndexSet* indexSet_;
     GridIndexType globalScvIndex_;
     LocalIndexType localDofIndex_;
     LocalBasis nus_;
@@ -138,6 +141,9 @@ public:
     using GridIndexType = typename IvIndexSet::GridIndexType;
     using LocalIndexType = typename IvIndexSet::LocalIndexType;
 
+    //! The default constructor
+    CCMpfaOInteractionVolumeLocalScvf() = default;
+
     /*!
      * \brief The constructor
      *
@@ -154,7 +160,7 @@ public:
     : isDirichlet_(isDirichlet)
     , scvfIdxGlobal_(scvf.index())
     , localDofIndex_(localDofIdx)
-    , neighborScvIndicesLocal_(localScvIndices)
+    , neighborScvIndicesLocal_(&localScvIndices)
     {}
 
     //! This is either the iv-local index of the intermediate unknown (interior/Neumann face)
@@ -165,7 +171,7 @@ public:
     GridIndexType globalScvfIndex() const { return scvfIdxGlobal_; }
 
     //! Returns the local indices of the scvs neighboring this scvf
-    const LocalIndexContainer& neighboringLocalScvIndices() const { return neighborScvIndicesLocal_; }
+    const LocalIndexContainer& neighboringLocalScvIndices() const { return *neighborScvIndicesLocal_; }
 
     //! states if this is scvf is on a Dirichlet boundary
     bool isDirichlet() const { return isDirichlet_; }
@@ -174,7 +180,7 @@ private:
     bool isDirichlet_;
     GridIndexType scvfIdxGlobal_;
     LocalIndexType localDofIndex_;
-    const LocalIndexContainer& neighborScvIndicesLocal_;
+    const LocalIndexContainer* neighborScvIndicesLocal_;
 };
 
 } // end namespace Dumux

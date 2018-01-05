@@ -75,7 +75,7 @@ public:
         for (const auto& vertex : vertices(fvGridGeometry.gridView()))
         {
             const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
-            if (fvGridGeometry.vertexUsesPrimaryInteractionVolume(vIdxGlobal))
+            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
                 numPrimaryIV_ += PrimaryIV::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
             else
                 numSecondaryIV_ += SecondaryIV::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
@@ -90,7 +90,7 @@ public:
         for (const auto& vertex : vertices(fvGridGeometry.gridView()))
         {
             const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
-            if (fvGridGeometry.vertexUsesPrimaryInteractionVolume(vIdxGlobal))
+            if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
                 PrimaryIV::addInteractionVolumeIndexSets(primaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);
             else
                 SecondaryIV::addInteractionVolumeIndexSets(secondaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);

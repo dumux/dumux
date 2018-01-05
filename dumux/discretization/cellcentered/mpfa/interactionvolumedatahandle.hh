@@ -28,27 +28,28 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/matrixvectorhelper.hh>
 
 namespace Dumux
 {
 
 //! Empty data handle class
-template<class InteractionVolume>
 class EmptyDataHandle
 {
 public:
+    template< class InteractionVolume >
     void resize(const InteractionVolume& iv) {}
 };
 
 //! Data handle for quantities related to advection
-template<class TypeTag, class InteractionVolume, bool EnableAdvection>
+template<class TypeTag, class M, class V, class LI, bool EnableAdvection>
 class AdvectionDataHandle
 {
     // export matrix & vector types from interaction volume
-    using Matrix = typename InteractionVolume::Traits::Matrix;
-    using Vector = typename InteractionVolume::Traits::Vector;
+    using Matrix = M;
+    using Vector = V;
+    using LocalIndexType = LI;
     using Scalar = typename Vector::value_type;
-    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
 
     using OutsideDataContainer = std::vector< std::vector<Vector> >;
 
@@ -59,58 +60,58 @@ class AdvectionDataHandle
 public:
 
     //! prepare data handle for subsequent fill (normal grids)
-    template< int d = dim, int dw = dimWorld, std::enable_if_t<(d==dw), int> = 0>
+    template< class InteractionVolume, int d = dim, int dw = dimWorld, std::enable_if_t<(d==dw), int> = 0>
     void resize(const InteractionVolume& iv)
     {
         // resize transmissibility matrix & pressure vectors
-        T_.resize(iv.numFaces(), iv.numKnowns());
+        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-            p_[pIdx].resize(iv.numKnowns());
+            resizeVector(p_[pIdx], iv.numKnowns());
 
         // maybe resize gravity container
         static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
         if (enableGravity)
         {
-            CA_.resize(iv.numFaces(), iv.numUnknowns());
+            resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                g_[pIdx].resize(iv.numFaces());
+                resizeVector(g_[pIdx], iv.numFaces());
         }
     }
 
 
     //! prepare data handle for subsequent fill (surface grids)
-    template< int d = dim, int dw = dimWorld, std::enable_if_t<(d<dw), int> = 0>
+    template< class InteractionVolume, int d = dim, int dw = dimWorld, std::enable_if_t<(d<dw), int> = 0>
     void resize(const InteractionVolume& iv)
     {
         static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
 
         if (!enableGravity)
         {
-            T_.resize(iv.numFaces(), iv.numKnowns());
+            resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
             outsideT_.resize(iv.numFaces());
-            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                p_[pIdx].resize(iv.numKnowns());
 
+            for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
+                resizeVector(p_[pIdx], iv.numKnowns());
             for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
             {
                 const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
                 outsideT_[i].resize(numNeighbors);
                 for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                    outsideT_[i][j].resize(iv.numKnowns());
+                    resizeVector(outsideT_[i][j], iv.numKnowns());
             }
         }
 
         else
         {
-            T_.resize(iv.numFaces(), iv.numKnowns());
-            CA_.resize(iv.numFaces(), iv.numUnknowns());
-            A_.resize(iv.numUnknowns(), iv.numUnknowns());
+            resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
+            resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
+            resizeMatrix(A_, iv.numUnknowns(), iv.numUnknowns());
             outsideT_.resize(iv.numFaces());
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
             {
-                p_[pIdx].resize(iv.numKnowns());
-                g_[pIdx].resize(iv.numFaces());
+                resizeVector(p_[pIdx], iv.numKnowns());
+                resizeVector(g_[pIdx], iv.numFaces());
                 outsideG_[pIdx].resize(iv.numFaces());
             }
 
@@ -120,12 +121,10 @@ public:
                 outsideT_[i].resize(numNeighbors);
 
                 for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
-                    outsideG_[pIdx][i].resize(numNeighbors);
-
+                    resizeVector(outsideG_[pIdx][i], numNeighbors);
                 for (LocalIndexType j = 0; j < numNeighbors; ++j)
-                    outsideT_[i][j].resize(iv.numKnowns());
+                    resizeVector(outsideT_[i][j], iv.numKnowns());
             }
-
         }
     }
 
@@ -177,12 +176,12 @@ private:
 };
 
 //! Data handle for quantities related to diffusion
-template<class TypeTag, class InteractionVolume, bool EnableDiffusion>
+template<class TypeTag, class M, class V, class LI, bool EnableDiffusion>
 class DiffusionDataHandle
 {
     // export matrix & vector types from interaction volume
-    using Matrix = typename InteractionVolume::Traits::Matrix;
-    using Vector = typename InteractionVolume::Traits::Vector;
+    using Matrix = M;
+    using Vector = V;
     using OutsideTContainer = std::vector< std::vector<Vector> >;
 
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
@@ -197,6 +196,7 @@ public:
     void setComponentIndex(unsigned int compIdx) { compIdx_ = compIdx; }
 
     //! prepare data handle for subsequent fill
+    template< class InteractionVolume >
     void resize(const InteractionVolume& iv)
     {
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
@@ -207,8 +207,8 @@ public:
                     continue;
 
                 // resize transmissibility matrix & mole fraction vector
-                T_[pIdx][cIdx].resize(iv.numFaces(), iv.numKnowns());
-                xj_[pIdx][cIdx].resize(iv.numKnowns());
+                resizeMatrix(T_[pIdx][cIdx], iv.numFaces(), iv.numKnowns());
+                resizeVector(xj_[pIdx][cIdx], iv.numKnowns());
 
                 // resize outsideTij on surface grids
                 if (dim < dimWorld)
@@ -217,7 +217,12 @@ public:
 
                     using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
                     for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-                      outsideT_[pIdx][cIdx][i].resize(iv.localScvf(i).neighboringLocalScvIndices().size()-1);
+                    {
+                        const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
+                        outsideT_[pIdx][cIdx][i].resize(numNeighbors);
+                        for (LocalIndexType j = 0; j < numNeighbors; ++j)
+                            resizeVector(outsideT_[pIdx][cIdx][i][j], iv.numKnowns());
+                    }
                 }
             }
         }
@@ -245,23 +250,23 @@ private:
 };
 
 //! Data handle for quantities related to heat conduction
-template<class TypeTag, class InteractionVolume, bool EnableHeatConduction>
+template<class TypeTag, class M, class V, class LI, bool EnableHeatConduction>
 class HeatConductionDataHandle
 {
-    //! export matrix & vector types from interaction volume
-    using Matrix = typename InteractionVolume::Traits::Matrix;
-    using Vector = typename InteractionVolume::Traits::Vector;
+    using Matrix = M;
+    using Vector = V;
 
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
 
 public:
     //! prepare data handle for subsequent fill
+    template< class InteractionVolume >
     void resize(const InteractionVolume& iv)
     {
         //! resize transmissibility matrix & temperature vector
-        T_.resize(iv.numFaces(), iv.numKnowns());
-        Tj_.resize(iv.numKnowns());
+        resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
+        resizeVector(Tj_, iv.numKnowns());
 
         //! resize outsideTij on surface grids
         if (dim < dimWorld)
@@ -270,7 +275,12 @@ public:
 
             using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
             for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
-              outsideT_[i].resize(iv.localScvf(i).neighboringLocalScvIndices().size()-1);
+            {
+                const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
+                outsideT_[i].resize(numNeighbors);
+                for (LocalIndexType j = 0; j < numNeighbors; ++j)
+                    resizeVector(outsideT_[i][j], iv.numKnowns());
+            }
         }
     }
 
@@ -294,25 +304,34 @@ private:
 };
 
 //! Process-dependent data handles when related process is disabled
-template<class TypeTag, class InteractionVolume>
-class AdvectionDataHandle<TypeTag, InteractionVolume, false> : public EmptyDataHandle<InteractionVolume> {};
-template<class TypeTag, class InteractionVolume>
-class DiffusionDataHandle<TypeTag, InteractionVolume, false> : public EmptyDataHandle<InteractionVolume> {};
-template<class TypeTag, class InteractionVolume>
-class HeatConductionDataHandle<TypeTag, InteractionVolume, false> : public EmptyDataHandle<InteractionVolume> {};
+template<class TypeTag, class M, class V, class LI>
+class AdvectionDataHandle<TypeTag, M, V, LI, false> : public EmptyDataHandle {};
+template<class TypeTag, class M, class V, class LI>
+class DiffusionDataHandle<TypeTag, M, V, LI, false> : public EmptyDataHandle {};
+template<class TypeTag, class M, class V, class LI>
+class HeatConductionDataHandle<TypeTag, M, V, LI, false> : public EmptyDataHandle {};
 
-//! Interaction volume data handle class
-template<class TypeTag, class InteractionVolume>
-class InteractionVolumeDataHandle : public AdvectionDataHandle<TypeTag, InteractionVolume, GET_PROP_VALUE(TypeTag, EnableAdvection)>,
-                                    public DiffusionDataHandle<TypeTag, InteractionVolume, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>,
-                                    public HeatConductionDataHandle<TypeTag, InteractionVolume, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Class for the interaction volume data handle.
+ *
+ * \tparam TypeTag The problem TypeTag
+ * \tparam M The type used for iv-local matrices
+ * \tparam V The type used for iv-local vectors
+ * \tparam LI The type used for iv-local indexing
+ */
+template<class TypeTag, class M, class V, class LI>
+class InteractionVolumeDataHandle : public AdvectionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableAdvection)>,
+                                    public DiffusionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>,
+                                    public HeatConductionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
 {
-    using AdvectionHandle = AdvectionDataHandle<TypeTag, InteractionVolume, GET_PROP_VALUE(TypeTag, EnableAdvection)>;
-    using DiffusionHandle = DiffusionDataHandle<TypeTag, InteractionVolume, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>;
-    using HeatConductionHandle = HeatConductionDataHandle<TypeTag, InteractionVolume, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+    using AdvectionHandle = AdvectionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableAdvection)>;
+    using DiffusionHandle = DiffusionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>;
+    using HeatConductionHandle = HeatConductionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
 
 public:
     //! prepare data handles for subsequent fills
+    template< class InteractionVolume >
     void resize(const InteractionVolume& iv)
     {
         AdvectionHandle::resize(iv);

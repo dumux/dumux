@@ -571,16 +571,16 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
 
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
-    using GlobalPosition = typename InteractionVolume::Traits::GlobalPosition;
-
     using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
@@ -641,6 +641,11 @@ public:
 
         return ghostVertices;
     }
+
+    //! Returns whether or not secondary interaction volumes have to be considered in the model.
+    //! This is always the case when the specified types for the interaction volumes differ.
+    static constexpr bool considerSecondaryIVs()
+    { return !std::is_same<PrimaryInteractionVolume, SecondaryInteractionVolume>::value; }
 
     //! returns whether or not a value exists in a vector
     template<typename V1, typename V2>

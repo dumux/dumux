@@ -151,12 +151,28 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 , public EnergyCacheChooser<TypeTag, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
 {
     using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
+
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    static constexpr bool considerSecondary = MpfaHelper::considerSecondaryIVs();
 public:
     //! Returns whether or not this cache has been updated
     bool isUpdated() const { return isUpdated_; }
 
+    //! Returns whether or not this cache is associated with a secondary interaction volume
+    //! Specialization for deactivated secondary interaction volumes
+    template< bool doSecondary = considerSecondary, std::enable_if_t<!doSecondary, int> = 0>
+    constexpr bool usesSecondaryIv() const { return false; }
+
+    //! Returns whether or not this cache is associated with a secondary interaction volume
+    //! Specialization for activated secondary interaction volumes
+    template< bool doSecondary = considerSecondary, std::enable_if_t<doSecondary, int> = 0>
+    bool usesSecondaryIv() const { return usesSecondaryIv_; }
+
     //! Sets the update status. When set to true, consecutive updates will be skipped
     void setUpdateStatus(bool status) { isUpdated_ = status; }
+
+    //! Sets if this cache is associated witha secondary iv
+    void setSecondaryIvUsage(bool status) { usesSecondaryIv_ = status; }
 
     //! Sets the index of the iv (this scvf is embedded in) in its container
     void setIvIndexInContainer(GridIndexType ivIndex) { ivIndexInContainer_ = ivIndex; }
@@ -167,6 +183,9 @@ public:
 private:
     //! indicates if cache has been fully updated
     bool isUpdated_ = false;
+
+    //! indicates if cache is associated with secondary interaction volume
+    bool usesSecondaryIv_ = false;
 
     //! the index of the iv (this scvf is embedded in) in its container
     GridIndexType ivIndexInContainer_;

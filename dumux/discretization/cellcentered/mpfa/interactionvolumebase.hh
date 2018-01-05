@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_INTERACTIONVOLUMEBASE_HH
 
+#include <dune/common/exceptions.hh>
+
 #include <dumux/common/properties.hh>
 
 namespace Dumux
@@ -31,28 +33,34 @@ namespace Dumux
 
 /*
  * \ingroup CCMpfaDiscretization
- * \brief Type Traits to retrieve types associated with an implementation of a Dumux::CCMpfaInteractionVolumeBase.
- *        You have to specialize this class for every implementation of Dumux::CCMpfaInteractionVolumeBase.
+ * \brief Type Traits to retrieve types associated with an implementation of a Dumux::CCMpfaInteractionVolume.
+ *        You have to provide a traits class for every implementation of Dumux::CCMpfaInteractionVolume. Also,
+ *        make sure to publicly export the traits class type in your interaction volume implementation.
+ *        The traits should contain the following type definitions:
  *
  * \code
- * //! export the interaction volume type to be used on boundaries etc.
- * using SecondaryInteractionVolume = ...;
+ * //! export the problem type (needed for iv-local assembly)
+ * using Problem = ...;
+ * //! export the type of the local view on the finite volume grid geometry
+ * using FVElementGeometry = ...;
+ * //! export the type of the local view on the grid volume variables
+ * using ElementVolumeVariables = ...;
+ * //! export the type of grid view
+ * using GridView = ...;
+ * //! export the type used for scalar values
+ * using ScalarType = ...;
+ * //! export the type of the mpfa helper class
+ * using MpfaHelper = ...;
  * //! export the type used for local indices
  * using LocalIndexType = ...;
- * //! export the type used for indices on the grid
- * using GridIndexType = ...;
  * //! export the type for the interaction volume index set
  * using IndexSet = ...;
- * //! export the type used for global coordinates
- * using GlobalPosition = ...;
  * //! export the type of interaction-volume local scvs
  * using LocalScvType = ...;
  * //! export the type of interaction-volume local scvfs
  * using LocalScvfType = ...;
  * //! export the type of used for the iv-local face data
  * using LocalFaceData = ...;
- * //! export the type of face data container (use dynamic container here)
- * using LocalFaceDataContainer = ...;
  * //! export the type used for iv-local matrices
  * using Matrix = ...;
  * //! export the type used for iv-local vectors
@@ -60,35 +68,35 @@ namespace Dumux
  * //! export the type used for the iv-stencils
  * using Stencil = ...;
  * //! export the data handle type for this iv
- * using DataHandle = InteractionVolumeDataHandle< TypeTag, InteractionVolumeType >;
+ * using DataHandle = ...;
  * \endcode
  */
-template< class InteractionVolume >
-struct CCMpfaInteractionVolumeTraits {};
 
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Base class for the interaction volumes of mpfa methods. It defines
  *        the interface and actual implementations should derive from this class.
+ *
+ * \tparam Impl The actual implementation of the interaction volume
+ * \tparam T The traits class to be used
  */
-template<class TypeTag, class Implementation>
+template< class Impl, class T>
 class CCMpfaInteractionVolumeBase
 {
     // Curiously recurring template pattern
-    Implementation & asImp() { return static_cast<Implementation&>(*this); }
-    const Implementation & asImp() const { return static_cast<const Implementation&>(*this); }
+    Impl& asImp() { return static_cast<Impl&>(*this); }
+    const Impl& asImp() const { return static_cast<const Impl&>(*this); }
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Problem = typename T::Problem;
+    using FVElementGeometry = typename T::FVElementGeometry;
+    using ElementVolumeVariables = typename T::ElementVolumeVariables;
+
+    using GridView = typename T::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
-    // Types required in the assembly of the local eq system
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-
     //! state the traits type publicly
-    using Traits = CCMpfaInteractionVolumeTraits< Implementation >;
+    using Traits = T;
 
     //! Prepares everything for the assembly
     void setUpLocalScope(const typename Traits::IndexSet& indexSet,
@@ -108,11 +116,11 @@ public:
     //! returns the number of scvs embedded in this interaction volume
     std::size_t numScvs() const { return asImp().numScvs(); }
 
-    //! returns the number of scvfs embedded in this interaction volume
-    std::size_t numScvfs() const { return asImp().numScvfs(); }
-
-    //! returns a reference to the container with the local face data
-    const typename Traits::LocalFaceDataContainer& localFaceData() const { asImp().localFaceData(); }
+    //! Returns a reference to the container with the local face data. The actual type of
+    //! the container depends on the interaction volume implementation. At this point we throw
+    //! an exception and force the implementation to overload this function.
+    const std::vector<typename Traits::LocalFaceData>& localFaceData() const
+    { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() funtion"); }
 
     //! returns the cell-stencil of this interaction volume
     const typename Traits::Stencil& stencil() const { return asImp().stencil(); }
@@ -132,7 +140,7 @@ public:
     //! returns the number of interaction volumes living around a vertex
     template< class NodalIndexSet >
     static std::size_t numInteractionVolumesAtVertex(const NodalIndexSet& nodalIndexSet)
-    { return Implementation::numInteractionVolumesAtVertex(nodalIndexSet); }
+    { return Impl::numInteractionVolumesAtVertex(nodalIndexSet); }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
@@ -140,7 +148,7 @@ public:
     static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
                                               ScvfIndexMap& scvfIndexMap,
                                               const NodalIndexSet& nodalIndexSet)
-    { Implementation::addInteractionVolumeIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet); }
+    { Impl::addInteractionVolumeIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet); }
 };
 
 } // end namespace Dumux

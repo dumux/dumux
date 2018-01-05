@@ -609,6 +609,29 @@ Dune::DynamicMatrix<Scalar> multiplyMatrices(const Dune::DynamicMatrix<Scalar> &
 
 /*!
  * \ingroup Common
+ * \brief Multiply two field matrices
+ *
+ * \param M1 The first field matrix
+ * \param M2 The second field matrix (to be multiplied to M1 from the right side)
+ */
+template <class Scalar, int rows1, int cols1, int cols2>
+Dune::FieldMatrix<Scalar, rows1, cols2> multiplyMatrices(const Dune::FieldMatrix<Scalar, rows1, cols1> &M1,
+                                                         const Dune::FieldMatrix<Scalar, cols1, cols2> &M2)
+{
+    using size_type = typename Dune::FieldMatrix<Scalar, rows1, cols2>::size_type;
+
+    Dune::FieldMatrix<Scalar, rows1, cols2> result(0.0);
+    for (size_type i = 0; i < rows1; i++)
+        for (size_type j = 0; j < cols2; j++)
+            for (size_type k = 0; k < cols1; k++)
+                result[i][j] += M1[i][k]*M2[k][j];
+
+    return result;
+}
+
+
+/*!
+ * \ingroup Common
  * \brief Trace of dynamic matrix
  *
  * \param M The dynamic matrix

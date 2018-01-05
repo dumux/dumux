@@ -90,44 +90,30 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
-        // In the current implementation of the flux variables cache we cannot
-        // make a disctinction between dynamic (mpfa-o) and static (mpfa-l)
-        // matrix and vector types, as currently the cache class can only be templated
-        // by a type tag (and there can only be one). We use a dynamic vector here to
-        // make sure it works in case one of the two used interaction volume types uses
-        // dynamic types performance is thus lowered for schemes using static types.
-        // TODO: this has to be checked thoroughly as soon as a scheme using static types
-        //       is implemented. One idea to overcome the performance drop could be only
-        //       storing the iv-local index here and obtain tij always from the datahandle
-        //       of the fluxVarsCacheContainer
-        using GridIndexType = typename GridView::IndexSet::IndexType;
-        using Vector = Dune::DynamicVector< Scalar >;
-        using Matrix = Dune::DynamicMatrix< Scalar >;
-        using Stencil = std::vector< GridIndexType >;
+        using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+        static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
+        // In the current implementation of the flux variables cache we cannot make a
+        // disctinction between dynamic (e.g. mpfa-o unstructured) and static (e.g.mpfa-l)
+        // matrix and vector types, as currently the cache class can only be templated
+        // by a type tag (and there can only be one). Currently, pointers to both the
+        // primary and secondary iv data is stored. Before accessing it has to be checked
+        // whether or not the scvf is embedded in a secondary interaction volume.
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+        using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
+        using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
-        using PrimaryStencil = typename PrimaryInteractionVolume::Traits::Stencil;
-
-        static_assert( std::is_convertible<PrimaryIvVector*, Vector*>::value,
-                       "The vector type used in primary interaction volumes is not convertible to Dune::DynamicVector!" );
-        static_assert( std::is_convertible<PrimaryIvMatrix*, Matrix*>::value,
-                       "The matrix type used in primary interaction volumes is not convertible to Dune::DynamicMatrix!" );
-        static_assert( std::is_convertible<PrimaryStencil*, Stencil*>::value,
-                       "The stencil type used in primary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+        using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
+        using PrimaryIvStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+        using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
+        using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
-        using SecondaryStencil = typename SecondaryInteractionVolume::Traits::Stencil;
-
-        static_assert( std::is_convertible<SecondaryIvVector*, Vector*>::value,
-                       "The vector type used in secondary interaction volumes is not convertible to Dune::DynamicVector!" );
-        static_assert( std::is_convertible<SecondaryIvMatrix*, Matrix*>::value,
-                       "The matrix type used in secondary interaction volumes is not convertible to Dune::DynamicMatrix!" );
-        static_assert( std::is_convertible<SecondaryStencil*, Stencil*>::value,
-                       "The stencil type used in secondary interaction volumes is not convertible to std::vector<GridIndexType>!" );
+        using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
+        using SecondaryIvStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
@@ -138,36 +124,62 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using Filler = MpfaFicksLawCacheFiller;
 
         /*!
-         * \brief Update cached objects (transmissibilities)
-         *
-         * \tparam InteractionVolume The (mpfa scheme-specific) interaction volume
-         * \tparam LocalFaceData The object used to store iv-local info on an scvf
-         * \tparam DataHandle The object used to store transmissibility matrices etc.
+         * \brief Update cached objects (transmissibilities).
+         *        This is used for updates with primary interaction volumes.
          *
          * \param iv The interaction volume this scvf is embedded in
          * \param localFaceData iv-local info on this scvf
          * \param dataHandle Transmissibility matrix & gravity data of this iv
          * \param scvf The sub-control volume face
          */
-        template<class InteractionVolume, class LocalFaceData, class DataHandle>
-        void updateDiffusion(const InteractionVolume& iv,
-                             const LocalFaceData& localFaceData,
-                             const DataHandle& dataHandle,
+        void updateDiffusion(const PrimaryInteractionVolume& iv,
+                             const PrimaryIvLocalFaceData& localFaceData,
+                             const PrimaryIvDataHandle& dataHandle,
                              const SubControlVolumeFace &scvf,
                              unsigned int phaseIdx, unsigned int compIdx)
         {
-            stencil_[phaseIdx][compIdx] = &iv.stencil();
+            primaryStencil_[phaseIdx][compIdx] = &iv.stencil();
             switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
 
             // store pointer to the mole fraction vector of this iv
-            xj_[phaseIdx][compIdx] = &dataHandle.moleFractions(phaseIdx, compIdx);
+            primaryXj_[phaseIdx][compIdx] = &dataHandle.moleFractions(phaseIdx, compIdx);
 
             const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
             if (dim == dimWorld)
-                Tij_[phaseIdx][compIdx] = &dataHandle.diffusionT()[ivLocalIdx];
+                primaryTij_[phaseIdx][compIdx] = &dataHandle.diffusionT()[ivLocalIdx];
             else
-                Tij_[phaseIdx][compIdx] = localFaceData.isOutside() ? &dataHandle.diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
-                                                                    : &dataHandle.diffusionT()[ivLocalIdx];
+                primaryTij_[phaseIdx][compIdx] = localFaceData.isOutside() ? &dataHandle.diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                                                                           : &dataHandle.diffusionT()[ivLocalIdx];
+        }
+
+        /*!
+         * \brief Update cached objects (transmissibilities).
+         *        This is used for updates with secondary interaction volumes.
+         *
+         * \param iv The interaction volume this scvf is embedded in
+         * \param localFaceData iv-local info on this scvf
+         * \param dataHandle Transmissibility matrix & gravity data of this iv
+         * \param scvf The sub-control volume face
+         */
+        template< bool doSecondary = considerSecondaryIVs, std::enable_if_t<doSecondary, int > = 0 >
+        void updateDiffusion(const SecondaryInteractionVolume& iv,
+                             const SecondaryIvLocalFaceData& localFaceData,
+                             const SecondaryIvDataHandle& dataHandle,
+                             const SubControlVolumeFace &scvf,
+                             unsigned int phaseIdx, unsigned int compIdx)
+        {
+            secondaryStencil_[phaseIdx][compIdx] = &iv.stencil();
+            switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
+
+            // store pointer to the mole fraction vector of this iv
+            secondaryXj_[phaseIdx][compIdx] = &dataHandle.moleFractions(phaseIdx, compIdx);
+
+            const auto ivLocalIdx = localFaceData.ivLocalScvfIndex();
+            if (dim == dimWorld)
+                secondaryTij_[phaseIdx][compIdx] = &dataHandle.diffusionT()[ivLocalIdx];
+            else
+                secondaryTij_[phaseIdx][compIdx] = localFaceData.isOutside() ? &dataHandle.diffusionTout()[ivLocalIdx][localFaceData.scvfLocalOutsideScvfIndex()]
+                                                                             : &dataHandle.diffusionT()[ivLocalIdx];
         }
 
         //! In the interaction volume-local system of eq we have one unknown per face.
@@ -177,23 +189,44 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         bool diffusionSwitchFluxSign(unsigned int phaseIdx, unsigned int compIdx) const
         { return switchFluxSign_[phaseIdx][compIdx]; }
 
-        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions
-        const Vector& diffusionTij(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *Tij_[phaseIdx][compIdx]; }
+        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (primary type)
+        const PrimaryIvTij& diffusionTijPrimaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *primaryTij_[phaseIdx][compIdx]; }
 
-        //! The cell (& Dirichlet) mole fractions within this interaction volume
-        const Vector& moleFractions(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *xj_[phaseIdx][compIdx]; }
+        //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (secondary type)
+        const SecondaryIvTij& diffusionTijSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *secondaryTij_[phaseIdx][compIdx]; }
 
-        //! The stencils corresponding to the transmissibilities
-        const Stencil& diffusionStencil(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *stencil_[phaseIdx][compIdx]; }
+        //! The cell (& Dirichlet) mole fractions within this interaction volume (primary type)
+        const PrimaryIvVector& moleFractionsPrimaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *primaryXj_[phaseIdx][compIdx]; }
+
+        //! The cell (& Dirichlet) mole fractions within this interaction volume (secondary type)
+        const SecondaryIvVector& moleFractionsSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *secondaryXj_[phaseIdx][compIdx]; }
+
+        //! The stencils corresponding to the transmissibilities (primary type)
+        const PrimaryIvStencil& diffusionStencilPrimaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *primaryStencil_[phaseIdx][compIdx]; }
+
+        //! The stencils corresponding to the transmissibilities (secondary type)
+        const SecondaryIvStencil& diffusionStencilSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *secondaryStencil_[phaseIdx][compIdx]; }
 
     private:
         std::array< std::array<bool, numComponents>, numPhases > switchFluxSign_;
-        std::array< std::array<const Stencil*, numComponents>, numPhases > stencil_;  //!< The stencils, i.e. the grid indices j
-        std::array< std::array<const Vector*, numComponents>, numPhases > Tij_;       //!< The transmissibilities such that f = Tij*xj
-        std::array< std::array<const Vector*, numComponents>, numPhases > xj_;        //!< The interaction-volume wide mole fractions xj
+
+        //! The stencils, i.e. the grid indices j
+        std::array< std::array<const PrimaryIvStencil*, numComponents>, numPhases > primaryStencil_;
+        std::array< std::array<const SecondaryIvStencil*, numComponents>, numPhases > secondaryStencil_;
+
+        //! The transmissibilities such that f = Tij*xj
+        std::array< std::array<const PrimaryIvVector*, numComponents>, numPhases > primaryTij_;
+        std::array< std::array<const SecondaryIvVector*, numComponents>, numPhases > secondaryTij_;
+
+        //! The interaction-volume wide mole fractions xj
+        std::array< std::array<const PrimaryIvVector*, numComponents>, numPhases > primaryXj_;
+        std::array< std::array<const SecondaryIvVector*, numComponents>, numPhases > secondaryXj_;
     };
 
 public:
@@ -212,6 +245,9 @@ public:
                                     const int phaseIdx,
                                     const ElementFluxVariablesCache& elemFluxVarsCache)
     {
+        // obtain this scvf's cache
+        const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+
         ComponentFluxVector componentFlux(0.0);
         for (int compIdx = 0; compIdx < numComponents; compIdx++)
         {
@@ -228,13 +264,21 @@ public:
             // calculate the density at the interface
             const auto rho = interpolateDensity(elemVolVars, scvf, phaseIdx);
 
-            // prepare computations
-            const auto& fluxVarsCache = elemFluxVarsCache[scvf];
-            const auto& tij = fluxVarsCache.diffusionTij(phaseIdx, compIdx);
-            const auto& xj = fluxVarsCache.moleFractions(phaseIdx, compIdx);
-
             // calculate Tij*xj
-            Scalar flux = tij*xj;
+            Scalar flux;
+            if (fluxVarsCache.usesSecondaryIv())
+            {
+                const auto& tij = fluxVarsCache.diffusionTijSecondaryIv(phaseIdx, compIdx);
+                const auto& xj = fluxVarsCache.moleFractionsSecondaryIv(phaseIdx, compIdx);
+                flux = tij*xj;
+            }
+            else
+            {
+                const auto& tij = fluxVarsCache.diffusionTijPrimaryIv(phaseIdx, compIdx);
+                const auto& xj = fluxVarsCache.moleFractionsPrimaryIv(phaseIdx, compIdx);
+                flux = tij*xj;
+            }
+
             if (fluxVarsCache.diffusionSwitchFluxSign(phaseIdx, compIdx))
                 flux *= -1.0;
 

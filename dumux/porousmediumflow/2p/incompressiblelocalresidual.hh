@@ -137,7 +137,7 @@ public:
     { /* TODO maybe forward to problem for the user to implement the source derivatives?*/ }
 
     /*!
-     * \brief Add flux derivatives for wetting and non-wetting phase for cell-centered FVM
+     * \brief Add flux derivatives for wetting and non-wetting phase for cell-centered FVM using TPFA
      *
      * Compute derivatives for the wetting and the non-wetting phase flux with respect to \f$p_w\f$
      * and \f$S_n\f$.
@@ -150,7 +150,7 @@ public:
      * \param scv The sub control volume
      */
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
