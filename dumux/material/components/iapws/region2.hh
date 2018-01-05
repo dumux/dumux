@@ -61,7 +61,7 @@ public:
      * \param propertyName the name for which property the check is performed
      */
     static void checkValidityRange(Scalar temperature, Scalar pressure,
-                                   std::string propertyName = "This property")
+                                   const std::string& propertyName = "This property")
     {
         // actually this is:
         /* (273.15 <= temperature && temperature <= 623.15 && pressure <= vaporPressure(temperature)) ||

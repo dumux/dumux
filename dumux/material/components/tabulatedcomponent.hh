@@ -113,7 +113,7 @@ public:
 
             try { vaporPressure_[iT] = RawComponent::vaporPressure(temperature); }
             catch (Dune::NotImplemented) { vaporPressure_[iT] = NaN; }
-            catch (NumericalProblem e) { vaporPressure_[iT] = NaN; }
+            catch (NumericalProblem) { vaporPressure_[iT] = NaN; }
 
             Scalar pgMax = maxGasPressure_(iT);
             Scalar pgMin = minGasPressure_(iT);
@@ -569,7 +569,7 @@ public:
 private:
     // prints a warning if the result is not in range or the table has
     // not been initialized
-    static void printWarning_(std::string quantity, Scalar arg1, Scalar arg2)
+    static void printWarning_(const std::string& quantity, Scalar arg1, Scalar arg2)
     {
 #ifndef NDEBUG
         if (warningPrinted_)

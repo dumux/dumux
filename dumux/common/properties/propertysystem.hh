@@ -919,7 +919,7 @@ std::string canonicalTypeTagNameToName_(const std::string &canonicalName)
 inline bool getDiagnostic_(const std::string &typeTagName,
                            const std::string &propTagName,
                            std::string &result,
-                           const std::string indent)
+                           const std::string &indent)
 {
     const PropertyRegistryKey *key = 0;
 
@@ -996,7 +996,7 @@ const std::string getDiagnostic(std::string propTagName)
 
 inline void print_(const std::string &typeTagName,
                    std::ostream &os,
-                   const std::string indent,
+                   const std::string &indent,
                    std::set<std::string> &printedProperties)
 {
     if (indent == "")

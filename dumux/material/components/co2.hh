@@ -136,7 +136,7 @@ public:
         Scalar Tred = T/criticalTemperature();
 
         using std::pow;
-        for (int i = 0; i < 5; ++i)
+        for (int i = 0; i < 4; ++i)
             exponent += a[i]*pow(1 - Tred, t[i]);
         exponent *= 1.0/Tred;
 
