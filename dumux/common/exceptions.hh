@@ -48,7 +48,7 @@ public:
     {}
 
     // constructor with error message
-    NumericalProblem(const std::string &s)
+    explicit NumericalProblem(const std::string &s)
     { this->message(s); }
 };
 
@@ -69,7 +69,7 @@ public:
     {}
 
     // constructor with error message
-    ParameterException(const std::string &s)
+    explicit ParameterException(const std::string &s)
     { this->message(s); }
 };
 

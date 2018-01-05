@@ -63,7 +63,7 @@ public:
     using CurveTypeVector = std::vector<CurveType>;
 
     //! \brief The constructor
-    GnuplotInterface(bool persist = true) :
+    explicit GnuplotInterface(bool persist = true) :
         pipe_(0), openPlotWindow_(true), persist_(persist), createImage_(true),
         terminalType_("x11"), outputDirectory_("./"),
         datafileSeparator_(' '), linetype_("solid"),
@@ -151,7 +151,7 @@ public:
 
         interactivePlot += plot;
         if (openPlotWindow_)
-            executeGnuplot(interactivePlot.c_str());
+            executeGnuplot(interactivePlot);
 
         // create a gnuplot file if a filename is specified
         if (filename.compare("") != 0)
@@ -168,7 +168,7 @@ public:
 
           // live plot of the results
           if (createImage_)
-              executeGnuplot(filePlot.c_str());
+              executeGnuplot(filePlot);
         }
     }
 
@@ -213,9 +213,9 @@ public:
     }
 
     DUNE_DEPRECATED_MSG("The signature of addFunctionToPlot(string, string, string) has been changed to addFunctionToPlot(string, string).")
-    void addFunctionToPlot(const std::string function,
-                           const std::string plotName,
-                           const std::string plotOptions)
+    void addFunctionToPlot(const std::string& function,
+                           const std::string& plotName,
+                           const std::string& plotOptions)
     {
         addFunctionToPlot(function, "title '" + plotName + "' " + plotOptions);
     }
@@ -226,8 +226,8 @@ public:
      * \param function Function to be plotted
      * \param options Specific gnuplot options passed to this plot
      */
-    void addFunctionToPlot(const std::string function,
-                           const std::string options = "with lines")
+    void addFunctionToPlot(const std::string& function,
+                           const std::string& options = "with lines")
     {
         curve_.push_back(function);
         curveOptions_.push_back(options);
@@ -235,9 +235,9 @@ public:
     }
 
     DUNE_DEPRECATED_MSG("The signature of addFileToPlot(string, string, string) has been changed to addFileToPlot(string, string).")
-    void addFileToPlot(const std::string file,
-                       const std::string plotName,
-                       const std::string plotOptions)
+    void addFileToPlot(const std::string& file,
+                       const std::string& plotName,
+                       const std::string& plotOptions)
     {
         addFileToPlot(file, "title '" + plotName + "' " + plotOptions);
     }
@@ -248,8 +248,8 @@ public:
      * \param fileName Name and path of the file to be plotted
      * \param options Specific gnuplot options passed to this plot
      */
-    void addFileToPlot(const std::string fileName,
-                       const std::string options = "with lines")
+    void addFileToPlot(const std::string& fileName,
+                       const std::string& options = "with lines")
     {
         curve_.push_back(fileName);
         curveOptions_.push_back(options);
@@ -268,8 +268,8 @@ public:
      */
     void addDataSetToPlot(const std::vector<Scalar>& x,
                           const std::vector<Scalar>& y,
-                          const std::string fileName,
-                          const std::string options = "with lines")
+                          const std::string& fileName,
+                          const std::string& options = "with lines")
     {
         assert(x.size() == y.size());
 
@@ -341,7 +341,7 @@ public:
      *
      * \param option Additional line of option in gnuplot language
      */
-    void setOption(std::string option)
+    void setOption(const std::string& option)
     {
         plotOptions_ += option + "\n";
     }
@@ -391,7 +391,7 @@ public:
      *
      * \param outputDirectory The user-specified terminal
      */
-    void setOutputDirectory(std::string outputDirectory)
+    void setOutputDirectory(const std::string& outputDirectory)
     {
         outputDirectory_ = outputDirectory + "/";
     }
@@ -417,7 +417,7 @@ private:
     }
 
     // Check validity of number
-    void checkNumber(Scalar number, std::string text = "") const
+    void checkNumber(Scalar number, const std::string& text = "") const
     {
         using std::isnan;
         using std::isinf;
@@ -447,7 +447,6 @@ private:
     StringVector curve_;
     StringVector curveOptions_;
     CurveTypeVector curveType_;
-    bool interaction_;
     Scalar xRangeMin_;
     Scalar xRangeMax_;
     Scalar xRangeIsSet_;
