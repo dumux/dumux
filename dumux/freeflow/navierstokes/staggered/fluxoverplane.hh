@@ -404,12 +404,12 @@ private:
             {
                 Scalar result = 0.0;
                 if(replaceCompEqIdx < numComponents)
+                    result = massOrMoleFlux[replaceCompEqIdx];
+                else
                 {
                     for(int i = 0; i < numComponents; ++i)
                         result += massOrMoleFlux[i];
                 }
-                else
-                    result = massOrMoleFlux[replaceCompEqIdx];
 
                 return result;
             }();
