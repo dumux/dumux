@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 #define DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 
+#include <dune/common/reservedvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
@@ -58,9 +59,13 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
+    static constexpr bool isNetwork = GridView::dimension < GridView::dimensionworld;
 
 public:
+    // we assume a maxium of 8 neighbors in embedded network grids otherwise max stencil size is 2
+    static constexpr std::size_t maxSize =  isNetwork ? 9 : 2;
+    using Stencil = Dune::ReservedVector<IndexType, maxSize>;
+
     static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
@@ -91,9 +96,10 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using Stencil = std::vector<IndexType>;
 
 public:
+    using Stencil = std::vector<IndexType>;
+
     static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
