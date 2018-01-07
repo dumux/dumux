@@ -56,14 +56,15 @@ public:
                         const UpwindTermFunction& upwindTerm,
                         Scalar flux, int phaseIdx)
     {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>
+            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
-        const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
-        const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
-        if (std::signbit(flux))
+        const auto& scvf = fluxVars.scvFace();
+        const auto& elemVolVars = fluxVars.elemVolVars();
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        if (std::signbit(flux)) // if sign of flux is negative
             return flux*(upwindWeight*upwindTerm(outsideVolVars)
                          + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
         else
@@ -91,17 +92,16 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(modelParamGroup, "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>
+            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
         // the volume variables of the inside sub-control volume
-        const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
+        const auto& scvf = fluxVars.scvFace();
+        const auto& elemVolVars = fluxVars.elemVolVars();
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
 
         // check if this is a branching point
-        if (fluxVars.scvFace().numOutsideScvs() > 1)
+        if (scvf.numOutsideScvs() > 1)
         {
             // more complicated upwind scheme
             // we compute a flux-weighted average of all inflowing branches
@@ -114,23 +114,24 @@ public:
             else
                 sumUpwindFluxes += flux;
 
-            for (unsigned int i = 0; i < fluxVars.scvFace().numOutsideScvs(); ++i)
+            for (unsigned int i = 0; i < scvf.numOutsideScvs(); ++i)
             {
-                 // compute the outside flux
-                const auto outsideScvIdx = fluxVars.scvFace().outsideScvIdx(i);
-                const auto outsideElement = fluxVars.fvGeometry().fvGridGeometry().element(outsideScvIdx);
-                const auto& flippedScvf = fluxVars.fvGeometry().flipScvf(fluxVars.scvFace().index(), i);
+                // compute the outside flux
+                const auto& fvGeometry = fluxVars.fvGeometry();
+                const auto outsideScvIdx = scvf.outsideScvIdx(i);
+                const auto outsideElement = fvGeometry.fvGridGeometry().element(outsideScvIdx);
+                const auto& flippedScvf = fvGeometry.flipScvf(scvf.index(), i);
 
                 const auto outsideFlux = AdvectionType::flux(fluxVars.problem(),
                                                              outsideElement,
-                                                             fluxVars.fvGeometry(),
-                                                             fluxVars.elemVolVars(),
+                                                             fvGeometry,
+                                                             elemVolVars,
                                                              flippedScvf,
                                                              phaseIdx,
                                                              fluxVars.elemFluxVarsCache());
 
                 if (!std::signbit(outsideFlux))
-                    branchingPointUpwindTerm += upwindTerm(fluxVars.elemVolVars()[outsideScvIdx])*outsideFlux;
+                    branchingPointUpwindTerm += upwindTerm(elemVolVars[outsideScvIdx])*outsideFlux;
                 else
                     sumUpwindFluxes += outsideFlux;
             }
@@ -153,7 +154,7 @@ public:
         else
         {
             // upwind scheme
-            const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
+            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
             if (std::signbit(flux))
                 return flux*(upwindWeight*upwindTerm(outsideVolVars)
                              + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
@@ -170,14 +171,15 @@ public:
           const UpwindTermFunction& upwindTerm,
           Scalar flux, int phaseIdx)
     {
-        // retrieve the upwind weight for the mass conservation equations. Use the value
-        // specified via the property system as default, and overwrite
-        // it by the run-time parameter from the Dune::ParameterTree
-        static const Scalar upwindWeight = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
+        static const Scalar upwindWeight = getParamFromGroup<Scalar>
+            (GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Implicit.UpwindWeight");
 
-        const auto& insideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().insideScvIdx()];
-        const auto& outsideVolVars = fluxVars.elemVolVars()[fluxVars.scvFace().outsideScvIdx()];
-        if (std::signbit(flux))
+        const auto& scvf = fluxVars.scvFace();
+        const auto& elemVolVars = fluxVars.elemVolVars();
+        const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+        if (std::signbit(flux)) // if sign of flux is negative
             return flux*(upwindWeight*upwindTerm(outsideVolVars)
                          + (1.0 - upwindWeight)*upwindTerm(insideVolVars));
         else
