@@ -30,6 +30,7 @@
 #include <utility>
 #include <algorithm>
 
+#include <dune/common/reservedvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
@@ -56,7 +57,7 @@ class CCSimpleConnectivityMap
     struct DataJ
     {
         IndexType globalJ;
-        std::vector<IndexType> scvfsJ;
+        typename FluxStencil::Stencil scvfsJ;
         // A list of additional scvfs is needed for compatibility
         // reasons with more complex connectivity maps (see mpfa)
         std::vector<IndexType> additionalScvfs;
@@ -75,16 +76,17 @@ public:
     {
         map_.clear();
         map_.resize(fvGridGeometry.gridView().size(0));
+        Dune::ReservedVector<std::pair<IndexType, DataJ>, FluxStencil::maxSize*2*GridView::dimension> dataJForI;
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // We are looking for the elements I, for which this element J is in the flux stencil
-            auto globalJ = fvGridGeometry.elementMapper().index(element);
+            const auto globalJ = fvGridGeometry.elementMapper().index(element);
 
             auto fvGeometry = localView(fvGridGeometry);
             fvGeometry.bindElement(element);
 
             // obtain the data of J in elements I
-            std::vector<std::pair<IndexType, DataJ>> dataJForI;
+            dataJForI.clear();
 
             // loop over sub control faces
             for (auto&& scvf : scvfs(fvGeometry))
@@ -97,16 +99,13 @@ public:
                     if (globalI == globalJ)
                         continue;
 
-                    auto it = std::find_if(dataJForI.begin(),
-                                           dataJForI.end(),
+                    auto it = std::find_if(dataJForI.begin(), dataJForI.end(),
                                            [globalI](const auto& pair) { return pair.first == globalI; });
 
                     if (it != dataJForI.end())
                         it->second.scvfsJ.push_back(scvf.index());
                     else
-                        dataJForI.emplace_back(std::make_pair(globalI, DataJ({globalJ,
-                                                                              std::vector<IndexType>({scvf.index()}),
-                                                                              std::vector<IndexType>()})));
+                        dataJForI.push_back(std::make_pair(globalI, DataJ({globalJ, {scvf.index()}, {}})));
                 }
             }
 
