@@ -30,6 +30,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/reservedblockvector.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
@@ -46,13 +47,13 @@ class FVLocalResidual
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -62,6 +63,10 @@ class FVLocalResidual
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
+    //! the container storing all element residuals (for cc size is 1 for box 2^dim)
+    static constexpr size_t maxNumScv = (1 << GridView::dimension); // 2^dim
+    using ElementResidualVector = ReservedBlockVector<ResidualVector, maxNumScv>;
+
     //! the constructor
     FVLocalResidual(const Problem* problem,
                     const TimeLoop* timeLoop = nullptr)
