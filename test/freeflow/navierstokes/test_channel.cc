@@ -52,6 +52,8 @@
 
 #include <dumux/io/staggeredvtkoutputmodule.hh>
 
+#include <dumux/freeflow/navierstokes/staggered/fluxoverplane.hh>
+
 /*!
  * \brief Provides an interface for customizing error messages associated with
  *        reading in parameters.
@@ -177,6 +179,34 @@ int main(int argc, char** argv) try
     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
+    // set up two planes over which fluxes are calculated
+    FluxOverPlane<TypeTag> flux(*assembler, x);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+
+    const Scalar xMin = fvGridGeometry->bBoxMin()[0];
+    const Scalar xMax = fvGridGeometry->bBoxMax()[0];
+    const Scalar yMin = fvGridGeometry->bBoxMin()[1];
+    const Scalar yMax = fvGridGeometry->bBoxMax()[1];
+
+    // The first plane shall be placed at the middle of the channel.
+    // If we have an odd number of cells in x-direction, there would not be any cell faces
+    // at the postion of the plane (which is required for the flux calculation).
+    // In this case, we add half a cell-width to the x-position in order to make sure that
+    // the cell faces lie on the plane. This assumes a regular cartesian grid.
+    const Scalar planePosMiddleX = xMin + 0.5*(xMax - xMin);
+    const int numCellsX = getParam<std::vector<int>>("Grid.Cells")[0];
+    const Scalar offsetX = (numCellsX % 2 == 0) ? 0.0 : 0.5*((xMax - xMin) / numCellsX);
+
+    const auto p0middle = GlobalPosition{planePosMiddleX + offsetX, yMin};
+    const auto p1middle = GlobalPosition{planePosMiddleX + offsetX, yMax};
+    flux.addPlane("middle", p0middle, p1middle);
+
+    // The second plane is placed at the outlet of the channel.
+    const auto p0outlet = GlobalPosition{xMax, yMin};
+    const auto p1outlet = GlobalPosition{xMax, yMax};
+    flux.addPlane("outlet", p0outlet, p1outlet);
+
     // time loop
     timeLoop->start(); do
     {
@@ -211,6 +241,24 @@ int main(int argc, char** argv) try
 
         // write vtk output
         vtkWriter.write(timeLoop->time());
+
+        // calculate and print mass fluxes over the planes
+        flux.calculateMassOrMoleFluxes();
+        if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
+        {
+            std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
+            std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        }
+        else
+        {
+            std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
+            std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        }
+
+        // calculate and print volume fluxes over the planes
+        flux.calculateVolumeFluxes();
+        std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
+        std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
         // report statistics of this time step
         timeLoop->reportTimeStep();

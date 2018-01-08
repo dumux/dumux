@@ -52,6 +52,10 @@ class FluxOverPlane
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
+    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
+    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Element = typename GridView::template Codim<0>::Entity;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
@@ -93,14 +97,14 @@ class FluxOverPlane
             geometries_ = std::forward<decltype(geo)>(geo);
         }
 
-        void addValue(int planeIdx, Scalar value)
+        void addValue(int planeIdx, const CellCenterPrimaryVariables& value)
         {
             values_[planeIdx] += value;
         }
 
         void addSubPlane(Geo&& geo)
         {
-            values_.push_back(0.0);
+            values_.emplace_back(0.0);
             geometries_.push_back(std::move(geo));
         }
 
@@ -109,7 +113,7 @@ class FluxOverPlane
             return geometries_;
         }
 
-        Scalar value(int planeIdx) const
+        CellCenterPrimaryVariables& value(int planeIdx) const
         {
             return values_[planeIdx];
         }
@@ -128,13 +132,13 @@ class FluxOverPlane
 
         void resetValues()
         {
-            std::fill(values_.begin(), values_.end(), 0.0);
+            std::fill(values_.begin(), values_.end(), CellCenterPrimaryVariables(0.0));
         }
 
     private:
 
         std::vector<Geo> geometries_;
-        std::vector<Scalar> values_;
+        std::vector<CellCenterPrimaryVariables> values_;
     };
 
 
@@ -241,13 +245,46 @@ public:
     }
 
     /*!
+     * \brief Calculate the mass or mole fluxes over all planes
+     */
+    void calculateMassOrMoleFluxes()
+    {
+        auto fluxType = [this](const auto& problem,
+                               const auto& element,
+                               const auto& fvGeometry,
+                               const auto& elemVolVars,
+                               const auto& elemFaceVars,
+                               const auto& scvf,
+                               const auto& elemFluxVarsCache)
+        {
+            return localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+        };
+
+        calculateFluxes(fluxType);
+    }
+
+    /*!
+     * \brief Calculate the volume fluxes over all planes.
+     *        This method simply averages the densities between two adjacent cells.
+     */
+    void calculateVolumeFluxes()
+    {
+        const auto isCompositional = std::integral_constant<bool, (GET_PROP_VALUE(TypeTag, NumComponents) > 1) >();
+        calculateVolumeFluxesImpl_(isCompositional);
+    }
+
+    /*!
      * \brief Calculate the fluxes over all planes for a given flux type.
      *
      * \param fluxType The flux type. This can be a lambda of the following form:
-     *                 [](const auto& element,
-     *                    const auto& fvGeometry,
-     *                    const auto& scvf,
-     *                    const Scalar velocity) { return velocity * ... ;}
+     *                 [](const auto& problem,
+                          const auto& element,
+                          const auto& fvGeometry,
+                          const auto& elemVolVars,
+                          const auto& elemFaceVars,
+                          const auto& scvf,
+                          const auto& elemFluxVarsCache)
+                          { return ... ; }
      */
     template<class FluxType>
     void calculateFluxes(const FluxType& fluxType)
@@ -259,10 +296,20 @@ public:
         // make sure not to iterate over the same dofs twice
         std::vector<bool> dofVisited(problem_.fvGridGeometry().numFaceDofs(), false);
 
+        LocalResidual localResidual;
+        auto elemVolVars = localView(gridVariables_.curGridVolVars());
+        auto elemFluxVarsCache = localView(gridVariables_.gridFluxVarsCache());
+        auto elemFaceVars = localView(gridVariables_.curGridFaceVars());
+
         for(auto&& element : elements(problem_.fvGridGeometry().gridView()))
         {
             auto fvGeometry = localView(problem_.fvGridGeometry());
             fvGeometry.bindElement(element);
+
+            elemVolVars.bind(element, fvGeometry, sol_);
+            elemFaceVars.bind(element, fvGeometry, sol_);
+            elemFluxVarsCache.bind(element, fvGeometry, elemVolVars);
+
             for(auto && scvf : scvfs(fvGeometry))
             {
                 const auto dofIdx = scvf.dofIndex();
@@ -282,8 +329,8 @@ public:
                     {
                         if(intersectsPointGeometry(scvf.center(), subPlanes[planeIdx]))
                         {
-                            const Scalar velocity = sol_[faceIdx][dofIdx][0];
-                            const Scalar result = fluxType(element, fvGeometry, scvf, velocity);
+                            const auto result = fluxType(problem_, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+
                             plane.second.addValue(planeIdx, result);
 
                             if(verbose_)
@@ -315,19 +362,101 @@ public:
      *
      * \param name The name of the plane
      */
-    Scalar netFlux(const std::string& name) const
+    auto netFlux(const std::string& name) const
     {
         const auto& planeResults = values(name);
-        return std::accumulate(planeResults.begin(), planeResults.end(), 0.0);
+        return std::accumulate(planeResults.begin(), planeResults.end(), CellCenterPrimaryVariables(0.0));
     }
 
 private:
+
+    /*!
+     * \brief Calculate the volume fluxes over all planes for compositional models.
+     *        This method simply averages the densities between two adjacent cells.
+     */
+    void calculateVolumeFluxesImpl_(std::true_type)
+    {
+        auto fluxType = [this](const auto& problem,
+                               const auto& element,
+                               const auto& fvGeometry,
+                               const auto& elemVolVars,
+                               const auto& elemFaceVars,
+                               const auto& scvf,
+                               const auto& elemFluxVarsCache)
+        {
+            const auto massOrMoleFlux = localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache);
+
+            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+            constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
+            const auto density = [useMoles](const auto& volVars)
+            {
+                return useMoles ? volVars.molarDensity() : volVars.density() ;
+            };
+
+            const auto avgDensity = 0.5*density(insideVolVars) + 0.5*density(outsideVolVars);
+
+            constexpr auto replaceCompEqIdx = GET_PROP_VALUE(TypeTag, ReplaceCompEqIdx);
+            constexpr auto numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+
+            const Scalar cumulativeFlux = [replaceCompEqIdx, numComponents, &massOrMoleFlux]()
+            {
+                Scalar result = 0.0;
+                if(replaceCompEqIdx < numComponents)
+                    result = massOrMoleFlux[replaceCompEqIdx];
+                else
+                {
+                    for(int i = 0; i < numComponents; ++i)
+                        result += massOrMoleFlux[i];
+                }
+
+                return result;
+            }();
+
+            CellCenterPrimaryVariables tmp(0.0);
+            tmp[Indices::conti0EqIdx] = cumulativeFlux / avgDensity;
+            return tmp;
+        };
+
+        calculateFluxes(fluxType);
+    }
+
+    /*!
+     * \brief Calculate the volume fluxes over all planes for non-compositional models.
+     *        This method simply averages the densities between two adjacent cells.
+     */
+    void calculateVolumeFluxesImpl_(std::false_type)
+    {
+        auto fluxType = [this](const auto& problem,
+                               const auto& element,
+                               const auto& fvGeometry,
+                               const auto& elemVolVars,
+                               const auto& elemFaceVars,
+                               const auto& scvf,
+                               const auto& elemFluxVarsCache)
+        {
+            const Scalar massFlux = localResidual_.computeFluxForCellCenter(problem, element, fvGeometry, elemVolVars, elemFaceVars, scvf, elemFluxVarsCache)[Indices::conti0EqIdx];
+
+            const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+            const auto& outsideVolVars = elemVolVars[scvf.outsideScvIdx()];
+
+            const auto avgDensity = 0.5*insideVolVars.density() + 0.5*outsideVolVars.density();
+
+            CellCenterPrimaryVariables tmp(0.0);
+            tmp[Indices::conti0EqIdx] = massFlux / avgDensity;
+            return tmp;
+        };
+
+        calculateFluxes(fluxType);
+    }
 
     std::map<std::string, PlaneData<planeDim ,dim> > planes_;
     const Problem& problem_;
     const GridVariables& gridVariables_;
     const SolutionVector& sol_;
     bool verbose_;
+    LocalResidual localResidual_;
 };
 
 } //end namespace
