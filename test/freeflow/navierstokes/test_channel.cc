@@ -244,13 +244,21 @@ int main(int argc, char** argv) try
 
         // calculate and print mass fluxes over the planes
         flux.calculateMassOrMoleFluxes();
-        std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        if(GET_PROP_VALUE(TypeTag, EnableEnergyBalance))
+        {
+            std::cout << "mass / energy flux at middle is: " << flux.netFlux("middle") << std::endl;
+            std::cout << "mass / energy flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        }
+        else
+        {
+            std::cout << "mass flux at middle is: " << flux.netFlux("middle") << std::endl;
+            std::cout << "mass flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        }
 
         // calculate and print volume fluxes over the planes
         flux.calculateVolumeFluxes();
-        std::cout << "volume flux at middle is: " << flux.netFlux("middle") << std::endl;
-        std::cout << "volume flux at outlet is: " << flux.netFlux("outlet") << std::endl;
+        std::cout << "volume flux at middle is: " << flux.netFlux("middle")[0] << std::endl;
+        std::cout << "volume flux at outlet is: " << flux.netFlux("outlet")[0] << std::endl;
 
         // report statistics of this time step
         timeLoop->reportTimeStep();
