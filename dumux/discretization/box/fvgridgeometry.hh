@@ -28,6 +28,7 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
+#include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
@@ -71,6 +72,9 @@ class BoxFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using GeometryHelper = BoxGeometryHelper<GridView, dim, SubControlVolume, SubControlVolumeFace>;
 
 public:
+    //! export discretization method
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::Box;
+
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView) {}
@@ -263,6 +267,9 @@ class BoxFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
+    //! export discretization method
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::Box;
+
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
     : ParentType(gridView) {}

@@ -32,6 +32,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 
+#include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
@@ -87,6 +88,9 @@ class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
+    //! export discretization method
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+
     using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! Constructor without indicator function for secondary interaction volumes
@@ -429,6 +433,9 @@ class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
+    //! export discretization method
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+
     using SecondaryIvIndicator = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! Constructor without indicator function for secondary interaction volumes

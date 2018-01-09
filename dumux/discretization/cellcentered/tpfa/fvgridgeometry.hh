@@ -28,6 +28,7 @@
 
 #include <dune/common/version.hh>
 
+#include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
@@ -74,6 +75,9 @@ class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
+    //! export discretization method
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
@@ -331,6 +335,9 @@ class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
+    //! export discretization method
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)

@@ -7,6 +7,7 @@ cclocalresidual.hh
 diffmethod.hh
 fvassembler.hh
 fvlocalresidual.hh
+jacobianpattern.hh
 staggeredfvassembler.hh
 staggeredlocalassembler.hh
 staggeredlocalresidual.hh

@@ -33,6 +33,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/parallel/vertexhandles.hh>
 
+#include "jacobianpattern.hh"
 #include "diffmethod.hh"
 #include "boxlocalassembler.hh"
 #include "cclocalassembler.hh"
@@ -227,11 +228,7 @@ public:
         jacobian_->setSize(numDofs, numDofs);
 
         // create occupation pattern of the jacobian
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(numDofs, numDofs);
-
-        // set the jacobian pattern depending on space and time discretization
-        setJacobianPattern_(occupationPattern, numDofs);
+        const auto occupationPattern = getJacobianPattern<isImplicit>(fvGridGeometry());
 
         // export pattern to jacobian
         occupationPattern.exportIdx(*jacobian_);
@@ -334,65 +331,6 @@ private:
     {
         if (!isStationaryProblem_ && !prevSol_)
             DUNE_THROW(Dune::InvalidStateException, "Assembling instationary problem but previous solution was not set!");
-    }
-
-    //! Implicit jacobian pattern for cell-centered fv schemes
-    template<class T = TypeTag, typename std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, int> = 0>
-    void setJacobianPattern_(Dune::MatrixIndexSet& pattern, std::size_t numDofs)
-    {
-        // matrix pattern for implicit Jacobians
-        if (isImplicit)
-        {
-            for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
-            {
-                pattern.add(globalI, globalI);
-                for (const auto& dataJ : fvGridGeometry().connectivityMap()[globalI])
-                    pattern.add(dataJ.globalJ, globalI);
-
-                // reserve index for additional user defined DOF dependencies
-                // const auto& additionalDofDependencies = problem().getAdditionalDofDependencies(globalI);
-                // for (auto globalJ : additionalDofDependencies)
-                //     pattern.add(globalI, globalJ);
-            }
-        }
-
-        // matrix pattern for explicit Jacobians -> diagonal matrix
-        else
-        {
-            for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
-                pattern.add(globalI, globalI);
-        }
-    }
-
-    //! Implicit jacobian pattern for vertex-centered fv schemes
-    template<class T = TypeTag, typename std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::Box, int> = 0>
-    void setJacobianPattern_(Dune::MatrixIndexSet& pattern, std::size_t numDofs)
-    {
-        // matrix pattern for implicit Jacobians
-        if (isImplicit)
-        {
-            static constexpr int dim = GridView::dimension;
-            for (const auto& element : elements(fvGridGeometry().gridView()))
-            {
-                for (unsigned int vIdx = 0; vIdx < element.subEntities(dim); ++vIdx)
-                {
-                    const auto globalI = fvGridGeometry().vertexMapper().subIndex(element, vIdx, dim);
-                    for (unsigned int vIdx2 = vIdx; vIdx2 < element.subEntities(dim); ++vIdx2)
-                    {
-                        const auto globalJ = fvGridGeometry().vertexMapper().subIndex(element, vIdx2, dim);
-                        pattern.add(globalI, globalJ);
-                        pattern.add(globalJ, globalI);
-                    }
-                }
-            }
-        }
-
-        // matrix pattern for explicit Jacobians -> diagonal matrix
-        else
-        {
-            for (unsigned int globalI = 0; globalI < numDofs; ++globalI)
-                pattern.add(globalI, globalI);
-        }
     }
 
     /*!
