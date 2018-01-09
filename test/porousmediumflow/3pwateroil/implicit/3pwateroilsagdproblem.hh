@@ -85,30 +85,23 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
 
+        contiWEqIdx = Indices::contiWEqIdx,
+        contiNEqIdx = Indices::contiNEqIdx,
         energyEqIdx = Indices::energyEqIdx,
-        temperatureIdx = Indices::temperatureIdx,
 
-        // phase and component indices
+        // phase indices
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
-        gPhaseIdx = Indices::gPhaseIdx,
-        wCompIdx = Indices::wCompIdx,
-        nCompIdx = Indices::nCompIdx,
 
-        // Phase State
-        wPhaseOnly = Indices::wPhaseOnly,
+        // phase state
         wnPhaseOnly = Indices::wnPhaseOnly,
-        wgPhaseOnly = Indices::wgPhaseOnly,
-        threePhases = Indices::threePhases,
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -234,9 +227,9 @@ public:
         // negative values for injection at injection well
         if (globalPos[1] > 8.5 - eps_ && globalPos[1] < 9.5 + eps_)
         {
-            values[Indices::contiNEqIdx] = -0.0;
-            values[Indices::contiWEqIdx] = -0.193;//*0.5;   // (55.5 mol*12.5)/3600 mol/s m = 0.193
-            values[Indices::energyEqIdx] = -9132;//*0.5;   // J/sec m 9132
+            values[contiNEqIdx] = -0.0;
+            values[contiWEqIdx] = -0.193;//*0.5;   // (55.5 mol*12.5)/3600 mol/s m = 0.193
+            values[energyEqIdx] = -9132;//*0.5;   // J/sec m 9132
         }
         else if (globalPos[1] > 2.5 - eps_ && globalPos[1] < 3.5 + eps_) // production well
         {
@@ -282,9 +275,9 @@ public:
               }
 
 
-            values[Indices::contiWEqIdx] = qW;
-            values[Indices::contiNEqIdx] = qN;
-            values[Indices::energyEqIdx] = qE;
+            values[contiWEqIdx] = qW;
+            values[contiNEqIdx] = qN;
+            values[energyEqIdx] = qE;
             massProducedOil_ = qN;
             massProducedWater_ = qW;
         }
@@ -318,7 +311,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(Indices::wnPhaseOnly);
+        values.setState(wnPhaseOnly);
         Scalar densityW = 1000.0;
         values[pressureIdx] = 101300.0 + (maxDepth_ - globalPos[1])*densityW*9.81;
 

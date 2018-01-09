@@ -157,21 +157,14 @@ class EvaporationAtmosphereSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    enum {dim=GridView::dimension };
-    enum {dimWorld=GridView::dimensionworld};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {sPhaseIdx = FluidSystem::sPhaseIdx};
-    enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
-    enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
-    enum { enableThermalNonEquilibrium  = GET_PROP_VALUE(TypeTag,EnableThermalNonEquilibrium)};
+    enum { dimWorld = GridView::dimensionworld };
+    enum { numPhases = GET_PROP_VALUE(TypeTag, NumPhases) };
 
-    using DimVector =  Dune::FieldVector<Scalar,dim>;
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
 
 public:

@@ -88,19 +88,12 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    enum { dimWorld = GridView::dimensionworld };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
 #if NONISOTHERMAL
         temperatureIdx = Indices::temperatureIdx,
@@ -112,11 +105,7 @@ class ChannelTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    using Element = typename GridView::template Codim<0>::Entity;
-
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 

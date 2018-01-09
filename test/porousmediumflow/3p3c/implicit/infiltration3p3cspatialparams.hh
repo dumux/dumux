@@ -77,10 +77,7 @@ class InfiltrationThreePThreeCSpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum {
-        dim = GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
+    enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);

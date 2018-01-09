@@ -61,13 +61,11 @@ public:
 template<class TypeTag>
 class Test2P2CSpatialParams : public SequentialFVSpatialParams<TypeTag>
 {
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    enum
-        {dim=Grid::dimension};
-    using Element = typename Grid::Traits::template Codim<0>::Entity;
+    enum { dim = GridView::dimension };
+    using Element = typename GridView::Traits::template Codim<0>::Entity;
 
     using FieldMatrix = Dune::FieldMatrix<Scalar, dim, dim>;
 

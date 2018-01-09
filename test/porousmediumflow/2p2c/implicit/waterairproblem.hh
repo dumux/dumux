@@ -112,17 +112,15 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
         pressureIdx = Indices::pressureIdx,
         switchIdx = Indices::switchIdx,
 
-        wCompIdx = FluidSystem::wCompIdx,
         nCompIdx = FluidSystem::nCompIdx,
 
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx,
 
-        // Phase State
+        // phase state
         wPhaseOnly = Indices::wPhaseOnly,
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld,
 
         conti0EqIdx = Indices::conti0EqIdx,
@@ -135,10 +133,8 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -295,7 +291,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(Indices::wPhaseOnly);
+        priVars.setState(wPhaseOnly);
         Scalar densityW = 1000.0;
         priVars[pressureIdx] = 1e5 + (maxDepth_ - globalPos[1])*densityW*9.81;
         priVars[switchIdx] = 0.0;

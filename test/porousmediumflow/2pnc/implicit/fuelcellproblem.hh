@@ -88,7 +88,6 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -98,29 +97,17 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     // Select the electrochemistry method
     using ElectroChemistry = typename Dumux::ElectroChemistry<TypeTag, ElectroChemistryModel::Ochs>;
 
-    enum
-    {
-        numComponents = FluidSystem::numComponents,
-        numSecComponents = FluidSystem::numSecComponents,
-    };
-    // phase indices
-    enum
-    {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
-    // component indices
-    enum
-    {
-        wCompIdx = FluidSystem::wCompIdx, //major component of the liquid phase
-        nCompIdx = FluidSystem::nCompIdx, //major component of the gas phase
-    };
+    enum { numComponents = FluidSystem::numComponents };
+
+    enum { wPhaseIdx = Indices::wPhaseIdx };
+
+    enum { bothPhases = Indices::bothPhases };
+
     // privar indices
     enum
     {
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
-        switchIdx = Indices::switchIdx, //liquid saturation or mole fraction
-        conti0EqIdx = Indices::conti0EqIdx
+        switchIdx = Indices::switchIdx //liquid saturation or mole fraction
     };
 
     static constexpr int dim = GridView::dimension;
@@ -323,7 +310,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(Indices::bothPhases);
+        priVars.setState(bothPhases);
 
         Scalar pn = 1.0e5;
         priVars[pressureIdx] = pn;

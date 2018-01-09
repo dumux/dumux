@@ -85,14 +85,9 @@ class OnePSingularityProblem : public PorousMediumFlowProblem<TypeTag>
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
+    enum { dimWorld = GridView::dimensionworld };
     enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
-    enum {
-        // indices of the primary variables
-        conti0EqIdx = Indices::conti0EqIdx,
+        // index of the primary variable
         pressureIdx = Indices::pressureIdx
     };
 

@@ -113,7 +113,6 @@ class OnePTwoCTestProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using Element = typename GridView::template Codim<0>::Entity;
 
     // copy some indices for convenience

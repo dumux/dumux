@@ -67,29 +67,17 @@ public:
 template<class TypeTag>
 class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
 {
-    using ThisType = DissolutionSpatialparams<TypeTag>;
     using ParentType = FVSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using CoordScalar = typename GridView::ctype;
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld,
-    };
-
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        wPhaseIdx = FluidSystem::wPhaseIdx,
-        nPhaseIdx = FluidSystem::nPhaseIdx,
-    };
+    enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -121,7 +109,7 @@ public:
 
         // set main diagonal entries of the permeability tensor to a value
         // setting to one value means: isotropic, homogeneous
-        for (int i = 0; i < dim; i++)  //TODO make this nice and dependend on PermeabilityType!
+        for (int i = 0; i < dimWorld; i++)  //TODO make this nice and dependend on PermeabilityType!
             initK_[i][i] = initialPermeability_;
 
         //! Intitialize the parameter laws

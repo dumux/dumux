@@ -90,7 +90,6 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -99,7 +98,6 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     enum {
         // copy some indices for convenience
         pwIdx = Indices::pressureIdx,
-        conti0EqIdx = Indices::conti0EqIdx,
         bothPhases = Indices::bothPhases,
     };
     // Grid and world dimension

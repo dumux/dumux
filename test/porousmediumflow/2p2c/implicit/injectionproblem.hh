@@ -97,16 +97,16 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     enum {
         pressureIdx = Indices::pressureIdx,
+        switchIdx = Indices::switchIdx,
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 
     enum {
-        wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
 
+        wPhaseOnly = Indices::wPhaseOnly,
 
         wCompIdx = FluidSystem::wCompIdx,
         nCompIdx = FluidSystem::nCompIdx,
@@ -117,7 +117,6 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -290,7 +289,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(Indices::wPhaseOnly);
+        priVars.setState(wPhaseOnly);
 
         Scalar densityW = FluidSystem::H2O::liquidDensity(temperature_, 1e5);
 
@@ -304,15 +303,15 @@ private:
         if(useMoles)
         {
             //mole-fraction formulation
-            priVars[Indices::switchIdx] = moleFracLiquidN2;
+            priVars[switchIdx] = moleFracLiquidN2;
         }
         else
         {
             //mass fraction formulation
             Scalar massFracLiquidN2 = moleFracLiquidN2*FluidSystem::molarMass(nCompIdx)/meanM;
-            priVars[Indices::switchIdx] = massFracLiquidN2;
+            priVars[switchIdx] = massFracLiquidN2;
         }
-        priVars[Indices::pressureIdx] = pl;
+        priVars[pressureIdx] = pl;
         return priVars;
     }
 

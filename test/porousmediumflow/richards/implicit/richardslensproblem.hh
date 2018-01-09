@@ -106,7 +106,7 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
         conti0EqIdx = Indices::conti0EqIdx,
         bothPhases = Indices::bothPhases,
 
-        // Grid and world dimension
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 

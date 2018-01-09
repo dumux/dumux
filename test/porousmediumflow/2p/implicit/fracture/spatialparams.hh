@@ -73,14 +73,9 @@ class FractureSpatialParams : public FVSpatialParams<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
+    enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     //get the material law from the property system
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);

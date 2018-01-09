@@ -76,7 +76,7 @@ class WaterAirSpatialParams : public FVSpatialParams<TypeTag>
     using CoordScalar = typename GridView::ctype;
 
     static constexpr int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     using PermeabilityType = Scalar;

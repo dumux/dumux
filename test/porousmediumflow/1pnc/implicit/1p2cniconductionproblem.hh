@@ -107,13 +107,9 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
@@ -126,17 +122,11 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         pressureIdx = Indices::pressureIdx,
         massOrMoleFracIdx = Indices::firstMoleFracIdx,
         temperatureIdx = Indices::temperatureIdx,
-
-        // indices of the equations
-        conti0EqIdx = Indices::conti0EqIdx,
-        transportEqIdx = Indices::firstTransportEqIdx,
-        energyEqIdx = Indices::energyEqIdx
     };
 
     //! property that defines whether mole or mass fractions are used
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
     static const auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
-    static const bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

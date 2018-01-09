@@ -108,22 +108,14 @@ class OnePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using IapwsH2O = H2O<Scalar>;
 
+    enum { dimWorld = GridView::dimensionworld };
+
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        // world dimension
-        dimWorld = GridView::dimensionworld
-    };
-
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
         temperatureIdx = Indices::temperatureIdx
-    };
-    enum {
-        // index of the transport equation
-        conti0EqIdx = Indices::conti0EqIdx,
-        energyEqIdx = Indices::energyEqIdx
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

@@ -72,14 +72,9 @@ class ThreePNISpatialParams : public FVSpatialParams<TypeTag>
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using Element = typename GridView::template Codim<0>::Entity;
-    enum {
-        dimWorld=GridView::dimensionworld
-    };
+    enum { dimWorld=GridView::dimensionworld };
     using CoordScalar = typename Grid::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     // export permeability type

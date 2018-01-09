@@ -113,7 +113,6 @@ class ObstacleProblem
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -121,14 +120,10 @@ class ObstacleProblem
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
 
-    // world dimension
     enum {dimWorld = GridView::dimensionworld};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
@@ -140,10 +135,8 @@ class ObstacleProblem
     enum {s0Idx = Indices::s0Idx};
     enum {p0Idx = Indices::p0Idx};
 
-
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
     /*!

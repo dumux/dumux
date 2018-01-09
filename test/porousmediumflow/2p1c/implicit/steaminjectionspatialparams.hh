@@ -68,7 +68,6 @@ class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
 
     using MaterialLawParams = typename MaterialLaw::Params;
@@ -77,9 +76,7 @@ class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    static constexpr int wPhaseIdx = FluidSystem::wPhaseIdx;
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using DimWorldMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;

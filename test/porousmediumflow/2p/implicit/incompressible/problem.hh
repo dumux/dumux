@@ -87,16 +87,16 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-
-    static constexpr int dimWorld = GridView::dimensionworld;
+    enum {
+        pwIdx = Indices::pwIdx,
+        snIdx = Indices::snIdx,
+        contiNEqIdx = Indices::contiNEqIdx
+    };
 
 public:
     TwoPTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
@@ -144,8 +144,8 @@ public:
         Scalar factor = (width*alpha + (1.0 - alpha)*globalPos[0])/width;
 
         // hydrostatic pressure scaled by alpha
-        values[Indices::pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
-        values[Indices::snIdx] = 0.0;
+        values[pwIdx] = 1e5 - factor*densityW*this->gravity()[1]*depth;
+        values[snIdx] = 0.0;
 
         return values;
     }
@@ -165,7 +165,7 @@ public:
     {
         NeumannFluxes values(0.0);
         if (onInlet_(globalPos))
-            values[Indices::contiNEqIdx] = -0.04; // kg / (m * s)
+            values[contiNEqIdx] = -0.04; // kg / (m * s)
         return values;
     }
 
@@ -189,8 +189,8 @@ public:
         Scalar depth = this->fvGridGeometry().bBoxMax()[1] - globalPos[1];
 
         // hydrostatic pressure
-        values[Indices::pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
-        values[Indices::snIdx] = 0.0;
+        values[pwIdx] = 1e5 - densityW*this->gravity()[1]*depth;
+        values[snIdx] = 0.0;
         return values;
     }
 

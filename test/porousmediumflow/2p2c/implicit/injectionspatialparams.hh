@@ -68,16 +68,11 @@ class InjectionSpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
-    static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
     using CoordScalar = typename Grid::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     using PermeabilityType = Scalar;

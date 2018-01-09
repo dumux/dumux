@@ -117,24 +117,16 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        // world dimension
-        dimWorld = GridView::dimensionworld
-    };
-
+    enum { dimWorld = GridView::dimensionworld };
 
     enum {
-        // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
-        conti0EqIdx = Indices::conti0EqIdx,
         wPhaseOnly = Indices::wPhaseOnly,
         wPhaseIdx = Indices::wPhaseIdx,
-        temperatureIdx = Indices::temperatureIdx,
-        energyEqIdx = Indices::energyEqIdx
+        temperatureIdx = Indices::temperatureIdx
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 

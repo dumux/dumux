@@ -86,8 +86,6 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx
@@ -95,17 +93,9 @@ class AngeliTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
-
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);

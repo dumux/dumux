@@ -117,7 +117,6 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -125,33 +124,25 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
-    enum {dim = GridView::dimension}; // Grid and world dimension
     enum {dimWorld = GridView::dimensionworld};
     enum {numPhases = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum {numComponents = GET_PROP_VALUE(TypeTag, NumComponents)};
-    enum {s0EqIdx = Indices::s0Idx};
-    enum {p0EqIdx = Indices::p0Idx};
+    enum {s0Idx = Indices::s0Idx};
+    enum {p0Idx = Indices::p0Idx};
     enum {conti00EqIdx = Indices::conti0EqIdx};
-    enum {temperature0Idx = Indices::temperatureIdx};
     enum {energyEq0Idx = Indices::energyEqIdx};
     enum {numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
     enum {numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid)};
     enum {energyEqSolidIdx = energyEq0Idx + numEnergyEqFluid + numEnergyEqSolid - 1};
     enum {wPhaseIdx = FluidSystem::wPhaseIdx};
     enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {sPhaseIdx = FluidSystem::sPhaseIdx};
     enum {wCompIdx = FluidSystem::H2OIdx};
     enum {nCompIdx = FluidSystem::N2Idx};
-
-     enum {numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
     // formulations
     enum {
@@ -160,7 +151,6 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
         leastWettingFirst = MpNcPressureFormulation::leastWettingFirst
     };
 
-    using DimVector = Dune::FieldVector<typename GridView::Grid::ctype, dim>;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
@@ -380,7 +370,7 @@ private:
         // Set saturation
         //////////////////////////////////////
         for (int i = 0; i < numPhases - 1; ++i) {
-            priVars[s0EqIdx + i] = S[i];
+            priVars[s0Idx + i] = S[i];
         }
 
         FluidState fluidState;
@@ -422,12 +412,12 @@ private:
         if(pressureFormulation == mostWettingFirst) {
             // This means that the pressures are sorted from the most wetting to the least wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pw
-            priVars[p0EqIdx] = p[wPhaseIdx];
+            priVars[p0Idx] = p[wPhaseIdx];
         }
         else if(pressureFormulation == leastWettingFirst) {
             // This means that the pressures are sorted from the least wetting to the most wetting-1 in the primary variables vector.
             // For two phases this means that there is one pressure as primary variable: pn
-            priVars[p0EqIdx] = p[nPhaseIdx];
+            priVars[p0Idx] = p[nPhaseIdx];
         }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << pressureFormulation << " is invalid.");
 

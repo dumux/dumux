@@ -108,8 +108,7 @@ class InfiltrationThreePProblem : public PorousMediumFlowProblem<TypeTag>
         swIdx = Indices::swIdx,
         snIdx = Indices::snIdx,
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 

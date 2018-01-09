@@ -101,19 +101,13 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
 
+        conti0EqIdx = Indices::conti0EqIdx,
         energyEqIdx = Indices::energyEqIdx,
 
-        // phase and component indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-        // Phase State
-        wPhaseOnly = Indices::wPhaseOnly,
-        nPhaseOnly = Indices::nPhaseOnly,
-        twoPhases = Indices::twoPhases,
+        // phase state
+        wPhaseOnly = Indices::wPhaseOnly
     };
 
-    static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -211,8 +205,8 @@ public:
             if(ipGlobal[1] > 2.0 - eps_ && ipGlobal[1] < 3.0 + eps_)
             {
                 const Scalar massRate = 1e-1;
-                values[Indices::conti0EqIdx] = -massRate;
-                values[Indices::energyEqIdx] = -massRate * 2690e3;
+                values[conti0EqIdx] = -massRate;
+                values[energyEqIdx] = -massRate * 2690e3;
             }
         }
         return values;

@@ -101,24 +101,19 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using IapwsH2O = H2O<Scalar>;
 
+    enum { dimWorld = GridView::dimensionworld };
+
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        // world dimension
-        dimWorld = GridView::dimensionworld
-    };
-
     enum {
         // indices of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -132,7 +127,6 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 

@@ -80,19 +80,8 @@ class SagdSpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
-
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
+    enum { dimWorld=GridView::dimensionworld };
 
     using CoordScalar = typename Grid::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
@@ -263,7 +252,7 @@ public:
 private:
     bool isFineMaterial_(const GlobalPosition &pos) const
     {
-        return pos[dim-1] > layerBottom_ - eps_;
+        return pos[dimWorld-1] > layerBottom_ - eps_;
     };
 
     Scalar layerBottom_;

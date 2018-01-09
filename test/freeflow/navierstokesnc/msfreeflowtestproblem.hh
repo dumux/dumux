@@ -82,8 +82,8 @@ class MaxwellStefanFluidSystem: public FluidSystems::BaseFluidSystem<typename GE
 
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    typedef MaxwellStefanFluidSystem<TypeTag> ThisType;
-    typedef FluidSystems::BaseFluidSystem <Scalar, ThisType> Base;
+    using ThisType = MaxwellStefanFluidSystem<TypeTag>;
+    using Base = FluidSystems::BaseFluidSystem<Scalar, ThisType>;
 
 public:
     //! The number of phases
@@ -187,18 +187,12 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    enum { dimWorld = GridView::dimensionworld };
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
         compTwoIdx = FluidSystem::N2Idx,
         compThreeIdx = FluidSystem::CO2Idx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx,
@@ -209,21 +203,14 @@ class MaxwellStefanNCTestProblem : public NavierStokesProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
-    using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
-    using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
 public:
     MaxwellStefanNCTestProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)

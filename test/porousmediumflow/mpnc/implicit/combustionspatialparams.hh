@@ -84,16 +84,11 @@ class CombustionSpatialParams : public FVSpatialParams<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimension>;
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using MaterialLawParams = typename MaterialLaw::Params;
-    using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
-    enum {dim=GridView::dimension };
-    enum {dimWorld=GridView::dimensionworld};
-    enum {wPhaseIdx = FluidSystem::wPhaseIdx};
-    enum {nPhaseIdx = FluidSystem::nPhaseIdx};
-    enum {sPhaseIdx = FluidSystem::sPhaseIdx};
+    enum {dimWorld = GridView::dimensionworld};
+    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
     using PermeabilityType = Scalar;

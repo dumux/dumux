@@ -79,7 +79,6 @@ class InjectionSpatialParams : public FVSpatialParams<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoorinateType = typename GridView::ctype;
 
     static const int dimWorld = GridView::dimensionworld;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

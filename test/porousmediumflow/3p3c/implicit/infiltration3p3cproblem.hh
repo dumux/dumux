@@ -108,15 +108,14 @@ class InfiltrationThreePThreeCProblem : public PorousMediumFlowProblem<TypeTag>
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
 
-        // Phase State
+        // phase state
         wgPhaseOnly = Indices::wgPhaseOnly,
 
         contiWEqIdx = Indices::conti0EqIdx, //!< Index of the mass conservation equation for the water component
         contiNEqIdx = Indices::conti1EqIdx,//!< Index of the mass conservation equation for the contaminant component
         contiAEqIdx = Indices::conti2EqIdx,//!< Index of the mass conservation equation for the gas component
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 
