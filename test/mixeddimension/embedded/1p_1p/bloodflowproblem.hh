@@ -90,9 +90,9 @@ class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);

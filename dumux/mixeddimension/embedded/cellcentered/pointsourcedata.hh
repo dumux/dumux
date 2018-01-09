@@ -39,25 +39,25 @@ namespace Dumux {
  * \brief A point source data class used for integration in multidimension models
  * \note The point source and related data are connected via an identifier (id)
  */
-template<class MixedDimensionTraits>
+template<class MDTraits>
 class PointSourceData
 {
-    using Scalar = typename MixedDimensionTraits::Scalar;
+    using Scalar = typename MDTraits::Scalar;
     using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
     // obtain the type tags of the sub problems
-    using BulkProblemTypeTag = typename MixedDimensionTraits::BulkTypeTag;
-    using LowDimProblemTypeTag = typename MixedDimensionTraits::LowDimTypeTag;
+    using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
+    using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
 
-    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, PrimaryVariables);
-    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables);
+    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkTypeTag, PrimaryVariables);
+    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimTypeTag, PrimaryVariables);
 
-    using BulkSolutionVector = typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector);
-    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector);
+    using BulkSolutionVector = typename GET_PROP_TYPE(BulkTypeTag, SolutionVector);
+    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimTypeTag, SolutionVector);
 
     enum {
-        bulkIsBox = GET_PROP_VALUE(BulkProblemTypeTag, DiscretizationMethod) == DiscretizationMethods::Box,
-        lowDimIsBox = GET_PROP_VALUE(LowDimProblemTypeTag, DiscretizationMethod) == DiscretizationMethods::Box
+        bulkIsBox = GET_PROP_VALUE(BulkTypeTag, DiscretizationMethod) == DiscretizationMethods::Box,
+        lowDimIsBox = GET_PROP_VALUE(LowDimTypeTag, DiscretizationMethod) == DiscretizationMethods::Box
     };
 
 public:
@@ -146,26 +146,26 @@ private:
  * the surface of the one-dimensional tube. This exact determination of the bulk pressure
  * is necessary for convergence studies.
  */
-template<class MixedDimensionTraits>
-class PointSourceDataCircleAverage : public PointSourceData<MixedDimensionTraits>
+template<class MDTraits>
+class PointSourceDataCircleAverage : public PointSourceData<MDTraits>
 {
-    using ParentType = PointSourceData<MixedDimensionTraits>;
-    using Scalar = typename MixedDimensionTraits::Scalar;
+    using ParentType = PointSourceData<MDTraits>;
+    using Scalar = typename MDTraits::Scalar;
     using ShapeValues = typename std::vector<Dune::FieldVector<Scalar, 1> >;
 
     // obtain the type tags of the sub problems
-    using BulkProblemTypeTag = typename MixedDimensionTraits::BulkTypeTag;
-    using LowDimProblemTypeTag = typename MixedDimensionTraits::LowDimTypeTag;
+    using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
+    using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
 
-    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkProblemTypeTag, PrimaryVariables);
-    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimProblemTypeTag, PrimaryVariables);
+    using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkTypeTag, PrimaryVariables);
+    using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimTypeTag, PrimaryVariables);
 
-    using BulkSolutionVector = typename GET_PROP_TYPE(BulkProblemTypeTag, SolutionVector);
-    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimProblemTypeTag, SolutionVector);
+    using BulkSolutionVector = typename GET_PROP_TYPE(BulkTypeTag, SolutionVector);
+    using LowDimSolutionVector = typename GET_PROP_TYPE(LowDimTypeTag, SolutionVector);
 
     enum {
-        bulkIsBox = GET_PROP_VALUE(BulkProblemTypeTag, DiscretizationMethod) == DiscretizationMethods::Box,
-        lowDimIsBox = GET_PROP_VALUE(LowDimProblemTypeTag, DiscretizationMethod) == DiscretizationMethods::Box
+        bulkIsBox = GET_PROP_VALUE(BulkTypeTag, DiscretizationMethod) == DiscretizationMethods::Box,
+        lowDimIsBox = GET_PROP_VALUE(LowDimTypeTag, DiscretizationMethod) == DiscretizationMethods::Box
     };
 
 public:

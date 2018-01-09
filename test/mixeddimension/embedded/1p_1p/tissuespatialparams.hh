@@ -41,7 +41,7 @@ class TissueSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum {

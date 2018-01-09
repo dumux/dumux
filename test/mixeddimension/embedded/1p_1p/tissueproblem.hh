@@ -86,9 +86,9 @@ class TissueProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolume = typename FVGridGeometry::SubControlVolume;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
