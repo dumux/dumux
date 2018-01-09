@@ -54,28 +54,33 @@ class BoxFVElementGeometry
 template<class TypeTag>
 class BoxFVElementGeometry<TypeTag, true>
 {
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+public:
+    //! export type of subcontrol volume
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using Element = typename GridView::template Codim<0>::Entity;
+    //! export type of finite volume grid geometry
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    //! the maximum number of scvs per element (2^dim for cubes)
+    static constexpr std::size_t maxNumElementScvs = (1<<dim);
+
+private:
+    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
-
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
 
     using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
-
 public:
+
     //! Constructor
     BoxFVElementGeometry(const FVGridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
@@ -169,16 +174,22 @@ template<class TypeTag>
 class BoxFVElementGeometry<TypeTag, false>
 {
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+public:
+    //! export type of subcontrol volume
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    //! export type of subcontrol volume face
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    //! export type of finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    //! the maximum number of scvs per element (2^dim for cubes)
+    static constexpr std::size_t maxNumElementScvs = (1<<dim);
+
+private:
+    using IndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-
     using Element = typename GridView::template Codim<0>::Entity;
 
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

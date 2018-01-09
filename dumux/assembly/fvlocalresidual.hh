@@ -63,9 +63,8 @@ class FVLocalResidual
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
-    //! the container storing all element residuals (for cc size is 1 for box 2^dim)
-    static constexpr size_t maxNumScv = (1 << GridView::dimension); // 2^dim
-    using ElementResidualVector = ReservedBlockVector<ResidualVector, maxNumScv>;
+    //! the container storing all element residuals
+    using ElementResidualVector = ReservedBlockVector<ResidualVector, FVElementGeometry::maxNumElementScvs>;
 
     //! the constructor
     FVLocalResidual(const Problem* problem,
