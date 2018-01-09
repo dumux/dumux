@@ -115,6 +115,25 @@ public:
         res[globalI] = asImp_().assembleResidualImpl(); // forward to the internal implementation
     }
 
+    /*!
+     * \brief Computes the residual
+     * \return The element residual at the current solution.
+     */
+    LocalResidualValues assembleResidualImpl()
+    {
+        if(this->assembler().isStationaryProblem() && !isImplicit())
+            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
+
+        return elementIsGhost() ? LocalResidualValues(0.0) : evalLocalResidual();
+    }
+
+    LocalResidualValues evalLocalResidual() const
+    {
+        return isImplicit() ? evalLocalResidual(curElemVolVars())
+                            : evalLocalResidual(prevElemVolVars());
+    }
+
+
     LocalResidualValues evalLocalResidual(const ElementVolumeVariables& elemVolVars) const
     {
         if (!assembler().isStationaryProblem())
@@ -126,6 +145,12 @@ public:
         else
             return evalLocalFluxSourceResidual(elemVolVars);
     }
+
+    LocalResidualValues evalLocalFluxSourceResidual() const
+    {
+        return isImplicit() ? evalLocalFluxSourceResidual(curElemVolVars())
+                            : evalLocalFluxSourceResidual(prevElemVolVars());
+     }
 
     LocalResidualValues evalLocalFluxSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
@@ -141,6 +166,35 @@ public:
                                          const SubControlVolumeFace& scvf) const
     {
         return localResidual_.evalFlux(problem(), neigbor, fvGeometry_, curElemVolVars_, elemFluxVarsCache_, scvf);
+    }
+
+    void bindLocalViews()
+    {
+        // get some references for convenience
+        const auto& element = this->element();
+        const auto& curSol = this->curSol();
+        const auto& prevSol = this->assembler().prevSol();
+        auto&& fvGeometry = this->fvGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+        auto&& prevElemVolVars = this->prevElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
+
+        // bind the caches
+        fvGeometry.bind(element);
+
+        if(isImplicit())
+        {
+            curElemVolVars.bind(element, fvGeometry, curSol);
+            elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
+            if (!this->assembler().isStationaryProblem())
+                prevElemVolVars.bindElement(element, fvGeometry, this->assembler().prevSol());
+        }
+        else
+        {
+            curElemVolVars.bindElement(element, fvGeometry, curSol);
+            prevElemVolVars.bind(element, fvGeometry, prevSol);
+            elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
+        }
     }
 
     const Problem& problem() const
@@ -202,6 +256,10 @@ public:
     VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return gridVolVars.volVars(scv); }
 
+    constexpr bool isImplicit() const
+    { return Implementation::isImplicit(); }
+    // { return Implementation::IsImplicit::value; }
+
 private:
     Implementation &asImp_()
     { return *static_cast<Implementation*>(this); }
@@ -226,108 +284,6 @@ private:
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief A base class for all implicit local assemblers
- * \tparam TypeTag the TypeTag
- * \tparam Assembler the assembler type
- */
-template<class TypeTag, class Assembler, class Implementation>
-class CCLocalAssemblerImplicitBase : public CCLocalAssemblerBase<TypeTag, Assembler, Implementation>
-{
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, Implementation>;
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-public:
-    using ParentType::ParentType;
-
-    void bindLocalViews()
-    {
-        // get some references for convenience
-        const auto& element = this->element();
-        const auto& curSol = this->curSol();
-        auto&& fvGeometry = this->fvGeometry();
-        auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
-
-        // bind the caches
-        fvGeometry.bind(element);
-        curElemVolVars.bind(element, fvGeometry, curSol);
-        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-        if (!this->assembler().isStationaryProblem())
-            this->prevElemVolVars().bindElement(element, fvGeometry, this->assembler().prevSol());
-    }
-
-    using ParentType::evalLocalResidual;
-    LocalResidualValues evalLocalResidual() const
-    { return this->evalLocalResidual(this->curElemVolVars()); }
-
-    using ParentType::evalLocalFluxSourceResidual;
-    LocalResidualValues evalLocalFluxSourceResidual() const
-    { return this->evalLocalFluxSourceResidual(this->curElemVolVars()); }
-
-    /*!
-     * \brief Computes the residual
-     * \return The element residual at the current solution.
-     */
-    LocalResidualValues assembleResidualImpl()
-    { return this->elementIsGhost() ? LocalResidualValues(0.0) : evalLocalResidual(); }
-};
-
-/*!
- * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief A base class for all explicit local assemblers
- * \tparam TypeTag the TypeTag
- * \tparam Assembler the assembler type
- */
-template<class TypeTag, class Assembler, class Implementation>
-class CCLocalAssemblerExplicitBase : public CCLocalAssemblerBase<TypeTag, Assembler, Implementation>
-{
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, Implementation>;
-    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-public:
-    using ParentType::ParentType;
-
-    void bindLocalViews()
-    {
-        // get some references for convenience
-        const auto& element = this->element();
-        const auto& curSol = this->curSol();
-        const auto& prevSol = this->assembler().prevSol();
-        auto&& fvGeometry = this->fvGeometry();
-        auto&& curElemVolVars = this->curElemVolVars();
-        auto&& prevElemVolVars = this->prevElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
-
-        // bind the caches
-        fvGeometry.bind(element);
-        curElemVolVars.bindElement(element, fvGeometry, curSol);
-        prevElemVolVars.bind(element, fvGeometry, prevSol);
-        elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
-    }
-
-    using ParentType::evalLocalResidual;
-    LocalResidualValues evalLocalResidual() const
-    { return this->evalLocalResidual(this->prevElemVolVars()); }
-
-    using ParentType::evalLocalFluxSourceResidual;
-    LocalResidualValues evalLocalFluxSourceResidual() const
-    { return this->evalLocalFluxSourceResidual(this->prevElemVolVars()); }
-
-    /*!
-     * \brief Computes the residual
-     * \return The element residual at the current solution.
-     */
-    LocalResidualValues assembleResidualImpl()
-    {
-        if (this->assembler().isStationaryProblem())
-            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
-
-        return this->elementIsGhost() ? LocalResidualValues(0.0) : evalLocalResidual();
-    }
-};
-
-/*!
- * \ingroup Assembly
- * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
  * \tparam TypeTag the TypeTag
  * \tparam DM the differentiation method to residual compute derivatives
@@ -343,11 +299,11 @@ class CCLocalAssembler;
  */
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
-: public CCLocalAssemblerImplicitBase<TypeTag, Assembler,
-            CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true> >
+: public CCLocalAssemblerBase<TypeTag, Assembler,
+                              CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true> >
 {
-    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>;
-    using ParentType = CCLocalAssemblerImplicitBase<TypeTag, Assembler, ThisType>;
+    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
@@ -366,6 +322,12 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     static constexpr int maxNeighbors = 4*(2*dim);
 
 public:
+
+    struct IsImplicit { static constexpr bool value = true; };
+
+    static constexpr bool isImplicit()
+    { return true; }
+
     using ParentType::ParentType;
 
     /*!
@@ -509,11 +471,11 @@ public:
  */
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
-: public CCLocalAssemblerExplicitBase<TypeTag, Assembler,
+: public CCLocalAssemblerBase<TypeTag, Assembler,
             CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false> >
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
-    using ParentType = CCLocalAssemblerExplicitBase<TypeTag, Assembler, ThisType>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
@@ -529,6 +491,9 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
 
 public:
     using ParentType::ParentType;
+
+    static constexpr bool isImplicit()
+    { return false; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -621,17 +586,20 @@ public:
  */
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
-: public CCLocalAssemblerImplicitBase<TypeTag, Assembler,
+: public CCLocalAssemblerBase<TypeTag, Assembler,
             CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true> >
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
-    using ParentType = CCLocalAssemblerImplicitBase<TypeTag, Assembler, ThisType>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
 public:
     using ParentType::ParentType;
+
+    static constexpr bool isImplicit()
+    { return true; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -700,17 +668,20 @@ public:
  */
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>
-: public CCLocalAssemblerExplicitBase<TypeTag, Assembler,
+: public CCLocalAssemblerBase<TypeTag, Assembler,
             CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false> >
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
-    using ParentType = CCLocalAssemblerExplicitBase<TypeTag, Assembler, ThisType>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
 public:
     using ParentType::ParentType;
+
+    static constexpr bool isImplicit()
+    { return true; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
