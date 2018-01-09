@@ -45,25 +45,25 @@
 namespace Dumux {
 
 /*!
-* \ingroup MixedDimension
-* \ingroup MixedDimensionEmbedded
+ * \ingroup MixedDimension
+ * \ingroup MixedDimensionEmbedded
  * \brief Manages the coupling between bulk elements and lower dimensional elements
  *        Point sources on each integration point are computed by an AABB tree.
  *        Both domain are assumed to be discretized using a cc finite volume scheme.
  */
-template<class MixedDimensionTraits>
+template<class MDTraits>
 class CCBBoxTreeEmbeddedCouplingManagerSimple
 : public CouplingManager<MDTraits, CCBBoxTreeEmbeddedCouplingManagerSimple<MDTraits>>
 {
-    using Scalar = typename MixedDimensionTraits::Scalar;
-    static constexpr auto bulkIdx = typename MixedDimensionTraits::bulkIdx();
-    static constexpr auto lowDimIdx = typename MixedDimensionTraits::lowDimIdx();
-    using SolutionVector = typename MixedDimensionTraits::SolutionVector;
-    using PointSourceData = Dumux::PointSourceData<MixedDimensionTraits>;
+    using Scalar = typename MDTraits::Scalar;
+    static constexpr auto bulkIdx = typename MDTraits::template DomainIdx<0>();
+    static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
+    using SolutionVector = typename MDTraits::SolutionVector;
+    using PointSourceData = Dumux::PointSourceData<MDTraits>;
 
     // obtain the type tags of the sub problems
-    using BulkTypeTag = typename MixedDimensionTraits::BulkTypeTag;
-    using LowDimTypeTag = typename MixedDimensionTraits::LowDimTypeTag;
+    using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
+    using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
 
     using BulkGridView = typename GET_PROP_TYPE(BulkTypeTag, GridView);
     using BulkProblem = typename GET_PROP_TYPE(BulkTypeTag, Problem);
