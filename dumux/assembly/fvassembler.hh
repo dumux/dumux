@@ -408,10 +408,6 @@ private:
 
             // if we get here, everything worked well on this process
             succeeded = true;
-
-            // make sure everything worked well on all processes
-            if (gridView().comm().size() > 1)
-                succeeded = gridView().comm().min(succeeded);
         }
         // throw exception if a problem ocurred
         catch (NumericalProblem &e)
@@ -421,6 +417,10 @@ private:
                       << "\n";
             succeeded = false;
         }
+
+        // make sure everything worked well on all processes
+        if (gridView().comm().size() > 1)
+            succeeded = gridView().comm().min(succeeded);
 
         // if not succeeded rethrow the error on all processes
         if (!succeeded)
