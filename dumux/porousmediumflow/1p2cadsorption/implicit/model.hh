@@ -109,15 +109,26 @@ public:
         // create the required scalar fields
         unsigned numDofs = this->numDofs();
         ScalarField &pressure = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &delp = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &delp     = *writer.allocateManagedBuffer(numDofs);
         ScalarField &moleFraction0 = *writer.allocateManagedBuffer(numDofs);
         ScalarField &moleFraction1 = *writer.allocateManagedBuffer(numDofs);
         ScalarField &massFraction0 = *writer.allocateManagedBuffer(numDofs);
         ScalarField &massFraction1 = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &rho = *writer.allocateManagedBuffer(numDofs);
-        ScalarField &mu = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &rho      = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &rhoMol   = *writer.allocateManagedBuffer(numDofs);
+        ScalarField &mu       = *writer.allocateManagedBuffer(numDofs);
         VectorField *velocity = writer.template allocateManagedBuffer<double, dimWorld>(numDofs);
         ImplicitVelocityOutput<TypeTag> velocityOutput(this->problem_());
+        ScalarField *S_n_CH4    = writer.allocateManagedBuffer (numDofs);
+        ScalarField *S_Ads_CH4  = writer.allocateManagedBuffer (numDofs);
+        ScalarField *S_nAds_CH4 = writer.allocateManagedBuffer (numDofs);
+        ScalarField *S_n_CO2    = writer.allocateManagedBuffer (numDofs);
+        ScalarField *S_Ads_CO2  = writer.allocateManagedBuffer (numDofs);
+        ScalarField *S_nAds_CO2 = writer.allocateManagedBuffer (numDofs);
+        ScalarField *boxVolume        = writer.allocateManagedBuffer (numDofs);
+        ScalarField *porosity        = writer.allocateManagedBuffer (numDofs);
+
+        *boxVolume = 0;
 
         if (velocityOutput.enableOutput())
         {
@@ -151,14 +162,39 @@ public:
                 int dofIdxGlobal = this->dofMapper().subIndex(element, scvIdx, dofCodim);
 
                 pressure[dofIdxGlobal] = elemVolVars[scvIdx].pressure();
-                delp[dofIdxGlobal] = elemVolVars[scvIdx].pressure() - 1e5;
+                delp[dofIdxGlobal]     = elemVolVars[scvIdx].pressure() - 1e5;
                 moleFraction0[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(0);
                 moleFraction1[dofIdxGlobal] = elemVolVars[scvIdx].moleFraction(1);
                 massFraction0[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(0);
                 massFraction1[dofIdxGlobal] = elemVolVars[scvIdx].massFraction(1);
-                rho[dofIdxGlobal] = elemVolVars[scvIdx].density();
-                mu[dofIdxGlobal] = elemVolVars[scvIdx].viscosity();
-            }
+                rho[dofIdxGlobal]    = elemVolVars[scvIdx].density();
+                rhoMol[dofIdxGlobal] = elemVolVars[scvIdx].molarDensity();
+                mu[dofIdxGlobal]     = elemVolVars[scvIdx].viscosity();
+                (*boxVolume)[dofIdxGlobal]  = fvGeometry.subContVol[scvIdx].volume;
+                (*porosity)[dofIdxGlobal]   = elemVolVars[scvIdx].porosity();
+                (*S_n_CH4)[dofIdxGlobal]    = elemVolVars[scvIdx].molarDensity()
+                                              *elemVolVars[scvIdx].moleFraction(0)
+                                              *elemVolVars[scvIdx].porosity()
+                                              *fvGeometry.subContVol[scvIdx].volume;
+                (*S_Ads_CH4)[dofIdxGlobal]  = elemVolVars[scvIdx].adsorption(0)
+                                               *fvGeometry.subContVol[scvIdx].volume;
+                (*S_nAds_CH4)[dofIdxGlobal] = (elemVolVars[scvIdx].molarDensity()
+                                               *elemVolVars[scvIdx].moleFraction(0)
+                                               *elemVolVars[scvIdx].porosity()
+                                               +elemVolVars[scvIdx].adsorption(0))
+                                               *fvGeometry.subContVol[scvIdx].volume;
+                (*S_n_CO2)[dofIdxGlobal]    = elemVolVars[scvIdx].molarDensity()
+                                               *elemVolVars[scvIdx].moleFraction(1)
+                                               *elemVolVars[scvIdx].porosity()
+                                               *fvGeometry.subContVol[scvIdx].volume;
+                (*S_Ads_CO2)[dofIdxGlobal]  = elemVolVars[scvIdx].adsorption(1)
+                                               *fvGeometry.subContVol[scvIdx].volume;
+                (*S_nAds_CO2)[dofIdxGlobal] = (elemVolVars[scvIdx].molarDensity()
+                                               *elemVolVars[scvIdx].moleFraction(1)
+                                               *elemVolVars[scvIdx].porosity()
+                                               +elemVolVars[scvIdx].adsorption(1))
+                                               *fvGeometry.subContVol[scvIdx].volume;
+                        }
 
             // velocity output
             velocityOutput.calculateVelocity(*velocity, elemVolVars, fvGeometry, element, phaseIdx);
@@ -173,11 +209,20 @@ public:
 
         writer.attachDofData(moleFraction0, "x_" + FluidSystem::componentName(0), isBox);
         writer.attachDofData(moleFraction1, "x_" + FluidSystem::componentName(1), isBox);
-        writer.attachDofData(massFraction0,  "X_" + FluidSystem::componentName(0), isBox);
-        writer.attachDofData(massFraction1,  "X_" + FluidSystem::componentName(1), isBox);
+        writer.attachDofData(massFraction0, "X_" + FluidSystem::componentName(0), isBox);
+        writer.attachDofData(massFraction1, "X_" + FluidSystem::componentName(1), isBox);
 
         writer.attachDofData(rho, "rho", isBox);
+        writer.attachDofData(rhoMol, "rhoMol", isBox);
         writer.attachDofData(mu, "mu", isBox);
+        writer.attachVertexData(*boxVolume, "boxVolume", isBox);
+        writer.attachVertexData(*porosity, "porosity", isBox);
+        writer.attachDofData(*S_n_CH4, "S_n_CH4", isBox);
+        writer.attachDofData(*S_Ads_CH4, "S_Ads_CH4", isBox);
+        writer.attachDofData(*S_nAds_CH4, "S_nAds_CH4", isBox);
+        writer.attachDofData(*S_n_CO2, "S_n_CO2", isBox);
+        writer.attachDofData(*S_Ads_CO2, "S_Ads_CO2", isBox);
+        writer.attachDofData(*S_nAds_CO2, "S_nAds_CO2", isBox);
         writer.attachCellData(rank, "process rank");
     }
 };

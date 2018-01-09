@@ -1,7 +1,7 @@
 [TimeManager]
 DtInitial 		= 1e-2 	# [s] initial TimeStep size
-TEnd 			= 1e7 	# [s] End Time
-MaxTimeStepSize = 10000  # maximum time step size
+TEnd 			= 5e7	# [s] End Time
+MaxTimeStepSize = 50000	# maximum time step size
 
 [Grid]
 LowerLeft 	= 0 0
@@ -11,11 +11,11 @@ Cells 		= 1 50
 [Problem]
 Name 				= outflowNoAds	# name passed to the output routines
 EnableGravity 		= 0 			# disable gravity = 0, enable=1
-CO2Inj				= 8.33E-11		# [m3/s] CO2 mole fraction of Dirichlet BC (0.005 ml/min)
+CO2Inj				= 8.33E-9		# [m3/s] CO2 mole fraction of Dirichlet BC (0.5 ml/min)
 
 [Initial]
 ReservoirPressure   = 1.01325E5     # [Pa] Initial reservoir pressure
-initCO2				= 0				# [-] initial mole fraction of CO2 in the entire domain
+initCO2				= 0 			# [-] initial mole fraction of CO2 in the entire domain
 
 [SorptionCoefficients]
 useAdsorption       = 0             # Using Ad-/Desorption in general (1: yes, 0: no)

@@ -119,6 +119,7 @@ class OnePTwoCAdsorptionOutflowProblem : public ImplicitPorousMediaProblem<TypeT
     typedef typename GET_PROP_TYPE(TypeTag, FluidSystem) FluidSystem;
     typedef typename GET_PROP_TYPE(TypeTag, BoundaryTypes) BoundaryTypes;
     typedef typename GET_PROP_TYPE(TypeTag, TimeManager) TimeManager;
+    typedef typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables) ElementVolumeVariables;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, Indices) Indices;
@@ -227,71 +228,81 @@ public:
     void boundaryTypesAtPos(BoundaryTypes &values,
                             const GlobalPosition &globalPos) const
     {
-//        if(globalPos[1] < eps_ || globalPos[1] > this->bBoxMax()[1] - eps_)
-//        {
-//            values.setAllDirichlet();
-//        }
-//        else
-//        {
+        if(globalPos[1] > this->bBoxMax()[1] / 2 - eps_ && globalPos[1] < this->bBoxMax()[1] /2 + eps_)
+        {
+            values.setDirichlet(pressureIdx);
+        }
+        else
+        {
             values.setAllNeumann();
-//        }
-
-//         outflow condition for the transport equation at right boundary
-        if(globalPos[0] > this->bBoxMax()[1] - eps_)
-            {
-                values.setOutflow(transportEqIdx);
-#if NONISOTHERMAL
-                values.setOutflow(energyEqIdx);
-#endif
-            }
-//        values.setAllNeumann();
+        }
     }
 
-//    THIS IS COMMENTED BECAUSE THERE USED TO BE A DIRICHLET BC, WHICH MIGHT BE USEFUL LATER!
-//    /*!
-//     * \brief Evaluate the boundary conditions for a dirichlet
-//     *        boundary segment.
-//     *
-//     * \param values The dirichlet values for the primary variables
-//     * \param globalPos The position for which the bc type should be evaluated
-//     *
-//     * For this method, the \a values parameter stores primary variables.
-//     */
-//    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
-//    {
-//        initial_(values, globalPos);
-//
-////        condition for the CO2 molefraction at left boundary
-//        if (globalPos[1] < eps_)
-//            {
-//                values[massOrMoleFracIdx] = CO2inj_;
-//#if NONISOTHERMAL
-//                values[temperatureIdx] = 300.;
-//#endif
-//            }
-//    }
+    /*!
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        boundary segment.
+     *
+     * \param values The dirichlet values for the primary variables
+     * \param globalPos The position for which the bc type should be evaluated
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
+    void dirichletAtPos(PrimaryVariables &values, const GlobalPosition &globalPos) const
+    {
+        values[pressureIdx] = pressure_;
+//        priVars[massOrMoleFracIdx] = initCO2_
+    }
 
-        void neumann(PrimaryVariables &values,
-                const Element &element,
-                const FVElementGeometry &fvGeometry,
-                const Intersection &is,
-                const int scvIdx,
-                const int boundaryFaceIdx) const
+    /*!
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * This is the method for the case where the Neumann condition is
+     * potentially solution dependent and requires some quantities that
+     * are specific to the fully-implicit method.
+     *
+     * \param values The neumann values for the conservation equations in units of
+     *                 \f$ [ \textnormal{unit of conserved quantity} / (m^2 \cdot s )] \f$
+     * \param element The finite element
+     * \param fvGeometry The finite-volume geometry
+     * \param intersection The intersection between element and boundary
+     * \param scvIdx The local subcontrolvolume index
+     * \param boundaryFaceIdx The index of the boundary face
+     * \param elemVolVars All volume variables for the element
+     *
+     * For this method, the \a values parameter stores the flux
+     * in normal direction of each phase. Negative values mean influx.
+     * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
+     */
+    void solDependentNeumann(PrimaryVariables &values,
+                      const Element &element,
+                      const FVElementGeometry &fvGeometry,
+                      const Intersection &intersection,
+                      const int scvIdx,
+                      const int boundaryFaceIdx,
+                      const ElementVolumeVariables &elemVolVars) const
+    {
+        values = 0;
+        const GlobalPosition globalPos = element.geometry().corner(scvIdx);
+
+        //Set no flow boundary conditions for the symmetry axes of the generic models
+        Scalar diameter = this->bBoxMax()[0];
+        Scalar flux = CO2inj_/(3.14*diameter*diameter/4.); //[m/s] v=1 m/d = 1.1547e-5 m/s mol/(m^2*s)
+
+        if(globalPos[1] <= eps_)
         {
-            values = 0;
-            const GlobalPosition globalPos = fvGeometry.boundaryFace[boundaryFaceIdx].ipGlobal;
-
-            //Set no flow boundary conditions for the symmetry axes of the generic models
-            Scalar diameter = this->bBoxMax()[0];
-            Scalar flux = CO2inj_/(3.14*diameter*diameter/4.); //[m/s] v=1 m/d = 1.1547e-5 m/s
-
-            if(globalPos[1] <= eps_)
-            {
-                values[TCIdx] = -flux*1.697/FluidSystem::molarMass(TCIdx); // flux*density(fix at the moment) / molarMass
-            }
-            else
-                values = 0.0;
+            values[TCIdx] = -flux;
         }
+        else if(globalPos[1] > this->bBoxMax()[1] - eps_)
+        {
+            Scalar moleFracCH4 = elemVolVars[scvIdx].moleFraction(CH4Idx);
+            Scalar moleFracTC = elemVolVars[scvIdx].moleFraction(TCIdx);
+            values[CH4Idx] = flux*moleFracCH4; //mol/(m^2*s) TODO:Check units again
+            values[TCIdx]  = flux*moleFracTC; //mol/(m^2*s)
+        }
+        else
+            values = 0.0;
+    }
 
     /*!
      * \brief Evaluate the source term for all phases within a given
@@ -359,9 +370,6 @@ private:
     {
         priVars[pressureIdx] = pressure_; // initial condition for the pressure
         priVars[massOrMoleFracIdx] = initCO2_;  // initial condition for the CO2 molefraction
-#if NONISOTHERMAL
-        priVars[temperatureIdx] = 290.;
-#endif
     }
 
     static constexpr Scalar eps_ = 1e-6;
