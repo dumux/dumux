@@ -59,7 +59,7 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    static constexpr bool isNetwork = GridView::dimension < GridView::dimensionworld;
+    static constexpr bool isNetwork = int(GridView::dimension) < int(GridView::dimensionworld);
 
 public:
     // we assume a maxium of 8 neighbors in embedded network grids otherwise max stencil size is 2
