@@ -29,6 +29,7 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
@@ -41,7 +42,7 @@
 #include <dumux/discretization/methods.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
-#include <dumux/mixeddimension/traits.hh>
+#include <dumux/multidomain/traits.hh>
 #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanagersimple.hh>
 #include <dumux/mixeddimension/embedded/integrationpointsource.hh>
 
@@ -53,13 +54,13 @@ namespace Properties {
 
 SET_PROP(TissueCCTypeTag, CouplingManager)
 {
-    using Traits = MixedDimensionTraits<TypeTag, TTAG(BloodFlowCCTypeTag)>;
+    using Traits = MultiDomainTraits<TypeTag, TTAG(BloodFlowCCTypeTag)>;
     using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
 };
 
 SET_PROP(BloodFlowCCTypeTag, CouplingManager)
 {
-    using Traits = MixedDimensionTraits<TTAG(TissueCCTypeTag), TypeTag>;
+    using Traits = MultiDomainTraits<TTAG(TissueCCTypeTag), TypeTag>;
     using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
 };
 
@@ -115,9 +116,9 @@ int main(int argc, char** argv) try
     lowDimFvGridGeometry->update();
 
     // the mixed dimension type traits
-    using Traits = MixedDimensionTraits<BulkTypeTag, LowDimTypeTag>;
-    constexpr auto bulkIdx = Traits::bulkIdx();
-    constexpr auto lowDimIdx = Traits::lowDimIdx();
+    using Traits = MultiDomainTraits<BulkTypeTag, LowDimTypeTag>;
+    constexpr auto bulkIdx = Traits::template DomainIdx<0>();
+    constexpr auto lowDimIdx = Traits::template DomainIdx<1>();
 
     // the coupling manager
     using CouplingManager = CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
@@ -171,7 +172,7 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    // using Assembler = FVAssembler<TypeTag, DiffMethod::numeric>;
+    // using Assembler = FVAssembler<Traits, DiffMethod::numeric>;
     // auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
     // the linear solver
@@ -183,6 +184,58 @@ int main(int argc, char** argv) try
     auto newtonController = std::make_shared<NewtonController>(timeLoop);
     // using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
     // NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+
+    typename Traits::JacobianMatrix M;
+
+    auto& A11 = M[bulkIdx][bulkIdx];
+    auto& A12 = M[bulkIdx][lowDimIdx];
+    auto& A22 = M[lowDimIdx][bulkIdx];
+    auto& A21 = M[lowDimIdx][lowDimIdx];
+
+    A11.setSize(3, 3);
+    A12.setSize(3, 8);
+    A22.setSize(8, 8);
+    A21.setSize(8, 3);
+
+    {
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(3, 3);
+        for (int i = 0; i < occupationPattern.rows(); ++i)
+            occupationPattern.add(i,i);
+        occupationPattern.exportIdx(A11);
+    }
+
+    {
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(3, 8);
+        for (int i = 0; i < occupationPattern.rows(); ++i)
+            occupationPattern.add(i,i);
+        occupationPattern.exportIdx(A12);
+    }
+
+    {
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(8, 3);
+        for (int i = 0; i < 3; ++i)
+            occupationPattern.add(i,i);
+        occupationPattern.exportIdx(A21);
+    }
+
+    {
+        Dune::MatrixIndexSet occupationPattern;
+        occupationPattern.resize(8, 8);
+        for (int i = 0; i < occupationPattern.rows(); ++i)
+            occupationPattern.add(i,i);
+        occupationPattern.exportIdx(A22);
+    }
+
+    M = 1.0;
+
+    Dune::printmatrix(std::cout, A11, "", "");
+    Dune::printmatrix(std::cout, A12, "", "");
+    Dune::printmatrix(std::cout, A21, "", "");
+    Dune::printmatrix(std::cout, A22, "", "");
+
 
     // time loop
     timeLoop->start();
