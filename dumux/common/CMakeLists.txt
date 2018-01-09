@@ -1,5 +1,6 @@
 add_subdirectory(properties)
 add_subdirectory(geometry)
+add_subdirectory(typetraits)
 
 #install headers
 install(FILES
