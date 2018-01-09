@@ -35,8 +35,7 @@
 #include <dumux/common/typetraits/matrix.hh>
 #include <dumux/linear/solver.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Linear
