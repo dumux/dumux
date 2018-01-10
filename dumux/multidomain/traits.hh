@@ -142,6 +142,15 @@ private:
     using SubDomainScalar = typename GET_PROP_TYPE(SubDomainTypeTag<id>, Scalar);
 
     template<std::size_t id>
+    using SubDomainProblem = std::shared_ptr<const typename GET_PROP_TYPE(SubDomainTypeTag<id>, Problem)>;
+
+    template<std::size_t id>
+    using SubDomainFVGridGeometry = std::shared_ptr<const typename GET_PROP_TYPE(SubDomainTypeTag<id>, FVGridGeometry)>;
+
+    template<std::size_t id>
+    using SubDomainGridVariables = std::shared_ptr<typename GET_PROP_TYPE(SubDomainTypeTag<id>, GridVariables)>;
+
+    template<std::size_t id>
     using JacobianDiagBlock = typename GET_PROP_TYPE(SubDomainTypeTag<id>, JacobianMatrix);
 
 public:
@@ -157,6 +166,15 @@ public:
 
     //! the jacobian type
     using JacobianMatrix = typename makeFromIndexedType<createMatrixType, JacobianDiagBlock, Indices>::type;
+
+    //! the tuple of problems
+    using ProblemTuple = typename makeFromIndexedType<std::tuple, SubDomainProblem, Indices>::type;
+
+    //! the tuple of fv grid geometries
+    using FVGridGeometryTuple = typename makeFromIndexedType<std::tuple, SubDomainFVGridGeometry, Indices>::type;
+
+    //! the tuple of grid variables
+    using GridVariablesTuple = typename makeFromIndexedType<std::tuple, SubDomainGridVariables, Indices>::type;
 };
 
 } //end namespace Dumux

@@ -31,19 +31,19 @@
 
 #include <dumux/porousmediumflow/1p/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
+#include <dumux/porousmediumflow/1p/incompressiblelocalresidual.hh>
 
 #include <dumux/material/components/constant.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
 #include "bloodflowspatialparams.hh"
 
-namespace Dumux
-{
-template <class TypeTag>
-class BloodFlowProblem;
+namespace Dumux {
+// forward declaration
+template <class TypeTag> class BloodFlowProblem;
 
-namespace Properties
-{
+namespace Properties {
+
 NEW_TYPE_TAG(BloodFlowTypeTag, INHERITS_FROM(OneP));
 NEW_TYPE_TAG(BloodFlowCCTypeTag, INHERITS_FROM(CCTpfaModel, BloodFlowTypeTag));
 
@@ -59,6 +59,9 @@ SET_PROP(BloodFlowTypeTag, FluidSystem)
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 };
+
+// Set the problem property
+SET_TYPE_PROP(BloodFlowTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // Set the spatial parameters
 SET_TYPE_PROP(BloodFlowTypeTag, SpatialParams, BloodFlowSpatialParams<TypeTag>);
@@ -79,6 +82,7 @@ class BloodFlowProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // copy some indices for convenience
@@ -242,15 +246,40 @@ public:
                      const SubControlVolume &scv) const
     {
         // compute source at every integration point
-        const auto& bulkVolVars = this->couplingManager().bulkVolVars(source.id());
-        const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
+        // const auto& bulkVolVars = this->couplingManager().bulkVolVars(source.id());
+        const Scalar pressure1D = elemVolVars[scv].pressure();
+        const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
 
         // calculate the source
         const Scalar radius = this->couplingManager().radius(source.id());
         const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
-        const Scalar sourceValue = beta*(bulkVolVars.pressure() - pressure1D)*bulkVolVars.density();
+        const Scalar sourceValue = beta*(pressure3D - pressure1D);//*bulkVolVars.density();
 
         source = sourceValue*source.quadratureWeight()*source.integrationElement();
+    }
+
+    //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
+    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
+    template<class MatrixBlock>
+    void addSourceDerivatives(MatrixBlock& block,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const VolumeVariables& curElemVolVars,
+                              const SubControlVolume& scv) const
+    {
+        const auto eIdx = this->fvGridGeometry().elementMapper().index(element);
+
+        auto key = std::make_pair(eIdx, 0);
+        if (this->pointSourceMap().count(key))
+        {
+            // call the solDependent function. Herein the user might fill/add values to the point sources
+            // we make a copy of the local point sources here
+            auto pointSources = this->pointSourceMap().at(key);
+
+            // add the point source values to the local residual (negative sign is convention for source term)
+            for (const auto& source : pointSources)
+                block[0][0] -= this->couplingManager().pointSourceDerivative(source, Dune::index_constant<1>{}, Dune::index_constant<1>{});
+        }
     }
 
     /*!
