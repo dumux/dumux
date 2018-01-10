@@ -511,7 +511,7 @@ public:
     using ParentType::ParentType;
 
     static constexpr bool isImplicit()
-    { return true; }
+    { return false; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
