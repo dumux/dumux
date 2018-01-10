@@ -41,7 +41,14 @@ public:
      enum { numPhases = FluidSystem::numPhases };
      enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
      enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
-     static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
+     /*! \todo Replacing the sum below with GET_PROP_VALUE(TypeTag, NumEq)
+      *        yields a compilation error with clang, due to complex
+      *        interdependencies of MPNC and NonEquilibrium type tags and
+      *        Indices classes. This should be fixed.
+      */
+     static const unsigned int numEq = GET_PROP_VALUE(TypeTag, NumEqBalance)
+                                     + GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)
+                                     + GET_PROP_VALUE(TypeTag, NumEnergyEqSolid);
 
     /*!
      * \brief Index for the temperature of the wetting phase in a vector of primary
