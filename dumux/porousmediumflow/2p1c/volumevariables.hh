@@ -41,7 +41,6 @@ class TwoPOneCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using ParentType = PorousMediumFlowVolumeVariables<TypeTag>;
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
@@ -50,14 +49,10 @@ class TwoPOneCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum {
-        dim = GridView::dimension,
-
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
 
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,

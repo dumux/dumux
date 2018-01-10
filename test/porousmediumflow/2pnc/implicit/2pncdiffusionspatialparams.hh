@@ -77,7 +77,6 @@ class TwoPNCDiffusionSpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using CoordScalar = typename GridView::ctype;
 
-    static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;

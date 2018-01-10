@@ -93,7 +93,6 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);;
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -103,14 +102,11 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ReactionRate =ThermoChemReaction<TypeTag>;
 
-
     enum { dim = GridView::dimension };
     enum { dimWorld = GridView::dimensionworld };
 
     enum
     {
-        numComponents = FluidSystem::numComponents,
-
         // Indices of the primary variables
         pressureIdx = Indices::pressureIdx, //gas-phase pressure
         firstMoleFracIdx = Indices::firstMoleFracIdx, // mole fraction water
@@ -118,21 +114,17 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
         CaOIdx = FluidSystem::numComponents,
         CaO2H2Idx = FluidSystem::numComponents+1,
 
-        //Equation Indices
+        // Equation Indices
         conti0EqIdx = Indices::conti0EqIdx,
-        firstTransportEqIdx = Indices::firstTransportEqIdx,
 
         // Phase Indices
-        phaseIdx = FluidSystem::gPhaseIdx,
         cPhaseIdx = FluidSystem::cPhaseIdx,
-        hPhaseIdx = FluidSystem::hPhaseIdx,
 
         temperatureIdx = Indices::temperatureIdx,
         energyEqIdx = Indices::energyEqIdx
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
 
 public:
     /*!

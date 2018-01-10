@@ -100,7 +100,6 @@ class TwoPTwoCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
 
     using MiscibleMultiPhaseComposition = Dumux::MiscibleMultiPhaseComposition<Scalar, FluidSystem, useKelvinEquation>;
 
-    static constexpr int dim = GridView::dimension;
     static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 public:

@@ -73,9 +73,6 @@ class OnePSingularityProblemTimeDependent : public OnePSingularityProblem<TypeTa
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-
 public:
     OnePSingularityProblemTimeDependent(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)

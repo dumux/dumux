@@ -98,16 +98,9 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
         snIdx = Indices::snIdx,
 
         // equation indices
-        contiWEqIdx = Indices::contiWEqIdx,
         contiNEqIdx = Indices::contiNEqIdx,
 
-        // phase indices
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx,
-
-
         // world dimension
-        dim = GridView::dimension,
         dimWorld = GridView::dimensionworld
     };
 

@@ -54,30 +54,17 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 1/*numEnergyEqFluid*/>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
-    enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
-    enum { temperature0Idx = Indices::temperature0Idx };
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
-    enum { conti0EqIdx = Indices::conti0EqIdx };
 
     enum { numComponents    = GET_PROP_VALUE(TypeTag, NumComponents) };
     enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
     enum { nPhaseIdx        = FluidSystem::nPhaseIdx};
     enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
-    enum { nCompIdx         = FluidSystem::nCompIdx};
-    enum { wCompIdx         = FluidSystem::wCompIdx};
-
-    enum { temperatureFluidIdx = Indices::temperature0Idx};
-    enum { temperatureSolidIdx = Indices::temperatureSolidIdx};
-
-    enum { dim = GridView::dimension}; // Grid and world dimension
-
-    static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
 
 public:
 
@@ -179,7 +166,7 @@ public:
         //specialization for 2 fluid phases
         const auto& localScvIdx = scv.indexInElement();
         const auto& volVars = elemVolVars[localScvIdx];
-        const FluidState & fs = volVars.fluidState() ;
+        const auto& fs = volVars.fluidState() ;
         const Scalar characteristicLength = volVars.characteristicLength()  ;
 
         //interfacial area
@@ -284,7 +271,7 @@ public:
     {
         // using saturation as input (instead of from volVars)
         // in order to make regularization (evaluation at different points) easyer
-        const FluidState & fs = volVars.fluidState() ;
+        const auto& fs = volVars.fluidState() ;
         const Scalar g( 9.81 ) ;
         const Scalar gamma(0.0589) ;
         const Scalar TSolid     = volVars.temperatureSolid();
@@ -336,13 +323,11 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
     enum { numPhases        = GET_PROP_VALUE(TypeTag, NumPhases) };
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid) };
     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid) };
-    enum { temperature0Idx = Indices::temperature0Idx };
     enum { energyEq0Idx = Indices::energyEq0Idx };
     enum { energyEqSolidIdx = Indices::energyEqSolidIdx};
     enum { conti0EqIdx = Indices::conti0EqIdx };
@@ -351,13 +336,6 @@ class EnergyLocalResidualNonEquilibrium<TypeTag, 2 /*numEnergyEqFluid*/>
     enum { wPhaseIdx        = FluidSystem::wPhaseIdx};
     enum { nPhaseIdx        = FluidSystem::nPhaseIdx};
     enum { sPhaseIdx        = FluidSystem::sPhaseIdx};
-    enum { nCompIdx         = FluidSystem::nCompIdx};
-    enum { wCompIdx         = FluidSystem::wCompIdx};
-
-    enum { temperatureFluidIdx = Indices::temperature0Idx};
-    enum { temperatureSolidIdx = Indices::temperatureSolidIdx};
-
-    enum { dim = GridView::dimension}; // Grid and world dimension
 
     static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
 
@@ -503,7 +481,7 @@ public:
                 //        -> Energy advectivly transported into a phase = the moles of a component that go into a  phase
                 //           * molMass * enthalpy of the component in the *originating* phase
 
-            const FluidState & fluidState = volVars.fluidState();
+            const auto& fluidState = volVars.fluidState();
 
             for(int phaseIdx =0; phaseIdx<numEnergyEqFluid+numEnergyEqSolid; ++phaseIdx)
             {

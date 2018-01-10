@@ -42,7 +42,6 @@ class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using ParentType = ImmiscibleLocalResidual<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -54,13 +53,10 @@ class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using EnergyLocalResidual = typename GET_PROP_TYPE(TypeTag, EnergyLocalResidual);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     // first index for the mass balance
     enum { conti0EqIdx = Indices::conti0EqIdx };
     enum { pressureIdx = Indices::pressureIdx };
-
-    static const int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
 public:
     using ParentType::ParentType;

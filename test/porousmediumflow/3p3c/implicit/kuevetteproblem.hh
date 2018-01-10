@@ -116,14 +116,16 @@ class KuevetteProblem : public PorousMediumFlowProblem<TypeTag>
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
         temperatureIdx = Indices::temperatureIdx,
+        contiWEqIdx = Indices::contiWEqIdx,
+        contiGEqIdx = Indices::contiGEqIdx,
+        contiNEqIdx = Indices::contiNEqIdx,
         energyEqIdx = Indices::energyEqIdx,
 
-        // Phase State
+        // phase states
         threePhases = Indices::threePhases,
         wgPhaseOnly = Indices::wgPhaseOnly,
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 
@@ -228,10 +230,10 @@ public:
         // negative values for injection
         if (globalPos[0] < eps_)
         {
-            values[Indices::contiWEqIdx] = -0.1435; // 0.3435 [mol/(s m)] in total
-            values[Indices::contiGEqIdx] = -0.2;
-            values[Indices::contiNEqIdx] =  0.0;
-            values[Indices::energyEqIdx] = -6929.;
+            values[contiWEqIdx] = -0.1435; // 0.3435 [mol/(s m)] in total
+            values[contiGEqIdx] = -0.2;
+            values[contiNEqIdx] =  0.0;
+            values[energyEqIdx] = -6929.;
         }
         return values;
     }

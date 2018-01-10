@@ -91,11 +91,16 @@ class TwoPNCDiffusionProblem : public PorousMediumFlowProblem<TypeTag>
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
+        pressureIdx = Indices::pressureIdx,
+        switchIdx = Indices::switchIdx,
+
         wPhaseIdx = Indices::wPhaseIdx,
         nPhaseIdx = Indices::nPhaseIdx,
 
         wCompIdx = FluidSystem::wCompIdx,
         nCompIdx = FluidSystem::nCompIdx,
+
+        wPhaseOnly = Indices::wPhaseOnly,
 
         contiH2OEqIdx = Indices::contiWEqIdx,
         contiN2EqIdx = Indices::contiNEqIdx
@@ -187,12 +192,12 @@ public:
     PrimaryVariables dirichletAtPos(const GlobalPosition &globalPos) const
     {
          PrimaryVariables priVars;
-         priVars.setState(Indices::wPhaseOnly);
-         priVars[Indices::pressureIdx] = 1e5;
-         priVars[Indices::switchIdx] = 1e-5 ;
+         priVars.setState(wPhaseOnly);
+         priVars[pressureIdx] = 1e5;
+         priVars[switchIdx] = 1e-5 ;
 
          if (globalPos[0] < this->fvGridGeometry().bBoxMin()[0] + eps_)
-             priVars[Indices::switchIdx] = 1e-3;
+             priVars[switchIdx] = 1e-3;
 
         return priVars;
     }
@@ -247,11 +252,11 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables priVars(0.0);
-        priVars.setState(Indices::wPhaseOnly);
+        priVars.setState(wPhaseOnly);
 
         //mole-fraction formulation
-        priVars[Indices::switchIdx] = 1e-5;
-        priVars[Indices::pressureIdx] = 1e5;
+        priVars[switchIdx] = 1e-5;
+        priVars[pressureIdx] = 1e5;
         return priVars;
     }
 

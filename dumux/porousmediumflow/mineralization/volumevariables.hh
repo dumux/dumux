@@ -51,11 +51,9 @@ class MineralizationVolumeVariables : public GET_PROP_TYPE(TypeTag, NonMineraliz
 
     enum
     {
-        dimWorld=GridView::dimensionworld,
-
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
         numSPhases =  GET_PROP_VALUE(TypeTag, NumSPhases),
-        numComponents = GET_PROP_VALUE(TypeTag, NumComponents),
+        numComponents = GET_PROP_VALUE(TypeTag, NumComponents)
     };
 
 public:

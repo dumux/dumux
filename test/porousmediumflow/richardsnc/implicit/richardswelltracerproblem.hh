@@ -109,13 +109,10 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     enum {
-        // copy some indices for convenience
         pressureIdx = Indices::pressureIdx,
-        conti0EqIdx = Indices::conti0EqIdx,
         compIdx = Indices::compMainIdx + 1,
         wPhaseIdx = Indices::wPhaseIdx,
 
-        // Grid and world dimension
         dimWorld = GridView::dimensionworld
     };
     using Element = typename GridView::template Codim<0>::Entity;

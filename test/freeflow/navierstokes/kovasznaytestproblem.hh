@@ -84,8 +84,6 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
     enum {
         massBalanceIdx = Indices::massBalanceIdx,
         momentumBalanceIdx = Indices::momentumBalanceIdx,
-        momentumXBalanceIdx = Indices::momentumXBalanceIdx,
-        momentumYBalanceIdx = Indices::momentumYBalanceIdx,
         pressureIdx = Indices::pressureIdx,
         velocityXIdx = Indices::velocityXIdx,
         velocityYIdx = Indices::velocityYIdx
@@ -93,11 +91,6 @@ class KovasznayTestProblem : public NavierStokesProblem<TypeTag>
 
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
-
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

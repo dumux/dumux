@@ -70,10 +70,7 @@ class ColumnSpatialParams : public FVSpatialParams<TypeTag>
     using ParentType = FVSpatialParams<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    enum {
-        dimWorld=GridView::dimensionworld,
-        dim=GridView::dimension
-    };
+    enum { dimWorld=GridView::dimensionworld };
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);

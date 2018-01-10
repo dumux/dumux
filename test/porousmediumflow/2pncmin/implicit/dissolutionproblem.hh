@@ -105,7 +105,6 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
 
         //Indices of the components
         wCompIdx = FluidSystem::H2OIdx,
-        nCompIdx = FluidSystem::AirIdx,
         NaClIdx = FluidSystem::NaClIdx,
 
         //Indices of the phases
@@ -115,13 +114,9 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
 
         //Index of the primary component of G and L phase
         conti0EqIdx = Indices::conti0EqIdx,
-        contiTotalMassIdx = conti0EqIdx + FluidSystem::AirIdx,
         precipNaClEqIdx = Indices::conti0EqIdx + FluidSystem::numComponents,
-        contiWEqIdx = conti0EqIdx + FluidSystem::H2OIdx,
 
         // Phase State
-        wPhaseOnly = Indices::wPhaseOnly,
-        nPhaseOnly = Indices::nPhaseOnly,
         bothPhases = Indices::bothPhases,
 
         // Grid and world dimension
@@ -137,8 +132,6 @@ class DissolutionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;

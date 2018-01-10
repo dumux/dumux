@@ -97,24 +97,15 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-//     enum {
-//         // Grid and world dimension
-//         dim = GridView::dimension,
-//         dimWorld = GridView::dimensionworld
-//     };
+
     enum {
-        // indices of the primary variables
-        conti0EqIdx = Indices::conti0EqIdx,
+        // index of the primary variable
         pressureIdx = Indices::pressureIdx
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     static constexpr int dimWorld = GridView::dimensionworld;
 

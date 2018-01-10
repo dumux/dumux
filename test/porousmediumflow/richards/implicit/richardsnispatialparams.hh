@@ -74,20 +74,12 @@ class RichardsNISpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using Element = typename GridView::template Codim<0>::Entity;
-    enum {
-        dimWorld=GridView::dimensionworld
-    };
+    enum { dimWorld=GridView::dimensionworld };
     using CoordScalar = typename Grid::ctype;
-    using GlobalPosition = Dune::FieldVector<CoordScalar,dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    //using EffMaterialLaw = LinearMaterial<Scalar>;
 public:
-        // export permeability type
+    // export permeability type
     using PermeabilityType = Scalar;
 
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);

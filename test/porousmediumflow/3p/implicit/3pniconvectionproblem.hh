@@ -110,7 +110,6 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
-    using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -120,11 +119,6 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        // world dimension
-        dimWorld = GridView::dimensionworld
-    };
-
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -136,8 +130,9 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
+    enum { dimWorld = GridView::dimensionworld };
+
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:

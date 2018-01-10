@@ -97,18 +97,19 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
-
         pressureIdx = Indices::pressureIdx,
         switch1Idx = Indices::switch1Idx,
         switch2Idx = Indices::switch2Idx,
         temperatureIdx = Indices::temperatureIdx,
+        contiWEqIdx = Indices::contiWEqIdx,
+        contiGEqIdx = Indices::contiGEqIdx,
+        contiNEqIdx = Indices::contiNEqIdx,
         energyEqIdx = Indices::energyEqIdx,
 
         // Phase State
         threePhases = Indices::threePhases,
 
-        // Grid and world dimension
-        dim = GridView::dimension,
+        // world dimension
         dimWorld = GridView::dimensionworld
     };
 
@@ -212,10 +213,10 @@ public:
         // negative values for injection
         if (globalPos[1] > this->fvGridGeometry().bBoxMax()[1] - eps_)
         {
-            values[Indices::contiWEqIdx] = -0.395710;
-            values[Indices::contiGEqIdx] = -0.000001;
-            values[Indices::contiNEqIdx] = -0.00;
-            values[Indices::energyEqIdx] = -17452.97;
+            values[contiWEqIdx] = -0.395710;
+            values[contiGEqIdx] = -0.000001;
+            values[contiNEqIdx] = -0.00;
+            values[energyEqIdx] = -17452.97;
         }
         return values;
     }

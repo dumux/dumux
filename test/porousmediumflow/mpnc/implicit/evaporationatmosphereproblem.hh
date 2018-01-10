@@ -105,7 +105,6 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -113,38 +112,26 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using ParameterCache = typename FluidSystem::ParameterCache;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
-    /*!
-     * \brief The fluid state which is used by the volume variables to
-     *        store the thermodynamic state. This should be chosen
-     *        appropriately for the model ((non-)isothermal, equilibrium, ...).
-     *        This can be done in the problem.
-     */
-    enum { dim = GridView::dimension}; // Grid and world dimension
     enum { dimWorld = GridView::dimensionworld};
     enum { numPhases       = GET_PROP_VALUE(TypeTag, NumPhases)};
     enum { numComponents   = GET_PROP_VALUE(TypeTag, NumComponents)};
-    enum { S0Idx = Indices::s0Idx};
+    enum { s0Idx = Indices::s0Idx};
     enum { p0Idx = Indices::p0Idx};
     enum { conti00EqIdx    = Indices::conti0EqIdx };
     enum { energyEq0Idx    = Indices::energyEqIdx};
     enum { wPhaseIdx       = FluidSystem::wPhaseIdx};
     enum { nPhaseIdx       = FluidSystem::nPhaseIdx};
-    enum { sPhaseIdx       = FluidSystem::sPhaseIdx};
     enum { wCompIdx        = FluidSystem::H2OIdx};
     enum { nCompIdx        = FluidSystem::N2Idx};
     enum { numEnergyEqFluid = GET_PROP_VALUE(TypeTag, NumEnergyEqFluid)};
     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid)};
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq)};
 
     static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
-    static constexpr bool enableThermalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
 
     // formulations
     enum {
@@ -377,7 +364,7 @@ private:
                        "You should not be here: x=" << globalPos[0] << " y= "<< globalPos[dimWorld-1]);
 
         for (int i = 0; i < numPhases - 1; ++i)
-            priVars[S0Idx + i] = S[i];
+            priVars[s0Idx + i] = S[i];
 
         // capillary pressure Params
         FluidState equilibriumFluidState;

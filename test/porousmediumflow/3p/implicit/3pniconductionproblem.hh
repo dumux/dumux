@@ -107,28 +107,19 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using IapwsH2O = H2O<Scalar>;
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
-    enum {
-        // world dimension
-        dimWorld = GridView::dimensionworld,
-        dim=GridView::dimension
-    };
-
     enum {
         // index of the primary variables
         pressureIdx = Indices::pressureIdx,
@@ -138,8 +129,9 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
         wPhaseIdx = Indices::wPhaseIdx
     };
 
+    enum { dimWorld = GridView::dimensionworld };
+
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:

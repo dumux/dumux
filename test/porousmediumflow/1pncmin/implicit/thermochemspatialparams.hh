@@ -59,7 +59,6 @@ SET_TYPE_PROP(ThermoChemSpatialParams, SpatialParams, Dumux::ThermoChemSpatialPa
 template<class TypeTag>
 class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
 {
-    using ThisType = ThermoChemSpatialParams<TypeTag>;
     using ParentType = FVSpatialParamsOneP<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -67,22 +66,16 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using CoordScalar = typename GridView::ctype;
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     enum {
-        dim=GridView::dimension,
         dimWorld=GridView::dimensionworld,
 
         numSPhases =  GET_PROP_VALUE(TypeTag, NumSPhases),
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
-        phaseIdx = FluidSystem::gPhaseIdx,
         cPhaseIdx = FluidSystem::cPhaseIdx,
         hPhaseIdx = FluidSystem::hPhaseIdx
     };
 
-    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
-    using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using Element = typename GridView::template Codim<0>::Entity;
 

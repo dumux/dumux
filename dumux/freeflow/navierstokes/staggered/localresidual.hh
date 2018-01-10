@@ -56,21 +56,14 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
-
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
 
     using CellCenterResidual = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceResidual = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
@@ -78,10 +71,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
     static constexpr auto numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
 
     enum {
-         // grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld,
-
         pressureIdx = Indices::pressureIdx,
 
         massBalanceIdx = Indices::massBalanceIdx,
@@ -90,7 +79,6 @@ class NavierStokesResidualImpl<TypeTag, DiscretizationMethods::Staggered>
 
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
 
-    static constexpr bool navierStokes = GET_PROP_VALUE(TypeTag, EnableInertiaTerms);
     static constexpr bool normalizePressure = GET_PROP_VALUE(TypeTag, NormalizePressure);
 
 public:
@@ -144,7 +132,7 @@ public:
                                                            const VolumeVariables& volVars) const
     {
         CellCenterPrimaryVariables storage;
-        storage[Indices::massBalanceIdx] = volVars.density();
+        storage[massBalanceIdx] = volVars.density();
 
         computeStorageForCellCenterNonIsothermal_(std::integral_constant<bool, GET_PROP_VALUE(TypeTag, EnableEnergyBalance) >(),
                                                   problem, scv, volVars, storage);

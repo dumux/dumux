@@ -49,12 +49,9 @@ class TracerVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
     static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
 

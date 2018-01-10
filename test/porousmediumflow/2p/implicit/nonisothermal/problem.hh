@@ -99,7 +99,6 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using Intersection = typename GridView::Intersection;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
     enum

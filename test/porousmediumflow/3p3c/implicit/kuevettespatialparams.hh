@@ -74,17 +74,8 @@ class KuevetteSpatialParams : public FVSpatialParams<TypeTag>
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
-
-    enum {
-        wPhaseIdx = Indices::wPhaseIdx,
-        nPhaseIdx = Indices::nPhaseIdx
-    };
+    enum { dimWorld=GridView::dimensionworld };
 
     using Element = typename GridView::template Codim<0>::Entity;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);

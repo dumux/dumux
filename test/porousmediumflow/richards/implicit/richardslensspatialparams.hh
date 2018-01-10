@@ -74,10 +74,7 @@ class RichardsLensSpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
-    enum {
-        dim=GridView::dimension,
-        dimWorld=GridView::dimensionworld
-    };
+    enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);

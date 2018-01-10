@@ -50,15 +50,12 @@ class ThreePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     enum {
-        dim = GridView::dimension,
-
         numPhases = GET_PROP_VALUE(TypeTag, NumPhases),
 
         wPhaseIdx = Indices::wPhaseIdx,
@@ -69,11 +66,6 @@ class ThreePVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
         snIdx = Indices::snIdx,
         pressureIdx = Indices::pressureIdx
     };
-
-    static const Scalar R; // universal gas constant
-
-    enum { isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box };
-    enum { dofCodim = isBox ? dim : 0 };
 
 public:
 
@@ -274,13 +266,6 @@ private:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 };
-
-/*!
- * \brief  The ideal gas constant \f$\mathrm{[J/(mol K)]}\f$
- */
-template <class TypeTag>
-const typename ThreePVolumeVariables<TypeTag>::Scalar ThreePVolumeVariables<TypeTag>::R = Constants<typename GET_PROP_TYPE(TypeTag, Scalar)>::R;
-
 } // end namespace
 
 #endif

@@ -118,29 +118,25 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 {
     using ParentType = PorousMediumFlowProblem<TypeTag>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
-    enum {
-        // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
-    };
+    enum { dimWorld = GridView::dimensionworld };
 
     // copy some indices for convenience
     enum {
-        lPhaseIdx = Indices::wPhaseIdx,
-        gPhaseIdx = Indices::nPhaseIdx
-    };
-    enum {
-        wCompIdx = FluidSystem::wCompIdx,
-        nCompIdx = FluidSystem::nCompIdx
-    };
-    enum {
+        pressureIdx = Indices::pressureIdx,
+        switchIdx = Indices::switchIdx,
+
+        wPhaseIdx = Indices::wPhaseIdx,
+        nPhaseIdx = Indices::nPhaseIdx,
+
+        wPhaseOnly = Indices::wPhaseOnly,
+
+        nCompIdx = FluidSystem::nCompIdx,
         BrineIdx = FluidSystem::BrineIdx,
         CO2Idx = FluidSystem::CO2Idx
     };
@@ -243,8 +239,8 @@ public:
         vtk.addField(vtkBoxVolume_, "boxVolume");
 
 #if !ISOTHERMAL
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(Indices::wPhaseIdx); }, "enthalpyW");
-        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(Indices::nPhaseIdx); }, "enthalpyN");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(wPhaseIdx); }, "enthalpyW");
+        vtk.addVolumeVariable([](const VolumeVariables& v){ return v.enthalpy(nPhaseIdx); }, "enthalpyN");
 #else
         vtkTemperature_.resize(numDofs, 0.0);
         vtk.addField(vtkTemperature_, "temperature");
@@ -423,7 +419,7 @@ private:
     PrimaryVariables initial_(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values(0.0);
-        values.setState(Indices::wPhaseOnly);
+        values.setState(wPhaseOnly);
 
         const Scalar temp = initialTemperatureField_(globalPos);
         const Scalar densityW = FluidSystem::Brine::liquidDensity(temp, 1e7);
@@ -435,11 +431,11 @@ private:
                              + FluidSystem::molarMass(CO2Idx)*moleFracLiquidCO2;
 
         if(useMoles) // mole-fraction formulation
-            values[Indices::switchIdx] = moleFracLiquidCO2;
+            values[switchIdx] = moleFracLiquidCO2;
         else // mass-fraction formulation
-            values[Indices::switchIdx] = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
+            values[switchIdx] = moleFracLiquidCO2*FluidSystem::molarMass(CO2Idx)/meanM;
 
-        values[Indices::pressureIdx] = 1.0e5 - densityW*this->gravity()[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
+        values[pressureIdx] = 1.0e5 - densityW*this->gravity()[dimWorld-1]*(depthBOR_ - globalPos[dimWorld-1]);
 
 #if !ISOTHERMAL
         values[temperatureIdx] = temp;
