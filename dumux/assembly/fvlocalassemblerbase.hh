@@ -90,7 +90,7 @@ public:
 
         if(elementIsGhost())
         {
-            using ResdiualType = decltype(evalLocalResidual(curElemVolVars()));
+            using ResdiualType = decltype(evalLocalResidual(std::declval<ElementVolumeVariables>()));
             return ResdiualType(0.0);
         }
 

@@ -64,7 +64,7 @@ class FVAssembler
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
     using ThisType = FVAssembler<TypeTag, diffMethod, isImplicit>;
-    using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, diffMethod, isImplicit>,
+    using LocalAssembler = std::conditional_t<isBox, BoxLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>,
                                                      CCLocalAssembler<TypeTag, ThisType, diffMethod, isImplicit>>;
 
 public:
