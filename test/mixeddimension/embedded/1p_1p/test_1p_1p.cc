@@ -36,13 +36,14 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/nonlinear/mixeddimensionnewtoncontroller.hh>
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/io/vtkoutputmodule.hh>
 
 #include <dumux/multidomain/traits.hh>
+#include <dumux/multidomain/fvassembler.hh>
+#include <dumux/multidomain/newtoncontroller.hh>
 #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanagersimple.hh>
 #include <dumux/mixeddimension/embedded/integrationpointsource.hh>
 
@@ -133,22 +134,22 @@ int main(int argc, char** argv) try
     lowDimProblem->computePointSourceMap();
 
     // the solution vector
-    auto sol = std::make_shared<Traits::SolutionVector>();
-    (*sol)[bulkIdx].resize(bulkFvGridGeometry->numDofs());
-    (*sol)[lowDimIdx].resize(lowDimFvGridGeometry->numDofs());
-    bulkProblem->applyInitialSolution((*sol)[bulkIdx]);
-    lowDimProblem->applyInitialSolution((*sol)[lowDimIdx]);
-    auto oldSol = std::make_shared<Traits::SolutionVector>(*sol);
+    Traits::SolutionVector sol;
+    sol[bulkIdx].resize(bulkFvGridGeometry->numDofs());
+    sol[lowDimIdx].resize(lowDimFvGridGeometry->numDofs());
+    bulkProblem->applyInitialSolution(sol[bulkIdx]);
+    lowDimProblem->applyInitialSolution(sol[lowDimIdx]);
+    auto oldSol = sol;
 
     couplingManager->init(bulkProblem, lowDimProblem, sol);
 
     // the grid variables
     using BulkGridVariables = typename GET_PROP_TYPE(BulkTypeTag, GridVariables);
     auto bulkGridVariables = std::make_shared<BulkGridVariables>(bulkProblem, bulkFvGridGeometry);
-    bulkGridVariables->init((*sol)[bulkIdx], (*oldSol)[bulkIdx]);
+    bulkGridVariables->init(sol[bulkIdx], oldSol[bulkIdx]);
     using LowDimGridVariables = typename GET_PROP_TYPE(LowDimTypeTag, GridVariables);
     auto lowDimGridVariables = std::make_shared<LowDimGridVariables>(lowDimProblem, lowDimFvGridGeometry);
-    lowDimGridVariables->init((*sol)[lowDimIdx], (*oldSol)[lowDimIdx]);
+    lowDimGridVariables->init(sol[lowDimIdx], oldSol[lowDimIdx]);
 
     // get some time loop parameters
     using Scalar = Traits::Scalar;
@@ -158,13 +159,14 @@ int main(int argc, char** argv) try
     auto dt = getParam<Scalar>("TimeLoop.DtInitial");
 
     // intialize the vtk output module
-    VtkOutputModule<BulkTypeTag> bulkVtkWriter(*bulkProblem, *bulkFvGridGeometry, *bulkGridVariables, (*sol)[bulkIdx], bulkProblem->name());
+    VtkOutputModule<BulkTypeTag> bulkVtkWriter(*bulkProblem, *bulkFvGridGeometry, *bulkGridVariables, sol[bulkIdx], bulkProblem->name());
     GET_PROP_TYPE(BulkTypeTag, VtkOutputFields)::init(bulkVtkWriter);
     bulkProblem->addVtkOutputFields(bulkVtkWriter);
     bulkVtkWriter.write(0.0);
 
-    VtkOutputModule<LowDimTypeTag> lowDimVtkWriter(*lowDimProblem, *lowDimFvGridGeometry, *lowDimGridVariables, (*sol)[lowDimIdx], lowDimProblem->name());
+    VtkOutputModule<LowDimTypeTag> lowDimVtkWriter(*lowDimProblem, *lowDimFvGridGeometry, *lowDimGridVariables, sol[lowDimIdx], lowDimProblem->name());
     GET_PROP_TYPE(LowDimTypeTag, VtkOutputFields)::init(lowDimVtkWriter);
+    lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
     lowDimVtkWriter.write(0.0);
 
     // instantiate time loop
@@ -172,99 +174,72 @@ int main(int argc, char** argv) try
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    // using Assembler = FVAssembler<Traits, DiffMethod::numeric>;
-    // auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::analytic>;
+    auto assembler = std::make_shared<Assembler>(std::make_tuple(bulkProblem, lowDimProblem),
+                                                 std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
+                                                 std::make_tuple(bulkGridVariables, lowDimGridVariables),
+                                                 couplingManager, timeLoop);
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend;
+    using LinearSolver = SSORBiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = MixedDimensionNewtonController<double>;
-    auto newtonController = std::make_shared<NewtonController>(timeLoop);
+    using NewtonController = MultiDomainNewtonController<double, CouplingManager>;
+    auto newtonController = std::make_shared<NewtonController>(timeLoop, couplingManager);
     // using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
     // NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
-
-    typename Traits::JacobianMatrix M;
-
-    auto& A11 = M[bulkIdx][bulkIdx];
-    auto& A12 = M[bulkIdx][lowDimIdx];
-    auto& A22 = M[lowDimIdx][bulkIdx];
-    auto& A21 = M[lowDimIdx][lowDimIdx];
-
-    A11.setSize(3, 3);
-    A12.setSize(3, 8);
-    A22.setSize(8, 8);
-    A21.setSize(8, 3);
-
-    {
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(3, 3);
-        for (int i = 0; i < occupationPattern.rows(); ++i)
-            occupationPattern.add(i,i);
-        occupationPattern.exportIdx(A11);
-    }
-
-    {
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(3, 8);
-        for (int i = 0; i < occupationPattern.rows(); ++i)
-            occupationPattern.add(i,i);
-        occupationPattern.exportIdx(A12);
-    }
-
-    {
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(8, 3);
-        for (int i = 0; i < 3; ++i)
-            occupationPattern.add(i,i);
-        occupationPattern.exportIdx(A21);
-    }
-
-    {
-        Dune::MatrixIndexSet occupationPattern;
-        occupationPattern.resize(8, 8);
-        for (int i = 0; i < occupationPattern.rows(); ++i)
-            occupationPattern.add(i,i);
-        occupationPattern.exportIdx(A22);
-    }
-
-    M = 1.0;
-
-    Dune::printmatrix(std::cout, A11, "", "");
-    Dune::printmatrix(std::cout, A12, "", "");
-    Dune::printmatrix(std::cout, A21, "", "");
-    Dune::printmatrix(std::cout, A22, "", "");
-
 
     // time loop
     timeLoop->start();
     while (!timeLoop->finished())
     {
         // set previous solution for storage evaluations
-        // assembler->setPreviousSolution(solOld);
+        assembler->setPreviousSolution(oldSol);
 
         // try solving the non-linear system
         for (int i = 0; i < maxDivisions; ++i)
         {
             // linearize & solve
-            // auto converged = nonLinearSolver.solve(sol);
+            assembler->assembleJacobianAndResidual(sol);
+            auto& b =  assembler->residual();
+            b *= -1.0;
+            linearSolver->template solve<2>(assembler->jacobian(), sol, b);
+            auto converged = true; //nonLinearSolver.solve(sol);
+            couplingManager->updateSolution(sol);
+            bulkGridVariables->update(sol[bulkIdx]);
+            lowDimGridVariables->update(sol[lowDimIdx]);
 
-            // if (converged)
-            //     break;
-            //
-            // if (!converged && i == maxDivisions-1)
-            //     DUNE_THROW(Dune::MathError,
-            //                "Newton solver didn't converge after "
-            //                << maxDivisions
-            //                << " time-step divisions. dt="
-            //                << timeLoop->timeStepSize()
-            //                << ".\nThe solutions of the current and the previous time steps "
-            //                << "have been saved to restart files.");
+            const auto& jac = assembler->jacobian();
+            const auto& res = assembler->residual();
+            using namespace Dune::Indices;
+            // if (jac[_0][_0].N() < 28)
+            // {
+                // Dune::printmatrix(std::cout, jac[_0][_0], "", "", 15, 15);
+                // Dune::printmatrix(std::cout, jac[_0][_1], "", "", 15, 15);
+                // Dune::printmatrix(std::cout, jac[_1][_0], "", "", 15, 15);
+                // Dune::printmatrix(std::cout, jac[_1][_1], "", "", 15, 15);
+                // Dune::printvector(std::cout, res[_0], "", "", 15, 15);
+                // Dune::printvector(std::cout, res[_1], "", "", 15, 15);
+                // Dune::printvector(std::cout, sol[_0], "", "", 15, 15);
+                // Dune::printvector(std::cout, sol[_1], "", "", 15, 15);
+            // }
+
+            if (converged)
+                break;
+
+            if (!converged && i == maxDivisions-1)
+                DUNE_THROW(Dune::MathError,
+                           "Newton solver didn't converge after "
+                           << maxDivisions
+                           << " time-step divisions. dt="
+                           << timeLoop->timeStepSize()
+                           << ".\nThe solutions of the current and the previous time steps "
+                           << "have been saved to restart files.");
         }
 
         // make the new solution the old solution
-        (*oldSol) = (*sol);
+        oldSol = sol;
         bulkGridVariables->advanceTimeStep();
         lowDimGridVariables->advanceTimeStep();
 
@@ -272,8 +247,8 @@ int main(int argc, char** argv) try
         timeLoop->advanceTimeStep();
 
         // output the source terms
-        bulkProblem->computeSourceIntegral((*sol)[bulkIdx], *bulkGridVariables);
-        lowDimProblem->computeSourceIntegral((*sol)[lowDimIdx], *lowDimGridVariables);
+        bulkProblem->computeSourceIntegral(sol[bulkIdx], *bulkGridVariables);
+        lowDimProblem->computeSourceIntegral(sol[lowDimIdx], *lowDimGridVariables);
 
         // write vtk output
         bulkVtkWriter.write(timeLoop->time());
