@@ -218,7 +218,8 @@ public:
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return PlaneGeometryType(Dune::GeometryTypes::line, corners);
 #else
-        return PlaneGeometryType(Dune::GeometryType::simplex, corners);
+        static Dune::GeometryType gt(Dune::GeometryType::simplex, dim-1);
+        return PlaneGeometryType(gt, corners);
 #endif
     }
 
@@ -240,7 +241,8 @@ public:
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         return PlaneGeometryType(Dune::GeometryTypes::quadrilateral, corners);
 #else
-        return PlaneGeometryType(Dune::GeometryType::cube, corners);
+        static Dune::GeometryType gt(Dune::GeometryType::cube, dim-1);
+        return PlaneGeometryType(gt, corners);
 #endif
     }
 
