@@ -80,9 +80,49 @@ public:
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.indexInElement()];
 
+        this->asImp_().evalDirichletBoundaries(jac, res);
+    }
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     */
+    void assembleJacobian(JacobianMatrix& jac, GridVariables& gridVariables)
+    {
+        this->asImp_().bindLocalViews();
+        this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+        // TODO: Dirichlet required here?
+    }
+
+    /*!
+     * \brief Assemble the residual only
+     */
+    void assembleResidual(SolutionVector& res)
+    {
+        this->asImp_().bindLocalViews();
+        const auto residual = this->evalLocalResidual();
+
+        for (const auto& scv : scvs(this->fvGeometry()))
+            res[scv.dofIndex()] += residual[scv.indexInElement()];
+
+        // TODO: Dirichlet required here?
+    }
+
+
+    auto evalLocalFluxSourceResidual(const ElementVolumeVariables& elemVolVars) const
+    {
+        return this->evalLocalFluxSourceResidual(elemVolVars);
+    }
+
+    auto evalLocalStorageResidual() const
+    {
+        return this->evalLocalStorageResidual();
+    }
+
+    void evalDirichletBoundaries(JacobianMatrix& jac, SolutionVector& res)
+    {
         // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
         // and set the residual to (privar - dirichletvalue)
-        // TODO: put this in separate method!
         if (this->elemBcTypes().hasDirichlet())
         {
             for (const auto& scvI : scvs(this->fvGeometry()))
@@ -115,38 +155,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     */
-    void assembleJacobian(JacobianMatrix& jac, GridVariables& gridVariables)
-    {
-        this->asImp_().bindLocalViews();
-        this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
-    }
-
-    /*!
-     * \brief Assemble the residual only
-     */
-    void assembleResidual(SolutionVector& res)
-    {
-        this->asImp_().bindLocalViews();
-        const auto residual = this->evalLocalResidual();
-
-        for (const auto& scv : scvs(this->fvGeometry()))
-            res[scv.dofIndex()] += residual[scv.indexInElement()];
-    }
-
-
-    auto evalLocalFluxSourceResidual(const ElementVolumeVariables& elemVolVars) const
-    {
-        return this->evalLocalFluxSourceResidual(elemVolVars);
-    }
-
-    auto evalLocalStorageResidual() const
-    {
-        return this->evalLocalStorageResidual();
-    }
 };
 
 /*!
