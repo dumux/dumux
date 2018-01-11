@@ -7,7 +7,7 @@
 # (c) 2016 Christoph Grüninger
 #
 
-if [ "${args[1]}" = "-h" ]; then
+if [ "$1" = "-h" ]; then
   echo "USAGE: ./getDumuxDuneVersions.sh"
   echo; exit
 fi
@@ -83,9 +83,9 @@ function getVersionGit
   cd ..
 }
 
-# run script from comand line
+# run script from command line
 # suppressed for use of external script when variable set accordingly
-if [ "$CALL_FROM_EXTERNAL_SCRIPT" == "no" ]; then
+if [ "$CALL_FROM_EXTERNAL_SCRIPT" != "yes" ]; then
   echo "# DUNE/DUMUX VERSIONS" > $OUTFILE
 
   echo "Creating file containing the version numbers:"
