@@ -103,21 +103,21 @@ public:
     {
         if (!assembler().isStationaryProblem())
         {
-            auto residual = evalLocalFluxSourceResidual(elemVolVars);
+            auto residual = evalLocalFluxAndSourceResidual(elemVolVars);
             residual += evalLocalStorageResidual();
             return residual;
         }
         else
-            return evalLocalFluxSourceResidual(elemVolVars);
+            return evalLocalFluxAndSourceResidual(elemVolVars);
     }
 
-    auto evalLocalFluxSourceResidual() const
+    auto evalLocalFluxAndSourceResidual() const
     {
-        return isImplicit() ? evalLocalFluxSourceResidual(curElemVolVars())
-                            : evalLocalFluxSourceResidual(prevElemVolVars());
+        return isImplicit() ? evalLocalFluxAndSourceResidual(curElemVolVars())
+                            : evalLocalFluxAndSourceResidual(prevElemVolVars());
      }
 
-    auto evalLocalFluxSourceResidual(const ElementVolumeVariables& elemVolVars) const
+    auto evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
         return localResidual_.evalFluxSource(element_, fvGeometry_, elemVolVars, elemFluxVarsCache_, elemBcTypes_);
     }

@@ -64,7 +64,6 @@ public:
 
     using ParentType::ParentType;
 
-
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
      *        to the global matrix. The element residual is written into the right hand side.
@@ -97,9 +96,9 @@ public:
     }
 
 
-    LocalResidualValues evalLocalFluxSourceResidual(const ElementVolumeVariables& elemVolVars) const
+    LocalResidualValues evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
-        return this->evalLocalFluxSourceResidual(elemVolVars)[0];
+        return this->evalLocalFluxAndSourceResidual(elemVolVars)[0];
     }
 
     LocalResidualValues evalLocalStorageResidual() const
@@ -326,7 +325,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
 
         // assemble the undeflected residual
-        auto residual = this->elementIsGhost() ? LocalResidualValues(0.0) : this->evalLocalFluxSourceResidual();
+        auto residual = this->elementIsGhost() ? LocalResidualValues(0.0) : this->evalLocalFluxAndSourceResidual();
         const auto storageResidual = this->elementIsGhost() ? LocalResidualValues(0.0) : this->evalLocalStorageResidual();
         residual += storageResidual;
 

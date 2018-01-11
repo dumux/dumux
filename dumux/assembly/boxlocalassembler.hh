@@ -109,9 +109,9 @@ public:
     }
 
 
-    auto evalLocalFluxSourceResidual(const ElementVolumeVariables& elemVolVars) const
+    auto evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
-        return this->evalLocalFluxSourceResidual(elemVolVars);
+        return this->evalLocalFluxAndSourceResidual(elemVolVars);
     }
 
     auto evalLocalStorageResidual() const
