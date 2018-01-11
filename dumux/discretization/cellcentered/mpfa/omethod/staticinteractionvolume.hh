@@ -52,7 +52,8 @@ template< class TypeTag, int localSize >
 struct CCMpfaODefaultStaticInteractionVolumeTraits
 {
 private:
-    using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
+    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using GridIndexType = typename NodalIndexSet::GridIndexType;
     static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
     static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
 
@@ -70,9 +71,9 @@ public:
     //! export the type of the mpfa helper class
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     //! export the type used for local indices
-    using LocalIndexType = std::uint8_t;
+    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
     //! export the type for the interaction volume index set
-    using IndexSet = CCMpfaOInteractionVolumeIndexSet< DualGridNodalIndexSet<GridIndexType, LocalIndexType, dim> >;
+    using IndexSet = CCMpfaOInteractionVolumeIndexSet< NodalIndexSet >;
     //! export the type of interaction-volume local scvs
     using LocalScvType = CCMpfaOInteractionVolumeLocalScv< IndexSet, ScalarType, dim, dimWorld >;
     //! export the type of interaction-volume local scvfs
@@ -84,7 +85,7 @@ public:
     //! export the type used for iv-local vectors
     using Vector = Dune::FieldVector< ScalarType, localSize >;
     //! export the type used for the iv-stencils
-    using Stencil = std::vector< GridIndexType >;
+    using Stencil = typename NodalIndexSet::GridStencilType;
     //! export the data handle type for this iv
     using DataHandle = InteractionVolumeDataHandle< TypeTag, Matrix, Vector, LocalIndexType >;
 };
@@ -132,7 +133,7 @@ class CCMpfaOStaticInteractionVolume : public CCMpfaInteractionVolumeBase< CCMpf
     //! from the nodal index set, which always uses dynamic types to be compatible
     //! on the boundaries and unstructured grids. Thus, we have to make sure that
     //! the type set for the stencils in the traits is castable.
-    static_assert( std::is_convertible<Stencil*, typename IndexSet::GridIndexContainer*>::value,
+    static_assert( std::is_convertible<Stencil*, typename IndexSet::GridStencilType*>::value,
                    "The o-method uses the (dynamic) nodal index set's stencil as the interaction volume stencil. "
                    "Using a different type is not permissive here." );
 

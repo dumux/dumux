@@ -91,7 +91,7 @@ private:
     static constexpr int dimWorld = GridView::dimensionworld;
 
 public:
-    //! Per default, we allow for 8 neighbors on network/surface grids
+    // Per default, we allow for 8 neighbors on network/surface grids
     static const std::size_t value = dim < dimWorld ? 9 : 2;
 };
 

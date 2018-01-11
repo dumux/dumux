@@ -654,8 +654,8 @@ public:
     { return !std::is_same<PrimaryInteractionVolume, SecondaryInteractionVolume>::value; }
 
     //! returns whether or not a value exists in a vector
-    template<typename V1, typename V2>
-    static bool vectorContainsValue(const std::vector<V1>& vector, const V2 value)
+    template<typename V, typename T>
+    static bool vectorContainsValue(const V& vector, const T value)
     { return std::find(vector.begin(), vector.end(), value) != vector.end(); }
 };
 

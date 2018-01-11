@@ -107,7 +107,7 @@ NEW_PROP_TAG(MpfaMethod);                          //!< Specifies the mpfa metho
 NEW_PROP_TAG(MpfaHelper);                          //!< A Helper class depending on the mpfa method and grid dimension
 NEW_PROP_TAG(PrimaryInteractionVolume);            //!< The primary interaction volume type
 NEW_PROP_TAG(SecondaryInteractionVolume);          //!< The secondary interaction volume type used e.g. on the boundaries
-
+NEW_PROP_TAG(DualGridNodalIndexSet);               //!< The type used for the nodal index sets of the dual grid
 
 /////////////////////////////////////////////////////////////
 // Properties used by models involving flow in porous media:

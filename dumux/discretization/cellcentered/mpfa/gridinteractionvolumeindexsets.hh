@@ -43,6 +43,7 @@ class CCMpfaGridInteractionVolumeIndexSets
     using GridIndexType = typename GridView::IndexSet::IndexType;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
     using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using PrimaryIVIndexSet = typename PrimaryIV::Traits::IndexSet;
@@ -51,7 +52,7 @@ class CCMpfaGridInteractionVolumeIndexSets
 
     static constexpr int dim = GridView::dimension;
     using LocalIndexType = typename PrimaryIV::Traits::LocalIndexType;
-    using DualGridIndexSet = CCMpfaDualGridIndexSet< GridIndexType, LocalIndexType, dim>;
+    using DualGridIndexSet = CCMpfaDualGridIndexSet< DualGridNodalIndexSet >;
 
 public:
     /*!

@@ -59,16 +59,22 @@ class CCMpfaFVElementGeometry<TypeTag, true>
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-
     using GridIndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
-    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<GridIndexType>, ThisType>;
-    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
+    static constexpr int dim = GridView::dimension;
 
 public:
+    //! export type of subcontrol volume
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    //! export type of subcontrol volume face
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    //! export type of finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    //! the maximum number of scvs per element
+    static constexpr std::size_t maxNumElementScvs = 1;
+    //! the maximum number of scvfs per element (use cubes for maximum)
+    static constexpr std::size_t maxNumElementScvfs = dim == 3 ? 24 : 8;
+
     //! Constructor
     CCMpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
@@ -97,9 +103,10 @@ public:
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volumes of this FVElementGeometry use
     //! for (auto&& scv : scvs(fvGeometry))
-    friend inline Dune::IteratorRange<ScvIterator>
+    friend inline Dune::IteratorRange< ScvIterator<SubControlVolume, std::array<GridIndexType, 1>, ThisType> >
     scvs(const CCMpfaFVElementGeometry& fvGeometry)
     {
+        using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::array<GridIndexType, 1>, ThisType>;
         return Dune::IteratorRange<ScvIterator>(ScvIterator(fvGeometry.scvIndices_.begin(), fvGeometry),
                                                 ScvIterator(fvGeometry.scvIndices_.end(), fvGeometry));
     }
@@ -109,11 +116,12 @@ public:
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volume faces of this FVElementGeometry use
     //! for (auto&& scvf : scvfs(fvGeometry))
-    friend inline Dune::IteratorRange<ScvfIterator>
+    friend inline Dune::IteratorRange< ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType> >
     scvfs(const CCMpfaFVElementGeometry& fvGeometry)
     {
         const auto& g = fvGeometry.fvGridGeometry();
         const auto scvIdx = fvGeometry.scvIndices_[0];
+        using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndicesOfScv(scvIdx).begin(), fvGeometry),
                                                  ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
     }
@@ -139,7 +147,7 @@ public:
     //! Bind only element-local
     void bindElement(const Element& element)
     {
-        scvIndices_ = std::vector<GridIndexType>({fvGridGeometry().elementMapper().index(element)});
+        scvIndices_[0] = fvGridGeometry().elementMapper().index(element);
     }
 
     //! The global finite volume geometry we are a restriction of
@@ -148,7 +156,7 @@ public:
 
 private:
 
-    std::vector<GridIndexType> scvIndices_;
+    std::array<GridIndexType, 1> scvIndices_;
     const FVGridGeometry* fvGridGeometryPtr_;
 };
 
@@ -168,12 +176,6 @@ class CCMpfaFVElementGeometry<TypeTag, false>
     using GridIndexType = typename GridView::IndexSet::IndexType;
 
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<GridIndexType>, ThisType>;
-    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<GridIndexType>, ThisType>;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -182,6 +184,17 @@ class CCMpfaFVElementGeometry<TypeTag, false>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
+    //! export type of subcontrol volume
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    //! export type of subcontrol volume face
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    //! export type of finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    //! the maximum number of scvs per element
+    static constexpr std::size_t maxNumElementScvs = 1;
+    //! the maximum number of scvfs per element (use cubes for maximum)
+    static constexpr std::size_t maxNumElementScvfs = dim == 3 ? 24 : 8;
+
     //! Constructor
     CCMpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
@@ -234,11 +247,11 @@ public:
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volumes of this FVElementGeometry use
     //! for (auto&& scv : scvs(fvGeometry))
-    friend inline Dune::IteratorRange<typename std::vector<SubControlVolume>::const_iterator>
+    friend inline Dune::IteratorRange<typename std::array<SubControlVolume, 1>::const_iterator>
     scvs(const ThisType& g)
     {
-        using Iter = typename std::vector<SubControlVolume>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvs_.begin(), g.scvs_.end());
+        using IteratorType = typename std::array<SubControlVolume, 1>::const_iterator;
+        return Dune::IteratorRange<IteratorType>(g.scvs_.begin(), g.scvs_.end());
     }
 
     //! iterator range for sub control volumes faces. Iterates over
@@ -249,8 +262,8 @@ public:
     friend inline Dune::IteratorRange<typename std::vector<SubControlVolumeFace>::const_iterator>
     scvfs(const ThisType& g)
     {
-        using Iter = typename std::vector<SubControlVolumeFace>::const_iterator;
-        return Dune::IteratorRange<Iter>(g.scvfs_.begin(), g.scvfs_.end());
+        using IteratorType = typename std::vector<SubControlVolumeFace>::const_iterator;
+        return Dune::IteratorRange<IteratorType>(g.scvfs_.begin(), g.scvfs_.end());
     }
 
     //! number of sub control volumes in this fv element geometry
@@ -336,8 +349,8 @@ private:
     {
         // make the scv
         const auto eIdx = fvGridGeometry().elementMapper().index(element);
-        scvs_.emplace_back(element.geometry(), eIdx);
-        scvIndices_.emplace_back(eIdx);
+        scvs_[0] = SubControlVolume(element.geometry(), eIdx);
+        scvIndices_[0] = eIdx;
 
         // get data on the scv faces
         const auto& scvFaceIndices = fvGridGeometry().scvfIndicesOfScv(eIdx);
@@ -617,9 +630,7 @@ private:
     //! clear all containers
     void clear()
     {
-        scvIndices_.clear();
         scvfIndices_.clear();
-        scvs_.clear();
         scvfs_.clear();
 
         neighborScvIndices_.clear();
@@ -634,9 +645,9 @@ private:
     const FVGridGeometry* fvGridGeometryPtr_;
 
     // local storage after binding an element
-    std::vector<GridIndexType> scvIndices_;
+    std::array<GridIndexType, 1> scvIndices_;
     std::vector<GridIndexType> scvfIndices_;
-    std::vector<SubControlVolume> scvs_;
+    std::array<SubControlVolume, 1> scvs_;
     std::vector<SubControlVolumeFace> scvfs_;
 
     std::vector<GridIndexType> neighborScvIndices_;
