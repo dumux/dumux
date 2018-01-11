@@ -82,6 +82,19 @@ SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, CCTpfaElementFluxVariables
 //! The global current volume variables vector class
 SET_TYPE_PROP(CCTpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
+//! Set the maximum admissible number of branches per scvf
+SET_PROP(CCTpfaModel, MaxNumBranchesPerScvf)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+public:
+    //! Per default, we allow for 8 neighbors on network/surface grids
+    static const std::size_t value = dim < dimWorld ? 9 : 2;
+};
+
 //! The sub control volume
 SET_PROP(CCTpfaModel, SubControlVolume)
 {

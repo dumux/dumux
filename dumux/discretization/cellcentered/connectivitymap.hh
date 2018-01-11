@@ -50,6 +50,7 @@ template<class TypeTag>
 class CCSimpleConnectivityMap
 {
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxStencil = Dumux::FluxStencil<TypeTag>;
@@ -57,10 +58,10 @@ class CCSimpleConnectivityMap
     struct DataJ
     {
         IndexType globalJ;
-        typename FluxStencil::Stencil scvfsJ;
+        Dune::ReservedVector<IndexType, FluxStencil::maxNumScvfJForI> scvfsJ;
         // A list of additional scvfs is needed for compatibility
         // reasons with more complex connectivity maps (see mpfa)
-        std::vector<IndexType> additionalScvfs;
+        Dune::ReservedVector<IndexType, FluxStencil::maxNumScvfJForI> additionalScvfs;
     };
 
     using Map = std::vector<std::vector<DataJ>>;
@@ -76,7 +77,11 @@ public:
     {
         map_.clear();
         map_.resize(fvGridGeometry.gridView().size(0));
-        Dune::ReservedVector<std::pair<IndexType, DataJ>, FluxStencil::maxSize*2*GridView::dimension> dataJForI;
+
+        // container to store for each element J the elements I that appear in J's flux stencils
+        static constexpr int maxNumJ = FluxStencil::maxFluxStencilSize*FVElementGeometry::maxNumElementScvfs;
+        Dune::ReservedVector<std::pair<IndexType, DataJ>, maxNumJ> dataJForI;
+
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
             // We are looking for the elements I, for which this element J is in the flux stencil

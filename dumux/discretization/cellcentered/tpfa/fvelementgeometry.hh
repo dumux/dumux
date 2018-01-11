@@ -72,6 +72,8 @@ public:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
+    //! the maximum number of scvfs per element (use cubes for maximum)
+    static constexpr std::size_t maxNumElementScvfs = GridView::dimension == 3 ? 6 : 4;
 
     //! Constructor
     CCTpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)
@@ -187,6 +189,8 @@ public:
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
+    //! the maximum number of scvfs per element (use cubes for maximum)
+    static constexpr std::size_t maxNumElementScvfs = dim == 3 ? 6 : 4;
 
     //! Constructor
     CCTpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)

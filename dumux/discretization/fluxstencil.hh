@@ -59,12 +59,16 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    static constexpr bool isNetwork = int(GridView::dimension) < int(GridView::dimensionworld);
 
 public:
-    // we assume a maxium of 8 neighbors in embedded network grids otherwise max stencil size is 2
-    static constexpr std::size_t maxSize =  isNetwork ? 9 : 2;
-    using Stencil = Dune::ReservedVector<IndexType, maxSize>;
+    //! The maximum number of elements in a flux stencil (equal to max number of branches)
+    static constexpr int maxFluxStencilSize = GET_PROP_VALUE(TypeTag, MaxNumBranchesPerScvf);
+
+    //! States how many scvfs of an element J might have an element I in the flux stencil
+    static constexpr int maxNumScvfJForI = 1;
+
+    //! The flux stencil type
+    using Stencil = Dune::ReservedVector<IndexType, maxFluxStencilSize>;
 
     static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
