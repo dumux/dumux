@@ -351,7 +351,6 @@ public:
                 auto evalStorage = [&](Scalar priVar)
                 {
                     // auto partialDerivsTmp = partialDerivs;
-                    // update the volume variables and the flux var cache
                     elemSol[scv.indexInElement()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
                     return this->evalLocalStorageResidual();
@@ -415,7 +414,6 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& curSol = this->curSol();
         const auto& problem = this->problem();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
@@ -527,7 +525,6 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        const auto& curSol = this->curSol();
         const auto& problem = this->problem();
         auto&& curElemVolVars = this->curElemVolVars();
         auto&& elemFluxVarsCache = this->elemFluxVarsCache();
