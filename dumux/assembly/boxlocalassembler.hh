@@ -44,10 +44,10 @@ namespace Dumux {
  * \tparam Assembler the assembler type
  * \tparam Assembler The acutal Implementation
  */
-template<class TypeTag, class Assembler, class Implementation>
-class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation>
+template<class TypeTag, class Assembler, class Implementation, bool implicit>
+class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
-    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation>;
+    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -147,10 +147,6 @@ public:
     {
         return this->evalLocalStorageResidual();
     }
-
-    constexpr bool isImplicit() const
-    { return Implementation::isImplicit(); }
-
 };
 
 /*!
@@ -172,10 +168,10 @@ class BoxLocalAssembler;
 template<class TypeTag, class Assembler>
 class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
 : public BoxLocalAssemblerBase<TypeTag, Assembler,
-                              BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true> >
+                              BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>, true>
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
-    using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType>;
+    using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -195,9 +191,6 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
 public:
 
     using ParentType::ParentType;
-
-    static constexpr bool isImplicit()
-    { return true; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -299,10 +292,10 @@ public:
 template<class TypeTag, class Assembler>
 class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
 : public BoxLocalAssemblerBase<TypeTag, Assembler,
-                              BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false> >
+                              BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>, false>
 {
     using ThisType = BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
-    using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType>;
+    using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -322,9 +315,6 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
 public:
 
     using ParentType::ParentType;
-
-    static constexpr bool isImplicit()
-    { return false; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them

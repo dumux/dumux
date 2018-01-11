@@ -47,7 +47,7 @@ namespace Dumux {
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
  */
-template<class TypeTag, class Assembler, class Implementation>
+template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class FVLocalAssemblerBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -222,8 +222,7 @@ public:
     { return gridVolVars.volVars(scv); }
 
     constexpr bool isImplicit() const
-    { return Implementation::isImplicit(); }
-    // { return Implementation::IsImplicit::value; }
+    { return implicit; }
 
 protected:
     Implementation &asImp_()

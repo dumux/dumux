@@ -49,10 +49,10 @@ namespace Dumux {
  * \tparam TypeTag the TypeTag
  * \tparam Assembler the assembler type
  */
-template<class TypeTag, class Assembler, class Implementation>
-class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation>
+template<class TypeTag, class Assembler, class Implementation, bool implicit>
+class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
 {
-    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation>;
+    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -106,9 +106,6 @@ public:
     {
         return this->evalLocalStorageResidual()[0];
     }
-
-    constexpr bool isImplicit() const
-    { return Implementation::isImplicit(); }
 };
 
 /*!
@@ -130,10 +127,10 @@ class CCLocalAssembler;
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
 : public CCLocalAssemblerBase<TypeTag, Assembler,
-                              CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true> >
+                              CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>, true >
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
@@ -152,11 +149,6 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     static constexpr int maxNeighbors = 4*(2*dim);
 
 public:
-
-    struct IsImplicit { static constexpr bool value = true; };
-
-    static constexpr bool isImplicit()
-    { return true; }
 
     using ParentType::ParentType;
 
@@ -302,10 +294,10 @@ public:
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
 : public CCLocalAssemblerBase<TypeTag, Assembler,
-            CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false> >
+            CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>, false>
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
@@ -321,9 +313,6 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
 
 public:
     using ParentType::ParentType;
-
-    static constexpr bool isImplicit()
-    { return false; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -417,19 +406,16 @@ public:
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
 : public CCLocalAssemblerBase<TypeTag, Assembler,
-            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true> >
+            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>, true>
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
 public:
     using ParentType::ParentType;
-
-    static constexpr bool isImplicit()
-    { return true; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -499,19 +485,16 @@ public:
 template<class TypeTag, class Assembler>
 class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>
 : public CCLocalAssemblerBase<TypeTag, Assembler,
-            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false> >
+            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>, false>
 {
     using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
-    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
 public:
     using ParentType::ParentType;
-
-    static constexpr bool isImplicit()
-    { return false; }
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
