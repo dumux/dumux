@@ -124,9 +124,9 @@ public:
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
 
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
+        const auto& stencil = fluxVarsCache.advectionStencil();
         if (fluxVarsCache.usesSecondaryIv())
         {
-            const auto& stencil = fluxVarsCache.advectionStencilSecondaryIv();
             const auto& tij = fluxVarsCache.advectionTijSecondaryIv();
             assert(stencil.size() == tij.size());
 
@@ -141,7 +141,6 @@ public:
         }
         else
         {
-            const auto& stencil = fluxVarsCache.advectionStencilPrimaryIv();
             const auto& tij = fluxVarsCache.advectionTijPrimaryIv();
             assert(stencil.size() == tij.size());
 

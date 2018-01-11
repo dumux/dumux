@@ -84,8 +84,6 @@ public:
     using Matrix = Dune::FieldMatrix< ScalarType, localSize, localSize >;
     //! export the type used for iv-local vectors
     using Vector = Dune::FieldVector< ScalarType, localSize >;
-    //! export the type used for the iv-stencils
-    using Stencil = typename NodalIndexSet::GridStencilType;
     //! export the data handle type for this iv
     using DataHandle = InteractionVolumeDataHandle< TypeTag, Matrix, Vector, LocalIndexType >;
 };
@@ -127,15 +125,7 @@ class CCMpfaOStaticInteractionVolume : public CCMpfaInteractionVolumeBase< CCMpf
     using IndexSet = typename Traits::IndexSet;
     using GridIndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename Traits::LocalIndexType;
-    using Stencil = typename Traits::Stencil;
-
-    //! For the o method, the interaction volume stencil can be taken directly
-    //! from the nodal index set, which always uses dynamic types to be compatible
-    //! on the boundaries and unstructured grids. Thus, we have to make sure that
-    //! the type set for the stencils in the traits is castable.
-    static_assert( std::is_convertible<Stencil*, typename IndexSet::GridStencilType*>::value,
-                   "The o-method uses the (dynamic) nodal index set's stencil as the interaction volume stencil. "
-                   "Using a different type is not permissive here." );
+    using Stencil = typename IndexSet::GridStencilType;
 
     //! Data attached to scvf touching Dirichlet boundaries.
     //! For the default o-scheme, we only store the corresponding vol vars index.

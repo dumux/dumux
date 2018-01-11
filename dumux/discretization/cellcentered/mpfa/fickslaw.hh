@@ -90,6 +90,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     //! The cache used in conjunction with the mpfa Fick's Law
     class MpfaFicksLawCache
     {
+        using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+        using Stencil = typename DualGridNodalIndexSet::GridStencilType;
+
         using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
@@ -105,7 +108,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
         using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
-        using PrimaryIvStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
@@ -113,7 +115,6 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
         using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
-        using SecondaryIvStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
@@ -138,7 +139,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                              const SubControlVolumeFace &scvf,
                              unsigned int phaseIdx, unsigned int compIdx)
         {
-            primaryStencil_[phaseIdx][compIdx] = &iv.stencil();
+            stencil_[phaseIdx][compIdx] = &iv.stencil();
             switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
 
             // store pointer to the mole fraction vector of this iv
@@ -168,7 +169,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                              const SubControlVolumeFace &scvf,
                              unsigned int phaseIdx, unsigned int compIdx)
         {
-            secondaryStencil_[phaseIdx][compIdx] = &iv.stencil();
+            stencil_[phaseIdx][compIdx] = &iv.stencil();
             switchFluxSign_[phaseIdx][compIdx] = localFaceData.isOutside();
 
             // store pointer to the mole fraction vector of this iv
@@ -205,20 +206,15 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const SecondaryIvVector& moleFractionsSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
         { return *secondaryXj_[phaseIdx][compIdx]; }
 
-        //! The stencils corresponding to the transmissibilities (primary type)
-        const PrimaryIvStencil& diffusionStencilPrimaryIv(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *primaryStencil_[phaseIdx][compIdx]; }
-
-        //! The stencils corresponding to the transmissibilities (secondary type)
-        const SecondaryIvStencil& diffusionStencilSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
-        { return *secondaryStencil_[phaseIdx][compIdx]; }
+        //! The stencils corresponding to the transmissibilities
+        const Stencil& diffusionStencil(unsigned int phaseIdx, unsigned int compIdx) const
+        { return *stencil_[phaseIdx][compIdx]; }
 
     private:
         std::array< std::array<bool, numComponents>, numPhases > switchFluxSign_;
 
         //! The stencils, i.e. the grid indices j
-        std::array< std::array<const PrimaryIvStencil*, numComponents>, numPhases > primaryStencil_;
-        std::array< std::array<const SecondaryIvStencil*, numComponents>, numPhases > secondaryStencil_;
+        std::array< std::array<const Stencil*, numComponents>, numPhases > stencil_;
 
         //! The transmissibilities such that f = Tij*xj
         std::array< std::array<const PrimaryIvVector*, numComponents>, numPhases > primaryTij_;
