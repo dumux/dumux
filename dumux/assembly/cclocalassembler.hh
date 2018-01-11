@@ -417,7 +417,7 @@ public:
     LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
         // assemble the undeflected residual
-        const auto residual = this->assembleResidualImpl();
+        const auto residual = this->evalLocalResidual()[0];
 
         // get some aliases for convenience
         const auto& problem = this->problem();
@@ -496,7 +496,7 @@ public:
     LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
         // assemble the undeflected residual
-        const auto residual = this->assembleResidualImpl();
+        const auto residual = this->evalLocalResidual()[0];
 
         // get reference to the element's current vol vars
         const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
