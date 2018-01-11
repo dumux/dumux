@@ -207,7 +207,6 @@ public:
         const auto& fvGeometry = this->fvGeometry();
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
@@ -241,19 +240,9 @@ public:
 
                 auto evalResiduals = [&](Scalar priVar)
                 {
-                    // auto partialDerivsTmp = partialDerivs;
-                    // update the volume variables and the flux var cache
+                    // update the volume variables and compute element residual
                     elemSol[scv.indexInElement()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
-                    // if (enableGridFluxVarsCache)
-                    //     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
-                    // else
-                    //     elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
-                    //TODO: fluxvar caches!
-                    //
-
-
-
                     return this->evalLocalResidual();
                 };
 
