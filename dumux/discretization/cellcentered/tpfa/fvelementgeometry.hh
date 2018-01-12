@@ -73,7 +73,7 @@ public:
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)
-    static constexpr std::size_t maxNumElementScvfs = GridView::dimension == 3 ? 6 : 4;
+    static constexpr std::size_t maxNumElementScvfs = 2*GridView::dimension;
 
     //! Constructor
     CCTpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)
@@ -190,7 +190,7 @@ public:
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)
-    static constexpr std::size_t maxNumElementScvfs = dim == 3 ? 6 : 4;
+    static constexpr std::size_t maxNumElementScvfs = 2*dim;
 
     //! Constructor
     CCTpfaFVElementGeometry(const FVGridGeometry& fvGridGeometry)
