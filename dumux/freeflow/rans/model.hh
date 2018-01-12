@@ -44,6 +44,7 @@
 #include <dumux/freeflow/nonisothermal/model.hh>
 
 #include "volumevariables.hh"
+#include "vtkoutputfields.hh"
 
 #include <dumux/material/fluidstates/immiscible.hh>
 #include <dumux/discretization/methods.hh>
@@ -74,6 +75,9 @@ SET_BOOL_PROP(RANS, EnableInertiaTerms, true); //!< Explicitly force the conside
 
 //! The volume variables
 SET_TYPE_PROP(RANS, VolumeVariables, RANSVolumeVariables<TypeTag>);
+
+//! The specific vtk output fields
+SET_TYPE_PROP(RANS, VtkOutputFields, RANSVtkOutputFields<TypeTag>);
  // \}
 }
 

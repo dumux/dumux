@@ -199,8 +199,11 @@ public:
     PrimaryVariables initialAtPos(const GlobalPosition &globalPos) const
     {
         PrimaryVariables values;
-        values[pressureIdx] = 1.1e+5;
-        values[velocityXIdx] = 0.0;
+        values[pressureIdx] = 1.0e+5;
+        if(isInlet(globalPos))
+        {
+            values[velocityXIdx] = inletVelocity_;
+        }
         values[velocityYIdx] = 0.0;
 
         return values;

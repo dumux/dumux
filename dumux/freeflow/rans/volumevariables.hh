@@ -82,12 +82,8 @@ public:
                 const Element &element,
                 const SubControlVolume& scv)
     {
-        ParentType::completeFluidState(elemSol, problem, element, scv, fluidState_);
-        dynamicEddyViscosity_ = scv.dofPosition()[1] * scv.dofPosition()[1];
-        std::cout << dynamicEddyViscosity_ << " "
-                  << asImp_().viscosity(defaultPhaseIdx) << " "
-                  << effectiveViscosity(defaultPhaseIdx) << " "
-                  << std::endl;
+        ParentType::update(elemSol, problem, element, scv);
+        dynamicEddyViscosity_ = std::max(0.0, scv.dofPosition()[1] * (0.2469 - scv.dofPosition()[1])); // TODO preliminary
     };
 
     /*!
@@ -159,7 +155,7 @@ public:
                 const Element &element,
                 const SubControlVolume &scv)
     {
-        completeFluidState(elemSol, problem, element, scv, this->fluidState_);
+        update(elemSol, problem, element, scv);
     }
 
     /*!
