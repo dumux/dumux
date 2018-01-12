@@ -79,7 +79,21 @@ public:
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.indexInElement()];
 
-        this->asImp_().evalDirichletBoundaries(jac, res);
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+            for (const auto& scvJ : scvs(this->fvGeometry()))
+            {
+                jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
+                if (scvI.indexInElement() == scvJ.indexInElement())
+                    jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+            }
+        };
+
+        this->asImp_().evalDirichletBoundaries(applyDirichlet);
     }
 
     /*!
@@ -90,7 +104,21 @@ public:
     {
         this->asImp_().bindLocalViews();
         this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
-        // TODO: Dirichlet required here?
+
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            for (const auto& scvJ : scvs(this->fvGeometry()))
+            {
+                jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
+                if (scvI.indexInElement() == scvJ.indexInElement())
+                    jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
+            }
+        };
+
+        this->asImp_().evalDirichletBoundaries(applyDirichlet);
     }
 
     /*!
@@ -104,7 +132,15 @@ public:
         for (const auto& scv : scvs(this->fvGeometry()))
             res[scv.dofIndex()] += residual[scv.indexInElement()];
 
-        // TODO: Dirichlet required here?
+        auto applyDirichlet = [&] (const auto& scvI,
+                                   const auto& dirichletValues,
+                                   const auto eqIdx,
+                                   const auto pvIdx)
+        {
+            res[scvI.dofIndex()][eqIdx] = this->curElemVolVars()[scvI].priVars()[pvIdx] - dirichletValues[pvIdx];
+        };
+
+        this->asImp_().evalDirichletBoundaries(applyDirichlet);
     }
 
     /*!
@@ -126,7 +162,8 @@ public:
     /*!
      * \brief Evaluates Dirichlet boundaries
      */
-    void evalDirichletBoundaries(JacobianMatrix& jac, SolutionVector& res)
+    template< typename ApplyDirichletFunctionType >
+    void evalDirichletBoundaries(ApplyDirichletFunctionType applyDirichlet)
     {
         // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
         // and set the residual to (privar - dirichletvalue)
@@ -146,15 +183,7 @@ public:
                         {
                             const auto pvIdx = bcTypes.eqToDirichletIndex(eqIdx);
                             assert(0 <= pvIdx && pvIdx < numEq);
-
-                            const auto& priVars = this->curElemVolVars()[scvI].priVars();
-                            res[scvI.dofIndex()][eqIdx] = priVars[pvIdx] - dirichletValues[pvIdx];
-                            for (const auto& scvJ : scvs(this->fvGeometry()))
-                            {
-                                jac[scvI.dofIndex()][scvJ.dofIndex()][eqIdx] = 0.0;
-                                if (scvI.indexInElement() == scvJ.indexInElement())
-                                    jac[scvI.dofIndex()][scvI.dofIndex()][eqIdx][pvIdx] = 1.0;
-                            }
+                            applyDirichlet(scvI, dirichletValues, eqIdx, pvIdx);
                         }
                     }
                 }
