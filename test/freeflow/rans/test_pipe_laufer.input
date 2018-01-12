@@ -1,0 +1,26 @@
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 100 # [s]
+
+[Grid]
+Verbosity = true
+Positions0 = 0.0 10.0
+Positions1 = 0.0 0.12345 0.2469
+Cells0 = 16
+Cells1 = 8 8
+Grading1 = 1.4 -1.4
+
+Cells = 0 # TODO Remove this requirement
+
+[Problem]
+Name = test_pipe_laufer # name passed to the output routines
+InletVelocity = 2.5 # [m/s]
+EnableGravity = false
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-5
+
+[Vtk]
+AddVelocity = true
+WriteFaceData = false
