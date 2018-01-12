@@ -30,7 +30,7 @@
 #include <dumux/material/fluidsystems/gasphase.hh>
 #include <dumux/material/components/air.hh>
 
-#include <dumux/freeflow/rans/model.hh>
+#include <dumux/freeflow/rans/zeroeq/model.hh>
 #include <dumux/freeflow/rans/problem.hh>
 #include <dumux/discretization/staggered/freeflow/properties.hh>
 
@@ -41,7 +41,7 @@ class PipeLauferProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, RANS));
+NEW_TYPE_TAG(PipeLauferProblem, INHERITS_FROM(StaggeredFreeFlowModel, ZeroEq));
 
 // the fluid system
 SET_PROP(PipeLauferProblem, FluidSystem)

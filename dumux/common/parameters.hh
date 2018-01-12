@@ -259,6 +259,9 @@ private:
 
         // parameters in the mpfa group
         params["Mpfa.Q"] = "0.0";
+
+        // parameters in the freeflow group
+        params["FreeFlow.EddyViscosityModel"] = "1";
     }
 };
 

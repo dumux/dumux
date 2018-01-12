@@ -17,6 +17,9 @@ Name = test_pipe_laufer # name passed to the output routines
 InletVelocity = 2.5 # [m/s]
 EnableGravity = false
 
+[FreeFlow]
+EddyViscosityModel = 1
+
 [Newton]
 MaxSteps = 10
 MaxRelativeShift = 1e-5

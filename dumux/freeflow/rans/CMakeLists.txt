@@ -1,3 +1,5 @@
+add_subdirectory("zeroeq")
+
 #install headers
 install(FILES
 model.hh

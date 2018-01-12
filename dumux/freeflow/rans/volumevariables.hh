@@ -83,8 +83,15 @@ public:
                 const SubControlVolume& scv)
     {
         ParentType::update(elemSol, problem, element, scv);
-        dynamicEddyViscosity_ = std::max(0.0, scv.dofPosition()[1] * (0.2469 - scv.dofPosition()[1])); // TODO preliminary
+        setDynamicEddyViscosity(0.0);
     };
+
+    /*!
+     * \brief Set the values of the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ within the
+     *        control volume.
+     */
+    void setDynamicEddyViscosity(Scalar value)
+    { dynamicEddyViscosity_ = value; }
 
     /*!
      * \brief Return the dynamic eddy viscosity \f$\mathrm{[Pa s]}\f$ of the flow within the
@@ -110,7 +117,6 @@ private:
     { return *static_cast<const Implementation *>(this); }
 
 protected:
-    FluidState fluidState_;
     Scalar dynamicEddyViscosity_;
 };
 
@@ -155,28 +161,42 @@ public:
                 const Element &element,
                 const SubControlVolume &scv)
     {
-        update(elemSol, problem, element, scv);
+        ParentTypeIsothermal::update(elemSol, problem, element, scv);
+        ParentTypeNonIsothermal::update(elemSol, problem, element, scv);
+        calculateEddyViscosity(elemSol, problem, element, scv);
     }
 
     /*!
-     * \brief Update the fluid state
+     * \brief Calculate the eddy thermal conductivity
+     *
+     * \param elemSol A vector containing all primary variables connected to the element
+     * \param problem The object specifying the problem which ought to
+     *                be simulated
+     * \param element An element which contains part of the control volume
+     * \param scv The sub-control volume
      */
-    static void completeFluidState(const ElementSolutionVector& elemSol,
-                                   const Problem& problem,
-                                   const Element& element,
-                                   const SubControlVolume& scv,
-                                   FluidState& fluidState)
+    void calculateEddyViscosity(const ElementSolutionVector &elemSol,
+                                const Problem &problem,
+                                const Element &element,
+                                const SubControlVolume &scv)
     {
-        ParentTypeIsothermal::completeFluidState(elemSol, problem, element, scv, fluidState);
-        ParentTypeNonIsothermal::completeFluidState(elemSol, problem, element, scv, fluidState);
+        // TODO convert mit Prandtl number etc.
+        eddyThermalConductivity_(ParentTypeIsothermal::dynamicEddyViscosity_());
     }
+
+    /*!
+     * \brief Sets the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
+     *        of the flow phase in the sub-control volume.
+     */
+    void setEddyThermalConductivity(Scalar value)
+    { eddyThermalConductivity_ = value; }
 
     /*!
      * \brief Returns the eddy thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
      *        of the flow phase in the sub-control volume.
      */
     Scalar eddyThermalConductivity() const
-    { return ParentTypeIsothermal::dynamicEddyViscosity_(); }
+    { return eddyThermalConductivity_; }
 
     /*!
      * \brief Returns the effective thermal conductivity \f$\mathrm{[W/(m*K)]}\f$
@@ -187,6 +207,9 @@ public:
         return FluidSystem::thermalConductivity(this->fluidState_, defaultPhaseIdx)
                + eddyThermalConductivity();
     }
+
+protected:
+    Scalar eddyThermalConductivity_;
 };
 }
 
