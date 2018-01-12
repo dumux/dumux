@@ -35,6 +35,7 @@
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/numericdifferentiation.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
+#include <dumux/discretization/fluxstencil.hh>
 
 namespace Dumux {
 
@@ -137,14 +138,16 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
+    using FluxStencil = Dumux::FluxStencil<TypeTag>;
+    static constexpr int maxNeighbors = FluxStencil::maxFluxStencilSize*FVElementGeometry::maxNumElementScvfs;
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
-    static constexpr int maxNeighbors = 4*(2*dim);
 
 public:
 
