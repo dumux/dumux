@@ -42,9 +42,9 @@ namespace Dumux {
 /*!
  * \ingroup Assembly
  * \brief A linear system assembler (residual and Jacobian) for finite volume schemes (box, tpfa, mpfa, ...)
- * \tparam TypeTag the TypeTag
- * \tparam diffMethod the differentiation method to residual compute derivatives
- * \tparam isImplicit if to use an implicit or explicit time discretization
+ * \tparam TypeTag The TypeTag
+ * \tparam diffMethod The differentiation method to residual compute derivatives
+ * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, DiffMethod diffMethod, bool isImplicit = true>
 class FVAssembler
@@ -237,36 +237,43 @@ public:
         occupationPattern.exportIdx(*jacobian_);
     }
 
-    /*!
-     * \brief Resizes the residual
-     */
+    //! Resizes the residual
     void setResidualSize()
     { residual_->resize(numDofs()); }
 
+    //! Returns the number of degrees of freedom
     std::size_t numDofs() const
     { return fvGridGeometry_->numDofs(); }
 
+    //! The problem
     const Problem& problem() const
     { return *problem_; }
 
+    //! The global finite volume geometry
     const FVGridGeometry& fvGridGeometry() const
     { return *fvGridGeometry_; }
 
+    //! The gridview
     const GridView& gridView() const
     { return fvGridGeometry().gridView(); }
 
+    //! The global grid variables
     GridVariables& gridVariables()
     { return *gridVariables_; }
 
+    //! The global grid variables
     const GridVariables& gridVariables() const
     { return *gridVariables_; }
 
+    //! The jacobian matrix
     JacobianMatrix& jacobian()
     { return *jacobian_; }
 
+    //! The residual vector (rhs)
     SolutionVector& residual()
     { return *residual_; }
 
+    //! The solution of the previous time step
     const SolutionVector& prevSol() const
     { return *prevSol_; }
 

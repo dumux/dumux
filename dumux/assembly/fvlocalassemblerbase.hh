@@ -19,11 +19,7 @@
 /*!
  * \file
  * \ingroup Assembly
- * \ingroup CCDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \copydoc Dumux::FVLocalAssemblerBase
  */
 #ifndef DUMUX_FV_LOCAL_ASSEMBLER_BASE_HH
 #define DUMUX_FV_LOCAL_ASSEMBLER_BASE_HH
@@ -42,10 +38,10 @@ namespace Dumux {
 
 /*!
  * \ingroup Assembly
- * \ingroup CCDiscretization
  * \brief A base class for all local assemblers
- * \tparam TypeTag the TypeTag
- * \tparam Assembler the assembler type
+ * \tparam TypeTag The TypeTag
+ * \tparam Assembler The assembler type
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class FVLocalAssemblerBase
@@ -69,6 +65,9 @@ class FVLocalAssemblerBase
 
 public:
 
+    /*!
+     * \brief The constructor
+     */
     explicit FVLocalAssemblerBase(const Assembler& assembler,
                                   const Element& element,
                                   const SolutionVector& curSol)
@@ -83,6 +82,10 @@ public:
     , elementIsGhost_((element.partitionType() == Dune::GhostEntity))
     {}
 
+    /*!
+     * \brief Convenience function to evaluate the complete local residual for the current element. Automatically chooses the the appropriate
+     *        element volume variables.
+     */
     auto evalLocalResidual() const
     {
         if(this->assembler().isStationaryProblem() && !isImplicit())
@@ -98,7 +101,10 @@ public:
                             : evalLocalResidual(prevElemVolVars());
     }
 
-
+    /*!
+     * \brief Evaluates the complete local residual for the current element.
+     * \param elemVolVars The element volume variables
+     */
     auto evalLocalResidual(const ElementVolumeVariables& elemVolVars) const
     {
         if (!assembler().isStationaryProblem())
@@ -111,28 +117,55 @@ public:
             return evalLocalFluxAndSourceResidual(elemVolVars);
     }
 
+    /*!
+     * \brief Convenience function to evaluate the flux and source terms (i.e, the terms without a time derivative)
+     *        of the local residual for the current element. Automatically chooses the the appropriate
+     *        element volume variables.
+     */
     auto evalLocalFluxAndSourceResidual() const
     {
         return isImplicit() ? evalLocalFluxAndSourceResidual(curElemVolVars())
                             : evalLocalFluxAndSourceResidual(prevElemVolVars());
      }
 
+    /*!
+     * \brief Evaluates the flux and source terms (i.e, the terms without a time derivative)
+     *        of the local residual for the current element.
+     *
+     * \param elemVolVars The element volume variables
+     */
     auto evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
         return localResidual_.evalFluxSource(element_, fvGeometry_, elemVolVars, elemFluxVarsCache_, elemBcTypes_);
     }
 
+    /*!
+     * \brief Convenience function to evaluate storage term (i.e, the term with a time derivative)
+     *        of the local residual for the current element. Automatically chooses the the appropriate
+     *        element volume variables.
+     */
     auto evalLocalStorageResidual() const
     {
         return localResidual_.evalStorage(element_, fvGeometry_, prevElemVolVars_, curElemVolVars_);
     }
 
-    auto evalFluxResidual(const Element& neigbor,
-                                         const SubControlVolumeFace& scvf) const
+    /*!
+     * \brief Evaluates the flux terms of the local residual for the neighboring element.
+     *
+     * \param neighbor The neighboring element
+     * \param scvf The sub control volume face
+     */
+     //TODO: put to CC ?
+    auto evalFluxResidual(const Element& neighbor,
+                          const SubControlVolumeFace& scvf) const
     {
-        return localResidual_.evalFlux(problem(), neigbor, fvGeometry_, curElemVolVars_, elemFluxVarsCache_, scvf);
+        return localResidual_.evalFlux(problem(), neighbor, fvGeometry_, curElemVolVars_, elemFluxVarsCache_, scvf);
     }
 
+    /*!
+     * \brief Convenience function bind and prepare all relevant variables required for the
+     *        evaluation of the local residual.
+     */
     void bindLocalViews()
     {
         // get some references for convenience
@@ -162,57 +195,75 @@ public:
         }
     }
 
+    //! The problem
     const Problem& problem() const
     { return assembler_.problem(); }
 
+    //! The assembler
     const Assembler& assembler() const
     { return assembler_; }
 
+    //! The current element
     const Element& element() const
     { return element_; }
 
+    //! Returns if element is a ghost entity
     bool elementIsGhost() const
     { return elementIsGhost_; }
 
+    //! The current solution
     const SolutionVector& curSol() const
     { return curSol_; }
 
+    //! The global finite volume geometry
     FVElementGeometry& fvGeometry()
     { return fvGeometry_; }
 
+    //! The current element volume variables
     ElementVolumeVariables& curElemVolVars()
     { return curElemVolVars_; }
 
+    //! The element volume variables of the provious time step
     ElementVolumeVariables& prevElemVolVars()
     { return prevElemVolVars_; }
 
+    //! The element flux variables cache
     ElementFluxVariablesCache& elemFluxVarsCache()
     { return elemFluxVarsCache_; }
 
+    //! The local residual for the current element
     LocalResidual& localResidual()
     { return localResidual_; }
 
+    //! The element's boundary types TODO: only for box?
     ElementBoundaryTypes& elemBcTypes()
     { return elemBcTypes_; }
 
+    //! The finite volume geometry
     const FVElementGeometry& fvGeometry() const
     { return fvGeometry_; }
 
+    //! The current element volume variables
     const ElementVolumeVariables& curElemVolVars() const
     { return curElemVolVars_; }
 
+    //! The element volume variables of the provious time step
     const ElementVolumeVariables& prevElemVolVars() const
     { return prevElemVolVars_; }
 
+    //! The element flux variables cache
     const ElementFluxVariablesCache& elemFluxVarsCache() const
     { return elemFluxVarsCache_; }
 
+    //! The element's boundary types TODO: only for box?
     const ElementBoundaryTypes& elemBcTypes() const
     { return elemBcTypes_; }
 
+    //! The local residual for the current element
     const LocalResidual& localResidual() const
     { return localResidual_; }
 
+    // TODO: should this really be public?
     template<class T = TypeTag, typename std::enable_if_t<!GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), int> = 0>
     VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
     { return elemVolVars[scv]; }

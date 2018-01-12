@@ -66,11 +66,11 @@ public:
 
     /*!
      * \brief Computes the derivative of a function with repect to a function parameter
-     * \param function the function to derive
-     * \param x0 the parameter at which the derivative is ought to be evaluated
-     * \param partialDerivative the partial derivative (output)
-     * \param fx0 the result of the function evaluated at x0
-     * \param eps the numeric epsilon used in the differentiation
+     * \param function The function to derive
+     * \param x0 The parameter at which the derivative is ought to be evaluated
+     * \param derivative The partial derivative (output)
+     * \param fx0 The result of the function evaluated at x0
+     * \param eps The numeric epsilon used in the differentiation
      */
     template<class Function, class Scalar, class FunctionEvalType>
     static void partialDerivative(const Function& function, Scalar x0,

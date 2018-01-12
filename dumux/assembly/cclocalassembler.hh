@@ -21,9 +21,6 @@
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
  */
 #ifndef DUMUX_CC_LOCAL_ASSEMBLER_HH
 #define DUMUX_CC_LOCAL_ASSEMBLER_HH
@@ -37,17 +34,18 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/numericdifferentiation.hh>
-
-#include "fvlocalassemblerbase.hh"
+#include <dumux/assembly/fvlocalassemblerbase.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief A base class for all local assemblers
- * \tparam TypeTag the TypeTag
- * \tparam Assembler the assembler type
+ * \brief A base class for all local cell-centered assemblers
+ * \tparam TypeTag The TypeTag
+ * \tparam Assembler The assembler type
+ * \tparam Implementation The actual implementation
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
@@ -95,12 +93,17 @@ public:
         res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
     }
 
-
+    /*!
+     * \brief Evaluates the flux and source terms (i.e, the terms without a time derivative) of the local residual
+     */
     LocalResidualValues evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
         return this->evalLocalFluxAndSourceResidual(elemVolVars)[0];
     }
 
+    /*!
+     * \brief Evaluates the storage term (i.e, the term with a time derivative) of the local residual
+     */
     LocalResidualValues evalLocalStorageResidual() const
     {
         return this->evalLocalStorageResidual()[0];
@@ -111,9 +114,9 @@ public:
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \tparam TypeTag The TypeTag
+ * \tparam DM The differentiation method to residual compute derivatives
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
 class CCLocalAssembler;

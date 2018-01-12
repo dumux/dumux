@@ -31,8 +31,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/assembly/diffmethod.hh>
-
-#include "fvlocalassemblerbase.hh"
+#include <dumux/assembly/fvlocalassemblerbase.hh>
 
 namespace Dumux {
 
@@ -40,9 +39,10 @@ namespace Dumux {
  * \ingroup Assembly
  * \ingroup BoxDiscretization
  * \brief A base class for all local box assemblers
- * \tparam TypeTag the TypeTag
- * \tparam Assembler the assembler type
- * \tparam Assembler The acutal Implementation
+ * \tparam TypeTag The TypeTag
+ * \tparam Assembler The assembler type
+ * \tparam Implementation The actual implementation
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, class Implementation, bool implicit>
 class BoxLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
@@ -107,17 +107,25 @@ public:
         // TODO: Dirichlet required here?
     }
 
-
+    /*!
+     * \brief Evaluates the flux and source terms (i.e, the terms without a time derivative) of the local residual
+     */
     auto evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
         return this->evalLocalFluxAndSourceResidual(elemVolVars);
     }
 
+    /*!
+     * \brief Evaluates the storage term (i.e, the term with a time derivative) of the local residual
+     */
     auto evalLocalStorageResidual() const
     {
         return this->evalLocalStorageResidual();
     }
 
+    /*!
+     * \brief Evaluates Dirichlet boundaries
+     */
     void evalDirichletBoundaries(JacobianMatrix& jac, SolutionVector& res)
     {
         // enforce Dirichlet boundaries by overwriting partial derivatives with 1 or 0
@@ -159,10 +167,10 @@ public:
 /*!
  * \ingroup Assembly
  * \ingroup BoxDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (box method)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \brief An assembler for Jacobian and residual contribution per element (box methods)
+ * \tparam TypeTag The TypeTag
+ * \tparam DM The differentiation method to residual compute derivatives
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
 template<class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
 class BoxLocalAssembler;
