@@ -377,16 +377,13 @@ public:
                 NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals);
 
                 // update the global stiffness matrix with the current partial derivatives
-                for (auto&& scvJ : scvs(fvGeometry))
+                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
                 {
-                      for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                      {
-                          // A[i][col][eqIdx][pvIdx] is the rate of change of
-                          // the residual of equation 'eqIdx' at dof 'i'
-                          // depending on the primary variable 'pvIdx' at dof
-                          // 'col'.
-                          A[scvJ.dofIndex()][dofIdx][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
-                      }
+                    // A[i][col][eqIdx][pvIdx] is the rate of change of
+                    // the residual of equation 'eqIdx' at dof 'i'
+                    // depending on the primary variable 'pvIdx' at dof
+                    // 'col'.
+                    A[dofIdx][dofIdx][eqIdx][pvIdx] += partialDerivs[scv.indexInElement()][eqIdx];
                 }
 
                 // restore the original state of the scv's volume variables
@@ -455,6 +452,7 @@ public:
 
             // derivative of this scv residual w.r.t the d.o.f. of the same scv (because of mass lumping)
             // only if the problem is instationary we add derivative of storage term
+            // TODO if e.g. porosity depends on all dofs in the element, we would have off-diagonal matrix entries!?
             if (!this->assembler().isStationaryProblem())
                 this->localResidual().addStorageDerivatives(A[dofIdx][dofIdx],
                                                             problem,
