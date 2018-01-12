@@ -362,6 +362,9 @@ public:
     const LocalResidual& localResidual() const
     { return localResidual_; }
 
+    bool isStationaryProblem() const
+    { return stationary_; }
+
 private:
     //! reset the residual to 0.0
     void resetResidual_()
