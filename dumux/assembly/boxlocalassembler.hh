@@ -144,22 +144,6 @@ public:
     }
 
     /*!
-     * \brief Evaluates the flux and source terms (i.e, the terms without a time derivative) of the local residual
-     */
-    auto evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
-    {
-        return this->evalLocalFluxAndSourceResidual(elemVolVars);
-    }
-
-    /*!
-     * \brief Evaluates the storage term (i.e, the term with a time derivative) of the local residual
-     */
-    auto evalLocalStorageResidual() const
-    {
-        return this->evalLocalStorageResidual();
-    }
-
-    /*!
      * \brief Evaluates Dirichlet boundaries
      */
     template< typename ApplyDirichletFunctionType >
@@ -345,15 +329,11 @@ public:
      */
     auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
-        if (this->assembler().isStationaryProblem())
-            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
-
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
         const auto& curSol = this->curSol();
         auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
@@ -564,7 +544,6 @@ public:
         const auto& fvGeometry = this->fvGeometry();
         const auto& problem = this->problem();
         auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
@@ -586,16 +565,12 @@ public:
 
             // derivative of this scv residual w.r.t the d.o.f. of the same scv (because of mass lumping)
             // only if the problem is instationary we add derivative of storage term
-            if (!this->assembler().isStationaryProblem())
-                this->localResidual().addStorageDerivatives(A[dofIdx][dofIdx],
-                                                            problem,
-                                                            element,
-                                                            fvGeometry,
-                                                            volVars,
-                                                            scv);
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
-
+            this->localResidual().addStorageDerivatives(A[dofIdx][dofIdx],
+                                                        problem,
+                                                        element,
+                                                        fvGeometry,
+                                                        volVars,
+                                                        scv);
         }
 
         return origResiduals;

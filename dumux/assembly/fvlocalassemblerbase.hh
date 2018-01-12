@@ -150,19 +150,6 @@ public:
     }
 
     /*!
-     * \brief Evaluates the flux terms of the local residual for the neighboring element.
-     *
-     * \param neighbor The neighboring element
-     * \param scvf The sub control volume face
-     */
-     //TODO: put to CC ?
-    auto evalFluxResidual(const Element& neighbor,
-                          const SubControlVolumeFace& scvf) const
-    {
-        return localResidual_.evalFlux(problem(), neighbor, fvGeometry_, curElemVolVars_, elemFluxVarsCache_, scvf);
-    }
-
-    /*!
      * \brief Convenience function bind and prepare all relevant variables required for the
      *        evaluation of the local residual.
      */
@@ -235,7 +222,7 @@ public:
     LocalResidual& localResidual()
     { return localResidual_; }
 
-    //! The element's boundary types TODO: only for box?
+    //! The element's boundary types
     ElementBoundaryTypes& elemBcTypes()
     { return elemBcTypes_; }
 
@@ -255,22 +242,13 @@ public:
     const ElementFluxVariablesCache& elemFluxVarsCache() const
     { return elemFluxVarsCache_; }
 
-    //! The element's boundary types TODO: only for box?
+    //! The element's boundary types
     const ElementBoundaryTypes& elemBcTypes() const
     { return elemBcTypes_; }
 
     //! The local residual for the current element
     const LocalResidual& localResidual() const
     { return localResidual_; }
-
-    // TODO: should this really be public?
-    template<class T = TypeTag, typename std::enable_if_t<!GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), int> = 0>
-    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return elemVolVars[scv]; }
-
-    template<class T = TypeTag, typename std::enable_if_t<GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), int> = 0>
-    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return gridVolVars.volVars(scv); }
 
     constexpr bool isImplicit() const
     { return implicit; }
@@ -281,6 +259,14 @@ protected:
 
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
+
+    template<class T = TypeTag, typename std::enable_if_t<!GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), int> = 0>
+    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return elemVolVars[scv]; }
+
+    template<class T = TypeTag, typename std::enable_if_t<GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), int> = 0>
+    VolumeVariables& getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
+    { return gridVolVars.volVars(scv); }
 
 private:
 

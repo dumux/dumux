@@ -93,22 +93,6 @@ public:
         const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
         res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
     }
-
-    /*!
-     * \brief Evaluates the flux and source terms (i.e, the terms without a time derivative) of the local residual
-     */
-    LocalResidualValues evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
-    {
-        return this->evalLocalFluxAndSourceResidual(elemVolVars)[0];
-    }
-
-    /*!
-     * \brief Evaluates the storage term (i.e, the term with a time derivative) of the local residual
-     */
-    LocalResidualValues evalLocalStorageResidual() const
-    {
-        return this->evalLocalStorageResidual()[0];
-    }
 };
 
 /*!
@@ -188,6 +172,16 @@ public:
         Residuals origResiduals(numNeighbors + 1); origResiduals = 0.0;
         origResiduals[0] = this->evalLocalResidual()[0];
 
+        // lambda for convenient evaluation of the fluxes across scvfs in the neighbors
+        auto evalNeighborFlux = [&] (const auto& neighbor, const auto& scvf)
+        {
+            return this->localResidual().evalFlux(this->problem(),
+                                                  neighbor,
+                                                  this->fvGeometry(),
+                                                  this->curElemVolVars(),
+                                                  this->elemFluxVarsCache(), scvf);
+        };
+
         // get the elements in which we need to evaluate the fluxes
         // and calculate these in the undeflected state
         unsigned int j = 1;
@@ -195,7 +189,7 @@ public:
         {
             neighborElements[j-1] = fvGridGeometry.element(dataJ.globalJ);
             for (const auto scvfIdx : dataJ.scvfsJ)
-                origResiduals[j] += this->evalFluxResidual(neighborElements[j-1], fvGeometry.scvf(scvfIdx));
+                origResiduals[j] += evalNeighborFlux(neighborElements[j-1], fvGeometry.scvf(scvfIdx));
 
             ++j;
         }
@@ -245,7 +239,7 @@ public:
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                     for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
-                        partialDerivsTmp[k+1] += this->evalFluxResidual(neighborElements[k], fvGeometry.scvf(scvfIdx));
+                        partialDerivsTmp[k+1] += evalNeighborFlux(neighborElements[k], fvGeometry.scvf(scvfIdx));
 
                 return partialDerivsTmp;
             };
@@ -303,7 +297,7 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fal
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
@@ -323,9 +317,7 @@ public:
             DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
 
         // assemble the undeflected residual
-        auto residual = this->elementIsGhost() ? LocalResidualValues(0.0) : this->evalLocalFluxAndSourceResidual();
-        const auto storageResidual = this->elementIsGhost() ? LocalResidualValues(0.0) : this->evalLocalStorageResidual();
-        residual += storageResidual;
+        const auto residual = this->evalLocalResidual()[0];
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -366,7 +358,7 @@ public:
                 // the residual with the deflected primary variables
                 elemSol[0][pvIdx] = priVar;
                 curVolVars.update(elemSol, this->problem(), element, scv);
-                return this->evalLocalStorageResidual();
+                return this->evalLocalStorageResidual()[0];
             };
 
             // for non-ghosts compute the derivative numerically
