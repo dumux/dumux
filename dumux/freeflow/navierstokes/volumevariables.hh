@@ -190,6 +190,13 @@ public:
     { return fluidState_.viscosity(defaultPhaseIdx); }
 
     /*!
+     * \brief Return the effective dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
+     *        control volume.
+     */
+    Scalar effectiveViscosity(int phaseIdx = 0) const
+    { return viscosity(defaultPhaseIdx); }
+
+    /*!
      * \brief Return the fluid state of the control volume.
      */
     const FluidState &fluidState() const
