@@ -53,9 +53,9 @@ class BoxLocalResidual : public FVLocalResidual<TypeTag>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
 
 public:
+    using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
 
     //! evaluate flux residuals for one sub control volume face and add to residual

@@ -86,6 +86,12 @@ public:
     friend inline ElementVolumeVariables localView(const BoxGridVolumeVariables& global)
     { return ElementVolumeVariables(global); }
 
+    const VolumeVariables& volVars(const SubControlVolume& scv) const
+    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
+
+    VolumeVariables& volVars(const SubControlVolume& scv)
+    { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
+
     const VolumeVariables& volVars(const IndexType eIdx, const IndexType scvIdx) const
     { return volumeVariables_[eIdx][scvIdx]; }
 

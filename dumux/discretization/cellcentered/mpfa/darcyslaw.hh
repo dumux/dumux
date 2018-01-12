@@ -94,6 +94,9 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         static constexpr int dimWorld = GridView::dimensionworld;
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
+        using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+        using Stencil = typename DualGridNodalIndexSet::GridStencilType;
+
         using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
@@ -109,7 +112,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
         using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
-        using PrimaryIvStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
@@ -117,7 +119,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
         using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
-        using SecondaryIvStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
     public:
         // export the filler type
@@ -138,7 +139,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                              const SubControlVolumeFace &scvf)
         {
             switchFluxSign_ = localFaceData.isOutside();
-            primaryStencil_ = &iv.stencil();
+            stencil_ = &iv.stencil();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
                 primaryPj_[pIdx] = &dataHandle.pressures(pIdx);
@@ -191,7 +192,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                              const SubControlVolumeFace &scvf)
         {
             switchFluxSign_ = localFaceData.isOutside();
-            secondaryStencil_ = &iv.stencil();
+            stencil_ = &iv.stencil();
 
             for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
                 secondaryPj_[pIdx] = &dataHandle.pressures(pIdx);
@@ -229,10 +230,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         }
 
         //! The stencil corresponding to the transmissibilities (primary type)
-        const PrimaryIvStencil& advectionStencilPrimaryIv() const { return *primaryStencil_; }
-
-        //! The stencil corresponding to the transmissibilities (secondary type)
-        const SecondaryIvStencil& advectionStencilSecondaryIv() const { return *secondaryStencil_; }
+        const Stencil& advectionStencil() const { return *stencil_; }
 
         //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (primary type)
         const PrimaryIvTij& advectionTijPrimaryIv() const { return *primaryTij_; }
@@ -259,8 +257,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         bool switchFluxSign_;
 
         //! The stencil, i.e. the grid indices j
-        const PrimaryIvStencil* primaryStencil_;
-        const SecondaryIvStencil* secondaryStencil_;
+        const Stencil* stencil_;
 
         //! The transmissibilities such that f = Tij*pj
         const PrimaryIvTij* primaryTij_;

@@ -25,8 +25,7 @@
 #ifndef DUMUX_CC_LOCAL_RESIDUAL_HH
 #define DUMUX_CC_LOCAL_RESIDUAL_HH
 
-#include <dune/istl/matrix.hh>
-
+#include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/assembly/fvlocalresidual.hh>
 
@@ -43,7 +42,6 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using ParentType = FVLocalResidual<TypeTag>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -52,6 +50,7 @@ class CCLocalResidual : public FVLocalResidual<TypeTag>
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
 
 public:
+    using ElementResidualVector = typename ParentType::ElementResidualVector;
     using ParentType::ParentType;
 
     //! evaluate the flux residual for a sub control volume face and add to residual

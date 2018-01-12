@@ -88,6 +88,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     //! The cache used in conjunction with the mpfa Fourier's Law
     class MpfaFouriersLawCache
     {
+        using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+        using Stencil = typename DualGridNodalIndexSet::GridStencilType;
+
         using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
@@ -103,7 +106,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
         using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
         using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
-        using PrimaryIvStencil = typename PrimaryInteractionVolume::Traits::Stencil;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
@@ -111,7 +113,6 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
         using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
         using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
-        using SecondaryIvStencil = typename SecondaryInteractionVolume::Traits::Stencil;
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
@@ -134,7 +135,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                                   const PrimaryIvDataHandle& dataHandle,
                                   const SubControlVolumeFace &scvf)
         {
-            primaryStencil_ = &iv.stencil();
+            stencil_ = &iv.stencil();
             switchFluxSign_ = localFaceData.isOutside();
 
             // store pointer to the temperature vector of this iv
@@ -163,7 +164,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
                                   const SecondaryIvDataHandle& dataHandle,
                                   const SubControlVolumeFace &scvf)
         {
-            secondaryStencil_ = &iv.stencil();
+            stencil_ = &iv.stencil();
             switchFluxSign_ = localFaceData.isOutside();
 
             // store pointer to the temperature vector of this iv
@@ -184,10 +185,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const SecondaryIvTij& heatConductionTijSecondaryIv() const { return *secondaryTij_; }
 
         //! The stencil corresponding to the transmissibilities (primary type)
-        const PrimaryIvStencil& heatConductionStencilPrimaryIv() const { return *primaryStencil_; }
-
-        //! The stencil corresponding to the transmissibilities (secondary type)
-        const SecondaryIvStencil& heatConductionStencilSecondaryIv() const { return *secondaryStencil_; }
+        const Stencil& heatConductionStencil() const { return *stencil_; }
 
         //! The cell (& Dirichlet) temperatures within this interaction volume (primary type)
         const PrimaryIvVector& temperaturesPrimaryIv() const { return *primaryTj_; }
@@ -205,8 +203,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         bool switchFluxSign_;
 
         //! The stencil, i.e. the grid indices j
-        const PrimaryIvStencil* primaryStencil_;
-        const SecondaryIvStencil* secondaryStencil_;
+        const Stencil* stencil_;
 
         //! The transmissibilities such that f = Tij*Tj
         const PrimaryIvTij* primaryTij_;

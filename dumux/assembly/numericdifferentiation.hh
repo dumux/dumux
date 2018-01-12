@@ -1,0 +1,126 @@
+// -*- mode: C++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*-
+// vi: set et ts=4 sw=4 sts=4:
+/****************************************************************************
+ *   See the file COPYING for full copying permissions.                      *
+ *                                                                           *
+ *   This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation, either version 2 of the License, or       *
+ *   (at your option) any later version.                                     *
+ *                                                                           *
+ *   This program is distributed in the hope that it will be useful,         *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of          *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the            *
+ *   GNU General Public License for more details.                            *
+ *                                                                           *
+ *   You should have received a copy of the GNU General Public License       *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ *****************************************************************************/
+/*!
+ * \file
+ * \ingroup Assembly
+ * \brief A class for numeric differentiation
+ *
+ */
+#ifndef DUMUX_NUMERIC_DIFFERENTIATION_HH
+#define DUMUX_NUMERIC_DIFFERENTIATION_HH
+
+#include <cmath>
+#include <limits>
+#include <dumux/common/parameters.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup Assembly
+ * \brief A class for numeric differentiation with respect to a scalar parameter
+ */
+class NumericDifferentiation
+{
+public:
+
+    /*!
+     * \brief Computes the epsilon used for numeric differentiation
+     * \param value The value of the variable with respect to which we are differentiating
+     */
+    template<class Scalar>
+    static Scalar epsilon(const Scalar value)
+    {
+        static constexpr Scalar baseEps = 1e-10;
+        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
+        // the epsilon value used for the numeric differentiation is
+        // now scaled by the absolute value of the primary variable...
+        using std::abs;
+        return baseEps*(abs(value) + 1.0);
+    }
+
+    /*!
+     * \brief Computes the derivative of a function with repect to a function parameter
+     * \note Overload using default epsilon computation
+     */
+    template<class Function, class Scalar, class FunctionEvalType>
+    static void partialDerivative(const Function& function, Scalar x0,
+                                  FunctionEvalType& derivative,
+                                  const FunctionEvalType& fx0)
+    { partialDerivative(function, x0, derivative, fx0, epsilon(x0)); }
+
+    /*!
+     * \brief Computes the derivative of a function with repect to a function parameter
+     * \param function The function to derive
+     * \param x0 The parameter at which the derivative is ought to be evaluated
+     * \param derivative The partial derivative (output)
+     * \param fx0 The result of the function evaluated at x0
+     * \param eps The numeric epsilon used in the differentiation
+     */
+    template<class Function, class Scalar, class FunctionEvalType>
+    static void partialDerivative(const Function& function, Scalar x0,
+                                  FunctionEvalType& derivative,
+                                  const FunctionEvalType& fx0,
+                                  const Scalar eps)
+    {
+        static const int numericDifferenceMethod = numDiffMethod();
+
+        Scalar delta = 0.0;
+        // we are using forward or central differences, i.e. we need to calculate f(x + \epsilon)
+        if (numericDifferenceMethod >= 0)
+        {
+            delta += eps;
+            // calculate the function evaluated with the deflected variable
+            derivative = function(x0 + eps);
+        }
+
+        // we are using backward differences,
+        // i.e. we don't need to calculate f(x + \epsilon)
+        // we can recycle the (possibly cached) f(x)
+        else derivative = fx0;
+
+        // we are using backward or central differences,
+        // i.e. we need to calculate f(x - \epsilon)
+        if (numericDifferenceMethod <= 0)
+        {
+            delta += eps;
+            // subtract the function evaluated with the deflected variable
+            derivative -= function(x0 - eps);
+        }
+
+        // we are using forward differences,
+        // i.e. we don't need to calculate f(x - \epsilon)
+        // we can recycle the (possibly cached) f(x)
+        else derivative -= fx0;
+
+        // divide difference in residuals by the magnitude of the
+        // deflections between the two function evaluation
+        derivative /= delta;
+    }
+
+    static int numDiffMethod()
+    {
+        static const int numericDifferenceMethod
+            = getParam<int>("Assembly.NumericDifferenceMethod", 1);
+        return numericDifferenceMethod;
+    }
+};
+
+} // end namespace Dumux
+
+#endif

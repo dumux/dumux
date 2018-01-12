@@ -21,34 +21,89 @@
  * \ingroup Assembly
  * \ingroup CCDiscretization
  * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
  */
 #ifndef DUMUX_CC_LOCAL_ASSEMBLER_HH
 #define DUMUX_CC_LOCAL_ASSEMBLER_HH
 
+#include <dune/common/reservedvector.hh>
 #include <dune/grid/common/gridenums.hh> // for GhostEntity
 #include <dune/istl/matrixindexset.hh>
-#include <dune/istl/bvector.hh>
 
+#include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/assembly/diffmethod.hh>
+#include <dumux/assembly/numericdifferentiation.hh>
+#include <dumux/assembly/fvlocalassemblerbase.hh>
+#include <dumux/discretization/fluxstencil.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
- * \tparam TypeTag the TypeTag
- * \tparam DM the differentiation method to residual compute derivatives
- * \tparam implicit if to use an implicit or explicit time discretization
+ * \brief A base class for all local cell-centered assemblers
+ * \tparam TypeTag The TypeTag
+ * \tparam Assembler The assembler type
+ * \tparam Implementation The actual implementation
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag,
-         DiffMethod DM = DiffMethod::numeric,
-         bool implicit = true>
+template<class TypeTag, class Assembler, class Implementation, bool implicit>
+class CCLocalAssemblerBase : public FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>
+{
+    using ParentType = FVLocalAssemblerBase<TypeTag, Assembler, Implementation, implicit>;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+
+public:
+
+    using ParentType::ParentType;
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix. The element residual is written into the right hand side.
+     */
+    void assembleJacobianAndResidual(JacobianMatrix& jac, SolutionVector& res, GridVariables& gridVariables)
+    {
+        this->asImp_().bindLocalViews();
+        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        res[globalI] = this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+    }
+
+    /*!
+     * \brief Computes the derivatives with respect to the given element and adds them
+     *        to the global matrix.
+     */
+    void assembleJacobian(JacobianMatrix& jac, GridVariables& gridVariables)
+    {
+        this->asImp_().bindLocalViews();
+        this->asImp_().assembleJacobianAndResidualImpl(jac, gridVariables); // forward to the internal implementation
+    }
+
+    /*!
+     * \brief Assemble the residual only
+     */
+    void assembleResidual(SolutionVector& res)
+    {
+        this->asImp_().bindLocalViews();
+        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        res[globalI] = this->asImp_().evalLocalResidual()[0]; // forward to the internal implementation
+    }
+};
+
+/*!
+ * \ingroup Assembly
+ * \ingroup CCDiscretization
+ * \brief An assembler for Jacobian and residual contribution per element (cell-centered methods)
+ * \tparam TypeTag The TypeTag
+ * \tparam DM The differentiation method to residual compute derivatives
+ * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ */
+template<class TypeTag, class Assembler, DiffMethod DM = DiffMethod::numeric, bool implicit = true>
 class CCLocalAssembler;
 
 /*!
@@ -56,145 +111,31 @@ class CCLocalAssembler;
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using numeric differentiation and implicit time discretization
  */
-template<class TypeTag>
-class CCLocalAssembler<TypeTag,
-                       DiffMethod::numeric,
-                       /*implicit=*/true>
+template<class TypeTag, class Assembler>
+class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/true>
+: public CCLocalAssemblerBase<TypeTag, Assembler,
+                              CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>, true >
 {
+    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, true>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
+    using FluxStencil = Dumux::FluxStencil<TypeTag>;
+    static constexpr int maxNeighbors = FluxStencil::maxFluxStencilSize*FVElementGeometry::maxNumElementScvfs;
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
 
 public:
 
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix. The element residual is written into the right hand side.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Assemble the residual only
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, element, curSol);
-    }
-
-    /*!
-     * \brief Computes the epsilon used for numeric differentiation
-     *        for a given value of a primary variable.
-     *
-     * \param priVar The value of the primary variable
-     */
-    static Scalar numericEpsilon(const Scalar priVar)
-    {
-        // define the base epsilon as the geometric mean of 1 and the
-        // resolution of the scalar type. E.g. for standard 64 bit
-        // floating point values, the resolution is about 10^-16 and
-        // the base epsilon is thus approximately 10^-8.
-        /*
-        static const Scalar baseEps
-            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
-        */
-        static const Scalar baseEps = 1e-10;
-        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
-        // the epsilon value used for the numeric differentiation is
-        // now scaled by the absolute value of the primary variable...
-        return baseEps*(std::abs(priVar) + 1.0);
-    }
-
-private:
-    /*!
-     * \brief Computes the residual
-     *
-     * \return The element residual at the current solution.
-     */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler,
-                                 const Element& element, const SolutionVector& curSol)
-    {
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-        if (isGhost) return NumEqVector(0.0);
-
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
-
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bind(element, fvGeometry, curSol);
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-
-        // for compatibility with box models
-        ElementBoundaryTypes elemBcTypes;
-
-        // the actual element's current residual
-        NumEqVector residual(0.0);
-        if (localResidual.isStationary())
-        {
-            residual = localResidual.eval(problem,
-                                          element,
-                                          fvGeometry,
-                                          curElemVolVars,
-                                          elemBcTypes,
-                                          elemFluxVarsCache)[0];
-        }
-        else
-        {
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-            residual = localResidual.eval(problem,
-                                          element,
-                                          fvGeometry,
-                                          prevElemVolVars,
-                                          curElemVolVars,
-                                          elemBcTypes,
-                                          elemFluxVarsCache)[0];
-        }
-
-        return residual;
-    }
+    using ParentType::ParentType;
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -202,117 +143,64 @@ private:
      *
      * \return The element residual at the current solution.
      */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler, JacobianMatrix& A,
-                                 const Element& element, const SolutionVector& curSol)
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
-        const auto& connectivityMap = fvGridGeometry.connectivityMap();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
-
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bind(element, fvGeometry, curSol);
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-
-        // the global dof of the actual element
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
-        ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
-
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-        // is the local residual stationary?
-        const bool isStationary = localResidual.isStationary();
-
-        // the actual element's current residual
-        NumEqVector residual(0.0);
-        if (!isGhost)
-        {
-            if (isStationary)
-            {
-                residual = localResidual.eval(problem,
-                                              element,
-                                              fvGeometry,
-                                              curElemVolVars,
-                                              elemBcTypes,
-                                              elemFluxVarsCache)[0];
-            }
-            else
-            {
-                prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-                residual = localResidual.eval(problem,
-                                              element,
-                                              fvGeometry,
-                                              prevElemVolVars,
-                                              curElemVolVars,
-                                              elemBcTypes,
-                                              elemFluxVarsCache)[0];
-            }
-        }
-
-
-        // TODO Do we really need this??????????
-        // this->model_().updatePVWeights(fvGeometry);
-
         //////////////////////////////////////////////////////////////////////////////////////////////////
-        //                                                                                              //
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
         // neighboring elements we do so by computing the derivatives of the fluxes which depend on the //
         // actual element. In the actual element we evaluate the derivative of the entire residual.     //
-        //                                                                                              //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        static const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        static const int numericDifferenceMethod = getParamFromGroup<int>(group, "Implicit.NumericDifferenceMethod");
+        // get some aliases for convenience
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& fvGridGeometry = this->assembler().fvGridGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get stencil informations
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto& connectivityMap = fvGridGeometry.connectivityMap();
         const auto numNeighbors = connectivityMap[globalI].size();
 
         // container to store the neighboring elements
-        std::vector<Element> neighborElements;
-        neighborElements.reserve(numNeighbors);
+        Dune::ReservedVector<Element, maxNeighbors+1> neighborElements;
+        neighborElements.resize(numNeighbors);
+
+        // assemble the undeflected residual
+        using Residuals = ReservedBlockVector<LocalResidualValues, maxNeighbors+1>;
+        Residuals origResiduals(numNeighbors + 1); origResiduals = 0.0;
+        origResiduals[0] = this->evalLocalResidual()[0];
+
+        // lambda for convenient evaluation of the fluxes across scvfs in the neighbors
+        auto evalNeighborFlux = [&] (const auto& neighbor, const auto& scvf)
+        {
+            return this->localResidual().evalFlux(this->problem(),
+                                                  neighbor,
+                                                  this->fvGeometry(),
+                                                  this->curElemVolVars(),
+                                                  this->elemFluxVarsCache(), scvf);
+        };
 
         // get the elements in which we need to evaluate the fluxes
         // and calculate these in the undeflected state
-        Dune::BlockVector<NumEqVector> origFlux(numNeighbors);
-        origFlux = 0.0;
-        unsigned int j = 0;
+        unsigned int j = 1;
         for (const auto& dataJ : connectivityMap[globalI])
         {
-            neighborElements.emplace_back(fvGridGeometry.element(dataJ.globalJ));
+            neighborElements[j-1] = fvGridGeometry.element(dataJ.globalJ);
             for (const auto scvfIdx : dataJ.scvfsJ)
-            {
-                origFlux[j] += localResidual.evalFlux(problem,
-                                                      neighborElements.back(),
-                                                      fvGeometry,
-                                                      curElemVolVars,
-                                                      elemFluxVarsCache,
-                                                      fvGeometry.scvf(scvfIdx));
-            }
-            // increment neighbor counter
+                origResiduals[j] += evalNeighborFlux(neighborElements[j-1], fvGeometry.scvf(scvfIdx));
+
             ++j;
         }
 
         // reference to the element's scv (needed later) and corresponding vol vars
         const auto& scv = fvGeometry.scv(globalI);
-        auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
+        auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
 
         // save a copy of the original privars and vol vars in order
         // to restore the original solution after deflection
+        const auto& curSol = this->curSol();
         const auto origPriVars = curSol[globalI];
         const auto origVolVars = curVolVars;
 
@@ -320,435 +208,102 @@ private:
         ElementSolutionVector elemSol(origPriVars);
 
         // derivatives in the neighbors with repect to the current elements
-        Dune::BlockVector<NumEqVector> neighborDeriv(numNeighbors);
-        for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+        // in index 0 we save the derivative of the element residual with respect to it's own dofs
+        Residuals partialDerivs(numNeighbors + 1);
+
+        for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
         {
-            // reset derivatives of element dof with respect to itself
-            // as well as neighbor derivatives
-            NumEqVector partialDeriv(0.0);
-            neighborDeriv = 0.0;
 
-            if (isGhost)
-                partialDeriv[pvIdx] = 1.0;
+            // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
+            // as we always solve for a delta of the solution with repect to the initial solution this
+            // results in a delta of zero for ghosts, we still need to do the neighbor derivatives though
+            // so we are not done yet here.
+            partialDerivs = 0.0;
+            if (this->elementIsGhost()) partialDerivs[0][pvIdx] = 1.0;
 
-            Scalar eps = numericEpsilon(curVolVars.priVar(pvIdx));
-            Scalar delta = 0;
-
-            if (numericDifferenceMethod >= 0)
+            auto evalResiduals = [&](Scalar priVar)
             {
-                // we are not using backward differences, i.e. we need to
-                // calculate f(x + \epsilon)
-
-                // deflect primary variables
-                elemSol[0][pvIdx] += eps;
-                delta += eps;
-
+                Residuals partialDerivsTmp(numNeighbors + 1);
+                partialDerivsTmp = 0.0;
                 // update the volume variables and the flux var cache
-                curVolVars.update(elemSol, problem, element, scv);
+                elemSol[0][pvIdx] = priVar;
+                curVolVars.update(elemSol, this->problem(), element, scv);
                 if (enableGridFluxVarsCache)
                     gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
                 else
                     elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                 // calculate the residual with the deflected primary variables
-                if (!isGhost)
-                {
-                    if (isStationary)
-                    {
-                        partialDeriv = localResidual.eval(problem,
-                                                          element,
-                                                          fvGeometry,
-                                                          curElemVolVars,
-                                                          elemBcTypes,
-                                                          elemFluxVarsCache)[0];
-                    }
-                    else
-                    {
-                        partialDeriv = localResidual.eval(problem,
-                                                          element,
-                                                          fvGeometry,
-                                                          prevElemVolVars,
-                                                          curElemVolVars,
-                                                          elemBcTypes,
-                                                          elemFluxVarsCache)[0];
-                    }
-                }
+                if (!this->elementIsGhost()) partialDerivsTmp[0] = this->evalLocalResidual()[0];
 
                 // calculate the fluxes in the neighbors with the deflected primary variables
                 for (std::size_t k = 0; k < numNeighbors; ++k)
                     for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
-                    {
-                        neighborDeriv[k] += localResidual.evalFlux(problem,
-                                                                   neighborElements[k],
-                                                                   fvGeometry,
-                                                                   curElemVolVars,
-                                                                   elemFluxVarsCache,
-                                                                   fvGeometry.scvf(scvfIdx));
-                    }
-            }
-            else
+                        partialDerivsTmp[k+1] += evalNeighborFlux(neighborElements[k], fvGeometry.scvf(scvfIdx));
+
+                return partialDerivsTmp;
+            };
+
+            // derive the residuals numerically
+            NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals);
+
+            // add the current partial derivatives to the global jacobian matrix
+            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
             {
-                // we are using backward differences, i.e. we don't need
-                // to calculate f(x + \epsilon) and we can recycle the
-                // (already calculated) residual f(x)
-                if (!isGhost)
-                    partialDeriv = residual;
-                neighborDeriv = origFlux;
+                // the diagonal entries
+                A[globalI][globalI][eqIdx][pvIdx] += partialDerivs[0][eqIdx];
+
+                // off-diagonal entries
+                j = 1;
+                for (const auto& dataJ : connectivityMap[globalI])
+                    A[dataJ.globalJ][globalI][eqIdx][pvIdx] += partialDerivs[j++][eqIdx];
             }
-
-            if (numericDifferenceMethod <= 0)
-            {
-                // we are not using forward differences, i.e. we
-                // need to calculate f(x - \epsilon)
-
-                // deflect the primary variables
-                elemSol[0][pvIdx] -= delta + eps;
-                delta += eps;
-
-                // update the volume variables and the flux var cache
-                curVolVars.update(elemSol, problem, element, scv);
-                if (enableGridFluxVarsCache)
-                    gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
-                else
-                    elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
-
-                // calculate the residual with the deflected primary variables and subtract it
-                if (!isGhost)
-                {
-                    if (isStationary)
-                    {
-                        partialDeriv -= localResidual.eval(problem,
-                                                           element,
-                                                           fvGeometry,
-                                                           curElemVolVars,
-                                                           elemBcTypes,
-                                                           elemFluxVarsCache)[0];
-                    }
-                    else
-                    {
-                        partialDeriv -= localResidual.eval(problem,
-                                                           element,
-                                                           fvGeometry,
-                                                           prevElemVolVars,
-                                                           curElemVolVars,
-                                                           elemBcTypes,
-                                                           elemFluxVarsCache)[0];
-                    }
-                }
-
-                // calculate the fluxes into element with the deflected primary variables
-                for (std::size_t k = 0; k < numNeighbors; ++k)
-                    for (auto scvfIdx : connectivityMap[globalI][k].scvfsJ)
-                    {
-                        neighborDeriv[k] -= localResidual.evalFlux(problem,
-                                                                   neighborElements[k],
-                                                                   fvGeometry,
-                                                                   curElemVolVars,
-                                                                   elemFluxVarsCache,
-                                                                   fvGeometry.scvf(scvfIdx));
-                    }
-            }
-            else
-            {
-                // we are using forward differences, i.e. we don't need to
-                // calculate f(x - \epsilon) and we can recycle the
-                // (already calculated) residual f(x)
-                if (!isGhost)
-                    partialDeriv -= residual;
-                neighborDeriv -= origFlux;
-            }
-
-            // divide difference in residuals by the magnitude of the
-            // deflections between the two function evaluation
-            if (!isGhost)
-                partialDeriv /= delta;
-            neighborDeriv /= delta;
 
             // restore the original state of the scv's volume variables
             curVolVars = origVolVars;
 
             // restore the current element solution
             elemSol[0][pvIdx] = origPriVars[pvIdx];
-
-            // add the current partial derivatives to the global jacobian matrix
-            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-            {
-                // the diagonal entries
-                A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
-
-                // off-diagonal entries
-                j = 0;
-                for (const auto& dataJ : connectivityMap[globalI])
-                    A[dataJ.globalJ][globalI][eqIdx][pvIdx] += neighborDeriv[j++][eqIdx];
-            }
         }
 
-        // Restore original state of the flux vars cache in case of global caching.
+        // restore original state of the flux vars cache in case of global caching.
         // This has to be done in order to guarantee that everything is in an undeflected
         // state before the assembly of another element is called. In the case of local caching
         // this is obsolete because the elemFluxVarsCache used here goes out of scope after this.
+        // We only have to do this for the last primary variable, for all others the flux var cache
+        // is updated with the correct element volume variables before residual evaluations
         if (enableGridFluxVarsCache)
             gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
 
-        //////////////////////////////////////////////////////////////////////////////////////////////
-        //                                                                                          //
-        // Calculate derivatives of the dofs in the element with respect to user-defined additional //
-        // dof dependencies. We do so by evaluating the change in the source term of the current    //
-        // element with respect to the primary variables at the given additional dofs.              //
-        //                                                                                          //
-        //////////////////////////////////////////////////////////////////////////////////////////////
-
-        // const auto& additionalDofDepedencies = problem.getAdditionalDofDependencies(globalI);
-        // if (!additionalDofDepedencies.empty() && !isGhost)
-        // {
-        //     // compute the source in the undeflected state
-        //     auto source = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
-        //     source *= -scv.volume()*curVolVarsI.extrusionFactor();
-
-        //     // deflect solution at given dofs and recalculate the source
-        //     for (auto globalJ : additionalDofDependencies)
-        //     {
-        //         const auto& scvJ = fvGeometry.scv(globalJ);
-        //         auto& curVolVarsJ = curElemVolVars[scv];
-        //         const auto& elementJ = fvGridGeometry.element(globalJ);
-
-        //         // save a copy of the original privars and volvars
-        //         // to restore original solution after deflection
-        //         const auto origPriVars = curSol[globalJ];
-        //         const auto origVolVarsJ = curVolVarsJ;
-
-        //         // derivatives with repect to the additional DOF we depend on
-        //         for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
-        //         {
-        //             // derivatives of element dof with respect to itself
-        //             NumEqVector partialDeriv(0.0);
-        //             const auto eps = numericEpsilon(curVolVarsJ.priVar(pvIdx));
-        //             Scalar delta = 0;
-
-        //             if (numericDifferenceMethod >= 0)
-        //             {
-        //                 // we are not using backward differences, i.e. we need to
-        //                 // calculate f(x + \epsilon)
-
-        //                 // deflect primary variables
-        //                 curSol[globalJ][pvIdx] += eps;
-        //                 delta += eps;
-
-        //                 // update the volume variables and the flux var cache
-        //                 curVolVarsJ.update(gridVariables.elementSolution(elementJ, curSol), problem, elementJ, scvJ);
-
-        //                 // calculate the source with the deflected primary variables
-        //                 auto deflSource = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
-        //                 deflSource *= -scv.volume()*curVolVarsI.extrusionFactor();
-        //                 partialDeriv = std::move(deflSource);
-        //             }
-        //             else
-        //             {
-        //                 // we are using backward differences, i.e. we don't need
-        //                 // to calculate f(x + \epsilon) and we can recycle the
-        //                 // (already calculated) source f(x)
-        //                 partialDeriv = source;
-        //             }
-
-        //             if (numericDifferenceMethod <= 0)
-        //             {
-        //                 // we are not using forward differences, i.e. we
-        //                 // need to calculate f(x - \epsilon)
-
-        //                 // deflect the primary variables
-        //                 curSol[globalJ][pvIdx] -= delta + eps;
-        //                 delta += eps;
-
-        //                 // update the volume variables and the flux var cache
-        //                 curVolVarsJ.update(gridVariables.elementSolution(elementJ, curSol), problem, elementJ, scvJ);
-
-        //                 // calculate the source with the deflected primary variables and subtract
-        //                 auto deflSource = localResidual.computeSource(element, fvGeometry, curElemVolVars, scv);
-        //                 deflSource *= -scv.volume()*curVolVarsI.extrusionFactor();
-        //                 partialDeriv -= std::move(deflSource);
-        //             }
-        //             else
-        //             {
-        //                 // we are using forward differences, i.e. we don't need to
-        //                 // calculate f(x - \epsilon) and we can recycle the
-        //                 // (already calculated) source f(x)
-        //                 partialDeriv -= source;
-        //             }
-
-        //             // divide difference in residuals by the magnitude of the
-        //             // deflections between the two function evaluation
-        //             partialDeriv /= delta;
-
-        //             // restore the original state of the dofs privars and the volume variables
-        //             curSol[globalJ] = origPriVars;
-        //             curVolVarsJ = origVolVarsJ;
-
-        //             // add the current partial derivatives to the global jacobian matrix
-        //             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-        //                 A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
-        //         }
-        //     }
-        // }
-
         // return the original residual
-        return residual;
+        return origResiduals[0];
     }
-private:
-    template<class T = TypeTag>
-    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return elemVolVars[scv]; }
-
-    template<class T = TypeTag>
-    static typename std::enable_if<GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return gridVolVars.volVars(scv); }
 };
 
 
 /*!
  * \ingroup Assembly
  * \ingroup CCDiscretization
- * \brief Cell-centered scheme local assembler using numeric differentiation and explicits time discretization
+ * \brief Cell-centered scheme local assembler using numeric differentiation and explicit time discretization
  */
-template<class TypeTag>
-class CCLocalAssembler<TypeTag,
-                       DiffMethod::numeric,
-                       /*implicit=*/false>
+template<class TypeTag, class Assembler>
+class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/false>
+: public CCLocalAssemblerBase<TypeTag, Assembler,
+            CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>, false>
 {
+    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, false>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
 
 public:
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix. The element residual is written into the right hand side.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Assemble the residual only
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, element, curSol);
-    }
-
-    /*!
-     * \brief Computes the epsilon used for numeric differentiation
-     *        for a given value of a primary variable.
-     *
-     * \param priVar The value of the primary variable
-     */
-    static Scalar numericEpsilon(const Scalar priVar)
-    {
-        // define the base epsilon as the geometric mean of 1 and the
-        // resolution of the scalar type. E.g. for standard 64 bit
-        // floating point values, the resolution is about 10^-16 and
-        // the base epsilon is thus approximately 10^-8.
-        /*
-        static const Scalar baseEps
-            = Dumux::geometricMean<Scalar>(std::numeric_limits<Scalar>::epsilon(), 1.0);
-        */
-        static const Scalar baseEps = 1e-10;
-        assert(std::numeric_limits<Scalar>::epsilon()*1e4 < baseEps);
-        // the epsilon value used for the numeric differentiation is
-        // now scaled by the absolute value of the primary variable...
-        return baseEps*(std::abs(priVar) + 1.0);
-    }
-
-private:
-
-    /*!
-     * \brief Computes the residual
-     *
-     * \return The element residual at the current solution.
-     */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler,
-                                 const Element& element, const SolutionVector& curSol)
-    {
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-        if (isGhost) return NumEqVector(0.0);
-
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
-
-        // using an explicit assembler doesn't make sense for stationary problems
-        if (localResidual.isStationary())
-            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
-
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bindElement(element, fvGeometry, curSol);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        prevElemVolVars.bind(element, fvGeometry, localResidual.prevSol());
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
-
-        // compatibility with box method
-        ElementBoundaryTypes elemBcTypes;
-
-        // the actual element's previous time step residual
-        auto residual = localResidual.eval(problem,
-                                           element,
-                                           fvGeometry,
-                                           prevElemVolVars,
-                                           elemBcTypes,
-                                           elemFluxVarsCache)[0];
-
-        auto storageResidual = localResidual.evalStorage(problem,
-                                                         element,
-                                                         fvGeometry,
-                                                         prevElemVolVars,
-                                                         curElemVolVars,
-                                                         elemBcTypes,
-                                                         elemFluxVarsCache)[0];
-
-        residual += storageResidual;
-
-        return residual;
-    }
+    using ParentType::ParentType;
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -756,65 +311,13 @@ private:
      *
      * \return The element residual at the current solution.
      */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler, JacobianMatrix& A,
-                                 const Element& element, const SolutionVector& curSol)
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
-
-        // using an explicit assembler doesn't make sense for stationary problems
-        if (localResidual.isStationary())
+        if (this->assembler().isStationaryProblem())
             DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
 
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bindElement(element, fvGeometry, curSol);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        prevElemVolVars.bind(element, fvGeometry, localResidual.prevSol());
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
-
-        // the global dof of the actual element
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
-        ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
-
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-
-        // the actual element's previous time step residual
-        NumEqVector residual(0.0), storageResidual(0.0);
-        if (!isGhost)
-        {
-            residual = localResidual.eval(problem,
-                                          element,
-                                          fvGeometry,
-                                          prevElemVolVars,
-                                          elemBcTypes,
-                                          elemFluxVarsCache)[0];
-
-            storageResidual = localResidual.evalStorage(problem,
-                                                        element,
-                                                        fvGeometry,
-                                                        prevElemVolVars,
-                                                        curElemVolVars,
-                                                        elemBcTypes,
-                                                        elemFluxVarsCache)[0];
-
-            residual += storageResidual;
-        }
+        // assemble the undeflected residual
+        const auto residual = this->evalLocalResidual()[0];
 
         //////////////////////////////////////////////////////////////////////////////////////////////////
         // Calculate derivatives of all dofs in stencil with respect to the dofs in the element. In the //
@@ -822,132 +325,66 @@ private:
         // derivatives are non-zero.                                                                    //
         //////////////////////////////////////////////////////////////////////////////////////////////////
 
-        static const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        static const int numericDifferenceMethod = getParamFromGroup<int>(group, "Implicit.NumericDifferenceMethod");
+        // get some aliases for convenience
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& fvGridGeometry = this->assembler().fvGridGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
 
         // reference to the element's scv (needed later) and corresponding vol vars
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
         const auto& scv = fvGeometry.scv(globalI);
-        auto& curVolVars = getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
+        auto& curVolVars = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scv);
 
         // save a copy of the original privars and vol vars in order
         // to restore the original solution after deflection
+        const auto& curSol = this->curSol();
         const auto origPriVars = curSol[globalI];
         const auto origVolVars = curVolVars;
 
         // element solution container to be deflected
-        ElementSolutionVector elemSol({origPriVars});
+        ElementSolutionVector elemSol(origPriVars);
+        LocalResidualValues partialDeriv;
 
         // derivatives in the neighbors with repect to the current elements
-        for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+        for (int pvIdx = 0; pvIdx < numEq; ++pvIdx)
         {
             // reset derivatives of element dof with respect to itself
-            // as well as neighbor derivatives
-            NumEqVector partialDeriv(0.0);
+            partialDeriv = 0.0;
 
-            if (isGhost)
-                partialDeriv[pvIdx] = 1.0;
-
-            Scalar eps = numericEpsilon(curVolVars.priVar(pvIdx));
-            Scalar delta = 0;
-
-            if (numericDifferenceMethod >= 0)
+            auto evalStorage = [&](Scalar priVar)
             {
-                // we are not using backward differences, i.e. we need to
-                // calculate f(x + \epsilon)
+                // update the volume variables and calculate
+                // the residual with the deflected primary variables
+                elemSol[0][pvIdx] = priVar;
+                curVolVars.update(elemSol, this->problem(), element, scv);
+                return this->evalLocalStorageResidual()[0];
+            };
 
-                // deflect primary variables
-                elemSol[0][pvIdx] += eps;
-                delta += eps;
+            // for non-ghosts compute the derivative numerically
+            if (!this->elementIsGhost())
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual);
 
-                // update the volume variables and the flux var cache
-                curVolVars.update(elemSol, problem, element, scv);
+            // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
+            // as we always solve for a delta of the solution with repect to the initial solution this
+            // results in a delta of zero for ghosts
+            else partialDeriv[pvIdx] = 1.0;
 
-                // calculate the residual with the deflected primary variables
-                if (!isGhost)
-                {
-                    partialDeriv = localResidual.evalStorage(problem,
-                                                             element,
-                                                             fvGeometry,
-                                                             prevElemVolVars,
-                                                             curElemVolVars,
-                                                             elemBcTypes,
-                                                             elemFluxVarsCache)[0];
-                }
-            }
-            else
-            {
-                // we are using backward differences, i.e. we don't need
-                // to calculate f(x + \epsilon) and we can recycle the
-                // (already calculated) residual f(x)
-                if (!isGhost)
-                    partialDeriv = storageResidual;
-            }
-
-            if (numericDifferenceMethod <= 0)
-            {
-                // we are not using forward differences, i.e. we
-                // need to calculate f(x - \epsilon)
-
-                // deflect the primary variables
-                elemSol[0][pvIdx] -= delta + eps;
-                delta += eps;
-
-                // update the volume variables and the flux var cache
-                curVolVars.update(elemSol, problem, element, scv);
-
-                // calculate the residual with the deflected primary variables and subtract it
-                if (!isGhost)
-                {
-                   partialDeriv -= localResidual.evalStorage(problem,
-                                                             element,
-                                                             fvGeometry,
-                                                             prevElemVolVars,
-                                                             curElemVolVars,
-                                                             elemBcTypes,
-                                                             elemFluxVarsCache)[0];
-                }
-            }
-            else
-            {
-                // we are using forward differences, i.e. we don't need to
-                // calculate f(x - \epsilon) and we can recycle the
-                // (already calculated) residual f(x)
-                if (!isGhost)
-                    partialDeriv -= storageResidual;
-            }
-
-            // divide difference in residuals by the magnitude of the
-            // deflections between the two function evaluation
-            if (!isGhost)
-                partialDeriv /= delta;
+            // add the current partial derivatives to the global jacobian matrix
+            // only diagonal entries for explicit jacobians
+            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
 
             // restore the original state of the scv's volume variables
             curVolVars = origVolVars;
 
             // restore the current element solution
             elemSol[0][pvIdx] = origPriVars[pvIdx];
-
-            // add the current partial derivatives to the global jacobian matrix
-            for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-            {
-                // the diagonal entries
-                A[globalI][globalI][eqIdx][pvIdx] += partialDeriv[eqIdx];
-            }
         }
 
         // return the original residual
         return residual;
     }
-private:
-    template<class T = TypeTag>
-    static typename std::enable_if<!GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return elemVolVars[scv]; }
-
-    template<class T = TypeTag>
-    static typename std::enable_if<GET_PROP_VALUE(T, EnableGridVolumeVariablesCache), VolumeVariables&>::type
-    getVolVarAccess(GridVolumeVariables& gridVolVars, ElementVolumeVariables& elemVolVars, const SubControlVolume& scv)
-    { return gridVolVars.volVars(scv); }
 };
 
 /*!
@@ -955,123 +392,19 @@ private:
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and implicit time discretization
  */
-template<class TypeTag>
-class CCLocalAssembler<TypeTag,
-                       DiffMethod::analytic,
-                       /*implicit=*/true>
+template<class TypeTag, class Assembler>
+class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/true>
+: public CCLocalAssemblerBase<TypeTag, Assembler,
+            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>, true>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using IndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, true>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
 public:
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix. The element residual is written into the right hand side.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Assemble the residual only
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, element, curSol);
-    }
-
-private:
-
-    /*!
-     * \brief Computes the residual
-     *
-     * \return The element residual at the current solution.
-     */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler,
-                                 const Element& element, const SolutionVector& curSol)
-    {
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-        if (isGhost) return NumEqVector(0.0);
-
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
-
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bind(element, fvGeometry, curSol);
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
-        ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
-
-        NumEqVector residual(0.0);
-        if (localResidual.isStationary())
-        {
-            residual = localResidual.eval(problem,
-                                          element,
-                                          fvGeometry,
-                                          curElemVolVars,
-                                          elemBcTypes,
-                                          elemFluxVarsCache)[0];
-        }
-        else
-        {
-            prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-            residual = localResidual.eval(problem,
-                                          element,
-                                          fvGeometry,
-                                          prevElemVolVars,
-                                          curElemVolVars,
-                                          elemBcTypes,
-                                          elemFluxVarsCache)[0];
-        }
-
-        return residual;
-    }
+    using ParentType::ParentType;
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -1079,136 +412,54 @@ private:
      *
      * \return The element residual at the current solution.
      */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler, JacobianMatrix& A,
-                                 const Element& element, const SolutionVector& curSol)
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
+        // assemble the undeflected residual
+        const auto residual = this->evalLocalResidual()[0];
 
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bind(element, fvGeometry, curSol);
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-
-        // the global dof of the actual element
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
-        ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
-
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-        // is this a stationary simulation?
-        const bool isStationary = localResidual.isStationary();
-
-        // the actual element's current residual (will be returned by this function)
-        NumEqVector residual(0.0);
-        if (!isGhost)
-        {
-            if (isStationary)
-            {
-                residual = localResidual.eval(problem,
-                                              element,
-                                              fvGeometry,
-                                              curElemVolVars,
-                                              elemBcTypes,
-                                              elemFluxVarsCache)[0];
-            }
-            else
-            {
-                prevElemVolVars.bindElement(element, fvGeometry, localResidual.prevSol());
-                residual = localResidual.eval(problem,
-                                              element,
-                                              fvGeometry,
-                                              prevElemVolVars,
-                                              curElemVolVars,
-                                              elemBcTypes,
-                                              elemFluxVarsCache)[0];
-            }
-        }
+        // get some aliases for convenience
+        const auto& problem = this->problem();
+        const auto& element = this->element();
+        const auto& fvGeometry = this->fvGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get reference to the element's current vol vars
+        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(element);
         const auto& scv = fvGeometry.scv(globalI);
         const auto& volVars = curElemVolVars[scv];
 
         // if the problem is instationary, add derivative of storage term
-        if (!isStationary)
-            localResidual.addStorageDerivatives(A[globalI][globalI],
-                                                problem,
-                                                element,
-                                                fvGeometry,
-                                                volVars,
-                                                scv);
+        if (!this->assembler().isStationaryProblem())
+            this->localResidual().addStorageDerivatives(A[globalI][globalI], problem, element, fvGeometry, volVars, scv);
 
         // add source term derivatives
-        localResidual.addSourceDerivatives(A[globalI][globalI],
-                                           problem,
-                                           element,
-                                           fvGeometry,
-                                           volVars,
-                                           scv);
+        this->localResidual().addSourceDerivatives(A[globalI][globalI], problem, element, fvGeometry, volVars, scv);
 
         // add flux derivatives for each scvf
         for (const auto& scvf : scvfs(fvGeometry))
         {
+            // inner faces
             if (!scvf.boundary())
-            {
-                localResidual.addFluxDerivatives(A[globalI],
-                                                 problem,
-                                                 element,
-                                                 fvGeometry,
-                                                 curElemVolVars,
-                                                 elemFluxVarsCache,
-                                                 scvf);
-            }
+                this->localResidual().addFluxDerivatives(A[globalI], problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+
+            // boundary faces
             else
             {
                 const auto& bcTypes = problem.boundaryTypes(element, scvf);
 
                 // add Dirichlet boundary flux derivatives
                 if (bcTypes.hasDirichlet() && !bcTypes.hasNeumann())
-                {
-                    localResidual.addCCDirichletFluxDerivatives(A[globalI],
-                                                                problem,
-                                                                element,
-                                                                fvGeometry,
-                                                                curElemVolVars,
-                                                                elemFluxVarsCache,
-                                                                scvf);
-                }
+                    this->localResidual().addCCDirichletFluxDerivatives(A[globalI], problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+
                 // add Robin ("solution dependent Neumann") boundary flux derivatives
                 else if (bcTypes.hasNeumann() && !bcTypes.hasDirichlet())
-                {
-                    localResidual.addRobinFluxDerivatives(A[globalI],
-                                                          problem,
-                                                          element,
-                                                          fvGeometry,
-                                                          curElemVolVars,
-                                                          elemFluxVarsCache,
-                                                          scvf);
-                }
+                    this->localResidual().addRobinFluxDerivatives(A[globalI], problem, element, fvGeometry, curElemVolVars, elemFluxVarsCache, scvf);
+
                 else
                     DUNE_THROW(Dune::NotImplemented, "Mixed boundary conditions. Use pure boundary conditions by converting Dirichlet BCs to Robin BCs");
             }
         }
-
-        // TODO Do we really need this??????????
-        // this->model_().updatePVWeights(fvGeometry);
-
-        // TODO: Additional dof dependencies???
 
         // return element residual
         return residual;
@@ -1220,124 +471,19 @@ private:
  * \ingroup CCDiscretization
  * \brief Cell-centered scheme local assembler using analytic (hand-coded) differentiation and explicit time discretization
  */
-template<class TypeTag>
-class CCLocalAssembler<TypeTag,
-                       DiffMethod::analytic,
-                       /*implicit=*/false>
+template<class TypeTag, class Assembler>
+class CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/false>
+: public CCLocalAssemblerBase<TypeTag, Assembler,
+            CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>, false>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
-    using IndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
+    using ThisType = CCLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, false>;
+    using ParentType = CCLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
+    using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-
-    enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
+    using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
 
 public:
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix. The element residual is written into the right hand side.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Computes the derivatives with respect to the given element and adds them
-     *        to the global matrix.
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, JacobianMatrix& jac,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        assemble_(assembler, jac, element, curSol);
-    }
-
-    /*!
-     * \brief Assemble the residual only
-     */
-    template<class Assembler>
-    static void assemble(Assembler& assembler, SolutionVector& res,
-                         const Element& element, const SolutionVector& curSol)
-    {
-        const auto globalI = assembler.fvGridGeometry().elementMapper().index(element);
-        res[globalI] = assemble_(assembler, element, curSol);
-    }
-
-private:
-
-    /*!
-     * \brief Computes the residual
-     *
-     * \return The element residual at the current solution.
-     */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler,
-                                 const Element& element, const SolutionVector& curSol)
-    {
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-        if (isGhost) return NumEqVector(0.0);
-
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
-
-        // using an explicit assembler doesn't make sense for stationary problems
-        if (localResidual.isStationary())
-            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
-
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bindElement(element, fvGeometry, curSol);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        prevElemVolVars.bind(element, fvGeometry, localResidual.prevSol());
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
-
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
-        ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
-
-        // the actual element's previous time step residual
-        auto residual = localResidual.eval(problem,
-                                           element,
-                                           fvGeometry,
-                                           prevElemVolVars,
-                                           elemBcTypes,
-                                           elemFluxVarsCache)[0];
-
-        auto storageResidual = localResidual.evalStorage(problem,
-                                                         element,
-                                                         fvGeometry,
-                                                         prevElemVolVars,
-                                                         curElemVolVars,
-                                                         elemBcTypes,
-                                                         elemFluxVarsCache)[0];
-
-        residual += storageResidual;
-
-        return residual;
-    }
+    using ParentType::ParentType;
 
     /*!
      * \brief Computes the derivatives with respect to the given element and adds them
@@ -1345,77 +491,18 @@ private:
      *
      * \return The element residual at the current solution.
      */
-    template<class Assembler>
-    static NumEqVector assemble_(Assembler& assembler, JacobianMatrix& A,
-                                 const Element& element, const SolutionVector& curSol)
+    LocalResidualValues assembleJacobianAndResidualImpl(JacobianMatrix& A, const GridVariables& gridVariables)
     {
-        // get some references for convenience
-        const auto& problem = assembler.problem();
-        const auto& fvGridGeometry = assembler.fvGridGeometry();
-        auto& localResidual = assembler.localResidual();
-        auto& gridVariables = assembler.gridVariables();
-
-        // using an explicit assembler doesn't make sense for stationary problems
-        if (localResidual.isStationary())
-            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
-
-        // prepare the local views
-        auto fvGeometry = localView(assembler.fvGridGeometry());
-        fvGeometry.bind(element);
-
-        auto curElemVolVars = localView(gridVariables.curGridVolVars());
-        curElemVolVars.bindElement(element, fvGeometry, curSol);
-
-        auto prevElemVolVars = localView(gridVariables.prevGridVolVars());
-        prevElemVolVars.bind(element, fvGeometry, localResidual.prevSol());
-
-        auto elemFluxVarsCache = localView(gridVariables.gridFluxVarsCache());
-        elemFluxVarsCache.bind(element, fvGeometry, prevElemVolVars);
-
-        // the global dof of the actual element
-        const auto globalI = fvGridGeometry.elementMapper().index(element);
-
-        // check for boundaries on the element
-        // TODO Do we need them for cell-centered models?
-        ElementBoundaryTypes elemBcTypes;
-        elemBcTypes.update(problem, element, fvGeometry);
-
-        // is the actual element a ghost element?
-        const bool isGhost = (element.partitionType() == Dune::GhostEntity);
-
-        // the actual element's previous time step residual
-        NumEqVector residual(0.0), storageResidual(0.0);
-        if (!isGhost)
-        {
-            residual = localResidual.eval(problem,
-                                          element,
-                                          fvGeometry,
-                                          prevElemVolVars,
-                                          elemBcTypes,
-                                          elemFluxVarsCache)[0];
-
-            storageResidual = localResidual.evalStorage(problem,
-                                                        element,
-                                                        fvGeometry,
-                                                        prevElemVolVars,
-                                                        curElemVolVars,
-                                                        elemBcTypes,
-                                                        elemFluxVarsCache)[0];
-
-            residual += storageResidual;
-        }
+        // assemble the undeflected residual
+        const auto residual = this->evalLocalResidual()[0];
 
         // get reference to the element's current vol vars
-        const auto& scv = fvGeometry.scv(globalI);
-        const auto& volVars = curElemVolVars[scv];
+        const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(this->element());
+        const auto& scv = this->fvGeometry().scv(globalI);
+        const auto& volVars = this->curElemVolVars()[scv];
 
-        // add derivative of storage term
-        localResidual.addStorageDerivatives(A[globalI][globalI],
-                                            problem,
-                                            element,
-                                            fvGeometry,
-                                            volVars,
-                                            scv);
+        // add hand-code derivative of storage term
+        this->localResidual().addStorageDerivatives(A[globalI][globalI], this->problem(), this->element(), this->fvGeometry(), volVars, scv);
 
         // return the original residual
         return residual;

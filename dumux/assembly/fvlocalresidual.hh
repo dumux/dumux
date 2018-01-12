@@ -24,11 +24,13 @@
 #ifndef DUMUX_FV_LOCAL_RESIDUAL_HH
 #define DUMUX_FV_LOCAL_RESIDUAL_HH
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/istl/bvector.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/timeloop.hh>
+#include <dumux/common/reservedblockvector.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux {
@@ -45,13 +47,13 @@ class FVLocalResidual
     using Implementation = typename GET_PROP_TYPE(TypeTag, LocalResidual);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ElementResidualVector = Dune::BlockVector<typename GET_PROP_TYPE(TypeTag, NumEqVector)>;
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementBoundaryTypes = typename GET_PROP_TYPE(TypeTag, ElementBoundaryTypes);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -61,13 +63,14 @@ class FVLocalResidual
     using TimeLoop = TimeLoopBase<Scalar>;
 
 public:
-    //! the constructor for stationary problems
-    FVLocalResidual() : prevSol_(nullptr) {}
+    //! the container storing all element residuals
+    using ElementResidualVector = ReservedBlockVector<ResidualVector, FVElementGeometry::maxNumElementScvs>;
 
-    //! the constructor for instationary problems
-    FVLocalResidual(std::shared_ptr<TimeLoop> timeLoop)
-    : timeLoop_(timeLoop)
-    , prevSol_(nullptr)
+    //! the constructor
+    FVLocalResidual(const Problem* problem,
+                    const TimeLoop* timeLoop = nullptr)
+    : problem_(problem)
+    , timeLoop_(timeLoop)
     {}
 
     /*!
@@ -141,6 +144,7 @@ public:
      * \param bcTypes The types of the boundary conditions for all boundary entities of an element
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      */
+    DUNE_DEPRECATED_MSG("eval is deprecated because it doesn't allow to specify on which time level to evaluate. Use evalFluxSource, and evalStorage instead!")
     ElementResidualVector eval(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
@@ -150,7 +154,6 @@ public:
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
         assert(timeLoop_ && "no time loop set for storage term evaluation");
-        assert(prevSol_ && "no solution set for storage term evaluation");
 
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(fvGeometry.numScv());
@@ -177,7 +180,6 @@ public:
      * \brief Compute the storage local residual, i.e. the deviation of the
      *        storage term from zero for instationary problems.
      *
-     * \param problem The problem to solve
      * \param element The DUNE Codim<0> entity for which the residual
      *                ought to be calculated
      * \param fvGeometry The finite-volume geometry of the element
@@ -185,30 +187,21 @@ public:
      *                        sub-control volumes of the element at the previous time level
      * \param curElemVolVars The volume averaged variables for all
      *                       sub-control volumes of the element at the current  time level
-     * \param bcTypes The types of the boundary conditions for all boundary entities of an element
-     * \param elemFluxVarsCache The flux variable caches for the element stencil
      */
-    ElementResidualVector evalStorage(const Problem& problem,
-                                      const Element& element,
+    ElementResidualVector evalStorage(const Element& element,
                                       const FVElementGeometry& fvGeometry,
                                       const ElementVolumeVariables& prevElemVolVars,
-                                      const ElementVolumeVariables& curElemVolVars,
-                                      const ElementBoundaryTypes &bcTypes,
-                                      const ElementFluxVariablesCache& elemFluxVarsCache) const
+                                      const ElementVolumeVariables& curElemVolVars) const
     {
         assert(timeLoop_ && "no time loop set for storage term evaluation");
-        assert(prevSol_ && "no solution set for storage term evaluation");
 
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(fvGeometry.numScv());
-        residual = 0.0;
 
         // evaluate the volume terms (storage + source terms)
+        // forward to the local residual specialized for the discretization methods
         for (auto&& scv : scvs(fvGeometry))
-        {
-            //! foward to the local residual specialized for the discretization methods
-            asImp().evalStorage(residual, problem, element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
-        }
+            asImp().evalStorage(residual, this->problem(), element, fvGeometry, prevElemVolVars, curElemVolVars, scv);
 
         return residual;
     }
@@ -226,6 +219,7 @@ public:
      * \param bcTypes The types of the boundary conditions for all boundary entities of an element
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      */
+    DUNE_DEPRECATED_MSG("Use evalFluxSource instead!")
     ElementResidualVector eval(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
@@ -233,22 +227,26 @@ public:
                                const ElementBoundaryTypes &bcTypes,
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
+        return evalFluxSource(element, fvGeometry, curElemVolVars, elemFluxVarsCache, bcTypes);
+    }
+
+    ElementResidualVector evalFluxSource(const Element& element,
+                                         const FVElementGeometry& fvGeometry,
+                                         const ElementVolumeVariables& elemVolVars,
+                                         const ElementFluxVariablesCache& elemFluxVarsCache,
+                                         const ElementBoundaryTypes &bcTypes) const
+    {
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(fvGeometry.numScv());
-        residual = 0.0;
 
         // evaluate the volume terms (storage + source terms)
+        // forward to the local residual specialized for the discretization methods
         for (auto&& scv : scvs(fvGeometry))
-        {
-            //! foward to the local residual specialized for the discretization methods
-            asImp().evalSource(residual, problem, element, fvGeometry, curElemVolVars, scv);
-        }
+            asImp().evalSource(residual, this->problem(), element, fvGeometry, elemVolVars, scv);
 
+        // forward to the local residual specialized for the discretization methods
         for (auto&& scvf : scvfs(fvGeometry))
-        {
-            //! foward to the local residual specialized for the discretization methods
-            asImp().evalFlux(residual, problem, element, fvGeometry, curElemVolVars, bcTypes, elemFluxVarsCache, scvf);
-        }
+            asImp().evalFlux(residual, this->problem(), element, fvGeometry, elemVolVars, bcTypes, elemFluxVarsCache, scvf);
 
         return residual;
     }
@@ -552,39 +550,21 @@ public:
     //\}
 
     /*!
-     * \brief Sets the solution from which to start the time integration.
-     * \note Has to be called prior to assembly for time-dependent problems.
+     * \name Interfaces accessed by local residual implementations
      */
-    void setPreviousSolution(const SolutionVector& u)
-    { prevSol_ = &u; }
+    // \{
 
-    /*!
-     * \brief Return the solution of the previous time level that has been set
-     */
-    const SolutionVector& prevSol() const
-    {
-        assert(prevSol_ && "no solution set for storage term evaluation");
-        return *prevSol_;
-    }
-
-    /*!
-     * \brief if the residual is stationary (storage residual is strictly zero)
-     * \note If no solution has been set, we treat the problem as stationary.
-     */
-    bool isStationary() const
-    { return !prevSol_; }
-
-    // \}
-protected:
-    //! the timeloop for instationary problems
-    //! calling this for stationary leads to undefined behaviour
-    TimeLoop& timeLoop()
-    { return *timeLoop_; }
+    //! the problem
+    const Problem& problem() const
+    { return *problem_; }
 
     //! the timeloop for instationary problems
     //! calling this for stationary leads to undefined behaviour
     const TimeLoop& timeLoop() const
     { return *timeLoop_; }
+
+    // \}
+protected:
 
     Implementation &asImp()
     { return *static_cast<Implementation*>(this); }
@@ -593,8 +573,8 @@ protected:
     { return *static_cast<const Implementation*>(this); }
 
 private:
-    std::shared_ptr<TimeLoop> timeLoop_; //!< the timeloop for instationary problems
-    const SolutionVector* prevSol_; //!< the solution of the previous time level for instationary problems
+    const Problem* problem_; //!< the problem we are assembling this residual for
+    const TimeLoop* timeLoop_; //!< the timeloop for instationary problems
 };
 
 } // end namespace Dumux

@@ -64,6 +64,7 @@ class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -164,7 +165,7 @@ public:
         const auto isGhostVertex = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        CCMpfaDualGridIndexSet<GridIndexType, LocalIndexType, dim> dualIdSet(this->gridView());
+        CCMpfaDualGridIndexSet< DualGridNodalIndexSet > dualIdSet(this->gridView());
 
         // Build the SCVs and SCV faces
         GridIndexType scvfIdx = 0;
@@ -405,6 +406,7 @@ class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
 
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
@@ -505,7 +507,7 @@ public:
         isGhostVertex_ = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        CCMpfaDualGridIndexSet<GridIndexType, LocalIndexType, dim> dualIdSet(this->gridView());
+        CCMpfaDualGridIndexSet< DualGridNodalIndexSet > dualIdSet(this->gridView());
 
         // Build the SCVs and SCV faces
         numScvf_ = 0;

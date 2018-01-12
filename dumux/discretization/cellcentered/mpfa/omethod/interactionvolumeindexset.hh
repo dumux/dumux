@@ -24,6 +24,8 @@
 #ifndef DUMUX_DISCRETIZATION_MPFA_O_INTERACTIONVOLUME_INDEXSET_HH
 #define DUMUX_DISCRETIZATION_MPFA_O_INTERACTIONVOLUME_INDEXSET_HH
 
+#include <dune/common/reservedvector.hh>
+
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 
 namespace Dumux
@@ -38,46 +40,27 @@ template< class DualGridNodalIndexSet >
 class CCMpfaOInteractionVolumeIndexSet
 {
 public:
+    //! Export the type used for the nodal grid index sets
+    using NodalIndexSet = DualGridNodalIndexSet;
+
+    //! Export the types used for local/grid indices
     using LocalIndexType = typename DualGridNodalIndexSet::LocalIndexType;
     using GridIndexType = typename DualGridNodalIndexSet::GridIndexType;
 
-    using LocalIndexContainer = typename DualGridNodalIndexSet::LocalIndexContainer;
-    using GridIndexContainer = typename DualGridNodalIndexSet::GridIndexContainer;
+    // Export the types used for local/grid stencils
+    using LocalStencilType = typename DualGridNodalIndexSet::LocalStencilType;
+    using GridStencilType = typename DualGridNodalIndexSet::GridStencilType;
+    using GridScvfStencilType = typename DualGridNodalIndexSet::GridScvfStencilType;
 
-    /*!
-     * \brief The constructor
-     * \note The actual type used for the nodal index sets might be different, as maybe
-     *       a different type for the local indexes is used. We therefore template this
-     *       constructor. However, a static assertion enforces you to use the same LocalIndexType
-     *       in the traits for both the secondary and the primary interaction volume traits.
-     *
-     * \tparam NodalIndexSet Possibly differing type for the DualGridNodalIndexSet
-     */
-    template< class NodalIndexSet >
-    CCMpfaOInteractionVolumeIndexSet(const NodalIndexSet& nodalIndexSet)
-    : nodalIndexSet_( static_cast<const DualGridNodalIndexSet&>(nodalIndexSet) )
+    //! Export the type used for the neighbor scv index sets of the scvfs
+    using ScvfNeighborLocalIndexSet = typename DualGridNodalIndexSet::ScvfNeighborLocalIndexSet;
+
+    //! The constructor
+    CCMpfaOInteractionVolumeIndexSet(const NodalIndexSet& nodalIndexSet) : nodalIndexSet_(nodalIndexSet)
     {
-        // make sure the index types used are the same in order to avoid any losses due to type conversion
-        static_assert(std::is_same<GridIndexType, typename NodalIndexSet::GridIndexType>::value,
-                      "Provided nodal index set does not use the same type for grid indices as the given template argument");
-        static_assert(std::is_same<LocalIndexType, typename NodalIndexSet::LocalIndexType>::value,
-                      "Provided nodal index set does not use the same type for local indices as the given template argument");
-
         // determine the number of iv-local faces for memory reservation
         // note that this might be a vast overestimation on surface grids!
         const auto numNodalScvfs = nodalIndexSet.numScvfs();
-        const auto numBoundaryScvfs = nodalIndexSet.numBoundaryScvfs();
-        const std::size_t numFaceEstimate = numBoundaryScvfs + (numNodalScvfs-numBoundaryScvfs)/2;
-
-        // make sure we found a reasonable number of faces
-        assert((numNodalScvfs-numBoundaryScvfs)%2 == 0);
-
-        // index transformation from interaction-volume-local to node-local
-        ivToNodeScvf_.reserve(numFaceEstimate);
-        nodeToIvScvf_.resize(numNodalScvfs);
-
-        // the local neighboring scv indices of the faces
-        scvfNeighborScvLocalIndices_.reserve(numFaceEstimate);
 
         // keeps track of which nodal scvfs have been handled already
         std::vector<bool> isHandled(numNodalScvfs, false);
@@ -172,7 +155,7 @@ public:
     { return nodeToIvScvf_[ nodalIndexSet_.scvfIdxLocal(scvIdxLocal, i) ]; }
 
     //! returns the local indices of the neighboring scvs of an scvf
-    const LocalIndexContainer& neighboringLocalScvIndices(LocalIndexType ivLocalScvfIdx) const
+    const ScvfNeighborLocalIndexSet& neighboringLocalScvIndices(LocalIndexType ivLocalScvfIdx) const
     { return scvfNeighborScvLocalIndices_[ivLocalScvfIdx]; }
 
     //! returns the number of faces in the interaction volume
@@ -182,10 +165,10 @@ public:
     std::size_t numScvs() const { return nodalIndexSet_.numScvs(); }
 
     //! returns the global scv indices connected to this dual grid node
-    const GridIndexContainer& globalScvIndices() const { return nodalIndexSet_.globalScvIndices(); }
+    const GridStencilType& globalScvIndices() const { return nodalIndexSet_.globalScvIndices(); }
 
     //! returns the global scvf indices connected to this dual grid node
-    const GridIndexContainer& globalScvfIndices() const { return nodalIndexSet_.globalScvfIndices(); }
+    const GridScvfStencilType& globalScvfIndices() const { return nodalIndexSet_.globalScvfIndices(); }
 
 private:
     //! returns the local scv index to a given global scv index
@@ -199,11 +182,12 @@ private:
     const DualGridNodalIndexSet& nodalIndexSet_;
 
     std::size_t numFaces_;
-    std::vector<LocalIndexType> ivToNodeScvf_;
-    std::vector<LocalIndexType> nodeToIvScvf_;
+    Dune::ReservedVector< LocalIndexType, NodalIndexSet::maxNumScvfsAtNode > ivToNodeScvf_;
+    Dune::ReservedVector< LocalIndexType, NodalIndexSet::maxNumScvfsAtNode > nodeToIvScvf_;
+
     // maps to each scvf a list of neighbouring scv indices
     // ordering: 0 - inside scv idx; 1..n - outside scv indices
-    std::vector< LocalIndexContainer > scvfNeighborScvLocalIndices_;
+    Dune::ReservedVector< ScvfNeighborLocalIndexSet, NodalIndexSet::maxNumScvfsAtNode > scvfNeighborScvLocalIndices_;
 };
 
 } // end namespace Dumux

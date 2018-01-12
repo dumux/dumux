@@ -47,10 +47,10 @@
 #include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
+#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethod/staticinteractionvolume.hh>
 
 namespace Dumux
 {
@@ -69,6 +69,44 @@ SET_PROP(CCMpfaModel, DiscretizationMethod)
 SET_PROP(CCMpfaModel, MpfaMethod)
 {
     static const MpfaMethods value = GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume)::MpfaMethod;
+};
+
+//! Set the maximum admissible number of branches per scvf
+SET_PROP(CCMpfaModel, MaxNumNeighborsPerScvf)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+
+public:
+    // Per default, we allow for 8 neighbors on network/surface grids
+    static const std::size_t value = dim < dimWorld ? 9 : 2;
+};
+
+//! Set the index set type used on the dual grid nodes
+SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+
+    // Use the grid view's index type for grid indices
+    using GI = typename GridView::IndexSet::IndexType;
+
+    // per default, use uint8_t as iv-local index type
+    using LI = std::uint8_t;
+
+    // the specified maximum admissible number of branches per scvf
+    static constexpr int maxB = GET_PROP_VALUE(TypeTag, MaxNumNeighborsPerScvf);
+
+    // maximum admissible number of elements around a node
+    // if for a given grid this number is still not high enough,
+    // overwrite this property in your problem with a higher number
+    static constexpr int dim = GridView::dimension;
+    static constexpr int maxE = dim == 3 ? 45 : 15;
+
+public:
+    using type = CCMpfaDualGridNodalIndexSet<GI, LI, dim, maxE, maxB>;
 };
 
 //! The mpfa helper class

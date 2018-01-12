@@ -456,7 +456,7 @@ public:
     template<class Assembler, class SolutionVector>
     void newtonFail(Assembler& assembler, SolutionVector& u)
     {
-        if (!assembler.localResidual().isStationary())
+        if (!assembler.isStationaryProblem())
         {
             // set solution to previous solution
             u = assembler.prevSol();

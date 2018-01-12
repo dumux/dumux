@@ -65,8 +65,6 @@ namespace Dumux
  * using Matrix = ...;
  * //! export the type used for iv-local vectors
  * using Vector = ...;
- * //! export the type used for the iv-stencils
- * using Stencil = ...;
  * //! export the data handle type for this iv
  * using DataHandle = ...;
  * \endcode
@@ -123,7 +121,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() funtion"); }
 
     //! returns the cell-stencil of this interaction volume
-    const typename Traits::Stencil& stencil() const { return asImp().stencil(); }
+    const typename Traits::IndexSet::GridStencilType& stencil() const { return asImp().stencil(); }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
     const typename Traits::LocalScvfType& localScvf(typename Traits::LocalIndexType ivLocalScvfIdx) const

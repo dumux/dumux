@@ -134,7 +134,7 @@ private:
 template< class IvIndexSet >
 struct CCMpfaOInteractionVolumeLocalScvf
 {
-  using LocalIndexContainer = typename IvIndexSet::LocalIndexContainer;
+  using ScvfNeighborLocalIndexSet = typename IvIndexSet::ScvfNeighborLocalIndexSet;
 
 public:
     // export index types
@@ -154,7 +154,7 @@ public:
      */
     template< class SubControlVolumeFace >
     CCMpfaOInteractionVolumeLocalScvf(const SubControlVolumeFace& scvf,
-                                      const LocalIndexContainer& localScvIndices,
+                                      const ScvfNeighborLocalIndexSet& localScvIndices,
                                       const LocalIndexType localDofIdx,
                                       const bool isDirichlet)
     : isDirichlet_(isDirichlet)
@@ -171,7 +171,7 @@ public:
     GridIndexType globalScvfIndex() const { return scvfIdxGlobal_; }
 
     //! Returns the local indices of the scvs neighboring this scvf
-    const LocalIndexContainer& neighboringLocalScvIndices() const { return *neighborScvIndicesLocal_; }
+    const ScvfNeighborLocalIndexSet& neighboringLocalScvIndices() const { return *neighborScvIndicesLocal_; }
 
     //! states if this is scvf is on a Dirichlet boundary
     bool isDirichlet() const { return isDirichlet_; }
@@ -180,7 +180,7 @@ private:
     bool isDirichlet_;
     GridIndexType scvfIdxGlobal_;
     LocalIndexType localDofIndex_;
-    const LocalIndexContainer* neighborScvIndicesLocal_;
+    const ScvfNeighborLocalIndexSet* neighborScvIndicesLocal_;
 };
 
 } // end namespace Dumux
