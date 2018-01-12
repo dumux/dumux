@@ -83,7 +83,7 @@ SET_TYPE_PROP(CCTpfaModel, ElementFluxVariablesCache, CCTpfaElementFluxVariables
 SET_TYPE_PROP(CCTpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
 //! Set the maximum admissible number of branches per scvf
-SET_PROP(CCTpfaModel, MaxNumBranchesPerScvf)
+SET_PROP(CCTpfaModel, MaxNumNeighborsPerScvf)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);

@@ -72,7 +72,7 @@ SET_PROP(CCMpfaModel, MpfaMethod)
 };
 
 //! Set the maximum admissible number of branches per scvf
-SET_PROP(CCMpfaModel, MaxNumBranchesPerScvf)
+SET_PROP(CCMpfaModel, MaxNumNeighborsPerScvf)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -97,7 +97,7 @@ private:
     using LI = std::uint8_t;
 
     // the specified maximum admissible number of branches per scvf
-    static constexpr int maxB = GET_PROP_VALUE(TypeTag, MaxNumBranchesPerScvf);
+    static constexpr int maxB = GET_PROP_VALUE(TypeTag, MaxNumNeighborsPerScvf);
 
     // maximum admissible number of elements around a node
     // if for a given grid this number is still not high enough,

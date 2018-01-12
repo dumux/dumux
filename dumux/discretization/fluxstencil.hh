@@ -61,8 +61,8 @@ class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using IndexType = typename GridView::IndexSet::IndexType;
 
 public:
-    //! The maximum number of elements in a flux stencil (equal to max number of branches)
-    static constexpr int maxFluxStencilSize = GET_PROP_VALUE(TypeTag, MaxNumBranchesPerScvf);
+    //! The maximum number of elements in a flux stencil
+    static constexpr int maxFluxStencilSize = GET_PROP_VALUE(TypeTag, MaxNumNeighborsPerScvf);
 
     //! States how many scvfs of an element J might have an element I in the flux stencil
     static constexpr int maxNumScvfJForI = 1;
