@@ -627,7 +627,7 @@ private:
      * \param getTensor Lambda to evaluate the scv-wise tensors
      */
     template< class IV, class GetTensor >
-    void assembleLocalMatrices_(Matrix& A, Matrix& B,  Matrix& C, Matrix& D,
+    void assembleLocalMatrices_(Matrix& A, Matrix& B, Matrix& C, Matrix& D,
                                 IV& iv, const GetTensor& getTensor)
     {
         // Matrix D is assumed to have the right size already
@@ -672,7 +672,7 @@ private:
             // we require the matrices A,B,C to have the correct size already
             assert(A.rows() == iv.numUnknowns() && A.cols() == iv.numUnknowns() && "Matrix A does not have the correct size");
             assert(B.rows() == iv.numUnknowns() && B.cols() == iv.numKnowns() && "Matrix B does not have the correct size");
-            assert(C.rows() == iv.numFaces() && C.cols() == iv.numKnowns() && "Matrix C does not have the correct size");
+            assert(C.rows() == iv.numFaces() && C.cols() == iv.numUnknowns() && "Matrix C does not have the correct size");
 
             // reset matrices
             A = 0.0;
