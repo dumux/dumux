@@ -22,6 +22,7 @@ loggingparametertree.hh
 math.hh
 matrixvectorhelper.hh
 optional.hh
+numericdifferentiation.hh
 parameters.hh
 pointsource.hh
 properties.hh
