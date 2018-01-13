@@ -205,6 +205,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
@@ -221,7 +223,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -243,7 +245,7 @@ public:
         // create the element solution
         ElementSolutionVector elemSol(element, curSol, fvGeometry);
 
-        using ElementResidualVector = std::decay_t<decltype(origResiduals)>;
+        // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
 
         // calculation of the derivatives
@@ -313,6 +315,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
@@ -327,7 +331,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -349,7 +353,7 @@ public:
         // create the element solution
         ElementSolutionVector elemSol(element, curSol, fvGeometry);
 
-        using ElementResidualVector = std::decay_t<decltype(origResiduals)>;
+        // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
 
         // calculation of the derivatives
@@ -412,6 +416,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/t
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
 public:
 
@@ -423,7 +429,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -524,6 +530,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/f
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
 public:
 
@@ -535,7 +543,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();
