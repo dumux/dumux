@@ -41,9 +41,9 @@ namespace Dumux {
  * \brief A base class for all local assemblers
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
- * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, class Implementation, bool implicit>
+template<class TypeTag, class Assembler, class Implementation, bool isImplicit>
 class FVLocalAssemblerBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
@@ -88,7 +88,7 @@ public:
      */
     auto evalLocalResidual() const
     {
-        if(this->assembler().isStationaryProblem() && !isImplicit())
+        if(this->assembler().isStationaryProblem() && !isImplicit)
             DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
 
         if(elementIsGhost())
@@ -97,8 +97,8 @@ public:
             return ResdiualType(0.0);
         }
 
-        return isImplicit() ? evalLocalResidual(curElemVolVars())
-                            : evalLocalResidual(prevElemVolVars());
+        return isImplicit ? evalLocalResidual(curElemVolVars())
+                          : evalLocalResidual(prevElemVolVars());
     }
 
     /*!
@@ -124,8 +124,8 @@ public:
      */
     auto evalLocalFluxAndSourceResidual() const
     {
-        return isImplicit() ? evalLocalFluxAndSourceResidual(curElemVolVars())
-                            : evalLocalFluxAndSourceResidual(prevElemVolVars());
+        return isImplicit ? evalLocalFluxAndSourceResidual(curElemVolVars())
+                          : evalLocalFluxAndSourceResidual(prevElemVolVars());
      }
 
     /*!
@@ -167,7 +167,7 @@ public:
         // bind the caches
         fvGeometry.bind(element);
 
-        if(isImplicit())
+        if(isImplicit)
         {
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
@@ -249,9 +249,6 @@ public:
     //! The local residual for the current element
     const LocalResidual& localResidual() const
     { return localResidual_; }
-
-    constexpr bool isImplicit() const
-    { return implicit; }
 
 protected:
     Implementation &asImp_()
