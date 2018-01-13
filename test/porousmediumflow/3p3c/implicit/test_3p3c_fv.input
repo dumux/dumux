@@ -9,7 +9,7 @@ Cells = 40 4
 [Problem]
 Name = infiltration
 
-[Implicit]
+[Assembly]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences
 
 [Newton]

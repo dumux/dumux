@@ -27,7 +27,6 @@
 
 #include <cmath>
 #include <limits>
-#include <dumux/common/parameters.hh>
 
 namespace Dumux {
 
@@ -61,8 +60,9 @@ public:
     template<class Function, class Scalar, class FunctionEvalType>
     static void partialDerivative(const Function& function, Scalar x0,
                                   FunctionEvalType& derivative,
-                                  const FunctionEvalType& fx0)
-    { partialDerivative(function, x0, derivative, fx0, epsilon(x0)); }
+                                  const FunctionEvalType& fx0,
+                                  const int numericDifferenceMethod = 1)
+    { partialDerivative(function, x0, derivative, fx0, epsilon(x0), numericDifferenceMethod); }
 
     /*!
      * \brief Computes the derivative of a function with repect to a function parameter
@@ -71,15 +71,16 @@ public:
      * \param derivative The partial derivative (output)
      * \param fx0 The result of the function evaluated at x0
      * \param eps The numeric epsilon used in the differentiation
+     * \param numericDifferenceMethod The numeric difference method
+     *        (1: foward differences (default), 0: central differences, -1: backward differences)
      */
     template<class Function, class Scalar, class FunctionEvalType>
     static void partialDerivative(const Function& function, Scalar x0,
                                   FunctionEvalType& derivative,
                                   const FunctionEvalType& fx0,
-                                  const Scalar eps)
+                                  const Scalar eps,
+                                  const int numericDifferenceMethod = 1)
     {
-        static const int numericDifferenceMethod = numDiffMethod();
-
         Scalar delta = 0.0;
         // we are using forward or central differences, i.e. we need to calculate f(x + \epsilon)
         if (numericDifferenceMethod >= 0)
@@ -111,13 +112,6 @@ public:
         // divide difference in residuals by the magnitude of the
         // deflections between the two function evaluation
         derivative /= delta;
-    }
-
-    static int numDiffMethod()
-    {
-        static const int numericDifferenceMethod
-            = getParam<int>("Assembly.NumericDifferenceMethod", 1);
-        return numericDifferenceMethod;
     }
 };
 
