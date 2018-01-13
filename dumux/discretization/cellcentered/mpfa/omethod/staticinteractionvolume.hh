@@ -35,6 +35,7 @@
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
+#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
@@ -103,7 +104,6 @@ public:
 template< class Traits, int localSize >
 class CCMpfaOStaticInteractionVolume : public CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >
 {
-    using ThisType = CCMpfaOInteractionVolume< Traits >;
     using ParentType = CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >;
 
     using Scalar = typename Traits::ScalarType;
