@@ -96,7 +96,7 @@ public:
 SET_TYPE_PROP(Pressure, PressureSolutionVector, typename GET_PROP(TypeTag, SolutionTypes)::ScalarSolution);
 
 // use the stabilized BiCG solver preconditioned by the ILU-0 by default
-SET_TYPE_PROP(Pressure, LinearSolver, ILU0BiCGSTABBackend<TypeTag> );
+SET_TYPE_PROP(Pressure, LinearSolver, ILU0BiCGSTABBackend );
 
 SET_TYPE_PROP( Pressure, Velocity, FVVelocityDefault<TypeTag>);
 

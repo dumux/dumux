@@ -69,9 +69,9 @@ SET_PROP(DiffusionTestProblem, FluidSystem)
 };
 
 #if HAVE_SUPERLU
-SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, SuperLUBackend<TypeTag>);
+SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, SuperLUBackend);
 #else
-SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, ILUnRestartedGMResBackend<TypeTag>);
+SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, ILUnRestartedGMResBackend);
 SET_INT_PROP(DiffusionTestProblem, LinearSolverGMResRestart, 80);
 SET_INT_PROP(DiffusionTestProblem, LinearSolverMaxIterations, 1000);
 SET_SCALAR_PROP(DiffusionTestProblem, LinearSolverResidualReduction, 1e-8);

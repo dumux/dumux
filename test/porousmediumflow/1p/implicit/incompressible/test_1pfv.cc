@@ -120,7 +120,7 @@ int main(int argc, char** argv) try
 
     // solve the linear system
     Dune::Timer solverTimer;
-    using LinearSolver = SSORCGBackend<TypeTag>;
+    using LinearSolver = SSORCGBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     if (mpiHelper.rank() == 0) std::cout << "Solving linear system using " + linearSolver->name() + "..." << std::flush;

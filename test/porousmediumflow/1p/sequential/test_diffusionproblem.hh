@@ -99,8 +99,8 @@ SET_PROP(FVVelocity2PTestProblem, FluidSystem)
 
 // set the types for the MPFA-O FV method
 NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FvMpfaO2dPressureTwoP, TestDiffusionSpatialParams));
-//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, ILUnBiCGSTABBackend<TypeTag>);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, SSORBiCGSTABBackend<TypeTag>);
+//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, ILUnBiCGSTABBackend);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, SSORBiCGSTABBackend);
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);

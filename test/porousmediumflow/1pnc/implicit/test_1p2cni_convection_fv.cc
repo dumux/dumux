@@ -129,8 +129,8 @@
      auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables, timeLoop);
 
      // the linear solver
-    //  using LinearSolver = UMFPackBackend<TypeTag>;
-     using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
+    //  using LinearSolver = UMFPackBackend;
+     using LinearSolver = ILU0BiCGSTABBackend;
      auto linearSolver = std::make_shared<LinearSolver>();
 
      // the non-linear solver

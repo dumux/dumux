@@ -45,38 +45,38 @@ using LinearSolverAcceptsMultiTypeMatrix = LinearSolverAcceptsMultiTypeMatrixImp
 //! And the direct solvers that have BCRS Matrix hardcoded
 
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnBiCGSTABBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnBiCGSTABBackend>
 { static constexpr bool value = false; };
 
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnCGBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnCGBackend>
 { static constexpr bool value = false; };
 
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0BiCGSTABBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0BiCGSTABBackend>
 { static constexpr bool value = false; };
 
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0CGBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0CGBackend>
 { static constexpr bool value = false; };
 
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0RestartedGMResBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0RestartedGMResBackend>
 { static constexpr bool value = false; };
 
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnRestartedGMResBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnRestartedGMResBackend>
 { static constexpr bool value = false; };
 
 #if HAVE_SUPERLU
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, SuperLUBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, SuperLUBackend>
 { static constexpr bool value = false; };
 #endif // HAVE_SUPERLU
 
 #if HAVE_UMFPACK
 template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, UMFPackBackend<TypeTag>>
+struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, UMFPackBackend>
 { static constexpr bool value = false; };
 #endif // HAVE_UMFPACK
 

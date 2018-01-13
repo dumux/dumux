@@ -99,7 +99,7 @@ public:
             BlockVector y(numRows);
 
             // solve
-            const bool converged = ls.solve(M, y, bTmp);
+            const bool converged = ls.template solve</*precondBlockLevel=*/2>(M, y, bTmp);
 
             // copy back the result y into x
             VectorConverter<SolutionVector>::retrieveValues(x, y);
