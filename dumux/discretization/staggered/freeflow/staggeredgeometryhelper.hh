@@ -24,6 +24,7 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
 #define DUMUX_DISCRETIZATION_STAGGERED_GEOMETRY_HELPER_HH
 
+#include <dune/common/version.hh>
 #include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
