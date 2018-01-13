@@ -60,13 +60,13 @@ public:
 
     using typename ParentType::ElementResidualVector;
 
-    ElementResidualVector evalFluxSource(const Element& element,
-                                         const FVElementGeometry& fvGeometry,
-                                         const ElementVolumeVariables& elemVolVars,
-                                         const ElementFluxVariablesCache& elemFluxVarsCache,
-                                         const ElementBoundaryTypes &bcTypes) const
+    ElementResidualVector evalFluxAndSource(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                                            const ElementBoundaryTypes &bcTypes) const
     {
-        ElementResidualVector residual = ParentType::evalFluxSource(element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
+        ElementResidualVector residual = ParentType::evalFluxAndSource(element, fvGeometry, elemVolVars, elemFluxVarsCache, bcTypes);
 
         for (auto&& scv : scvs(fvGeometry))
         {

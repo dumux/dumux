@@ -136,7 +136,7 @@ public:
      */
     auto evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
-        return localResidual_.evalFluxSource(element_, fvGeometry_, elemVolVars, elemFluxVarsCache_, elemBcTypes_);
+        return localResidual_.evalFluxAndSource(element_, fvGeometry_, elemVolVars, elemFluxVarsCache_, elemBcTypes_);
     }
 
     /*!

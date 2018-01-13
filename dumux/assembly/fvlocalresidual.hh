@@ -144,7 +144,7 @@ public:
      * \param bcTypes The types of the boundary conditions for all boundary entities of an element
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      */
-    DUNE_DEPRECATED_MSG("eval is deprecated because it doesn't allow to specify on which time level to evaluate. Use evalFluxSource, and evalStorage instead!")
+    DUNE_DEPRECATED_MSG("eval is deprecated because it doesn't allow to specify on which time level to evaluate. Use evalFluxAndSource, and evalStorage instead!")
     ElementResidualVector eval(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
@@ -219,7 +219,7 @@ public:
      * \param bcTypes The types of the boundary conditions for all boundary entities of an element
      * \param elemFluxVarsCache The flux variable caches for the element stencil
      */
-    DUNE_DEPRECATED_MSG("Use evalFluxSource instead!")
+    DUNE_DEPRECATED_MSG("Use evalFluxAndSource instead!")
     ElementResidualVector eval(const Problem& problem,
                                const Element& element,
                                const FVElementGeometry& fvGeometry,
@@ -227,14 +227,14 @@ public:
                                const ElementBoundaryTypes &bcTypes,
                                const ElementFluxVariablesCache& elemFluxVarsCache) const
     {
-        return evalFluxSource(element, fvGeometry, curElemVolVars, elemFluxVarsCache, bcTypes);
+        return evalFluxAndSource(element, fvGeometry, curElemVolVars, elemFluxVarsCache, bcTypes);
     }
 
-    ElementResidualVector evalFluxSource(const Element& element,
-                                         const FVElementGeometry& fvGeometry,
-                                         const ElementVolumeVariables& elemVolVars,
-                                         const ElementFluxVariablesCache& elemFluxVarsCache,
-                                         const ElementBoundaryTypes &bcTypes) const
+    ElementResidualVector evalFluxAndSource(const Element& element,
+                                            const FVElementGeometry& fvGeometry,
+                                            const ElementVolumeVariables& elemVolVars,
+                                            const ElementFluxVariablesCache& elemFluxVarsCache,
+                                            const ElementBoundaryTypes &bcTypes) const
     {
         // initialize the residual vector for all scvs in this element
         ElementResidualVector residual(fvGeometry.numScv());
