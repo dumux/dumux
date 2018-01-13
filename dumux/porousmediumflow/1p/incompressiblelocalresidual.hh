@@ -44,7 +44,6 @@ class OnePIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
