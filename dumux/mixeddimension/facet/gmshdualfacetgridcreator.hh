@@ -338,8 +338,16 @@ public:
 #endif
         auto& map = bulkInsertionToGlobalIdxMap_();
         map.resize(bulkElementCounter);
+
+        Dune::GeometryType tria; tria.makeTriangle();
+        const auto quadOffset = bulkGrid().leafGridView().size(tria);
         for (const auto& element : elements(bulkGrid().leafGridView()))
-            map[bulkFactory.insertionIndex(element)] = elementMapper.index(element);
+        {
+            const auto insertIdx = element.geometry().type() == tria ?
+                                   bulkFactory.insertionIndex(element) :
+                                   bulkFactory.insertionIndex(element) + quadOffset;
+            map[insertIdx] = elementMapper.index(element);
+        }
     }
 
     /*!
