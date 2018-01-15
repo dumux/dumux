@@ -168,10 +168,15 @@ public:
         // the coupling data container lowDim -> bulk
         auto& lowDimCouplingMap = lowDimCouplingElements_();
 
+        // the map to the physical entities
+        auto& elemToEntityMap = bulkInsertionIdxToPhysicalEntityMap_();
+        elemToEntityMap.resize(numElements);
+
         // read in the elements line by line
         std::getline(mshFile, line);
         BulkIndexType bulkElementCounter = 0;
         LowDimIndexType lowDimElementCounter = 0;
+
         while (line.compare(0, 12, "$EndElements") != 0)
         {
             // read the data of this element
@@ -264,6 +269,9 @@ public:
                     // insert bulk element into the factory
                     bulkFactory.insertElement(gt, elemVertexIndices);
 
+                    // store the physical entity index this elem belongs to
+                    elemToEntityMap[bulkElementCounter] = elemData[3];
+
                     // increase bulk element counter
                     bulkElementCounter++;
                     break;
@@ -298,6 +306,9 @@ public:
 
                     // insert bulk element into the factory
                     bulkFactory.insertElement(gt, elemVertexIndices);
+
+                    // store the physical entity index this elem belongs to
+                    elemToEntityMap[bulkElementCounter] = elemData[3];
 
                     // increase bulk element counter
                     bulkElementCounter++;
@@ -592,6 +603,9 @@ public:
     static LowDimIndexType getInsertionIndex(const LowDimElement& element)
     { return lowDimFactory_().insertionIndex(element); }
 
+    static unsigned int getPhysicalEntityIndex(const BulkElement& element)
+    { return bulkInsertionIdxToPhysicalEntityMap_()[getInsertionIndex(element)]; }
+
 private:
 
     /*!
@@ -613,6 +627,16 @@ private:
     {
         static std::vector<BulkIndexType> insertionIdxMap_;
         return insertionIdxMap_;
+    }
+
+    /*!
+     * \brief Returns a reference to the map mapping bulk element insertion indices
+     *        to the physical entity the element corresponds to
+     */
+    static std::vector<unsigned int>& bulkInsertionIdxToPhysicalEntityMap_()
+    {
+        static std::vector<unsigned int> physicalEntityMap_;
+        return physicalEntityMap_;
     }
 
     /*!
