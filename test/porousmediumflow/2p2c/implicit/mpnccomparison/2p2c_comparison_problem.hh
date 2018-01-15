@@ -34,7 +34,6 @@
 
 #include <dumux/material/fluidsystems/h2on2.hh>
 #include <dumux/material/fluidstates/compositional.hh>
-#include <dumux/material/constraintsolvers/computefromreferencephase.hh>
 
 #include "2p2c_comparison_spatialparams.hh"
 #include "vtkoutputfields.hh"
@@ -92,19 +91,13 @@ class TwoPTwoCComparisonProblem
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using ParameterCache = typename FluidSystem::ParameterCache;
 
     // world dimension
     enum {dimWorld = GridView::dimensionworld};
@@ -122,9 +115,7 @@ class TwoPTwoCComparisonProblem
         contiN2EqIdx = Indices::contiNEqIdx
     };
 
-
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-    using PhaseVector = Dune::FieldVector<Scalar, numPhases>;
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
@@ -174,20 +165,7 @@ public:
     { return temperature_; }
 
     /*!
-     * \brief Write a restart file?
-     */
-    bool shouldWriteRestartFile() const
-    {
-        return ParentType::shouldWriteRestartFile();
-    }
-
-    // \}
-
-    /*!
      * \name Boundary conditions
-     */
-    // \{
-    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment
      *
@@ -232,9 +210,8 @@ public:
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
                           const SubControlVolumeFace& scvf) const
-
     {
-        PrimaryVariables values(0.0);
+        NeumannFluxes values(0.0);
         const auto& globalPos = scvf.ipGlobal();
         Scalar injectedAirMass = -1e-3;
         Scalar injectedAirMolarMass = injectedAirMass/FluidSystem::molarMass(nCompIdx);
@@ -246,32 +223,6 @@ public:
     }
 
     // \}
-
-    /*!
-     * \name Volume terms
-     */
-    // \{
-
-    /*!
-     * \brief Evaluate the source term for all balance equations within a given
-     *        sub-control-volume.
-     *
-     * \param values Stores the solution for the conservation equations in
-     *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
-     * \param element The finite element
-     * \param fvGeometry The finite volume geometry of the element
-     * \param scvIdx The local index of the sub-control volume
-     *
-     * Positive values mean that mass is created, negative ones mean that it vanishes.
-     */
-    //! \copydoc Dumux::ImplicitProblem::source()
-    PrimaryVariables source(const Element &element,
-                            const FVElementGeometry& fvGeometry,
-                            const ElementVolumeVariables& elemVolVars,
-                            const SubControlVolume &scv) const
-    {
-       return PrimaryVariables(0.0);
-    }
 
     /*!
      * \brief Evaluate the initial value for a control volume.
