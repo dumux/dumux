@@ -249,10 +249,6 @@ protected:
     {
         const auto& couplingStencil = globalProblem_().couplingManager().couplingStencil(element);
 
-        //! if there are coupling residua to be evaluated, restore the elem flux vars cache
-        if (couplingStencil.size() > 0)
-            elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
-
         for (auto globalJ : couplingStencil)
         {
             const auto otherElement = otherProblem_().model().globalFvGeometry().element(globalJ);
@@ -282,10 +278,6 @@ protected:
                     otherPriVars[pvIdx] += eps;
                     delta += eps;
 
-                    // maybe update cache
-                    if (std::is_same<typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag), SubProblemTypeTag>::value)
-                        elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
-
                     // calculate the residual with the deflected primary variables
                     partialDeriv = globalProblem_().couplingManager().evalCouplingResidual(element,
                                                                                            fvGeometry,
@@ -311,10 +303,6 @@ protected:
                     // deflect the primary variables
                     otherPriVars[pvIdx] -= 2*eps;
                     delta += eps;
-
-                    // maybe update cache
-                    if (std::is_same<typename GET_PROP_TYPE(TypeTag, BulkProblemTypeTag), SubProblemTypeTag>::value)
-                        elemFluxVarsCache.update(element, fvGeometry, curElemVolVars);
 
                     // calculate the residual with the deflected primary variables
                     partialDeriv -= globalProblem_().couplingManager().evalCouplingResidual(element,

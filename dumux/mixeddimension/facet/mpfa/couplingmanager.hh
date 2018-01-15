@@ -180,20 +180,22 @@ public:
                                               const BulkFVElementGeometry& fvGeometry,
                                               const BulkElementVolumeVariables& elemVolVars,
                                               const BulkElementBoundaryTypes& elemBcTypes,
-                                              const BulkElementFluxVariablesCache& elemFluxVarsCache,
+                                              BulkElementFluxVariablesCache& elemFluxVarsCache,
                                               const LowDimElement& lowDimElement)
     {
         // ensure this is only called for the element the context is set for
         assert(bulkCouplingContext_.bulkElementIndex == bulkProblem().elementMapper().index(element) && "Context has not been set to the given element!");
+
         const auto& couplingData = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex);
 
         // This should never be called for non-coupled elements. But if so, derivative is zero
-        if (!couplingData.isCoupled) return BulkPrimaryVariables(0.0);
+        if (!couplingData.isCoupled)
+            DUNE_THROW(Dune::InvalidStateException, "Bulk element is not coupled");
 
         // obtain the corresponding volvars in the coupling context (store copy)
         const auto lowDimElementIndex = lowDimProblem().elementMapper().index(lowDimElement);
         const auto idxInContext = findIndexInVector(couplingData.couplingStencil, lowDimElementIndex);
-        const auto origVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
+        // const auto origVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
         const auto& lowDimCurSol = lowDimProblem().model().curSol();
 
         // update volvars of the coupling context
@@ -201,6 +203,9 @@ public:
                                                                 lowDimProblem(),
                                                                 lowDimElement,
                                                                 bulkCouplingContext_.lowDimFvGeometries[idxInContext].scv(lowDimElementIndex));
+
+        // after updating the vol vars, we have to update the flux vars cache
+        elemFluxVarsCache.update(element, fvGeometry, elemVolVars);
 
         // calculate the sum of the fluxes of the scvfs that touch an interior boundary
         static const bool bulkUseTpfaBoundary = GET_PROP_VALUE(BulkProblemTypeTag, UseTpfaBoundary);
@@ -228,7 +233,7 @@ public:
         }
 
         // restore the vol vars
-        bulkCouplingContext_.lowDimVolVars[idxInContext] = origVolVars;
+        // bulkCouplingContext_.lowDimVolVars[idxInContext] = origVolVars;
 
         // return the sum of the fluxes
         return flux;
@@ -248,14 +253,15 @@ public:
         const auto& couplingData = couplingMapper_.getLowDimCouplingData(lowDimCouplingContext_.lowDimElementIndex);
 
         // This should never be called for non-coupled elements. But if so, derivative is zero
-        if (!couplingData.isCoupled) return LowDimPrimaryVariables(0.0);
+        if (!couplingData.isCoupled)
+            DUNE_THROW(Dune::InvalidStateException, "low dim element is not coupled");
 
         // update the corresponding vol vars in the coupling context
         const auto bulkElementIndex = bulkProblem().elementMapper().index(bulkElement);
         const auto& bulkCurSol = bulkProblem().model().curSol();
 
         auto& bulkVolVars = lowDimCouplingContext_.bulkElemVolVars[bulkElementIndex];
-        const auto origVolVars = bulkVolVars;
+        // const auto origVolVars = bulkVolVars;
         bulkVolVars.update(bulkProblem().model().elementSolution(bulkElement, bulkCurSol),
                            bulkProblem(),
                            bulkElement,
@@ -270,12 +276,12 @@ public:
         const auto& couplingStencil = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex).couplingStencil;
         const auto idxInContext = findIndexInVector(couplingStencil, lowDimCouplingContext_.lowDimElementIndex);
 
-        const auto origLowDimVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
-        const auto& lowDimCurSol = lowDimProblem().model().curSol();
-        bulkCouplingContext_.lowDimVolVars[idxInContext].update(lowDimProblem().model().elementSolution(element, lowDimCurSol),
-                                                                lowDimProblem(),
-                                                                element,
-                                                                bulkCouplingContext_.lowDimFvGeometries[idxInContext].scv(lowDimCouplingContext_.lowDimElementIndex));
+        // const auto origLowDimVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
+        // const auto& lowDimCurSol = lowDimProblem().model().curSol();
+        // bulkCouplingContext_.lowDimVolVars[idxInContext].update(lowDimProblem().model().elementSolution(element, lowDimCurSol),
+        //                                                         lowDimProblem(),
+        //                                                         element,
+        //                                                         bulkCouplingContext_.lowDimFvGeometries[idxInContext].scv(lowDimCouplingContext_.lowDimElementIndex));
 
         // Calculate the sources stemming from the bulk domain.
         // We call the private routine directly, as we know we do not have to update
@@ -284,10 +290,10 @@ public:
         sources *= -1.0;
 
         // reset the corresponding volume variables in the coupling context
-        bulkVolVars = origVolVars;
+        // bulkVolVars = origVolVars;
 
         // restore the low dim vol vars
-        bulkCouplingContext_.lowDimVolVars[idxInContext] = origLowDimVolVars;
+        // bulkCouplingContext_.lowDimVolVars[idxInContext] = origLowDimVolVars;
 
         // return sources
         return sources;
@@ -303,7 +309,6 @@ public:
     {
         // ensure this is only called for the element the context is set for
         assert(lowDimCouplingContext_.lowDimElementIndex == lowDimProblem().elementMapper().index(element) && "Context has not been set to the given element!");
-
         const auto& couplingData = couplingMapper_.getLowDimCouplingData(lowDimCouplingContext_.lowDimElementIndex);
         if (!couplingData.isCoupled) return BulkPrimaryVariables(0.0);
 
@@ -318,11 +323,18 @@ public:
                                                                 element,
                                                                 scv);
 
+        // after updating the low dim vol vars, update the bulk flux variables cache
+        auto origFluxVarCache = lowDimCouplingContext_.bulkElemFluxVarsCache;
+        lowDimCouplingContext_.bulkElemFluxVarsCache.update(lowDimCouplingContext_.bulkElement,
+                                                            lowDimCouplingContext_.bulkFVGeometry,
+                                                            lowDimCouplingContext_.bulkElemVolVars);
+
         // let the private method evaluate the actual sources
         const auto flux = evalSourcesFromBulk_(element, fvGeometry, curElemVolVars, scv);
 
         // restore the vol vars
         bulkCouplingContext_.lowDimVolVars[idxInContext] = origVolVars;
+        lowDimCouplingContext_.bulkElemFluxVarsCache = origFluxVarCache;
 
         return flux;
     }
