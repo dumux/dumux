@@ -1,3 +1,4 @@
+add_subdirectory(2p2ccomparison)
 add_input_file_links()
 
 dune_add_test(NAME test_mpnc_box
@@ -17,7 +18,6 @@ dune_add_test(NAME test_mpnc_tpfa
                         --files ${CMAKE_SOURCE_DIR}/test/references/obstaclecc-reference.vtu
                                 ${CMAKE_CURRENT_BINARY_DIR}/test_ccmpnc-00009.vtu
                         --command "${CMAKE_CURRENT_BINARY_DIR}/test_mpnc_tpfa test_mpnc.input -Problem.Name test_ccmpnc")
-
 # build target for the full kinetic test problem
 dune_add_test(NAME test_mpnckinetic_box
               SOURCES test_boxmpnckinetic.cc
