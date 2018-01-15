@@ -510,6 +510,52 @@ public:
                     break;
                 }
 
+                case 3: // 4-node quadrilateral
+                {
+                    // the geometry type for lines
+                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::cube, 2);
+
+                    // get the connected vertex indices
+                    std::vector<LowDimIndexType> elemVertexIndices(4);
+                    std::vector<BulkIndexType> originalVertexIndices(4);
+
+                    originalVertexIndices[0] = elemData[3 + noOfTags];
+                    originalVertexIndices[1] = elemData[3 + noOfTags + 1];
+                    originalVertexIndices[2] = elemData[3 + noOfTags + 3];
+                    originalVertexIndices[3] = elemData[3 + noOfTags + 2];
+
+                    elemVertexIndices[0] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[0]);
+                    elemVertexIndices[1] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[1]);
+                    elemVertexIndices[2] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[2]);
+                    elemVertexIndices[3] = findIndexInVector_(lowDimVertexIndices, originalVertexIndices[3]);
+
+                    for (unsigned int i = 0; i < 4; ++i)
+                    {
+                        if (elemVertexIndices[i] == invalidIndex)
+                        {
+                            const auto vIdx = originalVertexIndices[i];
+                            const auto v = bulkVertices[vIdx-1];
+
+                            lowDimVertices.push_back(v);
+                            lowDimVertexIndices.push_back(vIdx);
+                            lowDimFactory.insertVertex(v);
+
+                            elemVertexIndices[i] = lowDimVertices.size()-1;
+                        }
+                    }
+
+                    // store the low dim elements' vertices
+                    lowDimElemVertices.push_back(originalVertexIndices);
+
+                    // insert element into the factory
+                    lowDimFactory.insertElement(gt, elemVertexIndices);
+
+                    // increase low dim element counter
+                    lowDimElementCounter++;
+                    break;
+                }
+
+
                 case 4: // 4-node tetrahedron
                 {
                     // the geometry type for triangles
@@ -525,6 +571,44 @@ public:
                     elemVertexIndices[1] = elemData[3 + noOfTags + 1];
                     elemVertexIndices[2] = elemData[3 + noOfTags + 2];
                     elemVertexIndices[3] = elemData[3 + noOfTags + 3];
+
+                    // get the insertion indices of the low dim elements connected to this element
+                    const auto lowDimElemIndices = obtainLowDimConnections_(lowDimElemVertices, elemVertexIndices);
+
+                    // if we found some, insert the connections in the map
+                    for (auto lowDimElemIdx : lowDimElemIndices)
+                        lowDimCouplingMap[lowDimElemIdx].push_back(bulkElementCounter);
+
+                    // subtract 1 from the element indices (gmsh starts at index 1)
+                    std::for_each(elemVertexIndices.begin(), elemVertexIndices.end(), [] (auto& i) { i--; });
+
+                    // insert bulk element into the factory
+                    bulkFactory.insertElement(gt, elemVertexIndices);
+
+                    // increase bulk element counter
+                    bulkElementCounter++;
+                    break;
+                }
+
+                case 5: // 8-node tetrahedron
+                {
+                    // the geometry type for triangles
+                    static const Dune::GeometryType gt = Dune::GeometryType(Dune::GeometryType::cube, 3);
+
+                    // we know that the low dim elements have been read already
+                    if (lowDimCouplingMap.empty())
+                        lowDimCouplingMap.resize(lowDimElementCounter);
+
+                    // get the vertex indices of this bulk element
+                    std::vector<BulkIndexType> elemVertexIndices(8);
+                    elemVertexIndices[0] = elemData[3 + noOfTags + 1];
+                    elemVertexIndices[1] = elemData[3 + noOfTags];
+                    elemVertexIndices[2] = elemData[3 + noOfTags + 5];
+                    elemVertexIndices[3] = elemData[3 + noOfTags + 4];
+                    elemVertexIndices[4] = elemData[3 + noOfTags + 2];
+                    elemVertexIndices[5] = elemData[3 + noOfTags + 3];
+                    elemVertexIndices[6] = elemData[3 + noOfTags + 6];
+                    elemVertexIndices[7] = elemData[3 + noOfTags + 7];
 
                     // get the insertion indices of the low dim elements connected to this element
                     const auto lowDimElemIndices = obtainLowDimConnections_(lowDimElemVertices, elemVertexIndices);
