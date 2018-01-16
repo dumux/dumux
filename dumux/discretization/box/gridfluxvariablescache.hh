@@ -53,9 +53,9 @@ class BoxGridFluxVariablesCache<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
@@ -128,8 +128,8 @@ class BoxGridFluxVariablesCache<TypeTag, false>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}

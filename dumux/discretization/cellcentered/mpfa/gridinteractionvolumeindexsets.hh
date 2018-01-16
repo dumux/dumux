@@ -42,7 +42,8 @@ class CCMpfaGridInteractionVolumeIndexSets
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using GridIndexType = typename GridView::IndexSet::IndexType;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
     using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);

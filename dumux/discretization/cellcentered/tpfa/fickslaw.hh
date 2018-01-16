@@ -46,11 +46,11 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>
     using Implementation = FicksLawImplementation<TypeTag, DiscretizationMethods::CCTpfa>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using Element = typename GridView::template Codim<0>::Entity;

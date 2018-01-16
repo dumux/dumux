@@ -55,7 +55,8 @@ class StaggeredGridFluxVariablesCache<TypeTag, true>
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
     StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}

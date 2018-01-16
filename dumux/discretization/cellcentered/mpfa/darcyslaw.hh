@@ -53,7 +53,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Element = typename GridView::template Codim<0>::Entity;
 
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);

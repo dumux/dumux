@@ -40,7 +40,7 @@ class EmptyCacheFiller
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 public:
     //! Fill, signature for advection filler

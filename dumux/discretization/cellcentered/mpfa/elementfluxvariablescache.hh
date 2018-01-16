@@ -58,7 +58,7 @@ class CCMpfaElementFluxVariablesCache<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
 
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
@@ -117,7 +117,7 @@ class CCMpfaElementFluxVariablesCache<TypeTag, false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);

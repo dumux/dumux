@@ -57,7 +57,7 @@ class CCTpfaGridFluxVariablesCache<TypeTag, true>
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:

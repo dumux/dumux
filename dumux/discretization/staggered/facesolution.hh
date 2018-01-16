@@ -45,7 +45,8 @@ class StaggeredFaceSolution
     using FaceSolutionVector = typename GET_PROP_TYPE(TypeTag, FaceSolutionVector);
     using FacePrimaryVariables = typename GET_PROP_TYPE(TypeTag, FacePrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;

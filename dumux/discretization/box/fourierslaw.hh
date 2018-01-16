@@ -46,12 +46,12 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;

@@ -49,9 +49,9 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::Staggered >
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);

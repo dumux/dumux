@@ -46,9 +46,9 @@ class BoxGridVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using IndexType = typename GridView::IndexSet::IndexType;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using IndexType = typename GridView::IndexSet::IndexType;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 

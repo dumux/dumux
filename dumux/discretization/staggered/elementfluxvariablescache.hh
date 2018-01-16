@@ -52,7 +52,7 @@ class StaggeredElementFluxVariablesCache<TypeTag, true>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)
@@ -102,7 +102,7 @@ class StaggeredElementFluxVariablesCache<TypeTag, false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using GridFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, GridFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
     StaggeredElementFluxVariablesCache(const GridFluxVariablesCache& global)

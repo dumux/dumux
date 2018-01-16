@@ -52,7 +52,8 @@ class StaggeredGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using IndexType = typename GridView::IndexSet::IndexType;
 

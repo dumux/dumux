@@ -47,10 +47,10 @@ class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/tru
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
 public:
@@ -101,10 +101,10 @@ class StaggeredElementFaceVariables<TypeTag, /*enableGridFaceVariablesCache*/fal
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GridFaceVariables = typename GET_PROP_TYPE(TypeTag, GridFaceVariables);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
