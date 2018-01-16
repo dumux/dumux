@@ -35,13 +35,11 @@ namespace Dumux {
  * \brief A nonequilibrium specific controller for the newton solver.
  * This controller calls the velocity averaging in the problem after each iteration.
  */
-template <class TypeTag>
-class NonEquilibriumNewtonController : public NewtonController<TypeTag>
+template <class Scalar,
+          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
+class NonEquilibriumNewtonController : public NewtonController<Scalar, Comm>
 {
-    using ParentType = NewtonController<TypeTag>;
-    using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
-    using Communicator = typename GridView::CollectiveCommunication;
+    using ParentType = NewtonController<Scalar, Comm>;
 
 public:
     using ParentType::ParentType;

@@ -156,7 +156,7 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonController = PriVarSwitchNewtonController<TypeTag>;
     using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+    auto newtonController = std::make_shared<NewtonController>(timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
     // time loop

@@ -131,7 +131,7 @@
 
      // the non-linear solver
      using NewtonController = Dumux::PriVarSwitchNewtonController<TypeTag>;
-     auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+     auto newtonController = std::make_shared<NewtonController>(timeLoop);
      NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
      // time loop

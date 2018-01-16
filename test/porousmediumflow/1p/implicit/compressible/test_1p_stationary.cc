@@ -115,8 +115,9 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
-    using NewtonController = Dumux::NewtonController<TypeTag>;
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm());
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using NewtonController = Dumux::NewtonController<Scalar>;
+    auto newtonController = std::make_shared<NewtonController>();
     NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
 
     // linearize & solve

@@ -26,59 +26,64 @@
 #ifndef DUMUX_NEWTON_CONTROLLER_HH
 #define DUMUX_NEWTON_CONTROLLER_HH
 
+#include <cmath>
+
 #include <dune/common/exceptions.hh>
+#include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/istl/bvector.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/exceptions.hh>
-#include <dumux/common/math.hh>
 #include <dumux/common/timeloop.hh>
-#include <dumux/linear/seqsolverbackend.hh>
 
 namespace Dumux {
 
 /*!
  * \ingroup Nonlinear
  * \brief An implementation of a Newton controller
- *
+ * \tparam Scalar the scalar type
+ * \tparam Comm the communication object used to communicate with all processes
  * \note If you want to specialize only some methods but are happy with the
  *       defaults of the reference controller, derive your controller from
  *       this class and simply overload the required methods.
  */
-template <class TypeTag>
+template <class Scalar,
+          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
 class NewtonController
 {
-    using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
-    using Communicator = typename GridView::CollectiveCommunication;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
 
 public:
+    //! the communication type used to communicate with all processes
+    using Communication = Comm;
+
     /*!
      * \brief Constructor for stationary problems
      */
-    NewtonController(const Communicator& comm)
+    NewtonController(const Communication& comm = Dune::MPIHelper::getCollectiveCommunication(),
+                     const std::string& paramGroup = "")
     : comm_(comm)
     , endIterMsgStream_(std::ostringstream::out)
+    , paramGroup_(paramGroup)
     {
-        initParams_();
+        initParams_(paramGroup);
     }
 
     /*!
      * \brief Constructor for instationary problems
      */
-    NewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
+    NewtonController(std::shared_ptr<TimeLoop<Scalar>> timeLoop,
+                     const Communication& comm = Dune::MPIHelper::getCollectiveCommunication(),
+                     const std::string& paramGroup = "")
     : comm_(comm)
     , timeLoop_(timeLoop)
     , endIterMsgStream_(std::ostringstream::out)
+    , paramGroup_(paramGroup)
     {
-        initParams_();
+        initParams_(paramGroup);
     }
 
     //! the communicator for parallel runs
-    const Communicator& communicator() const
+    const Communication& comm() const
     { return comm_; }
 
     /*!
@@ -251,8 +256,8 @@ public:
             shift_ = max(shift_, shiftAtDof);
         }
 
-        if (communicator().size() > 1)
-            shift_ = communicator().max(shift_);
+        if (comm().size() > 1)
+            shift_ = comm().max(shift_);
     }
 
     /*!
@@ -289,34 +294,37 @@ public:
             if (numSteps_ == 0)
             {
                 Scalar norm2 = b.two_norm2();
-                if (communicator().size() > 1)
-                    norm2 = communicator().sum(norm2);
+                if (comm().size() > 1)
+                    norm2 = comm().sum(norm2);
 
                 using std::sqrt;
                 initialResidual_ = sqrt(norm2);
             }
 
-            //! Copy into a standard block vector. This is necessary for all model _not_ using a FieldVector<Scalar, numEq> as
+            //! Copy into a standard block vector.
+            //! This is necessary for all model _not_ using a FieldVector<Scalar, blockSize> as
             //! primary variables vector in combination with UMFPack or SuperLU as their interfaces are hard coded
             //! to this field vector type in Dune ISTL
             //! Could be avoided for vectors that already have the right type using SFINAE
             //! but it shouldn't impact performance too much
-            Dune::BlockVector<NumEqVector> xTmp; xTmp.resize(b.size());
-            Dune::BlockVector<NumEqVector> bTmp(xTmp);
+            constexpr auto blockSize = JacobianMatrix::block_type::rows;
+            using BlockType = Dune::FieldVector<Scalar, blockSize>;
+            Dune::BlockVector<BlockType> xTmp; xTmp.resize(b.size());
+            Dune::BlockVector<BlockType> bTmp(xTmp);
             for (unsigned int i = 0; i < b.size(); ++i)
-                for (unsigned int j = 0; j < numEq; ++j)
+                for (unsigned int j = 0; j < blockSize; ++j)
                     bTmp[i][j] = b[i][j];
 
             int converged = ls.solve(A, xTmp, bTmp);
 
             for (unsigned int i = 0; i < x.size(); ++i)
-                for (unsigned int j = 0; j < numEq; ++j)
+                for (unsigned int j = 0; j < blockSize; ++j)
                     x[i][j] = xTmp[i][j];
 
             // make sure all processes converged
             int convergedRemote = converged;
-            if (communicator().size() > 1)
-                convergedRemote = communicator().min(converged);
+            if (comm().size() > 1)
+                convergedRemote = comm().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
@@ -327,24 +335,11 @@ public:
                            "Linear solver did not converge on a remote process");
             }
         }
-        catch (Dune::MatrixBlockError e) {
-            // make sure all processes converged
-            int converged = 0;
-            if (communicator().size() > 1)
-                converged = communicator().min(converged);
-
-            NumericalProblem p;
-            std::string msg;
-            std::ostringstream ms(msg);
-            ms << e.what() << "M=" << A[e.r][e.c];
-            p.message(ms.str());
-            throw p;
-        }
         catch (const Dune::Exception &e) {
             // make sure all processes converged
             int converged = 0;
-            if (communicator().size() > 1)
-                converged = communicator().min(converged);
+            if (comm().size() > 1)
+                converged = comm().min(converged);
 
             NumericalProblem p;
             p.message(e.what());
@@ -515,15 +510,19 @@ public:
      * \brief Returns true if the Newton method ought to be chatty.
      */
     bool verbose() const
-    { return verbose_ && communicator().rank() == 0; }
+    { return verbose_ && comm().rank() == 0; }
+
+    /*!
+     * \brief Returns the parameter group
+     */
+    const std::string& paramGroup() const
+    { return paramGroup_; }
 
 protected:
 
     //! initialize the parameters by reading from the parameter tree
-    void initParams_()
+    void initParams_(const std::string& group = "")
     {
-        const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-
         useLineSearch_ = getParamFromGroup<bool>(group, "Newton.UseLineSearch");
         enableAbsoluteResidualCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableAbsoluteResidualCriterion");
         enableShiftCriterion_ = getParamFromGroup<bool>(group, "Newton.EnableShiftCriterion");
@@ -590,8 +589,6 @@ protected:
         using std::abs;
         using std::max;
         // iterate over all primary variables
-        // note: we use PrimaryVariables::dimension (== numEq)
-        //       for compatibility with the staggered grid implementation
         for (int j = 0; j < PrimaryVariables::dimension; ++j) {
             Scalar eqErr = abs(priVars1[j] - priVars2[j]);
             eqErr /= max<Scalar>(1.0,abs(priVars1[j] + priVars2[j])/2);
@@ -601,8 +598,8 @@ protected:
         return result;
     }
 
-    //! The grid view's communicator
-    const Communicator& comm_;
+    //! The communication object
+    Communication comm_;
 
     //! The time loop for stationary simulations
     std::shared_ptr<TimeLoop<Scalar>> timeLoop_;
@@ -640,6 +637,9 @@ protected:
     bool enableShiftCriterion_;
     bool enableResidualCriterion_;
     bool satisfyResidualAndShiftCriterion_;
+
+    //! the parameter group for getting parameters from the parameter tree
+    std::string paramGroup_;
 };
 
 } // end namespace Dumux

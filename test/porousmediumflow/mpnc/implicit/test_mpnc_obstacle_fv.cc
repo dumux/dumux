@@ -163,9 +163,9 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = NewtonController<TypeTag>;
+    using NewtonController = Dumux::NewtonController<Scalar>;
     using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+    auto newtonController = std::make_shared<NewtonController>(timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
     // time loop
