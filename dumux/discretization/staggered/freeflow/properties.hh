@@ -114,9 +114,8 @@ public:
 //! The velocity output
 SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
 
-SET_TYPE_PROP(StaggeredFreeFlowModel, AssemblyMap, StaggeredFreeFlowConnectivityMap<TypeTag>);
-
-
+SET_TYPE_PROP(StaggeredFreeFlowModel, AssemblyMap, StaggeredFreeFlowConnectivityMap<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                                    typename GET_PROP(TypeTag, DofTypeIndices)>);
 } // namespace Properties
 } // namespace Dumux
 

@@ -188,7 +188,8 @@ SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>
 SET_TYPE_PROP(CCMpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
 
 //! Set the AssemblyMap property
-SET_TYPE_PROP(CCMpfaModel, AssemblyMap, Dumux::CCMpfaConnectivityMap<TypeTag>);
+SET_TYPE_PROP(CCMpfaModel, AssemblyMap, Dumux::CCMpfaConnectivityMap<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                     GET_PROP_VALUE(TypeTag, MpfaMethod)>);
 
 } // namespace Properties
 } // namespace Dumux

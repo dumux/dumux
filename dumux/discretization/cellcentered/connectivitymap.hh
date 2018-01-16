@@ -31,7 +31,6 @@
 #include <algorithm>
 
 #include <dune/common/reservedvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
 namespace Dumux {
@@ -46,12 +45,11 @@ namespace Dumux {
  *        to compute these fluxes. The same holds for scvfs in the cells J, i.e. we need only those
  *        scvfs in the cells J in which the cell I is in the stencil.
  */
-template<class TypeTag>
+template<class FVGridGeometry>
 class CCSimpleConnectivityMap
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename FVGridGeometry::FVElementGeometry;
+    using GridView = typename FVGridGeometry::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
 

@@ -64,8 +64,16 @@ public:
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+
+    //! Export the discretization method this geometry belongs to
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+
+    //! Export the mpfa method
+    static constexpr MpfaMethods mpfaMethod = GET_PROP_VALUE(TypeTag, MpfaMethod);
 
 private:
+    using ThisType = CCMpfaFVGridGeometry<TypeTag, true>;
     using ParentType = BaseFVGridGeometry<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -84,20 +92,16 @@ private:
     using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
     using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
-    using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
+    using ConnectivityMap = CCMpfaConnectivityMap<ThisType, mpfaMethod>;
 
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
-    //! Export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+    using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
     static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
-
-    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-    using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
@@ -407,8 +411,16 @@ public:
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+
+    //! Export the discretization method this geometry belongs to
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+
+    //! Export the mpfa method
+    static constexpr MpfaMethods mpfaMethod = GET_PROP_VALUE(TypeTag, MpfaMethod);
 
 private:
+    using ThisType = CCMpfaFVGridGeometry<TypeTag, false>;
     using ParentType = BaseFVGridGeometry<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
@@ -427,20 +439,16 @@ private:
     using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
     using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
-    using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
+    using ConnectivityMap = CCMpfaConnectivityMap<ThisType, mpfaMethod>;
 
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
-    //! Export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+    using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
     static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
-
-    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-    using SecondaryIvIndicator = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
@@ -451,7 +459,7 @@ public:
     {}
 
     //! Constructor with user-defined indicator function for secondary interaction volumes
-    CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicator& indicator)
+    CCMpfaFVGridGeometry(const GridView& gridView, const SecondaryIvIndicatorType& indicator)
     : ParentType(gridView)
     , secondaryIvIndicator_(indicator)
     {}
@@ -669,7 +677,7 @@ private:
     GridIVIndexSets ivIndexSets_;
 
     // Indicator function on where to use the secondary IVs
-    SecondaryIvIndicator secondaryIvIndicator_;
+    SecondaryIvIndicatorType secondaryIvIndicator_;
 };
 
 } // end namespace Dumux

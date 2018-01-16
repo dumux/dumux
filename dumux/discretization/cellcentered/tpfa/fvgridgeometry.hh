@@ -64,8 +64,9 @@ public:
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 private:
+    using ThisType = CCTpfaFVGridGeometry<TypeTag, true>;
     using ParentType = BaseFVGridGeometry<TypeTag>;
-    using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using ConnectivityMap = CCSimpleConnectivityMap<ThisType>;
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
     using IndexType = typename GridView::IndexSet::IndexType;
@@ -333,8 +334,9 @@ public:
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 private:
+    using ThisType = CCTpfaFVGridGeometry<TypeTag, false>;
     using ParentType = BaseFVGridGeometry<TypeTag>;
-    using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using ConnectivityMap = CCSimpleConnectivityMap<ThisType>;
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
     using IndexType = typename GridView::IndexSet::IndexType;

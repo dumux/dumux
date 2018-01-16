@@ -49,12 +49,15 @@ class StaggeredFVGridGeometry
 template<class TypeTag>
 class StaggeredFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
+public:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+
+private:
+    using ParentType = BaseFVGridGeometry<TypeTag>;
+    using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using IntersectionMapper = typename GET_PROP_TYPE(TypeTag, IntersectionMapper);
     //! The local class needs access to the scv, scvfs and the fv element geometry

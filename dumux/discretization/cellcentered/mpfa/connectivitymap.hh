@@ -34,16 +34,12 @@
 namespace Dumux
 {
 //! Forward declaration of method specific implementation of the assembly map
-template<class TypeTag, MpfaMethods method>
-class CCMpfaConnectivityMapImplementation;
-
-//! The Assembly map for models using mpfa methods
-template<class TypeTag>
-using CCMpfaConnectivityMap = CCMpfaConnectivityMapImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
+template<class FVGridGeometry, MpfaMethods method>
+class CCMpfaConnectivityMap;
 
 //! The o-method can use the simple (symmetric) assembly map
-template<class TypeTag>
-class CCMpfaConnectivityMapImplementation<TypeTag, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<TypeTag> {};
+template<class FVGridGeometry>
+class CCMpfaConnectivityMap<FVGridGeometry, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<FVGridGeometry> {};
 }
 
 #endif
