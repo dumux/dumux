@@ -37,7 +37,6 @@
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
 
-#include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
@@ -186,11 +185,6 @@ SET_TYPE_PROP(CCMpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCMpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
-
-//! Set the AssemblyMap property
-SET_TYPE_PROP(CCMpfaModel, AssemblyMap, Dumux::CCMpfaConnectivityMap<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                     GET_PROP_VALUE(TypeTag, MpfaMethod)>);
-
 } // namespace Properties
 } // namespace Dumux
 

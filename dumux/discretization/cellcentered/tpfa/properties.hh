@@ -42,7 +42,6 @@
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
-#include <dumux/discretization/cellcentered/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/gridfluxvariablescache.hh>
@@ -123,10 +122,6 @@ SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
-
-//! Set the AssemblyMap to the SimpleAssemblyMap per default
-SET_TYPE_PROP(CCTpfaModel, AssemblyMap, CCSimpleConnectivityMap<TypeTag>);
-
 } // namespace Properties
 } // namespace Dumux
 
