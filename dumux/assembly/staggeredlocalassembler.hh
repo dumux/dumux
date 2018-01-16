@@ -78,7 +78,7 @@ class StaggeredLocalAssembler<TypeTag,
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     using NumCellCenterEqVector =  typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
@@ -95,7 +95,7 @@ class StaggeredLocalAssembler<TypeTag,
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
     using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
     static constexpr auto faceOffset = GET_PROP_VALUE(TypeTag, NumEqCellCenter);
