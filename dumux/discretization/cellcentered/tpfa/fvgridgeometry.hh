@@ -172,11 +172,8 @@ public:
 
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // TODO check if intersection is on interior boundary
-                const auto isInteriorBoundary = false;
-
                 // inner sub control volume faces
-                if (intersection.neighbor() && !isInteriorBoundary)
+                if (intersection.neighbor())
                 {
                     if (dim == dimWorld)
                     {
@@ -211,7 +208,7 @@ public:
                     }
                 }
                 // boundary sub control volume faces
-                else if (intersection.boundary() || isInteriorBoundary)
+                else if (intersection.boundary())
                 {
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
@@ -426,11 +423,8 @@ public:
 
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // TODO check if intersection is on interior boundary
-                const auto isInteriorBoundary = false;
-
                 // inner sub control volume faces
-                if (intersection.neighbor() && !isInteriorBoundary)
+                if (intersection.neighbor())
                 {
                     if (dim == dimWorld)
                     {
@@ -455,7 +449,7 @@ public:
                     }
                 }
                 // boundary sub control volume faces
-                else if (intersection.boundary() || isInteriorBoundary)
+                else if (intersection.boundary())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
                     neighborVolVarIndexSet.push_back({numScvs_ + numBoundaryScvf_++});
