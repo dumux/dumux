@@ -73,7 +73,8 @@ class InjectionProblemSpatialParams : public FVSpatialParams<TypeTag>
     using MaterialLawParams = typename MaterialLaw::Params;
     using CoordScalar = typename GridView::ctype;
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int dimWorld = GridView::dimensionworld;

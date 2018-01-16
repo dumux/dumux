@@ -78,7 +78,8 @@ class KuevetteSpatialParams : public FVSpatialParams<TypeTag>
     enum { dimWorld=GridView::dimensionworld };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimWorld>;

@@ -78,7 +78,8 @@ class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
     using PorosityLaw = PorosityPrecipitation<TypeTag>;

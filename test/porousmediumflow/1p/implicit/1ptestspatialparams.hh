@@ -54,9 +54,9 @@ class OnePTestSpatialParams : public FVSpatialParamsOneP<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexSet = typename GridView::IndexSet;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     enum {
         dim=GridView::dimension,
@@ -121,6 +121,7 @@ public:
      *
      * \param gridView The GridView used by the problem
      */
+    template<class FVGridGeometry>
     void initRandomField(const FVGridGeometry& gg)
     {
         const auto& gridView = gg.gridView();
