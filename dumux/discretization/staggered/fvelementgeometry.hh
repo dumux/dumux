@@ -59,15 +59,16 @@ class StaggeredFVElementGeometry<TypeTag, true>
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
 
 public:
+    //! export type of subcontrol volume
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    //! export type of subcontrol volume face
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    //! export type of finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+
     //! Constructor
     StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
@@ -96,9 +97,9 @@ public:
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volumes of this FVElementGeometry use
     //! for (auto&& scv : scvs(fvGeometry))
-    friend inline Dune::IteratorRange<ScvIterator>
-    scvs(const StaggeredFVElementGeometry& fvGeometry)
+    friend inline auto scvs(const StaggeredFVElementGeometry& fvGeometry)
     {
+        using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
         return Dune::IteratorRange<ScvIterator>(ScvIterator(fvGeometry.scvIndices_.begin(), fvGeometry),
                                                 ScvIterator(fvGeometry.scvIndices_.end(), fvGeometry));
     }
@@ -108,11 +109,11 @@ public:
     //! This is a free function found by means of ADL
     //! To iterate over all sub control volume faces of this FVElementGeometry use
     //! for (auto&& scvf : scvfs(fvGeometry))
-    friend inline Dune::IteratorRange<ScvfIterator>
-    scvfs(const StaggeredFVElementGeometry& fvGeometry)
+    friend inline auto scvfs(const StaggeredFVElementGeometry& fvGeometry)
     {
         const auto& g = fvGeometry.fvGridGeometry();
         const auto scvIdx = fvGeometry.scvIndices_[0];
+        using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
         return Dune::IteratorRange<ScvfIterator>(ScvfIterator(g.scvfIndicesOfScv(scvIdx).begin(), fvGeometry),
                                                  ScvfIterator(g.scvfIndicesOfScv(scvIdx).end(), fvGeometry));
     }
@@ -163,18 +164,18 @@ template<class TypeTag>
 class StaggeredFVElementGeometry<TypeTag, false>
 {
     using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-
-    using ScvIterator = Dumux::ScvIterator<SubControlVolume, std::vector<IndexType>, ThisType>;
-    using ScvfIterator = Dumux::ScvfIterator<SubControlVolumeFace, std::vector<IndexType>, ThisType>;
 
 public:
+    //! export type of subcontrol volume
+    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    //! export type of subcontrol volume face
+    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    //! export type of finite volume grid geometry
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+
     //! Constructor
     StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
