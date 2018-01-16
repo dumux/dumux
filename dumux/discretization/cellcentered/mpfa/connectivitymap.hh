@@ -30,7 +30,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
-#include <dumux/discretization/cellcentered/mpfa/generalconnectivitymap.hh>
 
 namespace Dumux
 {
@@ -41,10 +40,6 @@ class CCMpfaConnectivityMapImplementation;
 //! The Assembly map for models using mpfa methods
 template<class TypeTag>
 using CCMpfaConnectivityMap = CCMpfaConnectivityMapImplementation<TypeTag, GET_PROP_VALUE(TypeTag, MpfaMethod)>;
-
-//! The default is the general assembly map for mpfa schemes (non-symmetric schemes)
-template<class TypeTag, MpfaMethods method>
-class CCMpfaConnectivityMapImplementation : public CCMpfaGeneralConnectivityMap<TypeTag> {};
 
 //! The o-method can use the simple (symmetric) assembly map
 template<class TypeTag>
