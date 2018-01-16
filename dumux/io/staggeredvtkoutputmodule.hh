@@ -52,7 +52,8 @@ class StaggeredVtkOutputModule : public VtkOutputModule<TypeTag>
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 
     enum { dim = GridView::dimension };
