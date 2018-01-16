@@ -57,8 +57,8 @@ class CCMpfaGeneralConnectivityMap
     struct DataJ
     {
         GridIndexType globalJ;
-        std::vector<GridIndexType> scvfsJ;
-        std::vector<GridIndexType> additionalScvfs;
+        typename FluxStencil::ScvfStencilIForJ scvfsJ;
+        typename FluxStencil::ScvfStencilIForJ additionalScvfs;
     };
 
     using Map = std::vector<std::vector<DataJ>>;

@@ -64,8 +64,8 @@ public:
     //! The maximum number of elements in a flux stencil
     static constexpr int maxFluxStencilSize = GET_PROP_VALUE(TypeTag, MaxNumNeighborsPerScvf);
 
-    //! States how many scvfs of an element J might have an element I in the flux stencil
-    static constexpr int maxNumScvfJForI = 1;
+    //! Each cell I couples to a cell J always only via one face
+    using ScvfStencilIForJ = Dune::ReservedVector<IndexType, 1>;
 
     //! The flux stencil type
     using Stencil = Dune::ReservedVector<IndexType, maxFluxStencilSize>;
@@ -109,9 +109,8 @@ public:
     //! The maximum number of elements in a flux stencil (equal to number of elements at node)
     static constexpr int maxFluxStencilSize = NodalIndexSet::maxNumElementsAtNode;
 
-    //! States how many scvfs of an element J might have an element I in the flux stencil
-    //! We use cubes here for determining the maximum. Only basic geometries are not supported.
-    static constexpr int maxNumScvfJForI = dim == 3 ? 12 : 4;
+    //! We don't know yet how many faces couple to a neighboring element
+    using ScvfStencilIForJ = std::vector<IndexType>;
 
     //! The flux stencil type
     using Stencil = typename NodalIndexSet::GridStencilType;

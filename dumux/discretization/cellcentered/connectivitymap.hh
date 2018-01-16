@@ -58,10 +58,10 @@ class CCSimpleConnectivityMap
     struct DataJ
     {
         IndexType globalJ;
-        Dune::ReservedVector<IndexType, FluxStencil::maxNumScvfJForI> scvfsJ;
+        typename FluxStencil::ScvfStencilIForJ scvfsJ;
         // A list of additional scvfs is needed for compatibility
         // reasons with more complex connectivity maps (see mpfa)
-        Dune::ReservedVector<IndexType, FluxStencil::maxNumScvfJForI> additionalScvfs;
+        typename FluxStencil::ScvfStencilIForJ additionalScvfs;
     };
 
     using Map = std::vector<std::vector<DataJ>>;
