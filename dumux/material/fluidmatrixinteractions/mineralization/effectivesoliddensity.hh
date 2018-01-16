@@ -41,7 +41,8 @@ class EffectiveSolidDensity
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;

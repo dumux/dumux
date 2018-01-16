@@ -41,7 +41,8 @@ class FVSpatialParams: public FVSpatialParamsOneP<TypeTag>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
