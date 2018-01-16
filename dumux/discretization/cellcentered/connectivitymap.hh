@@ -53,7 +53,7 @@ class CCSimpleConnectivityMap
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using IndexType = typename GridView::IndexSet::IndexType;
-    using FluxStencil = Dumux::FluxStencil<TypeTag>;
+    using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
 
     struct DataJ
     {
@@ -78,9 +78,8 @@ public:
         map_.clear();
         map_.resize(fvGridGeometry.gridView().size(0));
 
-        // container to store for each element J the elements I that appear in J's flux stencils
-        static constexpr int maxNumJ = FluxStencil::maxFluxStencilSize*FVElementGeometry::maxNumElementScvfs;
-        Dune::ReservedVector<std::pair<IndexType, DataJ>, maxNumJ> dataJForI;
+        // container to store for each element J the elements I which have J in their flux stencil
+        Dune::ReservedVector<std::pair<IndexType, DataJ>, FVGridGeometry::maxElementStencilSize> dataJForI;
 
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {

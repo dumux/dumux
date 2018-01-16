@@ -57,16 +57,19 @@ class CCTpfaFVGridGeometry
 template<class TypeTag>
 class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
+public:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using Element = typename GridView::template Codim<0>::Entity;
+
+private:
+    using ParentType = BaseFVGridGeometry<TypeTag>;
     using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -78,8 +81,13 @@ class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
-    //! export discretization method
+    //! Export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+
+    //! The maximum admissible stencil size (used for static memory allocation during assembly)
+    //! Per default, we allow for 9 branches per scvf on network/surface grids
+    static constexpr int maxElementStencilSize = (dim < dimWorld) ? FVElementGeometry::maxNumElementScvfs*8 + 1
+                                                                  : FVElementGeometry::maxNumElementScvfs + 1;
 
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
@@ -318,16 +326,19 @@ private:
 template<class TypeTag>
 class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
+public:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using Element = typename GridView::template Codim<0>::Entity;
+
+private:
+    using ParentType = BaseFVGridGeometry<TypeTag>;
     using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
@@ -340,8 +351,13 @@ class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
                                                                Dune::ReservedVector<IndexType, 1> >;
 
 public:
-    //! export discretization method
+    //! Export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+
+    //! The maximum admissible stencil size (used for static memory allocation during assembly)
+    //! Per default, we allow for 9 branches per scvf on network/surface grids
+    static constexpr int maxElementStencilSize = (dim < dimWorld) ? FVElementGeometry::maxNumElementScvfs*8 + 1
+                                                                  : FVElementGeometry::maxNumElementScvfs + 1;
 
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)

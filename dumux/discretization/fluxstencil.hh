@@ -25,15 +25,10 @@
 #define DUMUX_DISCRETIZATION_FLUXSTENCIL_HH
 
 #include <dune/common/reservedvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/methods.hh>
 
 namespace Dumux
 {
-
-//! Forward declaration of the upwind scheme implementation
-template<class TypeTag, DiscretizationMethods Method>
-class FluxStencilImplementation;
 
 /*!
  * \ingroup Discretization
@@ -44,32 +39,31 @@ class FluxStencilImplementation;
  *       since we use the flux stencil for matrix and assembly. This might lead to some zeros stored
  *       in the matrix.
  */
-template<class TypeTag>
-using FluxStencil = FluxStencilImplementation<TypeTag, GET_PROP_VALUE(TypeTag, DiscretizationMethod)>;
+template<class FVElementGeometry, DiscretizationMethods Method = FVElementGeometry::FVGridGeometry::discretizationMethod>
+class FluxStencil;
 
 /*
  * \ingroup Discretization
  * \brief Flux stencil specialization for the cell-centered tpfa scheme
+ * \tparam FVElementGeometry The local view on the finite volume grid geometry
  */
-template<class TypeTag>
-class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCTpfa>
+template<class FVElementGeometry>
+class FluxStencil<FVElementGeometry, DiscretizationMethods::CCTpfa>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
 public:
-    //! The maximum number of elements in a flux stencil
-    static constexpr int maxFluxStencilSize = GET_PROP_VALUE(TypeTag, MaxNumNeighborsPerScvf);
-
     //! Each cell I couples to a cell J always only via one face
     using ScvfStencilIForJ = Dune::ReservedVector<IndexType, 1>;
 
     //! The flux stencil type
-    using Stencil = Dune::ReservedVector<IndexType, maxFluxStencilSize>;
+    using Stencil = typename SubControlVolumeFace::Traits::GridIndexStorage;
 
+    //! Returns the flux stencil
     static Stencil stencil(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const SubControlVolumeFace& scvf)
@@ -91,41 +85,28 @@ public:
 /*
  * \ingroup Discretization
  * \brief Flux stencil specialization for the cell-centered mpfa scheme
+ * \tparam FVElementGeometry The local view on the finite volume grid geometry
  */
-template<class TypeTag>
-class FluxStencilImplementation<TypeTag, DiscretizationMethods::CCMpfa>
+template<class FVElementGeometry>
+class FluxStencil<FVElementGeometry, DiscretizationMethods::CCMpfa>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVGridGeometry = typename FVElementGeometry::FVGridGeometry;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using GridView = typename FVGridGeometry::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
-    static constexpr int dim = GridView::dimension;
 
     // Use the stencil type of the primary interaction volume
-    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using NodalIndexSet = typename FVGridGeometry::DualGridNodalIndexSet;
 
 public:
-    //! The maximum number of elements in a flux stencil (equal to number of elements at node)
-    static constexpr int maxFluxStencilSize = NodalIndexSet::maxNumElementsAtNode;
-
     //! We don't know yet how many faces couple to a neighboring element
     using ScvfStencilIForJ = std::vector<IndexType>;
 
     //! The flux stencil type
     using Stencil = typename NodalIndexSet::GridStencilType;
 
-    /*
-     * \brief Returns a set of grid element indices that participate in the
-     *        flux calculations on a given scvf.
-     *
-     * \note The interaction volume index sets must use the same type for the
-     *       stencils as the nodal index set. If not, the compiler will complain here.
-     *
-     * \param element The grid element
-     * \param fvGeometry The finite volume geometry of this element
-     * \param scvf The sub-control volume face embedded in this element
-     */
+    //! Returns the indices of the elements required for flux calculation on an scvf.
     static const Stencil& stencil(const Element& element,
                                   const FVElementGeometry& fvGeometry,
                                   const SubControlVolumeFace& scvf)

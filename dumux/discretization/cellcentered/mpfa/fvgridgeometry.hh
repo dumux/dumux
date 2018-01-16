@@ -59,20 +59,19 @@ class CCMpfaFVGridGeometry;
 template<class TypeTag>
 class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-
+public:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+private:
+    using ParentType = BaseFVGridGeometry<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -82,6 +81,7 @@ class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using CoordScalar = typename GridView::ctype;
     using GridIndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename PrimaryInteractionVolume::Traits::LocalIndexType;
+    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
     using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
     using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
@@ -89,9 +89,14 @@ class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
-    //! export discretization method
+    //! Export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
 
+    //! The maximum admissible stencil size (used for static memory allocation during assembly)
+    // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
+    static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
+
+    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
     using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! Constructor without indicator function for secondary interaction volumes
@@ -397,20 +402,19 @@ private:
 template<class TypeTag>
 class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-
+public:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+private:
+    using ParentType = BaseFVGridGeometry<TypeTag>;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
 
@@ -420,6 +424,7 @@ class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using CoordScalar = typename GridView::ctype;
     using GridIndexType = typename GridView::IndexSet::IndexType;
     using LocalIndexType = typename PrimaryInteractionVolume::Traits::LocalIndexType;
+    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
     using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
     using ConnectivityMap = CCMpfaConnectivityMap<TypeTag>;
@@ -427,9 +432,14 @@ class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
-    //! export discretization method
+    //! Export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
 
+    //! The maximum admissible stencil size (used for static memory allocation during assembly)
+    // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
+    static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
+
+    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
     using SecondaryIvIndicator = std::function<bool(const Element&, const Intersection&, bool)>;
 
     //! Constructor without indicator function for secondary interaction volumes
