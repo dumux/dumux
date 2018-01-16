@@ -11,7 +11,7 @@ Cells = 15 8
 [Problem]
 Name = kuevette # name passed to the output routines
 
-[Implicit]
+[Assembly]
 NumericDifferenceMethod = 0 # use central differences (backward -1, forward +1)
 
 [Newton]

@@ -30,6 +30,7 @@
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numericdifferentiation.hh>
 #include <dumux/assembly/diffmethod.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
 
@@ -205,6 +206,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tr
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
@@ -221,7 +224,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -243,7 +246,7 @@ public:
         // create the element solution
         ElementSolutionVector elemSol(element, curSol, fvGeometry);
 
-        using ElementResidualVector = std::decay_t<decltype(origResiduals)>;
+        // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
 
         // calculation of the derivatives
@@ -268,7 +271,8 @@ public:
                 };
 
                 // derive the residuals numerically
-                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals);
+                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals, numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (auto&& scvJ : scvs(fvGeometry))
@@ -313,6 +317,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/fa
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
@@ -327,7 +333,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -349,7 +355,7 @@ public:
         // create the element solution
         ElementSolutionVector elemSol(element, curSol, fvGeometry);
 
-        using ElementResidualVector = std::decay_t<decltype(origResiduals)>;
+        // create the vector storing the partial derivatives
         ElementResidualVector partialDerivs(element.subEntities(dim));
 
         // calculation of the derivatives
@@ -374,7 +380,8 @@ public:
                 };
 
                 // derive the residuals numerically
-                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals);
+                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[scv.indexInElement()][pvIdx], partialDerivs, origResiduals, numDiffMethod);
 
                 // update the global stiffness matrix with the current partial derivatives
                 for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -412,6 +419,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/t
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, true>;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
 public:
 
@@ -423,7 +432,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();
@@ -524,6 +533,8 @@ class BoxLocalAssembler<TypeTag, Assembler, DiffMethod::analytic, /*implicit=*/f
     using ParentType = BoxLocalAssemblerBase<TypeTag, Assembler, ThisType, false>;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
+    using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
 
 public:
 
@@ -535,7 +546,7 @@ public:
      *
      * \return The element residual at the current solution.
      */
-    auto assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
+    ElementResidualVector assembleJacobianAndResidualImpl(JacobianMatrix& A, GridVariables& gridVariables)
     {
         // get some aliases for convenience
         const auto& element = this->element();

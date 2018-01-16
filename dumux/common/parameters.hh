@@ -354,7 +354,9 @@ private:
         params["Implicit.UpwindWeight"] = "1.0";
         params["Implicit.EnablePartialReassemble"] = "false";
         params["Implicit.EnableJacobianRecycling"] = "false";
-        params["Implicit.NumericDifferenceMethod"] = "1";
+
+        // parameters in the assembly group
+        params["Assembly.NumericDifferenceMethod"] = "1";
 
         // parameters in the linear solver group
         params["LinearSolver.GMResRestart"] = "10";

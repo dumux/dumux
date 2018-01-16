@@ -10,5 +10,5 @@ Cells = 1 120
 [Problem]
 Name = columnxylol # name passed to the output routines
 
-[Implicit]
+[Assembly]
 NumericDifferenceMethod = 0 # -1 backward differences, 0: central differences, +1: forward differences

@@ -47,7 +47,7 @@ class TwoPIncompressibleLocalResidual : public ImmiscibleLocalResidual<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementResidualVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
@@ -188,10 +188,10 @@ public:
         const auto& outsideVolVars = curElemVolVars[outsideScvIdx];
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
                                                                                      insideScv,
-                                                                                     ElementResidualVector({insideVolVars.priVars()}));
+                                                                                     ElementSolutionVector({insideVolVars.priVars()}));
         const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(outsideElement,
                                                                                       outsideScv,
-                                                                                      ElementResidualVector({outsideVolVars.priVars()}));
+                                                                                      ElementSolutionVector({outsideVolVars.priVars()}));
 
         // get references to the two participating derivative matrices
         auto& dI_dI = derivativeMatrices[insideScvIdx];
@@ -303,7 +303,7 @@ public:
         const auto& outsideVolVars = curElemVolVars[outsideScv];
 
         // we need the element solution for the material parameters
-        ElementResidualVector elemSol(fvGeometry.numScv());
+        ElementSolutionVector elemSol(fvGeometry.numScv());
         for (const auto& scv : scvs(fvGeometry)) elemSol[scv.indexInElement()] = curElemVolVars[scv].priVars();
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element, insideScv, elemSol);
         const auto& outsideMaterialParams = problem.spatialParams().materialLawParams(element, outsideScv, elemSol);
@@ -449,7 +449,7 @@ public:
         const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
         const auto& insideMaterialParams = problem.spatialParams().materialLawParams(element,
                                                                                      insideScv,
-                                                                                     ElementResidualVector({insideVolVars.priVars()}));
+                                                                                     ElementSolutionVector({insideVolVars.priVars()}));
 
         // some quantities to be reused (rho & mu are constant and thus equal for all cells)
         static const auto rho_w = insideVolVars.density(FluidSystem::wPhaseIdx);

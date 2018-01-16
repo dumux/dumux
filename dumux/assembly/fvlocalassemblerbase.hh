@@ -32,7 +32,6 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/assembly/numericdifferentiation.hh>
 
 namespace Dumux {
 
@@ -41,13 +40,14 @@ namespace Dumux {
  * \brief A base class for all local assemblers
  * \tparam TypeTag The TypeTag
  * \tparam Assembler The assembler type
- * \tparam implicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
+ * \tparam isImplicit Specifies whether the time discretization is implicit or not not (i.e. explicit)
  */
-template<class TypeTag, class Assembler, class Implementation, bool implicit>
+template<class TypeTag, class Assembler, class Implementation, bool isImplicit>
 class FVLocalAssemblerBase
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using LocalResidual = typename GET_PROP_TYPE(TypeTag, LocalResidual);
+    using ElementResidualVector = typename LocalResidual::ElementResidualVector;
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -86,30 +86,28 @@ public:
      * \brief Convenience function to evaluate the complete local residual for the current element. Automatically chooses the the appropriate
      *        element volume variables.
      */
-    auto evalLocalResidual() const
+    ElementResidualVector evalLocalResidual() const
     {
-        if(this->assembler().isStationaryProblem() && !isImplicit())
-            DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
+        if (!isImplicit)
+            if (this->assembler().isStationaryProblem())
+                DUNE_THROW(Dune::InvalidStateException, "Using explicit jacobian assembler with stationary local residual");
 
-        if(elementIsGhost())
-        {
-            using ResdiualType = decltype(evalLocalResidual(std::declval<ElementVolumeVariables>()));
-            return ResdiualType(0.0);
-        }
+        if (elementIsGhost())
+            return ElementResidualVector(0.0);
 
-        return isImplicit() ? evalLocalResidual(curElemVolVars())
-                            : evalLocalResidual(prevElemVolVars());
+        return isImplicit ? evalLocalResidual(curElemVolVars())
+                          : evalLocalResidual(prevElemVolVars());
     }
 
     /*!
      * \brief Evaluates the complete local residual for the current element.
      * \param elemVolVars The element volume variables
      */
-    auto evalLocalResidual(const ElementVolumeVariables& elemVolVars) const
+    ElementResidualVector evalLocalResidual(const ElementVolumeVariables& elemVolVars) const
     {
         if (!assembler().isStationaryProblem())
         {
-            auto residual = evalLocalFluxAndSourceResidual(elemVolVars);
+            ElementResidualVector residual = evalLocalFluxAndSourceResidual(elemVolVars);
             residual += evalLocalStorageResidual();
             return residual;
         }
@@ -122,10 +120,10 @@ public:
      *        of the local residual for the current element. Automatically chooses the the appropriate
      *        element volume variables.
      */
-    auto evalLocalFluxAndSourceResidual() const
+    ElementResidualVector evalLocalFluxAndSourceResidual() const
     {
-        return isImplicit() ? evalLocalFluxAndSourceResidual(curElemVolVars())
-                            : evalLocalFluxAndSourceResidual(prevElemVolVars());
+        return isImplicit ? evalLocalFluxAndSourceResidual(curElemVolVars())
+                          : evalLocalFluxAndSourceResidual(prevElemVolVars());
      }
 
     /*!
@@ -134,9 +132,9 @@ public:
      *
      * \param elemVolVars The element volume variables
      */
-    auto evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
+    ElementResidualVector evalLocalFluxAndSourceResidual(const ElementVolumeVariables& elemVolVars) const
     {
-        return localResidual_.evalFluxSource(element_, fvGeometry_, elemVolVars, elemFluxVarsCache_, elemBcTypes_);
+        return localResidual_.evalFluxAndSource(element_, fvGeometry_, elemVolVars, elemFluxVarsCache_, elemBcTypes_);
     }
 
     /*!
@@ -144,7 +142,7 @@ public:
      *        of the local residual for the current element. Automatically chooses the the appropriate
      *        element volume variables.
      */
-    auto evalLocalStorageResidual() const
+    ElementResidualVector evalLocalStorageResidual() const
     {
         return localResidual_.evalStorage(element_, fvGeometry_, prevElemVolVars_, curElemVolVars_);
     }
@@ -167,7 +165,7 @@ public:
         // bind the caches
         fvGeometry.bind(element);
 
-        if(isImplicit())
+        if (isImplicit)
         {
             curElemVolVars.bind(element, fvGeometry, curSol);
             elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
@@ -249,9 +247,6 @@ public:
     //! The local residual for the current element
     const LocalResidual& localResidual() const
     { return localResidual_; }
-
-    constexpr bool isImplicit() const
-    { return implicit; }
 
 protected:
     Implementation &asImp_()

@@ -32,8 +32,8 @@
 #include <dumux/common/reservedblockvector.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
+#include <dumux/common/numericdifferentiation.hh>
 #include <dumux/assembly/diffmethod.hh>
-#include <dumux/assembly/numericdifferentiation.hh>
 #include <dumux/assembly/fvlocalassemblerbase.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
@@ -245,7 +245,8 @@ public:
             };
 
             // derive the residuals numerically
-            NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals);
+            static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+            NumericDifferentiation::partialDerivative(evalResiduals, elemSol[0][pvIdx], partialDerivs, origResiduals, numDiffMethod);
 
             // add the current partial derivatives to the global jacobian matrix
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -363,7 +364,10 @@ public:
 
             // for non-ghosts compute the derivative numerically
             if (!this->elementIsGhost())
-                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual);
+            {
+                static const int numDiffMethod = getParamFromGroup<int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Assembly.NumericDifferenceMethod");
+                NumericDifferentiation::partialDerivative(evalStorage, elemSol[0][pvIdx], partialDeriv, residual, numDiffMethod);
+            }
 
             // for ghost elements we assemble a 1.0 where the primary variable and zero everywhere else
             // as we always solve for a delta of the solution with repect to the initial solution this
