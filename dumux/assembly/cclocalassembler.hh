@@ -425,8 +425,8 @@ public:
         const auto& problem = this->problem();
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
+        const auto& curElemVolVars = this->curElemVolVars();
+        const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get reference to the element's current vol vars
         const auto globalI = this->assembler().fvGridGeometry().elementMapper().index(element);

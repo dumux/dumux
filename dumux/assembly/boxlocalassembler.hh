@@ -438,8 +438,8 @@ public:
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
         const auto& problem = this->problem();
-        auto&& curElemVolVars = this->curElemVolVars();
-        auto&& elemFluxVarsCache = this->elemFluxVarsCache();
+        const auto& curElemVolVars = this->curElemVolVars();
+        const auto& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
@@ -552,7 +552,7 @@ public:
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
         const auto& problem = this->problem();
-        auto&& curElemVolVars = this->curElemVolVars();
+        const auto& curElemVolVars = this->curElemVolVars();
 
         // get the vecor of the acutal element residuals
         const auto origResiduals = this->evalLocalResidual();
