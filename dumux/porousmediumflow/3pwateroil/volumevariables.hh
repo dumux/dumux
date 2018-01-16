@@ -59,7 +59,8 @@ class ThreePWaterOilVolumeVariables : public PorousMediumFlowVolumeVariables<Typ
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     enum {

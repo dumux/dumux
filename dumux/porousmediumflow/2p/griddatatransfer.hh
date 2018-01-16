@@ -46,7 +46,8 @@ class TwoPGridDataTransfer : public GridDataTransfer
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);

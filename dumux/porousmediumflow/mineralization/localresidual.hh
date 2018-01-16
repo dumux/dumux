@@ -39,7 +39,8 @@ class MineralizationLocalResidual: public CompositionalLocalResidual<TypeTag>
 {
     using ParentType = CompositionalLocalResidual<TypeTag>;
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
