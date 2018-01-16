@@ -56,7 +56,7 @@ class PointSource
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dimworld = GridView::dimensionworld;
@@ -218,7 +218,7 @@ class SolDependentPointSource : public PointSource<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
     static const int dimworld = GridView::dimensionworld;

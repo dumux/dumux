@@ -56,8 +56,8 @@ class FVProblem
     using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
