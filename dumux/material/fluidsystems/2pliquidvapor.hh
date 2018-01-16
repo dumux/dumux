@@ -362,7 +362,7 @@ public:
     }
 
     /*!
-     * \brief Calculate the fugacity coefficient [Pa] of an individual
+     * \brief Calculate the fugacity coefficient [-] of an individual
      *        component in a fluid phase
      *
      * The fugacity coefficient \f$\phi^\kappa_\alpha\f$ of

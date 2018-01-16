@@ -433,9 +433,9 @@ public:
      *
      * In this case, things are actually pretty simple. We have an ideal
      * solution. Thus, the fugacity coefficient is 1 in the gas phase
-     * (fugacity equals the partial pressure of the component in the gas phase
-     * respectively in the liquid phases it is the inverse of the
-     * Henry coefficients scaled by pressure
+     * (fugacity equals the partial pressure of the component in the gas phase)
+     * respectively in the liquid phases it is the Henry coefficients divided
+     * by pressure.
      * \param fluidState The fluid state
      * \param phaseIdx The index of the phase
      * \param compIdx The index of the component

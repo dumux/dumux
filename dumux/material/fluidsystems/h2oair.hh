@@ -510,7 +510,7 @@ public:
      * where \f$p_\alpha\f$ is the pressure of the fluid phase.
      *
      * For liquids with very low miscibility this boils down to the
-     * inverse Henry constant for the solutes and the saturated vapor pressure
+     * Henry constant for the solutes and the saturated vapor pressure
      * both divided by phase pressure.
      */
     template <class FluidState>
