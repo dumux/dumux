@@ -378,7 +378,7 @@ private:
             if (dim < dimWorld)
             {
                 const auto indexInInside = is.indexInInside();
-                if(finishedFacets[indexInInside])
+                if (finishedFacets[indexInInside])
                     continue;
                 else
                     finishedFacets[indexInInside] = true;

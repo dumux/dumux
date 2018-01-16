@@ -26,6 +26,8 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_ELEMENT_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_ELEMENT_GEOMETRY_HH
 
+#include <algorithm>
+
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
 #include <dumux/common/properties.hh>
@@ -395,6 +397,8 @@ private:
     //! create scvs and scvfs of the bound element
     void makeElementGeometries(const Element& element)
     {
+        using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
+
         const auto eIdx = fvGridGeometry().elementMapper().index(element);
         scvs_[0] = SubControlVolume(element.geometry(), eIdx);
         scvIndices_[0] = eIdx;
@@ -416,10 +420,14 @@ private:
                 if (handledScvf[intersection.indexInInside()])
                     continue;
 
+            const auto& scvfNeighborVolVarIndices = neighborVolVarIndices[scvfCounter];
+
             if (intersection.neighbor() || intersection.boundary())
             {
-                std::vector<IndexType> scvIndices({eIdx});
-                scvIndices.insert(scvIndices.end(), neighborVolVarIndices[scvfCounter].begin(), neighborVolVarIndices[scvfCounter].end());
+                ScvfGridIndexStorage scvIndices;
+                scvIndices.resize(scvfNeighborVolVarIndices.size() + 1);
+                scvIndices[0] = eIdx;
+                std::copy(scvfNeighborVolVarIndices.begin(), scvfNeighborVolVarIndices.end(), scvIndices.begin()+1);
                 scvfs_.emplace_back(intersection,
                                     intersection.geometry(),
                                     scvFaceIndices[scvfCounter],
@@ -438,6 +446,8 @@ private:
     //! create the necessary scvs and scvfs of the neighbor elements to the bound elements
     void makeNeighborGeometries(const Element& element, const IndexType eIdx)
     {
+        using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
+
         // create the neighbor scv
         neighborScvs_.emplace_back(element.geometry(), eIdx);
         neighborScvIndices_.push_back(eIdx);
@@ -459,6 +469,8 @@ private:
                 if (handledScvf[intersection.indexInInside()])
                     continue;
 
+            const auto& scvfNeighborVolVarIndices = neighborVolVarIndices[scvfCounter];
+
             if (intersection.neighbor())
             {
                 // only create subcontrol faces where the outside element is the bound element
@@ -466,8 +478,7 @@ private:
                 {
                     if (intersection.outside() == *elementPtr_)
                     {
-                        std::vector<IndexType> scvIndices({eIdx});
-                        scvIndices.insert(scvIndices.end(), neighborVolVarIndices[scvfCounter].begin(), neighborVolVarIndices[scvfCounter].end());
+                        ScvfGridIndexStorage scvIndices({eIdx, scvfNeighborVolVarIndices[0]});
                         neighborScvfs_.emplace_back(intersection,
                                                     intersection.geometry(),
                                                     scvFaceIndices[scvfCounter],
@@ -483,12 +494,14 @@ private:
                 // (will be optimized away for dim == dimWorld)
                 else
                 {
-                    for (unsigned outsideScvIdx = 0; outsideScvIdx < neighborVolVarIndices[scvfCounter].size(); ++outsideScvIdx)
+                    for (unsigned outsideScvIdx = 0; outsideScvIdx < scvfNeighborVolVarIndices.size(); ++outsideScvIdx)
                     {
-                        if (neighborVolVarIndices[scvfCounter][outsideScvIdx] == fvGridGeometry().elementMapper().index(*elementPtr_))
+                        if (scvfNeighborVolVarIndices[outsideScvIdx] == fvGridGeometry().elementMapper().index(*elementPtr_))
                         {
-                            std::vector<IndexType> scvIndices({eIdx});
-                            scvIndices.insert(scvIndices.end(), neighborVolVarIndices[scvfCounter].begin(), neighborVolVarIndices[scvfCounter].end());
+                            ScvfGridIndexStorage scvIndices;
+                            scvIndices.resize(scvfNeighborVolVarIndices.size() + 1);
+                            scvIndices[0] = eIdx;
+                            std::copy(scvfNeighborVolVarIndices.begin(), scvfNeighborVolVarIndices.end(), scvIndices.begin()+1);
                             neighborScvfs_.emplace_back(intersection,
                                                         intersection.geometry(),
                                                         scvFaceIndices[scvfCounter],

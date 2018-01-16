@@ -24,11 +24,28 @@
 #ifndef DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_SUBCONTROLVOLUME_HH
 
+#include <dune/common/fvector.hh>
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/common/optional.hh>
 
 namespace Dumux
 {
+
+/*!
+ * \ingroup CCDiscretization
+ * \brief Default traits class to be used for the sub-control volumes
+ *        for the cell-centered finite volume scheme using TPFA
+ */
+template<class GridView>
+struct CCDefaultScvGeometryTraits
+{
+    using Geometry = typename GridView::template Codim<0>::Geometry;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using LocalIndexType = unsigned int;
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+};
+
 /*!
  * \ingroup CCDiscretization
  * \brief Sub control volumes for cell-centered discretization schemes

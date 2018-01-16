@@ -25,11 +25,56 @@
 #define DUMUX_DISCRETIZATION_CC_MPFA_SUBCONTROLVOLUMEFACE_HH
 
 #include <vector>
+#include <array>
 #include <dune/common/version.hh>
+#include <dune/common/reservedvector.hh>
+#include <dune/common/fvector.hh>
 #include <dune/geometry/type.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 namespace Dumux
 {
+
+template<class GridView>
+struct CCMpfaDefaultScvfGeometryTraits
+{
+    using Grid = typename GridView::Grid;
+
+    static const int dim = Grid::dimension;
+    static const int dimWorld = Grid::dimensionworld;
+
+    using Scalar = typename Grid::ctype;
+    using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+    using LocalIndexType = unsigned int;
+    using OutsideGridIndexStorage = typename std::conditional_t< (dim<dimWorld),
+                                                                 std::vector<GridIndexType>,
+                                                                 Dune::ReservedVector<GridIndexType, 1> >;
+
+    // we use geometry traits that use static corner vectors to and a fixed geometry type
+    template <class ct>
+    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
+        };
+
+        // we know all scvfs will have the same geometry type
+        template< int dim >
+        struct hasSingleGeometryType
+        {
+            static const bool v = true;
+            static const unsigned int topologyId = Dune::Impl::CubeTopology< dim >::type::id;
+        };
+    };
+
+    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
+    using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
+    using GlobalPosition = typename CornerStorage::value_type;
+};
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -45,6 +90,7 @@ class CCMpfaSubControlVolumeFace
     using Scalar = typename ScvfGeometryTraits::Scalar;
     using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
     using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
+    using OutsideGridIndexStorage = typename ScvfGeometryTraits::OutsideGridIndexStorage;
     using Geometry = typename ScvfGeometryTraits::Geometry;
 
 public:
@@ -73,7 +119,7 @@ public:
                                unsigned int vIdxLocal,
                                GridIndexType scvfIndex,
                                GridIndexType insideScvIdx,
-                               const std::vector<GridIndexType>& outsideScvIndices,
+                               const OutsideGridIndexStorage& outsideScvIndices,
                                Scalar q,
                                bool boundary)
     : boundary_(boundary)
@@ -122,7 +168,7 @@ public:
     GridIndexType outsideScvIdx(int i = 0) const { return outsideScvIndices_[i]; }
 
     //! returns the outside scv indices (can be more than one index for dim < dimWorld)
-    const std::vector<GridIndexType>& outsideScvIndices() const { return outsideScvIndices_; }
+    const OutsideGridIndexStorage& outsideScvIndices() const { return outsideScvIndices_; }
 
     //! Returns the number of corners
     std::size_t corners() const { return corners_.size(); }
@@ -161,7 +207,7 @@ private:
     GridIndexType vertexIndex_;
     GridIndexType scvfIndex_;
     GridIndexType insideScvIdx_;
-    std::vector<GridIndexType> outsideScvIndices_;
+    OutsideGridIndexStorage outsideScvIndices_;
     unsigned int vIdxInElement_;
 
     CornerStorage corners_;

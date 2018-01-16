@@ -32,6 +32,45 @@ namespace Dumux
 {
 
 /*!
+ * \ingroup CCDiscretization
+ * \brief Default traits class to be used for the sub-control volume faces
+ *        for the cell-centered finite volume scheme using TPFA
+ */
+template<class GridView>
+struct CCTpfaDefaultScvfGeometryTraits
+{
+    using Grid = typename GridView::Grid;
+
+    static constexpr int dim = Grid::dimension;
+    static constexpr int dimWorld = Grid::dimensionworld;
+
+    using Scalar = typename Grid::ctype;
+    using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+    using LocalIndexType = unsigned int;
+    using GridIndexStorage = typename std::conditional_t< (dim<dimWorld),
+                                                          std::vector<GridIndexType>,
+                                                          Dune::ReservedVector<GridIndexType, 2> >;
+
+    // we use geometry traits that use static corner vectors to and a fixed geometry type
+    template <class ct>
+    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+            using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
+        };
+    };
+
+    using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
+    using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
+    using GlobalPosition = typename CornerStorage::value_type;
+    using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
+};
+
+/*!
  * \ingroup CCTpfaDiscretization
  * \brief The sub control volume face
  */
@@ -43,6 +82,7 @@ class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<CCTpfaSubCont
     using Scalar = typename ScvfGeometryTraits::Scalar;
     using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
     using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
+    using GridIndexStorage = typename ScvfGeometryTraits::GridIndexStorage;
     using Geometry = typename ScvfGeometryTraits::Geometry;
     using BoundaryFlag = typename ScvfGeometryTraits::BoundaryFlag;
 
@@ -66,7 +106,7 @@ public:
     CCTpfaSubControlVolumeFace(const Intersection& is,
                                const typename Intersection::Geometry& isGeometry,
                                GridIndexType scvfIndex,
-                               const std::vector<GridIndexType>& scvIndices,
+                               const GridIndexStorage& scvIndices,
                                bool isBoundary)
     : ParentType()
     , geomType_(isGeometry.type())
@@ -165,7 +205,7 @@ private:
     GlobalPosition center_;
     GlobalPosition unitOuterNormal_;
     GridIndexType scvfIndex_;
-    std::vector<GridIndexType> scvIndices_;
+    GridIndexStorage scvIndices_;
     bool boundary_;
     BoundaryFlag boundaryFlag_;
 };

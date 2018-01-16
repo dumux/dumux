@@ -69,6 +69,7 @@ class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -185,9 +186,9 @@ public:
             std::vector<GridIndexType> scvfIndexSet;
             scvfIndexSet.reserve(MpfaHelper::getNumLocalScvfs(elementGeometry.type()));
 
-            // for network grids there might be multiple intersections with the same geometryInInside
+            // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<GridIndexType>> outsideIndices;
+            std::vector<ScvfOutsideGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
                 outsideIndices.resize(element.subEntities(1));
@@ -195,8 +196,7 @@ public:
                 {
                     if (intersection.neighbor())
                     {
-                        const auto& outside = intersection.outside();
-                        auto nIdx = this->elementMapper().index(outside);
+                        const auto nIdx = this->elementMapper().index( intersection.outside() );
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
                 }
@@ -257,18 +257,11 @@ public:
                     const auto& outsideScvIndices = [&] ()
                                                     {
                                                         if (!boundary)
-                                                        {
                                                             return dim == dimWorld ?
-                                                                   std::vector<GridIndexType>({this->elementMapper().index(is.outside())}) :
+                                                                   ScvfOutsideGridIndexStorage({this->elementMapper().index(is.outside())}) :
                                                                    outsideIndices[indexInInside];
-                                                        }
                                                         else
-                                                        {
-                                                            // compute boundary scv idx and increment counter
-                                                            const GridIndexType bIdx = numScvs + numBoundaryScvf_;
-                                                            numBoundaryScvf_++;
-                                                            return std::vector<GridIndexType>(1, bIdx);
-                                                        }
+                                                            return ScvfOutsideGridIndexStorage({GridIndexType(numScvs) + numBoundaryScvf_++});
                                                     } ();
 
                     scvfIndexSet.push_back(scvfIdx);
@@ -382,7 +375,7 @@ private:
     // containers storing the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
-    std::size_t numBoundaryScvf_;
+    GridIndexType numBoundaryScvf_;
 
     // needed for embedded surface and network grids (dim < dimWorld)
     std::vector<std::vector<GridIndexType>> flipScvfIndices_;
@@ -414,6 +407,7 @@ class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
 
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
@@ -529,13 +523,13 @@ public:
             // the element-wise index sets for finite volume geometry
             const auto numLocalFaces = MpfaHelper::getNumLocalScvfs(elementGeometry.type());
             std::vector<GridIndexType> scvfsIndexSet;
-            std::vector< std::vector<GridIndexType> > neighborVolVarIndexSet;
+            std::vector<ScvfOutsideGridIndexStorage> neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
             // for network grids there might be multiple intersections with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<GridIndexType>> outsideIndices;
+            std::vector<ScvfOutsideGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
                 outsideIndices.resize(element.subEntities(1));
@@ -543,8 +537,7 @@ public:
                 {
                     if (intersection.neighbor())
                     {
-                        const auto& outside = intersection.outside();
-                        auto nIdx = this->elementMapper().index(outside);
+                        auto nIdx = this->elementMapper().index( intersection.outside() );
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
                 }
@@ -595,18 +588,11 @@ public:
                     const auto& outsideScvIndices = [&] ()
                                                     {
                                                         if (!boundary)
-                                                        {
                                                             return dim == dimWorld ?
-                                                                   std::vector<GridIndexType>({this->elementMapper().index(is.outside())}) :
+                                                                   ScvfOutsideGridIndexStorage({this->elementMapper().index(is.outside())}) :
                                                                    outsideIndices[indexInInside];
-                                                        }
                                                         else
-                                                        {
-                                                            // compute boundary scv idx and increment counter
-                                                            const GridIndexType bIdx = numScvs_ + numBoundaryScvf_;
-                                                            numBoundaryScvf_++;
-                                                            return std::vector<GridIndexType>(1, bIdx);
-                                                        }
+                                                            return ScvfOutsideGridIndexStorage({GridIndexType(numScvs_) + numBoundaryScvf_++});
                                                     } ();
 
                     // insert the scvf data into the dual grid index set
@@ -646,7 +632,7 @@ public:
     { return scvfIndicesOfScv_[scvIdx]; }
 
     //! Returns the neighboring vol var indices for each scvf contained in an scv.
-    const std::vector< std::vector<GridIndexType> >& neighborVolVarIndices(GridIndexType scvIdx) const
+    const std::vector<ScvfOutsideGridIndexStorage>& neighborVolVarIndices(GridIndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
     //! Returns the connectivity map of which dofs
@@ -662,12 +648,12 @@ private:
 
     // containers storing the global data
     std::vector<std::vector<GridIndexType>> scvfIndicesOfScv_;
-    std::vector< std::vector< std::vector<GridIndexType> > > neighborVolVarIndices_;
+    std::vector<std::vector<ScvfOutsideGridIndexStorage>> neighborVolVarIndices_;
     std::vector<bool> secondaryInteractionVolumeVertices_;
     std::vector<bool> isGhostVertex_;
-    std::size_t numScvs_;
-    std::size_t numScvf_;
-    std::size_t numBoundaryScvf_;
+    GridIndexType numScvs_;
+    GridIndexType numScvf_;
+    GridIndexType numBoundaryScvf_;
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;

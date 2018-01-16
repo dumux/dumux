@@ -26,6 +26,8 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 
+#include <algorithm>
+
 #include <dune/common/version.hh>
 
 #include <dumux/discretization/methods.hh>
@@ -60,6 +62,7 @@ class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -154,19 +157,21 @@ public:
 
             // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<IndexType>> outsideIndices;
+            std::vector<ScvfGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
+                //! first, push inside index in all neighbor sets
                 outsideIndices.resize(element.subEntities(1));
+                std::for_each(outsideIndices.begin(), outsideIndices.end(), [eIdx] (auto& nIndices) { nIndices.push_back(eIdx); });
+
+                // second, insert neighbors
                 for (const auto& intersection : intersections(this->gridView(), element))
                 {
                     if (intersection.neighbor())
                     {
-                        const auto& outside = intersection.outside();
-                        const auto nIdx = this->elementMapper().index(outside);
+                        const auto nIdx = this->elementMapper().index( intersection.outside() );
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
-
                 }
             }
 
@@ -181,7 +186,7 @@ public:
                         scvfs_.emplace_back(intersection,
                                             intersection.geometry(),
                                             scvfIdx,
-                                            std::vector<IndexType>({eIdx, nIdx}),
+                                            ScvfGridIndexStorage({eIdx, nIdx}),
                                             false);
                         scvfsIndexSet.push_back(scvfIdx++);
                     }
@@ -195,12 +200,10 @@ public:
                             continue;
                         else
                         {
-                            std::vector<IndexType> scvIndices({eIdx});
-                            scvIndices.insert(scvIndices.end(), outsideIndices[indexInInside].begin(), outsideIndices[indexInInside].end());
                             scvfs_.emplace_back(intersection,
                                                 intersection.geometry(),
                                                 scvfIdx,
-                                                scvIndices,
+                                                outsideIndices[indexInInside],
                                                 false);
                             scvfsIndexSet.push_back(scvfIdx++);
                             outsideIndices[indexInInside].clear();
@@ -213,7 +216,7 @@ public:
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
-                                        std::vector<IndexType>({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
+                                        ScvfGridIndexStorage({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
                                         true);
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
@@ -320,6 +323,7 @@ class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
     using IndexType = typename GridView::IndexSet::IndexType;
     using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
     using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -330,6 +334,10 @@ class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
 
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
+
+    using NeighborVolVarIndices = typename std::conditional_t< (dim<dimWorld),
+                                                               ScvfGridIndexStorage,
+                                                               Dune::ReservedVector<IndexType, 1> >;
 
 public:
     //! export discretization method
@@ -399,13 +407,13 @@ public:
             // the element-wise index sets for finite volume geometry
             auto numLocalFaces = element.subEntities(1);
             std::vector<IndexType> scvfsIndexSet;
-            std::vector<std::vector<IndexType>> neighborVolVarIndexSet;
+            std::vector<NeighborVolVarIndices> neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
             // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<IndexType>> outsideIndices;
+            std::vector<NeighborVolVarIndices> outsideIndices;
             if (dim < dimWorld)
             {
                 outsideIndices.resize(numLocalFaces);
@@ -413,11 +421,9 @@ public:
                 {
                     if (intersection.neighbor())
                     {
-                        const auto& outside = intersection.outside();
-                        const auto nIdx = this->elementMapper().index(outside);
+                        const auto nIdx = this->elementMapper().index(intersection.outside());
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
-
                 }
             }
 
@@ -430,7 +436,7 @@ public:
                     {
                         scvfsIndexSet.push_back(numScvf_++);
                         const auto nIdx = this->elementMapper().index(intersection.outside());
-                        neighborVolVarIndexSet.push_back({nIdx});
+                        neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({nIdx}));
                     }
                     // this is for network grids
                     // (will be optimized away of dim == dimWorld)
@@ -443,7 +449,7 @@ public:
                         else
                         {
                             scvfsIndexSet.push_back(numScvf_++);
-                            neighborVolVarIndexSet.push_back(outsideIndices[indexInInside]);
+                            neighborVolVarIndexSet.emplace_back(std::move(outsideIndices[indexInInside]));
                             outsideIndices[indexInInside].clear();
                         }
                     }
@@ -452,7 +458,7 @@ public:
                 else if (intersection.boundary())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.push_back({numScvs_ + numBoundaryScvf_++});
+                    neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({numScvs_ + numBoundaryScvf_++}));
                 }
             }
 
@@ -469,7 +475,7 @@ public:
     { return scvfIndicesOfScv_[scvIdx]; }
 
     //! Return the neighbor volVar indices for all scvfs in the scv with index scvIdx
-    const std::vector<std::vector<IndexType>>& neighborVolVarIndices(IndexType scvIdx) const
+    const std::vector<NeighborVolVarIndices>& neighborVolVarIndices(IndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
     /*!
@@ -491,7 +497,7 @@ private:
 
     //! vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
-    std::vector<std::vector<std::vector<IndexType>>> neighborVolVarIndices_;
+    std::vector<std::vector<NeighborVolVarIndices>> neighborVolVarIndices_;
 };
 
 } // end namespace Dumux

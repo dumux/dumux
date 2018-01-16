@@ -99,52 +99,20 @@ public:
 SET_PROP(CCTpfaModel, SubControlVolume)
 {
 private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    struct ScvGeometryTraits
-    {
-        using Geometry = typename Grid::template Codim<0>::Geometry;
-        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-        using LocalIndexType = unsigned int;
-        using Scalar = typename Grid::ctype;
-        using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimensionworld>;
-    };
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Traits = CCDefaultScvGeometryTraits<GridView>;
 public:
-    using type = CCSubControlVolume<ScvGeometryTraits>;
+    using type = CCSubControlVolume<Traits>;
 };
 
 //! The sub control volume face
 SET_PROP(CCTpfaModel, SubControlVolumeFace)
 {
 private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    static constexpr int dim = Grid::dimension;
-    static constexpr int dimWorld = Grid::dimensionworld;
-
-    // we use geometry traits that use static corner vectors to and a fixed geometry type
-    template <class ct>
-    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
-    {
-        // we use static vectors to store the corners as we know
-        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
-        template< int mydim, int cdim >
-        struct CornerStorage
-        {
-            using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
-        };
-    };
-
-    struct ScvfGeometryTraits
-    {
-        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-        using LocalIndexType = unsigned int;
-        using Scalar = typename Grid::ctype;
-        using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
-        using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
-        using GlobalPosition = typename CornerStorage::value_type;
-        using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
-    };
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Traits = CCTpfaDefaultScvfGeometryTraits<GridView>;
 public:
-    using type = Dumux::CCTpfaSubControlVolumeFace<ScvfGeometryTraits>;
+    using type = Dumux::CCTpfaSubControlVolumeFace<Traits>;
 };
 
 //! Set the solution vector type for an element

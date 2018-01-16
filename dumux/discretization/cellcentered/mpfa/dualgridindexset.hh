@@ -87,10 +87,11 @@ public:
     }
 
     //! Inserts scvf data
+    template<typename OutsideGridIndexStorage>
     void insert(const bool boundary,
                 const GridIndexType scvfIdx,
                 const GridIndexType insideScvIdx,
-                const std::vector<GridIndexType>& outsideScvIndices)
+                const OutsideGridIndexStorage& outsideScvIndices)
     {
         // this should always be called only once per scvf
         assert(std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx ) == scvfIndices_.end()
