@@ -118,7 +118,7 @@ int main(int argc, char** argv) try
     // we solve Ax = -r to save update and copy
     (*r) *= -1.0;
 
-    // // solve the linear system
+    // solve the linear system
     Dune::Timer solverTimer;
     using LinearSolver = SSORCGBackend<TypeTag>;
     auto linearSolver = std::make_shared<LinearSolver>();
@@ -127,6 +127,11 @@ int main(int argc, char** argv) try
     linearSolver->solve(*A, x, *r);
     solverTimer.stop();
     if (mpiHelper.rank() == 0) std::cout << " took " << solverTimer.elapsed() << " seconds." << std::endl;
+
+    // the grid variables need to be up to date for subsequent output
+    Dune::Timer updateTimer; std::cout << "Updating variables ..." << std::flush;
+    gridVariables->update(x);
+    updateTimer.elapsed(); std::cout << " took " << updateTimer.elapsed() << std::endl;
 
     // output result to vtk
     vtkWriter.write(1.0);
