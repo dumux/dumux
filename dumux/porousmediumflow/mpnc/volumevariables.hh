@@ -55,7 +55,7 @@ class MPNCVolumeVariables
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using PermeabilityType = typename SpatialParams::PermeabilityType;

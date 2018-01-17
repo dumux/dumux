@@ -57,7 +57,7 @@ class TwoPNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using PermeabilityType = typename SpatialParams::PermeabilityType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);

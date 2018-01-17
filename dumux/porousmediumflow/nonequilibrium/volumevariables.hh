@@ -61,7 +61,7 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, false/*enableChemical
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -104,7 +104,7 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, /*enableChemicalNonEq
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -282,7 +282,7 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -500,7 +500,7 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;

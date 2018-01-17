@@ -56,7 +56,7 @@ class OnePNCVolumeVariables : public PorousMediumFlowVolumeVariables<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using Implementation = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
