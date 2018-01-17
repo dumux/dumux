@@ -56,7 +56,7 @@ class ElectroChemistry
     using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
 
     using Constant = Constants<Scalar>;
 
