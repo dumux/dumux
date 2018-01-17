@@ -25,9 +25,7 @@
 #ifndef DUMUX_TRACER_TEST_PROBLEM_HH
 #define DUMUX_TRACER_TEST_PROBLEM_HH
 
-#include <dumux/discretization/box/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/tracer/model.hh>
 #include <dumux/porousmediumflow/problem.hh>
 #include <dumux/material/fluidsystems/base.hh>
@@ -48,8 +46,6 @@ namespace Properties
 {
 NEW_TYPE_TAG(TracerTestProblem, INHERITS_FROM(Tracer));
 NEW_TYPE_TAG(TracerTestCCProblem, INHERITS_FROM(CCTpfaModel, TracerTestProblem));
-NEW_TYPE_TAG(TracerTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, TracerTestProblem));
-NEW_TYPE_TAG(TracerTestBoxProblem, INHERITS_FROM(BoxModel, TracerTestProblem));
 
 // enable caching
 SET_BOOL_PROP(TracerTestProblem, EnableGridVolumeVariablesCache, true);
