@@ -580,8 +580,9 @@ class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimW
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using VertexMapper = typename FVGridGeometry::VertexMapper;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
 

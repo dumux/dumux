@@ -88,7 +88,7 @@ struct AmgTraitsImpl<TypeTag, DiscretizationMethods::Box>
     using ScalarProduct = typename SolverTraits::ScalarProduct;
     using Smoother = typename SolverTraits::Smoother;
 
-    using DofMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using DofMapper = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::VertexMapper;
 };
 
 //! OverlappingSolverTraits used by discretization with overlapping parallel model
@@ -136,7 +136,7 @@ struct AmgTraitsImpl<TypeTag, DiscretizationMethods::CCTpfa>
     using ScalarProduct = typename SolverTraits::ScalarProduct;
     using Smoother = typename SolverTraits::Smoother;
 
-    using DofMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
+    using DofMapper = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::ElementMapper;
 };
 
 template<class TypeTag>

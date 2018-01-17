@@ -56,8 +56,6 @@ NEW_PROP_TAG(JacobianMatrix);         //!< Type of the global jacobian matrix
 NEW_PROP_TAG(SolutionVector);         //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(BoundaryTypes);          //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG(DiscretizationMethod);   //!< Property for the used discretization method
-NEW_PROP_TAG(VertexMapper);           //!< mapper for vertices
-NEW_PROP_TAG(ElementMapper);          //!< mapper for elements
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.

@@ -53,7 +53,6 @@ class FVAssembler
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
@@ -167,6 +166,7 @@ public:
         // for box communicate the residual with the neighboring processes
         if (isBox && gridView().comm().size() > 1)
         {
+            using VertexMapper = typename FVGridGeometry::VertexMapper;
             VertexHandleSum<typename SolutionVector::block_type, SolutionVector, VertexMapper>
             sumResidualHandle(residual, fvGridGeometry_->vertexMapper());
             gridView().communicate(sumResidualHandle,

@@ -220,10 +220,10 @@ class VtkOutputModule
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using VelocityOutput = typename GET_PROP_TYPE(TypeTag, VelocityOutput);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using ElementMapper = typename FVGridGeometry::ElementMapper;
+    using VertexMapper = typename FVGridGeometry::VertexMapper;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 

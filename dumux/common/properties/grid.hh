@@ -25,7 +25,6 @@
 #define DUMUX_GRID_PROPERTIES_HH
 
 #include <dune/common/version.hh>
-#include <dune/grid/common/mcmgmapper.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/pointsource.hh>
@@ -49,32 +48,6 @@ SET_TYPE_PROP(GridProperties, PointSource, PointSource<TypeTag>);
 
 //! Use the point source helper using the bounding box tree as a default
 SET_TYPE_PROP(GridProperties, PointSourceHelper, BoundingBoxTreePointSourceHelper<TypeTag>);
-
-//! Mapper for the grid view's vertices.
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-SET_TYPE_PROP(GridProperties,
-              VertexMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView)>);
-#else
-SET_TYPE_PROP(GridProperties,
-              VertexMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
-                                                        Dune::MCMGVertexLayout>);
-#endif
-
-//! Mapper for the grid view's elements.
-#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-SET_TYPE_PROP(GridProperties,
-              ElementMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView)>);
-#else
-SET_TYPE_PROP(GridProperties,
-              ElementMapper,
-              Dune::MultipleCodimMultipleGeomTypeMapper<typename GET_PROP_TYPE(TypeTag, GridView),
-                                                        Dune::MCMGElementLayout>);
-#endif
-
-
 
 } // namespace Properties
 } // namespace Dumux
