@@ -97,7 +97,7 @@ class FluxStencil<FVElementGeometry, DiscretizationMethods::CCMpfa>
     using IndexType = typename GridView::IndexSet::IndexType;
 
     // Use the stencil type of the primary interaction volume
-    using NodalIndexSet = typename FVGridGeometry::DualGridNodalIndexSet;
+    using NodalIndexSet = typename FVGridGeometry::GridIVIndexSets::DualGridIndexSet::NodalIndexSet;
 
 public:
     //! We don't know yet how many faces couple to a neighboring element

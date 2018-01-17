@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element of the grid partition.
@@ -29,51 +30,85 @@
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
 #include <dumux/discretization/methods.hh>
+#include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/discretization/box/fvelementgeometry.hh>
+#include <dumux/discretization/box/subcontrolvolume.hh>
+#include <dumux/discretization/box/subcontrolvolumeface.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
- * \brief Base class for the finite volume geometry vector for box models
- *        This builds up the sub control volumes and sub control volume faces
- *        for each element.
+ * \ingroup BoxDiscretization
+ * \brief The default traits for the box finite volume grid geometry
+ *        Defines the scv and scvf types and the mapper types
+ * \tparam the grid view type
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class BoxFVGridGeometry
-{};
-
-// specialization in case the FVElementGeometries are stored
-template<class TypeTag>
-class BoxFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
+template<class GridView>
+struct BoxDefaultGridGeometryTraits
+: public DefaultMapperTraits<GridView>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
-    using Element = typename GridView::template Codim<0>::Entity;
+    using SubControlVolume = BoxSubControlVolume<GridView>;
+    using SubControlVolumeFace = BoxSubControlVolumeFace<GridView>;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename GridView::ctype;
+    template<class FVGridGeometry, bool enableCache>
+    using LocalView = BoxFVElementGeometry<FVGridGeometry, enableCache>;
+};
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+/*!
+ * \ingroup BoxDiscretization
+ * \brief Base class for the finite volume geometry vector for box schemes
+ *        This builds up the sub control volumes and sub control volume faces
+ * \note This class is specialized for versions with and without caching the fv geometries on the grid view
+ */
+template<class Scalar,
+         class GridView,
+         bool enableFVGridGeometryCache = false,
+         class Traits = BoxDefaultGridGeometryTraits<GridView> >
+class BoxFVGridGeometry;
 
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+/*!
+ * \ingroup BoxDiscretization
+ * \brief Base class for the finite volume geometry vector for box schemes
+ *        This builds up the sub control volumes and sub control volume faces
+ * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
+ */
+template<class Scalar, class GV, class Traits>
+class BoxFVGridGeometry<Scalar, GV, true, Traits>
+: public BaseFVGridGeometry<BoxFVGridGeometry<Scalar, GV, true, Traits>, GV, Traits>
+{
+    using ThisType = BoxFVGridGeometry<Scalar, GV, true, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using IndexType = typename GV::IndexSet::IndexType;
+
+    using Element = typename GV::template Codim<0>::Entity;
+    using CoordScalar = typename GV::ctype;
+    static const int dim = GV::dimension;
+    static const int dimWorld = GV::dimensionworld;
+
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
-    using GeometryHelper = BoxGeometryHelper<GridView, dim, SubControlVolume, SubControlVolumeFace>;
+    using GeometryHelper = BoxGeometryHelper<GV, dim,
+                                             typename Traits::SubControlVolume,
+                                             typename Traits::SubControlVolumeFace>;
 
 public:
     //! export discretization method
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::Box;
+
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, true>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export dof mapper type
+    using DofMapper = typename Traits::VertexMapper;
+    //! export the finite element cache type
+    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+    //! export the grid view type
+    using GridView = GV;
 
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
@@ -81,7 +116,7 @@ public:
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const VertexMapper& dofMapper() const
+    const DofMapper& dofMapper() const
     { return this->vertexMapper(); }
 
     //! The total number of sub control volumes
@@ -141,6 +176,7 @@ public:
 
             // construct the sub control volumes
             scvs_[eIdx].resize(elementGeometry.corners());
+            using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
             for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
             {
                 const auto dofIdxGlobal = this->vertexMapper().subIndex(element, scvLocalIdx, dim);
@@ -242,33 +278,45 @@ private:
     std::vector<bool> boundaryDofIndices_;
 };
 
-// specialization in case the FVElementGeometries are not stored
-template<class TypeTag>
-class BoxFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
+/*!
+ * \ingroup BoxDiscretization
+ * \brief Base class for the finite volume geometry vector for box schemes
+ *        This builds up the sub control volumes and sub control volume faces
+ * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
+ *       the corresponding FVElementGeometry
+ */
+template<class Scalar, class GV, class Traits>
+class BoxFVGridGeometry<Scalar, GV, false, Traits>
+: public BaseFVGridGeometry<BoxFVGridGeometry<Scalar, GV, false, Traits>, GV, Traits>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
+    using ThisType = BoxFVGridGeometry<Scalar, GV, false, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using IndexType = typename GV::IndexSet::IndexType;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    static const int dim = GV::dimension;
+    static const int dimWorld = GV::dimensionworld;
 
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
+    using Element = typename GV::template Codim<0>::Entity;
+    using CoordScalar = typename GV::ctype;
 
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename GridView::ctype;
-
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
     //! export discretization method
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::Box;
+
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, false>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export dof mapper type
+    using DofMapper = typename Traits::VertexMapper;
+    //! export the finite element cache type
+    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
+    //! export the grid view type
+    using GridView = GV;
 
     //! Constructor
     BoxFVGridGeometry(const GridView gridView)
@@ -276,7 +324,7 @@ public:
 
     //! the vertex mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const VertexMapper& dofMapper() const
+    const DofMapper& dofMapper() const
     { return this->vertexMapper(); }
 
     //! The total number of sub control volumes

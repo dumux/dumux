@@ -49,7 +49,6 @@
 #include <dumux/discretization/staggered/elementfacevariables.hh>
 #include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 
-#include <dumux/common/intersectionmapper.hh>
 #include <dune/istl/multitypeblockvector.hh>
 #include <dune/istl/multitypeblockmatrix.hh>
 
@@ -71,57 +70,9 @@ SET_PROP(StaggeredModel, DiscretizationMethod)
 };
 
 //! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(StaggeredModel, FVGridGeometry, StaggeredFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-
-//! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(StaggeredModel, FVElementGeometry, StaggeredFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-
-//! The default sub control volume
-SET_PROP(StaggeredModel, SubControlVolume)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    struct ScvGeometryTraits
-    {
-        using Geometry = typename Grid::template Codim<0>::Geometry;
-        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-        using LocalIndexType = unsigned int;
-        using Scalar = typename Grid::ctype;
-        using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimensionworld>;
-    };
-public:
-        using type = CCSubControlVolume<ScvGeometryTraits>;
-};
-
-//! The default sub-controlvolume face
-SET_PROP(StaggeredModel, SubControlVolumeFace)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    static constexpr int dim = Grid::dimension;
-    static constexpr int dimWorld = Grid::dimensionworld;
-
-    struct ScvfGeometryTraits
-    {
-        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-        using LocalIndexType = unsigned int;
-        using Scalar = typename Grid::ctype;
-        using Geometry = typename Grid::template Codim<1>::Geometry;
-        using GlobalPosition = Dune::FieldVector<Scalar, dim>;
-    };
-
-public:
-    using type = StaggeredSubControlVolumeFace<ScvfGeometryTraits>;
-};
-
-//! The default geometry helper required for the stencils, etc.
-SET_PROP(StaggeredModel, StaggeredGeometryHelper)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-public:
-    using type = BaseStaggeredGeometryHelper<GridView>;
-};
+SET_TYPE_PROP(StaggeredModel, FVElementGeometry,
+                StaggeredFVElementGeometry<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                           GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! Set the default global face variables cache vector class
 SET_TYPE_PROP(StaggeredModel, GridFaceVariables, StaggeredGridFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
@@ -155,9 +106,6 @@ SET_TYPE_PROP(StaggeredModel, GridVariables, StaggeredGridVariables<TypeTag>);
 
 //! Use the cell center element boundary types per default
 SET_TYPE_PROP(StaggeredModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>);
-
-//! Set the intersection mapper
-SET_TYPE_PROP(StaggeredModel, IntersectionMapper, ConformingGridIntersectionMapper<TypeTag>);
 
 //! Set the BaseLocalResidual to StaggeredLocalResidual
 SET_TYPE_PROP(StaggeredModel, BaseLocalResidual, StaggeredLocalResidual<TypeTag>);

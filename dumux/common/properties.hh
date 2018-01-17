@@ -102,7 +102,6 @@ NEW_PROP_TAG(MaxNumNeighborsPerScvf);              //!< The maximum number of ne
 /////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:
 /////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(MpfaMethod);                          //!< Specifies the mpfa method to be used
 NEW_PROP_TAG(MpfaHelper);                          //!< A Helper class depending on the mpfa method and grid dimension
 NEW_PROP_TAG(PrimaryInteractionVolume);            //!< The primary interaction volume type
 NEW_PROP_TAG(SecondaryInteractionVolume);          //!< The secondary interaction volume type used e.g. on the boundaries
@@ -189,7 +188,6 @@ NEW_PROP_TAG(CellCenterPrimaryVariables);          //!< The primary variables co
 NEW_PROP_TAG(FacePrimaryVariables);                //!< The primary variables container type for face dofs
 NEW_PROP_TAG(IntersectionMapper);                  //!< Specifies the intersection mapper
 NEW_PROP_TAG(DofTypeIndices);                      //!< Specifies index types for accessing the multi type block vectors/matrices
-NEW_PROP_TAG(StaggeredGeometryHelper);             //!< Specifies a helper class for the staggered grid geometry
 NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary variables container type
 NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data

@@ -26,48 +26,43 @@
 
 #include <dune/common/iteratorrange.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
-namespace Dumux
-{
-
-// forward declaration
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class StaggeredFVGridGeometry;
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Base class for the finite volume geometry vector for staggered models
  *        This locally builds up the sub control volumes and sub control volume faces
  *        for each element.
+ * \tparam GG the finite volume grid geometry type
+ * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class StaggeredFVElementGeometry
-{};
+template<class GG, bool enableFVGridGeometryCache>
+class StaggeredFVElementGeometry;
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Class for the finite volume geometry vector for staggered models
  *        This locally builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored globally.
-          In this case we just forward internally to the global object.
+ *        In this case we just forward internally to the global object.
  */
-template<class TypeTag>
-class StaggeredFVElementGeometry<TypeTag, true>
+template<class GG>
+class StaggeredFVElementGeometry<GG, true>
 {
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = StaggeredFVElementGeometry<GG, true>;
+    using GridView = typename GG::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
     //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GG;
 
     //! Constructor
     StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)
@@ -160,21 +155,21 @@ private:
  *        This locally builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are not stored globally.
  */
-template<class TypeTag>
-class StaggeredFVElementGeometry<TypeTag, false>
+template<class GG>
+class StaggeredFVElementGeometry<GG, false>
 {
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = StaggeredFVElementGeometry<GG, false>;
+    using GridView = typename GG::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
     //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GG;
 
     //! Constructor
     StaggeredFVElementGeometry(const FVGridGeometry& fvGridGeometry)

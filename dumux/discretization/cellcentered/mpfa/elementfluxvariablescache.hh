@@ -178,7 +178,12 @@ public:
         // Reserve memory (over-) estimate for interaction volumes and corresponding data.
         // The overestimate doesn't hurt as we are not in a memory-limited configuration.
         // We need to avoid reallocation because in the caches we store pointers to the data handles.
-        const auto numIvEstimate = getNoInteractionVolumesEstimate_(element, assemblyMapI);
+        // Default -> each facet has two neighbors (local adaption) and all scvfs belongs to different ivs.
+        // If you want to use higher local differences change the parameter below.
+        // TODO should this be a property? Statically allocated memory might be an issue for local adaptivity in general
+        static const std::size_t maxDiff = getParamFromGroup<std::size_t>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
+                                                                          "Grid.MaxLocalElementLevelDifference", 2);
+        const auto numIvEstimate = FVElementGeometry::maxNumElementScvfs*maxDiff;
         primaryInteractionVolumes_.reserve(numIvEstimate);
         secondaryInteractionVolumes_.reserve(numIvEstimate);
         primaryIvDataHandles_.reserve(numIvEstimate);
@@ -337,26 +342,6 @@ private:
         secondaryIvDataHandles_.clear();
     }
 
-    //! get estimate of interaction volumes that are going to be required
-    template<class AssemblyMap>
-    std::size_t getNoInteractionVolumesEstimate_(const Element& element, const AssemblyMap& assemblyMap)
-    {
-        // if statements are optimized away by the compiler
-        if (GET_PROP_VALUE(TypeTag, MpfaMethod) == MpfaMethods::oMethod)
-        {
-            // Reserve memory for the case of each facet having neighbors being 4 levels higher. Memory limitations
-            // do not play an important role here as global caching is disabled. In the unlikely case you want
-            // to use higher local differences in element levels set a higher value for the parameter below
-            // in your input file (note that some grids might only support levels differences of one anyway)
-            static const unsigned int maxDiff = getParamFromGroup<unsigned int>(GET_PROP_VALUE(TypeTag, ModelParameterGroup),
-                                                                                "Grid.MaxLocalElementLevelDifference",
-                                                                                4);
-            return element.subEntities(GridView::dimension)*maxDiff;
-        }
-        else
-            DUNE_THROW(Dune::NotImplemented, "number of interaction volumes estimate for chosen mpfa scheme");
-    }
-
     //! get index of an scvf in the local container
     unsigned int getLocalScvfIdx_(const int scvfIdx) const
     {
@@ -364,7 +349,6 @@ private:
         assert(it != globalScvfIndices_.end() && "Could not find the flux vars cache for scvfIdx");
         return std::distance(globalScvfIndices_.begin(), it);
     }
-
 
     // the local flux vars caches and corresponding indices
     std::vector<FluxVariablesCache> fluxVarsCache_;

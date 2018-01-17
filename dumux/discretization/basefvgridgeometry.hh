@@ -32,31 +32,35 @@
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/geometricentityset.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup Discretization
  * \brief Base class for all finite volume grid geometries
+ * \tparam Impl the type of the actual implementation
+ * \tparam GV the grid view type
+ * \tparam Traits the fv geometry traits
  */
-template<class TypeTag>
+template<class Impl, class GV, class Traits>
 class BaseFVGridGeometry
 {
-    using Implementation = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
-    using ElementMap = EntityMap<GridView, 0>;
-    using ElementSet = GridViewGeometricEntitySet<GridView, 0>;
+    using ElementMap = EntityMap<GV, 0>;
+    using ElementSet = GridViewGeometricEntitySet<GV, 0>;
     using BoundingBoxTree = Dumux::BoundingBoxTree<ElementSet>;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    using CoordScalar = typename GridView::ctype;
+    static const int dim = GV::dimension;
+    static const int dimWorld = GV::dimensionworld;
+    using CoordScalar = typename GV::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
+    //! export the grid view type
+    using GridView = GV;
+    //! export the element mapper type
+    using ElementMapper = typename Traits::ElementMapper;
+    //! export the vertex mapper type
+    using VertexMapper = typename Traits::VertexMapper;
+
     //! Constructor computes the bouding box of the entire domain, for e.g. setting boundary conditions
     BaseFVGridGeometry(const GridView& gridView)
     : gridView_(gridView)
@@ -78,8 +82,9 @@ public:
      *        The local object is only functional after calling its bind/bindElement method.
      *        This is a free function that will be found by means of ADL
      */
-    friend inline FVElementGeometry localView(const Implementation& fvGridGeometry)
-    { return FVElementGeometry(fvGridGeometry); }
+    template<class GridGeometry>
+    friend inline typename GridGeometry::LocalView localView(const GridGeometry& fvGridGeometry)
+    { return typename GridGeometry::LocalView(fvGridGeometry); }
 
     /*!
      * \brief Update all fvElementGeometries (do this again after grid adaption)

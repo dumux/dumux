@@ -48,7 +48,7 @@ namespace Dumux {
 template<class FVGridGeometry>
 class CCSimpleConnectivityMap
 {
-    using FVElementGeometry = typename FVGridGeometry::FVElementGeometry;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using GridView = typename FVGridGeometry::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;

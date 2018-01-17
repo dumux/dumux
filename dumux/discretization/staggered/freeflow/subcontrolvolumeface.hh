@@ -28,38 +28,41 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
+#include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 #include <dumux/discretization/staggered/freeflow/staggeredgeometryhelper.hh>
 #include <dumux/common/properties.hh>
 #include <dumux/common/optional.hh>
 
 #include <typeinfo>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on. This is a specialization for free flow models.
  */
-template<class ScvfGeometryTraits>
-class FreeFlowStaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
+template<class GV,
+         class T = StaggeredDefaultScvfGeometryTraits<GV> >
+class FreeFlowStaggeredSubControlVolumeFace
+: public SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<GV, T>, T>
 {
-    using ParentType = SubControlVolumeFaceBase<FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>;
-    using Geometry = typename ScvfGeometryTraits::Geometry;
-    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
+    using ThisType = FreeFlowStaggeredSubControlVolumeFace<GV, T>;
+    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
+    using Geometry = typename T::Geometry;
+    using GridIndexType = typename T::GridIndexType;
 
-    using Scalar = typename ScvfGeometryTraits::Scalar;
+    using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
-    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
+    using GlobalPosition = typename T::GlobalPosition;
 
     static constexpr int numPairs = (dimworld == 2) ? 2 : 4;
 
 public:
     //! State the traits public and thus export all types
-    using Traits = ScvfGeometryTraits;
+    using Traits = T;
 
     // The default constructor
     FreeFlowStaggeredSubControlVolumeFace() = default;
@@ -252,8 +255,6 @@ private:
     bool isGhostFace_;
 };
 
-
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

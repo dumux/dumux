@@ -26,24 +26,27 @@
 #define DUMUX_CC_MPFA_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/defaultmappertraits.hh>
 
 #include <dumux/assembly/cclocalresidual.hh>
 
-#include <dumux/discretization/methods.hh>
 #include <dumux/discretization/fvproperties.hh>
 
 #include <dumux/discretization/cellcentered/gridvolumevariables.hh>
-#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
+#include <dumux/discretization/cellcentered/mpfa/methods.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/mpfa/gridfluxvariablescache.hh>
 #include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
+#include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementvolumevariables.hh>
 #include <dumux/discretization/cellcentered/mpfa/elementfluxvariablescache.hh>
-#include <dumux/discretization/cellcentered/mpfa/subcontrolvolumeface.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
+#include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
+#include <dumux/discretization/cellcentered/mpfa/gridinteractionvolumeindexsets.hh>
 #include <dumux/discretization/cellcentered/mpfa/helper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
@@ -59,12 +62,6 @@ NEW_TYPE_TAG(CCMpfaModel, INHERITS_FROM(FiniteVolumeModel));
 SET_PROP(CCMpfaModel, DiscretizationMethod)
 {
     static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
-};
-
-//! Extract the used mpfa method from the primary interaction volume
-SET_PROP(CCMpfaModel, MpfaMethod)
-{
-    static const MpfaMethods value = GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume)::MpfaMethod;
 };
 
 //! Set the maximum admissible number of branches per scvf
@@ -129,14 +126,44 @@ public:
 };
 
 //! Set the default for the global finite volume geometry
-SET_TYPE_PROP(CCMpfaModel,
-              FVGridGeometry,
-              CCMpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+SET_PROP(CCMpfaModel, FVGridGeometry)
+{
+private:
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+
+    struct Traits : public DefaultMapperTraits<GridView>
+    {
+        using SubControlVolume = CCSubControlVolume<GridView>;
+        using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GridView>;
+        using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+        using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+
+        template< class FVGridGeometry >
+        using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeometry,
+                                                                      NodalIndexSet,
+                                                                      PrimaryIV,
+                                                                      SecondaryIV >;
+
+        template< class FVGridGeometry, bool enableCache >
+        using LocalView = CCMpfaFVElementGeometry<FVGridGeometry, enableCache>;
+
+        //! Per default, we use the o-method and thus the simple assembly map
+        template< class FVGridGeometry >
+        using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeometry, FVGridGeometry::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
+    };
+public:
+    using type = CCMpfaFVGridGeometry<GridView, Traits, enableCache>;
+};
 
 //! Set the default for the local finite volume geometry
 SET_TYPE_PROP(CCMpfaModel,
               FVElementGeometry,
-              CCMpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+              CCMpfaFVElementGeometry<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                      GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel,
@@ -156,26 +183,6 @@ SET_TYPE_PROP(CCMpfaModel,
 
 //! The global current volume variables vector class
 SET_TYPE_PROP(CCMpfaModel, GridVolumeVariables, CCGridVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
-
-//! The sub control volume
-SET_PROP(CCMpfaModel, SubControlVolume)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Traits = CCDefaultScvGeometryTraits<GridView>;
-public:
-    using type = CCSubControlVolume<Traits>;
-};
-
-//! The sub-control volume face class
-SET_PROP(CCMpfaModel, SubControlVolumeFace)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Traits = CCMpfaDefaultScvfGeometryTraits<GridView>;
-public:
-    using type = Dumux::CCMpfaSubControlVolumeFace<Traits>;
-};
 
 //! Set the solution vector type for an element
 SET_TYPE_PROP(CCMpfaModel, ElementSolutionVector, CCElementSolution<TypeTag>);

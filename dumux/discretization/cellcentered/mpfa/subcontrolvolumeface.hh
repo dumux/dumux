@@ -32,9 +32,14 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/multilineargeometry.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief Default traits class to be used for the sub-control volume faces
+ *        for the cell-centered finite volume scheme using MPFA
+ * \tparam GV the type of the grid view
+ */
 template<class GridView>
 struct CCMpfaDefaultScvfGeometryTraits
 {
@@ -80,22 +85,23 @@ struct CCMpfaDefaultScvfGeometryTraits
  * \ingroup CCMpfaDiscretization
  * \brief Class for a sub control volume face in mpfa methods, i.e a part of the boundary
  *        of a control volume we compute fluxes on.
- *
- * \param ScvfGeometryTraits the traits class for the geometry type
+ * \tparam GV the type of the grid view
+ * \tparam T the scvf geometry traits
  */
-template<class ScvfGeometryTraits>
+template<class GV,
+         class T = CCMpfaDefaultScvfGeometryTraits<GV> >
 class CCMpfaSubControlVolumeFace
 {
-    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
-    using Scalar = typename ScvfGeometryTraits::Scalar;
-    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
-    using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
-    using OutsideGridIndexStorage = typename ScvfGeometryTraits::OutsideGridIndexStorage;
-    using Geometry = typename ScvfGeometryTraits::Geometry;
+    using GridIndexType = typename T::GridIndexType;
+    using Scalar = typename T::Scalar;
+    using GlobalPosition = typename T::GlobalPosition;
+    using CornerStorage = typename T::CornerStorage;
+    using OutsideGridIndexStorage = typename T::OutsideGridIndexStorage;
+    using Geometry = typename T::Geometry;
 
 public:
     //! state the traits public and thus export all types
-    using Traits = ScvfGeometryTraits;
+    using Traits = T;
 
     /*!
      * \brief Constructor

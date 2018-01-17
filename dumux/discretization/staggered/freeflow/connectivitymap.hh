@@ -26,8 +26,7 @@
 
 #include <vector>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -38,7 +37,7 @@ template<class FVGridGeometry, class DofTypeIndices>
 class StaggeredFreeFlowConnectivityMap
 {
     using GridView = typename FVGridGeometry::GridView;
-    using FVElementGeometry = typename FVGridGeometry::FVElementGeometry;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;

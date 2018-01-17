@@ -27,29 +27,25 @@
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_ELEMENT_GEOMETRY_HH
 
 #include <algorithm>
+#include <array>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/iteratorrange.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
-namespace Dumux
-{
-
-//! forward declaration of the global finite volume geometry
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class CCTpfaFVGridGeometry;
+namespace Dumux {
 
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
+ * \tparam GG the finite volume grid geometry type
+ * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class CCTpfaFVElementGeometry
-{};
+template<class GG, bool enableFVGridGeometryCache>
+class CCTpfaFVElementGeometry;
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -57,21 +53,21 @@ class CCTpfaFVElementGeometry
  *        Specialization for grid caching enabled
  * \note The finite volume geometries are stored in the corresponding FVGridGeometry
  */
-template<class TypeTag>
-class CCTpfaFVElementGeometry<TypeTag, true>
+template<class GG>
+class CCTpfaFVElementGeometry<GG, true>
 {
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = CCTpfaFVElementGeometry<GG, true>;
+    using GridView = typename GG::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
     //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GG;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)
@@ -171,11 +167,11 @@ private:
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        Specialization for grid caching disabled
  */
-template<class TypeTag>
-class CCTpfaFVElementGeometry<TypeTag, false>
+template<class GG>
+class CCTpfaFVElementGeometry<GG, false>
 {
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = CCTpfaFVElementGeometry<GG, false>;
+    using GridView = typename GG::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -184,11 +180,11 @@ class CCTpfaFVElementGeometry<TypeTag, false>
 
 public:
     //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GG;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)

@@ -35,27 +35,27 @@ namespace Dumux
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Class that holds all interaction volume index sets on a grid view.
+ *
+ * \tparam FVG the finite volume grid geometry
+ * \tparam NI the type used for nodal index sets
+ * \tparam PI primary interaction volume type
+ * \tparam SI secondary interaction volume type
  */
-template<class TypeTag>
+template<class FVG, class NI, class PI, class SI = PI>
 class CCMpfaGridInteractionVolumeIndexSets
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GridIndexType = typename GridView::IndexSet::IndexType;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-
-    using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using PrimaryIVIndexSet = typename PrimaryIV::Traits::IndexSet;
-    using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-    using SecondaryIVIndexSet = typename SecondaryIV::Traits::IndexSet;
-
-    static constexpr int dim = GridView::dimension;
-    using LocalIndexType = typename PrimaryIV::Traits::LocalIndexType;
-    using DualGridIndexSet = CCMpfaDualGridIndexSet< DualGridNodalIndexSet >;
+    using SubControlVolumeFace = typename FVG::SubControlVolumeFace;
+    using PrimaryIVIndexSet = typename PI::Traits::IndexSet;
+    using SecondaryIVIndexSet = typename SI::Traits::IndexSet;
 
 public:
+    using FVGridGeometry = FVG;
+    using PrimaryInteractionVolume = PI;
+    using SecondaryInteractionVolume = SI;
+
+    using GridIndexType = typename FVGridGeometry::GridView::IndexSet::IndexType;
+    using DualGridIndexSet = CCMpfaDualGridIndexSet< NI >;
+
     /*!
      * \brief Construct all interaction volume index sets on the grid view
      *
@@ -78,9 +78,9 @@ public:
         {
             const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
             if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
-                numPrimaryIV_ += PrimaryIV::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
+                numPrimaryIV_ += PrimaryInteractionVolume::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
             else
-                numSecondaryIV_ += SecondaryIV::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
+                numSecondaryIV_ += SecondaryInteractionVolume::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
         }
 
         // reserve memory
@@ -93,9 +93,9 @@ public:
         {
             const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
             if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
-                PrimaryIV::addInteractionVolumeIndexSets(primaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);
+                PrimaryInteractionVolume::addInteractionVolumeIndexSets(primaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);
             else
-                SecondaryIV::addInteractionVolumeIndexSets(secondaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);
+                SecondaryInteractionVolume::addInteractionVolumeIndexSets(secondaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);
         }
     }
 

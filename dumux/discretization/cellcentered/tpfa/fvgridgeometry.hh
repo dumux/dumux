@@ -28,15 +28,35 @@
 
 #include <algorithm>
 
-#include <dune/common/version.hh>
-
+#include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The default traits for the tpfa finite volume grid geometry
+ *        Defines the scv and scvf types and the mapper types
+ * \tparam the grid view type
+ */
+template<class GridView>
+struct CCTpfaDefaultGridGeometryTraits
+: public DefaultMapperTraits<GridView>
 {
+    using SubControlVolume = CCSubControlVolume<GridView>;
+    using SubControlVolumeFace = CCTpfaSubControlVolumeFace<GridView>;
+
+    template<class FVGridGeometry>
+    using ConnectivityMap = CCSimpleConnectivityMap<FVGridGeometry>;
+
+    template<class FVGridGeometry, bool enableCache>
+    using LocalView = CCTpfaFVElementGeometry<FVGridGeometry, enableCache>;
+};
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -44,9 +64,10 @@ namespace Dumux
  *        This builds up the sub control volumes and sub control volume faces
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class CCTpfaFVGridGeometry
-{};
+template<class GridView,
+         bool enableFVGridGeometryCache = false,
+         class Traits = CCTpfaDefaultGridGeometryTraits<GridView> >
+class CCTpfaFVGridGeometry;
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -54,41 +75,40 @@ class CCTpfaFVGridGeometry
  *        This builds up the sub control volumes and sub control volume faces
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
  */
-template<class TypeTag>
-class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
+template<class GV, class Traits>
+class CCTpfaFVGridGeometry<GV, true, Traits>
+: public BaseFVGridGeometry<CCTpfaFVGridGeometry<GV, true, Traits>, GV, Traits>
 {
-public:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ThisType = CCTpfaFVGridGeometry<GV, true, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+    using IndexType = typename GV::IndexSet::IndexType;
+    using Element = typename GV::template Codim<0>::Entity;
 
-private:
-    using ThisType = CCTpfaFVGridGeometry<TypeTag, true>;
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using ConnectivityMap = CCSimpleConnectivityMap<ThisType>;
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    using CoordScalar = typename GridView::ctype;
+    static const int dim = GV::dimension;
+    static const int dimWorld = GV::dimensionworld;
+    using CoordScalar = typename GV::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    //! The local class needs access to the scv, scvfs and the fv element geometry
-    //! as they are globally cached
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-
 public:
-    //! Export the discretization method this geometry belongs to
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, true>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export dof mapper type
+    using DofMapper = typename Traits::ElementMapper;
+
+    //! export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     //! Per default, we allow for 9 branches per scvf on network/surface grids
-    static constexpr int maxElementStencilSize = (dim < dimWorld) ? FVElementGeometry::maxNumElementScvfs*8 + 1
-                                                                  : FVElementGeometry::maxNumElementScvfs + 1;
+    static constexpr int maxElementStencilSize = (dim < dimWorld) ? LocalView::maxNumElementScvfs*8 + 1
+                                                                  : LocalView::maxNumElementScvfs + 1;
+    //! export the grid view type
+    using GridView = GV;
 
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
@@ -97,7 +117,7 @@ public:
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const ElementMapper& dofMapper() const
+    const DofMapper& dofMapper() const
     { return this->elementMapper(); }
 
     //! The total number of sub control volumes
@@ -166,6 +186,7 @@ public:
 
             // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
             std::vector<ScvfGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
@@ -324,42 +345,48 @@ private:
  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
  *       the corresponding FVElementGeometry
  */
-template<class TypeTag>
-class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
+template<class GV, class Traits>
+class CCTpfaFVGridGeometry<GV, false, Traits>
+: public BaseFVGridGeometry<CCTpfaFVGridGeometry<GV, false, Traits>, GV, Traits>
 {
-public:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ThisType = CCTpfaFVGridGeometry<GV, false, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
-private:
-    using ThisType = CCTpfaFVGridGeometry<TypeTag, false>;
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using ConnectivityMap = CCSimpleConnectivityMap<ThisType>;
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using Element = typename GridView::template Codim<0>::Entity;
+    using IndexType = typename GV::IndexSet::IndexType;
+    using Element = typename GV::template Codim<0>::Entity;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    static const int dim = GV::dimension;
+    static const int dimWorld = GV::dimensionworld;
 
-    using CoordScalar = typename GridView::ctype;
+    using CoordScalar = typename GV::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
+    using ScvfGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::GridIndexStorage;
     using NeighborVolVarIndices = typename std::conditional_t< (dim<dimWorld),
                                                                ScvfGridIndexStorage,
                                                                Dune::ReservedVector<IndexType, 1> >;
 
 public:
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, false>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export dof mapper type
+    using DofMapper = typename Traits::ElementMapper;
+
     //! Export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     //! Per default, we allow for 9 branches per scvf on network/surface grids
-    static constexpr int maxElementStencilSize = (dim < dimWorld) ? FVElementGeometry::maxNumElementScvfs*8 + 1
-                                                                  : FVElementGeometry::maxNumElementScvfs + 1;
+    static constexpr int maxElementStencilSize = (dim < dimWorld) ? LocalView::maxNumElementScvfs*8 + 1
+                                                                  : LocalView::maxNumElementScvfs + 1;
+
+    //! Export the type of the grid view
+    using GridView = GV;
 
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
@@ -368,7 +395,7 @@ public:
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const ElementMapper& dofMapper() const
+    const DofMapper& dofMapper() const
     { return this->elementMapper(); }
 
     //! The total number of sub control volumes

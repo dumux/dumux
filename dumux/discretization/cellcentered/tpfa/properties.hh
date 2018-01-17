@@ -64,13 +64,21 @@ SET_PROP(CCTpfaModel, DiscretizationMethod)
 };
 
 //! Set the default for the global finite volume geometry
-SET_TYPE_PROP(CCTpfaModel, FVGridGeometry, CCTpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+SET_PROP(CCTpfaModel, FVGridGeometry)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = CCTpfaFVGridGeometry<GridView, enableCache>;
+};
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCTpfaModel, GridFluxVariablesCache, CCTpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
 //! Set the default for the local finite volume geometry
-SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
+                                                                      GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The global previous volume variables vector class
 SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, CCTpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
@@ -92,26 +100,6 @@ private:
 public:
     // Per default, we allow for 8 neighbors on network/surface grids
     static constexpr std::size_t value = dim < dimWorld ? 9 : 2;
-};
-
-//! The sub control volume
-SET_PROP(CCTpfaModel, SubControlVolume)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Traits = CCDefaultScvGeometryTraits<GridView>;
-public:
-    using type = CCSubControlVolume<Traits>;
-};
-
-//! The sub control volume face
-SET_PROP(CCTpfaModel, SubControlVolumeFace)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Traits = CCTpfaDefaultScvfGeometryTraits<GridView>;
-public:
-    using type = Dumux::CCTpfaSubControlVolumeFace<Traits>;
 };
 
 //! Set the solution vector type for an element

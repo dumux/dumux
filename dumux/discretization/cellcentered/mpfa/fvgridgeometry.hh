@@ -26,28 +26,26 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_FV_GRID_GEOMETRY_HH
 
-#include <dune/geometry/multilineargeometry.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/fvelementgeometry.hh>
-#include <dumux/discretization/cellcentered/mpfa/connectivitymap.hh>
-#include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
-#include <dumux/discretization/cellcentered/mpfa/gridinteractionvolumeindexsets.hh>
 
-namespace Dumux
-{
+namespace Dumux {
+
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief The finite volume geometry (scvs and scvfs) for cell-centered mpfa models on a grid view
  *        This builds up the sub control volumes and sub control volume faces
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
+ *
+ * \tparam GridView the grid view
+ * \tparam GridIvIs the interaction volume index sets
+ * \tparam Traits traits class
+ * \tparam enableCache
  */
-template<class TypeTag, bool EnableFVElementGeometryCache>
+template<class GridView, class Traits, bool enableCache>
 class CCMpfaFVGridGeometry;
 
 /*!
@@ -56,49 +54,46 @@ class CCMpfaFVGridGeometry;
  *        This builds up the sub control volumes and sub control volume faces
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
  */
-template<class TypeTag>
-class CCMpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
+template<class GV, class Traits>
+class CCMpfaFVGridGeometry<GV, Traits, true>
+: public BaseFVGridGeometry<CCMpfaFVGridGeometry<GV, Traits, true>, GV, Traits>
 {
-public:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using ThisType = CCMpfaFVGridGeometry<GV, Traits, true>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
 
-    //! Export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+    static constexpr int dim = GV::dimension;
+    static constexpr int dimWorld = GV::dimensionworld;
 
-    //! Export the mpfa method
-    static constexpr MpfaMethods mpfaMethod = GET_PROP_VALUE(TypeTag, MpfaMethod);
-
-private:
-    using ThisType = CCMpfaFVGridGeometry<TypeTag, true>;
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
-    using CoordScalar = typename GridView::ctype;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename PrimaryInteractionVolume::Traits::LocalIndexType;
-    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
-
-    using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
-    using ConnectivityMap = CCMpfaConnectivityMap<ThisType, mpfaMethod>;
-
+    using Element = typename GV::template Codim<0>::Entity;
+    using Vertex = typename GV::template Codim<dim>::Entity;
+    using Intersection = typename GV::Intersection;
+    using GridIndexType = typename GV::IndexSet::IndexType;
+    using CoordScalar = typename GV::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
 public:
+    //! export the mpfa helper type
+    using MpfaHelper = typename Traits::MpfaHelper;
+    //! export the grid interaction volume index set type
+    using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
+    //! export the type to be used for indicators where to use the secondary ivs
     using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, true>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the connectivity map type
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+    //! export dof mapper type
+    using DofMapper = typename Traits::ElementMapper;
+    //! export the grid view type
+    using GridView = GV;
+
+    //! export the discretization method this geometry belongs to
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
     static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
@@ -119,7 +114,7 @@ public:
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const ElementMapper& dofMapper() const { return this->elementMapper(); }
+    const DofMapper& dofMapper() const { return this->elementMapper(); }
 
     //! The total number of sub control volumes
     std::size_t numScv() const { return scvs_.size(); }
@@ -179,7 +174,7 @@ public:
         const auto isGhostVertex = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        CCMpfaDualGridIndexSet< DualGridNodalIndexSet > dualIdSet(this->gridView());
+        typename GridIVIndexSets::DualGridIndexSet dualIdSet(this->gridView());
 
         // Build the SCVs and SCV faces
         GridIndexType scvfIdx = 0;
@@ -197,6 +192,7 @@ public:
 
             // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
+            using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
             std::vector<ScvfOutsideGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
@@ -260,7 +256,7 @@ public:
                         secondaryInteractionVolumeVertices_[vIdxGlobal] = true;
 
                     // the quadrature point parameterizarion to be used on scvfs
-                    static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
+                    static const auto q = getParam<CoordScalar>("Mpfa.Q");
 
                     // make the scv face (for non-boundary scvfs on network grids, use precalculated outside indices)
                     const auto& outsideScvIndices = [&] ()
@@ -361,7 +357,7 @@ public:
     //! have derivatives with respect to a given dof.
     const ConnectivityMap& connectivityMap() const { return connectivityMap_; }
 
-    //! Returns the grid interaction volume seeds class.
+    //! Returns the grid interaction volume index set class.
     const GridIVIndexSets& gridInteractionVolumeIndexSets() const { return ivIndexSets_; }
 
     //! Get the scvf on the same face but from the other side
@@ -403,49 +399,48 @@ private:
  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
  *       the corresponding FVElementGeometry
  */
-template<class TypeTag>
-class CCMpfaFVGridGeometry<TypeTag, false> : public BaseFVGridGeometry<TypeTag>
+template<class GV, class Traits>
+class CCMpfaFVGridGeometry<GV, Traits, false>
+: public BaseFVGridGeometry<CCMpfaFVGridGeometry<GV, Traits, false>, GV, Traits>
 {
-public:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+    using ThisType = CCMpfaFVGridGeometry<GV, Traits, false>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
 
-    //! Export the discretization method this geometry belongs to
-    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+    static constexpr int dim = GV::dimension;
+    static constexpr int dimWorld = GV::dimensionworld;
 
-    //! Export the mpfa method
-    static constexpr MpfaMethods mpfaMethod = GET_PROP_VALUE(TypeTag, MpfaMethod);
-
-private:
-    using ThisType = CCMpfaFVGridGeometry<TypeTag, false>;
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-    using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
-    using Intersection = typename GridView::Intersection;
-    using CoordScalar = typename GridView::ctype;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename PrimaryInteractionVolume::Traits::LocalIndexType;
-    using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
-
-    using GridIVIndexSets = CCMpfaGridInteractionVolumeIndexSets<TypeTag>;
-    using ConnectivityMap = CCMpfaConnectivityMap<ThisType, mpfaMethod>;
-
+    using Element = typename GV::template Codim<0>::Entity;
+    using Vertex = typename GV::template Codim<dim>::Entity;
+    using Intersection = typename GV::Intersection;
+    using GridIndexType = typename GV::IndexSet::IndexType;
+    using CoordScalar = typename GV::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
+    using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
+
 public:
+    //! export the mpfa helper type
+    using MpfaHelper = typename Traits::MpfaHelper;
+    //! export the grid interaction volume index set type
+    using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
+    //! export the type to be used for indicators where to use the secondary ivs
     using SecondaryIvIndicatorType = std::function<bool(const Element&, const Intersection&, bool)>;
 
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, false>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the connectivity map type
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+    //! export dof mapper type
+    using DofMapper = typename Traits::ElementMapper;
+    //! export the grid view type
+    using GridView = GV;
+
+    //! export the discretization method this geometry belongs to
+    static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
     // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
     static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
@@ -466,7 +461,7 @@ public:
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const ElementMapper& dofMapper() const
+    const DofMapper& dofMapper() const
     { return this->elementMapper(); }
 
     //! Returns the total number of sub control volumes.
@@ -526,7 +521,7 @@ public:
         isGhostVertex_ = MpfaHelper::findGhostVertices(this->gridView(), this->vertexMapper());
 
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
-        CCMpfaDualGridIndexSet< DualGridNodalIndexSet > dualIdSet(this->gridView());
+        typename GridIVIndexSets::DualGridIndexSet dualIdSet(this->gridView());
 
         // Build the SCVs and SCV faces
         numScvf_ = 0;

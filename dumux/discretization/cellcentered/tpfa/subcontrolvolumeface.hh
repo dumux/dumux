@@ -25,16 +25,22 @@
 #define DUMUX_DISCRETIZATION_CC_TPFA_SUBCONTROLVOLUMEFACE_HH
 
 #include <utility>
+#include <vector>
+
+#include <dune/common/reservedvector.hh>
 #include <dune/geometry/type.hh>
+#include <dune/geometry/multilineargeometry.hh>
+
+#include <dumux/common/boundaryflag.hh>
 #include <dumux/discretization/subcontrolvolumefacebase.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCDiscretization
  * \brief Default traits class to be used for the sub-control volume faces
  *        for the cell-centered finite volume scheme using TPFA
+ * \tparam GV the type of the grid view
  */
 template<class GridView>
 struct CCTpfaDefaultScvfGeometryTraits
@@ -73,22 +79,27 @@ struct CCTpfaDefaultScvfGeometryTraits
 /*!
  * \ingroup CCTpfaDiscretization
  * \brief The sub control volume face
+ * \tparam GV the type of the grid view
+ * \tparam T the scvf geometry traits
  */
-template<class ScvfGeometryTraits>
-class CCTpfaSubControlVolumeFace : public SubControlVolumeFaceBase<CCTpfaSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>
+template<class GV,
+         class T = CCTpfaDefaultScvfGeometryTraits<GV> >
+class CCTpfaSubControlVolumeFace
+: public SubControlVolumeFaceBase<CCTpfaSubControlVolumeFace<GV, T>, T>
 {
-    using ParentType = SubControlVolumeFaceBase<CCTpfaSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>;
-    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
-    using Scalar = typename ScvfGeometryTraits::Scalar;
-    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
-    using CornerStorage = typename ScvfGeometryTraits::CornerStorage;
-    using GridIndexStorage = typename ScvfGeometryTraits::GridIndexStorage;
-    using Geometry = typename ScvfGeometryTraits::Geometry;
-    using BoundaryFlag = typename ScvfGeometryTraits::BoundaryFlag;
+    using ThisType = CCTpfaSubControlVolumeFace<GV, T>;
+    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
+    using GridIndexType = typename T::GridIndexType;
+    using Scalar = typename T::Scalar;
+    using GlobalPosition = typename T::GlobalPosition;
+    using CornerStorage = typename T::CornerStorage;
+    using GridIndexStorage = typename T::GridIndexStorage;
+    using Geometry = typename T::Geometry;
+    using BoundaryFlag = typename T::BoundaryFlag;
 
 public:
     //! state the traits public and thus export all types
-    using Traits = ScvfGeometryTraits;
+    using Traits = T;
 
     // the default constructor
     CCTpfaSubControlVolumeFace() = default;

@@ -31,61 +31,68 @@
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/staggered/properties.hh>
+#include <dumux/common/intersectionmapper.hh>
+#include <dumux/common/defaultmappertraits.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+#include <dumux/discretization/staggered/fvelementgeometry.hh>
+#include <dumux/discretization/staggered/fvgridgeometry.hh>
+#include <dumux/discretization/staggered/subcontrolvolumeface.hh>
 
-namespace Dumux
-{
-
-//! Dummy connectivity map, required by FVGridGeometry
-class MockConnectivityMap
-{
-public:
-    template<class FVGridGeometry>
-    void update(const FVGridGeometry& fvGridGeometry)
-    {}
-};
-
-namespace Properties
-{
-NEW_TYPE_TAG(TestFVGeometry, INHERITS_FROM(StaggeredModel));
-
-SET_TYPE_PROP(TestFVGeometry, Grid, Dune::YaspGrid<2>);
-
-SET_TYPE_PROP(TestFVGeometry, AssemblyMap, MockConnectivityMap);
-
-SET_BOOL_PROP(TestFVGeometry, EnableFVGridGeometryCache, true);
-}
-
-}
-
+#ifndef DOXYGEN
+namespace Dumux {
+namespace Detail {
 template<class T>
 class NoopFunctor {
 public:
   NoopFunctor() {}
   void operator()(const T& t){}
 };
+} // end namespace Detail
+
+//! the fv grid geometry traits for this test
+template<class GridView>
+struct TestFVGGTraits : public DefaultMapperTraits<GridView>
+{
+    using SubControlVolume = CCSubControlVolume<GridView>;
+    using SubControlVolumeFace = StaggeredSubControlVolumeFace<GridView>;
+    using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
+    using GeometryHelper = BaseStaggeredGeometryHelper<GridView>;
+
+    //! Dummy connectivity map, required by FVGridGeometry
+    template<class FVGridGeometry>
+    struct MockConnectivityMap
+    { void update(const FVGridGeometry& fvGridGeometry) {} };
+
+    template<class FVGridGeometry>
+    using ConnectivityMap = MockConnectivityMap<FVGridGeometry>;
+
+    template<class FVGridGeometry, bool enableCache>
+    using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;
+};
+
+} // end namespace Dumux
+#endif
 
 int main (int argc, char *argv[]) try
 {
+    using namespace Dumux;
+
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 
-    // aliases
-    using TypeTag = TTAG(TestFVGeometry);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename Grid::LeafGridView;
+    using Grid = Dune::YaspGrid<2>;
 
-    constexpr int dim = GridView::dimension;
-    constexpr int dimworld = GridView::dimensionworld;
+    constexpr int dim = Grid::dimension;
+    constexpr int dimworld = Grid::dimensionworld;
 
     using GlobalPosition = typename Dune::FieldVector<Grid::ctype, dimworld>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = StaggeredFVGridGeometry<typename Grid::LeafGridView, /*enable caching=*/ true,
+                                                   TestFVGGTraits<typename Grid::LeafGridView> >;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     // make a grid
     GlobalPosition lower(0.0);
@@ -106,7 +113,7 @@ int main (int argc, char *argv[]) try
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);
-        NoopFunctor<SubControlVolume> op;
+        Detail::NoopFunctor<SubControlVolume> op;
         if(0 != testForwardIterator(range.begin(), range.end(), op))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
@@ -116,7 +123,7 @@ int main (int argc, char *argv[]) try
         }
 
         auto range2 = scvfs(fvGeometry);
-        NoopFunctor<SubControlVolumeFace> op2;
+        Detail::NoopFunctor<SubControlVolumeFace> op2;
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 

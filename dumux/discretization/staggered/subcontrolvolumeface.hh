@@ -34,8 +34,7 @@
 
 #include <typeinfo>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -50,7 +49,9 @@ class BaseStaggeredGeometryHelper
 
 public:
 
-    BaseStaggeredGeometryHelper(const Element& element, const GridView& gridView) : element_(element), gridView_(gridView)
+    BaseStaggeredGeometryHelper(const Element& element, const GridView& gridView)
+    : element_(element)
+    , gridView_(gridView)
     { }
 
     /*!
@@ -86,28 +87,47 @@ private:
    const GridView gridView_;
 };
 
+
 /*!
- * \ingroup Discretization
+ * \ingroup StaggeredDiscretization
+ * \brief Default traits class to be used for the sub-control volume faces
+ *        for the staggered finite volume scheme
+ * \tparam GV the type of the grid view
+ */
+template<class GridView>
+struct StaggeredDefaultScvfGeometryTraits
+{
+    using Geometry = typename GridView::template Codim<1>::Geometry;
+    using GridIndexType = typename GridView::IndexSet::IndexType;
+    using LocalIndexType = unsigned int;
+    using Scalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
+};
+
+/*!
+ * \ingroup StaggeredDiscretization
  * \brief Class for a sub control volume face in the staggered method, i.e a part of the boundary
  *        of a sub control volume we compute fluxes on.
  */
-template<class ScvfGeometryTraits>
-class StaggeredSubControlVolumeFace : public SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>, ScvfGeometryTraits>
+template<class GV,
+         class T = StaggeredDefaultScvfGeometryTraits<GV> >
+class StaggeredSubControlVolumeFace
+: public SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<GV, T>, T>
 {
-    using ParentType = SubControlVolumeFaceBase<StaggeredSubControlVolumeFace<ScvfGeometryTraits>,ScvfGeometryTraits>;
-    using Geometry = typename ScvfGeometryTraits::Geometry;
-    using GridIndexType = typename ScvfGeometryTraits::GridIndexType;
+    using ThisType = StaggeredSubControlVolumeFace<GV, T>;
+    using ParentType = SubControlVolumeFaceBase<ThisType, T>;
+    using Geometry = typename T::Geometry;
+    using GridIndexType = typename T::GridIndexType;
 
-    using Scalar = typename ScvfGeometryTraits::Scalar;
+    using Scalar = typename T::Scalar;
     static const int dim = Geometry::mydimension;
     static const int dimworld = Geometry::coorddimension;
 
-    using GlobalPosition = typename ScvfGeometryTraits::GlobalPosition;
-
+    using GlobalPosition = typename T::GlobalPosition;
 
 public:
     //! state the traits public and thus export all types
-    using Traits = ScvfGeometryTraits;
+    using Traits = T;
 
     // the default constructor
     StaggeredSubControlVolumeFace() = default;
@@ -115,27 +135,26 @@ public:
     //! Constructor with intersection
     template <class Intersection, class GeometryHelper>
     StaggeredSubControlVolumeFace(const Intersection& is,
-                               const typename Intersection::Geometry& isGeometry,
-                               GridIndexType scvfIndex,
-                               const std::vector<GridIndexType>& scvIndices,
-                               const GeometryHelper& geometryHelper
-                           )
-    : ParentType(),
-      geomType_(isGeometry.type()),
-      area_(isGeometry.volume()),
-      center_(isGeometry.center()),
-      unitOuterNormal_(is.centerUnitOuterNormal()),
-      scvfIndex_(scvfIndex),
-      scvIndices_(scvIndices),
-      boundary_(is.boundary())
-      {
-          corners_.resize(isGeometry.corners());
-          for (int i = 0; i < isGeometry.corners(); ++i)
-              corners_[i] = isGeometry.corner(i);
+                                  const typename Intersection::Geometry& isGeometry,
+                                  GridIndexType scvfIndex,
+                                  const std::vector<GridIndexType>& scvIndices,
+                                  const GeometryHelper& geometryHelper)
+    : ParentType()
+    , geomType_(isGeometry.type())
+    , area_(isGeometry.volume())
+    , center_(isGeometry.center())
+    , unitOuterNormal_(is.centerUnitOuterNormal())
+    , scvfIndex_(scvfIndex)
+    , scvIndices_(scvIndices)
+    , boundary_(is.boundary())
+    {
+        corners_.resize(isGeometry.corners());
+        for (int i = 0; i < isGeometry.corners(); ++i)
+            corners_[i] = isGeometry.corner(i);
 
-          dofIdx_ = geometryHelper.dofIndex();
-          localFaceIdx_ = geometryHelper.localFaceIndex();
-      }
+        dofIdx_ = geometryHelper.dofIndex();
+        localFaceIdx_ = geometryHelper.localFaceIndex();
+    }
 
     //! The center of the sub control volume face
     const GlobalPosition& center() const
@@ -232,8 +251,6 @@ private:
     int localFaceIdx_;
 };
 
-
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

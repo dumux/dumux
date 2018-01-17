@@ -28,13 +28,13 @@
 #include <dumux/discretization/subcontrolvolumebase.hh>
 #include <dumux/common/optional.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup CCDiscretization
  * \brief Default traits class to be used for the sub-control volumes
  *        for the cell-centered finite volume scheme using TPFA
+ * \tparam GV the type of the grid view
  */
 template<class GridView>
 struct CCDefaultScvGeometryTraits
@@ -49,20 +49,25 @@ struct CCDefaultScvGeometryTraits
 /*!
  * \ingroup CCDiscretization
  * \brief Sub control volumes for cell-centered discretization schemes
+ * \tparam GV the type of the grid view
+ * \tparam T the scv geometry traits
  */
-template<class ScvGeometryTraits>
-class CCSubControlVolume : public SubControlVolumeBase<CCSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>
+template<class GV,
+         class T = CCDefaultScvGeometryTraits<GV> >
+class CCSubControlVolume
+: public SubControlVolumeBase<CCSubControlVolume<GV, T>, T>
 {
-    using ParentType = SubControlVolumeBase<CCSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>;
-    using Geometry = typename ScvGeometryTraits::Geometry;
-    using GridIndexType = typename ScvGeometryTraits::GridIndexType;
-    using LocalIndexType = typename ScvGeometryTraits::LocalIndexType;
-    using Scalar = typename ScvGeometryTraits::Scalar;
-    using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
+    using ThisType = CCSubControlVolume<GV, T>;
+    using ParentType = SubControlVolumeBase<ThisType, T>;
+    using Geometry = typename T::Geometry;
+    using GridIndexType = typename T::GridIndexType;
+    using LocalIndexType = typename T::LocalIndexType;
+    using Scalar = typename T::Scalar;
+    using GlobalPosition = typename T::GlobalPosition;
 
 public:
     //! state the traits public and thus export all types
-    using Traits = ScvGeometryTraits;
+    using Traits = T;
 
     CCSubControlVolume() = default;
 
