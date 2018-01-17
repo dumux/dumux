@@ -27,8 +27,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/elementfluxvariablescache.hh>
 
-namespace Dumux
-{
+//! make the local view function available whenever we use this class
+#include <dumux/discretization/localview.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -54,11 +56,13 @@ class StaggeredGridFluxVariablesCache<TypeTag, true>
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     StaggeredGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     // When global caching is enabled, precompute transmissibilities and stencils for all the scv faces
@@ -83,14 +87,6 @@ public:
         //     }
         // }
     }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const StaggeredGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -120,20 +116,14 @@ class StaggeredGridFluxVariablesCache<TypeTag, false>
     // the local class needs access to the problem
     friend StaggeredElementFluxVariablesCache<TypeTag, false>;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     // When global flux variables caching is disabled, we don't need to update the cache
     void update(Problem& problem)
     { problemPtr_ = &problem; }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const StaggeredGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
 
 private:
 
@@ -143,6 +133,6 @@ private:
     const Problem* problemPtr_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

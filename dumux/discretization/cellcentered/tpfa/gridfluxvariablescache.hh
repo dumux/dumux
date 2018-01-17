@@ -27,8 +27,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/tpfa/fluxvariablescachefiller.hh>
 
-namespace Dumux
-{
+//! make the local view function available whenever we use this class
+#include <dumux/discretization/localview.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -56,11 +58,13 @@ class CCTpfaGridFluxVariablesCache<TypeTag, true>
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FluxVariablesCacheFiller = CCTpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     // The constructor
     CCTpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -132,14 +136,6 @@ public:
     const Problem& problem() const
     { return *problemPtr_; }
 
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const CCTpfaGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
-
 private:
     const Problem* problemPtr_;
 
@@ -157,7 +153,6 @@ class CCTpfaGridFluxVariablesCache<TypeTag, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
@@ -165,6 +160,9 @@ class CCTpfaGridFluxVariablesCache<TypeTag, false>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     // The constructor
     CCTpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -181,14 +179,6 @@ public:
 
     const Problem& problem() const
     { return *problemPtr_; }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const CCTpfaGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
 
 private:
     const Problem* problemPtr_;
