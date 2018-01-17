@@ -32,6 +32,9 @@
 #include <dumux/common/geometry/boundingboxtree.hh>
 #include <dumux/common/geometry/geometricentityset.hh>
 
+//! make the local view function available whenever we use the grid geometry
+#include <dumux/discretization/localview.hh>
+
 namespace Dumux {
 
 /*!
@@ -76,15 +79,6 @@ public:
     {
         computeGlobalBoundingBox_();
     }
-
-    /*!
-     * \brief Return a local restriction of this global object.
-     *        The local object is only functional after calling its bind/bindElement method.
-     *        This is a free function that will be found by means of ADL
-     */
-    template<class GridGeometry>
-    friend inline typename GridGeometry::LocalView localView(const GridGeometry& fvGridGeometry)
-    { return typename GridGeometry::LocalView(fvGridGeometry); }
 
     /*!
      * \brief Update all fvElementGeometries (do this again after grid adaption)
