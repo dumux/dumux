@@ -117,7 +117,7 @@ class ColumnProblem : public PorousMediumFlowProblem<TypeTag>
     using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);

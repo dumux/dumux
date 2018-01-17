@@ -105,7 +105,7 @@ class ThreePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);

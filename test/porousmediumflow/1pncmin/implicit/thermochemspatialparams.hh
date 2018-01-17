@@ -76,7 +76,7 @@ class ThermoChemSpatialParams : public FVSpatialParamsOneP<TypeTag>
         hPhaseIdx = FluidSystem::hPhaseIdx
     };
 
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 

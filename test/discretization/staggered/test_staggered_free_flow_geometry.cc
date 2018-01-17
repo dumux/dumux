@@ -107,7 +107,7 @@ int main (int argc, char *argv[]) try
     constexpr int dimworld = GridView::dimensionworld;
 
     using GlobalPosition = typename Dune::FieldVector<Grid::ctype, dimworld>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);

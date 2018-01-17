@@ -77,7 +77,7 @@ class OnePTestProblem : public PorousMediumFlowProblem<TypeTag>
     using Element = typename GridView::template Codim<0>::Entity;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);

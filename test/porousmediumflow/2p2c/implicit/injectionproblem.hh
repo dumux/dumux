@@ -120,7 +120,7 @@ class InjectionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 

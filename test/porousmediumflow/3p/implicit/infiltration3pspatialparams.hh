@@ -80,7 +80,7 @@ class InfiltrationThreePSpatialParams : public FVSpatialParams<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag,ElementSolutionVector);
     enum { dimWorld=GridView::dimensionworld };

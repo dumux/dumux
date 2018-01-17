@@ -78,7 +78,7 @@ class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
 
