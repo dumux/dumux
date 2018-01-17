@@ -69,10 +69,6 @@ private:
 public:
     using type = BoxFVGridGeometry<Scalar, GridView, enableCache>;
 };
-//! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(BoxModel, FVElementGeometry,
-                BoxFVElementGeometry<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                     GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! Set the solution vector type for an element
 SET_TYPE_PROP(BoxModel, ElementSolutionVector, BoxElementSolution<TypeTag>);

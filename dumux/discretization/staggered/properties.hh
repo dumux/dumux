@@ -69,11 +69,6 @@ SET_PROP(StaggeredModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::Staggered;
 };
 
-//! Set the default for the FVElementGeometry vector
-SET_TYPE_PROP(StaggeredModel, FVElementGeometry,
-                StaggeredFVElementGeometry<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                           GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-
 //! Set the default global face variables cache vector class
 SET_TYPE_PROP(StaggeredModel, GridFaceVariables, StaggeredGridFaceVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFaceVariablesCache)>);
 

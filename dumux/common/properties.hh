@@ -80,7 +80,6 @@ NEW_PROP_TAG(BalanceEqOpts);          //!< A class that collects options for the
 NEW_PROP_TAG(ElementBoundaryTypes);                //!< Stores the boundary types on an element
 NEW_PROP_TAG(ElementSolutionVector);               //!< A vector of primary variables within an element
 
-NEW_PROP_TAG(FVElementGeometry);                   //!< The type of the local finite volume geometry (iterators over scvs, scvfs)
 NEW_PROP_TAG(FVGridGeometry);                      //!< The type of the global finite volume geometry
 NEW_PROP_TAG(EnableFVGridGeometryCache);           //!< specifies if geometric data is saved (faster, but more memory consuming)
 

@@ -159,12 +159,6 @@ public:
     using type = CCMpfaFVGridGeometry<GridView, Traits, enableCache>;
 };
 
-//! Set the default for the local finite volume geometry
-SET_TYPE_PROP(CCMpfaModel,
-              FVElementGeometry,
-              CCMpfaFVElementGeometry<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                      GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCMpfaModel,
               GridFluxVariablesCache,

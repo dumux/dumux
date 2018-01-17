@@ -76,10 +76,6 @@ public:
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCTpfaModel, GridFluxVariablesCache, CCTpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
 
-//! Set the default for the local finite volume geometry
-SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<typename GET_PROP_TYPE(TypeTag, FVGridGeometry),
-                                                                      GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
-
 //! The global previous volume variables vector class
 SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, CCTpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
 
