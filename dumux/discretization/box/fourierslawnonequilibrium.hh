@@ -49,7 +49,7 @@ class FouriersLawNonEquilibriumImplementation<TypeTag, DiscretizationMethods::Bo
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;

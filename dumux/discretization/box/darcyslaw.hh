@@ -44,7 +44,7 @@ template <class TypeTag>
 class DarcysLawImplementation<TypeTag, DiscretizationMethods::Box>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElemFluxVarCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);

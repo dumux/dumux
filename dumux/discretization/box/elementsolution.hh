@@ -41,7 +41,7 @@ class BoxElementSolution
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
 
 public:
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);

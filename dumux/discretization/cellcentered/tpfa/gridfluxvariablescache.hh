@@ -49,7 +49,7 @@ class CCTpfaGridFluxVariablesCache<TypeTag, true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -159,7 +159,7 @@ class CCTpfaGridFluxVariablesCache<TypeTag, false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);

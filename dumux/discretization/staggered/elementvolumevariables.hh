@@ -49,7 +49,7 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -110,7 +110,7 @@ class StaggeredElementVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using CellCenterPrimaryVariables = typename GET_PROP_TYPE(TypeTag, CellCenterPrimaryVariables);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
 

@@ -46,7 +46,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::Box>
     using FluidState = typename GET_PROP_TYPE(TypeTag, FluidState);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);

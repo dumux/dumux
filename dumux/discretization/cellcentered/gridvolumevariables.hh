@@ -51,7 +51,7 @@ class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
 
