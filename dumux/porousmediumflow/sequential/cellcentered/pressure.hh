@@ -20,6 +20,7 @@
 #define DUMUX_FVPRESSURE_HH
 
 // dumux environment
+#include <type_traits>
 #include <dumux/common/math.hh>
 #include <dumux/porousmediumflow/sequential/pressureproperties.hh>
 #include <map>
@@ -496,15 +497,25 @@ void FVPressure<TypeTag>::assemble(bool first)
 //    printvector(std::cout, f_, "right hand side", "row", 10);
 }
 
+// forward declaration
+template<class GV, class T>
+class ParallelAMGBackend;
+
+namespace Detail {
+template<class T> struct isParallelAMGBackend : public std::false_type {};
+template<class GV, class T>
+struct isParallelAMGBackend<Dumux::ParallelAMGBackend<GV, T>> : public std::true_type {};
+} // end namespace Detail
+
 template<class Solver, class Problem>
-typename std::enable_if<std::is_default_constructible<std::decay_t<Solver>>::value, Solver>::type
+typename std::enable_if_t<!Detail::isParallelAMGBackend<Solver>::value, Solver>
 getSolver(const Problem& problem)
 {
     return Solver();
 }
 
 template<class Solver, class Problem>
-typename std::enable_if<!std::is_default_constructible<std::decay_t<Solver>>::value, Solver>::type
+typename std::enable_if_t<Detail::isParallelAMGBackend<Solver>::value, Solver>
 getSolver(const Problem& problem)
 {
     return Solver(problem.gridView(), problem.model().dofMapper());
