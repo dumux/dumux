@@ -102,7 +102,7 @@ public:
         const IS& indexset(gridview.indexSet());
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         Mapper elementMapper(gridview, Dune::mcmgElementLayout());
-        Mapper faceMapper(gridview, Dune::mcmgLayout(Dune::Codim<dim - 1>()));
+        Mapper faceMapper(gridview, Dune::mcmgLayout(Dune::Codim<1>()));
 #else
         ElementMapper elementMapper(gridview);
         FaceMapper faceMapper(gridview);

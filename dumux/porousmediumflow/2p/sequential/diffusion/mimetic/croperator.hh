@@ -107,7 +107,7 @@ public:
     CROperatorAssemblerTwoP (const GridView& gridview)
     : gridView_(gridview)
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
-    , faceMapper_(gridView_, Dune::mcmgLayout(Dune::Codim<dim - 1>()))
+    , faceMapper_(gridView_, Dune::mcmgLayout(Dune::Codim<1>()))
 #else
     , faceMapper_(gridView_)
 #endif
