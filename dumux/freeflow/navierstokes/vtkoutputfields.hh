@@ -43,7 +43,8 @@ class NavierStokesVtkOutputFields
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
 
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;

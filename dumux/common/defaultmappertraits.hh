@@ -18,47 +18,27 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCDiscretization
- * \brief Boundary types gathered on an element
+ * \ingroup Common
+ * \brief Defines the default element and vertex mapper types
  */
-#ifndef DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
-#define DUMUX_CC_ELEMENT_BOUNDARY_TYPES_HH
+#ifndef DUMUX_DEFAULT_MAPPER_TRAITS_HH
+#define DUMUX_DEFAULT_MAPPER_TRAITS_HH
 
-#include <dumux/common/properties.hh>
+#include <dune/common/version.hh>
+#include <dune/grid/common/mcmgmapper.hh>
 
-namespace Dumux
+namespace Dumux {
+
+template <class GridView>
+struct DefaultMapperTraits
 {
-
-/*!
- * \ingroup CCDiscretization
- * \brief Boundary types gathered on an element
- * \note This class exists only for compatibility purposes with the
- *        box scheme. The cell-centered schemes and the box scheme use
- *        a common base local residual, which passes an ElementBoundaryTypes
- *        object to the implemented interfaces.
- */
-template<class TypeTag>
-class CCElementBoundaryTypes
-{
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using Element = typename GridView::template Codim<0>::Entity;
-
-public:
-
-    /*!
-     * \brief Update the boundary types for all vertices of an element.
-     *
-     * \param problem The problem object which needs to be simulated
-     * \param element The DUNE Codim<0> entity for which the boundary
-     *                types should be collected
-     * \param fvGeometry The element finite volume geometry
-     */
-    void update(const Problem &problem,
-                const Element &element,
-                const FVElementGeometry &fvGeometry)
-    {}
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
+#else
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGElementLayout>;
+    using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView, Dune::MCMGVertexLayout>;
+#endif
 };
 
 } // namespace Dumux

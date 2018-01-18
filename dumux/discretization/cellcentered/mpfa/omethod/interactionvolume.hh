@@ -60,7 +60,7 @@ public:
     //! export the problem type (needed for iv-local assembly)
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     //! export the type of the local view on the finite volume grid geometry
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     //! export the type of the local view on the grid volume variables
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     //! export the type of grid view

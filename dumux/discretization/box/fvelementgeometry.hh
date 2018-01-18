@@ -18,6 +18,7 @@
  *****************************************************************************/
 /*!
  * \file
+ * \ingroup BoxDiscretization
  * \brief Base class for the local finite volume geometry for box models
  *        This builds up the sub control volumes and sub control volume faces
  *        for an element.
@@ -29,57 +30,43 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/localfunctions/lagrange/pqkfactory.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 
-namespace Dumux
-{
-
-//! forward declaration of the global finite volume geometry
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class BoxFVGridGeometry;
+namespace Dumux {
 
 /*!
- * \ingroup ImplicitModel
+ * \ingroup BoxDiscretization
  * \brief Base class for the finite volume geometry vector for box models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
+ * \tparam GG the finite volume grid geometry type
+ * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class BoxFVElementGeometry
-{};
+template<class GG, bool enableFVGridGeometryCache>
+class BoxFVElementGeometry;
 
 //! specialization in case the FVElementGeometries are stored
-template<class TypeTag>
-class BoxFVElementGeometry<TypeTag, true>
+template<class GG>
+class BoxFVElementGeometry<GG, true>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-public:
-    //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    //! the maximum number of scvs per element (2^dim for cubes)
-    static constexpr std::size_t maxNumElementScvs = (1<<dim);
-
-private:
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using CoordScalar = typename GridView::ctype;
-
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
+    using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-
 public:
+    //! export type of subcontrol volume
+    using SubControlVolume = typename GG::SubControlVolume;
+    //! export type of subcontrol volume face
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
+    //! export type of finite volume grid geometry
+    using FVGridGeometry = GG;
+    //! the maximum number of scvs per element (2^dim for cubes)
+    static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
     //! Constructor
     BoxFVElementGeometry(const FVGridGeometry& fvGridGeometry)
@@ -170,38 +157,33 @@ private:
 };
 
 //! specialization in case the FVElementGeometries are not stored
-template<class TypeTag>
-class BoxFVElementGeometry<TypeTag, false>
+template<class GG>
+class BoxFVElementGeometry<GG, false>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename GG::GridView;
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
+
+    using IndexType = typename GridView::IndexSet::IndexType;
+    using Element = typename GridView::template Codim<0>::Entity;
+
+    using CoordScalar = typename GridView::ctype;
+    using FeLocalBasis = typename GG::FeCache::FiniteElementType::Traits::LocalBasisType;
+    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
+
+    using GeometryHelper = BoxGeometryHelper<GridView, dim,
+                                             typename GG::SubControlVolume,
+                                             typename GG::SubControlVolumeFace>;
 public:
     //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GG;
     //! the maximum number of scvs per element (2^dim for cubes)
     static constexpr std::size_t maxNumElementScvs = (1<<dim);
 
-private:
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Element = typename GridView::template Codim<0>::Entity;
-
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using CoordScalar = typename GridView::ctype;
-
-    using FeCache = Dune::PQkLocalFiniteElementCache<CoordScalar, Scalar, dim, 1>;
-    using FeLocalBasis = typename FeCache::FiniteElementType::Traits::LocalBasisType;
-    using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-
-    using GeometryHelper = BoxGeometryHelper<GridView, dim, SubControlVolume, SubControlVolumeFace>;
-
-public:
     //! Constructor
     BoxFVElementGeometry(const FVGridGeometry& fvGridGeometry)
     : fvGridGeometryPtr_(&fvGridGeometry) {}
@@ -301,6 +283,7 @@ private:
 
         // construct the sub control volumes
         scvs_.resize(elementGeometry.corners());
+        using LocalIndexType = typename SubControlVolumeFace::Traits::LocalIndexType;
         for (LocalIndexType scvLocalIdx = 0; scvLocalIdx < elementGeometry.corners(); ++scvLocalIdx)
         {
             // get asssociated dof index
@@ -372,6 +355,6 @@ private:
     std::vector<SubControlVolumeFace> scvfs_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif

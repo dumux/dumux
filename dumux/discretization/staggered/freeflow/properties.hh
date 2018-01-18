@@ -29,14 +29,22 @@
 #define DUMUX_STAGGERD_FREE_FLOW_PROPERTIES_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/common/intersectionmapper.hh>
+#include <dumux/common/defaultmappertraits.hh>
+
 #include <dumux/discretization/staggered/properties.hh>
 #include <dumux/freeflow/properties.hh>
+
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
+#include <dumux/discretization/staggered/freeflow/subcontrolvolumeface.hh>
+#include <dumux/discretization/staggered/fvgridgeometry.hh>
 
 #include "subcontrolvolumeface.hh"
 #include "connectivitymap.hh"
 #include "facevariables.hh"
 #include "boundarytypes.hh"
 #include "velocityoutput.hh"
+#include "staggeredgeometryhelper.hh"
 
 namespace Dumux
 {
@@ -69,34 +77,30 @@ public:
     static constexpr int value = GET_PROP_VALUE(TypeTag, NumEq) - dim;
 };
 
-//! The default sub-controlvolume face
-SET_PROP(StaggeredFreeFlowModel, SubControlVolumeFace)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    static constexpr int dim = Grid::dimension;
-    static constexpr int dimWorld = Grid::dimensionworld;
-
-    struct ScvfGeometryTraits
-    {
-        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-        using LocalIndexType = unsigned int;
-        using Scalar = typename Grid::ctype;
-        using Geometry = typename Grid::template Codim<1>::Geometry;
-        using GlobalPosition = Dune::FieldVector<Scalar, dim>;
-    };
-
-public:
-    using type = FreeFlowStaggeredSubControlVolumeFace<ScvfGeometryTraits>;
-};
-
-//! The default geometry helper required for the stencils, etc.
-SET_PROP(StaggeredFreeFlowModel, StaggeredGeometryHelper)
+//! The default fv grid geometry
+SET_PROP(StaggeredFreeFlowModel, FVGridGeometry)
 {
 private:
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+
+    struct Traits : public DefaultMapperTraits<GridView>
+    {
+        using SubControlVolume = CCSubControlVolume<GridView>;
+        using SubControlVolumeFace = FreeFlowStaggeredSubControlVolumeFace<GridView>;
+        using IntersectionMapper = ConformingGridIntersectionMapper<GridView>;
+        using GeometryHelper = FreeFlowStaggeredGeometryHelper<GridView>;
+
+        template<class FVGridGeometry>
+        using ConnectivityMap = StaggeredFreeFlowConnectivityMap<FVGridGeometry, DofTypeIndices>;
+
+        template<class FVGridGeometry, bool enableCache>
+        using LocalView = StaggeredFVElementGeometry<FVGridGeometry, enableCache>;
+    };
+
 public:
-    using type = FreeFlowStaggeredGeometryHelper<GridView>;
+    using type = StaggeredFVGridGeometry<GridView, enableCache, Traits>;
 };
 
 //! The variables living on the faces
@@ -113,9 +117,6 @@ public:
 
 //! The velocity output
 SET_TYPE_PROP(StaggeredFreeFlowModel, VelocityOutput, StaggeredFreeFlowVelocityOutput<TypeTag>);
-
-SET_TYPE_PROP(StaggeredFreeFlowModel, AssemblyMap, StaggeredFreeFlowConnectivityMap<TypeTag>);
-
 
 } // namespace Properties
 } // namespace Dumux

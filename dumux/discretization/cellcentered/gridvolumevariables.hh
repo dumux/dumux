@@ -26,8 +26,10 @@
 
 #include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+//! make the local view function available whenever we use this class
+#include <dumux/discretization/localview.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup CCDiscretization
@@ -50,14 +52,17 @@ class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/true>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
 
     static const int dim = GridView::dimension;
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
@@ -101,14 +106,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementVolumeVariables localView(const CCGridVolumeVariables& global)
-    { return ElementVolumeVariables(global); }
-
     const VolumeVariables& volVars(const IndexType scvIdx) const
     { return volumeVariables_[scvIdx]; }
 
@@ -145,21 +142,15 @@ class CCGridVolumeVariables<TypeTag, /*enableGridVolVarsCache*/false>
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
     CCGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementVolumeVariables localView(const CCGridVolumeVariables& global)
-    { return ElementVolumeVariables(global); }
 
     //! The problem we are solving
     const Problem& problem() const

@@ -27,8 +27,10 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/cellcentered/mpfa/fluxvariablescachefiller.hh>
 
-namespace Dumux
-{
+//! make the local view function available whenever we use this class
+#include <dumux/discretization/localview.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup CCMpfaDiscretization
@@ -52,13 +54,12 @@ class CCMpfaGridFluxVariablesCache<TypeTag, true>
     using IndexType = typename GridView::IndexSet::IndexType;
 
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
@@ -67,6 +68,9 @@ class CCMpfaGridFluxVariablesCache<TypeTag, true>
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     //! The constructor
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -165,14 +169,6 @@ public:
         }
     }
 
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const CCMpfaGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
-
     //! access operators in the case of caching
     const FluxVariablesCache& operator [](const SubControlVolumeFace& scvf) const
     { return fluxVarsCache_[scvf.index()]; }
@@ -248,14 +244,16 @@ class CCMpfaGridFluxVariablesCache<TypeTag, false>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using GridVolumeVariables = typename GET_PROP_TYPE(TypeTag, GridVolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     //! The constructor
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
@@ -269,14 +267,6 @@ public:
     void updateElement(const Element& element,
                        const FVElementGeometry& fvGeometry,
                        const ElementVolumeVariables& elemVolVars) {}
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const CCMpfaGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const
     { return *problemPtr_; }

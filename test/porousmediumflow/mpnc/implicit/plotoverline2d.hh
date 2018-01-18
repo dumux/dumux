@@ -63,7 +63,7 @@ class PlotOverLine2D
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using DofMapper = typename GET_PROP_TYPE(TypeTag, DofMapper);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);

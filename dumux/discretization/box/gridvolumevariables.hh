@@ -26,16 +26,17 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box/elementvolumevariables.hh>
 
-namespace Dumux
-{
+//! make the local view function available whenever we use this class
+#include <dumux/discretization/localview.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup BoxModel
  * \brief Base class for the grid volume variables
  */
 template<class TypeTag, bool enableGridVolVarsCache>
-class BoxGridVolumeVariables
-{};
+class BoxGridVolumeVariables;
 
 // specialization in case of storing the volume variables
 template<class TypeTag>
@@ -45,10 +46,9 @@ class BoxGridVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
@@ -56,6 +56,9 @@ class BoxGridVolumeVariables<TypeTag,/*enableGlobalVolVarCache*/true>
     using Element = typename GridView::template Codim<0>::Entity;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
@@ -77,14 +80,6 @@ public:
                 volumeVariables_[eIdx][scv.indexInElement()].update(elemSol, problem(), element, scv);
         }
     }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementVolumeVariables localView(const BoxGridVolumeVariables& global)
-    { return ElementVolumeVariables(global); }
 
     const VolumeVariables& volVars(const SubControlVolume& scv) const
     { return volumeVariables_[scv.elementIndex()][scv.indexInElement()]; }
@@ -114,21 +109,15 @@ class BoxGridVolumeVariables<TypeTag, /*enableGlobalVolVarCache*/false>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+
     BoxGridVolumeVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementVolumeVariables localView(const BoxGridVolumeVariables& global)
-    { return ElementVolumeVariables(global); }
 
     const Problem& problem() const
     { return *problemPtr_;}

@@ -27,16 +27,17 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/staggered/facesolution.hh>
 
-namespace Dumux
-{
+//! make the local view function available whenever we use this class
+#include <dumux/discretization/localview.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Face variables cache class for staggered models
  */
 template<class TypeTag, bool enableGlobalFaceVarsCache>
-class StaggeredGridFaceVariables
-{};
+class StaggeredGridFaceVariables;
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -46,20 +47,20 @@ class StaggeredGridFaceVariables
 template<class TypeTag>
 class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/true>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using IndexType = typename GridView::IndexSet::IndexType;
 
     using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Update all face variables
@@ -86,15 +87,6 @@ public:
     FaceVariables& faceVars(const IndexType facetIdx)
     { return faceVariables_[facetIdx]; }
 
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFaceVariables localView(const StaggeredGridFaceVariables& global)
-    { return ElementFaceVariables(global); }
-
     const Problem& problem() const
     { return *problemPtr_; }
 
@@ -113,44 +105,26 @@ private:
 template<class TypeTag>
 class StaggeredGridFaceVariables<TypeTag, /*enableGlobalFaceVarsCache*/false>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using FaceVariables = typename GET_PROP_TYPE(TypeTag, FaceVariables);
-    using ElementFaceVariables = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFaceVariables);
+
     StaggeredGridFaceVariables(const Problem& problem) : problemPtr_(&problem) {}
 
     //! Do nothing here.
-    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol)
-    {  }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFaceVariables localView(const StaggeredGridFaceVariables& global)
-    { return ElementFaceVariables(global); }
+    void update(const FVGridGeometry& fvGridGeometry, const SolutionVector& sol) {}
 
     const Problem& problem() const
     { return *problemPtr_; }
 
-
 private:
-
     const Problem* problemPtr_;
 };
 
-
-} // end namespace
+} // end namespace Dumux
 
 #endif

@@ -42,7 +42,6 @@
 #include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 
 #include <dumux/discretization/cellcentered/elementboundarytypes.hh>
-#include <dumux/discretization/cellcentered/connectivitymap.hh>
 #include <dumux/discretization/cellcentered/elementsolution.hh>
 #include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 #include <dumux/discretization/cellcentered/tpfa/gridfluxvariablescache.hh>
@@ -65,13 +64,17 @@ SET_PROP(CCTpfaModel, DiscretizationMethod)
 };
 
 //! Set the default for the global finite volume geometry
-SET_TYPE_PROP(CCTpfaModel, FVGridGeometry, CCTpfaFVGridGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
+SET_PROP(CCTpfaModel, FVGridGeometry)
+{
+private:
+    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
+    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+public:
+    using type = CCTpfaFVGridGeometry<GridView, enableCache>;
+};
 
 //! The global flux variables cache vector class
 SET_TYPE_PROP(CCTpfaModel, GridFluxVariablesCache, CCTpfaGridFluxVariablesCache<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache)>);
-
-//! Set the default for the local finite volume geometry
-SET_TYPE_PROP(CCTpfaModel, FVElementGeometry, CCTpfaFVElementGeometry<TypeTag, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>);
 
 //! The global previous volume variables vector class
 SET_TYPE_PROP(CCTpfaModel, ElementVolumeVariables, CCTpfaElementVolumeVariables<TypeTag, GET_PROP_VALUE(TypeTag, EnableGridVolumeVariablesCache)>);
@@ -95,58 +98,6 @@ public:
     static constexpr std::size_t value = dim < dimWorld ? 9 : 2;
 };
 
-//! The sub control volume
-SET_PROP(CCTpfaModel, SubControlVolume)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    struct ScvGeometryTraits
-    {
-        using Geometry = typename Grid::template Codim<0>::Geometry;
-        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-        using LocalIndexType = unsigned int;
-        using Scalar = typename Grid::ctype;
-        using GlobalPosition = Dune::FieldVector<Scalar, Grid::dimensionworld>;
-    };
-public:
-    using type = CCSubControlVolume<ScvGeometryTraits>;
-};
-
-//! The sub control volume face
-SET_PROP(CCTpfaModel, SubControlVolumeFace)
-{
-private:
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    static constexpr int dim = Grid::dimension;
-    static constexpr int dimWorld = Grid::dimensionworld;
-
-    // we use geometry traits that use static corner vectors to and a fixed geometry type
-    template <class ct>
-    struct ScvfMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
-    {
-        // we use static vectors to store the corners as we know
-        // the number of corners in advance (2^(dim-1) corners (1<<(dim-1))
-        template< int mydim, int cdim >
-        struct CornerStorage
-        {
-            using Type = Dune::ReservedVector< Dune::FieldVector< ct, cdim >, (1<<(dim-1)) >;
-        };
-    };
-
-    struct ScvfGeometryTraits
-    {
-        using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
-        using LocalIndexType = unsigned int;
-        using Scalar = typename Grid::ctype;
-        using Geometry = Dune::MultiLinearGeometry<Scalar, dim-1, dimWorld, ScvfMLGTraits<Scalar> >;
-        using CornerStorage = typename ScvfMLGTraits<Scalar>::template CornerStorage<dim-1, dimWorld>::Type;
-        using GlobalPosition = typename CornerStorage::value_type;
-        using BoundaryFlag = Dumux::BoundaryFlag<Grid>;
-    };
-public:
-    using type = Dumux::CCTpfaSubControlVolumeFace<ScvfGeometryTraits>;
-};
-
 //! Set the solution vector type for an element
 SET_TYPE_PROP(CCTpfaModel, ElementSolutionVector, CCElementSolution<TypeTag>);
 
@@ -155,10 +106,6 @@ SET_TYPE_PROP(CCTpfaModel, ElementBoundaryTypes, CCElementBoundaryTypes<TypeTag>
 
 //! Set the BaseLocalResidual to CCLocalResidual
 SET_TYPE_PROP(CCTpfaModel, BaseLocalResidual, CCLocalResidual<TypeTag>);
-
-//! Set the AssemblyMap to the SimpleAssemblyMap per default
-SET_TYPE_PROP(CCTpfaModel, AssemblyMap, CCSimpleConnectivityMap<TypeTag>);
-
 } // namespace Properties
 } // namespace Dumux
 

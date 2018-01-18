@@ -25,28 +25,24 @@
 #define DUMUX_STAGGERED_FREEFLOW_CONNECTIVITY_MAP_HH
 
 #include <vector>
-#include <dumux/common/properties.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
  * \brief Stores the dof indices corresponding to the neighboring cell centers and faces
  *        that contribute to the derivative calculation. Specialization for the staggered free flow model.
  */
-template<class TypeTag>
+template<class FVGridGeometry, class DofTypeIndices>
 class StaggeredFreeFlowConnectivityMap
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using GridView = typename FVGridGeometry::GridView;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
 
     using Element = typename GridView::template Codim<0>::Entity;
     using IndexType = typename GridView::IndexSet::IndexType;
 
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
     typename DofTypeIndices::CellCenterIdx cellCenterIdx;
     typename DofTypeIndices::FaceIdx faceIdx;
 

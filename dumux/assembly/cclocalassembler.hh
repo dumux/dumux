@@ -122,15 +122,16 @@ class CCLocalAssembler<TypeTag, Assembler, DiffMethod::numeric, /*implicit=*/tru
     using LocalResidualValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GET_PROP_TYPE(TypeTag, GridView)::template Codim<0>::Entity;
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
     using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
 
     enum { numEq = GET_PROP_VALUE(TypeTag, NumEq) };
     enum { dim = GET_PROP_TYPE(TypeTag, GridView)::dimension };
 
-    using FluxStencil = Dumux::FluxStencil<TypeTag>;
-    static constexpr int maxNeighbors = FluxStencil::maxFluxStencilSize*FVElementGeometry::maxNumElementScvfs;
+    using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
+    static constexpr int maxElementStencilSize = FVGridGeometry::maxElementStencilSize;
     static constexpr bool enableGridFluxVarsCache = GET_PROP_VALUE(TypeTag, EnableGridFluxVariablesCache);
 
 public:
@@ -164,11 +165,11 @@ public:
         const auto numNeighbors = connectivityMap[globalI].size();
 
         // container to store the neighboring elements
-        Dune::ReservedVector<Element, maxNeighbors+1> neighborElements;
+        Dune::ReservedVector<Element, maxElementStencilSize> neighborElements;
         neighborElements.resize(numNeighbors);
 
         // assemble the undeflected residual
-        using Residuals = ReservedBlockVector<LocalResidualValues, maxNeighbors+1>;
+        using Residuals = ReservedBlockVector<LocalResidualValues, maxElementStencilSize>;
         Residuals origResiduals(numNeighbors + 1); origResiduals = 0.0;
         origResiduals[0] = this->evalLocalResidual()[0];
 

@@ -18,7 +18,8 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for a sub control volume
+ * \ingroup BoxDiscretization
+ * \brief the sub control volume for the box scheme
  */
 #ifndef DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
 #define DUMUX_DISCRETIZATION_BOX_SUBCONTROLVOLUME_HH
@@ -29,23 +30,74 @@
 #include <dumux/discretization/box/boxgeometryhelper.hh>
 #include <dumux/common/math.hh>
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief Default traits class to be used for the sub-control volumes
+ *        for the box scheme
+ * \tparam GV the type of the grid view
+ */
+template<class GridView>
+struct BoxDefaultScvGeometryTraits
 {
-template<class ScvGeometryTraits>
-class BoxSubControlVolume : public SubControlVolumeBase<BoxSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>
+    using Grid = typename GridView::Grid;
+
+    static const int dim = Grid::dimension;
+    static const int dimWorld = Grid::dimensionworld;
+
+    template <class ct>
+    struct ScvMLGTraits : public Dune::MultiLinearGeometryTraits<ct>
+    {
+        // we use static vectors to store the corners as we know
+        // the number of corners in advance (2^(dim) corners (1<<(dim))
+        template< int mydim, int cdim >
+        struct CornerStorage
+        {
+            using Type = std::array< Dune::FieldVector< ct, cdim >, (1<<(dim)) >;
+        };
+
+        // we know all scvfs will have the same geometry type
+        template< int mydim >
+        struct hasSingleGeometryType
+        {
+            static const bool v = true;
+            static const unsigned int topologyId = Dune::Impl::CubeTopology< mydim >::type::id;
+        };
+    };
+
+    using GridIndexType = typename Grid::LeafGridView::IndexSet::IndexType;
+    using LocalIndexType = unsigned int;
+    using Scalar = typename Grid::ctype;
+    using Geometry = Dune::MultiLinearGeometry<Scalar, dim, dimWorld, ScvMLGTraits<Scalar>>;
+    using CornerStorage = typename ScvMLGTraits<Scalar>::template CornerStorage<dim, dimWorld>::Type;
+    using GlobalPosition = typename CornerStorage::value_type;
+};
+
+/*!
+ * \ingroup BoxDiscretization
+ * \brief the sub control volume for the box scheme
+ * \tparam GV the type of the grid view
+ * \tparam T the scvf geometry traits
+ */
+template<class GV,
+         class T = BoxDefaultScvGeometryTraits<GV> >
+class BoxSubControlVolume
+: public SubControlVolumeBase<BoxSubControlVolume<GV, T>, T>
 {
-    using ParentType = SubControlVolumeBase<BoxSubControlVolume<ScvGeometryTraits>, ScvGeometryTraits>;
-    using Geometry = typename ScvGeometryTraits::Geometry;
-    using GridIndexType = typename ScvGeometryTraits::GridIndexType;
-    using LocalIndexType = typename ScvGeometryTraits::LocalIndexType;
-    using Scalar = typename ScvGeometryTraits::Scalar;
-    using GlobalPosition = typename ScvGeometryTraits::GlobalPosition;
-    using CornerStorage = typename ScvGeometryTraits::CornerStorage;
+    using ThisType = BoxSubControlVolume<GV, T>;
+    using ParentType = SubControlVolumeBase<ThisType, T>;
+    using Geometry = typename T::Geometry;
+    using GridIndexType = typename T::GridIndexType;
+    using LocalIndexType = typename T::LocalIndexType;
+    using Scalar = typename T::Scalar;
+    using GlobalPosition = typename T::GlobalPosition;
+    using CornerStorage = typename T::CornerStorage;
     enum { dim = Geometry::mydimension };
 
 public:
     //! state the traits public and thus export all types
-    using Traits = ScvGeometryTraits;
+    using Traits = T;
 
     //! The default constructor
     BoxSubControlVolume() = default;

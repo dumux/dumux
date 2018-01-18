@@ -22,6 +22,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/properties/model.hh>
 #include <dumux/common/properties/grid.hh>
+#include <dumux/common/defaultmappertraits.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptproperties.hh>
 #include <dumux/porousmediumflow/sequential/gridadaptinitializationindicatordefault.hh>
 
@@ -129,6 +130,9 @@ private:
 public:
     static const int value = 2*dim;
 };
+
+//! A simplified grid geometry for compatibility with new style models
+SET_TYPE_PROP(SequentialModel, FVGridGeometry, DefaultMapperTraits<typename GET_PROP_TYPE(TypeTag, GridView)>);
 
 /*!
  * \brief Specifies the types which are assoicated with a solution.

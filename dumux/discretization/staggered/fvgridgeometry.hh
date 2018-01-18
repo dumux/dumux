@@ -24,11 +24,9 @@
 #ifndef DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 #define DUMUX_DISCRETIZATION_STAGGERED_FV_GRID_GEOMETRY
 
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
 
-namespace Dumux
-{
+namespace Dumux {
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -36,9 +34,10 @@ namespace Dumux
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element.
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class StaggeredFVGridGeometry
-{};
+ template<class GridView,
+          bool enableFVGridGeometryCache,
+          class Traits>
+class StaggeredFVGridGeometry;
 
 /*!
  * \ingroup StaggeredDiscretization
@@ -46,31 +45,35 @@ class StaggeredFVGridGeometry
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class TypeTag>
-class StaggeredFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
+template<class GV, class Traits>
+class StaggeredFVGridGeometry<GV, true, Traits>
+: public BaseFVGridGeometry<StaggeredFVGridGeometry<GV, true, Traits>, GV, Traits>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IntersectionMapper = typename GET_PROP_TYPE(TypeTag, IntersectionMapper);
-    //! The local class needs access to the scv, scvfs and the fv element geometry
-    //! as they are globally cached
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using ThisType = StaggeredFVGridGeometry<GV, true, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using IndexType = typename GV::IndexSet::IndexType;
+    using Element = typename GV::template Codim<0>::Entity;
 
     enum {
         // Grid and world dimension
-        dim = GridView::dimension,
-        dimWorld = GridView::dimensionworld
+        dim = GV::dimension,
+        dimWorld = GV::dimensionworld
     };
 
-    using GeometryHelper = typename GET_PROP_TYPE(TypeTag, StaggeredGeometryHelper);
-    using ConnectivityMap = typename GET_PROP_TYPE(TypeTag, AssemblyMap);
+    using IntersectionMapper = typename Traits::IntersectionMapper;
+    using GeometryHelper = typename Traits::GeometryHelper;
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
 public:
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, true>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export the grid view type
+    using GridView = GV;
+
     //! Constructor
     StaggeredFVGridGeometry(const GridView& gridView)
     : ParentType(gridView)
@@ -198,8 +201,6 @@ public:
         connectivityMap_.update(*this);
     }
 
-//private:
-
     //! Get a sub control volume with a global scv index
     const SubControlVolume& scv(IndexType scvIdx) const
     {
@@ -255,8 +256,8 @@ private:
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element. Specialization in case the FVElementGeometries are stored.
  */
-template<class TypeTag>
-class StaggeredFVGridGeometry<TypeTag, false>
+template<class GV, class Traits>
+class StaggeredFVGridGeometry<GV, false, Traits>
 {
     // TODO: implement without caching
 };

@@ -56,8 +56,6 @@ NEW_PROP_TAG(JacobianMatrix);         //!< Type of the global jacobian matrix
 NEW_PROP_TAG(SolutionVector);         //!< Vector containing all primary variable vector of the grid
 NEW_PROP_TAG(BoundaryTypes);          //!< Stores the boundary types of a single degree of freedom
 NEW_PROP_TAG(DiscretizationMethod);   //!< Property for the used discretization method
-NEW_PROP_TAG(VertexMapper);           //!< mapper for vertices
-NEW_PROP_TAG(ElementMapper);          //!< mapper for elements
 
 //! The type of the local residual function, i.e. the equation to be solved. Must inherit
 //! from the BaseLocalResidual property and fulfill its interfaces.
@@ -79,11 +77,7 @@ NEW_PROP_TAG(BalanceEqOpts);          //!< A class that collects options for the
 /////////////////////////////////////////////
 NEW_PROP_TAG(ElementBoundaryTypes);                //!< Stores the boundary types on an element
 NEW_PROP_TAG(ElementSolutionVector);               //!< A vector of primary variables within an element
-NEW_PROP_TAG(AssemblyMap);                         //!< Connectivity map (transposed) used for assembling the Jacobian matrix entries
 
-NEW_PROP_TAG(SubControlVolume);                    //!< The type of the sub control volume
-NEW_PROP_TAG(SubControlVolumeFace);                //!< The type of the sub control volume face
-NEW_PROP_TAG(FVElementGeometry);                   //!< The type of the local finite volume geometry (iterators over scvs, scvfs)
 NEW_PROP_TAG(FVGridGeometry);                      //!< The type of the global finite volume geometry
 NEW_PROP_TAG(EnableFVGridGeometryCache);           //!< specifies if geometric data is saved (faster, but more memory consuming)
 
@@ -102,7 +96,6 @@ NEW_PROP_TAG(MaxNumNeighborsPerScvf);              //!< The maximum number of ne
 /////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:
 /////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(MpfaMethod);                          //!< Specifies the mpfa method to be used
 NEW_PROP_TAG(MpfaHelper);                          //!< A Helper class depending on the mpfa method and grid dimension
 NEW_PROP_TAG(PrimaryInteractionVolume);            //!< The primary interaction volume type
 NEW_PROP_TAG(SecondaryInteractionVolume);          //!< The secondary interaction volume type used e.g. on the boundaries
@@ -189,7 +182,6 @@ NEW_PROP_TAG(CellCenterPrimaryVariables);          //!< The primary variables co
 NEW_PROP_TAG(FacePrimaryVariables);                //!< The primary variables container type for face dofs
 NEW_PROP_TAG(IntersectionMapper);                  //!< Specifies the intersection mapper
 NEW_PROP_TAG(DofTypeIndices);                      //!< Specifies index types for accessing the multi type block vectors/matrices
-NEW_PROP_TAG(StaggeredGeometryHelper);             //!< Specifies a helper class for the staggered grid geometry
 NEW_PROP_TAG(StaggeredPrimaryVariables);           //!< The hybrid primary variables container type
 NEW_PROP_TAG(BaseEpsilon);                         //!< A base epsilon for numerical differentiation, can contain multiple values
 NEW_PROP_TAG(FaceVariables);                       //!< Class containing local face-related data

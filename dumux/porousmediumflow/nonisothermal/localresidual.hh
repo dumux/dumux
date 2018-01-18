@@ -46,7 +46,8 @@ class EnergyLocalResidualImplementation<TypeTag, false>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
 
 public:
@@ -109,7 +110,8 @@ class EnergyLocalResidualImplementation<TypeTag, true>
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using FluxVariables = typename GET_PROP_TYPE(TypeTag, FluxVariables);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 

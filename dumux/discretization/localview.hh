@@ -18,28 +18,26 @@
  *****************************************************************************/
 /*!
  * \file
- * \ingroup CCMpfaDiscretization
- * \brief Stores the face indices corresponding to the neighbors of an element
- *        that contribute to the derivative calculation. Depending on if an
- *        mpfa scheme leads to a symmetric/unsymmetric sparsity pattern, the
- *        adequate implementation of the connectiviy map is chosen.
+ * \ingroup Discretization
+ * \brief Free function to get the local view of a grid cache object
  */
-#ifndef DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
-#define DUMUX_CC_MPFA_CONNECTIVITY_MAP_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/cellcentered/mpfa/methods.hh>
-#include <dumux/discretization/cellcentered/connectivitymap.hh>
+#ifndef DUMUX_LOCAL_VIEW_HH
+#define DUMUX_LOCAL_VIEW_HH
 
-namespace Dumux
-{
-//! Forward declaration of method specific implementation of the assembly map
-template<class FVGridGeometry, MpfaMethods method>
-class CCMpfaConnectivityMap;
+namespace Dumux {
 
-//! The o-method can use the simple (symmetric) assembly map
-template<class FVGridGeometry>
-class CCMpfaConnectivityMap<FVGridGeometry, MpfaMethods::oMethod> : public CCSimpleConnectivityMap<FVGridGeometry> {};
-}
+/*!
+ * \ingroup Discretization
+ * \brief Free function to get the local view of a grid cache object
+ * \note A local object is only functional after calling its bind/bindElement method.
+ * \tparam GridCache the grid caching type (such as FVGridGeometry)
+ * \param gridCache the grid caching object we want to localView from
+ */
+template<class GridCache>
+inline typename GridCache::LocalView localView(const GridCache& gridCache)
+{ return typename GridCache::LocalView(gridCache); }
+
+} // end namespace Dumux
 
 #endif

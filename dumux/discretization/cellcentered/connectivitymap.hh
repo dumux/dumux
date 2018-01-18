@@ -31,7 +31,6 @@
 #include <algorithm>
 
 #include <dune/common/reservedvector.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/discretization/fluxstencil.hh>
 
 namespace Dumux {
@@ -46,22 +45,21 @@ namespace Dumux {
  *        to compute these fluxes. The same holds for scvfs in the cells J, i.e. we need only those
  *        scvfs in the cells J in which the cell I is in the stencil.
  */
-template<class TypeTag>
+template<class FVGridGeometry>
 class CCSimpleConnectivityMap
 {
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using GridView = typename FVGridGeometry::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
-    using FluxStencil = Dumux::FluxStencil<TypeTag>;
+    using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
 
     struct DataJ
     {
         IndexType globalJ;
-        Dune::ReservedVector<IndexType, FluxStencil::maxNumScvfJForI> scvfsJ;
+        typename FluxStencil::ScvfStencilIForJ scvfsJ;
         // A list of additional scvfs is needed for compatibility
         // reasons with more complex connectivity maps (see mpfa)
-        Dune::ReservedVector<IndexType, FluxStencil::maxNumScvfJForI> additionalScvfs;
+        typename FluxStencil::ScvfStencilIForJ additionalScvfs;
     };
 
     using Map = std::vector<std::vector<DataJ>>;
@@ -78,9 +76,8 @@ public:
         map_.clear();
         map_.resize(fvGridGeometry.gridView().size(0));
 
-        // container to store for each element J the elements I that appear in J's flux stencils
-        static constexpr int maxNumJ = FluxStencil::maxFluxStencilSize*FVElementGeometry::maxNumElementScvfs;
-        Dune::ReservedVector<std::pair<IndexType, DataJ>, maxNumJ> dataJForI;
+        // container to store for each element J the elements I which have J in their flux stencil
+        Dune::ReservedVector<std::pair<IndexType, DataJ>, FVGridGeometry::maxElementStencilSize> dataJForI;
 
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {

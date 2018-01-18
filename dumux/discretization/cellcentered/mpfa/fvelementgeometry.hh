@@ -31,7 +31,6 @@
 #include <dune/common/iteratorrange.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/scvandscvfiterators.hh>
 
@@ -42,9 +41,11 @@ namespace Dumux
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered mpfa models
  *        This builds up the sub control volumes and sub control volume faces
  *        for each element in the local scope we are restricting to, e.g. stencil or element.
+ * \tparam GG the finite volume grid geometry type
+ * \tparam enableFVGridGeometryCache if the grid geometry is cached or not
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
+template<class GG, bool EnableFVGridGeometryCache>
 class CCMpfaFVElementGeometry;
 
 /*!
@@ -53,11 +54,11 @@ class CCMpfaFVElementGeometry;
  *        Specialization for grid caching enabled
  * \note The finite volume geometries are stored in the corresponding FVGridGeometry
  */
-template<class TypeTag>
-class CCMpfaFVElementGeometry<TypeTag, true>
+template<class GG>
+class CCMpfaFVElementGeometry<GG, true>
 {
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = CCMpfaFVElementGeometry<GG, true>;
+    using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename GridView::IndexSet::IndexType;
 
@@ -65,11 +66,11 @@ class CCMpfaFVElementGeometry<TypeTag, true>
 
 public:
     //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GG;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)
@@ -165,31 +166,28 @@ private:
  * \brief Stencil-local finite volume geometry (scvs and scvfs) for cell-centered TPFA models
  *        Specialization for grid caching disabled
  */
-template<class TypeTag>
-class CCMpfaFVElementGeometry<TypeTag, false>
+template<class GG>
+class CCMpfaFVElementGeometry<GG, false>
 {
-    using ThisType = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using ThisType = CCMpfaFVElementGeometry<GG, false>;
+    using GridView = typename GG::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
     using GridIndexType = typename GridView::IndexSet::IndexType;
-
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using MpfaHelper = typename GG::MpfaHelper;
 
     static const int dim = GridView::dimension;
     static const int dimWorld = GridView::dimensionworld;
     using CoordScalar = typename GridView::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
 public:
     //! export type of subcontrol volume
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using SubControlVolume = typename GG::SubControlVolume;
     //! export type of subcontrol volume face
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using SubControlVolumeFace = typename GG::SubControlVolumeFace;
     //! export type of finite volume grid geometry
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = GG;
     //! the maximum number of scvs per element
     static constexpr std::size_t maxNumElementScvs = 1;
     //! the maximum number of scvfs per element (use cubes for maximum)
@@ -357,7 +355,7 @@ private:
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdx);
 
         // the quadrature point parameterizaion to be used on scvfs
-        static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
+        static const auto q = getParam<CoordScalar>("Mpfa.Q");
 
         // reserve memory for the scv faces
         const auto numLocalScvf = scvFaceIndices.size();
@@ -378,7 +376,7 @@ private:
             if (dim < dimWorld)
             {
                 const auto indexInInside = is.indexInInside();
-                if(finishedFacets[indexInInside])
+                if (finishedFacets[indexInInside])
                     continue;
                 else
                     finishedFacets[indexInInside] = true;
@@ -446,7 +444,7 @@ private:
         const auto& neighborVolVarIndices = fvGridGeometry().neighborVolVarIndices(eIdxGlobal);
 
         // the quadrature point parameterizaion to be used on scvfs
-        static const Scalar q = getParamFromGroup<Scalar>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Mpfa.Q");
+        static const auto q = getParam<CoordScalar>("Mpfa.Q");
 
         // for network grids we only want to do one scvf per half facet
         // this approach assumes conforming grids at branching facets

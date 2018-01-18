@@ -33,13 +33,10 @@
 #include <dune/common/timer.hh>
 #include <dune/grid/io/file/dgfparser/dgfexception.hh>
 #include <dune/grid/io/file/vtk.hh>
-#include <dune/istl/io.hh>
 
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/valgrind.hh>
 #include <dumux/common/dumuxmessage.hh>
-#include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
@@ -49,7 +46,7 @@
 
 #include <dumux/io/vtkoutputmodule.hh>
 
-int main(int argc, char** argv)
+int main(int argc, char** argv) try
 {
     using namespace Dumux;
 
@@ -92,13 +89,13 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
 
     //! create the finite volume grid geometry
-    using OnePFVGridGeometry = typename GET_PROP_TYPE(OnePTypeTag, FVGridGeometry);
-    auto onePFvGridGeometry = std::make_shared<OnePFVGridGeometry>(leafGridView);
-    onePFvGridGeometry->update();
+    using FVGridGeometry = typename GET_PROP_TYPE(OnePTypeTag, FVGridGeometry);
+    auto fvGridGeometry = std::make_shared<FVGridGeometry>(leafGridView);
+    fvGridGeometry->update();
 
     //! the problem (boundary conditions)
     using OnePProblem = typename GET_PROP_TYPE(OnePTypeTag, Problem);
-    auto problemOneP = std::make_shared<OnePProblem>(onePFvGridGeometry);
+    auto problemOneP = std::make_shared<OnePProblem>(fvGridGeometry);
 
     //! the solution vector
     using JacobianMatrix = typename GET_PROP_TYPE(OnePTypeTag, JacobianMatrix);
@@ -111,12 +108,12 @@ int main(int argc, char** argv)
 
     //! the grid variables
     using OnePGridVariables = typename GET_PROP_TYPE(OnePTypeTag, GridVariables);
-    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, onePFvGridGeometry);
+    auto onePGridVariables = std::make_shared<OnePGridVariables>(problemOneP, fvGridGeometry);
     onePGridVariables->init(p);
 
     //! the assembler
     using OnePAssembler = FVAssembler<OnePTypeTag, DiffMethod::analytic>;
-    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, onePFvGridGeometry, onePGridVariables);
+    auto assemblerOneP = std::make_shared<OnePAssembler>(problemOneP, fvGridGeometry, onePGridVariables);
     assemblerOneP->setLinearSystem(A, r);
 
     Dune::Timer timer;
@@ -159,13 +156,13 @@ int main(int argc, char** argv)
     // compute volume fluxes for the tracer model
     ////////////////////////////////////////////////////////////
     using Scalar =  typename GET_PROP_TYPE(OnePTypeTag, Scalar);
-    std::vector<Scalar> volumeFlux(onePFvGridGeometry->numScvf(), 0.0);
+    std::vector<Scalar> volumeFlux(fvGridGeometry->numScvf(), 0.0);
 
     using FluxVariables =  typename GET_PROP_TYPE(OnePTypeTag, FluxVariables);
     auto upwindTerm = [](const auto& volVars) { return volVars.mobility(0); };
     for (const auto& element : elements(leafGridView))
     {
-        auto fvGeometry = localView(*onePFvGridGeometry);
+        auto fvGeometry = localView(*fvGridGeometry);
         fvGeometry.bind(element);
 
         auto elemVolVars = localView(onePGridVariables->curGridVolVars());
@@ -200,11 +197,6 @@ int main(int argc, char** argv)
     ////////////////////////////////////////////////////////////
     // setup & solve tracer problem on the same grid
     ////////////////////////////////////////////////////////////
-
-    //! create the finite volume grid geometry
-    using TracerFVGridGeometry = typename GET_PROP_TYPE(TracerTypeTag, FVGridGeometry);
-    auto fvGridGeometry = std::make_shared<TracerFVGridGeometry>(leafGridView);
-    fvGridGeometry->update();
 
     //! the problem (initial and boundary conditions)
     using TracerProblem = typename GET_PROP_TYPE(TracerTypeTag, Problem);
@@ -311,4 +303,28 @@ int main(int argc, char** argv)
 
     return 0;
 
-} // end main
+}
+catch (Dumux::ParameterException &e)
+{
+    std::cerr << std::endl << e << " ---> Abort!" << std::endl;
+    return 1;
+}
+catch (Dune::DGFException & e)
+{
+    std::cerr << "DGF exception thrown (" << e <<
+                 "). Most likely, the DGF file name is wrong "
+                 "or the DGF file is corrupted, "
+                 "e.g. missing hash at end of file or wrong number (dimensions) of entries."
+                 << " ---> Abort!" << std::endl;
+    return 2;
+}
+catch (Dune::Exception &e)
+{
+    std::cerr << "Dune reported error: " << e << " ---> Abort!" << std::endl;
+    return 3;
+}
+catch (...)
+{
+    std::cerr << "Unknown exception thrown! ---> Abort!" << std::endl;
+    return 4;
+}

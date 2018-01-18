@@ -44,7 +44,8 @@ class PermeabilityKozenyCarman
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using ElementSolution = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
     static constexpr int dim = GridView::dimension;

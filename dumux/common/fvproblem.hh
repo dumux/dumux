@@ -53,11 +53,10 @@ class FVProblem
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using VertexMapper = typename GET_PROP_TYPE(TypeTag, VertexMapper);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolume = typename FVElementGeometry::SubControlVolume;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
@@ -71,7 +70,6 @@ class FVProblem
     };
 
     using Element = typename GridView::template Codim<0>::Entity;
-    using Vertex = typename GridView::template Codim<dim>::Entity;
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 

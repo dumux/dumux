@@ -26,15 +26,37 @@
 #ifndef DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 #define DUMUX_DISCRETIZATION_CCTPFA_FV_GRID_GEOMETRY_HH
 
-#include <dune/common/version.hh>
+#include <algorithm>
 
+#include <dumux/common/defaultmappertraits.hh>
 #include <dumux/discretization/methods.hh>
 #include <dumux/discretization/basefvgridgeometry.hh>
-#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/cellcentered/subcontrolvolume.hh>
 #include <dumux/discretization/cellcentered/connectivitymap.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvelementgeometry.hh>
+#include <dumux/discretization/cellcentered/tpfa/subcontrolvolumeface.hh>
 
-namespace Dumux
+namespace Dumux {
+
+/*!
+ * \ingroup CCTpfaDiscretization
+ * \brief The default traits for the tpfa finite volume grid geometry
+ *        Defines the scv and scvf types and the mapper types
+ * \tparam the grid view type
+ */
+template<class GridView>
+struct CCTpfaDefaultGridGeometryTraits
+: public DefaultMapperTraits<GridView>
 {
+    using SubControlVolume = CCSubControlVolume<GridView>;
+    using SubControlVolumeFace = CCTpfaSubControlVolumeFace<GridView>;
+
+    template<class FVGridGeometry>
+    using ConnectivityMap = CCSimpleConnectivityMap<FVGridGeometry>;
+
+    template<class FVGridGeometry, bool enableCache>
+    using LocalView = CCTpfaFVElementGeometry<FVGridGeometry, enableCache>;
+};
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -42,9 +64,10 @@ namespace Dumux
  *        This builds up the sub control volumes and sub control volume faces
  * \note This class is specialized for versions with and without caching the fv geometries on the grid view
  */
-template<class TypeTag, bool EnableFVGridGeometryCache>
-class CCTpfaFVGridGeometry
-{};
+template<class GridView,
+         bool enableFVGridGeometryCache = false,
+         class Traits = CCTpfaDefaultGridGeometryTraits<GridView> >
+class CCTpfaFVGridGeometry;
 
 /*!
  * \ingroup CCTpfaDiscretization
@@ -52,31 +75,40 @@ class CCTpfaFVGridGeometry
  *        This builds up the sub control volumes and sub control volume faces
  * \note For caching enabled we store the fv geometries for the whole grid view which is memory intensive but faster
  */
-template<class TypeTag>
-class CCTpfaFVGridGeometry<TypeTag, true> : public BaseFVGridGeometry<TypeTag>
+template<class GV, class Traits>
+class CCTpfaFVGridGeometry<GV, true, Traits>
+: public BaseFVGridGeometry<CCTpfaFVGridGeometry<GV, true, Traits>, GV, Traits>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using ThisType = CCTpfaFVGridGeometry<GV, true, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
+    using IndexType = typename GV::IndexSet::IndexType;
+    using Element = typename GV::template Codim<0>::Entity;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
-    using CoordScalar = typename GridView::ctype;
+    static const int dim = GV::dimension;
+    static const int dimWorld = GV::dimensionworld;
+    using CoordScalar = typename GV::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
-    //! The local class needs access to the scv, scvfs and the fv element geometry
-    //! as they are globally cached
-    friend typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-
 public:
-    //! export discretization method
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, true>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export dof mapper type
+    using DofMapper = typename Traits::ElementMapper;
+
+    //! export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+
+    //! The maximum admissible stencil size (used for static memory allocation during assembly)
+    //! Per default, we allow for 9 branches per scvf on network/surface grids
+    static constexpr int maxElementStencilSize = (dim < dimWorld) ? LocalView::maxNumElementScvfs*8 + 1
+                                                                  : LocalView::maxNumElementScvfs + 1;
+    //! export the grid view type
+    using GridView = GV;
 
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
@@ -85,7 +117,7 @@ public:
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const ElementMapper& dofMapper() const
+    const DofMapper& dofMapper() const
     { return this->elementMapper(); }
 
     //! The total number of sub control volumes
@@ -154,29 +186,29 @@ public:
 
             // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<IndexType>> outsideIndices;
+            using ScvfGridIndexStorage = typename SubControlVolumeFace::Traits::GridIndexStorage;
+            std::vector<ScvfGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
+                //! first, push inside index in all neighbor sets
                 outsideIndices.resize(element.subEntities(1));
+                std::for_each(outsideIndices.begin(), outsideIndices.end(), [eIdx] (auto& nIndices) { nIndices.push_back(eIdx); });
+
+                // second, insert neighbors
                 for (const auto& intersection : intersections(this->gridView(), element))
                 {
                     if (intersection.neighbor())
                     {
-                        const auto& outside = intersection.outside();
-                        const auto nIdx = this->elementMapper().index(outside);
+                        const auto nIdx = this->elementMapper().index( intersection.outside() );
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
-
                 }
             }
 
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // TODO check if intersection is on interior boundary
-                const auto isInteriorBoundary = false;
-
                 // inner sub control volume faces
-                if (intersection.neighbor() && !isInteriorBoundary)
+                if (intersection.neighbor())
                 {
                     if (dim == dimWorld)
                     {
@@ -184,7 +216,7 @@ public:
                         scvfs_.emplace_back(intersection,
                                             intersection.geometry(),
                                             scvfIdx,
-                                            std::vector<IndexType>({eIdx, nIdx}),
+                                            ScvfGridIndexStorage({eIdx, nIdx}),
                                             false);
                         scvfsIndexSet.push_back(scvfIdx++);
                     }
@@ -198,12 +230,10 @@ public:
                             continue;
                         else
                         {
-                            std::vector<IndexType> scvIndices({eIdx});
-                            scvIndices.insert(scvIndices.end(), outsideIndices[indexInInside].begin(), outsideIndices[indexInInside].end());
                             scvfs_.emplace_back(intersection,
                                                 intersection.geometry(),
                                                 scvfIdx,
-                                                scvIndices,
+                                                outsideIndices[indexInInside],
                                                 false);
                             scvfsIndexSet.push_back(scvfIdx++);
                             outsideIndices[indexInInside].clear();
@@ -211,12 +241,12 @@ public:
                     }
                 }
                 // boundary sub control volume faces
-                else if (intersection.boundary() || isInteriorBoundary)
+                else if (intersection.boundary())
                 {
                     scvfs_.emplace_back(intersection,
                                         intersection.geometry(),
                                         scvfIdx,
-                                        std::vector<IndexType>({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
+                                        ScvfGridIndexStorage({eIdx, this->gridView().size(0) + numBoundaryScvf_++}),
                                         true);
                     scvfsIndexSet.push_back(scvfIdx++);
                 }
@@ -315,28 +345,48 @@ private:
  * \note For caching disabled we store only some essential index maps to build up local systems on-demand in
  *       the corresponding FVElementGeometry
  */
-template<class TypeTag>
-class CCTpfaFVGridGeometry<TypeTag, false>  : public BaseFVGridGeometry<TypeTag>
+template<class GV, class Traits>
+class CCTpfaFVGridGeometry<GV, false, Traits>
+: public BaseFVGridGeometry<CCTpfaFVGridGeometry<GV, false, Traits>, GV, Traits>
 {
-    using ParentType = BaseFVGridGeometry<TypeTag>;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using IndexType = typename GridView::IndexSet::IndexType;
-    using SubControlVolume = typename GET_PROP_TYPE(TypeTag, SubControlVolume);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using ElementMapper = typename GET_PROP_TYPE(TypeTag, ElementMapper);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using ConnectivityMap = CCSimpleConnectivityMap<TypeTag>;
+    using ThisType = CCTpfaFVGridGeometry<GV, false, Traits>;
+    using ParentType = BaseFVGridGeometry<ThisType, GV, Traits>;
+    using ConnectivityMap = typename Traits::template ConnectivityMap<ThisType>;
 
-    static const int dim = GridView::dimension;
-    static const int dimWorld = GridView::dimensionworld;
+    using IndexType = typename GV::IndexSet::IndexType;
+    using Element = typename GV::template Codim<0>::Entity;
 
-    using CoordScalar = typename GridView::ctype;
+    static const int dim = GV::dimension;
+    static const int dimWorld = GV::dimensionworld;
+
+    using CoordScalar = typename GV::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
+    using ScvfGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::GridIndexStorage;
+    using NeighborVolVarIndices = typename std::conditional_t< (dim<dimWorld),
+                                                               ScvfGridIndexStorage,
+                                                               Dune::ReservedVector<IndexType, 1> >;
+
 public:
-    //! export discretization method
+    //! export the type of the fv element geometry (the local view type)
+    using LocalView = typename Traits::template LocalView<ThisType, false>;
+    //! export the type of sub control volume
+    using SubControlVolume = typename Traits::SubControlVolume;
+    //! export the type of sub control volume
+    using SubControlVolumeFace = typename Traits::SubControlVolumeFace;
+    //! export dof mapper type
+    using DofMapper = typename Traits::ElementMapper;
+
+    //! Export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
+
+    //! The maximum admissible stencil size (used for static memory allocation during assembly)
+    //! Per default, we allow for 9 branches per scvf on network/surface grids
+    static constexpr int maxElementStencilSize = (dim < dimWorld) ? LocalView::maxNumElementScvfs*8 + 1
+                                                                  : LocalView::maxNumElementScvfs + 1;
+
+    //! Export the type of the grid view
+    using GridView = GV;
 
     //! Constructor
     CCTpfaFVGridGeometry(const GridView& gridView)
@@ -345,7 +395,7 @@ public:
 
     //! the element mapper is the dofMapper
     //! this is convenience to have better chance to have the same main files for box/tpfa/mpfa...
-    const ElementMapper& dofMapper() const
+    const DofMapper& dofMapper() const
     { return this->elementMapper(); }
 
     //! The total number of sub control volumes
@@ -402,13 +452,13 @@ public:
             // the element-wise index sets for finite volume geometry
             auto numLocalFaces = element.subEntities(1);
             std::vector<IndexType> scvfsIndexSet;
-            std::vector<std::vector<IndexType>> neighborVolVarIndexSet;
+            std::vector<NeighborVolVarIndices> neighborVolVarIndexSet;
             scvfsIndexSet.reserve(numLocalFaces);
             neighborVolVarIndexSet.reserve(numLocalFaces);
 
             // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            std::vector<std::vector<IndexType>> outsideIndices;
+            std::vector<NeighborVolVarIndices> outsideIndices;
             if (dim < dimWorld)
             {
                 outsideIndices.resize(numLocalFaces);
@@ -416,27 +466,22 @@ public:
                 {
                     if (intersection.neighbor())
                     {
-                        const auto& outside = intersection.outside();
-                        const auto nIdx = this->elementMapper().index(outside);
+                        const auto nIdx = this->elementMapper().index(intersection.outside());
                         outsideIndices[intersection.indexInInside()].push_back(nIdx);
                     }
-
                 }
             }
 
             for (const auto& intersection : intersections(this->gridView(), element))
             {
-                // TODO check if intersection is on interior boundary
-                const auto isInteriorBoundary = false;
-
                 // inner sub control volume faces
-                if (intersection.neighbor() && !isInteriorBoundary)
+                if (intersection.neighbor())
                 {
                     if (dim == dimWorld)
                     {
                         scvfsIndexSet.push_back(numScvf_++);
                         const auto nIdx = this->elementMapper().index(intersection.outside());
-                        neighborVolVarIndexSet.push_back({nIdx});
+                        neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({nIdx}));
                     }
                     // this is for network grids
                     // (will be optimized away of dim == dimWorld)
@@ -449,16 +494,16 @@ public:
                         else
                         {
                             scvfsIndexSet.push_back(numScvf_++);
-                            neighborVolVarIndexSet.push_back(outsideIndices[indexInInside]);
+                            neighborVolVarIndexSet.emplace_back(std::move(outsideIndices[indexInInside]));
                             outsideIndices[indexInInside].clear();
                         }
                     }
                 }
                 // boundary sub control volume faces
-                else if (intersection.boundary() || isInteriorBoundary)
+                else if (intersection.boundary())
                 {
                     scvfsIndexSet.push_back(numScvf_++);
-                    neighborVolVarIndexSet.push_back({numScvs_ + numBoundaryScvf_++});
+                    neighborVolVarIndexSet.emplace_back(NeighborVolVarIndices({numScvs_ + numBoundaryScvf_++}));
                 }
             }
 
@@ -475,7 +520,7 @@ public:
     { return scvfIndicesOfScv_[scvIdx]; }
 
     //! Return the neighbor volVar indices for all scvfs in the scv with index scvIdx
-    const std::vector<std::vector<IndexType>>& neighborVolVarIndices(IndexType scvIdx) const
+    const std::vector<NeighborVolVarIndices>& neighborVolVarIndices(IndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
     /*!
@@ -497,7 +542,7 @@ private:
 
     //! vectors that store the global data
     std::vector<std::vector<IndexType>> scvfIndicesOfScv_;
-    std::vector<std::vector<std::vector<IndexType>>> neighborVolVarIndices_;
+    std::vector<std::vector<NeighborVolVarIndices>> neighborVolVarIndices_;
 };
 
 } // end namespace Dumux

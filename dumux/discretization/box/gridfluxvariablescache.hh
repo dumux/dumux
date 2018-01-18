@@ -26,16 +26,17 @@
 #include <dumux/common/properties.hh>
 #include <dumux/discretization/box/elementfluxvariablescache.hh>
 
-namespace Dumux
-{
+//! make the local view function available whenever we use this class
+#include <dumux/discretization/localview.hh>
+
+namespace Dumux {
 
 /*!
  * \ingroup ImplicitModel
  * \brief Base class for the flux variables cache vector, we store one cache per face
  */
 template<class TypeTag, bool EnableGridFluxVariablesCache>
-class BoxGridFluxVariablesCache
-{};
+class BoxGridFluxVariablesCache;
 
 /*!
  * \ingroup ImplicitModel
@@ -52,12 +53,14 @@ class BoxGridFluxVariablesCache<TypeTag, true>
     using IndexType = typename GridView::IndexSet::IndexType;
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry,
@@ -85,14 +88,6 @@ public:
             }
         }
     }
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const BoxGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -127,25 +122,19 @@ class BoxGridFluxVariablesCache<TypeTag, false>
     using Element = typename GridView::template Codim<0>::Entity;
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
-    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
-    using SubControlVolumeFace = typename GET_PROP_TYPE(TypeTag, SubControlVolumeFace);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
+    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
 public:
+    //! export the type of the local view
+    using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
     BoxGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}
 
     void update(const FVGridGeometry& fvGridGeometry,
                 const GridVolumeVariables& gridVolVars,
                 const SolutionVector& sol,
                 bool forceUpdate = false) {}
-
-    /*!
-     * \brief Return a local restriction of this global object
-     *        The local object is only functional after calling its bind/bindElement method
-     *        This is a free function that will be found by means of ADL
-     */
-    friend inline ElementFluxVariablesCache localView(const BoxGridFluxVariablesCache& global)
-    { return ElementFluxVariablesCache(global); }
 
     const Problem& problem() const
     { return *problemPtr_; }
@@ -154,6 +143,6 @@ private:
     const Problem* problemPtr_;
 };
 
-} // end namespace
+} // end namespace Dumux
 
 #endif
