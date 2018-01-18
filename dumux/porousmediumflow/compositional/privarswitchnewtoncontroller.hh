@@ -40,39 +40,22 @@ namespace Dumux
 /*!
  * \ingroup PorousmediumCompositional
  * \brief A newton controller that handles primary variable switches
+ * \todo make this independent of TypeTag by making PrimaryVariableSwitch a template argument
+ *       and extracting everything model specific from there
+ * \todo Implement for volume variable caching enabled
  */
 template <class TypeTag>
-class PriVarSwitchNewtonController : public NewtonController<TypeTag>
+class PriVarSwitchNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
 {
-    using ParentType = NewtonController<TypeTag>;
     using Scalar =  typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
-    using Communicator = typename GridView::CollectiveCommunication;
-    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using ParentType = NewtonController<Scalar>;
     using PrimaryVariableSwitch =  typename GET_PROP_TYPE(TypeTag, PrimaryVariableSwitch);
-    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
 
-    static constexpr int numEq = GET_PROP_VALUE(TypeTag, NumEq);
-
-    static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+    // using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    // static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
 
 public:
-    /*!
-     * \ingroup Newton
-     * \brief Constructor for stationary problems
-     */
-    PriVarSwitchNewtonController(const Communicator& comm)
-    : ParentType(comm)
-    , switchedInLastIteration_(false)
-    {}
-
-    /*!
-     * \brief Constructor for stationary problems
-     */
-    PriVarSwitchNewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
-    : ParentType(comm, timeLoop)
-    , switchedInLastIteration_(false)
-    {}
+    using ParentType::ParentType;
 
     /*!
      * \brief Returns true if the error of the solution is below the
@@ -201,7 +184,7 @@ private:
     //! the class handling the primary variable switch
     std::unique_ptr<PrimaryVariableSwitch> priVarSwitch_;
     //! if we switched primary variables in the last iteration
-    bool switchedInLastIteration_;
+    bool switchedInLastIteration_ = false;
 };
 
 } // end namespace Dumux

@@ -34,38 +34,23 @@ namespace Dumux {
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * and can thus do update smarter than the plain Newton controller.
+ *
+ * \todo make this typetag independent by extracting anything model specific from assembler
+ *       or from possible ModelTraits.
  */
 template <class TypeTag>
-class RichardsNewtonController : public NewtonController<TypeTag>
+class RichardsNewtonController : public NewtonController<typename GET_PROP_TYPE(TypeTag, Scalar)>
 {
-    using ParentType = NewtonController<TypeTag>;
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVElementGeometry);
-    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Communicator = typename GridView::CollectiveCommunication;
-    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using ParentType = NewtonController<Scalar>;
 
+    using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
+    using ElementSolution =  typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum { pressureIdx = Indices::pressureIdx };
 
 public:
-    /*!
-     * \brief Constructor for stationary problems
-     */
-    RichardsNewtonController(const Communicator& comm)
-    : ParentType(comm)
-    {}
-
-    /*!
-     * \brief Constructor for stationary problems
-     */
-    RichardsNewtonController(const Communicator& comm, std::shared_ptr<TimeLoop<Scalar>> timeLoop)
-    : ParentType(comm, timeLoop)
-    {}
+    using ParentType::ParentType;
 
     /*!
      * \brief Update the current solution of the newton method
@@ -73,7 +58,7 @@ public:
      * This is basically the step
      * \f[ u^{k+1} = u^k - \Delta u^k \f]
      *
-     * \param assembler TODO docme!
+     * \param assembler The Jacobian assembler
      * \param uCurrentIter The solution after the current Newton iteration \f$ u^{k+1} \f$
      * \param uLastIter The solution after the last Newton iteration \f$ u^k \f$
      * \param deltaU The vector of differences between the last
@@ -86,8 +71,7 @@ public:
                       const SolutionVector &deltaU)
     {
         ParentType::newtonUpdate(assembler, uCurrentIter, uLastIter, deltaU);
-        const std::string group = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        if (!this->useLineSearch_ && getParamFromGroup<bool>(group, "Newton.EnableChop"))
+        if (!this->useLineSearch_ && getParamFromGroup<bool>(this->paramGroup(), "Newton.EnableChop"))
         {
             // do not clamp anything after 5 iterations
             if (this->numSteps_ > 4)

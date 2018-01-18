@@ -40,7 +40,7 @@
 #include <dumux/common/dumuxmessage.hh>
 #include <dumux/common/defaultusagemessage.hh>
 
-#include <dumux/linear/amgbackend.hh>
+#include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/porousmediumflow/richards/newtoncontroller.hh>
@@ -159,7 +159,7 @@ int main(int argc, char** argv) try
     // the non-linear solver
     using NewtonController = Dumux::RichardsNewtonController<TypeTag>;
     using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(leafGridView.comm(), timeLoop);
+    auto newtonController = std::make_shared<NewtonController>(timeLoop);
     NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
     // time loop

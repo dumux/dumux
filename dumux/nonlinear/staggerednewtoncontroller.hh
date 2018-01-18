@@ -25,9 +25,12 @@
 #ifndef DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 #define DUMUX_STAGGERED_NEWTON_CONTROLLER_HH
 
-#include <dumux/common/properties.hh>
-#include <dumux/common/exceptions.hh>
+#include <dune/common/indices.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/fvector.hh>
+#include <dune/istl/bvector.hh>
 
+#include <dumux/common/exceptions.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
 #include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 #include <dumux/linear/matrixconverter.hh>
@@ -40,26 +43,11 @@ namespace Dumux {
  * \brief A newton controller for staggered finite volume schemes
  */
 
-template <class TypeTag>
-class StaggeredNewtonController : public NewtonController<TypeTag>
+template <class Scalar,
+          class Comm = Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> >
+class StaggeredNewtonController : public NewtonController<Scalar, Comm>
 {
-    using ParentType = NewtonController<TypeTag>;
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
-    using JacobianMatrix = typename GET_PROP_TYPE(TypeTag, JacobianMatrix);
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-
-    using GridView =  typename GET_PROP_TYPE(TypeTag, GridView);
-    using Communicator = typename GridView::CollectiveCommunication;
-
-    using DofTypeIndices = typename GET_PROP(TypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
-
-    enum {
-        numEqCellCenter = GET_PROP_VALUE(TypeTag, NumEqCellCenter),
-        numEqFace = GET_PROP_VALUE(TypeTag, NumEqFace)
-    };
+    using ParentType = NewtonController<Scalar, Comm>;
 
 public:
     using ParentType::ParentType;
@@ -90,8 +78,9 @@ public:
                 this->initialResidual_ = b.two_norm();
 
             // check matrix sizes
-            assert(A[cellCenterIdx][cellCenterIdx].N() == A[cellCenterIdx][faceIdx].N());
-            assert(A[faceIdx][cellCenterIdx].N() == A[faceIdx][faceIdx].N());
+            using namespace Dune::Indices;
+            assert(A[_0][_0].N() == A[_0][_1].N());
+            assert(A[_1][_0].N() == A[_1][_1].N());
 
             // create the bcrs matrix the IterativeSolver backend can handle
             const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
@@ -158,14 +147,15 @@ public:
             this->lineSearchUpdate_(assembler, uCurrentIter, uLastIter, deltaU);
         }
         else {
-            for (unsigned int i = 0; i < uLastIter[cellCenterIdx].size(); ++i) {
-                uCurrentIter[cellCenterIdx][i] = uLastIter[cellCenterIdx][i];
-                uCurrentIter[cellCenterIdx][i] -= deltaU[cellCenterIdx][i];
-            }
-            for (unsigned int i = 0; i < uLastIter[faceIdx].size(); ++i) {
-                uCurrentIter[faceIdx][i] = uLastIter[faceIdx][i];
-                uCurrentIter[faceIdx][i] -= deltaU[faceIdx][i];
-            }
+            using namespace Dune::Hybrid;
+            forEach(integralRange(Dune::Hybrid::size(uLastIter)), [&](const auto dofTypeIdx)
+            {
+                for (unsigned int i = 0; i < uLastIter[dofTypeIdx].size(); ++i)
+                {
+                    uCurrentIter[dofTypeIdx][i] = uLastIter[dofTypeIdx][i];
+                    uCurrentIter[dofTypeIdx][i] -= deltaU[dofTypeIdx][i];
+                }
+            });
 
             if (this->enableResidualCriterion_)
             {
@@ -186,30 +176,27 @@ public:
      * \param uLastIter The current iterative solution
      * \param deltaU The difference between the current and the next solution
      */
+    template<class SolutionVector>
     void newtonUpdateShift(const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
     {
         this->shift_ = 0;
 
-        for (int i = 0; i < int(uLastIter[cellCenterIdx].size()); ++i) {
-            auto uNewI = uLastIter[cellCenterIdx][i];
-            uNewI -= deltaU[cellCenterIdx][i];
+        using namespace Dune::Hybrid;
+        forEach(integralRange(Dune::Hybrid::size(uLastIter)), [&](const auto dofTypeIdx)
+        {
+            for (int i = 0; i < int(uLastIter[dofTypeIdx].size()); ++i)
+            {
+                auto uNewI = uLastIter[dofTypeIdx][i];
+                uNewI -= deltaU[dofTypeIdx][i];
 
-            Scalar shiftAtDof = this->relativeShiftAtDof_(uLastIter[cellCenterIdx][i],
-                                                            uNewI);
-            this->shift_ = std::max(this->shift_, shiftAtDof);
-        }
-        for (int i = 0; i < int(uLastIter[faceIdx].size()); ++i) {
-            auto uNewI = uLastIter[faceIdx][i];
-            uNewI -= deltaU[faceIdx][i];
+                Scalar shiftAtDof = this->relativeShiftAtDof_(uLastIter[dofTypeIdx][i], uNewI);
+                this->shift_ = std::max(this->shift_, shiftAtDof);
+            }
+        });
 
-            Scalar shiftAtDof = this->relativeShiftAtDof_(uLastIter[faceIdx][i],
-                                                            uNewI);
-            this->shift_ = std::max(this->shift_, shiftAtDof);
-        }
-
-        if (this->communicator().size() > 1)
-            this->shift_ = this->communicator().max(this->shift_);
+        if (this->comm().size() > 1)
+            this->shift_ = this->comm().max(this->shift_);
     }
 
 };
