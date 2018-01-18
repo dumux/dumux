@@ -176,7 +176,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeInnerInteraction
             levelIdx[i][1] = interactionVolume.getSubVolumeElement(i).level();
         }
 
-        std::sort(levelIdx.begin(), levelIdx.end(), sort_compare);
+        std::sort(levelIdx.begin(), levelIdx.end(), [](const auto& a, const auto& b) { return (a[1]<b[1]); });
 
         // Generate and store the geometric information going from the coarsest to the finest level.
         // For the calculation we take advantage from the fact that the ordering inside the interaction volume
@@ -337,7 +337,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
             levelIdx[i][1] = -1;
     }
 
-    std::sort(levelIdx.begin(), levelIdx.end(), sort_compare);
+    std::sort(levelIdx.begin(), levelIdx.end(), [](const auto& a, const auto& b) { return (a[1]<b[1]); });
 
     // Generate and store the geometric information going from the coarsest to the finest level.
     // For the calculation we take advantage from the fact that the ordering inside the interaction volume

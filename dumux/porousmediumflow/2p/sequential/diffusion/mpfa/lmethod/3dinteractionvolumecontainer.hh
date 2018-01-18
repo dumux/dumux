@@ -31,13 +31,7 @@
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/properties.hh>
 #include <dumux/porousmediumflow/sequential/cellcentered/mpfa/linteractionvolume3d.hh>
 
-namespace Dumux
-{
-
-bool sort_compare(const std::vector<int>& entryI, const std::vector<int>& entryJ)
-{
-    return (entryI[1] < entryJ[1]);
-}
+namespace Dumux {
 
 /*!
  * \brief Interactionvolume container for 3-d MPFA L-method
