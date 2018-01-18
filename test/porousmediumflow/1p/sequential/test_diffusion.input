@@ -1,11 +1,11 @@
 [Grid]
 LowerLeft = 0 0
 UpperRight = 1 1
-NumRefine = 3
+Refinement = 3
 
 [Problem]
 #Delta = 1e-6 # [-] if this is commented in, it is used
-EnableGravity = 0
+EnableGravity = false
 
 [LinearSolver]
 PreconditionerIterations = 2

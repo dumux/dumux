@@ -43,7 +43,6 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
     enum
         {
@@ -72,7 +71,8 @@ public:
         };
 
     //! Constructs a FVMPFALInteractionVolume object
-    FVMPFALInteractionVolume() :
+    FVMPFALInteractionVolume(const Grid& grid)
+    : grid_(&grid),
         stored_(false), normal_(FieldVectorVector(DimVector(0.0))),
         facePos_(FieldVectorVector(DimVector(0.0))),
         faceArea_(DimVector(0.0)),
@@ -280,7 +280,7 @@ public:
      */
     Element getSubVolumeElement(int subVolumeIdx)
     {
-        return GridCreator::grid().entity(elements_[subVolumeIdx][0]);
+        return grid_->entity(elements_[subVolumeIdx][0]);
     }
 
     //! Get boundary condtion types for a flux face
@@ -411,6 +411,7 @@ public:
     }
 
 private:
+    const Grid* grid_;
     bool stored_;
     Dune::FieldVector<FieldVectorVector, 2*dim> normal_;
     Dune::FieldVector<FieldVectorVector, 2*dim> facePos_;

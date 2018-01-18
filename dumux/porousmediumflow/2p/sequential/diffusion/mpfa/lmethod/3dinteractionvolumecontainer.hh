@@ -118,7 +118,7 @@ public:
 
         realFluxFaceArea_.resize(problem_.gridView().size(dim),
                                  Dune::FieldVector<Dune::FieldVector<Scalar, 2>, 2 * dim>(Dune::FieldVector<Scalar, 2>(0.0)));
-        interactionVolumes_.resize(problem_.gridView().size(dim));
+        interactionVolumes_.resize(problem_.gridView().size(dim), InteractionVolume(problem_.gridView().grid()));
 
         asImp_().storeInteractionVolumeInfo();
     }

@@ -136,8 +136,6 @@ using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
 using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
-using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-
 enum
 {
     dim = GridView::dimension, dimWorld = GridView::dimensionworld
@@ -168,8 +166,6 @@ ParentType(timeManager, gridView)
 , analyticSolution_(*this)
 #endif
 {
-    this->setGrid(GridCreator::grid());
-
     int refinementFactor = getParam<Scalar>("Grid.RefinementFactor", 0);
     this->grid().globalRefine(refinementFactor);
 

@@ -12,6 +12,4 @@ Verbosity = 1 #
 [Grid]
 Cells = 1 1
 UpperRight = 1 1
-
-NumRefine = 3 # refinement level of the created grid
-
+Refinement = 3 # refinement level of the created grid

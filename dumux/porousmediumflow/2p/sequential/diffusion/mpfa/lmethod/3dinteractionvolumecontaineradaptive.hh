@@ -462,7 +462,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
     // hanging-node interaction volume of type 5 or 7
     case 2:
         {
-            InteractionVolume hangingNodeVolume;
+            InteractionVolume hangingNodeVolume(problem_.gridView().grid());
 
             std::vector<int> elemIdxOld;
             for (int i = 0; i < InteractionVolume::subVolumeTotalNum; i++)
@@ -660,7 +660,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
         //hanging-node interaction volume of type 1, 3 or 4
     case 4:
         {
-            InteractionVolume hangingNodeVolume;
+            InteractionVolume hangingNodeVolume(problem_.gridView().grid());
 
             std::vector<int> elemIdxOld;
             for (int i = 0; i < InteractionVolume::subVolumeTotalNum; i++)
@@ -1401,7 +1401,7 @@ void FvMpfaL3dInteractionVolumeContainerAdaptive<TypeTag>::storeHangingNodeInter
         //hanging-node interaction volume of type 2 or 6
     case 6:
         {
-            InteractionVolume hangingNodeVolume;
+            InteractionVolume hangingNodeVolume(problem_.gridView().grid());
 
             std::vector<int> elemIdxOld;
             for (int i = 0; i < InteractionVolume::subVolumeTotalNum; i++)

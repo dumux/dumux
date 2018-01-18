@@ -45,7 +45,7 @@ void usage(const char *progName, const std::string &errorMsg)
                     errorMessageOut += "\n\nThe list of mandatory arguments for this program is:\n"
                                        "\t-TimeManager.TEnd      End of the simulation [s] \n"
                                        "\t-TimeManager.DtInitial Initial timestep size [s] \n"
-                                       "\t-Grid.NumRefine        The refinement level of the grid. [-] \n";
+                                       "\t-Grid.Refinement       The refinement level of the grid. [-] \n";
                     errorMessageOut += "\nAdditionally the following arguments can be specified:\n"
                                        "\t-Problem.Delta         Anisotropy of permeability tensor. Value out"
                                        "\t                       of (0, 1], with 1 being isotrop. Default: 1e-3.\n";

@@ -37,35 +37,7 @@
 
 #include "test_diffusionspatialparams.hh"
 
-namespace Dumux
-{
-
-// A simple unit sqare grid creator
-template <class Grid>
-class UnitCubeGridCreator
-{
-public:
-    static Grid& grid()
-    {
-        return *gridPtr();
-    }
-
-    static void createGrid()
-    {
-        std::array<unsigned int, Grid::dimension> cellRes;
-        cellRes.fill(1);
-        using GlobalPosition = Dune::FieldVector<typename Grid::ctype, Grid::dimension>;
-        GlobalPosition lowerLeft(0.0);
-        GlobalPosition upperRight(1.0);
-        gridPtr() = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
-    }
-private:
-    static std::shared_ptr<Grid> &gridPtr()
-    {
-        static std::shared_ptr<Grid> gridPtr_;
-        return gridPtr_;
-    }
-};
+namespace Dumux {
 
 /*!
  * \ingroup IMPETtests
@@ -85,9 +57,6 @@ SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, TestDiffusionProblem<TypeTag>);
 // Set the grid type
 SET_TYPE_PROP(FVVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(FVVelocity2PTestProblem, GridCreator,
-    UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
-
 // Set the fluid system
 SET_PROP(FVVelocity2PTestProblem, FluidSystem)
 {
@@ -105,9 +74,6 @@ SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, TestDiffusionProblem<TypeTa
 // Set the grid type
 SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
 
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, GridCreator,
-    UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
-
 // Set the fluid system
 SET_PROP(FVMPFAOVelocity2PTestProblem, FluidSystem)
 {
@@ -123,9 +89,6 @@ SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, TestDiffusionProblem<TypeTa
 
 // Set the grid type
 SET_TYPE_PROP(MimeticPressure2PTestProblem, Grid, Dune::YaspGrid<2>);
-
-SET_TYPE_PROP(MimeticPressure2PTestProblem, GridCreator,
-    UnitCubeGridCreator<typename GET_PROP_TYPE(TypeTag, Grid)>);
 
 // Set the fluid system
 SET_PROP(MimeticPressure2PTestProblem, FluidSystem)

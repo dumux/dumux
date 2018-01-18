@@ -190,7 +190,7 @@ public:
         interactionVolumes_.clear();
         innerBoundaryVolumeFaces_.clear();
 
-        interactionVolumes_.resize(problem_.gridView().size(dim));
+        interactionVolumes_.resize(problem_.gridView().size(dim), InteractionVolume(problem_.gridView().grid()));
         innerBoundaryVolumeFaces_.resize(problem_.gridView().size(0), Dune::FieldVector<bool, 2 * dim>(false));
 
         storeInteractionVolumeInfo();
