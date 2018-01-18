@@ -19,21 +19,23 @@
 /*!
  * \file
  * \ingroup Linear
- * \brief Provides a linear solver based on the ISTL AMG preconditioner
+ * \brief Provides a parallel linear solver based on the ISTL AMG preconditioner
  *        and the ISTL BiCGSTAB solver.
  */
-#ifndef DUMUX_AMGBACKEND_HH
-#define DUMUX_AMGBACKEND_HH
+#ifndef DUMUX_PARALLEL_AMGBACKEND_HH
+#define DUMUX_PARALLEL_AMGBACKEND_HH
 
+#include <memory>
+
+#include <dune/common/exceptions.hh>
 #include <dune/common/parallel/indexset.hh>
 #include <dune/common/parallel/mpicollectivecommunication.hh>
+#include <dune/grid/common/capabilities.hh>
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/paamg/pinfo.hh>
 #include <dune/istl/solvers.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/linear/solver.hh>
-#include <dumux/linear/amgtraits.hh>
 #include <dumux/linear/amgparallelhelpers.hh>
 
 namespace Dumux {
@@ -74,12 +76,10 @@ void scaleLinearSystem(Matrix& matrix, Vector& rhs)
  * \brief A linear solver based on the ISTL AMG preconditioner
  *        and the ISTL BiCGSTAB solver.
  */
-template <class TypeTag>
-class AMGBackend : public LinearSolver<TypeTag>
+template <class GridView, class AmgTraits>
+class ParallelAMGBackend : public LinearSolver
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using AmgTraits = Dumux::AmgTraits<TypeTag>;
+    using Grid = typename GridView::Grid;
     enum { numEq = AmgTraits::numEq };
     using LinearOperator = typename AmgTraits::LinearOperator;
     using ScalarProduct = typename AmgTraits::ScalarProduct;
@@ -91,15 +91,32 @@ class AMGBackend : public LinearSolver<TypeTag>
     using DofMapper = typename AmgTraits::DofMapper;
 public:
     /*!
-     * \brief Construct the backend.
+     * \brief Construct the backend for the sequential case only
      *
      * \param gridView the grid view on which we are performing the multi-grid
      * \param dofMapper an index mapper for dof entities
+     * \param paramGroup the parameter group for parameter lookup
      */
-    AMGBackend(const GridView& gridView, const DofMapper& dofMapper)
-    : gridView_(gridView)
-    , dofMapper_(dofMapper)
-    , phelper_(gridView, dofMapper)
+    ParallelAMGBackend(const std::string& paramGroup = "")
+    : LinearSolver(paramGroup)
+    , firstCall_(true)
+    {
+        if (Dune::MPIHelper::getCollectiveCommunication().size() > 1)
+            DUNE_THROW(Dune::InvalidStateException, "Using sequential constructor for parallel run. Use signature with gridView and dofMapper!");
+    }
+
+    /*!
+     * \brief Construct the backend for parallel or sequential runs
+     *
+     * \param gridView the grid view on which we are performing the multi-grid
+     * \param dofMapper an index mapper for dof entities
+     * \param paramGroup the parameter group for parameter lookup
+     */
+    ParallelAMGBackend(const GridView& gridView,
+                       const DofMapper& dofMapper,
+                       const std::string& paramGroup = "")
+    : LinearSolver(paramGroup)
+    , phelper_(std::make_shared<ParallelISTLHelper<GridView, AmgTraits>>(gridView, dofMapper))
     , firstCall_(true)
     {}
 
@@ -184,18 +201,31 @@ private:
                                std::shared_ptr<LinearOperator>& fop,
                                std::shared_ptr<ScalarProduct>& sp)
     {
-        LinearAlgebraPreparator<TypeTag, isParallel>
+        LinearAlgebraPreparator<GridView, AmgTraits, isParallel>
           ::prepareLinearAlgebra(A, b, rank, comm, fop, sp,
-                                 gridView_, dofMapper_, phelper_, firstCall_);
+                                 *phelper_, firstCall_);
     }
 
-    GridView gridView_;
-    DofMapper dofMapper_;
-
-    ParallelISTLHelper<TypeTag> phelper_;
+    std::shared_ptr<ParallelISTLHelper<GridView, AmgTraits>> phelper_;
     Dune::InverseOperatorResult result_;
     bool firstCall_;
 };
+
+} // namespace Dumux
+
+#include <dumux/common/properties.hh>
+#include <dumux/linear/amgtraits.hh>
+
+namespace Dumux {
+
+/*!
+ * \ingroup Linear
+ * \brief A linear solver based on the ISTL AMG preconditioner
+ *        and the ISTL BiCGSTAB solver.
+ * \note This is an adaptor using a TypeTag
+ */
+template<class TypeTag>
+using AMGBackend = ParallelAMGBackend<typename GET_PROP_TYPE(TypeTag, GridView), AmgTraits<TypeTag>>;
 
 } // namespace Dumux
 

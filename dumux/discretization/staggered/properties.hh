@@ -208,7 +208,7 @@ public:
     }
 };
 
-// TODO: bundle SolutionVector, JacobianMatrix and LinearSolverPreconditionerBlockLevel
+// TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
@@ -262,9 +262,6 @@ public:
     // the jacobian matrix
     using type = typename Dune::MultiTypeBlockMatrix<RowCellCenter, RowFace>;
 };
-
-// set the block level to 2 (nested multiple times) TODO: move to LinearAlgebra traits
-SET_INT_PROP(StaggeredModel, LinearSolverPreconditionerBlockLevel, 2);
 
 } // namespace Properties
 } // namespace Dumux

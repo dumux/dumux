@@ -59,7 +59,7 @@ SET_BOOL_PROP(FiniteVolumeModel, EnableGridFluxVariablesCache, false);
 //! Boundary types at a single degree of freedom
 SET_TYPE_PROP(FiniteVolumeModel, BoundaryTypes, BoundaryTypes<GET_PROP_VALUE(TypeTag, NumEq)>);
 
-// TODO: bundle SolutionVector, JacobianMatrix and LinearSolverPreconditionerBlockLevel
+// TODO: bundle SolutionVector, JacobianMatrix
 //       in LinearAlgebra traits
 
 //! The type of a solution for the whole grid at a fixed time TODO: move to LinearAlgebra traits
@@ -75,11 +75,6 @@ private:
 public:
     using type = typename Dune::BCRSMatrix<MatrixBlock>;
 };
-
-//! set the block level to 1, suitable for e.g. a simple Dune::BCRSMatrix.
-//! Set this to more than one if the matrix to solve is nested multiple times
-//! e.g. for Dune::MultiTypeBlockMatrix'es. TODO: move to LinearAlgebra traits
-SET_INT_PROP(FiniteVolumeModel, LinearSolverPreconditionerBlockLevel, 1);
 
 } // namespace Properties
 } // namespace Dumux

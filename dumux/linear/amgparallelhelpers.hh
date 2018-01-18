@@ -30,8 +30,6 @@
 #include <dune/grid/common/partitionset.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/paamg/pinfo.hh>
-#include <dumux/common/properties.hh>
-#include <dumux/linear/amgtraits.hh>
 
 namespace Dumux {
 
@@ -41,13 +39,10 @@ namespace Dumux {
  *        decomposition of all degrees of freedom
  */
 // operator that resets result to zero at constrained DOFS
-template<class TypeTag>
+template<class GridView, class AmgTraits>
 class ParallelISTLHelper
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     using DofMapper = typename AmgTraits::DofMapper;
-
     enum { dofCodim = AmgTraits::dofCodim };
 
     class BaseGatherScatter
@@ -462,6 +457,14 @@ public:
     void createIndexSetAndProjectForAMG(MatrixType& m, Comm& c);
 #endif
 
+    //! Return the dofMapper
+    const DofMapper& dofMapper() const
+    { return mapper_; }
+
+    //! Return the gridView
+    const GridView& gridView() const
+    { return gridView_; }
+
 private:
     const GridView gridView_; //!< the grid view
     const DofMapper& mapper_; //!< the dof mapper
@@ -475,17 +478,13 @@ private:
 /*!
  * \ingroup Linear
  * \brief Helper class for adding up matrix entries on border.
- * \tparam GridOperator The grid operator to work on.
- * \tparam MatrixType The MatrixType.
+ * \tparam GridView The grid view to work on
+ * \tparam AmgTraits traits class
  */
-template<class TypeTag>
+template<class GridView, class AmgTraits>
 class EntityExchanger
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using AmgTraits = Dumux::AmgTraits<TypeTag>;
-    enum { numEq = AmgTraits::numEq };
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,numEq,numEq> >;
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Matrix = typename AmgTraits::MType;
     enum { dim = GridView::dimension };
     enum { dofCodim = AmgTraits::dofCodim };
     using Grid = typename GridView::Traits::Grid;
@@ -563,7 +562,7 @@ public:
         MatPatternExchange (const DofMapper& mapper,
                             const std::map<IdType,int>& g2i,
                             const std::map<int,IdType>& i2g, Matrix& A,
-                            const ParallelISTLHelper<TypeTag>& helper)
+                            const ParallelISTLHelper<GridView, AmgTraits>& helper)
             : mapper_(mapper), gid2Index_(g2i), index2GID_(i2g),
               sparsity_(A.N()), A_(A), helper_(helper)
         {}
@@ -648,7 +647,7 @@ public:
         const std::map<int,IdType>& index2GID_;
         std::vector<std::set<int> > sparsity_;
         Matrix& A_;
-        const ParallelISTLHelper<TypeTag>& helper_;
+        const ParallelISTLHelper<GridView, AmgTraits>& helper_;
 
     }; // class MatPatternExchange
 
@@ -759,7 +758,7 @@ public:
         \param A Matrix to operate on.
         \param helper ParallelelISTLHelper.
     */
-    void getExtendedMatrix (Matrix& A, const ParallelISTLHelper<TypeTag>& helper)
+    void getExtendedMatrix (Matrix& A, const ParallelISTLHelper<GridView, AmgTraits>& helper)
     {
         if (gridView_.comm().size() > 1)
         {
@@ -833,8 +832,8 @@ private:
 
 // methods that only exist if MPI is available
 #if HAVE_MPI
-template<class TypeTag>
-void EntityExchanger<TypeTag>::getExtendedMatrix (Matrix& A) const
+template<class GridView, class AmgTraits>
+void EntityExchanger<GridView, AmgTraits>::getExtendedMatrix (Matrix& A) const
 {
     if (gridView_.comm().size() > 1)
     {
@@ -878,9 +877,9 @@ void EntityExchanger<TypeTag>::getExtendedMatrix (Matrix& A) const
 
 } // EntityExchanger::getExtendedMatrix
 
-template<class TypeTag>
+template<class GridView, class AmgTraits>
 template<typename MatrixType, typename Comm>
-void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(MatrixType& m, Comm& comm)
+void ParallelISTLHelper<GridView, AmgTraits>::createIndexSetAndProjectForAMG(MatrixType& m, Comm& comm)
 {
     if(!initialized_)
     {
@@ -1002,13 +1001,11 @@ void ParallelISTLHelper<TypeTag>::createIndexSetAndProjectForAMG(MatrixType& m, 
  *
  * \tparam isParallel decides if the setting is parallel or sequential
  */
-template<class TypeTag, bool isParallel>
+template<class GridView, class AmgTraits, bool isParallel>
 struct LinearAlgebraPreparator
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     using DofMapper = typename AmgTraits::DofMapper;
-    using ParallelHelper = ParallelISTLHelper<TypeTag>;
+    using ParallelHelper = ParallelISTLHelper<GridView, AmgTraits>;
     using Comm = typename AmgTraits::Comm;
     using LinearOperator = typename AmgTraits::LinearOperator;
     using ScalarProduct = typename AmgTraits::ScalarProduct;
@@ -1019,8 +1016,6 @@ struct LinearAlgebraPreparator
                                      std::shared_ptr<Comm>& comm,
                                      std::shared_ptr<LinearOperator>& fop,
                                      std::shared_ptr<ScalarProduct>& sp,
-                                     const GridView& gridView,
-                                     const DofMapper& mapper,
                                      ParallelHelper& pHelper,
                                      const bool firstCall)
     {
@@ -1034,13 +1029,11 @@ struct LinearAlgebraPreparator
 /*!
  * \brief Specialization for the parallel case.
  */
-template<class TypeTag>
-struct LinearAlgebraPreparator<TypeTag, true>
+template<class GridView, class AmgTraits>
+struct LinearAlgebraPreparator<GridView, AmgTraits, true>
 {
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using AmgTraits = Dumux::AmgTraits<TypeTag>;
     using DofMapper = typename AmgTraits::DofMapper;
-    using ParallelHelper = ParallelISTLHelper<TypeTag>;
+    using ParallelHelper = ParallelISTLHelper<GridView, AmgTraits>;
     using Comm = typename AmgTraits::Comm;
     using LinearOperator = typename AmgTraits::LinearOperator;
     using ScalarProduct = typename AmgTraits::ScalarProduct;
@@ -1051,8 +1044,6 @@ struct LinearAlgebraPreparator<TypeTag, true>
                                      std::shared_ptr<Comm>& comm,
                                      std::shared_ptr<LinearOperator>& fop,
                                      std::shared_ptr<ScalarProduct>& sp,
-                                     const GridView& gridView,
-                                     const DofMapper& mapper,
                                      ParallelHelper& pHelper,
                                      const bool firstCall)
     {
@@ -1064,12 +1055,12 @@ struct LinearAlgebraPreparator<TypeTag, true>
             pHelper.initGhostsAndOwners();
         }
 
-        comm = std::make_shared<Comm>(gridView.comm(), category);
+        comm = std::make_shared<Comm>(pHelper.gridView().comm(), category);
 
         if(AmgTraits::isNonOverlapping)
         {
             // extend the matrix pattern such that it is usable for AMG
-            EntityExchanger<TypeTag> exchanger(gridView, mapper);
+            EntityExchanger<GridView, AmgTraits> exchanger(pHelper.gridView(), pHelper.dofMapper());
             exchanger.getExtendedMatrix(A, pHelper);
             exchanger.sumEntries(A);
         }

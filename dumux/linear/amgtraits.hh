@@ -37,9 +37,6 @@
 
 namespace Dumux {
 
-// Forward declaration for the property definitions
-template <class TypeTag> class AMGBackend;
-
 //! The implementation is specialized for the different discretizations
 template<class TypeTag, DiscretizationMethods DM> struct AmgTraitsImpl;
 

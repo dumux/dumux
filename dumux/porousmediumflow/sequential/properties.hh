@@ -104,12 +104,8 @@ SET_PROP(SequentialModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::CCTpfa;
 };
 
-//!< Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
+//! Type of the jacobian matrix needed for compatibility with implicit models for the amg backend
 SET_TYPE_PROP(SequentialModel, JacobianMatrix, typename GET_PROP_TYPE(TypeTag, PressureCoefficientMatrix));
-
-
-//!< Block level on which the preconditioner is supposed to work.
-SET_INT_PROP(SequentialModel, LinearSolverPreconditionerBlockLevel, 1);
 
 //! Use the leaf grid view if not defined otherwise
 SET_PROP(SequentialModel, GridView)

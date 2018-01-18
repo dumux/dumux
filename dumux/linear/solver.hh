@@ -26,7 +26,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dumux/common/parameters.hh>
-#include <dumux/common/properties.hh>
 
 namespace Dumux
 {
@@ -35,12 +34,12 @@ namespace Dumux
  * \ingroup Linear
  * \brief Base class for linear solvers
  */
-template <class TypeTag>
 class LinearSolver
 {
 public:
-    //! export scalar type (might be needed to set parameters from output)
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    //! export Scalar type (might be needed to set parameters from output)
+    //! TODO: Do we need this?
+    using Scalar = double;
 
     /*!
      * \brief Contruct the solver
@@ -51,14 +50,14 @@ public:
      *       - LinearSolver.PreconditionerRelaxation precondition relaxation
      *       - LinearSolver.PreconditionerIterations the number of preconditioner iterations
      */
-    LinearSolver()
+    LinearSolver(const std::string& paramGroup = "")
+    : paramGroup_(paramGroup)
     {
-        static const std::string modelParamGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        verbosity_ = getParamFromGroup<int>(modelParamGroup, "LinearSolver.Verbosity");
-        maxIter_ = getParamFromGroup<int>(modelParamGroup, "LinearSolver.MaxIterations");
-        residReduction_ = getParamFromGroup<Scalar>(modelParamGroup, "LinearSolver.ResidualReduction");
-        relaxation_ = getParamFromGroup<Scalar>(modelParamGroup, "LinearSolver.PreconditionerRelaxation");
-        precondIter_ = getParamFromGroup<int>(modelParamGroup, "LinearSolver.PreconditionerIterations");
+        verbosity_ = getParamFromGroup<int>(paramGroup, "LinearSolver.Verbosity");
+        maxIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.MaxIterations");
+        residReduction_ = getParamFromGroup<double>(paramGroup, "LinearSolver.ResidualReduction");
+        relaxation_ = getParamFromGroup<double>(paramGroup, "LinearSolver.PreconditionerRelaxation");
+        precondIter_ = getParamFromGroup<int>(paramGroup, "LinearSolver.PreconditionerIterations");
     }
 
     /*!
@@ -74,6 +73,10 @@ public:
     //! the name of the linear solver
     std::string name() const
     { return "unknown solver"; }
+
+    //! the parameter group for getting parameter from the parameter tree
+    const std::string& paramGroup() const
+    { return paramGroup_; }
 
     //! the verbosity level
     int verbosity() const
@@ -92,19 +95,19 @@ public:
     { maxIter_ = i; }
 
     //! the linear solver residual reduction
-    Scalar residReduction() const
+    double residReduction() const
     { return residReduction_; }
 
     //! set the linear solver residual reduction
-    void setResidualReduction(Scalar r)
+    void setResidualReduction(double r)
     { residReduction_ = r; }
 
     //! the linear solver relaxation factor
-    Scalar relaxation() const
+    double relaxation() const
     { return relaxation_; }
 
     //! set the linear solver relaxation factor
-    void setRelaxation(Scalar r)
+    void setRelaxation(double r)
     { relaxation_ = r; }
 
     //! the number of preconditioner iterations
@@ -118,9 +121,10 @@ public:
 private:
     int verbosity_;
     int maxIter_;
-    Scalar residReduction_;
-    Scalar relaxation_;
+    double residReduction_;
+    double relaxation_;
     int precondIter_;
+    const std::string paramGroup_;
 };
 
 } // end namespace Dumux

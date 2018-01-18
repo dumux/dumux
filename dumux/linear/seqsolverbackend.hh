@@ -168,20 +168,19 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class ILUnBiCGSTABBackend : public LinearSolver<TypeTag>
+class ILUnBiCGSTABBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -207,20 +206,19 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class SORBiCGSTABBackend : public LinearSolver<TypeTag>
+class SORBiCGSTABBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -246,20 +244,19 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class SSORBiCGSTABBackend : public LinearSolver<TypeTag>
+class SSORBiCGSTABBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -285,20 +282,19 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class GSBiCGSTABBackend : public LinearSolver<TypeTag>
+class GSBiCGSTABBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -323,20 +319,19 @@ public:
  * applied as often as given by the parameter LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class JacBiCGSTABBackend : public LinearSolver<TypeTag>
+class JacBiCGSTABBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -361,20 +356,19 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class ILUnCGBackend : public LinearSolver<TypeTag>
+class ILUnCGBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -399,20 +393,19 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class SORCGBackend : public LinearSolver<TypeTag>
+class SORCGBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -437,20 +430,19 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class SSORCGBackend : public LinearSolver<TypeTag>
+class SSORCGBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -475,20 +467,19 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class GSCGBackend : public LinearSolver<TypeTag>
+class GSCGBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqGS<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -512,20 +503,19 @@ public:
  * applied as often as given by the parameter LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class JacCGBackend : public LinearSolver<TypeTag>
+class JacCGBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqJac<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solve<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -551,20 +541,19 @@ public:
  * LinearSolver.PreconditionerIterations.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class SSORRestartedGMResBackend : public LinearSolver<TypeTag>
+class SSORRestartedGMResBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqSSOR<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -589,20 +578,19 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class ILU0BiCGSTABBackend : public LinearSolver<TypeTag>
+class ILU0BiCGSTABBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::BiCGSTABSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -626,20 +614,19 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class ILU0CGBackend : public LinearSolver<TypeTag>
+class ILU0CGBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::CGSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithILU0Prec<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -664,20 +651,19 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class ILU0RestartedGMResBackend : public LinearSolver<TypeTag>
+class ILU0RestartedGMResBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqILU0<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithILU0PrecGMRes<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithILU0PrecGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 
     std::string name() const
@@ -703,20 +689,19 @@ public:
  * LinearSolver.PreconditionerRelaxation.\n
  * See: Golub, G. H., and Van Loan, C. F. (2012). Matrix computations. JHU Press.
  */
-template <class TypeTag>
-class ILUnRestartedGMResBackend : public LinearSolver<TypeTag>
+class ILUnRestartedGMResBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel: set this to more than one if the matrix to solve is nested multiple times
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
-        static const std::string paramGroup = GET_PROP_VALUE(TypeTag, ModelParameterGroup);
-        constexpr auto blockLevel = GET_PROP_VALUE(TypeTag, LinearSolverPreconditionerBlockLevel);
-        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, blockLevel>;
+        using Preconditioner = Dune::SeqILUn<Matrix, Vector, Vector, precondBlockLevel>;
         using Solver = Dune::RestartedGMResSolver<Vector>;
 
-        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, paramGroup);
+        return IterativePreconditionedSolverImpl::template solveWithGMRes<Preconditioner, Solver>(*this, A, x, b, this->paramGroup());
     }
 };
 
@@ -729,12 +714,13 @@ public:
  * and user interface." ACM Transactions on Mathematical Software (TOMS) 31(3): 302-325.
  * http://crd-legacy.lbl.gov/~xiaoye/SuperLU/
  */
-template <class TypeTag>
-class SuperLUBackend : public LinearSolver<TypeTag>
+class SuperLUBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel is unused and just here for compatibility with iterative solvers
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         static_assert(isBCRSMatrix<Matrix>::value, "SuperLU only works with BCRS matrices!");
@@ -789,12 +775,13 @@ private:
  * Mathematical Software 30 (2): 196–199. doi:10.1145/992200.992206.
  * http://faculty.cse.tamu.edu/davis/suitesparse.html
  */
-template <class TypeTag>
-class UMFPackBackend : public LinearSolver<TypeTag>
+class UMFPackBackend : public LinearSolver
 {
 public:
+    using LinearSolver::LinearSolver;
 
-    template<class Matrix, class Vector>
+    // precondBlockLevel is unused and just here for compatibility with iterative solvers
+    template<int precondBlockLevel = 1, class Matrix, class Vector>
     bool solve(const Matrix& A, Vector& x, const Vector& b)
     {
         static_assert(isBCRSMatrix<Matrix>::value, "UMFPack only works with BCRS matrices!");

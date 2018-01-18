@@ -129,7 +129,7 @@ int main(int argc, char** argv)
     (*r) *= -1.0;
 
     //! solve the 1p problem
-    using LinearSolver = UMFPackBackend<OnePTypeTag>;
+    using LinearSolver = UMFPackBackend;
     Dune::Timer solverTimer; std::cout << "Solving linear system ..." << std::flush;
     auto linearSolver = std::make_shared<LinearSolver>();
     linearSolver->solve(*A, p, *r);

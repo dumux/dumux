@@ -111,7 +111,7 @@ int main(int argc, char** argv) try
     auto assembler = std::make_shared<Assembler>(problem, fvGridGeometry, gridVariables);
 
     // the linear solver
-    using LinearSolver = ILU0BiCGSTABBackend<TypeTag>;
+    using LinearSolver = ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver

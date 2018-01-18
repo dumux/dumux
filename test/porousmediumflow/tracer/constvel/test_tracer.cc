@@ -121,7 +121,7 @@ int main(int argc, char** argv) try
     assembler->setLinearSystem(A, r);
 
     //! the linear solver
-    using LinearSolver = UMFPackBackend<TypeTag>;
+    using LinearSolver = UMFPackBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     //! intialize the vtk output module

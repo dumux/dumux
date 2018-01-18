@@ -65,7 +65,6 @@ NEW_PROP_TAG(LocalResidual);
 
 //! TODO: Remove this property as soon as the decoupled models are integrated
 NEW_PROP_TAG(LinearSolver);
-NEW_PROP_TAG(LinearSolverPreconditionerBlockLevel); //!< Block level depth for the preconditioner
 
 ////////////////////////////////////////////////
 // Basic properties regarding balance equations
@@ -146,8 +145,6 @@ NEW_PROP_TAG(UseKelvinEquation);                   //!< If we use Kelvin equatio
 NEW_PROP_TAG(NumSPhases);
 NEW_PROP_TAG(NonMineralizationVtkOutputFields);
 NEW_PROP_TAG(NonMineralizationVolumeVariables);
-
-NEW_PROP_TAG(UseConstraintSolver);                 //!< Determines whether the constraint solver should be used#
 
 /////////////////////////////////////////////////////////////
 // non-isothermal porous medium flow models
