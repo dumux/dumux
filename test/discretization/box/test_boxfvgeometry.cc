@@ -27,54 +27,44 @@
 #include <utility>
 
 #include <dune/common/test/iteratortest.hh>
+#include <dune/common/fvector.hh>
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/box/properties.hh>
+#include <dumux/discretization/box/fvgridgeometry.hh>
 
-namespace Dumux
-{
-
-namespace Properties
-{
-NEW_TYPE_TAG(TestBoxFVGeometry, INHERITS_FROM(BoxModel));
-
-SET_TYPE_PROP(TestBoxFVGeometry, Scalar, double);
-SET_TYPE_PROP(TestBoxFVGeometry, Grid, Dune::YaspGrid<3>);
-SET_BOOL_PROP(TestBoxFVGeometry, EnableFVGridGeometryCache, ENABLE_CACHING);
-}
-
-}
-
+#ifndef DOXYGEN
+namespace Dumux {
+namespace Detail {
 template<class T>
 class NoopFunctor {
 public:
   NoopFunctor() {}
   void operator()(const T& t){}
 };
+} // end namespace Detail
+} // end namespace Dumux
+#endif
 
 int main (int argc, char *argv[]) try
 {
+    using namespace Dumux;
+
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces" << std::endl;
 
-    // aliases
-    using TypeTag = TTAG(TestBoxFVGeometry);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename Grid::LeafGridView;
+    using Grid = Dune::YaspGrid<3>;
 
-    constexpr int dim = GridView::dimension;
-    constexpr int dimworld = GridView::dimensionworld;
+    constexpr int dim = Grid::dimension;
+    constexpr int dimworld = Grid::dimensionworld;
 
-    using GlobalPosition = Dune::FieldVector<typename GridView::ctype, dimworld>;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
+    using FVGridGeometry = BoxFVGridGeometry<double, typename Grid::LeafGridView, ENABLE_CACHING>;
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     // make a grid
     GlobalPosition lower(0.0);
@@ -95,7 +85,7 @@ int main (int argc, char *argv[]) try
         fvGeometry.bind(element);
 
         auto range = scvs(fvGeometry);
-        NoopFunctor<SubControlVolume> op;
+        Detail::NoopFunctor<SubControlVolume> op;
         if(0 != testForwardIterator(range.begin(), range.end(), op))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
@@ -105,7 +95,7 @@ int main (int argc, char *argv[]) try
         }
 
         auto range2 = scvfs(fvGeometry);
-        NoopFunctor<SubControlVolumeFace> op2;
+        Detail::NoopFunctor<SubControlVolumeFace> op2;
         if(0 != testForwardIterator(range2.begin(), range2.end(), op2))
             DUNE_THROW(Dune::Exception, "Iterator does not fulfill the forward iterator concept");
 
