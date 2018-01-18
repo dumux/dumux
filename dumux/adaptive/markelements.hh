@@ -37,7 +37,7 @@ namespace Dumux {
  * \return bool whether or not anything has been marked
  */
 template<class Grid, class Indicator>
-bool markElements(Grid& grid, Indicator& indicator, bool verbose = true)
+bool markElements(Grid& grid, const Indicator& indicator, bool verbose = true)
 {
     // mark elements according to indicator
     std::size_t refine = 0;
