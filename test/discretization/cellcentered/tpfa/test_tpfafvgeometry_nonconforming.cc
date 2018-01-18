@@ -32,26 +32,13 @@
 
 #include <dune/grid/utility/structuredgridfactory.hh>
 #include <dune/alugrid/grid.hh>
-#include <dune/grid/common/mcmgmapper.hh>
 
-#include <dumux/common/properties.hh>
-#include <dumux/discretization/cellcentered/tpfa/properties.hh>
+#include <dumux/adaptive/markelements.hh>
+#include <dumux/discretization/cellcentered/tpfa/fvgridgeometry.hh>
 
+#ifndef DOXGEN
 namespace Dumux {
-namespace Properties{
-//! Test without using global caching of the geometries
-NEW_TYPE_TAG(TestFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
-SET_TYPE_PROP(TestFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-
-//! Test using global geometry caching
-NEW_TYPE_TAG(TestCachedFVGeometryNonConforming, INHERITS_FROM(CCTpfaModel));
-SET_TYPE_PROP(TestCachedFVGeometryNonConforming, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
-SET_BOOL_PROP(TestCachedFVGeometryNonConforming, EnableFVGridGeometryCache, true);
-} // end namespace Properties
-} // end namespace Dumux
-
-
-namespace Dumux {
+namespace Test {
 
 //! epsilon for checking direction of scvf normals
 constexpr double eps = 1e-6;
@@ -115,27 +102,27 @@ std::string elementTypeName(const Dune::FieldVector<double, 2>& center)
 
     DUNE_THROW(Dune::InvalidStateException, "Element center position could not be interpreted.");
 }
+} // end namespace Test
 } // end namespace Dumux
+#endif
 
 int main (int argc, char *argv[]) try
 {
+    using namespace Dumux;
+    using namespace Dumux::Test;
+
     // maybe initialize mpi
     Dune::MPIHelper::instance(argc, argv);
 
     std::cout << "Checking the FVGeometries, SCVs and SCV faces on a non-conforming grid" << std::endl;
 
-    using namespace Dumux;
+    using Grid = Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>;
 
-    //! aliases
-    using TypeTag = TTAG(TYPETAG);
-    using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-    using GridView = typename Grid::LeafGridView;
-
-    constexpr int dim = GridView::dimension;
-    constexpr int dimworld = GridView::dimensionworld;
+    constexpr int dim = Grid::dimension;
+    constexpr int dimworld = Grid::dimensionworld;
 
     using GlobalPosition = Dune::FieldVector<typename Grid::ctype, dimworld>;
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVGridGeometry = CCTpfaFVGridGeometry<typename Grid::LeafGridView, ENABLE_CACHING>;
 
     //! make a grid
     GlobalPosition lower(0.0);
@@ -145,9 +132,7 @@ int main (int argc, char *argv[]) try
 
     //! refine the central element once
     auto leafGridView = grid->leafGridView();
-    for (const auto& element : elements(leafGridView))
-        if (isInCentralElement(element.geometry().center()))
-            grid->mark(1, element);
+    markElements(*grid, [&](const auto& e){ return isInCentralElement(e.geometry().center()) ? 1 : 0; });
     grid->preAdapt();
     grid->adapt();
     grid->postAdapt();
