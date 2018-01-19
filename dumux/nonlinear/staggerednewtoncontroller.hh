@@ -268,6 +268,26 @@ private:
         return converged;
     }
 
+    //! helper method to assure the MultiType matrix's sub blocks have the correct sizes
+    template<class JacobianMatrix>
+    bool checkMatrix_(const JacobianMatrix& A)
+    {
+        bool matrixHasCorrectSize = true;
+        using namespace Dune::Hybrid;
+        using namespace Dune::Indices;
+        forEach(A, [&matrixHasCorrectSize](const auto& rowOfMultiTypeMatrix)
+        {
+            const auto numRowsLeftMostBlock = rowOfMultiTypeMatrix[_0].N();
+
+            forEach(rowOfMultiTypeMatrix, [&matrixHasCorrectSize, &numRowsLeftMostBlock](const auto& subBlock)
+            {
+                if (subBlock.N() != numRowsLeftMostBlock)
+                    matrixHasCorrectSize = false;
+            });
+        });
+        return matrixHasCorrectSize;
+    }
+
 };
 
 } // end namespace Dumux
