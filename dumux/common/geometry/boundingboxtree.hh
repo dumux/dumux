@@ -351,9 +351,9 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
     static constexpr ctype eps_ = 1.0e-7;
-    const ctype eps0 = eps_*(b[3] - b[0]);
-    const ctype eps1 = eps_*(b[4] - b[1]);
-    const ctype eps2 = eps_*(b[5] - b[2]);
+    const ctype eps0 = eps_*std::max(b[3]-b[0], a[3]-a[0]);
+    const ctype eps1 = eps_*std::max(b[4]-b[1], a[4]-a[1]);
+    const ctype eps2 = eps_*std::max(b[5]-b[2], a[5]-a[2]);
     return (b[0] - eps0 <= a[3] && a[0] <= b[3] + eps0 &&
             b[1] - eps1 <= a[4] && a[1] <= b[4] + eps1 &&
             b[2] - eps2 <= a[5] && a[2] <= b[5] + eps2);
@@ -370,8 +370,8 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
     static constexpr ctype eps_ = 1.0e-7;
-    const ctype eps0 = eps_*(b[2] - b[0]);
-    const ctype eps1 = eps_*(b[3] - b[1]);
+    const ctype eps0 = eps_*std::max(b[2]-b[0], a[2]-a[0]);
+    const ctype eps1 = eps_*std::max(b[3]-b[1], a[3]-a[1]);
     return (b[0] - eps0 <= a[2] && a[0] <= b[2] + eps0 &&
             b[1] - eps1 <= a[3] && a[1] <= b[3] + eps1);
 }
@@ -386,7 +386,7 @@ inline bool intersectsBoundingBoxBoundingBox(const ctypea* a, const ctypeb* b)
 {
     using ctype = typename Dune::PromotionTraits<ctypea, ctypeb>::PromotedType;
     static constexpr ctype eps_ = 1.0e-1;
-    const ctype eps0 = eps_*(b[1] - b[0]);
+    const ctype eps0 = eps_*std::max(b[1]-b[0], a[1]-a[0]);
     return b[0] - eps0 <= a[1] && a[0] <= b[1] + eps0;
 }
 
