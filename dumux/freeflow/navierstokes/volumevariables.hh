@@ -164,22 +164,22 @@ public:
     { return fluidState_.density(defaultPhaseIdx); }
 
     /*!
-    * \brief Returns the mass density of a given phase within the
-    *        control volume.
-    */
-   Scalar molarDensity(int phaseIdx = 0) const
-   {
-       return fluidState_.molarDensity(defaultPhaseIdx);
-   }
+     * \brief Returns the mass density of a given phase within the
+     *        control volume.
+     */
+    Scalar molarDensity(int phaseIdx = 0) const
+    {
+        return fluidState_.molarDensity(defaultPhaseIdx);
+    }
 
-   /*!
-   * \brief Returns the molar mass of a given phase within the
-   *        control volume.
-   */
-  Scalar molarMass(int phaseIdx = 0) const
-  {
-      return fluidState_.averageMolarMass(defaultPhaseIdx);
-  }
+    /*!
+     * \brief Returns the molar mass of a given phase within the
+     *        control volume.
+     */
+    Scalar molarMass(int phaseIdx = 0) const
+    {
+        return fluidState_.averageMolarMass(defaultPhaseIdx);
+    }
 
     /*!
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the

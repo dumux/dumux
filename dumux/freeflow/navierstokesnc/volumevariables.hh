@@ -182,7 +182,7 @@ public:
          return this->fluidState_.moleFraction(phaseIdx, compIdx);
      }
 
-     /*!
+    /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
      *
