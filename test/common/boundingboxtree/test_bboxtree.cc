@@ -68,12 +68,25 @@ public:
     template <class OtherEntitySet, class OtherGridView>
     int intersectTree(const Dumux::BoundingBoxTree<OtherEntitySet>& otherTree,
                       const OtherGridView& otherGridView,
-                      std::size_t expectedIntersections)
+                      std::size_t expectedUniqueIntersections,
+                      bool checkTotalIntersections = false,
+                      std::size_t expectedIntersections = 0)
     {
         Dune::Timer timer;
         const auto intersections = intersectingEntities(*tree_, otherTree);
-        std::cout << "Computed tree intersections in " << timer.elapsed() << std::endl;
+        std::cout << "Computed " << intersections.size() << " tree intersections in " << timer.elapsed() << std::endl;
         timer.reset();
+
+        if (checkTotalIntersections)
+        {
+            if (intersections.size() != expectedIntersections)
+            {
+                std::cerr << "BoundingBoxTree intersection failed: Expected "
+                          << expectedIntersections << " (total) and got "
+                          << intersections.size() << "!" <<std::endl;
+                return 1;
+            }
+        }
 
         std::vector<std::vector<std::vector<GlobalPosition>>> map;
         map.resize(otherGridView.size(0));
@@ -96,10 +109,10 @@ public:
         std::cout << "Found " << uniqueIntersections.size() << " unique intersections "
                   << "in " << timer.elapsed() << std::endl;
 
-        if (uniqueIntersections.size() != expectedIntersections)
+        if (uniqueIntersections.size() != expectedUniqueIntersections)
         {
             std::cerr << "BoundingBoxTree intersection failed: Expected "
-                      << expectedIntersections << " and got "
+                      << expectedUniqueIntersections << " (unique) and got "
                       << uniqueIntersections.size() << "!" <<std::endl;
             return 1;
         }
@@ -168,37 +181,93 @@ int main (int argc, char *argv[]) try
 
             using NetworkGrid = Dune::FoamGrid<1, dimworld>;
             using NetworkGridView = NetworkGrid::LeafGridView;
-
-            std::cout << std::endl
-                          << "Intersect with other bounding box tree:" << std::endl
-                          << "***************************************"
-                          << std::endl;
-
-            auto networkGrid = std::shared_ptr<NetworkGrid>(Dune::GmshReader<NetworkGrid>::read("network1d.msh", false, false));
-
-            // scaling
-            for (const auto& vertex : vertices(networkGrid->leafGridView()))
-            {
-                auto newPos = vertex.geometry().corner(0);
-                newPos *= scaling;
-                networkGrid->setPosition(vertex, newPos);
-            }
-
-            // Dune::VTKWriter<NetworkGridView> lowDimVtkWriter(networkGrid->leafGridView());
-            // lowDimVtkWriter.write("network", Dune::VTK::ascii);
-
-            std::cout << "Constructed 1d network grid with " << networkGrid->leafGridView().size(0) << " elements." << std::endl;
-
-            // build the bulk grid bounding box tree
-            returns.push_back(test.build(grid->leafGridView()));
-
-            // build the network grid bounding box tree
             using EntitySet = Dumux::GridViewGeometricEntitySet<NetworkGridView, 0>;
             Dumux::BoundingBoxTree<EntitySet> networkTree;
-            networkTree.build(std::make_shared<EntitySet>(networkGrid->leafGridView()));
 
-            // intersect the two bounding box trees
-            returns.push_back(test.intersectTree(networkTree, networkGrid->leafGridView(), 20));
+            {
+                std::cout << std::endl
+                              << "Intersect with other bounding box tree:" << std::endl
+                              << "***************************************"
+                              << std::endl;
+
+                // create a network grid from gmsh
+                auto networkGrid = std::shared_ptr<NetworkGrid>(Dune::GmshReader<NetworkGrid>::read("network1d.msh", false, false));
+
+                // scaling
+                for (const auto& vertex : vertices(networkGrid->leafGridView()))
+                {
+                    auto newPos = vertex.geometry().corner(0);
+                    newPos *= scaling;
+                    networkGrid->setPosition(vertex, newPos);
+                }
+
+                // Dune::VTKWriter<NetworkGridView> lowDimVtkWriter(networkGrid->leafGridView());
+                // lowDimVtkWriter.write("network", Dune::VTK::ascii);
+
+                std::cout << "Constructed 1d network grid with " << networkGrid->leafGridView().size(0) << " elements." << std::endl;
+
+                // build the bulk grid bounding box tree
+                returns.push_back(test.build(grid->leafGridView()));
+
+                // build the network grid bounding box tree
+                networkTree.build(std::make_shared<EntitySet>(networkGrid->leafGridView()));
+
+                // intersect the two bounding box trees
+                returns.push_back(test.intersectTree(networkTree, networkGrid->leafGridView(), 20));
+            }
+            {
+                std::cout << std::endl
+                              << "Intersect with other bounding box tree (2):" << std::endl
+                              << "*******************************************"
+                              << std::endl;
+
+                // construct a line network grid
+                const GlobalPosition lowerLeftNW({0.5, 0.5, 0.0});
+                const GlobalPosition upperRightNW({0.5, 0.5, 1.0});
+
+                // make the grid (structured interval grid in dimworld space)
+                Dune::GridFactory<NetworkGrid> factory;
+
+        #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+                constexpr auto geomType = Dune::GeometryTypes::line;
+        #else
+                auto geomType = Dune::GeometryType(1);
+        #endif
+
+                // create a step vector
+                auto step = upperRightNW;
+                step -= lowerLeftNW, step /= numCellsX;
+
+                // create the vertices
+                auto globalPos = lowerLeftNW;
+                for (unsigned int vIdx = 0; vIdx <= numCellsX; vIdx++, globalPos += step)
+                    factory.insertVertex(globalPos);
+
+                // create the cells
+                for(unsigned int eIdx = 0; eIdx < numCellsX; eIdx++)
+                    factory.insertElement(geomType, {eIdx, eIdx+1});
+
+                auto networkGrid = std::shared_ptr<NetworkGrid>(factory.createGrid());
+
+                // scaling
+                for (const auto& vertex : vertices(networkGrid->leafGridView()))
+                {
+                    auto newPos = vertex.geometry().corner(0);
+                    newPos *= scaling;
+                    networkGrid->setPosition(vertex, newPos);
+                }
+
+                std::cout << "Constructed 1d network grid with " << networkGrid->leafGridView().size(0) << " elements." << std::endl;
+
+                // build the bulk grid bounding box tree
+                returns.push_back(test.build(grid->leafGridView()));
+
+                // build the network grid bounding box tree
+                networkTree.build(std::make_shared<EntitySet>(networkGrid->leafGridView()));
+
+                // intersect the two bounding box trees
+                returns.push_back(test.intersectTree(networkTree, networkGrid->leafGridView(), 10, true, 40));
+            }
         }
 #endif
     }
