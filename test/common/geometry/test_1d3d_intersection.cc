@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <initializer_list>
 
+#include <dune/common/version.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
@@ -17,7 +18,11 @@ template<int dimworld = 3>
 Dune::MultiLinearGeometry<double, 1, dimworld>
 makeLine(std::initializer_list<Dune::FieldVector<double, dimworld>>&& c)
 {
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
     return {Dune::GeometryTypes::line, c};
+#else
+    return {Dune::GeometryType(1), c};
+#endif
 }
 
 template<int dimworld = 3>
@@ -55,8 +60,12 @@ int main (int argc, char *argv[]) try
     });
 
     Dune::MultiLinearGeometry<double, dim, dimworld>
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
         cube(Dune::GeometryTypes::cube(dimworld), cubeCorners);
-
+#else
+        Dune::GeometryType geomType; geomType.makeCube(3);
+        cube(geomType, cubeCorners);
+#endif
 
 
     // collect returns to determine exit code
