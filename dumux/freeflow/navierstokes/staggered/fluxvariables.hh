@@ -80,7 +80,7 @@ class NavierStokesFluxVariablesImpl<TypeTag, DiscretizationMethods::Staggered>
 public:
 
     /*!
-    * \brief Returns the advective flux over a sub control volume face
+    * \brief Returns the advective flux over a sub control volume face.
     * \param elemVolVars All volume variables for the element
     * \param elemFaceVars The face variables
     * \param scvf The sub control volume face
@@ -112,22 +112,41 @@ public:
     }
 
     /*!
-    * \brief Computes the flux for the cell center residual.
+    * \brief Computes the flux for the cell center residual (mass balance).
+    *
+    * \verbatim
+    *                    scvf
+    *              ----------------
+    *              |              # current scvf    # scvf over which fluxes are calculated
+    *              |              #
+    *              |      x       #~~~~> vel.Self   x dof position
+    *              |              #
+    *        scvf  |              #                 -- element
+    *              ----------------
+    *                   scvf
+    * \endverbatim
     */
     CellCenterPrimaryVariables computeFluxForCellCenter(const Problem& problem,
-                                                        const Element &element,
+                                                        const Element& element,
                                                         const FVElementGeometry& fvGeometry,
                                                         const ElementVolumeVariables& elemVolVars,
                                                         const ElementFaceVariables& elemFaceVars,
-                                                        const SubControlVolumeFace &scvf,
+                                                        const SubControlVolumeFace& scvf,
                                                         const FluxVariablesCache& fluxVarsCache)
     {
+        // The advectively transported quantity (i.e density for a single-phase system).
         auto upwindTerm = [](const auto& volVars) { return volVars.density(); };
 
-        const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, false);
+        // Check if we are on an outflow boundary.
+        const bool isOutflow = scvf.boundary() ?
+                               problem.boundaryTypesAtPos(scvf.center()).isOutflow(Indices::massBalanceIdx)
+                               : false;
+
+        // Call the generic flux function.
+        const Scalar flux = advectiveFluxForCellCenter(elemVolVars, elemFaceVars, scvf, upwindTerm, isOutflow);
 
         CellCenterPrimaryVariables result(0.0);
-        result[massBalanceIdx] = flux;
+        result[Indices::massBalanceIdx] = flux;
 
         return result;
     }
