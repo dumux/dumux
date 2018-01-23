@@ -59,11 +59,13 @@ int main (int argc, char *argv[]) try
         {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {0.0, 1.0, 1.0}, {1.0, 1.0, 1.0}
     });
 
-    Dune::MultiLinearGeometry<double, dim, dimworld>
 #if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
+    Dune::MultiLinearGeometry<double, dim, dimworld>
         cube(Dune::GeometryTypes::cube(dimworld), cubeCorners);
 #else
-        Dune::GeometryType geomType; geomType.makeCube(3);
+    Dune::GeometryType geomType;
+    geomType.makeCube(3);
+    Dune::MultiLinearGeometry<double, dim, dimworld>
         cube(geomType, cubeCorners);
 #endif
 
