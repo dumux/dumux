@@ -68,9 +68,13 @@ NEW_TYPE_TAG(TwoPIncompressibleAdaptiveBox, INHERITS_FROM(TwoPIncompressibleBox)
 NEW_TYPE_TAG(TwoPAdaptivePointSource, INHERITS_FROM(TwoPIncompressibleAdaptiveTpfa));
 
 //! Use non-conforming refinement in the cell-centered tests, conforming for box
+#if HAVE_DUNE_ALUGRID
 SET_TYPE_PROP(TwoPIncompressibleAdaptiveTpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 SET_TYPE_PROP(TwoPIncompressibleAdaptiveMpfa, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+#endif
+#if HAVE_DUNE_UGGRID
 SET_TYPE_PROP(TwoPIncompressibleAdaptiveBox, Grid, Dune::UGGrid<2>);
+#endif
 SET_TYPE_PROP(TwoPAdaptivePointSource, Problem, PointSourceTestProblem<TypeTag>);
 } // end namespace Properties
 } // end namespace Dumux

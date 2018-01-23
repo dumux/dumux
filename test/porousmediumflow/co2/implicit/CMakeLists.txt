@@ -43,7 +43,7 @@ dune_add_test(NAME test_co2_tpfa
 dune_add_test(NAME test_co2ni_box
               SOURCES test_co2_fv.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNIBoxTypeTag
-              COMPILE_DEFINITIONS ISOTHERMAL=0
+                                  ISOTHERMAL=0
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -55,7 +55,7 @@ dune_add_test(NAME test_co2ni_box
 dune_add_test(NAME test_co2ni_tpfa
               SOURCES test_co2_fv.cc
               COMPILE_DEFINITIONS TYPETAG=HeterogeneousNICCTpfaTypeTag
-              COMPILE_DEFINITIONS ISOTHERMAL=0
+                                  ISOTHERMAL=0
               CMAKE_GUARD "( dune-alugrid_FOUND AND DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS )"
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
