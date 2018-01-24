@@ -293,6 +293,7 @@ public:
         const auto eps = (geo1.corner(0) - geo1.corner(1)).two_norm()*eps_;
         std::sort(points.begin(), points.end(), [&eps](const auto& a, const auto& b) -> bool
         {
+            using std::abs;
             return (abs(a[0]-b[0]) > eps ? a[0] < b[0] : (abs(a[1]-b[1]) > eps ? a[1] < b[1] : (a[2] < b[2])));
         });
 
@@ -308,6 +309,7 @@ public:
 
         // compute convex hull
         const auto convexHull = grahamConvexHull2d3d(points);
+        assert(!convexHull.empty());
 
         // the intersections are the triangulation of the convex hull polygon
         intersection = triangulateConvexHull(convexHull);
