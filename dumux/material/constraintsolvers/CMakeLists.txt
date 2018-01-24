@@ -2,10 +2,7 @@
 #install headers
 install(FILES
 compositionalflash.hh
-compositionfromfugacities2pncmin.hh
 compositionfromfugacities.hh
-computefromreferencephase2pnc.hh
-computefromreferencephase2pncmin.hh
 computefromreferencephase.hh
 fluidsystemcomputefromreferencephase.hh
 fluidsystemconstraintsolver.hh
