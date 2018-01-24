@@ -12,7 +12,7 @@ dune_add_test(NAME test_bboxtree_dim3
               COMPILE_DEFINITIONS WORLD_DIMENSION=3)
 
 # symlink the input file in the build directory
-dune_symlink_to_source_files(FILES "network1d.msh")
+dune_symlink_to_source_files(FILES "network1d.msh" "network2d.msh")
 
 #install sources
 install(FILES
