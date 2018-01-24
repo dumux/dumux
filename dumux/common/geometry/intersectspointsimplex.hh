@@ -80,42 +80,43 @@ bool intersectsPointSimplex(const Dune::FieldVector<ctype, dimworld>& point,
                             const Dune::FieldVector<ctype, dimworld>& p1,
                             const Dune::FieldVector<ctype, dimworld>& p2)
 {
-    // Algorithm from http://www.blackpawn.com/texts/pointinpoly/
-    // See also "Real-Time Collision Detection" by Christer Ericson.
-    using GlobalPosition = Dune::FieldVector<ctype, dimworld>;
+    // adapted from the algorithm from from "Real-Time Collision Detection" by Christer Ericson,
+    // published by Morgan Kaufmann Publishers, (c) 2005 Elsevier Inc. (Chapter 5.4.2)
     static constexpr ctype eps_ = 1.0e-7;
 
-    // compute the vectors of the edges and the vector point-p0
-    const GlobalPosition v1 = p0 - p2;
-    const GlobalPosition v2 = p1 - p0;
-    const GlobalPosition v3 = p2 - p1;
-    const GlobalPosition v = point - p0;
-
     // compute the normal of the triangle
-    const GlobalPosition n = crossProduct(v1, v2);
+    const auto v1 = p0 - p2;
+    auto n = crossProduct(v1, p1 - p0);
+    n /= n.two_norm();
 
     // first check if we are in the plane of the triangle
     // if not we can return early
-    const double t = v.dot(n);
     using std::abs;
-    if (abs(t) > v1.two_norm()*eps_) // take |v1| as scale
+    auto x = p0 - point;
+    x /= x.two_norm();
+
+    if (abs(x*n) > eps_)
         return false;
 
-    // compute the normal to the triangle made of point and first edge
-    // the dot product of this normal and the triangle normal has to
-    // be positive because we defined the edges in the right orientation
-    const GlobalPosition n1 = crossProduct(v, v1);
-    const double t1 = n.dot(n1);
-    if (t1 < 0) return false;
+    // translate the triangle so that 'point' is the origin
+    const auto a = p0 - point;
+    const auto b = p1 - point;
+    const auto c = p2 - point;
 
-    const GlobalPosition n2 = crossProduct(v, v2);
-    const double t2 = n.dot(n2);
-    if (t2 < 0) return false;
+    // compute the normal vectors for triangles P->A->B and P->B->C
+    const auto u = crossProduct(b, c);
+    const auto v = crossProduct(c, a);
 
-    const GlobalPosition n3 = crossProduct(v, v3);
-    const double t3 = n.dot(n3);
-    if (t3 < 0) return false;
+    // they have to point in the same direction
+    if (u*v < 0.0) return false;
 
+    // compute the normal vector for triangle P->C->A
+    const auto w = crossProduct(a, b);
+
+    // it also has to point in the same direction
+    if (u*w < 0.0) return false;
+
+    // now the point must be in the triangle (or on the faces)
     return true;
 }
 
