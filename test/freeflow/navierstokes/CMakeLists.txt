@@ -1,24 +1,33 @@
 add_input_file_links()
 
-add_executable(test_stokes_closedsystem EXCLUDE_FROM_ALL test_closedsystem.cc)
+add_executable(test_closedsystem EXCLUDE_FROM_ALL test_closedsystem.cc)
 
-dune_add_test(NAME test_stokes_liddrivencavity
-              TARGET test_stokes_closedsystem
+dune_add_test(NAME test_navierstokes_liddrivencavity_re1
+              TARGET test_closedsystem
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
-                             --files ${CMAKE_SOURCE_DIR}/test/references/liddrivencavity-reference.vtu
-                                     ${CMAKE_CURRENT_BINARY_DIR}/test_liddrivencavity-00002.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_closedsystem test_liddrivencavity.input")
+                             --files ${CMAKE_SOURCE_DIR}/test/references/liddrivencavity-low-re-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_liddrivencavity_re1-00002.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_liddrivencavity_re1.input")
 
-dune_add_test(NAME test_stokes_hydrostaticpressure
-              TARGET test_stokes_closedsystem
+dune_add_test(NAME test_navierstokes_liddrivencavity_re1000
+              TARGET test_closedsystem
+              CMAKE_GUARD HAVE_UMFPACK
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS       --script fuzzy
+                             --files ${CMAKE_SOURCE_DIR}/test/references/liddrivencavity-high-re-reference.vtu
+                                     ${CMAKE_CURRENT_BINARY_DIR}/test_liddrivencavity_re1000-00009.vtu
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_liddrivencavity_re1000.input")
+
+dune_add_test(NAME test_navierstokes_hydrostaticpressure
+              TARGET test_closedsystem
               CMAKE_GUARD HAVE_UMFPACK
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS       --script fuzzy
                              --files ${CMAKE_SOURCE_DIR}/test/references/stokeshydrostaticpressure-reference.vtu
                                      ${CMAKE_CURRENT_BINARY_DIR}/test_hydrostaticpressure-00002.vtu
-                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_stokes_closedsystem test_hydrostaticpressure.input"
+                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_closedsystem test_hydrostaticpressure.input"
                              --zeroThreshold {"velocity_Constant \(m/s\)":1e-16})
 
 dune_add_test(NAME test_channel_stokes
