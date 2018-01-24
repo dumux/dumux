@@ -60,6 +60,11 @@ SET_TYPE_PROP(InjectionTypeTag,
 
 // Define whether mole(true) or mass (false) fractions are used
 SET_BOOL_PROP(InjectionTypeTag, UseMoles, true);
+
+// Enable caching or not (reference solutions created without caching)
+SET_BOOL_PROP(InjectionTypeTag, EnableFVGridGeometryCache, ENABLECACHING);
+SET_BOOL_PROP(InjectionTypeTag, EnableGridVolumeVariablesCache, ENABLECACHING);
+SET_BOOL_PROP(InjectionTypeTag, EnableGridFluxVariablesCache, ENABLECACHING);
 }
 
 
