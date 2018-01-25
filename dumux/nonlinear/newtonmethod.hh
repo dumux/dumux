@@ -102,7 +102,7 @@ public:
             {
                 // notify the controller that we're about to start
                 // a new timestep
-                controller_->newtonBeginStep();
+                controller_->newtonBeginStep(uCurrentIter);
 
                 // make the current solution to the old one
                 if (controller_->newtonNumSteps() > 0)
