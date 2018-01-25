@@ -40,10 +40,11 @@ namespace Dumux {
  *         +1   for a clockwise turn,
  *          0   if they are on one line (colinear)
  */
-int getOrientation(const Dune::FieldVector<double, 3>& a,
-                   const Dune::FieldVector<double, 3>& b,
-                   const Dune::FieldVector<double, 3>& c,
-                   const Dune::FieldVector<double, 3>& normal)
+template<class ctype>
+int getOrientation(const Dune::FieldVector<ctype, 3>& a,
+                   const Dune::FieldVector<ctype, 3>& b,
+                   const Dune::FieldVector<ctype, 3>& c,
+                   const Dune::FieldVector<ctype, 3>& normal)
 {
     const auto d = b-a;
     const auto e = c-b;
@@ -54,15 +55,28 @@ int getOrientation(const Dune::FieldVector<double, 3>& a,
 
 /*!
  * \brief Compute the points making up the convex hull around the given set of unordered points
- * \note We assume that all points are coplanar
- * \note this algorithm changes the order of the given points a bit
+ * \note We assume that all points are coplanar and there are no indentical points in the list
+ */
+template<class ctype>
+std::vector<Dune::FieldVector<ctype, 3>>
+grahamConvexHull2d3d(const std::vector<Dune::FieldVector<ctype, 3>>& points)
+{
+    auto copyPoints = points;
+    return grahamConvexHull2d3d(copyPoints);
+}
+
+/*!
+ * \brief Compute the points making up the convex hull around the given set of unordered points
+ * \note We assume that all points are coplanar and there are no indentical points in the list
+ * \note This algorithm changes the order of the given points a bit
  *       as they are unordered anyway this shouldn't matter too much
  */
-std::vector<Dune::FieldVector<double, 3>>
-grahamConvexHull2d3d(std::vector<Dune::FieldVector<double, 3>>& points)
+template<class ctype>
+std::vector<Dune::FieldVector<ctype, 3>>
+grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
 {
-    using Point = Dune::FieldVector<double, 3>;
-    std::vector<Point> convexHull; convexHull.reserve(50);
+    using Point = Dune::FieldVector<ctype, 3>;
+    std::vector<Point> convexHull;
 
     // return empty convex hull
     if (points.size() < 3)
@@ -72,16 +86,35 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<double, 3>>& points)
     if (points.size() == 3)
         return points;
 
-    // get the normal vector of the plane
+    // try to compute the normal vector of the plane
     const auto a = points[1] - points[0];
-    const auto b = points[2] - points[0];
+    auto b = points[2] - points[0];
     auto normal = Dumux::crossProduct(a, b);
-    normal /= normal.two_norm();
 
-    // find the element with the smallest y coordinate (if y is the same, smallest x coordinate)
-    auto minIt = std::min_element(points.begin(), points.end(),
-                                  [](const auto& a, const auto& b)
-                                  { return a[1] != b[1] ? a[1] < b[1] : a[0] < b[0]; });
+    // make sure the normal vector has non-zero length
+    std::size_t k = 2;
+    auto norm = normal.two_norm();
+    while (norm == 0.0 && k < points.size()-1)
+    {
+        b = points[++k];
+        normal = Dumux::crossProduct(a, b);
+        norm = normal.two_norm();
+    }
+
+    // if all given points are colinear -> return empty convex hull
+    if (norm == 0.0)
+        return convexHull;
+
+    using std::sqrt;
+    const auto eps = 1e-7*sqrt(norm);
+    normal /= norm;
+
+    // find the element with the smallest x coordinate (if x is the same, smallest y coordinate, and so on...)
+    auto minIt = std::min_element(points.begin(), points.end(), [&eps](const auto& a, const auto& b)
+    {
+        using std::abs;
+        return (abs(a[0]-b[0]) > eps ? a[0] < b[0] : (abs(a[1]-b[1]) > eps ? a[1] < b[1] : (a[2] < b[2])));
+    });
 
     // swap the smallest element to the front
     std::iter_swap(minIt, points.begin());
@@ -90,22 +123,23 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<double, 3>>& points)
     // sort in counter-clockwise order around pivot point
     const auto pivot = points[0];
     std::sort(points.begin()+1, points.end(), [&](const auto& a, const auto& b)
-              {
-                  int order = getOrientation(pivot, a, b, normal);
-                  if (order == 0)
-                       return (a-pivot).two_norm() < (b-pivot).two_norm();
-                  else
-                       return (order == -1);
-              });
+    {
+        const int order = getOrientation(pivot, a, b, normal);
+        if (order == 0)
+             return (a-pivot).two_norm() < (b-pivot).two_norm();
+        else
+             return (order == -1);
+    });
 
     // push the first three points
+    convexHull.reserve(50);
     convexHull.push_back(points[0]);
     convexHull.push_back(points[1]);
     convexHull.push_back(points[2]);
 
     // This is the heart of the algorithm
-    // Pop_back until the last point in the queue forms a counter-clockwise oriented line
-    // with the new vertices. Then add new points to the queue.
+    // pop_back until the last point in the queue forms a counter-clockwise oriented line
+    // with the next two vertices. Then add these points to the queue.
     for (std::size_t i = 3; i < points.size(); ++i)
     {
         Point p = convexHull.back();
@@ -113,8 +147,19 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<double, 3>>& points)
         // keep popping until the orientation a->b->currentp is counter-clockwise
         while (getOrientation(convexHull.back(), p, points[i], normal) != -1)
         {
-            p = convexHull.back();
-            convexHull.pop_back();
+            // make sure the queue doesn't get empty
+            if (convexHull.size() == 1)
+            {
+                // before we reach size-2 there has to be a good candidate
+                // as not all points are colinear (a non-zero plane normal exists)
+                assert(i < points.size()-2);
+                p = points[i++];
+            }
+            else
+            {
+                p = convexHull.back();
+                convexHull.pop_back();
+            }
         }
 
         // add back the last popped point and this point
@@ -130,10 +175,11 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<double, 3>>& points)
  * \note Assumes all points of the convex hull are coplanar
  * \note This inserts a mid point and connects all corners with that point to triangles
  */
-std::vector<std::array<Dune::FieldVector<double, 3>, 3> >
-triangulateConvexHull(const std::vector<Dune::FieldVector<double, 3>>& convexHull)
+template<class ctype>
+std::vector<std::array<Dune::FieldVector<ctype, 3>, 3> >
+triangulateConvexHull(const std::vector<Dune::FieldVector<ctype, 3>>& convexHull)
 {
-    using Point = Dune::FieldVector<double, 3>;
+    using Point = Dune::FieldVector<ctype, 3>;
     using Triangle = std::array<Point, 3>;
 
     if (convexHull.size() < 3)

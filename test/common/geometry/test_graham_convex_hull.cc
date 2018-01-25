@@ -94,11 +94,11 @@ void writeVTKPolyData(const std::vector<Dune::FieldVector<double, 3>>& p,
          << "</VTKFile>\n";
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char* argv[]) try
 {
     using Point = Dune::FieldVector<double, 3>;
     // create 100 random points
-    std::vector<Point> points(50);
+    std::vector<Point> points(100);
     // normal vector of the plane
     const Point normal({0.0, 1.0, 1.0});
     const Point origin({3.0, 0.0, 0.0});
@@ -121,5 +121,25 @@ int main(int argc, char* argv[])
 
     Dumux::writeVTKPolyDataTriangle(triangles, "triangulation");
 
+    // some specific tests for corner cases with colinear points
+    points = {{0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,2.0}, {0.0,0.0,3.0}};
+    auto hull = Dumux::grahamConvexHull2d3d(points);
+    if (!(hull.empty())) DUNE_THROW(Dune::InvalidStateException, "False positive for finding a convex hull!");
+
+    points = {{0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,2.0}, {0.0,0.0,3.0}, {0.0,0.0,4.0}, {2.0,3.0,3.0}};
+    hull = Dumux::grahamConvexHull2d3d(points);
+    if (hull.empty()) DUNE_THROW(Dune::InvalidStateException, "Didn't find convex hull!");
+
+    points = {{2.0,3.0,3.0}, {0.0,0.0,4.0}, {0.0,0.0,0.0}, {0.0,0.0,1.0}, {0.0,0.0,2.0}, {0.0,0.0,3.0}};
+    hull = Dumux::grahamConvexHull2d3d(points);
+    if (hull.empty()) DUNE_THROW(Dune::InvalidStateException, "Didn't find convex hull!");
+
     return 0;
+}
+// //////////////////////////////////
+//   Error handler
+// /////////////////////////////////
+catch (const Dune::Exception& e) {
+    std::cout << e << std::endl;
+    return 1;
 }
