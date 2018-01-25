@@ -527,8 +527,8 @@ public:
      */
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
     {
-        //! As a default, i.e. if the user's problem does not overload any extrusion factor method
-        //! return 1.0
+        // As a default, i.e. if the user's problem does not overload
+        // any extrusion factor method, return 1.0
         return 1.0;
     }
 
