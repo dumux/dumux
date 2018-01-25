@@ -145,7 +145,7 @@ public:
      * To get the time after the time integration you have to add timeStepSize() to
      * time().
      */
-    virtual Scalar time() const
+    Scalar time() const override
     { return time_; }
 
     /*!
@@ -199,7 +199,7 @@ public:
      *        don't miss the beginning of the next episode or cross
      *        the end of the simulation.
      */
-    virtual Scalar timeStepSize() const
+    Scalar timeStepSize() const override
     { return timeStepSize_; }
 
     /*!
