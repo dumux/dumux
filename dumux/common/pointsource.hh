@@ -290,9 +290,10 @@ class BoundingBoxTreePointSourceHelper
 
 public:
     //! calculate a DOF index to point source map from given vector of point sources
+    template<class PointSourceMap>
     static void computePointSourceMap(const FVGridGeometry& fvGridGeometry,
                                       std::vector<PointSource>& sources,
-                                      std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> >& pointSourceMap)
+                                      PointSourceMap& pointSourceMap)
     {
         const auto& boundingBoxTree = fvGridGeometry.boundingBoxTree();
 
