@@ -81,12 +81,11 @@ public:
      *        The controller is responsible for all the strategic decisions.
      */
     template<class SolutionVector, class ConvergenceWriter = ConvergenceWriterInferface>
-    bool solve(SolutionVector& u, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
+    bool solve(SolutionVector& uCurrentIter, const std::unique_ptr<ConvergenceWriter>& convWriter = nullptr)
     {
         try
         {
             // the given solution is the initial guess
-            SolutionVector& uCurrentIter = u;
             SolutionVector uLastIter(uCurrentIter);
             SolutionVector deltaU(uCurrentIter);
 
@@ -120,7 +119,7 @@ public:
 
                 // linearize the problem at the current solution
                 assembleTimer.start();
-                controller_->assembleLinearSystem(*assembler_, u);
+                controller_->assembleLinearSystem(*assembler_, uCurrentIter);
                 assembleTimer.stop();
 
                 ///////////////
@@ -182,7 +181,7 @@ public:
             // reset state if newton failed
             if (!controller_->newtonConverged())
             {
-                controller_->newtonFail(*assembler_, u);
+                controller_->newtonFail(*assembler_, uCurrentIter);
                 return false;
             }
 
@@ -204,7 +203,7 @@ public:
         {
             if (controller_->verbose())
                 std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
-            controller_->newtonFail(*assembler_, u);
+            controller_->newtonFail(*assembler_, uCurrentIter);
             return false;
         }
     }
