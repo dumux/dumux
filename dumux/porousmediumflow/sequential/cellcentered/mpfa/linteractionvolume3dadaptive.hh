@@ -195,7 +195,6 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     enum
@@ -252,8 +251,9 @@ public:
     //! Constructs a FvMpfaL3dInteractionVolumeAdaptive object
     /**
      */
-    FvMpfaL3dInteractionVolumeAdaptive() :
-        hangingNodeType_(noHangingNode)
+    FvMpfaL3dInteractionVolumeAdaptive(const Grid& grid)
+    : ParentType(grid)
+    , hangingNodeType_(noHangingNode)
     {}
 
     //!\copydoc FvMpfaL3dInteractionVolume::reset()

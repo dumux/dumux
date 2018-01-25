@@ -76,7 +76,7 @@ int start(int argc,
     ////////////////////////////////////////////////////////////
     // get some optional parameters
     ////////////////////////////////////////////////////////////
-    const int numRefine = getParam<int>("Grid.NumRefine", 0);
+    const int numRefine = getParam<int>("Grid.Refinement", 0);
 
     auto outputName = getParam<std::string>("Problem.OutputName", "");
     if (outputName.size())

@@ -133,7 +133,6 @@ Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
             debugWriter_(gridView, "gridAfterAdapt")
 {
     GridCreator::grid().globalRefine(getParam<int>("GridAdapt.MaxLevel"));
-    this->setGrid(GridCreator::grid());
 
     //Process parameter file
     //Simulation Control

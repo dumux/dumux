@@ -101,9 +101,6 @@ public:
     {
         delta_ = getParam<Scalar>("Problem.Delta", 1e-3);
 
-        int numRefine = getParam<int>("Grid.NumRefine");
-        GridCreator::grid().globalRefine(numRefine);
-
         this->spatialParams().initialize(delta_);
     }
 

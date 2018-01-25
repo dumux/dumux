@@ -63,10 +63,8 @@ int main(int argc, char** argv)
         // create the grid
         ////////////////////////////////////////////////////////////
         using GridCreator = GET_PROP_TYPE(TypeTag, GridCreator);
-        GridCreator::createGrid();
+        GridCreator::makeGrid();
         auto& grid = GridCreator::grid();
-        auto numRefine = Dumux::getParam<int>("Grid.NumRefine", 0);
-        grid.globalRefine(numRefine);
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem

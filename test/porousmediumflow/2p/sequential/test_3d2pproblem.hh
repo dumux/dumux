@@ -160,15 +160,11 @@ using Intersection = typename GridView::Intersection;
 using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 using LocalPosition = Dune::FieldVector<Scalar, dim>;
 
-using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
-
 public:
 
 Test3D2PProblem(TimeManager &timeManager,const GridView &gridView) :
 ParentType(timeManager, gridView), inflowEdge_(0), outflowEdge_(0)
 {
-    this->setGrid(GridCreator::grid());
-
     int refinementFactor = 0;
     if (haveParam("Grid.RefinementFactor") && !GET_PROP_VALUE(TypeTag, AdaptiveGrid))
     {

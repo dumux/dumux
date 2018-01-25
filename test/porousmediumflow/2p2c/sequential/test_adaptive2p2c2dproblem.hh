@@ -102,7 +102,6 @@ class Adaptive2p2c2d: public IMPETProblem2P2C<TypeTag>
 using ParentType = IMPETProblem2P2C<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
 using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -132,7 +131,6 @@ Adaptive2p2c2d(TimeManager &timeManager, const GridView& gridView) :
     ParentType(timeManager, gridView),
             debugWriter_(gridView, "gridAfterAdapt")
 {
-    this->setGrid(GridCreator::grid());
     this->setName(getParam<std::string>("Problem.SimulationName"));
     this->setOutputInterval(getParam<int>("Problem.OutputInterval"));
 }

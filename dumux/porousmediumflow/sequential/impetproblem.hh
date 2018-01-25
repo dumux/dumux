@@ -85,6 +85,7 @@ private:
 
     using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
     //private!! copy constructor
     IMPETProblem(const IMPETProblem&)
@@ -106,6 +107,8 @@ public:
           outputTimeInterval_(0.0),
           vtkOutputLevel_(-1)
     {
+        setGrid(GridCreator::grid());
+
         // calculate the bounding box of the grid view
         using std::min;
         using std::max;

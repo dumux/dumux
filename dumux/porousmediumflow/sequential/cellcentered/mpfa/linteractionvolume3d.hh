@@ -117,7 +117,6 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
 
     enum
@@ -161,16 +160,17 @@ public:
     //! Constructs a FvMpfaL3dInteractionVolume object
     /**
      */
-    FvMpfaL3dInteractionVolume() :
-        normal_(FieldVectorVector(DimVector(0.0))),
-        facePos_(DimVector(0.0)),
-        edgePos_((DimVector(0.0))),
-        faceArea_(0.0),
-        faceType_(fluxFacesTotalNum, inside),
-        indexOnElement_(IndexVector(0.0)),
-        elements_(subVolumeTotalNum),
-        centerVertexPos_(0),
-        elementNum_(0)
+    FvMpfaL3dInteractionVolume(const Grid& grid)
+    : grid_(&grid)
+    , normal_(FieldVectorVector(DimVector(0.0)))
+    , facePos_(DimVector(0.0))
+    , edgePos_((DimVector(0.0)))
+    , faceArea_(0.0)
+    , faceType_(fluxFacesTotalNum, inside)
+    , indexOnElement_(IndexVector(0.0))
+    , elements_(subVolumeTotalNum)
+    , centerVertexPos_(0)
+    , elementNum_(0)
     {}
 
     //! Reset the interaction volume (deletes stored data)
@@ -380,7 +380,7 @@ public:
     Element getSubVolumeElement(int subVolumeIdx)
     {
         if (hasSubVolumeElement(subVolumeIdx))
-            return GridCreator::grid().entity(elements_[subVolumeIdx][0]);
+            return grid_->entity(elements_[subVolumeIdx][0]);
         else
         {
             std::cout<<"Problems when calling getSubVolumeElement("<<subVolumeIdx<<")\n";
@@ -581,9 +581,9 @@ public:
             if (elements_[i].size() > 0)
             {
             std::cout<<"element "<<i<<":\n";
-            std::cout<<"element level: "<<GridCreator::grid().entity(elements_[i][0]).level()<<"\n";
-            std::cout<<"element position: "<<GridCreator::grid().entity(elements_[i][0]).geometry().center()<<"\n";
-            std::cout<<"element volume: "<<GridCreator::grid().entity(elements_[i][0]).geometry().volume()<<"\n";
+            std::cout<<"element level: "<<grid_->entity(elements_[i][0]).level()<<"\n";
+            std::cout<<"element position: "<<grid_->entity(elements_[i][0]).geometry().center()<<"\n";
+            std::cout<<"element volume: "<<grid_->entity(elements_[i][0]).geometry().volume()<<"\n";
             std::cout<<"face indices on element: "<<indexOnElement_[i]<<"\n";
             std::cout<<"face normals on element: "<<normal_[i]<<"\n";
             std::cout<<"face areas on element: ";
@@ -686,6 +686,7 @@ public:
 //    }
 
 private:
+    const Grid* grid_;
     Dune::FieldVector<FieldVectorVector, subVolumeTotalNum> normal_;
     Dune::FieldVector<DimVector, fluxFacesTotalNum> facePos_;
     Dune::FieldVector<DimVector, fluxEdgesTotalNum> edgePos_;

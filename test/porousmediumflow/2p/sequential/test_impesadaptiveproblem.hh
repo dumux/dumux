@@ -129,8 +129,6 @@ public:
         if (!(haveParam("Restart") || haveParam("TimeManager.Restart")))
             GridCreator::grid().globalRefine(getParam<int>("GridAdapt.MaxLevel"));
 
-        this->setGrid(GridCreator::grid());
-
         this->setOutputInterval(10);
     }
 
