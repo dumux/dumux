@@ -418,7 +418,7 @@ public:
                 // call convienience problem interface function
                 asImp_().pointSource(pointSource, element, fvGeometry, elemVolVars, scv);
                 // at last take care about multiplying with the correct volume
-                pointSource /= volume;
+                pointSource /= volume*pointSource.embeddings();
                 // add the point source values to the local residual
                 source += pointSource.values();
             }
