@@ -471,6 +471,11 @@ public:
         if (enableGridFluxVarsCache)
             gridVariables.gridFluxVarsCache().updateElement(element, fvGeometry, curElemVolVars);
 
+        // evaluate additional derivatives that can be caused by coupling conditions
+        const auto additionalDofDeps = this->couplingManager().getAdditionalDofDependencies(domainIdI, globalI);
+        if (!additionalDofDeps.empty())
+            evalAdditionalDerivatives(additionalDofDeps, A, gridVariables);
+
         // return the original residual
         return origResiduals[0];
     }
@@ -562,6 +567,76 @@ public:
             this->couplingManager().updateSelf(domainIdI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
         else
             this->couplingManager().updateSelf(domainIdI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
+    }
+
+    template<class JacobianMatrixDiagBlock, class GridVariables>
+    void evalAdditionalDerivatives(const std::vector<std::size_t>& additionalDofDependencies,
+                                   JacobianMatrixDiagBlock& A, GridVariables& gridVariables)
+    {
+        const auto& fvGeometry = this->fvGeometry();
+        const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
+        auto&& curElemVolVars = this->curElemVolVars();
+        const auto& element = this->element();
+        const auto globalI = fvGridGeometry.elementMapper().index(element);
+        const auto& scv = fvGeometry.scv(globalI);
+
+        const auto& curVolVarsI = curElemVolVars[scv];
+        auto source = this->localResidual().computeSource(this->problem(), element, fvGeometry, curElemVolVars, scv);
+        source *= -scv.volume()*curVolVarsI.extrusionFactor();
+
+        for (const auto globalJ : additionalDofDependencies)
+        {
+            const auto& scvJ = fvGeometry.scv(globalJ);
+            auto& curVolVarsJ = ParentType::getVolVarAccess(gridVariables.curGridVolVars(), curElemVolVars, scvJ);
+            const auto& elementJ = fvGridGeometry.element(globalJ);
+
+            // save a copy of the original privars and vol vars in order
+            // to restore the original solution after deflection
+            const auto& curSol = this->curSol()[domainIdI];
+            const auto origPriVarsJ = curSol[globalJ];
+            const auto origVolVarsJ = curVolVarsJ;
+
+            // element solution container to be deflected
+            using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+            ElementSolutionVector elemSolJ(origPriVarsJ);
+
+            // derivatives with repect to the additional DOF we depend on
+            for (int pvIdx = 0; pvIdx < numEq; pvIdx++)
+            {
+                auto evalResiduals = [&](Scalar priVar)
+                {
+                    LocalResidualValues partialDerivTmp(0.0);
+                    // update the volume variables and the flux var cache
+                    elemSolJ[0][pvIdx] = priVar;
+                    this->couplingManager().updateCouplingContext(domainIdI, elementJ, elemSolJ[0], this->assembler());
+                    curVolVarsJ.update(elemSolJ, this->problem(), elementJ, scvJ);
+
+                    // calculate the residual with the deflected primary variables
+                    if (!this->elementIsGhost())
+                    {
+                        partialDerivTmp = this->localResidual().computeSource(this->problem(), element, fvGeometry, curElemVolVars, scv);
+                        partialDerivTmp *= -scv.volume()*curVolVarsI.extrusionFactor();
+                    }
+
+                    return partialDerivTmp;
+                };
+
+                // derive the residuals numerically
+                LocalResidualValues partialDeriv(0.0);
+                NumericDifferentiation::partialDerivative(evalResiduals, elemSolJ[0][pvIdx], partialDeriv, source);
+
+                // add the current partial derivatives to the global jacobian matrix
+                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                    A[globalI][globalJ][eqIdx][pvIdx] += partialDeriv[eqIdx];
+
+                // restore the original state of the dofs privars and the volume variables
+                elemSolJ[0][pvIdx] = origPriVarsJ[pvIdx];
+                curVolVarsJ = origVolVarsJ;
+
+                // restore the undeflected state of the coupling context
+                this->couplingManager().updateCouplingContext(domainIdI, elementJ, elemSolJ[0], this->assembler());
+            }
+        }
     }
 };
 

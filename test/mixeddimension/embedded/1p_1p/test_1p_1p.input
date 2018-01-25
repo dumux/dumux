@@ -10,18 +10,18 @@ MaxTimeStepDivisions = 2
 [Vessel.Grid]
 LowerLeft = 0 0 0
 UpperRight = 0 0 1
-Cells = 20
+Cells = 40
 
 [Tissue.Grid]
 #File = ./grids/cylinder.msh
 #Refinement = 10
 LowerLeft = -1 -1 0
 UpperRight = 1 1 1
-Cells = 20 20 20
+Cells = 40 40 40
 
 [Problem]
 Name = test_1p1p_embedded
-NormIntegrationOrder = 1
+NormIntegrationOrder = 2
 NormExcludeInnerBulk = true
 IntegrationOrder = 2
 EnableGravity = false
@@ -32,7 +32,7 @@ LiquidDensity = 1 # [kg/m^3]
 
 [SpatialParams]
 PermeabilityTissue = 1 # [m^2]
-Radius = 0.1 # [m]
+Radius = 0.33 # [m]
 
 [Vtk]
 AddVelocity = false
@@ -42,11 +42,8 @@ PressureInput = 2.0
 DeltaPressure = 1.0
 
 [Newton]
-MaxRelativeShift = 1e-5
+MaxRelativeShift = 1e-7
 MaxSteps = 10
 
 [LinearSolver]
 ResidualReduction = 1e-20
-
-[Assembly]
-BaseEps = 1e10
