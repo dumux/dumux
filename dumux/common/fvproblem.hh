@@ -62,6 +62,7 @@ class FVProblem
     using PointSourceHelper = typename GET_PROP_TYPE(TypeTag, PointSourceHelper);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
+    using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
 
     enum {
@@ -377,6 +378,17 @@ public:
      */
     void pointSourceAtPos(PointSource& pointSource,
                           const GlobalPosition &globalPos) const {}
+
+    /*!
+     * \brief Add source term derivative to the Jacobian
+     * \note Only needed in case of analytic differentiation and solution dependent sources
+     */
+    template<class MatrixBlock>
+    void addSourceDerivatives(MatrixBlock& block,
+                              const Element& element,
+                              const FVElementGeometry& fvGeometry,
+                              const VolumeVariables& volVars,
+                              const SubControlVolume& scv) const {}
 
     /*!
      * \brief Adds contribution of point sources for a specific sub control volume
