@@ -36,6 +36,7 @@
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/linear/matrixconverter.hh>
 #include <dumux/nonlinear/newtoncontroller.hh>
+#include <dumux/linear/linearsolveracceptsmultitypematrix.hh>
 
 namespace Dumux {
 
@@ -116,11 +117,13 @@ public:
     /*!
      * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
      *
-     * \throws Dumux::NumericalProblem if the linear solver didn't
+     * Throws Dumux::NumericalProblem if the linear solver didn't
      * converge.
-     * TODO: parallel
      *
-     * \param ls The linear solver to be used
+     * If the linear solver doesn't accept multitype matrices we copy the matrix
+     * into a 1x1 block BCRS matrix for solving.
+     *
+     * \param ls the linear solver
      * \param A The matrix of the linear system of equations
      * \param x The vector which solves the linear system
      * \param b The right hand side of the linear system
@@ -131,20 +134,11 @@ public:
                            SolutionVector& x,
                            SolutionVector& b)
     {
-        const auto& jac = A;
-        const auto& res = b;
-        using namespace Dune::Indices;
-        if (jac[_0][_0].N() < 28)
-        {
-            Dune::printmatrix(std::cout, jac[_0][_0], "", "", 15, 15);
-            Dune::printmatrix(std::cout, jac[_0][_1], "", "", 15, 15);
-            Dune::printmatrix(std::cout, jac[_1][_0], "", "", 15, 15);
-            Dune::printmatrix(std::cout, jac[_1][_1], "", "", 15, 15);
-            Dune::printvector(std::cout, res[_0], "", "", 15, 15);
-            Dune::printvector(std::cout, res[_1], "", "", 15, 15);
-        }
+        // check matrix sizes
+        assert(checkMatrix_(A) && "Sub blocks of MultiType matrix have wrong sizes!");
 
-        try {
+        try
+        {
             if (this->numSteps_ == 0)
             {
                 Scalar norm2 = b.two_norm2();
@@ -155,25 +149,34 @@ public:
                 this->initialResidual_ = sqrt(norm2);
             }
 
-            // TODO: Only do this is the linear solver really can't handle multitype matrices
-            // create the bcrs matrix the IterativeSolver backend can handle
-            const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
-            const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
-            auto y = bTmp; y = 0.0;
+            // solve by calling the appropriate implementation depending on whether the linear solver
+            // is capable of handling MultiType matrices or not
+            const bool converged = solveLinearSystem_(ls, A, x, b,
+                                                      std::integral_constant<bool, LinearSolverAcceptsMultiTypeMatrix<LinearSolver>::value>());
 
-            // solve
-            const bool converged = ls.template solve</*precondBlockLevel=*/2>(M, y, bTmp);
-
-            // copy back the result y into x
-            VectorConverter<SolutionVector>::retrieveValues(x, y);
+            // make sure all processes converged
+            int convergedRemote = converged;
+            if (this->comm().size() > 1)
+                convergedRemote = this->comm().min(converged);
 
             if (!converged) {
                 DUNE_THROW(NumericalProblem,
                            "Linear solver did not converge");
             }
+            else if (!convergedRemote) {
+                DUNE_THROW(NumericalProblem,
+                           "Linear solver did not converge on a remote process");
+            }
         }
         catch (const Dune::Exception &e) {
-            throw NumericalProblem(e.what());
+            // make sure all processes converged
+            int converged = 0;
+            if (this->comm().size() > 1)
+                converged = this->comm().min(converged);
+
+            NumericalProblem p;
+            p.message(e.what());
+            throw p;
         }
     }
 
@@ -277,6 +280,89 @@ public:
     }
 
 private:
+    /*!
+     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
+     *
+     * Throws Dumux::NumericalProblem if the linear solver didn't
+     * converge.
+     *
+     * Specialization for linear solvers that can handle MultiType matrices.
+     *
+     */
+    template<class LinearSolver, class JacobianMatrix, class SolutionVector>
+    bool solveLinearSystem_(LinearSolver& ls,
+                            JacobianMatrix& A,
+                            SolutionVector& x,
+                            SolutionVector& b,
+                            std::true_type)
+    {
+        // TODO: automatically derive the precondBlockLevel
+        return ls.template solve</*precondBlockLevel=*/2>(A, x, b);
+    }
+
+    /*!
+     * \brief Solve the linear system of equations \f$\mathbf{A}x - b = 0\f$.
+     *
+     * Throws Dumux::NumericalProblem if the linear solver didn't
+     * converge.
+     *
+     * Specialization for linear solvers that cannot handle MultiType matrices.
+     * We copy the matrix into a 1x1 block BCRS matrix before solving.
+     *
+     */
+    template<class LinearSolver, class JacobianMatrix, class SolutionVector>
+    bool solveLinearSystem_(LinearSolver& ls,
+                            JacobianMatrix& A,
+                            SolutionVector& x,
+                            SolutionVector& b,
+                            std::false_type)
+    {
+        // create the bcrs matrix the IterativeSolver backend can handle
+        const auto M = MatrixConverter<JacobianMatrix>::multiTypeToBCRSMatrix(A);
+
+        // get the new matrix sizes
+        const std::size_t numRows = M.N();
+        assert(numRows == M.M());
+
+        // create the vector the IterativeSolver backend can handle
+        const auto bTmp = VectorConverter<SolutionVector>::multiTypeToBlockVector(b);
+        assert(bTmp.size() == numRows);
+
+        // create a blockvector to which the linear solver writes the solution
+        using VectorBlock = typename Dune::FieldVector<Scalar, 1>;
+        using BlockVector = typename Dune::BlockVector<VectorBlock>;
+        BlockVector y(numRows);
+
+        // solve
+        const bool converged = ls.solve(M, y, bTmp);
+
+        // copy back the result y into x
+        if(converged)
+            VectorConverter<SolutionVector>::retrieveValues(x, y);
+
+        return converged;
+    }
+
+    //! helper method to assure the MultiType matrix's sub blocks have the correct sizes
+    template<class JacobianMatrix>
+    bool checkMatrix_(const JacobianMatrix& A)
+    {
+        bool matrixHasCorrectSize = true;
+        using namespace Dune::Hybrid;
+        using namespace Dune::Indices;
+        forEach(A, [&matrixHasCorrectSize](const auto& rowOfMultiTypeMatrix)
+        {
+            const auto numRowsLeftMostBlock = rowOfMultiTypeMatrix[_0].N();
+
+            forEach(rowOfMultiTypeMatrix, [&matrixHasCorrectSize, &numRowsLeftMostBlock](const auto& subBlock)
+            {
+                if (subBlock.N() != numRowsLeftMostBlock)
+                    matrixHasCorrectSize = false;
+            });
+        });
+        return matrixHasCorrectSize;
+    }
+
     std::shared_ptr<CouplingManager> couplingManager_;
 };
 

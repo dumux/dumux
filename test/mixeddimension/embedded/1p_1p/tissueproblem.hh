@@ -235,7 +235,7 @@ public:
                      const SubControlVolume &scv) const
     {
         // compute source at every integration point
-        const Scalar pressure3D = elemVolVars[scv].pressure();
+        const Scalar pressure3D = this->couplingManager().bulkPriVars(source.id())[Indices::pressureIdx];
         const Scalar pressure1D = this->couplingManager().lowDimPriVars(source.id())[Indices::pressureIdx];
 
         // calculate the source
