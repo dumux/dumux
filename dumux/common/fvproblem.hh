@@ -81,6 +81,9 @@ class FVProblem
                                     std::vector<PointSource> >;
 
 public:
+    //! export the type of the grid geometry
+    using GridGeometry = FVGridGeometry;
+
     /*!
      * \brief Constructor
      * \param fvGridGeometry The finite volume grid geometry
