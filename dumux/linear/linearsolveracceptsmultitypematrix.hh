@@ -29,54 +29,48 @@
 namespace Dumux {
 
 //! The default
-template<typename TypeTag, typename LinearSolver>
-struct LinearSolverAcceptsMultiTypeMatrixImpl
+template<typename LinearSolver>
+struct LinearSolverAcceptsMultiTypeMatrix
 { static constexpr bool value = true; };
 
-/*!
- * \ingroup Linear
- * \brief Trait checking if linear solvers accept Dune::MultiTypeBlockMatrix or we need to convert the matrix
- */
-template <typename TypeTag>
-using LinearSolverAcceptsMultiTypeMatrix = LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, typename GET_PROP_TYPE(TypeTag, LinearSolver)>;
 
 //! Solvers that don't accept multi-type matrices
 //! Those are all with ILU preconditioner that doesn't support the additional block level
 //! And the direct solvers that have BCRS Matrix hardcoded
 
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnBiCGSTABBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<ILUnBiCGSTABBackend>
 { static constexpr bool value = false; };
 
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnCGBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<ILUnCGBackend>
 { static constexpr bool value = false; };
 
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0BiCGSTABBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<ILU0BiCGSTABBackend>
 { static constexpr bool value = false; };
 
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0CGBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<ILU0CGBackend>
 { static constexpr bool value = false; };
 
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILU0RestartedGMResBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<ILU0RestartedGMResBackend>
 { static constexpr bool value = false; };
 
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, ILUnRestartedGMResBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<ILUnRestartedGMResBackend>
 { static constexpr bool value = false; };
 
 #if HAVE_SUPERLU
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, SuperLUBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<SuperLUBackend>
 { static constexpr bool value = false; };
 #endif // HAVE_SUPERLU
 
 #if HAVE_UMFPACK
-template<typename TypeTag>
-struct LinearSolverAcceptsMultiTypeMatrixImpl<TypeTag, UMFPackBackend>
+template<>
+struct LinearSolverAcceptsMultiTypeMatrix<UMFPackBackend>
 { static constexpr bool value = false; };
 #endif // HAVE_UMFPACK
 
