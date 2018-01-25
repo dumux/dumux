@@ -26,6 +26,7 @@
 
 #include <ctime>
 #include <iostream>
+#include <fstream>
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
@@ -34,6 +35,7 @@
 #include <dumux/common/properties.hh>
 #include <dumux/common/parameters.hh>
 #include <dumux/common/dumuxmessage.hh>
+#include <dumux/common/geometry/diameter.hh>
 #include <dumux/linear/seqsolverbackend.hh>
 #include <dumux/nonlinear/newtonmethod.hh>
 #include <dumux/assembly/fvassembler.hh>
@@ -45,10 +47,12 @@
 #include <dumux/multidomain/fvassembler.hh>
 #include <dumux/multidomain/newtoncontroller.hh>
 #include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanagersimple.hh>
+#include <dumux/mixeddimension/embedded/cellcentered/bboxtreecouplingmanager.hh>
 #include <dumux/mixeddimension/embedded/integrationpointsource.hh>
 
 #include "bloodflowproblem.hh"
 #include "tissueproblem.hh"
+#include "l2norm.hh"
 
 namespace Dumux {
 namespace Properties {
@@ -56,13 +60,15 @@ namespace Properties {
 SET_PROP(TissueCCTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TypeTag, TTAG(BloodFlowCCTypeTag)>;
-    using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
+    // using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
+    using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
 };
 
 SET_PROP(BloodFlowCCTypeTag, CouplingManager)
 {
     using Traits = MultiDomainTraits<TTAG(TissueCCTypeTag), TypeTag>;
-    using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
+    // using type = Dumux::CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
+    using type = Dumux::CCBBoxTreeEmbeddedCouplingManager<Traits>;
 };
 
 SET_TYPE_PROP(TissueCCTypeTag, PointSource, IntegrationPointSource<TypeTag>);
@@ -122,16 +128,14 @@ int main(int argc, char** argv) try
     constexpr auto lowDimIdx = Traits::template DomainIdx<1>();
 
     // the coupling manager
-    using CouplingManager = CCBBoxTreeEmbeddedCouplingManagerSimple<Traits>;
+    using CouplingManager = typename GET_PROP_TYPE(BulkTypeTag, CouplingManager);
     auto couplingManager = std::make_shared<CouplingManager>(bulkFvGridGeometry, lowDimFvGridGeometry);
 
     // the problem (initial and boundary conditions)
     using BulkProblem = typename GET_PROP_TYPE(BulkTypeTag, Problem);
     auto bulkProblem = std::make_shared<BulkProblem>(bulkFvGridGeometry, couplingManager);
-    bulkProblem->computePointSourceMap();
     using LowDimProblem = typename GET_PROP_TYPE(LowDimTypeTag, Problem);
     auto lowDimProblem = std::make_shared<LowDimProblem>(lowDimFvGridGeometry, couplingManager);
-    lowDimProblem->computePointSourceMap();
 
     // the solution vector
     Traits::SolutionVector sol;
@@ -142,6 +146,8 @@ int main(int argc, char** argv) try
     auto oldSol = sol;
 
     couplingManager->init(bulkProblem, lowDimProblem, sol);
+    bulkProblem->computePointSourceMap();
+    lowDimProblem->computePointSourceMap();
 
     // the grid variables
     using BulkGridVariables = typename GET_PROP_TYPE(BulkTypeTag, GridVariables);
@@ -169,26 +175,38 @@ int main(int argc, char** argv) try
     lowDimProblem->addVtkOutputFields(lowDimVtkWriter);
     lowDimVtkWriter.write(0.0);
 
+    // an output file for the L2-norm
+    std::ofstream outFile_;
+
+    // compute hmax of both domains
+    Scalar hMaxBulk = 0.0;
+    for (const auto& element : elements(bulkGridView))
+        hMaxBulk = std::max(hMaxBulk, diameter(element.geometry()));
+
+    Scalar hMaxLowDim = 0.0;
+    for (const auto& element : elements(lowDimGridView))
+        hMaxLowDim = std::max(hMaxLowDim, diameter(element.geometry()));
+
     // instantiate time loop
     auto timeLoop = std::make_shared<TimeLoop<Scalar>>(0.0, dt, tEnd);
     timeLoop->setMaxTimeStepSize(maxDt);
 
     // the assembler with time loop for instationary problem
-    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::analytic>;
+    using Assembler = MultiDomainFVAssembler<Traits, CouplingManager, DiffMethod::numeric>;
     auto assembler = std::make_shared<Assembler>(std::make_tuple(bulkProblem, lowDimProblem),
                                                  std::make_tuple(bulkFvGridGeometry, lowDimFvGridGeometry),
                                                  std::make_tuple(bulkGridVariables, lowDimGridVariables),
                                                  couplingManager, timeLoop);
 
     // the linear solver
-    using LinearSolver = SSORBiCGSTABBackend;
+    using LinearSolver = ILU0BiCGSTABBackend;
     auto linearSolver = std::make_shared<LinearSolver>();
 
     // the non-linear solver
     using NewtonController = MultiDomainNewtonController<double, CouplingManager>;
     auto newtonController = std::make_shared<NewtonController>(timeLoop, couplingManager);
-    // using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    // NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonMethod = NewtonMethod<NewtonController, Assembler, LinearSolver>;
+    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
 
     // time loop
     timeLoop->start();
@@ -200,30 +218,34 @@ int main(int argc, char** argv) try
         // try solving the non-linear system
         for (int i = 0; i < maxDivisions; ++i)
         {
-            // linearize & solve
-            assembler->assembleJacobianAndResidual(sol);
-            auto& b =  assembler->residual();
-            b *= -1.0;
-            linearSolver->template solve<2>(assembler->jacobian(), sol, b);
-            auto converged = true; //nonLinearSolver.solve(sol);
-            couplingManager->updateSolution(sol);
-            bulkGridVariables->update(sol[bulkIdx]);
-            lowDimGridVariables->update(sol[lowDimIdx]);
+            // assemble
+            // assembler->assembleJacobianAndResidual(sol);
+            // auto& b = assembler->residual(); b *= -1.0;
+
+            // solve
+            // linearSolver->template solve<2>(assembler->jacobian(), sol, b);
+            auto converged = nonLinearSolver.solve(sol);
+            // auto converged = true;
+
+            // update
+            // couplingManager->updateSolution(sol);
+            // bulkGridVariables->update(sol[bulkIdx]);
+            // lowDimGridVariables->update(sol[lowDimIdx]);
 
             const auto& jac = assembler->jacobian();
             const auto& res = assembler->residual();
             using namespace Dune::Indices;
-            // if (jac[_0][_0].N() < 28)
-            // {
-                // Dune::printmatrix(std::cout, jac[_0][_0], "", "", 15, 15);
-                // Dune::printmatrix(std::cout, jac[_0][_1], "", "", 15, 15);
-                // Dune::printmatrix(std::cout, jac[_1][_0], "", "", 15, 15);
-                // Dune::printmatrix(std::cout, jac[_1][_1], "", "", 15, 15);
-                // Dune::printvector(std::cout, res[_0], "", "", 15, 15);
-                // Dune::printvector(std::cout, res[_1], "", "", 15, 15);
-                // Dune::printvector(std::cout, sol[_0], "", "", 15, 15);
-                // Dune::printvector(std::cout, sol[_1], "", "", 15, 15);
-            // }
+            if (jac[_0][_0].N() < 28)
+            {
+                Dune::printmatrix(std::cout, jac[_0][_0], "", "", 15, 15);
+                Dune::printmatrix(std::cout, jac[_0][_1], "", "", 15, 15);
+                Dune::printmatrix(std::cout, jac[_1][_0], "", "", 15, 15);
+                Dune::printmatrix(std::cout, jac[_1][_1], "", "", 15, 15);
+                Dune::printvector(std::cout, res[_0], "", "", 15, 15);
+                Dune::printvector(std::cout, res[_1], "", "", 15, 15);
+                Dune::printvector(std::cout, sol[_0], "", "", 15, 15);
+                Dune::printvector(std::cout, sol[_1], "", "", 15, 15);
+            }
 
             if (converged)
                 break;
@@ -258,7 +280,25 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+        // timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+
+        // write the L2-norm to file
+        static const int order = getParam<Scalar>("Problem.NormIntegrationOrder");
+        auto norm1D = L2Norm<Scalar>::computeErrorNorm(*lowDimProblem, sol[lowDimIdx], order);
+        norm1D /= L2Norm<Scalar>::computeNormalization(*lowDimProblem, order);
+        auto norm3D = L2Norm<Scalar>::computeErrorNorm(*bulkProblem, sol[bulkIdx], order);
+        norm3D /= L2Norm<Scalar>::computeNormalization(*bulkProblem, order);
+
+        // ouput result to terminal
+        std::cout << "-----------------------------------------------------\n";
+        std::cout << " L2_1d: " << norm1D << " hmax_1d: " << hMaxLowDim << '\n'
+                  << " L2_3d: " << norm3D << " hmax_3d: " << hMaxBulk << '\n';
+        std::cout << "-----------------------------------------------------" << std::endl;
+
+        // ... and file.
+        outFile_.open("1p_1p_norm.log", std::ios::app);
+        outFile_ << hMaxBulk << " " << hMaxLowDim << " " << norm3D << " " << norm1D << '\n';
+        outFile_.close();
     }
 
     timeLoop->finalize(mpiHelper.getCollectiveCommunication());

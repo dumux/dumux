@@ -50,6 +50,13 @@ NEW_TYPE_TAG(BloodFlowCCTypeTag, INHERITS_FROM(CCTpfaModel, BloodFlowTypeTag));
 // Set the grid type
 SET_TYPE_PROP(BloodFlowTypeTag, Grid, Dune::FoamGrid<1, 3>);
 
+SET_BOOL_PROP(BloodFlowTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(BloodFlowTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(BloodFlowTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(BloodFlowTypeTag, SolutionDependentAdvection, false);
+SET_BOOL_PROP(BloodFlowTypeTag, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(BloodFlowTypeTag, SolutionDependentHeatConduction, false);
+
 // Set the problem property
 SET_TYPE_PROP(BloodFlowTypeTag, Problem, BloodFlowProblem<TypeTag>);
 
