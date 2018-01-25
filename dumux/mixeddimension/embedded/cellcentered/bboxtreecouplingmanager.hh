@@ -37,6 +37,9 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
+#include <dumux/common/properties.hh>
+#include <dumux/common/geometry/intersectingentities.hh>
+#include <dumux/multidomain/couplingmanager.hh>
 #include <dumux/mixeddimension/glue/glue.hh>
 #include <dumux/mixeddimension/embedded/cellcentered/pointsourcedata.hh>
 
@@ -49,24 +52,30 @@ namespace Dumux {
  *        Point sources on each integration point are computed by an AABB tree.
  *        Both domain are assumed to be discretized using a cc finite volume scheme.
  */
-template<class TypeTag>
+template<class MDTraits>
 class CCBBoxTreeEmbeddedCouplingManager
+: public CouplingManager<MDTraits, CCBBoxTreeEmbeddedCouplingManager<MDTraits>>
 {
-    using Scalar = MixedDimensionTraits::Scalar;
-    using PointSourceData = Dumux::PointSourceDataCircleAverage<MixedDimensionTraits>;
+    using Scalar = typename MDTraits::Scalar;
+    static constexpr auto bulkIdx = typename MDTraits::template DomainIdx<0>();
+    static constexpr auto lowDimIdx = typename MDTraits::template DomainIdx<1>();
+    using SolutionVector = typename MDTraits::SolutionVector;
+    using PointSourceData = Dumux::PointSourceDataCircleAverage<MDTraits>;
 
     // obtain the type tags of the sub problems
-    using BulkTypeTag = MixedDimensionTraits::BulkTypeTag;
-    using LowDimTypeTag = MixedDimensionTraits::LowDimTypeTag;
+    using BulkTypeTag = typename MDTraits::template SubDomainTypeTag<0>;
+    using LowDimTypeTag = typename MDTraits::template SubDomainTypeTag<1>;
 
     using BulkGridView = typename GET_PROP_TYPE(BulkTypeTag, GridView);
     using BulkProblem = typename GET_PROP_TYPE(BulkTypeTag, Problem);
     using BulkPointSource = typename GET_PROP_TYPE(BulkTypeTag, PointSource);
     using BulkPrimaryVariables = typename GET_PROP_TYPE(BulkTypeTag, PrimaryVariables);
+    using BulkNumEqVector = typename GET_PROP_TYPE(BulkTypeTag, NumEqVector);
     using BulkElementSolutionVector = typename GET_PROP_TYPE(BulkTypeTag, ElementSolutionVector);
     using BulkVolumeVariables = typename GET_PROP_TYPE(BulkTypeTag, VolumeVariables);
     using BulkElementVolumeVariables = typename GET_PROP_TYPE(BulkTypeTag, ElementVolumeVariables);
-    using BulkFVElementGeometry = typename GET_PROP_TYPE(BulkTypeTag, FVElementGeometry);
+    using BulkFVGridGeometry = typename GET_PROP_TYPE(BulkTypeTag, FVGridGeometry);
+    using BulkFVElementGeometry = typename BulkFVGridGeometry::LocalView;
     using BulkElementBoundaryTypes = typename GET_PROP_TYPE(BulkTypeTag, ElementBoundaryTypes);
     using BulkElementFluxVariablesCache = typename GET_PROP_TYPE(BulkTypeTag, ElementFluxVariablesCache);
     using BulkElement = typename BulkGridView::template Codim<0>::Entity;
@@ -75,9 +84,12 @@ class CCBBoxTreeEmbeddedCouplingManager
     using LowDimProblem = typename GET_PROP_TYPE(LowDimTypeTag, Problem);
     using LowDimPointSource = typename GET_PROP_TYPE(LowDimTypeTag, PointSource);
     using LowDimPrimaryVariables = typename GET_PROP_TYPE(LowDimTypeTag, PrimaryVariables);
+    using LowDimNumEqVector = typename GET_PROP_TYPE(LowDimTypeTag, NumEqVector);
+    using LowDimElementSolutionVector = typename GET_PROP_TYPE(LowDimTypeTag, ElementSolutionVector);
     using LowDimVolumeVariables = typename GET_PROP_TYPE(LowDimTypeTag, VolumeVariables);
     using LowDimElementVolumeVariables = typename GET_PROP_TYPE(LowDimTypeTag, ElementVolumeVariables);
-    using LowDimFVElementGeometry = typename GET_PROP_TYPE(LowDimTypeTag, FVElementGeometry);
+    using LowDimFVGridGeometry = typename GET_PROP_TYPE(LowDimTypeTag, FVGridGeometry);
+    using LowDimFVElementGeometry = typename LowDimFVGridGeometry::LocalView;
     using LowDimElementBoundaryTypes = typename GET_PROP_TYPE(LowDimTypeTag, ElementBoundaryTypes);
     using LowDimElementFluxVariablesCache = typename GET_PROP_TYPE(LowDimTypeTag, ElementFluxVariablesCache);
     using LowDimElement = typename LowDimGridView::template Codim<0>::Entity;
@@ -89,40 +101,57 @@ class CCBBoxTreeEmbeddedCouplingManager
     };
 
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
-public:
 
+public:
     /*!
      * \brief Constructor
      */
-    CCBBoxTreeEmbeddedCouplingManager(BulkProblem& bulkProblem, LowDimProblem& lowDimProblem)
-    : bulkProblem_(bulkProblem), lowDimProblem_(lowDimProblem)
+    CCBBoxTreeEmbeddedCouplingManager(std::shared_ptr<const BulkFVGridGeometry> bulkFvGridGeometry,
+                                      std::shared_ptr<const LowDimFVGridGeometry> lowDimFvGridGeometry)
     {
+
         // Check if we are using the cellcentered method in both domains
         static_assert(lowDimDim == 1, "The bounding box coupling manager only works with one-dimensional low-dim grids");
-        computePointSourceData();
-        glue_ = std::make_shared<CCMultiDimensionGlue<TypeTag>>(bulkProblem(), lowDimProblem());
-        computeLowDimVolumeFractions();
+
+        using GlueType = CCMixedDimensionGlue<BulkGridView, LowDimGridView>;
+        glue_ = std::make_shared<GlueType>();
     }
 
     /*!
-     * \brief Methods to be accessed by the coupled problem
+     * \brief Methods to be accessed by main
      */
     // \{
 
-    /*!
-     * \brief Update after the grid has changed
-     */
-    void update()
+    void init(std::shared_ptr<BulkProblem> bulkProblem,
+              std::shared_ptr<LowDimProblem> lowDimProblem,
+              const SolutionVector& curSol)
     {
+        curSol_ = curSol;
+        bulkProblem_ = bulkProblem;
+        lowDimProblem_ = lowDimProblem;
+
         computePointSourceData();
         computeLowDimVolumeFractions();
     }
+
+    /*!
+     * \brief Update the solution vector before assembly
+     */
+    void updateSolution(const SolutionVector& curSol)
+    { curSol_ = curSol; }
+
+    // \}
+
+    /*!
+     * \brief Methods to be accessed by the assembly
+     */
+    // \{
 
     /*!
      * \brief The bulk coupling stencil, i.e. which low-dimensional dofs
      *        the given bulk element dof depends on.
      */
-    const std::vector<std::size_t>& couplingStencil(const BulkElement& element) const
+    const std::vector<std::size_t>& couplingStencil(const BulkElement& element, Dune::index_constant<1> lowDimIdx) const
     {
         const std::size_t eIdx = bulkProblem().fvGridGeometry().elementMapper().index(element);
         if (bulkCouplingStencils_.count(eIdx))
@@ -135,7 +164,7 @@ public:
      * \brief The low dim coupling stencil, i.e. which bulk dofs
      *        the given low dimensional element dof depends on.
      */
-    const std::vector<std::size_t>& couplingStencil(const LowDimElement& element) const
+    const std::vector<std::size_t>& couplingStencil(const LowDimElement& element, Dune::index_constant<0> bulkIdx) const
     {
         const std::size_t eIdx = lowDimProblem().fvGridGeometry().elementMapper().index(element);
         if (lowDimCouplingStencils_.count(eIdx))
@@ -146,12 +175,12 @@ public:
 
     //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
     //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
-    BulkPrimaryVariables evalCouplingResidual(const BulkElement& element,
-                                              const BulkFVElementGeometry& fvGeometry,
-                                              const BulkElementVolumeVariables& curElemVolVars,
-                                              const BulkElementBoundaryTypes& elemBcTypes,
-                                              const BulkElementFluxVariablesCache& elemFluxVarsCache,
-                                              const LowDimElement& lowDimElement)
+    BulkNumEqVector evalCouplingResidual(const BulkElement& element,
+                                         const BulkFVElementGeometry& fvGeometry,
+                                         const BulkElementVolumeVariables& curElemVolVars,
+                                         const BulkElementBoundaryTypes& elemBcTypes,
+                                         const BulkElementFluxVariablesCache& elemFluxVarsCache,
+                                         const LowDimElement& lowDimElement)
     {
         const auto bulkElementIdx = bulkProblem().fvGridGeometry().elementMapper().index(element);
         auto&& scv = fvGeometry.scv(bulkElementIdx);
@@ -162,18 +191,105 @@ public:
 
     //! evaluate coupling residual for the derivative low dim DOF with respect to bulk DOF
     //! we only need to evaluate the part of the residual that will be influence by the bulk DOF
-    LowDimPrimaryVariables evalCouplingResidual(const LowDimElement& element,
-                                                const LowDimFVElementGeometry& fvGeometry,
-                                                const LowDimElementVolumeVariables& curElemVolVars,
-                                                const LowDimElementBoundaryTypes& elemBcTypes,
-                                                const LowDimElementFluxVariablesCache& elemFluxVarsCache,
-                                                const BulkElement& bulkElement)
+    LowDimNumEqVector evalCouplingResidual(const LowDimElement& element,
+                                           const LowDimFVElementGeometry& fvGeometry,
+                                           const LowDimElementVolumeVariables& curElemVolVars,
+                                           const LowDimElementBoundaryTypes& elemBcTypes,
+                                           const LowDimElementFluxVariablesCache& elemFluxVarsCache,
+                                           const BulkElement& bulkElement)
     {
         const auto lowDimElementIdx = lowDimProblem().fvGridGeometry().elementMapper().index(element);
         auto&& scv = fvGeometry.scv(lowDimElementIdx);
         auto couplingSource = lowDimProblem().scvPointSources(element, fvGeometry, curElemVolVars, scv);
         couplingSource *= -scv.volume()*curElemVolVars[scv].extrusionFactor();
         return couplingSource;
+    }
+
+    //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
+    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
+    template<std::size_t i, class MatrixBlock>
+    void addCouplingDerivatives(Dune::index_constant<i> domainId,
+                                MatrixBlock& Aij,
+                                const BulkElement& element,
+                                const BulkFVElementGeometry& fvGeometry,
+                                const BulkElementVolumeVariables& curElemVolVars,
+                                const LowDimElement& lowDimElement)
+    {
+        const auto bulkElementIdx = bulkProblem().fvGridGeometry().elementMapper().index(element);
+
+        auto key = std::make_pair(bulkElementIdx, 0);
+        if (bulkProblem().pointSourceMap().count(key))
+        {
+            // call the solDependent function. Herein the user might fill/add values to the point sources
+            // we make a copy of the local point sources here
+            auto pointSources = bulkProblem().pointSourceMap().at(key);
+
+            // add the point source values to the local residual (negative is sign convention for source term)
+            for (const auto& source : pointSources)
+                Aij[0][0] -= pointSourceDerivative(source, domainId, lowDimIdx);
+        }
+    }
+
+    //! evaluate coupling residual for the derivative bulk DOF with respect to low dim DOF
+    //! we only need to evaluate the part of the residual that will be influence by the low dim DOF
+    template<std::size_t i, class MatrixBlock>
+    void addCouplingDerivatives(Dune::index_constant<i> domainId,
+                                MatrixBlock& Aij,
+                                const LowDimElement& element,
+                                const LowDimFVElementGeometry& fvGeometry,
+                                const LowDimElementVolumeVariables& curElemVolVars,
+                                const BulkElement& bulkElement)
+    {
+        const auto lowDimElementIdx = lowDimProblem().fvGridGeometry().elementMapper().index(element);
+        auto key = std::make_pair(lowDimElementIdx, 0);
+        if (lowDimProblem().pointSourceMap().count(key))
+        {
+            // call the solDependent function. Herein the user might fill/add values to the point sources
+            // we make a copy of the local point sources here
+            auto pointSources = lowDimProblem().pointSourceMap().at(key);
+
+            // add the point source values to the local residual (negative is sign convention for source term)
+            for (const auto& source : pointSources)
+                Aij[0][0] -= pointSourceDerivative(source, domainId, bulkIdx);
+        }
+    }
+
+    //! helper function for the point source derivative (di/dj)
+    template<std::size_t i, std::size_t j, class PointSource>
+    Scalar pointSourceDerivative(const PointSource& source, Dune::index_constant<i> idI, Dune::index_constant<j> idJ) const
+    {
+        constexpr Scalar sign = (i == j) ? -1.0 : 1.0;
+        // calculate the source derivative
+        const Scalar radius = this->radius(source.id());
+        const Scalar beta = 2*M_PI/(2*M_PI + std::log(radius));
+        return sign*beta*source.quadratureWeight()*source.integrationElement()/source.embeddings();
+    }
+
+    /*!
+     * \brief Bind the coupling context
+     */
+    template<class Element, class Assembler>
+    void bindCouplingContext(const Element& element, const Assembler& assembler)
+    {}
+
+    /*!
+     * \brief Update the coupling context
+     */
+    template<std::size_t i, class Assembler>
+    void updateCouplingContext(Dune::index_constant<i> domainId, const BulkElement& element, const BulkPrimaryVariables& priVars, const Assembler& assembler)
+    {
+        const auto eIdx = bulkProblem().fvGridGeometry().elementMapper().index(element);
+        curSol_[bulkIdx][eIdx] = priVars;
+    }
+
+    /*!
+     * \brief Update the coupling context
+     */
+    template<std::size_t i, class Assembler>
+    void updateCouplingContext(Dune::index_constant<i> domainId, const LowDimElement& element, const LowDimPrimaryVariables& priVars, const Assembler& assembler)
+    {
+        const auto eIdx = lowDimProblem().fvGridGeometry().elementMapper().index(element);
+        curSol_[lowDimIdx][eIdx] = priVars;
     }
 
     // \}
@@ -187,10 +303,11 @@ public:
      * \param order The order of the quadrature rule for integration of sources over an intersection
      * \param verbose If the point source computation is verbose
      */
-    void computePointSourceData(std::size_t order = 1, bool verbose = false)
+    void computePointSourceData(std::size_t order = 1,
+                                bool verbose = false)
     {
         // Initialize the bulk bounding box tree
-        const auto& bulkTree = this->bulkProblem().fvGridGeometry().boundingBoxTree();
+        const auto& bulkTree = bulkProblem().fvGridGeometry().boundingBoxTree();
 
         // initilize the maps
         // do some logging and profiling
@@ -202,13 +319,13 @@ public:
         clear();
 
         // iterate over all lowdim elements
-        for (const auto& lowDimElement : elements(this->lowDimGridView()))
+        for (const auto& lowDimElement : elements(lowDimGridView()))
         {
             // get the Gaussian quadrature rule for the low dim element
-            auto lowDimGeometry = lowDimElement.geometry();
+            const auto lowDimGeometry = lowDimElement.geometry();
             const auto& quad = Dune::QuadratureRules<Scalar, lowDimDim>::rule(lowDimGeometry.type(), order);
 
-            const std::size_t lowDimElementIdx = this->lowDimProblem().elementMapper().index(lowDimElement);
+            const auto lowDimElementIdx = lowDimProblem().fvGridGeometry().elementMapper().index(lowDimElement);
 
             // apply the Gaussian quadrature rule and define point sources at each quadrature point
             // note that the approximation is not optimal if
@@ -222,7 +339,7 @@ public:
                 // global position of the quadrature point
                 const auto globalPos = lowDimGeometry.global(qp.position());
 
-                auto bulkElementIndices = bulkTree.computeEntityCollisions(globalPos);
+                const auto bulkElementIndices = intersectingEntities(globalPos, bulkTree);
 
                 // do not add a point source if the qp is outside of the 3d grid
                 // this is equivalent to having a source of zero for that qp
@@ -233,21 +350,21 @@ public:
                 // get circle average connectivity and interpolation data
                 //////////////////////////////////////////////////////////
 
-                auto numIp = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, int, MixedDimension, NumCircleSegments);
+                static const auto numIp = getParam<int>("MixedDimension.NumCircleSegments");
                 const auto radius = this->lowDimProblem().spatialParams().radius(lowDimElementIdx);
                 const auto normal = lowDimGeometry.corner(1)-lowDimGeometry.corner(0);
-                auto length = 2*M_PI*radius/numIp;
+                const auto length = 2*M_PI*radius/numIp;
 
-                auto circlePoints = this->getCirclePoints_(globalPos, normal, radius, numIp);
+                const auto circlePoints = getCirclePoints_(globalPos, normal, radius, numIp);
                 std::vector<Scalar> circleIpWeight;
                 std::vector<std::size_t> circleStencil;
                 for (const auto& p : circlePoints)
                 {
-                    auto bulkElementIndices = bulkTree.computeEntityCollisions(p);
-                    if (bulkElementIndices.empty())
+                    const auto circleBulkElementIndices = intersectingEntities(p, bulkTree);
+                    if (circleBulkElementIndices.empty())
                         continue;
 
-                    for (auto bulkElementIdx : bulkElementIndices)
+                    for (auto bulkElementIdx : circleBulkElementIndices)
                     {
                         circleStencil.push_back(bulkElementIdx);
                         circleIpWeight.push_back(length);
@@ -255,9 +372,9 @@ public:
                 }
 
                 // export low dim circle stencil
-                lowDimCircleStencils_[lowDimElementIdx].insert(lowDimCircleStencils_[lowDimElementIdx].end(),
-                                                               circleStencil.begin(),
-                                                               circleStencil.end());
+                lowDimCouplingStencils_[lowDimElementIdx].insert(lowDimCouplingStencils_[lowDimElementIdx].end(),
+                                                                 circleStencil.begin(),
+                                                                 circleStencil.end());
 
                 for (auto bulkElementIdx : bulkElementIndices)
                 {
@@ -265,10 +382,10 @@ public:
                     const auto ie = lowDimGeometry.integrationElement(qp.position());
                     const auto qpweight = qp.weight();
 
-                    this->bulkPointSources().emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({bulkElementIdx}));
-                    this->bulkPointSources().back().setEmbeddings(bulkElementIndices.size());
-                    this->lowDimPointSources().emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
-                    this->lowDimPointSources().back().setEmbeddings(bulkElementIndices.size());
+                    bulkPointSources_.emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({bulkElementIdx}));
+                    bulkPointSources_.back().setEmbeddings(bulkElementIndices.size());
+                    lowDimPointSources_.emplace_back(globalPos, id, qpweight, ie, std::vector<std::size_t>({lowDimElementIdx}));
+                    lowDimPointSources_.back().setEmbeddings(bulkElementIndices.size());
 
                     // pre compute additional data used for the evaluation of
                     // the actual solution dependent source term
@@ -292,7 +409,7 @@ public:
             }
         }
 
-        // make the circle stencils unique
+        // make the circle stencil unique
         for (auto&& stencil : bulkCircleStencils_)
         {
             std::sort(stencil.second.begin(), stencil.second.end());
@@ -302,26 +419,16 @@ public:
                                  stencil.second.end());
         }
 
-        for (auto&& stencil : lowDimCircleStencils_)
-        {
-            std::sort(stencil.second.begin(), stencil.second.end());
-            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
-        }
-
-        // coupling stencils
-        for (auto&& stencil : bulkCouplingStencils_)
-        {
-            std::sort(stencil.second.begin(), stencil.second.end());
-            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
-        }
-
-        // the low dim coupling stencil
+        // low dim coupling stencil
         for (auto&& stencil : lowDimCouplingStencils_)
         {
-            // add the circle stencil to the coupling stencil
-            stencil.second.insert(stencil.second.end(),
-                                  lowDimCircleStencils_.at(stencil.first).begin(),
-                                  lowDimCircleStencils_.at(stencil.first).end());
+            std::sort(stencil.second.begin(), stencil.second.end());
+            stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
+        }
+
+        // bulk coupling stencils
+        for (auto&& stencil : bulkCouplingStencils_)
+        {
             std::sort(stencil.second.begin(), stencil.second.end());
             stencil.second.erase(std::unique(stencil.second.begin(), stencil.second.end()), stencil.second.end());
         }
@@ -332,11 +439,8 @@ public:
     //! Compute the low dim volume fraction in the bulk domain cells
     void computeLowDimVolumeFractions()
     {
-        // intersect the bounding box trees
-        glue_->build();
-
         // resize the storage vector
-        lowDimVolumeInBulkElement_.resize(bulkProblem().gridView().size(0));
+        lowDimVolumeInBulkElement_.resize(bulkGridView().size(0));
 
         // compute the low dim volume fractions
         for (const auto& is : intersections(*glue_))
@@ -344,14 +448,14 @@ public:
             // all inside elements are identical...
             const auto& inside = is.inside(0);
             const auto intersectionGeometry = is.geometry();
-            const std::size_t lowDimElementIdx = lowDimProblem().elementMapper().index(inside);
+            const std::size_t lowDimElementIdx = lowDimProblem().fvGridGeometry().elementMapper().index(inside);
 
             // compute the volume the low-dim domain occupies in the bulk domain if it were full-dimensional
             const auto radius = lowDimProblem().spatialParams().radius(lowDimElementIdx);
             for (std::size_t outsideIdx = 0; outsideIdx < is.neighbor(0); ++outsideIdx)
             {
                 const auto& outside = is.outside(outsideIdx);
-                const std::size_t bulkElementIdx = bulkProblem().elementMapper().index(outside);
+                const std::size_t bulkElementIdx = bulkProblem().fvGridGeometry().elementMapper().index(outside);
                 lowDimVolumeInBulkElement_[bulkElementIdx] += intersectionGeometry.volume()*M_PI*radius*radius;
             }
         }
@@ -394,37 +498,37 @@ public:
     //! Return a reference to the bulk problem
     const BulkProblem& bulkProblem() const
     {
-        return bulkProblem_;
+        return *bulkProblem_;
     }
 
     //! Return a reference to the low dimensional problem
     const LowDimProblem& lowDimProblem() const
     {
-        return lowDimProblem_;
+        return *lowDimProblem_;
     }
 
     //! Return a reference to the bulk problem
     BulkProblem& bulkProblem()
     {
-        return bulkProblem_;
+        return *bulkProblem_;
     }
 
     //! Return a reference to the low dimensional problem
     LowDimProblem& lowDimProblem()
     {
-        return lowDimProblem_;
+        return *lowDimProblem_;
     }
 
     //! Return a reference to the bulk problem
     const BulkGridView& bulkGridView() const
     {
-        return bulkProblem().gridView();
+        return bulkProblem().fvGridGeometry().gridView();
     }
 
     //! Return a reference to the low dimensional problem
     const LowDimGridView& lowDimGridView() const
     {
-        return lowDimProblem().gridView();
+        return lowDimProblem().fvGridGeometry().gridView();
     }
 
     //! Return a reference to the point sources
@@ -443,53 +547,53 @@ public:
     BulkPrimaryVariables bulkPriVars(std::size_t id) const
     {
         auto& data = pointSourceData_[id];
-        return data.interpolateBulk(bulkProblem().model().curSol());
+        return data.interpolateBulk(curSol_[bulkIdx]);
     }
 
     //! Return data for a low dim point source with the identifier id
     LowDimPrimaryVariables lowDimPriVars(std::size_t id) const
     {
         auto& data = pointSourceData_[id];
-        return data.interpolateLowDim(lowDimProblem().model().curSol());
+        return data.interpolateLowDim(curSol_[lowDimIdx]);
     }
 
-    //! Compute bulk volume variables for the identifier id
-    BulkVolumeVariables bulkVolVars(std::size_t id) const
-    {
-        // use circle interpolated data and construct volVar object for the interpolated privars
-        auto& data = pointSourceData_[id];
-        auto bulkPriVars = data.interpolateBulk(bulkProblem().model().curSol());
+    // //! Compute bulk volume variables for the identifier id
+    // BulkVolumeVariables bulkVolVars(std::size_t id) const
+    // {
+    //     // use circle interpolated data and construct volVar object for the interpolated privars
+    //     auto& data = pointSourceData_[id];
+    //     auto bulkPriVars = data.interpolateBulk(bulkProblem().model().curSol());
+    //
+    //     const auto element = bulkProblem().model().fvGridGeometry().element(data.bulkElementIdx());
+    //     auto fvGeometry = localView(bulkProblem().model().fvGridGeometry());
+    //     fvGeometry.bindElement(element);
+    //
+    //     BulkVolumeVariables volVars;
+    //     volVars.update(BulkElementSolutionVector(bulkPriVars),
+    //                    bulkProblem(),
+    //                    element,
+    //                    fvGeometry.scv(data.bulkElementIdx()));
+    //
+    //     return volVars;
+    // }
 
-        const auto element = bulkProblem().model().fvGridGeometry().element(data.bulkElementIdx());
-        auto fvGeometry = localView(bulkProblem().model().fvGridGeometry());
-        fvGeometry.bindElement(element);
-
-        BulkVolumeVariables volVars;
-        volVars.update(BulkElementSolutionVector(bulkPriVars),
-                       bulkProblem(),
-                       element,
-                       fvGeometry.scv(data.bulkElementIdx()));
-
-        return volVars;
-    }
-
-    //! Compute lowDim volume variables for the identifier id
-    LowDimVolumeVariables lowDimVolVars(std::size_t id) const
-    {
-        const auto& data = pointSourceData_[id];
-        const auto element = lowDimProblem().model().fvGridGeometry().element(data.lowDimElementIdx());
-        auto fvGeometry = localView(lowDimProblem().model().fvGridGeometry());
-        fvGeometry.bindElement(element);
-
-        const auto& curSol = lowDimProblem().model().curSol();
-        LowDimVolumeVariables volVars;
-        volVars.update(lowDimProblem().model().elementSolution(element, curSol),
-                       lowDimProblem(),
-                       element,
-                       fvGeometry.scv(data.lowDimElementIdx()));
-
-        return volVars;
-    }
+    // //! Compute lowDim volume variables for the identifier id
+    // LowDimVolumeVariables lowDimVolVars(std::size_t id) const
+    // {
+    //     const auto& data = pointSourceData_[id];
+    //     const auto element = lowDimProblem().model().fvGridGeometry().element(data.lowDimElementIdx());
+    //     auto fvGeometry = localView(lowDimProblem().model().fvGridGeometry());
+    //     fvGeometry.bindElement(element);
+    //
+    //     const auto& curSol = lowDimProblem().model().curSol();
+    //     LowDimVolumeVariables volVars;
+    //     volVars.update(lowDimProblem().model().elementSolution(element, curSol),
+    //                    lowDimProblem(),
+    //                    element,
+    //                    fvGeometry.scv(data.lowDimElementIdx()));
+    //
+    //     return volVars;
+    // }
     // \}
 
     //! Clear all internal data members
@@ -503,8 +607,12 @@ public:
         idCounter_ = 0;
     }
 
-    const std::vector<std::size_t>& getAdditionalDofDependencies(std::size_t bulkElementIdx) const
+    const std::vector<std::size_t>& getAdditionalDofDependencies(Dune::index_constant<0> bulkDomain, std::size_t bulkElementIdx) const
     { return bulkCircleStencils_.count(bulkElementIdx) ? bulkCircleStencils_.at(bulkElementIdx) : emptyStencil_; }
+
+
+    const std::vector<std::size_t>& getAdditionalDofDependencies(Dune::index_constant<1> lowDimDomain, std::size_t lowDimElementIdx) const
+    { return emptyStencil_; }
 
 protected:
     //! Return reference to point source data vector member
@@ -582,8 +690,8 @@ private:
         return points;
     }
 
-    BulkProblem& bulkProblem_;
-    LowDimProblem& lowDimProblem_;
+    std::shared_ptr<BulkProblem> bulkProblem_;
+    std::shared_ptr<LowDimProblem> lowDimProblem_;
 
     std::vector<BulkPointSource> bulkPointSources_;
     std::vector<LowDimPointSource> lowDimPointSources_;
@@ -596,16 +704,23 @@ private:
 
      // circle stencils
     std::unordered_map<std::size_t, std::vector<std::size_t> > bulkCircleStencils_;
-    std::unordered_map<std::size_t, std::vector<std::size_t> > lowDimCircleStencils_;
 
     //! vector for the volume fraction of the lowdim domain in the bulk domain cells
     std::vector<Scalar> lowDimVolumeInBulkElement_;
 
     //! id generator for point sources
-    std::size_t idCounter_;
+    std::size_t idCounter_ = 0;
 
     //! The glue object
-    std::shared_ptr<CCMultiDimensionGlue<TypeTag>> glue_;
+    std::shared_ptr<CCMixedDimensionGlue<BulkGridView, LowDimGridView>> glue_;
+
+    ////////////////////////////////////////////////////////////////////////////
+    //! The coupling context
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    //! TODO: this is the simplest context -> just the solutionvector
+    ////////////////////////////////////////////////////////////////////////////
+    SolutionVector curSol_;
 };
 
 } // end namespace Dumux
