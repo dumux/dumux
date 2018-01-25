@@ -195,7 +195,7 @@ public:
         // obtain the corresponding volvars in the coupling context (store copy)
         const auto lowDimElementIndex = lowDimProblem().elementMapper().index(lowDimElement);
         const auto idxInContext = findIndexInVector(couplingData.couplingStencil, lowDimElementIndex);
-        // const auto origVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
+        const auto origVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
         const auto& lowDimCurSol = lowDimProblem().model().curSol();
 
         // update volvars of the coupling context
@@ -213,8 +213,8 @@ public:
         for (const auto& scvf : scvfs(fvGeometry))
         {
             // if the scvf does not touch an interior boundary, skip the rest
-            if (!bulkProblem().model().globalFvGeometry().touchesInteriorBoundary(scvf))
-                continue;
+            // if (!bulkProblem().model().globalFvGeometry().touchesInteriorBoundary(scvf))
+            //     continue;
 
             if (bulkUseTpfaBoundary)
             {
@@ -233,7 +233,7 @@ public:
         }
 
         // restore the vol vars
-        // bulkCouplingContext_.lowDimVolVars[idxInContext] = origVolVars;
+        bulkCouplingContext_.lowDimVolVars[idxInContext] = origVolVars;
 
         // return the sum of the fluxes
         return flux;
@@ -261,7 +261,7 @@ public:
         const auto& bulkCurSol = bulkProblem().model().curSol();
 
         auto& bulkVolVars = lowDimCouplingContext_.bulkElemVolVars[bulkElementIndex];
-        // const auto origVolVars = bulkVolVars;
+        const auto origVolVars = bulkVolVars;
         bulkVolVars.update(bulkProblem().model().elementSolution(bulkElement, bulkCurSol),
                            bulkProblem(),
                            bulkElement,
@@ -273,8 +273,8 @@ public:
                                                             lowDimCouplingContext_.bulkElemVolVars);
 
         // update the volvars of the bulk coupling context (store original ones for reset)
-        const auto& couplingStencil = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex).couplingStencil;
-        const auto idxInContext = findIndexInVector(couplingStencil, lowDimCouplingContext_.lowDimElementIndex);
+        // const auto& couplingStencil = couplingMapper_.getBulkCouplingData(bulkCouplingContext_.bulkElementIndex).couplingStencil;
+        // const auto idxInContext = findIndexInVector(couplingStencil, lowDimCouplingContext_.lowDimElementIndex);
 
         // const auto origLowDimVolVars = bulkCouplingContext_.lowDimVolVars[idxInContext];
         // const auto& lowDimCurSol = lowDimProblem().model().curSol();
@@ -290,7 +290,7 @@ public:
         sources *= -1.0;
 
         // reset the corresponding volume variables in the coupling context
-        // bulkVolVars = origVolVars;
+        bulkVolVars = origVolVars;
 
         // restore the low dim vol vars
         // bulkCouplingContext_.lowDimVolVars[idxInContext] = origLowDimVolVars;
@@ -425,7 +425,7 @@ public:
             bulkCouplingContext_.lowDimVolVars[i].update(lowDimProblem().model().elementSolution(lowDimElement, lowDimCurSol),
                                                          lowDimProblem(),
                                                          lowDimElement,
-                                                         bulkCouplingContext_.lowDimFvGeometries[i].scv(lowDimElementIndex));
+                                                         bulkCouplingContext_.lowDimFvGeometries.back().scv(lowDimElementIndex));
         }
     }
 
