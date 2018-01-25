@@ -547,7 +547,7 @@ protected:
     }
 
     template<class JacobianAssembler, class SolutionVector>
-    void lineSearchUpdate_(const JacobianAssembler& assembler,
+    void lineSearchUpdate_(JacobianAssembler& assembler,
                            SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
