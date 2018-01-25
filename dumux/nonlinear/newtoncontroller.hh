@@ -206,7 +206,7 @@ public:
      * \param u The initial solution
      */
     template<class SolutionVector>
-    void newtonBegin(const SolutionVector &u)
+    void newtonBegin(const SolutionVector& u)
     {
         numSteps_ = 0;
     }
@@ -214,7 +214,8 @@ public:
     /*!
      * \brief Indicates the beginning of a Newton iteration.
      */
-    void newtonBeginStep()
+    template<class SolutionVector>
+    void newtonBeginStep(const SolutionVector& u)
     {
         lastShift_ = shift_;
         if (numSteps_ == 0)
@@ -546,7 +547,7 @@ protected:
     }
 
     template<class JacobianAssembler, class SolutionVector>
-    void lineSearchUpdate_(const JacobianAssembler& assembler,
+    void lineSearchUpdate_(JacobianAssembler& assembler,
                            SolutionVector &uCurrentIter,
                            const SolutionVector &uLastIter,
                            const SolutionVector &deltaU)
