@@ -1,4 +1,4 @@
-dune_symlink_to_source_files(FILES grids test_gridcreator_gmsh.input test_gridcreator_cake.input)
+add_input_file_links()
 
 dune_add_test(NAME test_gridcreator_gmsh
               SOURCES test_gridcreator_gmsh.cc
@@ -19,3 +19,12 @@ dune_add_test(NAME test_gridcreator_cake
                        --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_cake"
                        --files ${CMAKE_SOURCE_DIR}/test/references/cake-reference.vtu
                                ${CMAKE_CURRENT_BINARY_DIR}/cake-00000.vtu)
+
+dune_add_test(NAME test_gridcreator_subgrid
+              SOURCES test_gridcreator_subgrid.cc
+              CMAKE_GUARD dune-subgrid_FOUND
+              COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
+              CMD_ARGS --script fuzzy
+                       --command "${CMAKE_CURRENT_BINARY_DIR}/test_gridcreator_subgrid"
+                       --files ${CMAKE_SOURCE_DIR}/test/references/subgrid-reference.vtu
+                               ${CMAKE_CURRENT_BINARY_DIR}/subgrid_three.vtu)

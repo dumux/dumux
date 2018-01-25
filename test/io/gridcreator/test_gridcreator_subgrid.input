@@ -1,0 +1,12 @@
+SubGridOne.Problem.Name = one
+SubGridTwo.Problem.Name = two
+SubGridThree.Problem.Name = three
+
+[Grid]
+Positions0 = 0 1
+Positions1 = 0 1
+Cells0 = 1
+Cells1 = 1
+Refinement = 4
+
+WriteSubGridToVtk = true
