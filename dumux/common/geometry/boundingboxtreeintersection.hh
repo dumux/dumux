@@ -45,12 +45,13 @@ class BoundingBoxTreeIntersection
     using GlobalPosition = Dune::FieldVector<ctype, dimworld>;
 
 public:
+    template<class Corners>
     explicit BoundingBoxTreeIntersection(std::size_t a,
                                          std::size_t b,
-                                         std::vector<GlobalPosition>&& c)
+                                         Corners&& c)
     : a_(a)
     , b_(b)
-    , corners_(std::move(c))
+    , corners_(c.begin(), c.end())
     {
         static_assert(int(EntitySet0::dimensionworld) == int(EntitySet1::dimensionworld),
           "Can only store intersections of entity sets with the same world dimension");

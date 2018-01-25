@@ -145,7 +145,10 @@ void intersectingEntities(const BoundingBoxTree<EntitySet0>& treeA,
                                                             std::decay_t<decltype(geometryB)> >;
         typename IntersectionAlgorithm::IntersectionType intersection;
         if (IntersectionAlgorithm::intersection(geometryA, geometryB, intersection))
-            intersections.emplace_back(eIdxA, eIdxB, std::move(intersection));
+        {
+            for (int i = 0; i < intersection.size(); ++i)
+                intersections.emplace_back(eIdxA, eIdxB, std::move(intersection[i]));
+        }
     }
 
     // if we reached the leaf in treeA, just continue in treeB
