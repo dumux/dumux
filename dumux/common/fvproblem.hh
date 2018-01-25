@@ -25,6 +25,7 @@
 #define DUMUX_FV_PROBLEM_HH
 
 #include <memory>
+#include <map>
 
 #include <dune/common/version.hh>
 #include <dune/common/fvector.hh>
@@ -74,6 +75,9 @@ class FVProblem
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
 
     static constexpr bool isBox = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box;
+
+    using PointSourceMap = std::map<std::pair<std::size_t, std::size_t>,
+                                    std::vector<PointSource> >;
 
 public:
     /*!
@@ -418,7 +422,7 @@ public:
                 // call convienience problem interface function
                 asImp_().pointSource(pointSource, element, fvGeometry, elemVolVars, scv);
                 // at last take care about multiplying with the correct volume
-                pointSource /= volume;
+                pointSource /= volume*pointSource.embeddings();
                 // add the point source values to the local residual
                 source += pointSource.values();
             }
@@ -431,7 +435,7 @@ public:
      * \brief Compute the point source map, i.e. which scvs have point source contributions
      * \note Call this on the problem before assembly if you want to enable point sources set
      *       via the addPointSources member function.
-    */
+     */
     void computePointSourceMap()
     {
         // clear the given point source maps in case it's not empty
@@ -452,9 +456,15 @@ public:
     }
 
     /*!
+     * \brief Get the point source map. It stores the point sources per scv
+     */
+    const PointSourceMap& pointSourceMap() const
+    { return pointSourceMap_; }
+
+    /*!
      * \brief Applies the initial solution for all degrees of freedom of the grid.
      * \param sol the initial solution vector
-    */
+     */
     void applyInitialSolution(SolutionVector& sol) const
     {
         // set the initial values by forwarding to a specialized method
@@ -517,8 +527,8 @@ public:
      */
     Scalar extrusionFactorAtPos(const GlobalPosition &globalPos) const
     {
-        //! As a default, i.e. if the user's problem does not overload any extrusion factor method
-        //! return 1.0
+        // As a default, i.e. if the user's problem does not overload
+        // any extrusion factor method, return 1.0
         return 1.0;
     }
 
@@ -569,8 +579,7 @@ private:
     std::string problemName_;
 
     //! A map from an scv to a vector of point sources
-    std::map<std::pair<unsigned int, unsigned int>,
-             std::vector<PointSource> > pointSourceMap_;
+    PointSourceMap pointSourceMap_;
 };
 
 } // end namespace Dumux

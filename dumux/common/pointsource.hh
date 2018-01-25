@@ -115,14 +115,8 @@ public:
     }
 
     //! return the source values
-    // don't forget to call this when it's overloaded
-    // in the derived class
     PrimaryVariables values() const
-    {
-        auto values = PrimaryVariables(values_);
-        values /= embeddings_;
-        return values;
-    }
+    { return values_; }
 
     //! return the source position
     const GlobalPosition& position() const
@@ -144,7 +138,17 @@ public:
         embeddings_ = embeddings;
     }
 
-    //! get the number of embeddings for this point source
+    /*!
+     * \brief get the number of embeddings for this point source
+     * \note A point source might be located on the intersection between several scvs.
+     *       If so, there are point sources for every neighboring scv with the same position.
+     *       `embeddings` returns the number of neighboring scvs.
+     * Example: If I want to inject 1kg/s at a location that is on the inner face of an scv
+     *          the point source exists in both scvs. Both have a value of 1kg/s.
+     *          We then divide the value by the number of embeddings to not inject 2kg/s but 1kg/s.
+     * \note This division is done in the problem.scvPointSources() if this behaviour is not explicitly
+     *       changed by e.g. overloading this function in the problem implementation.
+     */
     std::size_t embeddings() const
     {
         return embeddings_;
@@ -286,9 +290,10 @@ class BoundingBoxTreePointSourceHelper
 
 public:
     //! calculate a DOF index to point source map from given vector of point sources
+    template<class PointSourceMap>
     static void computePointSourceMap(const FVGridGeometry& fvGridGeometry,
                                       std::vector<PointSource>& sources,
-                                      std::map<std::pair<unsigned int, unsigned int>, std::vector<PointSource> >& pointSourceMap)
+                                      PointSourceMap& pointSourceMap)
     {
         const auto& boundingBoxTree = fvGridGeometry.boundingBoxTree();
 
