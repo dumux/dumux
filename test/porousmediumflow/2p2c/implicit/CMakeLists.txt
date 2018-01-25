@@ -59,7 +59,7 @@ dune_add_test(NAME test_2p2c_mpfa_caching
 # non-isothermal tests
 dune_add_test(NAME test_2p2cni_box
               SOURCES test_2p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=WaterAirBoxTypeTag
+              COMPILE_DEFINITIONS TYPETAG=WaterAirBoxTypeTag ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/waterairbox-reference.vtu
@@ -68,7 +68,7 @@ dune_add_test(NAME test_2p2cni_box
 
 dune_add_test(NAME test_2p2cni_tpfa
               SOURCES test_2p2c_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=WaterAirCCTpfaTypeTag
+              COMPILE_DEFINITIONS TYPETAG=WaterAirCCTpfaTypeTag ENABLECACHING=0
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/wateraircc-reference.vtu
