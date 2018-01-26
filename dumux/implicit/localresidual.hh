@@ -97,6 +97,9 @@ public:
      */
     void eval(const Element &element)
     {
+        //! Set the context for the coupling manager
+        problemPtr_->couplingManager().setCouplingContext(element);
+
         // make sure FVElementGeometry and volume variables are bound to the element
         auto fvGeometry = localView(problem().model().globalFvGeometry());
         fvGeometry.bind(element);
@@ -108,7 +111,7 @@ public:
         prevElemVolVars.bindElement(element, fvGeometry, problem().model().prevSol());
 
         auto elemFluxVarsCache = localView(problem().model().globalFluxVarsCache());
-        elemFluxVarsCache.bindElement(element, fvGeometry, curElemVolVars);
+        elemFluxVarsCache.bind(element, fvGeometry, curElemVolVars);
 
         ElementBoundaryTypes bcTypes;
         bcTypes.update(problem(), element, fvGeometry);
