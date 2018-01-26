@@ -43,28 +43,31 @@ public:
     /*!
      * \brief The coupling stencil, i.e. which dofs of domain i are in the stencil of the element
      */
-    template<class Element, std::size_t i>
-    const StencilType& couplingStencil(const Element& element, Dune::index_constant<i> domainId) const
+    template<class Element, std::size_t i, std::size_t j>
+    const StencilType& couplingStencil(const Element& element,
+                                       Dune::index_constant<i> domainI,
+                                       Dune::index_constant<j> domainJ) const
     {
-        return asImp_().couplingStencil(element, i);
+        return asImp_().couplingStencil(element, domainI, domainJ);
     }
 
     /*!
      * \brief The coupling stencil, i.e. which dofs of domain i are in the stencil of the element
      */
-    template<class Element, class Assembler>
-    void bindCouplingContext(const Element& element, const Assembler& assembler)
+    template<class Element, std::size_t i, class Assembler>
+    void bindCouplingContext(Dune::index_constant<i> domainI, const Element& element, const Assembler& assembler)
     {
-        return asImp_().bindCouplingContext(element, assembler);
+        return asImp_().bindCouplingContext(element, domainI, assembler);
     }
 
     /*!
-     * \brief The coupling stencil, i.e. which dofs of domain i are in the stencil of the element
+     * \brief Update the context for a derivative i->j
      */
     template<std::size_t i, class Element, class PrimaryVariables, class Assembler>
-    void updateCouplingContext(Dune::index_constant<i> domainId, const Element& element, const PrimaryVariables& priVars, const Assembler& assembler)
+    void updateCouplingContext(Dune::index_constant<i> domainI, Dune::index_constant<i> domainJ,
+                               const Element& element, const PrimaryVariables& priVars, const Assembler& assembler)
     {
-        return asImp_().updateCouplingContext(domainId, element, priVars, assembler);
+        return asImp_().updateCouplingContext(domainI, domainJ, element, priVars, assembler);
     }
 
     /*!
