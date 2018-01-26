@@ -32,7 +32,7 @@ LiquidDensity = 1 # [kg/m^3]
 
 [SpatialParams]
 PermeabilityTissue = 1 # [m^2]
-Radius = 0.33 # [m]
+Radius = 0.01 # [m]
 
 [Vtk]
 AddVelocity = false
@@ -47,3 +47,6 @@ MaxSteps = 10
 
 [LinearSolver]
 ResidualReduction = 1e-20
+
+[Assembly]
+Invert = true
