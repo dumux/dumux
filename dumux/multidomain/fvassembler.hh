@@ -236,9 +236,9 @@ public:
     void setJacobianSize(JacobianMatrix& jac) const
     {
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jac)), [&](const auto domainIdI) {
-            forEach(integralRange(Dune::Hybrid::size(jac[domainIdI])), [&](const auto domainIdJ) {
-                jac[domainIdI][domainIdJ].setSize(numDofs(domainIdI), numDofs(domainIdJ));
+        forEach(integralRange(Dune::Hybrid::size(jac)), [&](const auto domainI) {
+            forEach(integralRange(Dune::Hybrid::size(jac[domainI])), [&](const auto domainJ) {
+                jac[domainI][domainJ].setSize(numDofs(domainI), numDofs(domainJ));
             });
         });
     }
@@ -249,12 +249,12 @@ public:
     void setJacobianPattern(JacobianMatrix& jac) const
     {
         using namespace Dune::Hybrid;
-        forEach(integralRange(Dune::Hybrid::size(jac)), [&](const auto domainIdI)
+        forEach(integralRange(Dune::Hybrid::size(jac)), [&](const auto domainI)
         {
-            forEach(integralRange(Dune::Hybrid::size(jac[domainIdI])), [&](const auto domainIdJ)
+            forEach(integralRange(Dune::Hybrid::size(jac[domainI])), [&](const auto domainJ)
             {
-                const auto pattern = getJacobianPattern_(domainIdI, domainIdJ);
-                pattern.exportIdx(jac[domainIdI][domainIdJ]);
+                const auto pattern = getJacobianPattern_(domainI, domainJ);
+                pattern.exportIdx(jac[domainI][domainJ]);
             });
         });
     }
@@ -418,17 +418,17 @@ private:
 
     // get diagonal block pattern
     template<std::size_t i, std::size_t j, typename std::enable_if_t<(i==j), int> = 0>
-    Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainIdI,
-                                             Dune::index_constant<j> domainIdJ) const
+    Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
+                                             Dune::index_constant<j> domainJ) const
     {
-        const auto& gg = fvGridGeometry(domainIdI);
+        const auto& gg = fvGridGeometry(domainI);
         auto pattern = getJacobianPattern<isImplicit>(gg);
 
         // add additional dof dependencies
         for (const auto& element0 : elements(gg.gridView()))
         {
             const auto globalI = gg.elementMapper().index(element0);
-            const auto& additionalDofDeps = couplingManager_->getAdditionalDofDependencies(domainIdI, globalI);
+            const auto& additionalDofDeps = couplingManager_->getAdditionalDofDependencies(domainI, globalI);
             for (const auto globalJ : additionalDofDeps)
                 pattern.add(globalI, globalJ);
         }
@@ -438,13 +438,12 @@ private:
 
     // get coupling block pattern
     template<std::size_t i, std::size_t j, typename std::enable_if_t<(i!=j), int> = 0>
-    Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainIdI,
-                                             Dune::index_constant<j> domainIdJ) const
+    Dune::MatrixIndexSet getJacobianPattern_(Dune::index_constant<i> domainI,
+                                             Dune::index_constant<j> domainJ) const
     {
         return getCouplingJacobianPattern<isImplicit>(*couplingManager_,
-                                                      fvGridGeometry(domainIdI),
-                                                      fvGridGeometry(domainIdJ),
-                                                      domainIdJ);
+                                                      domainI, fvGridGeometry(domainI),
+                                                      domainJ, fvGridGeometry(domainJ));
     }
 
     //! pointer to the problem to be solved
