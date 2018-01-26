@@ -666,6 +666,20 @@ public:
             grading[i] = getParamFromGroup<std::vector<ctype>>(modelParamGroup, "Grid.Grading" + std::to_string(i), grading[i]);
         }
 
+        // call the generic function
+        makeGrid(positions, cells, grading, modelParamGroup);
+    }
+
+    /*!
+     * \brief Make the grid using input data not read from the input file.
+     */
+    static void makeGrid(const std::array<std::vector<ctype>, dim>& positions,
+                         const std::array<std::vector<int>, dim>& cells,
+                         const std::array<std::vector<ctype>, dim>& grading,
+                         const std::string& modelParamGroup = "")
+    {
+
+
         // Additional arameters (they have a default)
         const auto periodic = getParamFromGroup<std::bitset<dim>>(modelParamGroup, "Grid.Periodic", std::bitset<dim>());
         const int overlap = YaspOverlapHelper<DiscMethod>::getOverlap(modelParamGroup);
