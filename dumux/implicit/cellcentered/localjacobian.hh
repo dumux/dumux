@@ -230,6 +230,14 @@ protected:
                                                                elemFluxVarsCache);
             }
 
+            const auto& scvJ = fvGeometry.scv(dataJ.globalJ);
+            auto source = this->localResidual().computeSource(elementJ,
+                                                              fvGeometry,
+                                                              curElemVolVars,
+                                                              scvJ);
+            source *= scvJ.volume()*curElemVolVars[scvJ].extrusionFactor();
+            origFlux[j] -= source;
+
             ++j;
         }
 
@@ -296,6 +304,14 @@ protected:
                                                                             scvf,
                                                                             elemFluxVarsCache);
                     }
+
+                    const auto& scvJ = fvGeometry.scv(assemblyMap_[globalI_][k].globalJ);
+                    auto source = this->localResidual().computeSource(neighborElements[k],
+                                                                      fvGeometry,
+                                                                      curElemVolVars,
+                                                                      scvJ);
+                    source *= scvJ.volume()*curElemVolVars[scvJ].extrusionFactor();
+                    neighborDeriv[k] -= source;
                 }
             }
             else
@@ -347,6 +363,14 @@ protected:
                                                                             scvf,
                                                                             elemFluxVarsCache);
                     }
+
+                    const auto& scvJ = fvGeometry.scv(assemblyMap_[globalI_][k].globalJ);
+                    auto source = this->localResidual().computeSource(neighborElements[k],
+                                                                      fvGeometry,
+                                                                      curElemVolVars,
+                                                                      scvJ);
+                    source *= scvJ.volume()*curElemVolVars[scvJ].extrusionFactor();
+                    neighborDeriv[k] += source;
                 }
             }
             else
