@@ -241,7 +241,12 @@ public:
             const auto localEdgeGeom = referenceElement1.template geometry<dim1-1>(i);
             const auto p = geo1.global(localEdgeGeom.corner(0));
             const auto q = geo1.global(localEdgeGeom.corner(1));
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
             const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+#else
+            static const Dune::GeometryType gt(1);
+            const auto segGeo = SegGeometry(gt, std::vector<Point>{p, q});
+#endif
 
             using PolySegTest = GeometryIntersection<Geometry2, SegGeometry>;
             typename PolySegTest::IntersectionType intersection;
@@ -261,14 +266,24 @@ public:
                     const auto b = geo1.global(localFaceGeo.corner(1));
                     const auto c = geo1.global(localFaceGeo.corner(2));
                     const auto d = geo1.global(localFaceGeo.corner(3));
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                     return PolyhedronFaceGeometry(Dune::GeometryTypes::cube(2), std::vector<Point>{a, b, c, d});
+#else
+                    static const Dune::GeometryType gt(Dune::GeometryType::cube, 2);
+                    return PolyhedronFaceGeometry(gt, std::vector<Point>{a, b, c, d});
+#endif
                 }
                 else
                 {
                     const auto a = geo1.global(localFaceGeo.corner(0));
                     const auto b = geo1.global(localFaceGeo.corner(1));
                     const auto c = geo1.global(localFaceGeo.corner(2));
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                     return PolyhedronFaceGeometry(Dune::GeometryTypes::simplex(2), std::vector<Point>{a, b, c});
+#else
+                    static const Dune::GeometryType gt(Dune::GeometryType::simplex, 2);
+                    return PolyhedronFaceGeometry(gt, std::vector<Point>{a, b, c});
+#endif
                 }
             }();
 
@@ -277,7 +292,12 @@ public:
                 const auto localEdgeGeom = referenceElement2.template geometry<1>(j);
                 const auto p = geo2.global(localEdgeGeom.corner(0));
                 const auto q = geo2.global(localEdgeGeom.corner(1));
+#if DUNE_VERSION_NEWER(DUNE_COMMON,2,6)
                 const auto segGeo = SegGeometry(Dune::GeometryTypes::line, std::vector<Point>{p, q});
+#else
+                static const Dune::GeometryType gt(1);
+                const auto segGeo = SegGeometry(gt, std::vector<Point>{p, q});
+#endif
 
                 using PolySegTest = GeometryIntersection<PolyhedronFaceGeometry, SegGeometry>;
                 typename PolySegTest::IntersectionType intersection;
