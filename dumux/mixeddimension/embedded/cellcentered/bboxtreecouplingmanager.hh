@@ -627,8 +627,6 @@ private:
     //! TODO: this is the simplest context -> just the solutionvector
     ////////////////////////////////////////////////////////////////////////////
     SolutionVector curSol_;
-
-    mutable int counter = 0;
 };
 
 } // end namespace Dumux
