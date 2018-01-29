@@ -1,0 +1,40 @@
+[MixedDimension]
+NumCircleSegments = 100
+
+[TimeLoop]
+DtInitial = 1 # [s]
+TEnd = 1 # [s]
+MaxTimeStepSize = 1
+MaxTimeStepDivisions = 2
+
+[Fracture.Grid]
+File = fracture.msh
+
+[Matrix.Grid]
+LowerLeft = 0 0 0
+UpperRight = 8 8 5
+Cells = 20 20 10
+
+[Problem]
+Name = test_1p1p_embedded
+NormIntegrationOrder = 2
+NormExcludeInnerBulk = true
+IntegrationOrder = 2
+EnableGravity = false
+
+[Component]
+LiquidKinematicViscosity = 1 # [m^2/s]
+LiquidDensity = 1 # [kg/m^3]
+
+[Matrix.SpatialParams]
+Permeability = 1 # [m^2]
+
+[Fracture.SpatialParams]
+Permeability = 1 # [m^2]
+Aperture = 0.01 # [m]
+
+[Vtk]
+AddVelocity = false
+
+[Assembly]
+Invert = true
