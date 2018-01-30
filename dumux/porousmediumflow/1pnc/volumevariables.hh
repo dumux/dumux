@@ -190,18 +190,28 @@ public:
     /*!
      * \brief Return density \f$\mathrm{[kg/m^3]}\f$ the of the fluid phase.
      *
-     * We always forward to the fluid state with the phaseIdx property (see class description).
+     * \note the phase index passed to this function is for compatibility reasons
+     *       with multiphasic models. We always forward to the fluid state with the
+     *       phaseIdx property (see class description).
      */
-    Scalar density(int phaseIdx) const
-    { return fluidState_.density(phaseIdx); }
+    Scalar density(int pIdx = phaseIdx) const
+    {
+        assert(pIdx == phaseIdx);
+        return fluidState_.density(phaseIdx);
+    }
 
     /*!
      * \brief Return molar density \f$\mathrm{[mol/m^3]}\f$ the of the fluid phase.
      *
-     * We always forward to the fluid state with the phaseIdx property (see class description).
+     * \note the phase index passed to this function is for compatibility reasons
+     *       with multiphasic models. We always forward to the fluid state with the
+     *       phaseIdx property (see class description).
      */
-    Scalar molarDensity(int phaseIdx = 0) const
-    { return fluidState_.molarDensity(phaseIdx); }
+    Scalar molarDensity(int pIdx = phaseIdx) const
+    {
+        assert(pIdx == phaseIdx);
+        return fluidState_.molarDensity(phaseIdx);
+    }
 
     /*!
      * \brief Return the saturation
@@ -209,7 +219,7 @@ public:
      * This method is here for compatibility reasons with other models. The saturation
      * is always 1.0 in a one-phasic context.
      */
-    Scalar saturation(int pIdx = 0) const
+    Scalar saturation(int pIdx = phaseIdx) const
     { return 1.0; }
 
      /*!
@@ -218,19 +228,35 @@ public:
       * \param phaseIdx the index of the fluid phase
       * \param compIdx the index of the component
       *
-      * We always forward to the fluid state with the phaseIdx property (see class description).
+      * \note the phase index passed to this function is for compatibility reasons
+      *       with multiphasic models. We always forward to the fluid state with the
+      *       phaseIdx property (see class description).
       */
-     Scalar moleFraction(int phaseIdx, int compIdx) const
-     { return fluidState_.moleFraction(phaseIdx, compIdx); }
+     Scalar moleFraction(int pIdx, int compIdx) const
+     {
+         // make sure this is only called with admissible indices
+         assert(pIdx == phaseIdx);
+         assert(compIdx < numComponents);
+         return fluidState_.moleFraction(phaseIdx, compIdx);
+     }
 
      /*!
       * \brief Returns the mass fraction of a component in the phase
       *
       * \param phaseIdx the index of the fluid phase
       * \param compIdx the index of the component
+      *
+      * \note the phase index passed to this function is for compatibility reasons
+      *       with multiphasic models. We always forward to the fluid state with the
+      *       phaseIdx property (see class description).
       */
-     Scalar massFraction(int phaseIdx, int compIdx) const
-     { return fluidState_.massFraction(phaseIdx, compIdx); }
+     Scalar massFraction(int pIdx, int compIdx) const
+     {
+         // make sure this is only called with admissible indices
+         assert(pIdx == phaseIdx);
+         assert(compIdx < numComponents);
+         return fluidState_.massFraction(phaseIdx, compIdx);
+     }
 
     /*!
      * \brief Return the effective pressure \f$\mathrm{[Pa]}\f$ of a given phase within
@@ -238,10 +264,15 @@ public:
      *
      * \param phaseIdx The phase index
      *
-     * We always forward to the fluid state with the phaseIdx property (see class description).
+     * \note the phase index passed to this function is for compatibility reasons
+     *       with multiphasic models. We always forward to the fluid state with the
+     *       phaseIdx property (see class description).
      */
-    Scalar pressure(int pIdx = 0) const
-    { return fluidState_.pressure(phaseIdx); }
+    Scalar pressure(int pIdx = phaseIdx) const
+    {
+        assert(pIdx == phaseIdx);
+        return fluidState_.pressure(phaseIdx);
+    }
 
     /*!
      * \brief Return temperature \f$\mathrm{[K]}\f$ inside the sub-control volume.
@@ -259,17 +290,29 @@ public:
      * The term mobility is usually not employed in the one phase context.
      * The method is here for compatibility reasons with other models.
      *
-     * We always forward to the fluid state with the phaseIdx property (see class description).
+     * \note the phase index passed to this function is for compatibility reasons
+     *       with multiphasic models. We always forward to the fluid state with the
+     *       phaseIdx property (see class description).
      */
-    Scalar mobility(int pIdx = 0) const
-    { return 1.0/fluidState_.viscosity(phaseIdx); }
+    Scalar mobility(int pIdx = phaseIdx) const
+    {
+        assert(pIdx == phaseIdx);
+        return 1.0/fluidState_.viscosity(phaseIdx);
+    }
 
     /*!
      * \brief Return the dynamic viscosity \f$\mathrm{[Pa s]}\f$ of the fluid within the
      *        control volume.
+     *
+     * \note the phase index passed to this function is for compatibility reasons
+     *       with multiphasic models. We always forward to the fluid state with the
+     *       phaseIdx property (see class description).
      */
-    Scalar viscosity(int phaseIdx = 0) const
-    { return fluidState_.viscosity(phaseIdx); }
+    Scalar viscosity(int pIdx = phaseIdx) const
+    {
+        assert(pIdx == phaseIdx);
+        return fluidState_.viscosity(phaseIdx);
+    }
 
     /*!
      * \brief Return the average porosity \f$\mathrm{[-]}\f$ within the control volume.
@@ -281,26 +324,32 @@ public:
      * \brief Return the binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ in the fluid.
      */
     Scalar diffusionCoefficient(int pIdx, int compIdx) const
-    { return diffCoeff_[compIdx]; }
+    {
+        assert(pIdx == phaseIdx);
+        assert(compIdx < numComponents);
+        return diffCoeff_[compIdx];
+    }
 
     /*!
      * \brief Returns the molarity of a component in the phase
      *
-     * \param phaseIdx the index of the fluid phase
      * \param compIdx the index of the component
      */
-     Scalar molarity(int compIdx) const // [moles/m^3]
-    { return fluidState_.molarity(phaseIdx, compIdx);}
+    Scalar molarity(int compIdx) const // [moles/m^3]
+    {
+        assert(compIdx < numComponents);
+        return fluidState_.molarity(phaseIdx, compIdx);
+    }
 
      /*!
       * \brief Returns the mass fraction of a component in the phase
       *
-      * \param phaseIdx the index of the fluid phase
       * \param compIdx the index of the component
       */
      Scalar massFraction(int compIdx) const
      {
-        return this->fluidState_.massFraction(phaseIdx, compIdx);
+         assert(compIdx < numComponents);
+         return this->fluidState_.massFraction(phaseIdx, compIdx);
      }
 
     /*!
