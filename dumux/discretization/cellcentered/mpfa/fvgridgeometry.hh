@@ -71,6 +71,8 @@ class CCMpfaFVGridGeometry<GV, Traits, true>
     using CoordScalar = typename GV::ctype;
     using ReferenceElements = typename Dune::ReferenceElements<CoordScalar, dim>;
 
+    using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
+
 public:
     //! export the mpfa helper type
     using MpfaHelper = typename Traits::MpfaHelper;
@@ -192,7 +194,6 @@ public:
 
             // for network grids there might be multiple intersection with the same geometryInInside
             // we indentify those by the indexInInside for now (assumes conforming grids at branching facets)
-            using ScvfOutsideGridIndexStorage = typename SubControlVolumeFace::Traits::OutsideGridIndexStorage;
             std::vector<ScvfOutsideGridIndexStorage> outsideIndices;
             if (dim < dimWorld)
             {
@@ -383,7 +384,7 @@ private:
     GridIndexType numBoundaryScvf_;
 
     // needed for embedded surface and network grids (dim < dimWorld)
-    std::vector<std::vector<GridIndexType>> flipScvfIndices_;
+    std::vector<ScvfOutsideGridIndexStorage> flipScvfIndices_;
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;
