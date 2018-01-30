@@ -69,6 +69,7 @@ NEW_PROP_TAG(FaceVariables); //!<  Returns whether to consider energy transport 
 NEW_PROP_TAG(NormalizePressure); //!<  Returns whether to normalize the pressure term in the momentum balance or not
 NEW_PROP_TAG(EnergyLocalResidual); //!<  The energy local residual
 NEW_PROP_TAG(EnergyFluxVariables); //!<  The energy flux variables
+NEW_PROP_TAG(PhaseIdx);
 // \}
 }
 

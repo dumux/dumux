@@ -112,23 +112,22 @@ public:
     {
         Scalar t = problem.temperatureAtPos(scv.dofPosition());
         fluidState.setTemperature(t);
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.);
 
-        fluidState.setPressure(/*phaseIdx=*/0, elemSol[0][Indices::pressureIdx]);
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(/*phaseIdx=*/0, 1.0);
+        fluidState.setSaturation(phaseIdx, 1.0);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, /*phaseIdx=*/0);
+        paramCache.updatePhase(fluidState, phaseIdx);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setDensity(/*phaseIdx=*/0, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, /*phaseIdx=*/0);
-        fluidState.setViscosity(/*phaseIdx=*/0, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
     }
 
     /*!

@@ -55,7 +55,8 @@ struct NavierStokesCommonIndices
     static constexpr int velocityYIdx = velocityIdx + 1; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
     static constexpr int velocityZIdx = velocityIdx + 2; //!< Index of the velocity in a solution vector (NOTE: This PV lives in a different vector than the pressure)
 
-    static constexpr int phaseIdx = 0; //!< Index of the fluid phase (required to use the same fluid system in coupled models)
+    static constexpr int phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx); //!< Index of the fluid phase (required to use the same fluid system in coupled models)
+
 };
 
 // \}

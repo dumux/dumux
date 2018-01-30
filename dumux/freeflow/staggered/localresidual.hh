@@ -161,7 +161,7 @@ public:
                                     const VolumeVariables& volVars)
     {
         CellCenterPrimaryVariables storage;
-        storage[0] = volVars.density();
+        storage[0] = volVars.density(Indices::phaseIdx);
         EnergyLocalResidual::fluidPhaseStorage(storage, scv, volVars);
         return storage;
     }
@@ -182,7 +182,7 @@ public:
     {
         FacePrimaryVariables storage(0.0);
         const Scalar velocity = globalFaceVars.faceVars(scvf.dofIndex()).velocity();
-        storage[0] = volVars.density() * velocity;
+        storage[0] = volVars.density(Indices::phaseIdx) * velocity;
         return storage;
     }
 
@@ -193,7 +193,7 @@ public:
         FacePrimaryVariables source(0.0);
         const auto insideScvIdx = scvf.insideScvIdx();
         const auto& insideVolVars = elemVolVars[insideScvIdx];
-        source += this->problem().gravity()[scvf.directionIndex()] * insideVolVars.density();
+        source += this->problem().gravity()[scvf.directionIndex()] * insideVolVars.density(Indices::phaseIdx);
 
         source += this->problem().sourceAtPos(scvf.center())[faceIdx][scvf.directionIndex()];
 
@@ -216,9 +216,11 @@ public:
     {
         FacePrimaryVariables flux(0.0);
         FluxVariables fluxVars;
+
         flux += fluxVars.computeNormalMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
         flux += fluxVars.computeTangetialMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
         flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+
         return flux;
     }
 
@@ -266,7 +268,7 @@ protected:
                     for(int eqIdx = 0; eqIdx < GET_PROP_VALUE(TypeTag, NumEqCellCenter); ++eqIdx)
                         if(bcTypes.isNeumann(eqIdx))
                         {
-                            const auto extrusionFactor = 1.0; //TODO: get correct extrusion factor
+                            const auto extrusionFactor = elemVolVars[scvf.insideScvIdx()].extrusionFactor();
                             boundaryFlux[eqIdx] = this->problem().neumannAtPos(scvf.center())[cellCenterIdx][eqIdx]
                                                    * extrusionFactor * scvf.area();
                         }
@@ -295,7 +297,7 @@ protected:
         if(bcTypes.isDirichletCell(massBalanceIdx))
         {
             const auto& insideVolVars = elemVolVars[insideScv];
-            this->ccResidual_[pressureIdx] = insideVolVars.pressure() - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
+            this->ccResidual_[pressureIdx] = insideVolVars.pressure(Indices::phaseIdx) - this->problem().dirichletAtPos(insideScv.center())[cellCenterIdx][pressureIdx];
         }
     }
 
@@ -332,8 +334,6 @@ protected:
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
             }
         }
-//        std::cout << "** staggered/localresidual: massBalanceIdx = " << massBalanceIdx
-//        		<< ", momBalanceIdx = " << momentumBalanceIdx << std::endl;
     }
 
 
@@ -357,7 +357,7 @@ private:
 
         const Scalar deltaP = normalizePressure ? this->problem().initialAtPos(scvf.center())[cellCenterIdx][pressureIdx] : 0.0;
 
-        Scalar result = (insideVolVars.pressure() - deltaP) * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
+        Scalar result = (insideVolVars.pressure(Indices::phaseIdx) - deltaP) * scvf.area() * -1.0 * sign(scvf.outerNormalScalar());
 
         // treat outflow BCs
         if(scvf.boundary())

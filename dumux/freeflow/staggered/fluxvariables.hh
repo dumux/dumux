@@ -119,8 +119,8 @@ public:
 
         const Scalar upWindWeight = GET_PROP_VALUE(TypeTag, ImplicitUpwindWeight);
 
-        flux = (upWindWeight * upstreamVolVars.density() +
-               (1.0 - upWindWeight) * downstreamVolVars.density()) * velocity;
+        flux = (upWindWeight * upstreamVolVars.density(Indices::phaseIdx) +
+               (1.0 - upWindWeight) * downstreamVolVars.density(Indices::phaseIdx)) * velocity;
 
         flux *= scvf.area() * sign(scvf.outerNormalScalar());
 
@@ -214,7 +214,7 @@ public:
            // advective part
            const Scalar vAvg = (velocitySelf + velocityOpposite) * 0.5;
            const Scalar vUp = (sign(scvf.outerNormalScalar()) == sign(vAvg)) ? velocityOpposite : velocitySelf;
-           normalFlux += vAvg * vUp * insideVolVars.density();
+           normalFlux += vAvg * vUp * insideVolVars.density(Indices::phaseIdx);
        }
 
        // diffusive part
@@ -223,7 +223,7 @@ public:
                              (velocityOpposite - velocitySelf);
 
        const Scalar deltaX = scvf.selfToOppositeDistance();
-       normalFlux -= insideVolVars.viscosity() * 2.0 * deltaV/deltaX;
+       normalFlux -= insideVolVars.viscosity(Indices::phaseIdx) * 2.0 * deltaV/deltaX;
 
        // account for the orientation of the face
        const Scalar sgn = -1.0 * sign(scvf.outerNormalScalar());
@@ -236,7 +236,7 @@ public:
            const auto& upVolVars = (sign(scvf.outerNormalScalar()) == sign(velocitySelf)) ?
                                    elemVolVars[insideScvIdx] : elemVolVars[scvf.outsideScvIdx()] ;
 
-           result += velocitySelf * velocitySelf * upVolVars.density() * sign(scvf.outerNormalScalar()) * scvf.area() ;
+           result += velocitySelf * velocitySelf * upVolVars.density(Indices::phaseIdx) * sign(scvf.outerNormalScalar()) * scvf.area() ;
        }
        return result;
    }
@@ -316,7 +316,7 @@ private:
               transportedVelocity = problem.dirichlet(element, scvf)[faceIdx][scvf.directionIndex()];
       }
 
-      const Scalar momentum = upVolVars.density() * transportedVelocity;
+      const Scalar momentum = upVolVars.density(Indices::phaseIdx) * transportedVelocity;
       const int sgn = sign(normalFace.outerNormalScalar());
 
       return transportingVelocity * momentum * sgn * normalFace.area() * 0.5;
@@ -347,7 +347,7 @@ private:
       };
 
       // the averaged viscosity at the face normal to our face of interest (where we assemble the face residual)
-      const Scalar muAvg = (insideVolVars.viscosity() + outsideVolVars.viscosity()) * 0.5;
+      const Scalar muAvg = (insideVolVars.viscosity(Indices::phaseIdx) + outsideVolVars.viscosity(Indices::phaseIdx)) * 0.5;
 
       // the normal derivative
       const int innerNormalVelocityIdx = subFaceData.normalPair.first;

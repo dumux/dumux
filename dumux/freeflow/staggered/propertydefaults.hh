@@ -155,6 +155,9 @@ SET_PROP(NavierStokes, FluidState){
         typedef Dumux::ImmiscibleFluidState<Scalar, FluidSystem> type;
 };
 
+// set phase index
+SET_INT_PROP(NavierStokes, PhaseIdx, 0);
+
 // disable velocity output by default
 SET_BOOL_PROP(NavierStokes, VtkAddVelocity, true);
 

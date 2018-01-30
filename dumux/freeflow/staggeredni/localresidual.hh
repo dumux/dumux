@@ -84,7 +84,7 @@ public:
                                   const SubControlVolume& scv,
                                   const VolumeVariables& volVars)
     {
-        storage[energyBalanceIdx] += volVars.density()
+        storage[energyBalanceIdx] += volVars.density(Indices::phaseIdx)
                                    * volVars.internalEnergy();
     }
 };

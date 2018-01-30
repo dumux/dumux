@@ -109,7 +109,7 @@ class StaggeredNavierStokesResidualImpl<TypeTag, true> : public StaggeredNavierS
     {
         CellCenterPrimaryVariables storage(0.0);
 
-        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density();
+        const Scalar density = useMoles ? volVars.molarDensity() : volVars.density(phaseIdx);
 
         // compute storage term of all components
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
