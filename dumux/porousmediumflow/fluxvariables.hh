@@ -72,79 +72,104 @@ public:
         advFluxBeforeUpwinding_.fill(0.0);
     }
 
-    template<typename FunctionType>
+    /*!
+     * \brief Returns the advective flux computed by the respective law.
+     *        Specialization for enabled advection.
+     */
+    template<typename FunctionType, bool enable = enableAdvection, std::enable_if_t<enable, int> = 0>
     Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm) const
     {
-        if (enableAdvection)
+        if (!advFluxIsCached_[phaseIdx])
         {
-            if (!advFluxIsCached_[phaseIdx])
-            {
 
-                advFluxBeforeUpwinding_[phaseIdx] = AdvectionType::flux(this->problem(),
-                                                                        this->element(),
-                                                                        this->fvGeometry(),
-                                                                        this->elemVolVars(),
-                                                                        this->scvFace(),
-                                                                        phaseIdx,
-                                                                        this->elemFluxVarsCache());
-                advFluxIsCached_.set(phaseIdx, true);
-            }
+            advFluxBeforeUpwinding_[phaseIdx] = AdvectionType::flux(this->problem(),
+                                                                    this->element(),
+                                                                    this->fvGeometry(),
+                                                                    this->elemVolVars(),
+                                                                    this->scvFace(),
+                                                                    phaseIdx,
+                                                                    this->elemFluxVarsCache());
+            advFluxIsCached_.set(phaseIdx, true);
+        }
 
-            return this->applyUpwindScheme(upwindTerm, advFluxBeforeUpwinding_[phaseIdx], phaseIdx);
-        }
-        else
-        {
-            return 0.0;
-        }
+        return this->applyUpwindScheme(upwindTerm, advFluxBeforeUpwinding_[phaseIdx], phaseIdx);
     }
 
+    /*!
+     * \brief Returns the advective flux computed by the respective law.
+     *        Specialization for disabled advection. Advective fluxes are zero.
+     */
+    template<typename FunctionType, bool enable = enableAdvection, typename std::enable_if_t<!enable, int> = 0>
+    Scalar advectiveFlux(const int phaseIdx, const FunctionType& upwindTerm) const
+    {
+        return 0.0;
+    }
+
+    /*!
+     * \brief Returns the diffusive fluxes computed by the respective law.
+     *        Specialization for enabled diffusion.
+     */
+    template<bool enable = enableMolecularDiffusion, typename std::enable_if_t<enable, int> = 0>
     Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx) const
     {
-        if (enableMolecularDiffusion)
-        {
-            return MolecularDiffusionType::flux(this->problem(),
-                                                this->element(),
-                                                this->fvGeometry(),
-                                                this->elemVolVars(),
-                                                this->scvFace(),
-                                                phaseIdx,
-                                                this->elemFluxVarsCache());
-        }
-        else
-        {
-            return Dune::FieldVector<Scalar, numComponents>(0.0);
-        }
-    }
-
-    template <bool enable = !enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
-    Scalar heatConductionFlux() const
-    {
-        if (enableEnergyBalance)
-        {
-            return HeatConductionType::flux(this->problem(),
-                                            this->element(),
-                                            this->fvGeometry(),
-                                            this->elemVolVars(),
-                                            this->scvFace(),
-                                            this->elemFluxVarsCache());
-        }
-        else
-        {
-            return 0.0;
-        }
-    }
-
-    template <bool enable = enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
-    Scalar heatConductionFlux(const int phaseIdx) const
-    {
-            return HeatConductionType::flux(this->problem(),
+        return MolecularDiffusionType::flux(this->problem(),
                                             this->element(),
                                             this->fvGeometry(),
                                             this->elemVolVars(),
                                             this->scvFace(),
                                             phaseIdx,
                                             this->elemFluxVarsCache());
+    }
 
+    /*!
+     * \brief Returns the diffusive fluxes computed by the respective law.
+     *        Specialization for disabled diffusion. Fluxes are zero.
+     */
+    template<bool enable = enableMolecularDiffusion, typename std::enable_if_t<!enable, int> = 0>
+    Dune::FieldVector<Scalar, numComponents> molecularDiffusionFlux(const int phaseIdx) const
+    {
+        return Dune::FieldVector<Scalar, numComponents>(0.0);
+    }
+
+    /*!
+     * \brief Returns the conductive flux computed by the respective law.
+     *        Specialization for enabled heat conduction and thermal equilibrium between all phases.
+     */
+    template<bool enable = enableEnergyBalance && !enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
+    Scalar heatConductionFlux() const
+    {
+        return HeatConductionType::flux(this->problem(),
+                                        this->element(),
+                                        this->fvGeometry(),
+                                        this->elemVolVars(),
+                                        this->scvFace(),
+                                        this->elemFluxVarsCache());
+    }
+
+    /*!
+     * \brief Returns the conductive flux computed by the respective law.
+     *        Specialization for enabled heat conduction and thermal non-equilibrium.
+     */
+    template<bool enable = enableEnergyBalance && enableThermalNonEquilibrium, typename std::enable_if_t<enable, int> = 0>
+    Scalar heatConductionFlux(const int phaseIdx) const
+    {
+        return HeatConductionType::flux(this->problem(),
+                                        this->element(),
+                                        this->fvGeometry(),
+                                        this->elemVolVars(),
+                                        this->scvFace(),
+                                        phaseIdx,
+                                        this->elemFluxVarsCache());
+    }
+
+    /*!
+     * \brief Returns the conductive flux computed by the respective law.
+     *        Specialization for disabeld heat conduction. Conductive fluxes are zero.
+     */
+    template<bool enable = enableEnergyBalance, typename std::enable_if_t<!enable, int> = 0>
+    Scalar heatConductionFlux(const int phaseIdx) const
+    {
+        return 0.0;
     }
 
 private:
