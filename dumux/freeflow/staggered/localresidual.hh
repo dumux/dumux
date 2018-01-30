@@ -216,11 +216,21 @@ public:
     {
         FacePrimaryVariables flux(0.0);
         FluxVariables fluxVars;
-
-        flux += fluxVars.computeNormalMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
-        flux += fluxVars.computeTangetialMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
-        flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
-
+        if(this->problem().onCouplingInterface(scvf.center()))
+        {
+            flux = this->problem().neumann(element, fvGeometry, elemVolVars, scvf)[faceIdx][scvf.directionIndex()];
+            if(normalizePressure) // TODO necessary?
+            {
+                const auto& insideVolVars = elemVolVars[scvf.insideScvIdx()];
+                flux -= insideVolVars.pressure(Indices::phaseIdx) * scvf.area() * sign(scvf.outerNormalScalar());
+            }
+        }
+        else
+        {
+            flux += fluxVars.computeNormalMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+            flux += fluxVars.computeTangetialMomentumFlux(this->problem(), element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+            flux += computePressureTerm_(element, scvf, fvGeometry, elemVolVars, globalFaceVars);
+        }
         return flux;
     }
 
@@ -332,6 +342,12 @@ protected:
                     this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(element, scvf, fvGeometry, elemVolVars, faceVars, elemFluxVarsCache);
                 else
                     DUNE_THROW(Dune::InvalidStateException, "Face at " << scvf.center()  << " has an outflow BC for the momentum balance but no Dirichlet BC for the pressure!");
+            }
+
+            // Neumann coupling condition for the momentum balance equation
+            if(bcTypes.isCouplingNeumann(momentumBalanceIdx))
+            {
+                this->faceResiduals_[scvf.localFaceIdx()] += computeFluxForFace(element, scvf, fvGeometry, elemVolVars, faceVars, elemFluxVarsCache);
             }
         }
     }
