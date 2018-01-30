@@ -146,6 +146,7 @@ public:
         eps_ = 1e-6;
         name_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, std::string, Problem, Name);
         vIn_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, Velocity);
+        pressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, FFPressure);
 
         bBoxMin_[0] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, StokesGrid, Positions0)[0];
         bBoxMin_[1] = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, StokesGrid, Positions1)[0];
@@ -195,7 +196,7 @@ public:
     {
         BoundaryTypes values;
 
-        // inflow left, outflow right (pnmstokes1p)
+        // inflow left, outflow right
         // set Dirichlet values for the velocity everywhere
         values.setDirichlet(momentumBalanceIdx);
 
@@ -203,10 +204,16 @@ public:
         if (onRightBoundary_(globalPos))
         {
             values.setDirichlet(massBalanceIdx);
-            values.setOutflow(momentumBalanceIdx); // TODO mixed b.c.s not allowed anymore!
+            values.setOutflow(momentumBalanceIdx);
         }
         else
             values.setOutflow(massBalanceIdx);
+
+        if (onCouplingInterface(globalPos))
+        {
+            values.setDirichlet(massBalanceIdx);
+            values.setCouplingNeumann(momentumBalanceIdx);
+        }
 
         return values;
     }
@@ -217,22 +224,8 @@ public:
         const auto& globalPos = scvf.dofPosition();
 
         BoundaryValues values(0.0);
-        values[pressureIdx] = 1e5;
 
-        if(globalPos[0] < bBoxMin_[0] + eps_) // left boundary -- inflow
-        {
-            values[velocityXIdx] = vIn_*(globalPos[1] - bBoxMin_[1])*(bBoxMax_[1] - globalPos[1])
-                                     / (0.25*(bBoxMax_[1] - bBoxMin_[1])*(bBoxMax_[1] - bBoxMin_[1]));
-
-        }
-
-        if(couplingManager().isStokesCouplingEntity(element, scvf))
-        {
-            if(onCouplingInterface(globalPos))
-            {
-                values[velocityYIdx] = couplingManager().darcyData().boundaryVelocity(scvf);
-            }
-        }
+        values = initialAtPos(globalPos);
 
         return values;
     }
@@ -245,6 +238,10 @@ public:
     {
         BoundaryValues values(0.0);
 
+        if(onCouplingInterface(scvf.center()))
+        {
+            values[velocityYIdx] = couplingManager().darcyData().momentumCouplingCondition(scvf);
+        }
         return values;
     }
 
@@ -255,6 +252,15 @@ public:
      */
     // \{
 
+    PrimaryVariables source(const Element &element,
+                            const FVElementGeometry& fvGeometry,
+                            const ElementVolumeVariables& elemVolVars,
+                            const SubControlVolume &scv) const
+    {
+        PrimaryVariables values(0.0);
+        return values;
+    }
+
     /*!
      * \brief Evaluate the initial value for a control volume.
      *
@@ -263,14 +269,11 @@ public:
     InitialValues initialAtPos(const GlobalPosition &globalPos) const
     {
         InitialValues values(0.0);
-//        values = dirichletAtPos(globalPos);
 
-        // copied from dirichlet TODO
-        values[pressureIdx] = 1e5;
+        values[pressureIdx] = pressure_;
         // left inflow
         values[velocityXIdx] = vIn_*(globalPos[1] - bBoxMin_[1])*(bBoxMax_[1] - globalPos[1])
                                  / (0.25*(bBoxMax_[1] - bBoxMin_[1])*(bBoxMax_[1] - bBoxMin_[1]));
-
         return values;
     }
 
@@ -318,6 +321,7 @@ private:
 
     Scalar eps_;
     Scalar vIn_;
+    Scalar pressure_;
     std::string name_;
 
     GlobalPosition bBoxMin_;

@@ -3,7 +3,9 @@
 [Problem]
 Name = StokesDarcy1p
 Verbose = true
-Velocity = 1
+Velocity = 1e-2
+FFPressure = 1.0e5
+PMPressure = 1.0e5
 
 [TimeManager]
 DtInitial = 2 # s
@@ -23,7 +25,7 @@ UpperRight = 2 1
 Cells = 40 20
 
 [SpatialParams]
-Permeability = 1e-10 # m^2
+Permeability = 1e-2#10 # m^2
 #PermeabilityLens = 1e-12 # m^2
 # use values outside of boundaries if no lens is wanted
 #LensLowerLeft = 0.75 0.25 # m

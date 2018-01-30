@@ -78,7 +78,6 @@ SET_BOOL_PROP(DarcyTestProblem, EnableGlobalFVGeometryCache, true);
 NEW_PROP_TAG(GlobalProblemTypeTag);
 NEW_PROP_TAG(CouplingManager);
 
-SET_TYPE_PROP(DarcyTestProblem, LocalResidual, DarcyCouplingLocalResidual<TypeTag>); // TODO
 
 }
 
@@ -125,8 +124,9 @@ public:
         bBoxMin_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, LowerLeft);
         bBoxMax_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, GlobalPosition, DarcyGrid, UpperRight);
 
-        this->boundingBoxTree(); // TODO
+        pressure_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, Scalar, Problem, PMPressure);
 
+        this->boundingBoxTree(); // TODO necessary?
 }
 
     /*!
@@ -161,17 +161,6 @@ public:
         return (this->timeManager().time() < 0.0);
     }
 
-    void preTimeStep()
-    {
-    }
-
-    /*!
-     * \brief Called at the end of each time step
-     */
-    void postTimeStep()
-    {
-    }
-
     /*!
      * \brief Return the temperature within the domain in [K].
      *
@@ -184,16 +173,21 @@ public:
      * \name Boundary conditions
      */
     // \{
-    //! Specifies which kind of boundary condition should be used for
-    //! which equation for a finite volume on the boundary.
+
+    /*!
+     * \brief Specify the boundary types.
+     *
+     * Specifies which kind of boundary condition should be used for
+     * which equation for a finite volume on the boundary.
+     *
+     * \param globalPos The global coordinates
+     *
+     * For this method, the \a values variable stores primary variables.
+     */
     BoundaryTypes boundaryTypesAtPos(const GlobalPosition &globalPos) const
     {
         BoundaryTypes values;
         values.setAllNeumann();
-//        values.setAllDirichlet(); // TODO only for test case
-
-        if(onCouplingInterface(globalPos))
-            values.setAllDirichlet();
 
         return values;
     }
@@ -211,17 +205,8 @@ public:
                                const SubControlVolumeFace &scvf) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 0.9e5;
+        values = initial(element);
 
-        FVElementGeometry fvGeometry = localView(this->model().globalFvGeometry());
-        fvGeometry.bind(element);
-        Scalar scvIdx = scvf.insideScvIdx();
-        SubControlVolume scv = fvGeometry.scv(scvIdx);
-
-        if(onCouplingInterface(scvf.center()))
-        {
-            values[pressureIdx] = couplingManager().stokesData().valueFromSolVec(scv.dofIndex(), pressureIdx);
-        }
         return values;
     }
 
@@ -232,7 +217,7 @@ public:
      * \param element The element for which the Neumann boundary condition is set
      * \param fvGeomentry The fvGeometry
      * \param elemVolVars The element volume variables
-     * \param scvf The boundary subcontrolvolumeface
+     * \param scvf The boundary sub control volume face
      *
      * For this method, the \a values variable stores primary variables.
      */
@@ -242,6 +227,15 @@ public:
                              const SubControlVolumeFace& scvf) const
     {
         PrimaryVariables values(0.0);
+
+        Scalar scvIdx = scvf.insideScvIdx();
+        SubControlVolume scv = fvGeometry.scv(scvIdx);
+
+        if (onCouplingInterface(scvf.center())) // only top scvf of boundary element
+        {
+            values[pressureIdx] = couplingManager().stokesData().massCouplingCondition(scvf);
+        }
+
         return values;
     }
 
@@ -287,7 +281,7 @@ public:
     PrimaryVariables initial(const Element &element) const
     {
         PrimaryVariables values(0.0);
-        values[pressureIdx] = 0.9e5;
+        values[pressureIdx] = pressure_;
         return values;
     }
 
@@ -336,6 +330,8 @@ private:
 
     Scalar eps_;
     std::string name_;
+
+    Scalar pressure_;
 
     GlobalPosition bBoxMin_;
     GlobalPosition bBoxMax_;
