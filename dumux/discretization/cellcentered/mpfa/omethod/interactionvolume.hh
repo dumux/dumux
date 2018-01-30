@@ -295,7 +295,8 @@ public:
     //! returns the number of interaction volumes living around a vertex
     //! the mpfa-o scheme always constructs one iv per vertex
     template< class NodalIndexSet >
-    static std::size_t numInteractionVolumesAtVertex(const NodalIndexSet& nodalIndexSet) { return 1; }
+    static constexpr std::size_t numInteractionVolumesAtVertex(const NodalIndexSet& nodalIndexSet)
+    { return 1; }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
