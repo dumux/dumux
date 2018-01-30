@@ -60,7 +60,7 @@ class NavierStokesNCVolumeVariables : public NavierStokesVolumeVariables<TypeTag
     };
 
     static constexpr bool useMoles = GET_PROP_VALUE(TypeTag, UseMoles);
-    static constexpr auto defaultPhaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
+    static constexpr auto phaseIdx = GET_PROP_VALUE(TypeTag, PhaseIdx);
 
 public:
 
@@ -87,16 +87,16 @@ public:
 
         typename FluidSystem::ParameterCache paramCache;
         paramCache.updateAll(this->fluidState_);
-        int compIIdx = defaultPhaseIdx;
+        int compIIdx = phaseIdx;
         for (unsigned int compJIdx = 0; compJIdx < numComponents; ++compJIdx)
         {
             // binary diffusion coefficents
             if(compIIdx!= compJIdx)
             {
-                setDiffusionCoefficient_(defaultPhaseIdx, compJIdx,
+                setDiffusionCoefficient_(phaseIdx, compJIdx,
                                          FluidSystem::binaryDiffusionCoefficient(this->fluidState_,
                                                                                  paramCache,
-                                                                                 defaultPhaseIdx,
+                                                                                 phaseIdx,
                                                                                  compIIdx,
                                                                                  compJIdx));
             }
@@ -112,16 +112,13 @@ public:
                                    const SubControlVolume& scv,
                                    FluidState& fluidState)
     {
-        const Scalar t = ParentType::temperature(elemSol, problem, element, scv);
-        fluidState.setTemperature(t);
-        fluidState.setSaturation(defaultPhaseIdx, 1.);
-
-        fluidState.setPressure(defaultPhaseIdx, elemSol[0][Indices::pressureIdx]);
+        fluidState.setTemperature(ParentType::temperature(elemSol, problem, element, scv));
+        fluidState.setPressure(phaseIdx, elemSol[0][Indices::pressureIdx]);
 
         // saturation in a single phase is always 1 and thus redundant
         // to set. But since we use the fluid state shared by the
         // immiscible multi-phase models, so we have to set it here...
-        fluidState.setSaturation(defaultPhaseIdx, 1.0);
+        fluidState.setSaturation(phaseIdx, 1.0);
 
         Scalar fracMinor = 0.0;
         int transportEqIdx = 1;
@@ -133,76 +130,77 @@ public:
 
             const Scalar moleOrMassFraction = elemSol[0][transportEqIdx++] + 1.0;
             if(useMoles)
-                fluidState.setMoleFraction(defaultPhaseIdx, compIdx, moleOrMassFraction -1.0);
+                fluidState.setMoleFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
             else
-                fluidState.setMassFraction(defaultPhaseIdx, compIdx, moleOrMassFraction -1.0);
+                fluidState.setMassFraction(phaseIdx, compIdx, moleOrMassFraction -1.0);
             fracMinor += moleOrMassFraction - 1.0;
         }
         if(useMoles)
-            fluidState.setMoleFraction(defaultPhaseIdx, mainCompIdx, 1.0 - fracMinor);
+            fluidState.setMoleFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
         else
-            fluidState.setMassFraction(defaultPhaseIdx, mainCompIdx, 1.0 - fracMinor);
+            fluidState.setMassFraction(phaseIdx, mainCompIdx, 1.0 - fracMinor);
 
         typename FluidSystem::ParameterCache paramCache;
-        paramCache.updatePhase(fluidState, defaultPhaseIdx);
+        paramCache.updatePhase(fluidState, phaseIdx);
 
-        Scalar value = FluidSystem::density(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setDensity(defaultPhaseIdx, value);
+        Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
+        fluidState.setDensity(phaseIdx, value);
 
-        value = FluidSystem::viscosity(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setViscosity(defaultPhaseIdx, value);
+        value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
+        fluidState.setViscosity(phaseIdx, value);
 
         // compute and set the enthalpy
-        const Scalar h = ParentType::enthalpy(fluidState, paramCache, defaultPhaseIdx);
-        fluidState.setEnthalpy(defaultPhaseIdx, h);
+        const Scalar h = ParentType::enthalpy(fluidState, paramCache, phaseIdx);
+        fluidState.setEnthalpy(phaseIdx, h);
     }
 
 
      /*!
       * \brief Returns the mass fraction of a component in the phase
       *
-      * \param phaseIdx the index of the fluid phase
+      * \param pIdx the index of the fluid phase
       * \param compIdx the index of the component
       */
-     Scalar massFraction(int phaseIdx, int compIdx) const
+     Scalar massFraction(int pIdx, int compIdx) const
      {
-         assert(phaseIdx == defaultPhaseIdx);
-         return this->fluidState_.massFraction(phaseIdx, compIdx);
+         assert(pIdx == phaseIdx);
+         return this->fluidState_.massFraction(pIdx, compIdx);
      }
 
      /*!
       * \brief Returns the mole fraction of a component in the phase
       *
-      * \param phaseIdx the index of the fluid phase
+      * \param pIdx the index of the fluid phase
       * \param compIdx the index of the component
       */
-     Scalar moleFraction(int phaseIdx, int compIdx) const
+     Scalar moleFraction(int pIdx, int compIdx) const
      {
-         assert(phaseIdx == defaultPhaseIdx);
-         return this->fluidState_.moleFraction(phaseIdx, compIdx);
+         assert(pIdx == phaseIdx);
+         return this->fluidState_.moleFraction(pIdx, compIdx);
      }
 
     /*!
      * \brief Returns the mass density of a given phase within the
      *        control volume.
      *
-     * \param phaseIdx The phase index
+      * \param pIdx the index of the fluid phase
      */
-    Scalar molarDensity(int phaseIdx = 0) const
+    Scalar molarDensity(int pIdx = phaseIdx) const
     {
-        return this->fluidState_.molarDensity(defaultPhaseIdx);
+        assert(pIdx == phaseIdx);
+        return this->fluidState_.molarDensity(pIdx);
     }
 
      /*!
      * \brief Returns the diffusion coeffiecient
      */
-    Scalar diffusionCoefficient(int phaseIdx, int compIdx) const
+    Scalar diffusionCoefficient(int pIdx, int compIdx) const
     {
-        assert(phaseIdx == defaultPhaseIdx);
-        if (compIdx < phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx];
-        else if (compIdx > phaseIdx)
-            return diffCoefficient_[phaseIdx][compIdx-1];
+        assert(pIdx == phaseIdx);
+        if (compIdx < pIdx)
+            return diffCoefficient_[pIdx][compIdx];
+        else if (compIdx > pIdx)
+            return diffCoefficient_[pIdx][compIdx-1];
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient called for phaseIdx = compIdx");
     }
@@ -215,13 +213,13 @@ protected:
     const Implementation &asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    void setDiffusionCoefficient_(int phaseIdx, int compIdx, Scalar d)
+    void setDiffusionCoefficient_(int pIdx, int compIdx, Scalar d)
     {
-        assert(phaseIdx == defaultPhaseIdx);
-        if (compIdx < phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx] = std::move(d);
-        else if (compIdx > phaseIdx)
-            diffCoefficient_[phaseIdx][compIdx-1] = std::move(d);
+        assert(pIdx == phaseIdx);
+        if (compIdx < pIdx)
+            diffCoefficient_[pIdx][compIdx] = std::move(d);
+        else if (compIdx > pIdx)
+            diffCoefficient_[pIdx][compIdx-1] = std::move(d);
         else
             DUNE_THROW(Dune::InvalidStateException, "Diffusion coeffiecient for phaseIdx = compIdx doesn't exist");
     }
