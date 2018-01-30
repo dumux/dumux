@@ -203,7 +203,8 @@ public:
         {
             for (unsigned int cIdx = 0; cIdx < numComponents; ++cIdx)
             {
-                if (pIdx == cIdx)
+                using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+                if (cIdx == FluidSystem::getMainComponent(pIdx))
                     continue;
 
                 // resize transmissibility matrix & mole fraction vector
