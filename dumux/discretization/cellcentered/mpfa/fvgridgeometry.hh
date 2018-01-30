@@ -74,6 +74,8 @@ class CCMpfaFVGridGeometry<GV, Traits, true>
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
 public:
+    //! export the flip scvf index set type
+    using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the mpfa helper type
     using MpfaHelper = typename Traits::MpfaHelper;
     //! export the grid interaction volume index set type
@@ -302,32 +304,29 @@ public:
         }
 
         // Make the flip index set for network and surface grids
-        if (dim < dimWorld)
+        flipScvfIndices_.resize(scvfs_.size());
+        for (const auto& scvf : scvfs_)
         {
-            flipScvfIndices_.resize(scvfs_.size());
-            for (const auto& scvf : scvfs_)
+            if (scvf.boundary())
+                continue;
+
+            const auto numOutsideScvs = scvf.numOutsideScvs();
+            const auto vIdxGlobal = scvf.vertexIndex();
+            const auto insideScvIdx = scvf.insideScvIdx();
+
+            flipScvfIndices_[scvf.index()].resize(numOutsideScvs);
+            for (std::size_t i = 0; i < numOutsideScvs; ++i)
             {
-                if (scvf.boundary())
-                    continue;
-
-                const auto numOutsideScvs = scvf.numOutsideScvs();
-                const auto vIdxGlobal = scvf.vertexIndex();
-                const auto insideScvIdx = scvf.insideScvIdx();
-
-                flipScvfIndices_[scvf.index()].resize(numOutsideScvs);
-                for (std::size_t i = 0; i < numOutsideScvs; ++i)
+                const auto outsideScvIdx = scvf.outsideScvIdx(i);
+                for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
                 {
-                    const auto outsideScvIdx = scvf.outsideScvIdx(i);
-                    for (auto outsideScvfIndex : scvfIndicesOfScv_[outsideScvIdx])
+                    const auto& outsideScvf = this->scvf(outsideScvfIndex);
+                    if (outsideScvf.vertexIndex() == vIdxGlobal &&
+                        MpfaHelper::vectorContainsValue(outsideScvf.outsideScvIndices(), insideScvIdx))
                     {
-                        const auto& outsideScvf = this->scvf(outsideScvfIndex);
-                        if (outsideScvf.vertexIndex() == vIdxGlobal &&
-                            MpfaHelper::vectorContainsValue(outsideScvf.outsideScvIndices(), insideScvIdx))
-                        {
-                            flipScvfIndices_[scvf.index()][i] = outsideScvfIndex;
-                            // there is always only one flip face in an outside element
-                            break;
-                        }
+                        flipScvfIndices_[scvf.index()][i] = outsideScvfIndex;
+                        // there is always only one flip face in an outside element
+                        break;
                     }
                 }
             }
@@ -360,14 +359,16 @@ public:
     //! Returns the grid interaction volume index set class.
     const GridIVIndexSets& gridInteractionVolumeIndexSets() const { return ivIndexSets_; }
 
+    //! Get the sub control volume face indices of an scv by global index
+    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const { return scvfIndicesOfScv_[scvIdx]; }
+
+    //! Returns the flip scvf index set
+    const FlipScvfIndexSet& flipScvfIndexSet() const { return flipScvfIndices_; }
+
     //! Get the scvf on the same face but from the other side
     //! Note that e.g. the normals might be different in the case of surface grids
     const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
     { return scvfs_[flipScvfIndices_[scvfIdx][outsideScvfIdx]]; }
-
-    //! Get the sub control volume face indices of an scv by global index
-    const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
-    { return scvfIndicesOfScv_[scvIdx]; }
 
 private:
     // connectivity map for efficient assembly
@@ -383,7 +384,7 @@ private:
     GridIndexType numBoundaryScvf_;
 
     // needed for embedded surface and network grids (dim < dimWorld)
-    std::vector<ScvfOutsideGridIndexStorage> flipScvfIndices_;
+    FlipScvfIndexSet flipScvfIndices_;
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;
@@ -419,6 +420,8 @@ class CCMpfaFVGridGeometry<GV, Traits, false>
     using ScvfOutsideGridIndexStorage = typename Traits::SubControlVolumeFace::Traits::OutsideGridIndexStorage;
 
 public:
+    //! export the flip scvf index set type
+    using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the mpfa helper type
     using MpfaHelper = typename Traits::MpfaHelper;
     //! export the grid interaction volume index set type
@@ -616,7 +619,7 @@ public:
                                                     } ();
 
                     // insert the scvf data into the dual grid index set
-                    dualIdSet[vIdxGlobal].insert(boundary, numScvf_, eIdx, outsideScvIndices);
+                    dualIdSet[vIdxGlobal].insert(numScvf_, eIdx, boundary);
 
                     // store information on the scv face
                     scvfsIndexSet.push_back(numScvf_++);
@@ -635,40 +638,37 @@ public:
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
         }
 
-        // Make the flip index set for network and surface grids
-        if (dim < dimWorld)
+        // Make the flip scvf index set
+        flipScvfIndices_.resize(numScvf_);
+        for (std::size_t scvIdx = 0; scvIdx < numScvs_; ++scvIdx)
         {
-            flipScvfIndices_.resize(numScvf_);
-            for (std::size_t scvIdx = 0; scvIdx < numScvs_; ++scvIdx)
+            const auto& scvfIndices = scvfIndicesOfScv_[scvIdx];
+            for (unsigned int i = 0; i < scvfIndices.size(); ++i)
             {
-                const auto& scvfIndices = scvfIndicesOfScv_[scvIdx];
-                for (unsigned int i = 0; i < scvfIndices.size(); ++i)
+                // boundary scvf have no flip scvfs
+                if (scvfIsOnBoundary[ scvfIndices[i] ])
+                    continue;
+
+                const auto scvfIdx = scvfIndices[i];
+                const auto vIdxGlobal = scvfVertexIndex[scvfIdx];
+                const auto numOutsideScvs = neighborVolVarIndices_[scvIdx][i].size();
+
+                flipScvfIndices_[scvfIdx].resize(numOutsideScvs);
+                for (unsigned int j = 0; j < numOutsideScvs; ++j)
                 {
-                    // boundary scvf have no flip scvfs
-                    if (scvfIsOnBoundary[ scvfIndices[i] ])
-                        continue;
-
-                    const auto scvfIdx = scvfIndices[i];
-                    const auto vIdxGlobal = scvfVertexIndex[scvfIdx];
-                    const auto numOutsideScvs = neighborVolVarIndices_[scvIdx][i].size();
-
-                    flipScvfIndices_[scvfIdx].resize(numOutsideScvs);
-                    for (unsigned int j = 0; j < numOutsideScvs; ++j)
+                    const auto outsideScvIdx = neighborVolVarIndices_[scvIdx][i][j];
+                    const auto& outsideScvfIndices = scvfIndicesOfScv_[outsideScvIdx];
+                    for (unsigned int k = 0; k < outsideScvfIndices.size(); ++k)
                     {
-                        const auto outsideScvIdx = neighborVolVarIndices_[scvIdx][i][j];
-                        const auto& outsideScvfIndices = scvfIndicesOfScv_[outsideScvIdx];
-                        for (unsigned int k = 0; k < outsideScvfIndices.size(); ++k)
+                        const auto outsideScvfIndex = outsideScvfIndices[k];
+                        const auto outsideScvfVertexIndex = scvfVertexIndex[outsideScvfIndex];
+                        const auto& outsideScvfNeighborIndices = neighborVolVarIndices_[outsideScvIdx][k];
+                        if (outsideScvfVertexIndex == vIdxGlobal &&
+                            MpfaHelper::vectorContainsValue(outsideScvfNeighborIndices, scvIdx))
                         {
-                            const auto outsideScvfIndex = outsideScvfIndices[k];
-                            const auto outsideScvfVertexIndex = scvfVertexIndex[outsideScvfIndex];
-                            const auto& outsideScvfNeighborIndices = neighborVolVarIndices_[outsideScvIdx][k];
-                            if (outsideScvfVertexIndex == vIdxGlobal &&
-                                MpfaHelper::vectorContainsValue(outsideScvfNeighborIndices, scvIdx))
-                            {
-                                flipScvfIndices_[scvfIdx][j] = outsideScvfIndex;
-                                // there is always only one flip face in an outside element
-                                break;
-                            }
+                            flipScvfIndices_[scvfIdx][j] = outsideScvfIndex;
+                            // there is always only one flip face in an outside element
+                            break;
                         }
                     }
                 }
@@ -702,6 +702,9 @@ public:
     const GridIndexType flipScvfIdx(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
     { return flipScvfIndices_[scvfIdx][outsideScvfIdx]; }
 
+    //! Returns the flip scvf index set
+    const FlipScvfIndexSet& flipScvfIndexSet() const { return flipScvfIndices_; }
+
     //! Returns the connectivity map of which dofs
     //! have derivatives with respect to a given dof.
     const ConnectivityMap& connectivityMap() const { return connectivityMap_; }
@@ -723,7 +726,7 @@ private:
     GridIndexType numBoundaryScvf_;
 
     // needed for embedded surface and network grids (dim < dimWorld)
-    std::vector<ScvfOutsideGridIndexStorage> flipScvfIndices_;
+    FlipScvfIndexSet flipScvfIndices_;
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;

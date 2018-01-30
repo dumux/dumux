@@ -93,9 +93,15 @@ public:
         {
             const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
             if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
-                PrimaryInteractionVolume::addInteractionVolumeIndexSets(primaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);
+                PrimaryInteractionVolume::addInteractionVolumeIndexSets(primaryIVIndexSets_,
+                                                                        scvfIndexMap_,
+                                                                        (*dualGridIndexSet_)[vIdxGlobal],
+                                                                        fvGridGeometry.flipScvfIndexSet());
             else
-                SecondaryInteractionVolume::addInteractionVolumeIndexSets(secondaryIVIndexSets_, scvfIndexMap_, (*dualGridIndexSet_)[vIdxGlobal]);
+                SecondaryInteractionVolume::addInteractionVolumeIndexSets(secondaryIVIndexSets_,
+                                                                          scvfIndexMap_,
+                                                                          (*dualGridIndexSet_)[vIdxGlobal],
+                                                                          fvGridGeometry.flipScvfIndexSet());
         }
     }
 

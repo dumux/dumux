@@ -300,16 +300,20 @@ public:
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
-    template<class IvIndexSetContainer, class ScvfIndexMap, class NodalIndexSet>
+    template< class IvIndexSetContainer,
+              class ScvfIndexMap,
+              class NodalIndexSet,
+              class FlipScvfIndexSet >
     static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
                                               ScvfIndexMap& scvfIndexMap,
-                                              const NodalIndexSet& nodalIndexSet)
+                                              const NodalIndexSet& nodalIndexSet,
+                                              const FlipScvfIndexSet& flipScvfIndexSet)
     {
         // the global index of the iv index set that is about to be created
         const auto curGlobalIndex = ivIndexSetContainer.size();
 
         // make the one index set for this node
-        ivIndexSetContainer.emplace_back(nodalIndexSet);
+        ivIndexSetContainer.emplace_back(nodalIndexSet, flipScvfIndexSet);
 
         // store the index mapping
         for (const auto scvfIdx : nodalIndexSet.globalScvfIndices())

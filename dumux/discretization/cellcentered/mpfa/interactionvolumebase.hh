@@ -142,11 +142,15 @@ public:
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
-    template<class IvIndexSetContainer, class ScvfIndexMap, class NodalIndexSet>
+    template< class IvIndexSetContainer,
+              class ScvfIndexMap,
+              class NodalIndexSet,
+              class FlipScvfIndexSet >
     static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
                                               ScvfIndexMap& scvfIndexMap,
-                                              const NodalIndexSet& nodalIndexSet)
-    { Impl::addInteractionVolumeIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet); }
+                                              const NodalIndexSet& nodalIndexSet,
+                                              const FlipScvfIndexSet& flipScvfIndexSet)
+    { Impl::addInteractionVolumeIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet, flipScvfIndexSet); }
 };
 
 } // end namespace Dumux
