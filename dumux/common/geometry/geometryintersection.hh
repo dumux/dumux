@@ -27,6 +27,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/promotiontraits.hh>
 #include <dune/geometry/referenceelements.hh>
+#include <dune/geometry/multilineargeometry.hh>
 
 #include <dumux/common/math.hh>
 #include <dumux/common/geometry/intersectspointgeometry.hh>

@@ -26,10 +26,6 @@
 #ifndef DUMUX_CC_TPFA_PROPERTIES_HH
 #define DUMUX_CC_TPFA_PROPERTIES_HH
 
-#include <dune/common/fvector.hh>
-#include <dune/common/reservedvector.hh>
-#include <dune/geometry/multilineargeometry.hh>
-
 #include <dumux/common/properties.hh>
 #include <dumux/common/boundaryflag.hh>
 
