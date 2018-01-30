@@ -441,6 +441,7 @@ public:
                 p[numCorners+2] /= 2;
                 p[numCorners+3] = p[3] + p[2];
                 p[numCorners+3] /= 2;
+                return p;
             }
             case 4: // quadrilateral
             {
@@ -453,14 +454,13 @@ public:
                 p[numCorners+3] /= 2;
                 p[numCorners+4] = p[4] + p[3];
                 p[numCorners+4] /= 2;
+                return p;
             }
             default:
                 DUNE_THROW(Dune::NotImplemented, "Mpfa scvf corners for dim = " << dim
                                                               << ", dimWorld = " << dimWorld
                                                               << ", corners = " << numCorners);
         }
-
-        return p;
     }
 
     /*!
