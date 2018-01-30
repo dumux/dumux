@@ -329,7 +329,6 @@ public:
                             break;
                         }
                     }
-
                 }
             }
         }
@@ -524,6 +523,13 @@ public:
         // instantiate the dual grid index set (to be used for construction of interaction volumes)
         typename GridIVIndexSets::DualGridIndexSet dualIdSet(this->gridView());
 
+        // keep track of boundary scvfs and scvf vertex indices in order to set up flip scvf index set
+        const auto maxNumScvfs = numScvs_*LocalView::maxNumElementScvfs;
+        std::vector<bool> scvfIsOnBoundary;
+        std::vector<GridIndexType> scvfVertexIndex;
+        scvfIsOnBoundary.reserve(maxNumScvfs);
+        scvfVertexIndex.reserve(maxNumScvfs);
+
         // Build the SCVs and SCV faces
         numScvf_ = 0;
         numBoundaryScvf_ = 0;
@@ -614,6 +620,8 @@ public:
 
                     // store information on the scv face
                     scvfsIndexSet.push_back(numScvf_++);
+                    scvfIsOnBoundary.push_back(boundary);
+                    scvfVertexIndex.push_back(vIdxGlobal);
                     neighborVolVarIndexSet.emplace_back(std::move(outsideScvIndices));
                 }
 
@@ -625,6 +633,46 @@ public:
             // store the sets of indices in the data container
             scvfIndicesOfScv_[eIdx] = scvfsIndexSet;
             neighborVolVarIndices_[eIdx] = neighborVolVarIndexSet;
+        }
+
+        // Make the flip index set for network and surface grids
+        if (dim < dimWorld)
+        {
+            flipScvfIndices_.resize(numScvf_);
+            for (std::size_t scvIdx = 0; scvIdx < numScvs_; ++scvIdx)
+            {
+                const auto& scvfIndices = scvfIndicesOfScv_[scvIdx];
+                for (unsigned int i = 0; i < scvfIndices.size(); ++i)
+                {
+                    // boundary scvf have no flip scvfs
+                    if (scvfIsOnBoundary[ scvfIndices[i] ])
+                        continue;
+
+                    const auto scvfIdx = scvfIndices[i];
+                    const auto vIdxGlobal = scvfVertexIndex[scvfIdx];
+                    const auto numOutsideScvs = neighborVolVarIndices_[scvIdx][i].size();
+
+                    flipScvfIndices_[scvfIdx].resize(numOutsideScvs);
+                    for (unsigned int j = 0; j < numOutsideScvs; ++j)
+                    {
+                        const auto outsideScvIdx = neighborVolVarIndices_[scvIdx][i][j];
+                        const auto& outsideScvfIndices = scvfIndicesOfScv_[outsideScvIdx];
+                        for (unsigned int k = 0; k < outsideScvfIndices.size(); ++k)
+                        {
+                            const auto outsideScvfIndex = outsideScvfIndices[k];
+                            const auto outsideScvfVertexIndex = scvfVertexIndex[outsideScvfIndex];
+                            const auto& outsideScvfNeighborIndices = neighborVolVarIndices_[outsideScvIdx][k];
+                            if (outsideScvfVertexIndex == vIdxGlobal &&
+                                MpfaHelper::vectorContainsValue(outsideScvfNeighborIndices, scvIdx))
+                            {
+                                flipScvfIndices_[scvfIdx][j] = outsideScvfIndex;
+                                // there is always only one flip face in an outside element
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         // building the geometries has finished
@@ -649,6 +697,11 @@ public:
     const std::vector<ScvfOutsideGridIndexStorage>& neighborVolVarIndices(GridIndexType scvIdx) const
     { return neighborVolVarIndices_[scvIdx]; }
 
+    //! Get the index scvf on the same face but from the other side
+    //! Note that e.g. the normals might be different in the case of surface grids
+    const GridIndexType flipScvfIdx(GridIndexType scvfIdx, unsigned int outsideScvfIdx = 0) const
+    { return flipScvfIndices_[scvfIdx][outsideScvfIdx]; }
+
     //! Returns the connectivity map of which dofs
     //! have derivatives with respect to a given dof.
     const ConnectivityMap& connectivityMap() const { return connectivityMap_; }
@@ -668,6 +721,9 @@ private:
     GridIndexType numScvs_;
     GridIndexType numScvf_;
     GridIndexType numBoundaryScvf_;
+
+    // needed for embedded surface and network grids (dim < dimWorld)
+    std::vector<ScvfOutsideGridIndexStorage> flipScvfIndices_;
 
     // The grid interaction volume index set
     GridIVIndexSets ivIndexSets_;
