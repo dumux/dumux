@@ -90,7 +90,7 @@ public:
             // solve by calling the appropriate implementation depending on whether the linear solver
             // is capable of handling MultiType matrices or not
             bool converged = solveLinearSystem_(ls, A, x, b,
-                                                std::integral_constant<bool, LinearSolverAcceptsMultiTypeMatrix<LinearSolver>::value>());
+                                                std::integral_constant<bool, linearSolverAcceptsMultiTypeMatrix<LinearSolver>::value>());
 
             // make sure all processes converged
             int convergedRemote = converged;

@@ -29,49 +29,39 @@
 namespace Dumux {
 
 //! The default
-template<typename LinearSolver>
-struct LinearSolverAcceptsMultiTypeMatrix
-{ static constexpr bool value = true; };
-
+template<class LinearSolver>
+struct linearSolverAcceptsMultiTypeMatrix : public std::true_type {};
 
 //! Solvers that don't accept multi-type matrices
 //! Those are all with ILU preconditioner that doesn't support the additional block level
 //! And the direct solvers that have BCRS Matrix hardcoded
 
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<ILUnBiCGSTABBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<ILUnBiCGSTABBackend> : public std::false_type {};
 
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<ILUnCGBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<ILUnCGBackend> : public std::false_type {};
 
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<ILU0BiCGSTABBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<ILU0BiCGSTABBackend> : public std::false_type {};
 
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<ILU0CGBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<ILU0CGBackend> : public std::false_type {};
 
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<ILU0RestartedGMResBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<ILU0RestartedGMResBackend> : public std::false_type {};
 
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<ILUnRestartedGMResBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<ILUnRestartedGMResBackend> : public std::false_type {};
 
 #if HAVE_SUPERLU
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<SuperLUBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<SuperLUBackend> : public std::false_type {};
 #endif // HAVE_SUPERLU
 
 #if HAVE_UMFPACK
 template<>
-struct LinearSolverAcceptsMultiTypeMatrix<UMFPackBackend>
-{ static constexpr bool value = false; };
+struct linearSolverAcceptsMultiTypeMatrix<UMFPackBackend> : public std::false_type {};
 #endif // HAVE_UMFPACK
 
 } // end namespace Dumux
