@@ -38,8 +38,7 @@
 #include <dumux/common/defaultusagemessage.hh>
 
 #include <dumux/linear/amgbackend.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
-#include <dumux/porousmediumflow/compositional/privarswitchnewtoncontroller.hh>
+#include <dumux/nonlinear/privarswitchnewtonsolver.hh>
 
 #include <dumux/assembly/fvassembler.hh>
 #include <dumux/assembly/diffmethod.hh>
@@ -132,10 +131,8 @@ int main(int argc, char** argv) try
     auto linearSolver = std::make_shared<LinearSolver>(leafGridView, fvGridGeometry->dofMapper());
 
     // the non-linear solver
-    using NewtonController = PriVarSwitchNewtonController<TypeTag>;
-    using NewtonMethod = Dumux::NewtonMethod<NewtonController, Assembler, LinearSolver>;
-    auto newtonController = std::make_shared<NewtonController>(timeLoop);
-    NewtonMethod nonLinearSolver(newtonController, assembler, linearSolver);
+    using NewtonMethod = Dumux::PriVarSwitchNewtonSolver<TypeTag, Assembler, LinearSolver>;
+    NewtonMethod nonLinearSolver(assembler, linearSolver);
 
     // time loop
     timeLoop->start(); do
@@ -173,7 +170,7 @@ int main(int argc, char** argv) try
         timeLoop->reportTimeStep();
 
         // set new dt as suggested by newton controller
-        timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+        timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
         // write vtk output
         vtkWriter.write(timeLoop->time());

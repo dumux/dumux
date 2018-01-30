@@ -41,9 +41,8 @@
  #include <dumux/common/dumuxmessage.hh>
  #include <dumux/common/defaultusagemessage.hh>
 
- #include <dumux/nonlinear/newtoncontroller.hh>
  #include <dumux/linear/seqsolverbackend.hh>
- #include <dumux/nonlinear/newtonmethod.hh>
+ #include <dumux/nonlinear/newtonsolver.hh>
 
  #include <dumux/assembly/fvassembler.hh>
 
@@ -130,9 +129,7 @@
      auto linearSolver = std::make_shared<LinearSolver>();
 
      // the non-linear solver
-     using NewtonController = Dumux::NewtonController<Scalar>;
-     auto newtonController = std::make_shared<NewtonController>(timeLoop);
-     NewtonMethod<NewtonController, Assembler, LinearSolver> nonLinearSolver(newtonController, assembler, linearSolver);
+     NewtonSolver<Assembler, LinearSolver> nonLinearSolver(assembler, linearSolver, timeLoop);
 
      // time loop
      timeLoop->start(); do
@@ -173,7 +170,7 @@
          timeLoop->reportTimeStep();
 
          // set new dt as suggested by newton controller
-         timeLoop->setTimeStepSize(newtonController->suggestTimeStepSize(timeLoop->timeStepSize()));
+         timeLoop->setTimeStepSize(nonLinearSolver.suggestTimeStepSize(timeLoop->timeStepSize()));
 
      } while (!timeLoop->finished());
 
