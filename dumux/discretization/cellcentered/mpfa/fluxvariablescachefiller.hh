@@ -315,7 +315,8 @@ private:
         {
             for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                if (phaseIdx == compIdx)
+                using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                     continue;
 
                 // fill data in the handle
