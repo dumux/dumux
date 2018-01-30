@@ -358,10 +358,11 @@ public:
                                         JacobianMatrixCoupling& couplingMatrix,
                                         SolutionVector& residual)
     {
-        // Darcy to CC
         const auto& couplingStencilCC = globalProblem_().couplingManager().couplingStencil(element, cellCenterIdx);
+        const auto& couplingStencilFace = globalProblem_().couplingManager().couplingStencil(element, faceIdx);
         auto scv = fvGeometry.scv(0); // TODO 0 ?? idx
 
+        // Darcy to cc
         for (auto globalJ : couplingStencilCC)
         {
             const auto originalResidual = globalProblem_().couplingManager().evalDarcyCouplingResidual(element,
@@ -387,26 +388,6 @@ public:
 
                     // deflect primary variables
                     otherPriVars[pvIdx] += eps;
-
-                    // update volVars --> depend on (otherPriVars + eps)
-                    for (auto&& scvf : scvfs(fvGeometry))
-                    {
-                        if(!problem_().onCouplingInterface(scvf.center()))
-                            continue;
-
-                        // volVars update necessary if Dirichlet boundary conditions are used for coupling
-                        ElementSolutionVector dirichletPriVars({problem_().dirichlet(element, scvf)});
-                        const auto insideScvIdx = scvf.insideScvIdx();
-                        const auto& insideScv = fvGeometry.scv(insideScvIdx);
-                        const auto outsideScvIdx = scvf.outsideScvIdx();
-
-                        auto& curVolVars = curElemVolVars[outsideScvIdx]; // TODO const (np/nc)
-                        curVolVars.update(dirichletPriVars,
-                                problem_(),
-                                element,
-                                insideScv);
-                    }
-
                     delta += eps;
 
                     // calculate the residual with the deflected primary variables
@@ -460,6 +441,89 @@ public:
                 // update the global jacobian matrix (coupling block)
                 for (auto&& scv : scvs(fvGeometry))
                     this->updateGlobalJacobian_(couplingMatrix[localDarcyIdx][cellCenterIdx], scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.indexInElement()]);
+            }
+        }
+
+        // Darcy to face
+        // TODO only horizontal faces on coupling interface? (compare matrix entries to Fetzer2017c for 2x2 cells)
+        for (auto globalJ : couplingStencilFace)
+        {
+            const auto originalResidual = globalProblem_().couplingManager().evalDarcyCouplingResidual(element,
+                    fvGeometry,
+                    curElemVolVars,
+                    elemBcTypes,
+                    elemFluxVarsCache);
+
+            auto& otherPriVars = otherProblem_().model().curSol()[faceIdx][globalJ];
+            auto originalOtherPriVars = otherPriVars;
+
+            // derivatives in the neighbors with respect to the current elements
+            std::decay_t<decltype(originalResidual)> partialDeriv;
+            for (int pvIdx = 0; pvIdx < otherPriVars.size(); pvIdx++)
+            {
+                const Scalar eps = this->numericEpsilon(otherPriVars[pvIdx]);
+                Scalar delta = 0;
+
+                if (numericDifferenceMethod_ >= 0)
+                {
+                    // we are not using backward differences, i.e. we need to
+                    // calculate f(x + \epsilon)
+
+                    // deflect primary variables
+                    otherPriVars[pvIdx] += eps;
+                    delta += eps;
+
+                    // calculate the residual with the deflected primary variables
+                    partialDeriv = globalProblem_().couplingManager().evalDarcyCouplingResidual(element,
+                            fvGeometry,
+                            curElemVolVars,
+                            elemBcTypes,
+                            elemFluxVarsCache);
+                }
+                else
+                {
+                    // we are using backward differences, i.e. we don't need
+                    // to calculate f(x + \epsilon) and we can recycle the
+                    // (already calculated) residual f(x)
+                    partialDeriv = originalResidual;
+                }
+
+
+                if (numericDifferenceMethod_ <= 0)
+                {
+                    // we are not using forward differences, i.e. we
+                    // need to calculate f(x - \epsilon)
+
+                    // deflect the primary variables
+                    otherPriVars[pvIdx] -= 2*eps;
+                    delta += eps;
+
+                    // calculate the residual with the deflected primary variables
+                    partialDeriv -= globalProblem_().couplingManager().evalDarcyCouplingResidual(element,
+                            fvGeometry,
+                            curElemVolVars,
+                            elemBcTypes,
+                            elemFluxVarsCache);
+                }
+                else
+                {
+                    // we are using forward differences, i.e. we don't need to
+                    // calculate f(x - \epsilon) and we can recycle the
+                    // (already calculated) residual f(x)
+                    partialDeriv -= originalResidual;
+
+                }
+
+                // divide difference in residuals by the magnitude of the
+                // deflections between the two function evaluation
+                partialDeriv /= delta;
+
+                // restore the original state of the element solution vector
+                otherPriVars = originalOtherPriVars;
+
+                // update the global jacobian matrix (coupling block)
+                for (auto&& scv : scvs(fvGeometry))
+                    this->updateGlobalJacobian_(couplingMatrix[localDarcyIdx][faceIdx], scv.dofIndex(), globalJ, pvIdx, partialDeriv[scv.indexInElement()]);
             }
         }
 

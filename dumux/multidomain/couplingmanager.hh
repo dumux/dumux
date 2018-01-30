@@ -203,18 +203,28 @@ public:
         return !(couplingStencil(element).empty());
     }
 
+    /*!
+     * \brief Returns whether a Stokes element sub control volume face is considered for coupling
+     *        with the Darcy domain. This function is used for the boundaryType() method
+     *        of the Stokes problem which handles vertices.
+     *
+     * \param scvf The sub control volume face
+     */
+    bool isStokesCouplingEntity(const StokesSubControlVolumeFace& scvf) const
+    {
+        return couplingMapper_.stokesFaceToDarcyMap().count(scvf.dofIndex());
+    }
 
     /*!
      * \brief Returns whether a Stokes element sub control volume is considered for coupling
      *        with the Darcy domain. This function is used for the boundaryType() method
      *        of the Stokes problem which handles vertices.
      *
-     * \param vertex The vertex
+     * \param scv The sub control volume
      */
-    // TODO remove 'element' as argument (misleading, not used)
-    bool isStokesCouplingEntity(const StokesElement &element, const StokesSubControlVolumeFace& scvf) const
+    bool isStokesCouplingEntity(const StokesSubControlVolume& scv) const
     {
-        return couplingMapper_.stokesFaceToDarcyMap().count(scvf.dofIndex());
+        return couplingMapper_.stokesCCToDarcyMap().count(scv.dofIndex());
     }
 
     /*!
@@ -277,6 +287,15 @@ public:
     {
         return couplingMapper_.stokesFaceToDarcyMap();
     }
+
+    /*!
+     * \brief Returns a reference to the coupling mapper.
+     */
+    const auto &stokesCCToDarcyMap() const
+    {
+        return couplingMapper_.stokesCCToDarcyMap();
+    }
+
 
     void computeStencils()
     {
