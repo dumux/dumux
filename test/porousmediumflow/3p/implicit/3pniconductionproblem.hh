@@ -116,7 +116,7 @@ class ThreePNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using IapwsH2O = H2O<Scalar>;
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     // copy some indices for convenience
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -262,9 +262,9 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    NeumannFluxes neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        return NeumannFluxes(0.0);
+        return NumEqVector(0.0);
     }
 
     // \}
@@ -286,9 +286,9 @@ public:
      *
      * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return NumEqVector(0.0);
     }
 
     /*!
