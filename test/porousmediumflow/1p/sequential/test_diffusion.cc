@@ -73,7 +73,7 @@ int main(int argc, char** argv)
         bool consecutiveNumbering = true;
 
         using FVProblem = GET_PROP_TYPE(TTAG(FVVelocity2PTestTypeTag), Problem);
-        FVProblem fvProblem(grid.leafGridView());
+        FVProblem fvProblem(grid);
         fvProblem.setName("fvdiffusion");
         timer.reset();
         fvProblem.init();
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
         fvResult.evaluate(grid.leafGridView(), fvProblem, consecutiveNumbering);
 
         using MPFAOProblem = GET_PROP_TYPE(TTAG(FVMPFAOVelocity2PTestTypeTag), Problem);
-        MPFAOProblem mpfaProblem(grid.leafGridView());
+        MPFAOProblem mpfaProblem(grid);
         mpfaProblem.setName("fvmpfaodiffusion");
         timer.reset();
         mpfaProblem.init();
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
         mpfaResult.evaluate(grid.leafGridView(), mpfaProblem, consecutiveNumbering);
 
         using MimeticProblem = GET_PROP_TYPE(TTAG(MimeticPressure2PTestTypeTag), Problem);
-        MimeticProblem mimeticProblem(grid.leafGridView());
+        MimeticProblem mimeticProblem(grid);
         mimeticProblem.setName("mimeticdiffusion");
         timer.reset();
         mimeticProblem.init();

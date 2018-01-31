@@ -102,7 +102,6 @@ class Adaptive2p2c3d: public IMPETProblem2P2C<TypeTag>
 using ParentType = IMPETProblem2P2C<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
 using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
-using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
 using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
@@ -128,11 +127,11 @@ using Intersection = typename GridView::Intersection;
 using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 public:
-Adaptive2p2c3d(TimeManager &timeManager, const GridView& gridView) :
-    ParentType(timeManager, gridView),
-            debugWriter_(gridView, "gridAfterAdapt")
+Adaptive2p2c3d(TimeManager& timeManager, Grid& grid) :
+    ParentType(timeManager, grid),
+            debugWriter_(grid.leafGridView(), "gridAfterAdapt")
 {
-    GridCreator::grid().globalRefine(getParam<int>("GridAdapt.MaxLevel"));
+    grid.globalRefine(getParam<int>("GridAdapt.MaxLevel"));
 
     //Process parameter file
     //Simulation Control

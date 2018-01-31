@@ -42,7 +42,8 @@ class DiffusionProblem2P: public OneModelProblem<TypeTag>
     using ParentType = OneModelProblem<TypeTag>;
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Grid = typename GridView::Grid;using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using Grid = typename GridView::Grid;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
     using PressureModel = typename GET_PROP_TYPE(TypeTag, PressureModel);
@@ -70,10 +71,10 @@ public:
      * \param timeManager the time manager
      * \param gridView The grid view
      */
-    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView), gravity_(0)
+    DiffusionProblem2P(TimeManager& timeManager, Grid& grid)
+    : ParentType(timeManager, grid), gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
@@ -87,8 +88,8 @@ public:
      * \param gridView The grid view
      * \param spatialParams SpatialParams instantiation
      */
-    DiffusionProblem2P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
-    : ParentType(timeManager, gridView), gravity_(0)
+    DiffusionProblem2P(TimeManager& timeManager, Grid& grid, SpatialParams& spatialParams)
+    : ParentType(timeManager, grid), gravity_(0)
     {
         spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
         gravity_ = 0;
@@ -103,10 +104,10 @@ public:
      *
      * \param gridView The grid view
      */
-    DiffusionProblem2P(const GridView &gridView)
-    : ParentType(gridView, false), gravity_(0)
+    DiffusionProblem2P(Grid& grid)
+    : ParentType(grid, false), gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
@@ -119,8 +120,8 @@ public:
      * \param gridView The grid view
      * \param spatialParams SpatialParams instantiation
      */
-    DiffusionProblem2P(const GridView &gridView, SpatialParams &spatialParams)
-    : ParentType(gridView, false), gravity_(0)
+    DiffusionProblem2P(Grid& grid, SpatialParams& spatialParams)
+    : ParentType(grid, false), gravity_(0)
     {
         spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
         gravity_ = 0;

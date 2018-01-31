@@ -121,6 +121,7 @@ class IMPESTestProblem: public IMPESProblem2P<TypeTag>
 {
 using ParentType = IMPESProblem2P<TypeTag>;
 using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+using Grid = typename GridView::Grid;
 
 using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
 
@@ -149,11 +150,11 @@ using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
 using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
 using SolutionTypes = typename GET_PROP(TypeTag, SolutionTypes);
-    using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
+using PrimaryVariables = typename SolutionTypes::PrimaryVariables;
 
 public:
-IMPESTestProblem(TimeManager &timeManager, const GridView &gridView) :
-ParentType(timeManager, gridView)
+IMPESTestProblem(TimeManager &timeManager, Grid &grid) :
+ParentType(timeManager, grid)
 {
     name_ = getParam<std::string>("Problem.Name");
 }

@@ -45,6 +45,7 @@ class OneModelProblem
 private:
     using Implementation = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
 
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
@@ -88,18 +89,18 @@ public:
      *  \tparam TypeTag The TypeTag
      *  \tparam verbose Output level for TimeManager
      */
-    OneModelProblem(const GridView &gridView, bool verbose = true)
-        : gridView_(gridView),
+    OneModelProblem(Grid& grid, bool verbose = true)
+        : gridView_(grid.leafGridView()),
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
-          variables_(gridView),
+          variables_(grid.leafGridView()),
           outputInterval_(1),
           outputTimeInterval_(0)
     {
         // calculate the bounding box of the grid view
         using std::max;
         using std::min;
-        for (const auto& vertex : vertices(gridView)) {
+        for (const auto& vertex : vertices(grid.leafGridView())) {
             for (int i=0; i<dim; i++) {
                 bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().center()[i]);
                 bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().center()[i]);
@@ -117,18 +118,18 @@ public:
      *  \tparam TypeTag The TypeTag
      *  \tparam verbose Output level for TimeManager
      */
-    OneModelProblem(TimeManager &timeManager, const GridView &gridView)
-        : gridView_(gridView),
+    OneModelProblem(TimeManager& timeManager, Grid& grid)
+        : gridView_(grid.leafGridView()),
           bBoxMin_(std::numeric_limits<double>::max()),
           bBoxMax_(-std::numeric_limits<double>::max()),
-          variables_(gridView),
+          variables_(grid.leafGridView()),
           outputInterval_(1),
           outputTimeInterval_(0)
     {
         // calculate the bounding box of the grid view
         using std::max;
         using std::min;
-        for (const auto& vertex : vertices(gridView)) {
+        for (const auto& vertex : vertices(grid.leafGridView())) {
             for (int i=0; i<dim; i++) {
                 bBoxMin_[i] = min(bBoxMin_[i], vertex.geometry().center()[i]);
                 bBoxMax_[i] = max(bBoxMax_[i], vertex.geometry().center()[i]);

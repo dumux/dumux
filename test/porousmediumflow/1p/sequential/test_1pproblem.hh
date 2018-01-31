@@ -75,6 +75,7 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
 
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using Grid = typename GridView::Grid;
 
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
 
@@ -92,12 +93,11 @@ class TestProblemOneP: public DiffusionProblem1P<TypeTag >
     using Intersection = typename GridView::Intersection;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using LocalPosition = Dune::FieldVector<Scalar, dim>;
-    using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 
 public:
-    TestProblemOneP(TimeManager &timeManager, const GridView &gridView) :
-        ParentType(gridView), velocity_(*this)
+    TestProblemOneP(TimeManager& timeManager, Grid& grid) :
+        ParentType(grid), velocity_(*this)
     {
         delta_ = getParam<Scalar>("Problem.Delta", 1e-3);
 

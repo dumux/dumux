@@ -119,15 +119,15 @@ class TestIMPESAdaptiveProblem: public IMPESProblem2P<TypeTag>
     using GridCreator = typename GET_PROP_TYPE(TypeTag, GridCreator);
 
 public:
-    TestIMPESAdaptiveProblem(TimeManager &timeManager, const GridView &gridView) :
-            ParentType(timeManager, gridView)
+    TestIMPESAdaptiveProblem(TimeManager &timeManager, Grid& grid) :
+            ParentType(timeManager, grid)
     {
         name_ = getParam<std::string>("Problem.Name");
 
         // Refine the grid provided that no restart occurs. Otherwise, an
         // already refined grid will be read.
         if (!(haveParam("Restart") || haveParam("TimeManager.Restart")))
-            GridCreator::grid().globalRefine(getParam<int>("GridAdapt.MaxLevel"));
+            grid.globalRefine(getParam<int>("GridAdapt.MaxLevel"));
 
         this->setOutputInterval(10);
     }

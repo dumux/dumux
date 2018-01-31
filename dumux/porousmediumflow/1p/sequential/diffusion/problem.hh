@@ -72,10 +72,10 @@ public:
      * \param timeManager the time manager
      * \param gridView The grid view
      */
-    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView)
-    : ParentType(timeManager, gridView), gravity_(0)
+    DiffusionProblem1P(TimeManager& timeManager, Grid& grid)
+    : ParentType(timeManager, grid), gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
@@ -88,8 +88,8 @@ public:
      * \param gridView The grid view
      * \param spatialParams SpatialParams instantiation
      */
-    DiffusionProblem1P(TimeManager &timeManager, const GridView &gridView, SpatialParams &spatialParams)
-    : ParentType(timeManager, gridView), gravity_(0)
+    DiffusionProblem1P(TimeManager& timeManager, Grid& grid, SpatialParams &spatialParams)
+    : ParentType(timeManager, grid), gravity_(0)
     {
         spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
         gravity_ = 0;
@@ -102,10 +102,10 @@ public:
      *
      * \param gridView The grid view
      */
-    DiffusionProblem1P(const GridView &gridView)
-    : ParentType(gridView, false), gravity_(0)
+    DiffusionProblem1P(Grid& grid)
+    : ParentType(grid, false), gravity_(0)
     {
-        spatialParams_ = std::make_shared<SpatialParams>(gridView);
+        spatialParams_ = std::make_shared<SpatialParams>(grid.leafGridView());
         gravity_ = 0;
         if (getParam<bool>("Problem.EnableGravity"))
             gravity_[dim - 1] = -9.81;
@@ -117,8 +117,8 @@ public:
      * \param gridView The grid view
      * \param spatialParams SpatialParams instantiation
      */
-    DiffusionProblem1P(const GridView &gridView, SpatialParams &spatialParams)
-    : ParentType(gridView, false), gravity_(0)
+    DiffusionProblem1P(Grid& grid, SpatialParams& spatialParams)
+    : ParentType(grid, false), gravity_(0)
     {
         spatialParams_ = Dune::stackobject_to_shared_ptr<SpatialParams>(spatialParams);
         gravity_ = 0;
