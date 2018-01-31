@@ -55,7 +55,9 @@ public:
     /*!
      * \brief Binary diffusion coefficient \f$\mathrm{[m^2/s]}\f$ for molecular oxygen in liquid nitrogen.
      *
-     * Uses fullerMethod to determine the diffusion of water in nitrogen.
+     * Uses Fuller's method to determine the diffusion of water in nitrogen.
+     * This is only valid at "low" pressures.
+     * See: R. Reid, et al. (1987, pp. 587-588) \cite reid1987
      * \param temperature the temperature \f$\mathrm{[K]}\f$
      * \param pressure the phase pressure \f$\mathrm{[Pa]}\f$
      */
@@ -66,11 +68,17 @@ public:
         using O2 = Dumux::O2<Scalar>;
 
         // atomic diffusion volumes
-        const std::array<Scalar, 2> SigmaNu = { 18.1 /* N2 */,  16.3 /* O2 */ };
+        static const std::array<Scalar, 2> SigmaNu = { 18.5 /* N2 */,  16.3 /* O2 */ };
         // molar masses [g/mol]
-        const std::array<Scalar, 2> M = { N2::molarMass()*1e3, O2::molarMass()*1e3 };
+        static const std::array<Scalar, 2> M = { N2::molarMass()*1e3, O2::molarMass()*1e3 };
 
-        return fullerMethod(M, SigmaNu, temperature, pressure);
+        static const Scalar Mab = harmonicMean(M[0], M[1]);
+
+        using std::pow;
+        using std::sqrt;
+        using std::cbrt;
+        static const Scalar tmp = cbrt(SigmaNu[0]) + cbrt(SigmaNu[1]);
+        return 1e-4 * (143.0*pow(temperature, 1.75))/(pressure*sqrt(Mab)*tmp*tmp);
     }
 
     /*!

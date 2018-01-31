@@ -71,11 +71,17 @@ public:
         using O2 = O2<Scalar>;
 
         // atomic diffusion volumes
-        const std::array<Scalar, 2> SigmaNu = { 13.1 /* H2O */,  16.3 /* O2 */ };
+        static const std::array<Scalar, 2> SigmaNu = { 13.1 /* H2O */,  16.3 /* O2 */ };
         // molar masses [g/mol]
-        const std::array<Scalar, 2> M = { H2O::molarMass()*1e3, O2::molarMass()*1e3 };
+        static const std::array<Scalar, 2> M = { H2O::molarMass()*1e3, O2::molarMass()*1e3 };
 
-        return fullerMethod(M, SigmaNu, temperature, pressure);
+        static const Scalar Mab = harmonicMean(M[0], M[1]);
+
+        using std::pow;
+        using std::sqrt;
+        using std::cbrt;
+        static const Scalar tmp = cbrt(SigmaNu[0]) + cbrt(SigmaNu[1]);
+        return 1e-4 * (143.0*pow(temperature, 1.75))/(pressure*sqrt(Mab)*tmp*tmp);
     }
 
     /*!

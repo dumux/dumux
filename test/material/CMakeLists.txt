@@ -1,3 +1,4 @@
+add_subdirectory("binarycoefficients")
 add_subdirectory("components")
 add_subdirectory("fluidsystems")
 add_subdirectory("fluidmatrixinteractions")
