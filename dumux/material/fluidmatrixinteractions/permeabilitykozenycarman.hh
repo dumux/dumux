@@ -76,12 +76,12 @@ public:
                                   const SubControlVolume& scv,
                                   const ElementSolution& elemSol) const
     {
-        auto initPoro = spatialParams().initialPorosity(element, scv);
+        auto refPoro = spatialParams().referencePorosity(element, scv);
         auto poro = spatialParams().porosity(element, scv, elemSol);
 
         using std::pow;
-        auto factor = pow((1.0 - initPoro)/(1.0 - poro), 2) * pow(poro/initPoro, 3);
-        return applyFactorToPermeability_(spatialParams().initialPermeability(element, scv), factor);
+        auto factor = pow((1.0 - refPoro)/(1.0 - poro), 2) * pow(poro/refPoro, 3);
+        return applyFactorToPermeability_(spatialParams().referencePermeability(element, scv), factor);
     }
 
 private:

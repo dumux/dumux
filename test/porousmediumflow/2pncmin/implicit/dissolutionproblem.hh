@@ -144,8 +144,7 @@ public:
         temperature_            = getParam<Scalar>("Problem.Temperature");
         reservoirPressure_      = getParam<Scalar>("Problem.ReservoirPressure");
         initLiqSaturation_      = getParam<Scalar>("Problem.LiquidSaturation");
-        initPrecipitatedSalt1_  = getParam<Scalar>("Problem.InitPrecipitatedSalt1");
-        initPrecipitatedSalt2_  = getParam<Scalar>("Problem.InitPrecipitatedSalt2");
+        initPrecipitatedSaltBlock_  = getParam<Scalar>("Problem.InitPrecipitatedSaltBlock");
 
         outerLiqSaturation_     = getParam<Scalar>("Problem.OuterLiqSaturation");
         innerLiqSaturation_     = getParam<Scalar>("Problem.InnerLiqSaturation");
@@ -284,9 +283,9 @@ public:
         priVars[switchIdx]   = initLiqSaturation_;                 // Sw primary variable
         priVars[xwNaClIdx]   = massToMoleFrac_(outerSalinity_);     // mole fraction
         if(globalPos[0] > 5.0 - eps_ && globalPos[0] < 19.0 + eps_)
-            priVars[precipNaClIdx] = initPrecipitatedSalt2_; // [kg/m^3]
+            priVars[precipNaClIdx] = initPrecipitatedSaltBlock_; // [kg/m^3]
         else
-            priVars[precipNaClIdx] = initPrecipitatedSalt1_; // [kg/m^3]
+            priVars[precipNaClIdx] = 0.0; // [kg/m^3]
 
         return priVars;
     }
@@ -350,7 +349,7 @@ public:
         if (precipSalt*timeStepSize_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
             precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/timeStepSize_;
 
-        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().initialPorosity(element, scv) - saltPorosity  && precipSalt > 0)
+        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().referencePorosity(element, scv) - saltPorosity  && precipSalt > 0)
             precipSalt = 0;
 
         source[conti0EqIdx + NaClIdx] += -precipSalt;
@@ -425,8 +424,7 @@ private:
     Scalar initLiqSaturation_;
     Scalar outerLiqSaturation_;
     Scalar innerLiqSaturation_;
-    Scalar initPrecipitatedSalt1_;
-    Scalar initPrecipitatedSalt2_;
+    Scalar initPrecipitatedSaltBlock_;
     Scalar innerSalinity_;
     Scalar time_ = 0.0;
     Scalar timeStepSize_ = 0.0;

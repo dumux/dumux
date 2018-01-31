@@ -76,7 +76,7 @@ public:
         auto minPoro = spatialParams_().minPorosity(element, scv);
 
         using std::max;
-        return max(minPoro, spatialParams_().initialPorosity(element, scv) - sumPrecipitates);
+        return max(minPoro, spatialParams_().referencePorosity(element, scv) - sumPrecipitates);
     }
 
 private:

@@ -72,12 +72,14 @@ class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using MaterialLawParams = typename GET_PROP_TYPE(TypeTag, MaterialLaw)::Params;
+    using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using CoordScalar = typename GridView::ctype;
     enum { dimWorld=GridView::dimensionworld };
 
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
     using Tensor = Dune::FieldMatrix<CoordScalar, dimWorld, dimWorld>;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using Element = typename GridView::template Codim<0>::Entity;
@@ -93,8 +95,8 @@ public:
     : ParentType(problem)
     {
         solubilityLimit_     = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
-        initialPorosity_     = getParam<Scalar>("SpatialParams.Porosity", 0.11);
-        initialPermeability_ = getParam<Scalar>("SpatialParams.Permeability", 2.23e-14);
+        referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
+        refPermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
         irreducibleLiqSat_   = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
         irreducibleGasSat_   = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
         pEntry1_             = getParam<Scalar>("SpatialParams.Pentry1", 500);
@@ -108,15 +110,55 @@ public:
         materialParams_.setPe(pEntry1_);
         materialParams_.setLambda(bcLambda1_);
 
-        // set main diagonal entries of the permeability tensor to a value
-        // setting to one value means: isotropic, homogeneous
-        for (int i = 0; i < dimWorld; i++)  //TODO make this nice and dependend on PermeabilityType!
-            initK_[i][i] = initialPermeability_;
-
         //! Intitialize the parameter laws
         poroLaw_.init(*this);
         permLaw_.init(*this);
+
+        for (int i = 0; i < dimWorld; i++)
+            referencePermeability_[i][i] = refPermeability_;
     }
+
+    /*!
+     *  \brief Define the minimum porosity \f$[-]\f$ distribution
+     *
+     *  \param element The finite element
+     *  \param scv The sub-control volume
+     */
+    Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
+    { return 1e-5; }
+
+    /*!
+     *  \brief Define the reference porosity \f$[-]\f$ distribution.
+     *  This is the porosity of the porous medium without any of the
+     *  considered solid phases.
+     *
+     *  \param element The finite element
+     *  \param scv The sub-control volume
+     */
+    Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
+    { return referencePorosity_; }
+
+    /*!
+     *  \brief Return the actual recent porosity \f$[-]\f$ accounting for
+     *  clogging caused by mineralization
+     *
+     *  \param element The finite element
+     *  \param scv The sub-control volume
+     */
+    Scalar porosity(const Element& element,
+                    const SubControlVolume& scv,
+                    const ElementSolutionVector& elemSol) const
+    { return poroLaw_.evaluatePorosity(element, scv, elemSol); }
+
+    /*!
+     *  \brief Define the reference permeability \f$[m^2]\f$ distribution
+     *
+     *  \param element The finite element
+     *  \param scv The sub-control volume
+     */
+    PermeabilityType referencePermeability(const Element& element, const SubControlVolume &scv) const
+    { return referencePermeability_; }
+
 
     /*! Intrinsic permeability tensor K \f$[m^2]\f$ depending
      *  on the position in the domain
@@ -130,45 +172,6 @@ public:
                         const SubControlVolume& scv,
                         const ElementSolutionVector& elemSol) const
     { return permLaw_.evaluatePermeability(element, scv, elemSol); }
-
-    /*!
-     *  \brief Define the minimum porosity \f$[-]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    Scalar minPorosity(const Element& element, const SubControlVolume &scv) const
-    { return 1e-5; }
-
-    /*!
-     *  \brief Define the initial porosity \f$[-]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    Scalar initialPorosity(const Element& element, const SubControlVolume &scv) const
-    { return initialPorosity_; }
-
-    /*!
-     *  \brief Define the initial permeability \f$[m^2]\f$ distribution
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    PermeabilityType initialPermeability(const Element& element, const SubControlVolume &scv) const
-    { return initK_; }
-
-    /*!
-     *  \brief Define the minimum porosity \f$[-]\f$ after clogging caused by mineralization
-     *
-     *  \param element The finite element
-     *  \param scv The sub-control volume
-     */
-    Scalar porosity(const Element& element,
-                    const SubControlVolume& scv,
-                    const ElementSolutionVector& elemSol) const
-    { return poroLaw_.evaluatePorosity(element, scv, elemSol); }
-
 
     Scalar solidity(const SubControlVolume &scv) const
     { return 1.0 - porosityAtPos(scv.center()); }
@@ -184,14 +187,15 @@ public:
     { return materialParams_; }
 
 private:
+
     MaterialLawParams materialParams_;
 
     PorosityLaw poroLaw_;
     PermeabilityLaw permLaw_;
     Scalar solubilityLimit_;
-    Scalar initialPorosity_;
-    Scalar initialPermeability_;
-    PermeabilityType initK_= 0.0;
+    Scalar referencePorosity_;
+    Scalar refPermeability_;
+    PermeabilityType referencePermeability_ = 0.0;
     Scalar irreducibleLiqSat_;
     Scalar irreducibleGasSat_;
     Scalar pEntry1_;

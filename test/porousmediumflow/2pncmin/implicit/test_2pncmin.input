@@ -31,13 +31,12 @@ OuterPressure       = 11e6         # [Pa] reservoir boundary pressure
 OuterLiqSaturation  = 0.2          # [-]  liquid saturation at outer boundary
 OuterSalinity       = 0.4          # [-]  Initial salinity
 LiquidSaturation    = 0.4          # [-]  initial liquid saturation
-InitPrecipitatedSalt1    = 0.0     # [-]  initial precipitated salt
-InitPrecipitatedSalt2    = 0.05    # [-]  initial precipitated salt in the blocked part
+InitPrecipitatedSaltBlock    = 0.05    # [-]  initial precipitated salt in the blocked part
 
 [SpatialParams]
 SolubilityLimit     = 0.26 	       # [-]  solubility limit of salt in brine
-Porosity            = 0.11         # [-]  initial porosity
-Permeability        = 2.23e-14
+referencePorosity   = 0.11         # [-]  initial porosity
+referencePermeability   = 2.23e-14
 IrreducibleLiqSat   = 0.2          # [-]  irreducible liquid saturation
 IrreducibleGasSat   = 0.001        # [-]  irreducible gas saturation
 Pentry1             = 500          # [Pa]
