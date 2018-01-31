@@ -91,7 +91,7 @@ class ClosedSystemTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
 
 public:
@@ -130,9 +130,9 @@ public:
      * \param values Stores the source values, acts as return value
      * \param globalPos The global position
      */
-    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return SourceValues(0.0);
+        return NumEqVector(0.0);
     }
     // \}
    /*!

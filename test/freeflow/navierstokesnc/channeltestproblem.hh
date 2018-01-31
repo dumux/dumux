@@ -122,7 +122,7 @@ class ChannelNCTestProblem : public NavierStokesProblem<TypeTag>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using SourceValues = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     using TimeLoopPtr = std::shared_ptr<CheckPointTimeLoop<Scalar>>;
     using GridVariables = typename GET_PROP_TYPE(TypeTag, GridVariables);
@@ -161,9 +161,9 @@ public:
      *
      * \param globalPos The global position
      */
-    SourceValues sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return SourceValues(0.0);
+        return NumEqVector(0.0);
     }
     // \}
    /*!
