@@ -162,8 +162,7 @@ public:
         name_                   = getParam<std::string>("Problem.Name");
 
         unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0;
-        Kxx_.resize(fvGridGeometry->gridView().size(codim));
-        Kyy_.resize(fvGridGeometry->gridView().size(codim));
+        permeability_.resize(fvGridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -362,14 +361,9 @@ public:
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
 
-    const std::vector<Scalar>& getKxx()
+    const std::vector<Scalar>& getPermeability()
     {
-        return Kxx_;
-    }
-
-    const std::vector<Scalar>& getKyy()
-    {
-        return Kyy_;
+        return permeability_;
     }
 
     void updateVtkOutput(const SolutionVector& curSol)
@@ -386,8 +380,7 @@ public:
                     VolumeVariables volVars;
                     volVars.update(elemSol, *this, element, scv);
                     const auto dofIdxGlobal = scv.dofIndex();
-                    Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
-                    Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
+                    permeability_[dofIdxGlobal] = volVars.permeability();
                 }
             }
         }
@@ -430,8 +423,8 @@ private:
     Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
     Scalar reservoirSaturation_;
-    std::vector<double> Kxx_;
-    std::vector<double> Kyy_;
+    Scalar Permeability_;
+    std::vector<double> permeability_;
 };
 
 } //end namespace Dumux

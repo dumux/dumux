@@ -89,18 +89,18 @@ class DissolutionSpatialparams : public FVSpatialParams<TypeTag>
 
 public:
     // type used for the permeability (i.e. tensor or scalar)
-    using PermeabilityType = Tensor;
+    using PermeabilityType = Scalar;
 
     DissolutionSpatialparams(const Problem& problem)
     : ParentType(problem)
     {
-        solubilityLimit_     = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
+        solubilityLimit_       = getParam<Scalar>("SpatialParams.SolubilityLimit", 0.26);
         referencePorosity_     = getParam<Scalar>("SpatialParams.referencePorosity", 0.11);
-        refPermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
-        irreducibleLiqSat_   = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
-        irreducibleGasSat_   = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
-        pEntry1_             = getParam<Scalar>("SpatialParams.Pentry1", 500);
-        bcLambda1_           = getParam<Scalar>("SpatialParams.BCLambda1", 2);
+        referencePermeability_ = getParam<Scalar>("SpatialParams.referencePermeability", 2.23e-14);
+        irreducibleLiqSat_     = getParam<Scalar>("SpatialParams.IrreducibleLiqSat", 0.2);
+        irreducibleGasSat_     = getParam<Scalar>("SpatialParams.IrreducibleGasSat", 1e-3);
+        pEntry1_               = getParam<Scalar>("SpatialParams.Pentry1", 500);
+        bcLambda1_             = getParam<Scalar>("SpatialParams.BCLambda1", 2);
 
         // residual saturations
         materialParams_.setSwr(irreducibleLiqSat_);
@@ -110,12 +110,9 @@ public:
         materialParams_.setPe(pEntry1_);
         materialParams_.setLambda(bcLambda1_);
 
-        //! Intitialize the parameter laws
+        //! Initialize the parameter laws
         poroLaw_.init(*this);
         permLaw_.init(*this);
-
-        for (int i = 0; i < dimWorld; i++)
-            referencePermeability_[i][i] = refPermeability_;
     }
 
     /*!
@@ -194,7 +191,6 @@ private:
     PermeabilityLaw permLaw_;
     Scalar solubilityLimit_;
     Scalar referencePorosity_;
-    Scalar refPermeability_;
     PermeabilityType referencePermeability_ = 0.0;
     Scalar irreducibleLiqSat_;
     Scalar irreducibleGasSat_;

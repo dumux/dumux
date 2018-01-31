@@ -15,7 +15,7 @@ dune_add_test(NAME test_2pncmin_tpfa
               COMPILE_DEFINITIONS TYPETAG=DissolutionCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS      --script fuzzy
-                            --files ${CMAKE_SOURCE_DIR}/test/references/saltflushcc2pncmin-reference.vtu
+                            --files ${CMAKE_SOURCE_DIR}/test/references/saltflushtpfa2pncmin-reference.vtu
                                     ${CMAKE_CURRENT_BINARY_DIR}/saltflushtpfa-00043.vtu
                             --command "${CMAKE_CURRENT_BINARY_DIR}/test_2pncmin_tpfa -ParameterFile test_2pncmin.input -Problem.Name saltflushtpfa")
 
