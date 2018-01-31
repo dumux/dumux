@@ -47,18 +47,19 @@ namespace BinaryCoeff
  * See: R. Reid, et al. (1987, pp. 587-588) \cite reid1987
  */
 template <class Scalar>
-inline Scalar fullerMethod(const Scalar *M, // molar masses [g/mol]
-                           const Scalar *SigmaNu, // atomic diffusion volume
+inline Scalar fullerMethod(const std::array<Scalar,2> M, // molar masses [g/mol]
+                           const std::array<Scalar,2> SigmaNu, // atomic diffusion volume
                            const Scalar temperature, // [K]
                            const Scalar pressure) // [Pa]
 {
     // "effective" molar mass in [g/m^3]
-    Scalar Mab = harmonicMean(M[0], M[1]);
+    const Scalar Mab = harmonicMean(M[0], M[1]);
 
     // Fuller's method
     using std::pow;
     using std::sqrt;
-    Scalar tmp = pow(SigmaNu[0], 1./3) + pow(SigmaNu[1], 1./3);
+    using std::cbrt;
+    const Scalar tmp = cbrt(SigmaNu[0]) + cbrt(SigmaNu[1]);
     return 1e-4 * (143.0*pow(temperature, 1.75))/(pressure*sqrt(Mab)*tmp*tmp);
 }
 

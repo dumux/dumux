@@ -66,9 +66,10 @@ public:
         using O2 = Dumux::O2<Scalar>;
 
         // atomic diffusion volumes
-        const Scalar SigmaNu[2] = { 18.1 /* N2 */,  16.3 /* O2 */ };
+        const std::array<Scalar, 2> SigmaNu = { 18.1 /* N2 */,  16.3 /* O2 */ };
         // molar masses [g/mol]
-        const Scalar M[2] = { N2::molarMass()*1e3, O2::molarMass()*1e3 };
+        const std::array<Scalar, 2> M = { N2::molarMass()*1e3, O2::molarMass()*1e3 };
+
         return fullerMethod(M, SigmaNu, temperature, pressure);
     }
 
