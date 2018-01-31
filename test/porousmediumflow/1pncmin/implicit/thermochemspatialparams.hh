@@ -110,21 +110,21 @@ public:
     }
 
     /*!
-     *  \brief Define the initial permeability \f$[m^2]\f$ distribution
+     *  \brief Define the reference permeability \f$[m^2]\f$ distribution
      *
      *  \param element The finite element
      *  \param scv The sub-control volume
      */
-    Scalar initialPermeability(const Element& element, const SubControlVolume &scv) const
+    Scalar referencePermeability(const Element& element, const SubControlVolume &scv) const
     { return 8.53e-12; }
 
     /*!
-     *  \brief Define the initial porosity \f$[-]\f$ distribution
+     *  \brief Define the reference porosity \f$[-]\f$ distribution
      *
      *  \param element The finite element
      *  \param scv The sub-control volume
      */
-    Scalar initialPorosity(const Element& element, const SubControlVolume &scv) const
+    Scalar referencePorosity(const Element& element, const SubControlVolume &scv) const
     {
         return  0.8;
     }
