@@ -117,6 +117,7 @@ class CombustionProblemOneComponent: public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -216,12 +217,12 @@ public:
      * Positive values mean that mass is created, negative ones mean that it vanishes.
      */
     //! \copydoc Dumux::ImplicitProblem::source()
-    PrimaryVariables source(const Element &element,
+    NumEqVector source(const Element &element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
-        PrimaryVariables priVars(0.0);
+        NumEqVector values(0.0);
 
         const auto& globalPos = scv.dofPosition();
 
@@ -233,10 +234,10 @@ public:
             if (onRightBoundaryPorousMedium_(globalPos))
             {
                 // Testing the location of a vertex, but function is called for each associated scv. Compensate for that
-                priVars[energyEqSolidIdx] = heatFluxFromRight_ / volume / numScv;
+                values[energyEqSolidIdx] = heatFluxFromRight_ / volume / numScv;
             }
          }
-        return priVars;
+        return values;
     }
 
     /*!
@@ -287,12 +288,12 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumann(const Element &element,
+    NumEqVector neumann(const Element &element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables priVars(0.0);
+        NumEqVector values(0.0);
 
         const auto& globalPos = fvGeometry.scv(scvf.insideScvIdx()).dofPosition();
         const auto& scvIdx = scvf.insideScvIdx();
@@ -327,11 +328,11 @@ public:
 
         if (onLeftBoundary_(globalPos))
         {
-            priVars[conti00EqIdx + wCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, wCompIdx);;
-            priVars[conti00EqIdx + nCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, nCompIdx);;
-            priVars[energyEq0Idx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
+            values[conti00EqIdx + wCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, wCompIdx);;
+            values[conti00EqIdx + nCompIdx] = - molarFlux * fluidState.moleFraction(wPhaseIdx, nCompIdx);;
+            values[energyEq0Idx] = - massFluxInjectedPhase * fluidState.enthalpy(wPhaseIdx);
         }
-        return priVars;
+        return values;
     }
 
     /*!

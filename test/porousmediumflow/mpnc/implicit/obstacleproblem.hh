@@ -112,6 +112,7 @@ class ObstacleProblem
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -239,12 +240,12 @@ public:
      *
      * Negative values mean influx.
      */
-    PrimaryVariables neumann(const Element& element,
+    NumEqVector neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
     {
-        return PrimaryVariables(0.0);
+        return NumEqVector(0.0);
     }
 
     // \}
@@ -267,12 +268,12 @@ public:
      * Positive values mean that mass is created, negative ones mean that it vanishes.
      */
     //! \copydoc Dumux::ImplicitProblem::source()
-    PrimaryVariables source(const Element &element,
+    NumEqVector source(const Element &element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
-       return PrimaryVariables(0.0);
+       return NumEqVector(0.0);
     }
 
     /*!
