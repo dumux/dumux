@@ -190,7 +190,7 @@ public:
             flux[eqIdx] += normalFlux
                     * ((massUpwindWeight_) * up.density(phaseIdx)
                             * up.mobility(phaseIdx)
-                            + (massUpwindWeight_) * dn.density(phaseIdx)
+                            + (1.0 - massUpwindWeight_) * dn.density(phaseIdx)
                                     * dn.mobility(phaseIdx));
 
             // if geomechanical feedback on flow is taken into account add the flux contribution
