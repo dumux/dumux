@@ -97,6 +97,7 @@ class RichardsLensProblem : public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -208,9 +209,9 @@ public:
      *
      * \param globalPos The position for which the Neumann value is set
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NumEqVector values(0.0);
         if (onInlet_(globalPos))
             values[conti0EqIdx] = -0.04; // kg/(m*s)
         return values;

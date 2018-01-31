@@ -91,6 +91,7 @@ class RichardsAnalyticalProblem :  public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -172,9 +173,9 @@ public:
      * \param values Storage for all primary variables of the source term
      * \param globalPos The position for which the source term is set
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NumEqVector values(0.0);
         const Scalar time = time_;
         const Scalar pwTop = 98942.8;
         const Scalar pwBottom = 95641.1;
@@ -256,9 +257,9 @@ public:
      * \param values The neumann values for the conservation equations
      * \param globalPos The position for which the Neumann value is set
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NumEqVector values(0.0);
         return values;
     }
 

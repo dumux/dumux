@@ -101,6 +101,7 @@ class RichardsWellTracerProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using MaterialLaw = typename GET_PROP_TYPE(TypeTag, MaterialLaw);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using PointSource = typename GET_PROP_TYPE(TypeTag, PointSource);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -250,8 +251,8 @@ public:
      *
      * \param globalPos The position for which the Neumann value is set
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
-    { return PrimaryVariables(0.0); }
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
+    { return NumEqVector(0.0); }
 
     /*!
      * \name Volume terms

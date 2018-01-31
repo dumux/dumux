@@ -101,6 +101,7 @@ class RichardsNIConductionProblem :public PorousMediumFlowProblem<TypeTag>
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
     using VolumeVariables = typename GET_PROP_TYPE(TypeTag, VolumeVariables);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
@@ -256,9 +257,9 @@ public:
      * in normal direction of each component. Negative values mean
      * influx.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NumEqVector values(0.0);
         return values;
     }
 
