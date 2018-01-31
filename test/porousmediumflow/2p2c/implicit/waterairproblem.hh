@@ -128,7 +128,7 @@ class WaterAirProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
@@ -232,12 +232,12 @@ public:
      *
      * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
-    NeumannFluxes neumann(const Element& element,
+    NumEqVector neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
                           const SubControlVolumeFace& scvf) const
     {
-        NeumannFluxes values(0.0);
+        NumEqVector values(0.0);
 
         const auto& globalPos = scvf.ipGlobal();
 
