@@ -140,8 +140,7 @@ int main(int argc, char** argv) try
     VtkOutputModule<TypeTag> vtkWriter(*problem, *fvGridGeometry, *gridVariables, x, problem->name());
     VtkOutputFields::init(vtkWriter); //!< Add model specific output fields
     //add specific output
-    vtkWriter.addField(problem->getKxx(), "Kxx");
-    vtkWriter.addField(problem->getKyy(), "Kyy");
+    vtkWriter.addField(problem->getPermeability(), "Permeability");
     // update the output fields before write
     problem->updateVtkOutput(x);
     vtkWriter.write(0.0);

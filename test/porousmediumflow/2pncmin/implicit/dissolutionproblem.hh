@@ -144,8 +144,7 @@ public:
         temperature_            = getParam<Scalar>("Problem.Temperature");
         reservoirPressure_      = getParam<Scalar>("Problem.ReservoirPressure");
         initLiqSaturation_      = getParam<Scalar>("Problem.LiquidSaturation");
-        initPrecipitatedSalt1_  = getParam<Scalar>("Problem.InitPrecipitatedSalt1");
-        initPrecipitatedSalt2_  = getParam<Scalar>("Problem.InitPrecipitatedSalt2");
+        initPrecipitatedSaltBlock_  = getParam<Scalar>("Problem.InitPrecipitatedSaltBlock");
 
         outerLiqSaturation_     = getParam<Scalar>("Problem.OuterLiqSaturation");
         innerLiqSaturation_     = getParam<Scalar>("Problem.InnerLiqSaturation");
@@ -163,8 +162,7 @@ public:
         name_                   = getParam<std::string>("Problem.Name");
 
         unsigned int codim = GET_PROP_VALUE(TypeTag, DiscretizationMethod) == DiscretizationMethods::Box ? dim : 0;
-        Kxx_.resize(fvGridGeometry->gridView().size(codim));
-        Kyy_.resize(fvGridGeometry->gridView().size(codim));
+        permeability_.resize(fvGridGeometry->gridView().size(codim));
 
         FluidSystem::init(/*Tmin=*/temperatureLow_,
                           /*Tmax=*/temperatureHigh_,
@@ -284,9 +282,9 @@ public:
         priVars[switchIdx]   = initLiqSaturation_;                 // Sw primary variable
         priVars[xwNaClIdx]   = massToMoleFrac_(outerSalinity_);     // mole fraction
         if(globalPos[0] > 5.0 - eps_ && globalPos[0] < 19.0 + eps_)
-            priVars[precipNaClIdx] = initPrecipitatedSalt2_; // [kg/m^3]
+            priVars[precipNaClIdx] = initPrecipitatedSaltBlock_; // [kg/m^3]
         else
-            priVars[precipNaClIdx] = initPrecipitatedSalt1_; // [kg/m^3]
+            priVars[precipNaClIdx] = 0.0; // [kg/m^3]
 
         return priVars;
     }
@@ -350,7 +348,7 @@ public:
         if (precipSalt*timeStepSize_ + volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)< 0)
             precipSalt = -volVars.precipitateVolumeFraction(sPhaseIdx)* volVars.molarDensity(sPhaseIdx)/timeStepSize_;
 
-        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().initialPorosity(element, scv) - saltPorosity  && precipSalt > 0)
+        if (volVars.precipitateVolumeFraction(sPhaseIdx) >= this->spatialParams().referencePorosity(element, scv) - saltPorosity  && precipSalt > 0)
             precipSalt = 0;
 
         source[conti0EqIdx + NaClIdx] += -precipSalt;
@@ -363,14 +361,9 @@ public:
      * \brief Adds additional VTK output data to the VTKWriter. Function is called by the output module on every write.
      */
 
-    const std::vector<Scalar>& getKxx()
+    const std::vector<Scalar>& getPermeability()
     {
-        return Kxx_;
-    }
-
-    const std::vector<Scalar>& getKyy()
-    {
-        return Kyy_;
+        return permeability_;
     }
 
     void updateVtkOutput(const SolutionVector& curSol)
@@ -387,8 +380,7 @@ public:
                     VolumeVariables volVars;
                     volVars.update(elemSol, *this, element, scv);
                     const auto dofIdxGlobal = scv.dofIndex();
-                    Kxx_[dofIdxGlobal] = volVars.permeability()[0][0];
-                    Kyy_[dofIdxGlobal] = volVars.permeability()[1][1];
+                    permeability_[dofIdxGlobal] = volVars.permeability();
                 }
             }
         }
@@ -425,15 +417,14 @@ private:
     Scalar initLiqSaturation_;
     Scalar outerLiqSaturation_;
     Scalar innerLiqSaturation_;
-    Scalar initPrecipitatedSalt1_;
-    Scalar initPrecipitatedSalt2_;
+    Scalar initPrecipitatedSaltBlock_;
     Scalar innerSalinity_;
     Scalar time_ = 0.0;
     Scalar timeStepSize_ = 0.0;
     static constexpr Scalar eps_ = 1e-6;
     Scalar reservoirSaturation_;
-    std::vector<double> Kxx_;
-    std::vector<double> Kyy_;
+    Scalar Permeability_;
+    std::vector<double> permeability_;
 };
 
 } //end namespace Dumux

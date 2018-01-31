@@ -54,7 +54,7 @@ public:
         // additional output
         for (int i = 0; i < numSPhases; ++i)
         {
-            vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipVolFrac_"+ FluidSystem::phaseName(numPhases + i));
+            vtk.addVolumeVariable([i](const VolumeVariables& v){ return v.precipitateVolumeFraction(numPhases + i); },"precipitateVolumeFraction_"+ FluidSystem::phaseName(numPhases + i));
         }
     }
 };
