@@ -153,7 +153,7 @@ class HeterogeneousProblem : public PorousMediumFlowProblem<TypeTag>
 #endif
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -363,14 +363,14 @@ public:
      * in normal direction of each phase. Negative values mean influx.
      * E.g. for the mass balance that would the mass flux in \f$ [ kg / (m^2 \cdot s)] \f$.
      */
-    NeumannFluxes neumann(const Element& element,
+    NumEqVector neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolvars,
                           const SubControlVolumeFace& scvf) const
     {
         const auto boundaryId = scvf.boundaryFlag();
 
-        NeumannFluxes fluxes(0.0);
+        NumEqVector fluxes(0.0);
          // kg/(m^2*s) or mole/(m^2*s) depending on useMoles
         if (boundaryId == injectionBottom_)
         {
