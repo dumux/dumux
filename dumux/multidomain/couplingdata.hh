@@ -26,6 +26,8 @@
 
 #include <type_traits>
 
+double totalMassFlux = 0.0; // TODO remove
+
 namespace Dumux
 {
 
@@ -90,6 +92,10 @@ public:
 
         const Scalar massFlux = -1.0* densityStokes * velocityStokes * scvf.unitOuterNormal()[1];
 
+        // sum up individual mass fluxes
+        totalMassFlux += massFlux * scvf.area(); // multiplied by area in flux method (different file)
+        std::cout << "** couplingdata: totalMassFlux = " << totalMassFlux << std::endl;
+
         return massFlux;
     }
 
@@ -112,17 +118,10 @@ class DarcyData
     using CouplingManager = typename GET_PROP_TYPE(TypeTag, CouplingManager);
 
     using DarcyProblemTypeTag = typename GET_PROP_TYPE(TypeTag, DarcyProblemTypeTag);
-    using DarcyFVElementGeometry = typename GET_PROP_TYPE(DarcyProblemTypeTag, FVElementGeometry);
     using DarcyIndices = typename GET_PROP_TYPE(DarcyProblemTypeTag, Indices);
 
-
     using StokesProblemTypeTag = typename GET_PROP_TYPE(TypeTag, StokesProblemTypeTag);
-    using StokesGridView = typename GET_PROP_TYPE(StokesProblemTypeTag, GridView);
     using StokesSubControlVolumeFace = typename GET_PROP_TYPE(StokesProblemTypeTag, SubControlVolumeFace);
-    enum { stokesDim = StokesGridView::dimension };
-    using DofTypeIndices = typename GET_PROP(StokesProblemTypeTag, DofTypeIndices);
-    typename DofTypeIndices::CellCenterIdx cellCenterIdx;
-    typename DofTypeIndices::FaceIdx faceIdx;
 
 public:
     DarcyData(const CouplingManager &couplingManager) : couplingManager_(couplingManager)
@@ -132,7 +131,7 @@ public:
      * \brief Returns the momentum flux across the coupling boundary
      *
      * For the momentum coupling, the porous medium side of the coupling condition
-     * is evalueted, i.e. [p n]^pm.
+     * is evalueted, i.e. -[p n]^pm.
      *
      * \param scvf The Stokes sub control volume face (on the coupling interface)
      */
@@ -144,7 +143,8 @@ public:
         const auto& darcySolution = couplingManager().darcyProblem().model().curSol();
         const auto darcyPressure = darcySolution[darcyCouplingInfo.darcyElementIdx][DarcyIndices::pressureIdx];
 
-        momentumFlux -= darcyPressure;
+        // - p_pm n_pm = p_pm n_ff
+        momentumFlux = darcyPressure;
         momentumFlux *= scvf.outerNormalScalar() * scvf.area();
 
         return momentumFlux;
