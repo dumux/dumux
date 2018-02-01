@@ -49,7 +49,9 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVarsCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -91,7 +93,7 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
         using Stencil = typename DualGridNodalIndexSet::GridStencilType;
 
-        using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+        using MpfaHelper = typename FVGridGeometry::MpfaHelper;
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
         // In the current implementation of the flux variables cache we cannot make a

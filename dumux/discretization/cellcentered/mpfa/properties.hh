@@ -99,15 +99,6 @@ public:
     using type = CCMpfaDualGridNodalIndexSet<GV, LI, dim, maxE, maxB>;
 };
 
-//! The mpfa helper class
-SET_PROP(CCMpfaModel, MpfaHelper)
-{
-private:
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-public:
-    using type = CCMpfaHelper< FVGridGeometry >;
-};
-
 //! Per default, we use the dynamic mpfa-o interaction volume
 SET_PROP(CCMpfaModel, PrimaryInteractionVolume)
 {
@@ -142,7 +133,6 @@ private:
     {
         using SubControlVolume = CCSubControlVolume<GridView>;
         using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GridView>;
-        using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
         using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
         template< class FVGridGeometry >
@@ -153,6 +143,9 @@ private:
 
         template< class FVGridGeometry, bool enableGeomCache >
         using LocalView = CCMpfaFVElementGeometry<FVGridGeometry, enableGeomCache>;
+
+        template< class FVGridGeometry >
+        using MpfaHelper = CCMpfaHelper< FVGridGeometry >;
 
         //! Use the correct connectivity map depending on mpfa scheme (obtain from primary iv)
         template< class FVGridGeometry >

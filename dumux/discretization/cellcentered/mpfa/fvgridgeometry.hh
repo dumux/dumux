@@ -77,7 +77,7 @@ public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the mpfa helper type
-    using MpfaHelper = typename Traits::MpfaHelper;
+    using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
     //! export the grid interaction volume index set type
     using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
     //! export the type to be used for indicators where to use the secondary ivs
@@ -426,7 +426,7 @@ public:
     //! export the flip scvf index set type
     using FlipScvfIndexSet = std::vector<ScvfOutsideGridIndexStorage>;
     //! export the mpfa helper type
-    using MpfaHelper = typename Traits::MpfaHelper;
+    using MpfaHelper = typename Traits::template MpfaHelper<ThisType>;
     //! export the grid interaction volume index set type
     using GridIVIndexSets = typename Traits::template GridIvIndexSets<ThisType>;
     //! export the type to be used for indicators where to use the secondary ivs
