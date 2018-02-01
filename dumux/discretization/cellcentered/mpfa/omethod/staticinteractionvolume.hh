@@ -30,15 +30,14 @@
 #include <dune/common/fvector.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/matrixvectorhelper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
-#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
 #include <dumux/discretization/cellcentered/mpfa/methods.hh>
+#include <dumux/discretization/cellcentered/mpfa/omethod/interactionvolume.hh>
 
 #include "localsubcontrolentities.hh"
 #include "interactionvolumeindexset.hh"
@@ -46,47 +45,64 @@
 namespace Dumux
 {
 //! Forward declaration of the o-method's static interaction volume
-template< class Traits, int localSize > class CCMpfaOStaticInteractionVolume;
+template< class Traits > class CCMpfaOStaticInteractionVolume;
 
-//! Specialization of the default interaction volume traits class for the mpfa-o method
-template< class TypeTag, int localSize >
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief The default interaction volume traits class for the mpfa-o method
+ *        with known size of the interaction volumes at compile time. It uses
+ *        statically sized containers for the iv-local data structures and static
+ *        matrices and vectors.
+ *
+ * \tparam NI The type used for the dual grid's nodal index sets
+ * \tparam S The Type used for scalar values
+ * \tparam PT Traits class encapsulating info on the physical processes
+ * \tparam C The number of sub-control volumes (cells) in the ivs
+ * \tparam F The number of sub-control volume faces in the ivs
+ */
+template< class NI, class S, class PT, int C, int F >
 struct CCMpfaODefaultStaticInteractionVolumeTraits
 {
 private:
-    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-    using GridIndexType = typename NodalIndexSet::GridIndexType;
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    using GridIndexType = typename NI::GridIndexType;
+    using LocalIndexType = typename NI::LocalIndexType;
+
+    static constexpr int dim = NI::GridView::dimension;
+    static constexpr int dimWorld = NI::GridView::dimensionworld;
+
+    //! Matrix/Vector traits to be used by the data handle
+    struct MVTraits
+    {
+        using AMatrix = Dune::FieldMatrix< S, F, F >;
+        using BMatrix = Dune::FieldMatrix< S, F, C >;
+        using CMatrix = Dune::FieldMatrix< S, F, F >;
+        using DMatrix = Dune::FieldMatrix< S, F, C >;
+        using TMatrix = Dune::FieldMatrix< S, F, C >;
+        using CellVector = Dune::FieldVector< S, C >;
+        using FaceVector = Dune::FieldVector< S, F >;
+    };
 
 public:
-    //! export the problem type (needed for iv-local assembly)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    //! export the type of the local view on the finite volume grid geometry
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    //! export the type of the local view on the grid volume variables
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     //! export the type of grid view
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename NI::GridView;
     //! export the type used for scalar values
-    using ScalarType = typename GET_PROP_TYPE(TypeTag, Scalar);
-    //! export the type of the mpfa helper class
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    //! export the type used for local indices
-    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
+    using ScalarType = S;
     //! export the type for the interaction volume index set
-    using IndexSet = CCMpfaOInteractionVolumeIndexSet< NodalIndexSet >;
+    using IndexSet = CCMpfaOInteractionVolumeIndexSet< NI >;
     //! export the type of interaction-volume local scvs
     using LocalScvType = CCMpfaOInteractionVolumeLocalScv< IndexSet, ScalarType, dim, dimWorld >;
     //! export the type of interaction-volume local scvfs
     using LocalScvfType = CCMpfaOInteractionVolumeLocalScvf< IndexSet >;
     //! export the type of used for the iv-local face data
     using LocalFaceData = InteractionVolumeLocalFaceData<GridIndexType, LocalIndexType>;
-    //! export the type used for iv-local matrices
-    using Matrix = Dune::FieldMatrix< ScalarType, localSize, localSize >;
-    //! export the type used for iv-local vectors
-    using Vector = Dune::FieldVector< ScalarType, localSize >;
+    //! export the matrix/vector traits to be used by the iv
+    using MatVecTraits = MVTraits;
     //! export the data handle type for this iv
-    using DataHandle = InteractionVolumeDataHandle< TypeTag, Matrix, Vector, LocalIndexType >;
+    using DataHandle = InteractionVolumeDataHandle< MatVecTraits, PT >;
+    //! export the number of scvs in the interaction volumes
+    static constexpr int numScvs = C;
+    //! export the number of scvfs in the interaction volumes
+    static constexpr int numScvfs = F;
 };
 
 /*!
@@ -98,182 +114,177 @@ public:
  *        vectors/matrices defined in the traits class in case static types are used.
  *
  * \tparam Traits The type traits class to be used
- * \tparam localSize The size of the local eq system
- *                   This also is the number of local scvs/scvfs
  */
-template< class Traits, int localSize >
-class CCMpfaOStaticInteractionVolume : public CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >
+template< class Traits >
+class CCMpfaOStaticInteractionVolume
+      : public CCMpfaInteractionVolumeBase< CCMpfaOStaticInteractionVolume<Traits>, Traits >
 {
-    using ParentType = CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >;
-
-    using Scalar = typename Traits::ScalarType;
-    using Helper = typename Traits::MpfaHelper;
-    using Problem = typename Traits::Problem;
-    using FVElementGeometry = typename Traits::FVElementGeometry;
-
     using GridView = typename Traits::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr int dim = GridView::dimension;
-    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using IndexSet = typename Traits::IndexSet;
+    using GridIndexType = typename IndexSet::GridIndexType;
+    using LocalIndexType = typename IndexSet::LocalIndexType;
+    using Stencil = typename IndexSet::GridStencilType;
 
-    using Matrix = typename Traits::Matrix;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using DimVector = Dune::FieldVector<typename Traits::ScalarType, dim>;
+    using FaceOmegas = typename Dune::ReservedVector<DimVector, 2>;
+
+    using AMatrix = typename Traits::MatVecTraits::AMatrix;
+    using BMatrix = typename Traits::MatVecTraits::BMatrix;
+    using CMatrix = typename Traits::MatVecTraits::CMatrix;
+
     using LocalScvType = typename Traits::LocalScvType;
     using LocalScvfType = typename Traits::LocalScvfType;
     using LocalFaceData = typename Traits::LocalFaceData;
 
-    using IndexSet = typename Traits::IndexSet;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename Traits::LocalIndexType;
-    using Stencil = typename IndexSet::GridStencilType;
-
-    //! Data attached to scvf touching Dirichlet boundaries.
-    //! For the default o-scheme, we only store the corresponding vol vars index.
-    class DirichletData
-    {
-        GridIndexType volVarIndex_;
-
-    public:
-        //! Constructor
-        DirichletData(const GridIndexType index) : volVarIndex_(index) {}
-
-        //! Return corresponding vol var index
-        GridIndexType volVarIndex() const { return volVarIndex_; }
-    };
+    static constexpr int numScvf = Traits::numScvfs;
+    static constexpr int numScv = Traits::numScvs;
 
 public:
+    //! export the standard o-methods dirichlet data
+    using DirichletData = typename CCMpfaOInteractionVolume< Traits >::DirichletData;
+
+    //! export the type used for transmissibility storage
+    using TransmissibilityStorage = std::array< FaceOmegas, numScvf >;
+
     //! publicly state the mpfa-scheme this interaction volume is associated with
     static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
 
     //! Sets up the local scope for a given iv index set
+    template< class Problem, class FVElementGeometry >
     void setUpLocalScope(const IndexSet& indexSet,
                          const Problem& problem,
                          const FVElementGeometry& fvGeometry)
     {
         // for the o-scheme, the stencil is equal to the scv
         // index set of the dual grid's nodal index set
+        assert(indexSet.numScvs() == numScv);
         stencil_ = &indexSet.nodalIndexSet().globalScvIndices();
 
-        // set up local geometry containers
+        // set up stuff related to sub-control volumes
         const auto& scvIndices = indexSet.globalScvIndices();
-        for (LocalIndexType localIdx = 0; localIdx < localSize; localIdx++)
+        for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numScv; scvIdxLocal++)
         {
-            // scv-related quantities
-            scvs_[localIdx] = LocalScvType(Helper(),
+            elements_[scvIdxLocal] = fvGeometry.fvGridGeometry().element( scvIndices[scvIdxLocal] );
+            scvs_[scvIdxLocal] = LocalScvType(fvGeometry.fvGridGeometry().mpfaHelper(),
                                               fvGeometry,
-                                              fvGeometry.scv( scvIndices[localIdx] ),
-                                              localIdx,
+                                              fvGeometry.scv( scvIndices[scvIdxLocal] ),
+                                              scvIdxLocal,
                                               indexSet);
-            elements_[localIdx] = fvGeometry.fvGridGeometry().element( scvIndices[localIdx] );
+        }
 
-            // scvf-related quantities
-            const auto& scvf = fvGeometry.scvf(indexSet.scvfIdxGlobal(localIdx));
+        // set up quantitites related to sub-control volume faces
+        for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numScvf; ++faceIdxLocal)
+        {
+            const auto& scvf = fvGeometry.scvf(indexSet.scvfIdxGlobal(faceIdxLocal));
 
-            // this interaction volume implementation does not work on boundaries
-            assert(!scvf.boundary() && "static mpfa-o interaction volume cannot be used on boundaries");
+            // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
+            const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(faceIdxLocal);
 
-            const auto& neighborScvIndicesLocal = indexSet.neighboringLocalScvIndices(localIdx);
-            scvfs_[localIdx] = LocalScvfType(scvf, neighborScvIndicesLocal, localIdx, /*isDirichlet*/false);
-            localFaceData_[localIdx*2] = LocalFaceData(localIdx, neighborScvIndicesLocal[0], scvf.index());
+            // this does not work for network grids or on boundaries
+            assert(!scvf.boundary());
+            assert(neighborScvIndicesLocal.size() == 2);
 
+            // create iv-local scvf objects
+            scvfs_[faceIdxLocal] = LocalScvfType(scvf, neighborScvIndicesLocal, faceIdxLocal, /*isDirichlet*/false);
+            localFaceData_[faceIdxLocal*2] = LocalFaceData(faceIdxLocal, neighborScvIndicesLocal[0], scvf.index());
+
+            // add local face data objects for the outside face
             const auto outsideLocalScvIdx = neighborScvIndicesLocal[1];
-            // loop over scvfs in outside scv until we find the one coinciding with current scvf
             for (int coord = 0; coord < dim; ++coord)
             {
-                if (indexSet.scvfIdxLocal(outsideLocalScvIdx, coord) == localIdx)
+                if (indexSet.scvfIdxLocal(outsideLocalScvIdx, coord) == faceIdxLocal)
                 {
                     const auto globalScvfIdx = indexSet.nodalIndexSet().scvfIdxGlobal(outsideLocalScvIdx, coord);
                     const auto& flipScvf = fvGeometry.scvf(globalScvfIdx);
-                    localFaceData_[localIdx*2 + 1] = LocalFaceData(localIdx,           // iv-local scvf idx
-                                                                   outsideLocalScvIdx, // iv-local scv index
-                                                                   0,                  // scvf-local index in outside faces
-                                                                   flipScvf.index());  // global scvf index
+                    localFaceData_[faceIdxLocal*2+1] = LocalFaceData(faceIdxLocal,       // iv-local scvf idx
+                                                                     outsideLocalScvIdx, // iv-local scv index
+                                                                     0,                  // scvf-local index in outside faces
+                                                                     flipScvf.index());  // global scvf index
+                    break; // go to next outside face
                 }
             }
+
+            // make sure we found it
+            assert(localFaceData_[faceIdxLocal*2+1].ivLocalInsideScvIndex() == outsideLocalScvIdx);
         }
 
         // Maybe resize local matrices if dynamic types are used
-        resizeMatrix(A_, localSize, localSize);
-        resizeMatrix(B_, localSize, localSize);
-        resizeMatrix(C_, localSize, localSize);
+        resizeMatrix(A_, numScvf, numScvf);
+        resizeMatrix(B_, numScvf, numScv);
+        resizeMatrix(C_, numScvf, numScv);
     }
 
     //! returns the number of primary scvfs of this interaction volume
-    static constexpr std::size_t numFaces() { return localSize; }
+    static constexpr std::size_t numFaces() { return numScvf; }
 
     //! returns the number of intermediate unknowns within this interaction volume
-    static constexpr std::size_t numUnknowns() { return localSize; }
+    static constexpr std::size_t numUnknowns() { return numScvf; }
 
     //! returns the number of (in this context) known solution values within this interaction volume
-    static constexpr std::size_t numKnowns() { return localSize; }
+    static constexpr std::size_t numKnowns() { return numScv; }
 
     //! returns the number of scvs embedded in this interaction volume
-    static constexpr std::size_t numScvs() { return localSize; }
+    static constexpr std::size_t numScvs() { return numScv; }
 
     //! returns the cell-stencil of this interaction volume
     const Stencil& stencil() const { return *stencil_; }
 
     //! returns the grid element corresponding to a given iv-local scv idx
-    const Element& element(const LocalIndexType ivLocalScvIdx) const
-    {
-        assert(ivLocalScvIdx < localSize);
-        return elements_[ivLocalScvIdx];
-    }
+    const Element& element(LocalIndexType ivLocalScvIdx) const { return elements_[ivLocalScvIdx]; }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
-    const LocalScvfType& localScvf(const LocalIndexType ivLocalScvfIdx) const
-    {
-        assert(ivLocalScvfIdx < localSize);
-        return scvfs_[ivLocalScvfIdx];
-    }
+    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const { return scvfs_[ivLocalScvfIdx]; }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
-    const LocalScvType& localScv(const LocalIndexType ivLocalScvIdx) const
-    {
-        assert(ivLocalScvIdx < localSize);
-        return scvs_[ivLocalScvIdx];
-    }
+    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const { return scvs_[ivLocalScvIdx]; }
 
     //! returns a reference to the container with the local face data
-    const std::array<LocalFaceData, 2*localSize>& localFaceData() const { return localFaceData_; }
+    const std::array<LocalFaceData, numScvf*2>& localFaceData() const { return localFaceData_; }
 
     //! Returns a reference to the information container on Dirichlet BCs within this iv.
     //! Here, we return an empty container as this implementation cannot be used on boundaries.
     const std::array<DirichletData, 0>& dirichletData() const { return dirichletData_; }
 
     //! returns the matrix associated with face unknowns in local equation system
-    const Matrix& A() const { return A_; }
-    Matrix& A() { return A_; }
+    const AMatrix& A() const { return A_; }
+    AMatrix& A() { return A_; }
 
     //! returns the matrix associated with cell unknowns in local equation system
-    const Matrix& B() const { return B_; }
-    Matrix& B() { return B_; }
+    const BMatrix& B() const { return B_; }
+    BMatrix& B() { return B_; }
 
     //! returns the matrix associated with face unknowns in flux expressions
-    const Matrix& C() const { return C_; }
-    Matrix& C() { return C_; }
+    const CMatrix& C() const { return C_; }
+    CMatrix& C() { return C_; }
 
     //! returns container storing the transmissibilities for each face & coordinate
-    const std::array< std::array<DimVector, 2>, localSize >& omegas() const { return wijk_; }
-    std::array< std::array<DimVector, 2>, localSize >& omegas() { return wijk_; }
+    const TransmissibilityStorage& omegas() const { return wijk_; }
+    TransmissibilityStorage& omegas() { return wijk_; }
 
     //! returns the number of interaction volumes living around a vertex
-    //! the mpfa-o scheme always constructs one iv per vertex
-    template< class NodalIndexSet >
-    static std::size_t numInteractionVolumesAtVertex(const NodalIndexSet& nodalIndexSet) { return 1; }
+    template< class NI >
+    static constexpr std::size_t numInteractionVolumesAtVertex(const NI& nodalIndexSet) { return 1; }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
-    template<class IvIndexSetContainer, class ScvfIndexMap, class NodalIndexSet>
+    template< class IvIndexSetContainer,
+              class ScvfIndexMap,
+              class NodalIndexSet,
+              class FlipScvfIndexSet >
     static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
                                               ScvfIndexMap& scvfIndexMap,
-                                              const NodalIndexSet& nodalIndexSet)
+                                              const NodalIndexSet& nodalIndexSet,
+                                              const FlipScvfIndexSet& flipScvfIndexSet)
     {
         // the global index of the iv index set that is about to be created
         const auto curGlobalIndex = ivIndexSetContainer.size();
 
         // make the one index set for this node
-        ivIndexSetContainer.emplace_back(nodalIndexSet);
+        ivIndexSetContainer.emplace_back(nodalIndexSet, flipScvfIndexSet);
 
         // store the index mapping
         for (const auto scvfIdx : nodalIndexSet.globalScvfIndices())
@@ -285,22 +296,21 @@ private:
     const Stencil* stencil_;
 
     // Variables defining the local scope
-    std::array<Element, localSize> elements_;
-    std::array<LocalScvType, localSize> scvs_;
-    std::array<LocalScvfType, localSize> scvfs_;
-    std::array<LocalFaceData, 2*localSize> localFaceData_;
-
-    // Empty Dirichlet container to be compatible with dynamic assembly
-    std::array<DirichletData, 0> dirichletData_;
+    std::array<Element, numScv> elements_;
+    std::array<LocalScvType, numScv> scvs_;
+    std::array<LocalScvfType, numScvf> scvfs_;
+    std::array<LocalFaceData, numScvf*2> localFaceData_;
 
     // Matrices needed for computation of transmissibilities
-    Matrix A_;
-    Matrix B_;
-    Matrix C_;
+    AMatrix A_;
+    BMatrix B_;
+    CMatrix C_;
 
     // The omega factors are stored during assembly of local system
-    // we assume one "outside" face per scvf (does not work on surface grids)
-    std::array< std::array<DimVector, 2>, localSize > wijk_;
+    TransmissibilityStorage wijk_;
+
+    // Dummy dirichlet data container (compatibility with dynamic o-iv)
+    std::array<DirichletData, 0> dirichletData_;
 };
 
 } // end namespace
