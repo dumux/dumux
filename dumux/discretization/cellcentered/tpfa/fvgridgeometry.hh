@@ -56,6 +56,12 @@ struct CCTpfaDefaultGridGeometryTraits
 
     template<class FVGridGeometry, bool enableCache>
     using LocalView = CCTpfaFVElementGeometry<FVGridGeometry, enableCache>;
+
+    //! State the maximum admissible number of neighbors per scvf
+    //! Per default, we allow for 8 branches on network/surface grids, where
+    //! conformity is assumed. For normal grids, we allow a maximum of one
+    //! hanging node per scvf. Use different traits if you need more.
+    static constexpr int maxNumScvfNeighbors = int(GridView::dimension)<int(GridView::dimensionworld) ? 8 : 2;
 };
 
 /*!
@@ -104,9 +110,8 @@ public:
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
-    //! Per default, we allow for 9 branches per scvf on network/surface grids
-    static constexpr int maxElementStencilSize = (dim < dimWorld) ? LocalView::maxNumElementScvfs*8 + 1
-                                                                  : LocalView::maxNumElementScvfs + 1;
+    static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
+
     //! export the grid view type
     using GridView = GV;
 
@@ -381,9 +386,7 @@ public:
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCTpfa;
 
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
-    //! Per default, we allow for 9 branches per scvf on network/surface grids
-    static constexpr int maxElementStencilSize = (dim < dimWorld) ? LocalView::maxNumElementScvfs*8 + 1
-                                                                  : LocalView::maxNumElementScvfs + 1;
+    static constexpr int maxElementStencilSize = LocalView::maxNumElementScvfs*Traits::maxNumScvfNeighbors + 1;
 
     //! Export the type of the grid view
     using GridView = GV;

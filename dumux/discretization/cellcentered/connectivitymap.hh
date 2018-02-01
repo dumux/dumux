@@ -52,6 +52,7 @@ class CCSimpleConnectivityMap
     using GridView = typename FVGridGeometry::GridView;
     using IndexType = typename GridView::IndexSet::IndexType;
     using FluxStencil = Dumux::FluxStencil<FVElementGeometry>;
+    static constexpr int maxElemStencilSize = FVGridGeometry::maxElementStencilSize;
 
     struct DataJ
     {
@@ -77,7 +78,7 @@ public:
         map_.resize(fvGridGeometry.gridView().size(0));
 
         // container to store for each element J the elements I which have J in their flux stencil
-        Dune::ReservedVector<std::pair<IndexType, DataJ>, FVGridGeometry::maxElementStencilSize> dataJForI;
+        Dune::ReservedVector<std::pair<IndexType, DataJ>, maxElemStencilSize> dataJForI;
 
         for (const auto& element : elements(fvGridGeometry.gridView()))
         {
@@ -107,7 +108,13 @@ public:
                     if (it != dataJForI.end())
                         it->second.scvfsJ.push_back(scvf.index());
                     else
+                    {
+                        if (dataJForI.size() > maxElemStencilSize - 1)
+                            DUNE_THROW(Dune::InvalidStateException, "Maximum admissible stencil size is surpassed. "
+                                                                    "Please adjust the FVGridGeometry traits accordingly!");
+
                         dataJForI.push_back(std::make_pair(globalI, DataJ({globalJ, {scvf.index()}, {}})));
+                    }
                 }
             }
 
