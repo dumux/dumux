@@ -264,7 +264,7 @@ public:
 
     //! returns the number of interaction volumes living around a vertex
     template< class NI >
-    static constexpr std::size_t numInteractionVolumesAtVertex(const NI& nodalIndexSet) { return 1; }
+    static constexpr std::size_t numIVAtVertex(const NI& nodalIndexSet) { return 1; }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
@@ -272,10 +272,10 @@ public:
               class ScvfIndexMap,
               class NodalIndexSet,
               class FlipScvfIndexSet >
-    static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
-                                              ScvfIndexMap& scvfIndexMap,
-                                              const NodalIndexSet& nodalIndexSet,
-                                              const FlipScvfIndexSet& flipScvfIndexSet)
+    static void addIVIndexSets(IvIndexSetContainer& ivIndexSetContainer,
+                               ScvfIndexMap& scvfIndexMap,
+                               const NodalIndexSet& nodalIndexSet,
+                               const FlipScvfIndexSet& flipScvfIndexSet)
     {
         // the global index of the iv index set that is about to be created
         const auto curGlobalIndex = ivIndexSetContainer.size();

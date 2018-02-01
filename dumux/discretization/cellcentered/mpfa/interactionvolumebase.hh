@@ -118,8 +118,7 @@ public:
 
     //! returns the number of interaction volumes living around a vertex
     template< class NodalIndexSet >
-    static std::size_t numInteractionVolumesAtVertex(const NodalIndexSet& nodalIndexSet)
-    { return Impl::numInteractionVolumesAtVertex(nodalIndexSet); }
+    static std::size_t numIVAtVertex(const NodalIndexSet& nodalIndexSet) { return Impl::numIVAtVertex(nodalIndexSet); }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
@@ -127,11 +126,11 @@ public:
               class ScvfIndexMap,
               class NodalIndexSet,
               class FlipScvfIndexSet >
-    static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
-                                              ScvfIndexMap& scvfIndexMap,
-                                              const NodalIndexSet& nodalIndexSet,
-                                              const FlipScvfIndexSet& flipScvfIndexSet)
-    { Impl::addInteractionVolumeIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet, flipScvfIndexSet); }
+    static void addIVIndexSets(IvIndexSetContainer& ivIndexSetContainer,
+                               ScvfIndexMap& scvfIndexMap,
+                               const NodalIndexSet& nodalIndexSet,
+                               const FlipScvfIndexSet& flipScvfIndexSet)
+    { Impl::addIVIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet, flipScvfIndexSet); }
 };
 
 } // end namespace Dumux

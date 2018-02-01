@@ -77,9 +77,9 @@ public:
         {
             const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
             if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
-                numPrimaryIV_ += PrimaryInteractionVolume::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
+                numPrimaryIV_ += PrimaryInteractionVolume::numIVAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
             else
-                numSecondaryIV_ += SecondaryInteractionVolume::numInteractionVolumesAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
+                numSecondaryIV_ += SecondaryInteractionVolume::numIVAtVertex((*dualGridIndexSet_)[vIdxGlobal]);
         }
 
         // reserve memory
@@ -92,15 +92,15 @@ public:
         {
             const auto vIdxGlobal = fvGridGeometry.vertexMapper().index(vertex);
             if (!fvGridGeometry.vertexUsesSecondaryInteractionVolume(vIdxGlobal))
-                PrimaryInteractionVolume::addInteractionVolumeIndexSets(primaryIVIndexSets_,
-                                                                        scvfIndexMap_,
-                                                                        (*dualGridIndexSet_)[vIdxGlobal],
-                                                                        fvGridGeometry.flipScvfIndexSet());
+                PrimaryInteractionVolume::addIVIndexSets(primaryIVIndexSets_,
+                                                         scvfIndexMap_,
+                                                         (*dualGridIndexSet_)[vIdxGlobal],
+                                                         fvGridGeometry.flipScvfIndexSet());
             else
-                SecondaryInteractionVolume::addInteractionVolumeIndexSets(secondaryIVIndexSets_,
-                                                                          scvfIndexMap_,
-                                                                          (*dualGridIndexSet_)[vIdxGlobal],
-                                                                          fvGridGeometry.flipScvfIndexSet());
+                SecondaryInteractionVolume::addIVIndexSets(secondaryIVIndexSets_,
+                                                           scvfIndexMap_,
+                                                           (*dualGridIndexSet_)[vIdxGlobal],
+                                                           fvGridGeometry.flipScvfIndexSet());
         }
     }
 
