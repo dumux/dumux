@@ -1,1 +1,2 @@
-add_executable(test_stokesdarcy1p test_stokesdarcy1p test_stokesdarcy1p.cc)
+add_subdirectory(horizontalflow)
+add_subdirectory(verticalflow)

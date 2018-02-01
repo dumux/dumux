@@ -1,0 +1,3 @@
+add_input_file_links()
+
+add_executable(test_stokesdarcy1phorizontal test_stokesdarcy1phorizontal test_stokesdarcy1phorizontal.cc)

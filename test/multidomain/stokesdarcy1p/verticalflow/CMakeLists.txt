@@ -1,0 +1,3 @@
+add_input_file_links()
+
+add_executable(test_stokesdarcy1pvertical test_stokesdarcy1pvertical test_stokesdarcy1pvertical.cc)

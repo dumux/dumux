@@ -1,0 +1,29 @@
+# Parameter file for test_stokesdarcy1p
+
+[Problem]
+Name = StokesDarcy1p
+Verbose = true
+Velocity = -1e-2
+FFPressure = 1.0e5
+PMPressure = 1.0e5
+PrintMatrix = 0 # 0 - none, 1 - whole matrix, 2 - submatrices # TODO remove
+
+[TimeManager]
+DtInitial = 2 # s
+# MaxTimeStepSize = 1 # s
+EpisodeTime = 300 # s
+TEnd = 10 # s
+
+[StokesGrid]
+Positions0 = 0.0 2.0 # m # position array for x-coordinate -- x in [0,2]
+Positions1 = 2.0 4.0 # m # position array for x-coordinate -- y in [1,2]
+Cells0 = 40
+Cells1 = 40
+
+[DarcyGrid]
+LowerLeft = 0 0
+UpperRight = 2 2
+Cells = 40 40
+
+[SpatialParams]
+Permeability = 1e-2#10 # m^2

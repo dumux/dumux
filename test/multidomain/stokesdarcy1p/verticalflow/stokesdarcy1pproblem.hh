@@ -21,8 +21,8 @@
  *
  * \brief A test problem for the coupled problem (1p)
  */
-#ifndef DUMUX_STOKES_DARCY_1P_TEST_PROBLEM_HH
-#define DUMUX_STOKES_DARCY_1P_TEST_PROBLEM_HH
+#ifndef DUMUX_STOKES_DARCY_1P_VERTICAL_TEST_PROBLEM_HH
+#define DUMUX_STOKES_DARCY_1P_VERTICAL_TEST_PROBLEM_HH
 
 #include "darcytestproblem.hh"
 #include "stokestestproblem.hh"
@@ -41,49 +41,49 @@
 namespace Dumux
 {
 template <class TypeTag>
-class TestCoupledStokesDarcyProblem;
+class VerticalFlowCoupledStokesDarcyProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TestCoupledStokesDarcyProblem, INHERITS_FROM(MultiDomain, CouplingStokesStaggeredModel));
+NEW_TYPE_TAG(VerticalFlowCoupledStokesDarcyProblem, INHERITS_FROM(MultiDomain, CouplingStokesStaggeredModel));
 
 // Set the problem property
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, Problem, Dumux::TestCoupledStokesDarcyProblem<TypeTag>);
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, Problem, Dumux::VerticalFlowCoupledStokesDarcyProblem<TypeTag>);
 
 // Set the coupling manager
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, CouplingManager, Dumux::CouplingManagerStokesDarcy<TypeTag>);
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, CouplingManager, Dumux::CouplingManagerStokesDarcy<TypeTag>);
 
 //////////////////////////////////////////////////////////////////////////
 // Set the two sub-problems of the global problem
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyProblemTypeTag, TTAG(DarcyTestProblem));
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, StokesProblemTypeTag, TTAG(StokesTestProblem));
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, DarcyProblemTypeTag, TTAG(DarcyTestProblem));
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, StokesProblemTypeTag, TTAG(StokesTestProblem));
 ////////////////////////////////////////////////////////////////////////////
 
 // publish this problem in the sub problems
-SET_TYPE_PROP(DarcyTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDarcyProblem));
-SET_TYPE_PROP(StokesTestProblem, GlobalProblemTypeTag, TTAG(TestCoupledStokesDarcyProblem));
+SET_TYPE_PROP(DarcyTestProblem, GlobalProblemTypeTag, TTAG(VerticalFlowCoupledStokesDarcyProblem));
+SET_TYPE_PROP(StokesTestProblem, GlobalProblemTypeTag, TTAG(VerticalFlowCoupledStokesDarcyProblem));
 
 // The subproblems inherit the parameter tree from this problem
-SET_PROP(DarcyTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
-SET_PROP(StokesTestProblem, ParameterTree) : GET_PROP(TTAG(TestCoupledStokesDarcyProblem), ParameterTree) {};
+SET_PROP(DarcyTestProblem, ParameterTree) : GET_PROP(TTAG(VerticalFlowCoupledStokesDarcyProblem), ParameterTree) {};
+SET_PROP(StokesTestProblem, ParameterTree) : GET_PROP(TTAG(VerticalFlowCoupledStokesDarcyProblem), ParameterTree) {};
 
 NEW_PROP_TAG(DarcyToStokesMapValue);
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, DarcyToStokesMapValue, Dumux::DarcyToStokesMap<TypeTag>);
 
 #if HAVE_UMFPACK
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, LinearSolver, UMFPackBackend<TypeTag>);
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, LinearSolver, UMFPackBackend<TypeTag>);
 #endif
 
 NEW_PROP_TAG(StokesData);
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, StokesData, StokesData<TypeTag>);
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, StokesData, StokesData<TypeTag>);
 
 NEW_PROP_TAG(DarcyData);
-SET_TYPE_PROP(TestCoupledStokesDarcyProblem, DarcyData, DarcyData<TypeTag>);
+SET_TYPE_PROP(VerticalFlowCoupledStokesDarcyProblem, DarcyData, DarcyData<TypeTag>);
 
 }//end namespace properties
 
 template <class TypeTag>
-class TestCoupledStokesDarcyProblem : public MultiDomainProblem<TypeTag>
+class VerticalFlowCoupledStokesDarcyProblem : public MultiDomainProblem<TypeTag>
 {
     using ParentType = MultiDomainProblem<TypeTag>;
     using TimeManager = typename GET_PROP_TYPE(TypeTag, TimeManager);
@@ -101,7 +101,7 @@ class TestCoupledStokesDarcyProblem : public MultiDomainProblem<TypeTag>
     using DarcyGridView = typename GET_PROP_TYPE(DarcyProblemTypeTag, GridView);
 
 public:
-    TestCoupledStokesDarcyProblem(TimeManager &timeManager, const StokesGridView &stokesGridView, const DarcyGridView &darcygridView)
+    VerticalFlowCoupledStokesDarcyProblem(TimeManager &timeManager, const StokesGridView &stokesGridView, const DarcyGridView &darcygridView)
     : ParentType(timeManager, stokesGridView, darcygridView)
     {
         verbose_ = GET_RUNTIME_PARAM_FROM_GROUP(TypeTag, bool, Problem, Verbose);
