@@ -39,6 +39,7 @@
 
 #include "couplingjacobianpattern.hh"
 #include "subdomaincclocalassembler.hh"
+#include "subdomainboxlocalassembler.hh"
 
 namespace Dumux {
 
@@ -80,8 +81,27 @@ private:
     using TimeLoop = TimeLoopBase<Scalar>;
     using ThisType = MultiDomainFVAssembler<MDTraits, CouplingManager, diffMethod, isImplicit>;
 
+    template<DiscretizationMethods DiscMethod, std::size_t id>
+    struct SubDomainAssemblerType;
+
     template<std::size_t id>
-    using SubDomainAssembler = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+    struct SubDomainAssemblerType<DiscretizationMethods::CCTpfa, id>
+    {
+        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+    };
+
+    template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethods::Box, id>
+    {
+        using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+    };
+
+
+    template<std::size_t id>
+    using FVGridGeometry = typename std::tuple_element<id, FVGridGeometryTuple>::type::element_type;
+
+    template<std::size_t id>
+    using SubDomainAssembler = typename SubDomainAssemblerType<FVGridGeometry<id>::discretizationMethod, id>::type;
 
 public:
 
