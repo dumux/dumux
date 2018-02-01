@@ -222,22 +222,7 @@ public:
     //! Note that e.g. the normals might be different in the case of surface grids
     const SubControlVolumeFace& flipScvf(GridIndexType scvfIdx, unsigned int outsideScvIdx = 0) const
     {
-        auto it = std::find(scvfIndices_.begin(), scvfIndices_.end(), scvfIdx);
-        if (it != scvfIndices_.end())
-        {
-            const auto localScvfIdx = std::distance(scvfIndices_.begin(), it);
-            return neighborScvfs_[flipScvfIndices_[localScvfIdx][outsideScvIdx]];
-        }
-        else
-        {
-            const auto neighborScvfIdxLocal = findLocalIndex(scvfIdx, neighborScvfIndices_);
-            const auto& scvf = neighborScvfs_[neighborScvfIdxLocal];
-
-            if (scvf.outsideScvIdx(outsideScvIdx) == scvIndices_[0])
-                return scvfs_[neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx]];
-            else
-                return neighborScvfs_[neighborFlipScvfIndices_[neighborScvfIdxLocal][outsideScvIdx]];
-        }
+        return scvf( fvGridGeometry().flipScvfIdx(scvfIdx, outsideScvIdx) );
     }
 
     //! iterator range for sub control volumes. Iterates over
@@ -298,10 +283,6 @@ public:
                                    dataJ.globalJ,
                                    dataJ.scvfsJ,
                                    dataJ.additionalScvfs);
-
-        // set up the scvf flip indices for network grids
-        if (dim < dimWorld)
-            makeFlipIndexSet();
 
         // //! TODO Check if user added additional DOF dependencies, i.e. the residual of DOF globalI depends
         // //! on additional DOFs not included in the discretization schemes' occupation pattern
@@ -524,98 +505,6 @@ private:
         }
     }
 
-    //! find the "flip" indices for all scvfs
-    void makeFlipIndexSet()
-    {
-        const auto numInsideScvfs = scvfIndices_.size();
-        const auto numNeighborScvfs = neighborScvfIndices_.size();
-
-        // first, handle the interior scvfs (flip scvf will be in outside scvfs)
-        flipScvfIndices_.resize(numInsideScvfs);
-        for (unsigned int insideFace = 0; insideFace < numInsideScvfs; ++insideFace)
-        {
-            const auto& scvf = scvfs_[insideFace];
-            if (scvf.boundary())
-                continue;
-
-            const auto numOutsideScvs = scvf.numOutsideScvs();
-            const auto vIdxGlobal = scvf.vertexIndex();
-            const auto insideScvIdx = scvf.insideScvIdx();
-
-            flipScvfIndices_[insideFace].resize(numOutsideScvs);
-            for (unsigned int nIdx = 0; nIdx < numOutsideScvs; ++nIdx)
-            {
-                const auto outsideScvIdx = scvf.outsideScvIdx(nIdx);
-                for (unsigned int outsideFace = 0; outsideFace < numNeighborScvfs; ++outsideFace)
-                {
-                    const auto& outsideScvf = neighborScvfs_[outsideFace];
-                    // check if outside face is the flip face
-                    if (outsideScvf.insideScvIdx() == outsideScvIdx &&
-                        outsideScvf.vertexIndex() == vIdxGlobal &&
-                        MpfaHelper::vectorContainsValue(outsideScvf.outsideScvIndices(), insideScvIdx))
-                    {
-                        flipScvfIndices_[insideFace][nIdx] = outsideFace;
-                        // there is always only one flip face in an outside element
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Now we look for the flip indices of the outside faces
-        neighborFlipScvfIndices_.resize(numNeighborScvfs);
-        for (unsigned int outsideFace = 0; outsideFace < numNeighborScvfs; ++outsideFace)
-        {
-            const auto& scvf = neighborScvfs_[outsideFace];
-            if (scvf.boundary())
-                continue;
-
-            const auto numOutsideScvs = scvf.numOutsideScvs();
-            const auto vIdxGlobal = scvf.vertexIndex();
-            const auto insideScvIdx = scvf.insideScvIdx();
-
-            neighborFlipScvfIndices_[outsideFace].resize(numOutsideScvs);
-            for (unsigned int nIdx = 0; nIdx < numOutsideScvs; ++nIdx)
-            {
-                const auto neighborScvIdx = scvf.outsideScvIdx(nIdx);
-
-                // if the neighbor scv idx is the index of the bound element,
-                // then the flip scvf will be within the inside scvfs
-                if (neighborScvIdx == scvIndices_[0])
-                {
-                    for (unsigned int insideFace = 0; insideFace < numInsideScvfs; ++insideFace)
-                    {
-                        const auto& insideScvf = scvfs_[insideFace];
-                        // check if the face is the flip face
-                        if (insideScvf.vertexIndex() == vIdxGlobal &&
-                            MpfaHelper::vectorContainsValue(insideScvf.outsideScvIndices(), insideScvIdx))
-                        {
-                            neighborFlipScvfIndices_[outsideFace][nIdx] = insideFace;
-                            // there is always only one flip face in an outside element
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    for (unsigned int outsideFace2 = 0; outsideFace2 < numNeighborScvfs; ++outsideFace2)
-                    {
-                        const auto& outsideScvf = neighborScvfs_[outsideFace2];
-                        // check if outside face is the flip face
-                        if (outsideScvf.insideScvIdx() == neighborScvIdx &&
-                            outsideScvf.vertexIndex() == vIdxGlobal &&
-                            MpfaHelper::vectorContainsValue(outsideScvf.outsideScvIndices(), insideScvIdx))
-                        {
-                            neighborFlipScvfIndices_[outsideFace][nIdx] = outsideFace2;
-                            // there is always only one flip face in an outside element
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     //! map a global index to the local storage index
     const unsigned int findLocalIndex(const GridIndexType idx,
                                       const std::vector<GridIndexType>& indices) const
@@ -635,9 +524,6 @@ private:
         neighborScvfIndices_.clear();
         neighborScvs_.clear();
         neighborScvfs_.clear();
-
-        flipScvfIndices_.clear();
-        neighborFlipScvfIndices_.clear();
     }
 
     const FVGridGeometry* fvGridGeometryPtr_;
@@ -652,10 +538,6 @@ private:
     std::vector<GridIndexType> neighborScvfIndices_;
     std::vector<SubControlVolume> neighborScvs_;
     std::vector<SubControlVolumeFace> neighborScvfs_;
-
-    // flip scvf index sets
-    std::vector< std::vector<GridIndexType> > flipScvfIndices_;
-    std::vector< std::vector<GridIndexType> > neighborFlipScvfIndices_;
 };
 
 } // end namespace

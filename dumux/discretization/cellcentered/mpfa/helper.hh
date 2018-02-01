@@ -32,7 +32,6 @@
 #include <dune/geometry/type.hh>
 #include <dune/geometry/referenceelements.hh>
 
-#include <dumux/common/properties.hh>
 #include <dumux/common/math.hh>
 
 namespace Dumux {
@@ -41,34 +40,22 @@ namespace Dumux {
  * \ingroup CCMpfaDiscretization
  * \brief Dimension-specific helper class to get data required for mpfa scheme.
  */
-template<class TypeTag, int dim, int dimWorld>
+template<class FVGridGeometry, int dim, int dimWorld>
 class MpfaDimensionHelper;
 
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief  Dimension-specific helper class to get data required for mpfa scheme.
- *         Specialization for dim == 2 & dimWorld == 2
+ * \brief  Dimension-specific mpfa helper class for dim == 2 & dimWorld == 2
  */
-template<class TypeTag>
-class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/2>
+template<class FVGridGeometry>
+class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/2>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
-    using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using LocalScvType = typename InteractionVolume::Traits::LocalScvType;
-    using ScvBasis = typename LocalScvType::LocalBasis;
+    using GridView = typename FVGridGeometry::GridView;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, GridView::dimensionworld>;
 
-    // We know that dim = 2 & dimworld = 2. However, the specialization for
-    // dim = 2 & dimWorld = 3 reuses some methods of this class, thus, we
-    // obtain the world dimension from the grid view here to get the
-    // GlobalPosition vector right. Be picky about the dimension though.
-    static_assert(GridView::dimension == 2, "The chosen mpfa helper expects a grid view with dim = 2");
-    static const int dim = 2;
-    static const int dimWorld = GridView::dimensionworld;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
+    using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
 
     // Container to store the positions of intersections required for scvf
     // corner computation. In 2d, these are the center plus the two corners
@@ -80,9 +67,10 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
+    template< class ScvBasis >
     static ScvBasis calculateInnerNormals(const ScvBasis& scvBasis)
     {
-        static const Dune::FieldMatrix<Scalar, dim, dim> R = {{0.0, 1.0}, {-1.0, 0.0}};
+        static const Dune::FieldMatrix<CoordScalar, 2, 2> R = {{0.0, 1.0}, {-1.0, 0.0}};
 
         ScvBasis innerNormals;
         R.mv(scvBasis[1], innerNormals[0]);
@@ -103,10 +91,11 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
-    static typename LocalScvType::ctype calculateDetX(const ScvBasis& scvBasis)
+    template< class ScvBasis >
+    static CoordScalar calculateDetX(const ScvBasis& scvBasis)
     {
         using std::abs;
-        return abs(crossProduct<Scalar>(scvBasis[0], scvBasis[1]));
+        return abs(crossProduct<CoordScalar>(scvBasis[0], scvBasis[1]));
     }
 
     /*!
@@ -139,8 +128,9 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
+    template< class ScvBasis >
     static bool isRightHandSystem(const ScvBasis& scvBasis)
-    { return !std::signbit(crossProduct<Scalar>(scvBasis[0], scvBasis[1])); }
+    { return !std::signbit(crossProduct<CoordScalar>(scvBasis[0], scvBasis[1])); }
 
     /*!
      * \brief Returns a vector containing the positions on a given intersection
@@ -164,7 +154,8 @@ public:
         p[0] = 0.0;
         for (unsigned int c = 0; c < numCorners; ++c)
         {
-            p[c+1] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, dim), dim));
+            // codim = 1, dim = 2
+            p[c+1] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, 2), 2));
             p[0] += p[c+1];
         }
         p[0] /= numCorners;
@@ -199,7 +190,7 @@ public:
      *
      * \param scvfCorners Container with the corners of the scvf
      */
-    static Scalar getScvfArea(const ScvfCornerVector& scvfCorners)
+    static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
     { return (scvfCorners[1]-scvfCorners[0]).two_norm(); }
 
     /*!
@@ -229,19 +220,15 @@ public:
 
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief  Dimension-specific helper class to get data required for mpfa scheme.
- *         Specialization for dim == 2 & dimWorld == 2. Reuses some functionality
- *         of the specialization for dim = dimWorld = 2
+ * \brief  Dimension-specific mpfa helper class for dim == 2 & dimWorld == 2.
+ *         Reuses some functionality of the specialization for dim = dimWorld = 2
  */
-template<class TypeTag>
-class MpfaDimensionHelper<TypeTag, /*dim*/2, /*dimWorld*/3>
-                : public MpfaDimensionHelper<TypeTag, 2, 2>
+template<class FVGridGeometry>
+class MpfaDimensionHelper<FVGridGeometry, /*dim*/2, /*dimWorld*/3>
+      : public MpfaDimensionHelper<FVGridGeometry, 2, 2>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using LocalScvType = typename InteractionVolume::Traits::LocalScvType;
-    using ScvBasis = typename LocalScvType::LocalBasis;
-
+    using GridView = typename FVGridGeometry::GridView;
+    using CoordScalar = typename GridView::ctype;
 public:
 
     /*!
@@ -249,19 +236,20 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
+    template< class ScvBasis >
     static ScvBasis calculateInnerNormals(const ScvBasis& scvBasis)
     {
         // compute vector normal to the basis plane
         const auto normal = [&] () {
-                                        auto n = crossProduct<Scalar>(scvBasis[0], scvBasis[1]);
+                                        auto n = crossProduct<CoordScalar>(scvBasis[0], scvBasis[1]);
                                         n /= n.two_norm();
                                         return n;
                                     } ();
 
         // compute inner normals using the normal vector
         ScvBasis innerNormals;
-        innerNormals[0] = crossProduct<Scalar>(scvBasis[1], normal);
-        innerNormals[1] = crossProduct<Scalar>(normal, scvBasis[0]);
+        innerNormals[0] = crossProduct<CoordScalar>(scvBasis[1], normal);
+        innerNormals[1] = crossProduct<CoordScalar>(normal, scvBasis[0]);
 
         return innerNormals;
     }
@@ -274,10 +262,11 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
-    static typename LocalScvType::ctype calculateDetX(const ScvBasis& scvBasis)
+    template< class ScvBasis >
+    static CoordScalar calculateDetX(const ScvBasis& scvBasis)
     {
         using std::abs;
-        return abs(crossProduct<Scalar>(scvBasis[0], scvBasis[1]).two_norm());
+        return abs(crossProduct<CoordScalar>(scvBasis[0], scvBasis[1]).two_norm());
     }
 
     /*!
@@ -287,32 +276,24 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
-    static bool isRightHandSystem(const ScvBasis& scvBasis)
-    { return true; }
+    template< class ScvBasis >
+    static constexpr bool isRightHandSystem(const ScvBasis& scvBasis) { return true; }
 };
 /*!
  * \ingroup CCMpfaDiscretization
- * \brief  Dimension-specific helper class to get data required for mpfa scheme.
- *         Specialization for dim == 3 & dimWorld == 3.
+ * \brief   Dimension-specific mpfa helper class for dim == 3 & dimWorld == 3.
+ *
  */
-template<class TypeTag>
-class MpfaDimensionHelper<TypeTag, /*dim*/3, /*dimWorld*/3>
+template<class FVGridGeometry>
+class MpfaDimensionHelper<FVGridGeometry, /*dim*/3, /*dimWorld*/3>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
+    using SubControlVolumeFace = typename FVGridGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
-    using InteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using LocalScvType = typename InteractionVolume::Traits::LocalScvType;
-    using ScvBasis = typename LocalScvType::LocalBasis;
 
     // Be picky about the dimensions
-    static_assert(GridView::dimension == 3 && GridView::dimensionworld == 3,
-                  "The chosen mpfa helper expects a grid view with dim = 3 & dimWorld = 3");
-    static const int dim = 3;
-    static const int dimWorld = 3;
-    using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
+    using GridView = typename FVGridGeometry::GridView;
+    using CoordScalar = typename GridView::ctype;
+    using GlobalPosition = Dune::FieldVector<CoordScalar, /*dimworld*/3>;
 
     // container to store the positions of intersections required for
     // scvf corner computation. Maximum number of points needed is 9
@@ -326,13 +307,14 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
+    template< class ScvBasis >
     static ScvBasis calculateInnerNormals(const ScvBasis& scvBasis)
     {
         ScvBasis innerNormals;
 
-        innerNormals[0] = crossProduct<Scalar>(scvBasis[1], scvBasis[2]);
-        innerNormals[1] = crossProduct<Scalar>(scvBasis[2], scvBasis[0]);
-        innerNormals[2] = crossProduct<Scalar>(scvBasis[0], scvBasis[1]);
+        innerNormals[0] = crossProduct<CoordScalar>(scvBasis[1], scvBasis[2]);
+        innerNormals[1] = crossProduct<CoordScalar>(scvBasis[2], scvBasis[0]);
+        innerNormals[2] = crossProduct<CoordScalar>(scvBasis[0], scvBasis[1]);
 
         if (!isRightHandSystem(scvBasis))
         {
@@ -350,10 +332,11 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
-    static typename LocalScvType::ctype calculateDetX(const ScvBasis& scvBasis)
+    template< class ScvBasis >
+    static CoordScalar calculateDetX(const ScvBasis& scvBasis)
     {
         using std::abs;
-        return abs(tripleProduct<Scalar>(scvBasis[0], scvBasis[1], scvBasis[2]));
+        return abs(tripleProduct<CoordScalar>(scvBasis[0], scvBasis[1], scvBasis[2]));
     }
 
     /*!
@@ -396,8 +379,9 @@ public:
      *
      * \param scvBasis The basis of an scv
      */
+    template< class ScvBasis >
     static bool isRightHandSystem(const ScvBasis& scvBasis)
-    { return !std::signbit(tripleProduct<Scalar>(scvBasis[0], scvBasis[1], scvBasis[2])); }
+    { return !std::signbit(tripleProduct<CoordScalar>(scvBasis[0], scvBasis[1], scvBasis[2])); }
 
     /*!
      * \brief Returns a vector containing the positions on a given intersection
@@ -424,7 +408,8 @@ public:
         p[0] = 0.0;
         for (unsigned int c = 0; c < numCorners; ++c)
         {
-            p[c+1] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, dim), dim));
+            // codim = 1, dim = 3
+            p[c+1] = eg.global(refElement.position(refElement.subEntity(indexInElement, 1, c, 3), 3));
             p[0] += p[c+1];
         }
         p[0] /= numCorners;
@@ -441,6 +426,7 @@ public:
                 p[numCorners+2] /= 2;
                 p[numCorners+3] = p[3] + p[2];
                 p[numCorners+3] /= 2;
+                return p;
             }
             case 4: // quadrilateral
             {
@@ -453,14 +439,12 @@ public:
                 p[numCorners+3] /= 2;
                 p[numCorners+4] = p[4] + p[3];
                 p[numCorners+4] /= 2;
+                return p;
             }
             default:
-                DUNE_THROW(Dune::NotImplemented, "Mpfa scvf corners for dim = " << dim
-                                                              << ", dimWorld = " << dimWorld
-                                                              << ", corners = " << numCorners);
+                DUNE_THROW(Dune::NotImplemented,
+                           "Mpfa scvf corners for dim = 3, dimWorld = 3, corners = " << numCorners);
         }
-
-        return p;
     }
 
     /*!
@@ -515,9 +499,8 @@ public:
                                           p[map[cornerIdx][3]]} );
             }
             default:
-                DUNE_THROW(Dune::NotImplemented, "Mpfa scvf corners for dim = " << dim
-                                                              << ", dimWorld = " << dimWorld
-                                                              << ", corners = " << numIntersectionCorners);
+                DUNE_THROW(Dune::NotImplemented,
+                           "Mpfa scvf corners for dim = 3, dimWorld = 3, corners = " << numIntersectionCorners);
         }
     }
 
@@ -526,7 +509,7 @@ public:
      *
      * \param scvfCorners Container with the corners of the scvf
      */
-    static Scalar getScvfArea(const ScvfCornerVector& scvfCorners)
+    static CoordScalar getScvfArea(const ScvfCornerVector& scvfCorners)
     {
         // after Wolfram alpha quadrilateral area
         return 0.5*Dumux::crossProduct(scvfCorners[3]-scvfCorners[0], scvfCorners[2]-scvfCorners[1]).two_norm();
@@ -566,25 +549,25 @@ public:
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Helper class to get the required information on an interaction volume.
- *        Specializations depending on the method and dimension are provided.
+ *
+ * \tparam FVGridGeometry The finite volume grid geometry
  */
-template<class TypeTag, int dim, int dimWorld>
-class CCMpfaHelperImplementation : public MpfaDimensionHelper<TypeTag, dim, dimWorld>
+template<class FVGridGeometry>
+class CCMpfaHelper : public MpfaDimensionHelper<FVGridGeometry,
+                                                FVGridGeometry::GridView::dimension,
+                                                FVGridGeometry::GridView::dimensionworld>
 {
-    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using PrimaryInteractionVolume = typename FVGridGeometry::GridIVIndexSets::PrimaryInteractionVolume;
+    using SecondaryInteractionVolume = typename FVGridGeometry::GridIVIndexSets::SecondaryInteractionVolume;
 
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    using Element = typename GridView::template Codim<0>::Entity;
-    using IndexType = typename GridView::IndexSet::IndexType;
-
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-
-    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using VertexMapper = typename FVGridGeometry::VertexMapper;
     using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ScvfCornerVector = typename SubControlVolumeFace::Traits::CornerStorage;
+
+    using GridView = typename FVGridGeometry::GridView;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
 
     using CoordScalar = typename GridView::ctype;
     using GlobalPosition = Dune::FieldVector<CoordScalar, dimWorld>;
@@ -597,14 +580,17 @@ public:
      * \param scvfCorners Container with the corners of the scvf
      * \param q Parameterization of the integration point on the scvf
      */
+    template< class Scalar >
     static GlobalPosition getScvfIntegrationPoint(const ScvfCornerVector& scvfCorners, Scalar q)
     {
-        // scvfs in 3d are always quadrilaterals
         // ordering -> first corner: facet center, last corner: vertex
         if (q == 0.0)
             return scvfCorners[0];
-        const auto d = [&] () { auto tmp = scvfCorners.back() - scvfCorners.front(); tmp *= q; return tmp; } ();
-        return scvfCorners[0] + d;
+
+        auto ip = scvfCorners.back() - scvfCorners.front();
+        ip *= q;
+        ip += scvfCorners[0];
+        return ip;
     }
 
     // returns a vector which maps true to each vertex on processor boundaries and false otherwise
@@ -617,7 +603,7 @@ public:
         if (Dune::MPIHelper::getCollectiveCommunication().size() == 1)
             return ghostVertices;
 
-        // mpfa methods can not yet handle ghost cells
+        // mpfa methods cannot yet handle ghost cells
         if (gridView.ghostSize(0) > 0)
             DUNE_THROW(Dune::InvalidStateException, "Mpfa methods in parallel do not work with ghost cells. Use overlap cells instead.");
 
@@ -659,16 +645,6 @@ public:
     static bool vectorContainsValue(const V& vector, const T value)
     { return std::find(vector.begin(), vector.end(), value) != vector.end(); }
 };
-
-/*!
- * \ingroup CCMpfaDiscretization
- * \brief Helper class to obtain data required for mpfa methods.
- *        It inherits from dimension-, dimensionworld- and method-specific implementations.
- */
-template<class TypeTag>
-using CCMpfaHelper = CCMpfaHelperImplementation<TypeTag,
-                                                GET_PROP_TYPE(TypeTag, GridView)::dimension,
-                                                GET_PROP_TYPE(TypeTag, GridView)::dimensionworld>;
 
 } // end namespace Dumux
 

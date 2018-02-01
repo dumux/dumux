@@ -26,8 +26,6 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dumux/common/properties.hh>
-
 namespace Dumux
 {
 
@@ -39,21 +37,9 @@ namespace Dumux
  *        The traits should contain the following type definitions:
  *
  * \code
- * //! export the problem type (needed for iv-local assembly)
- * using Problem = ...;
- * //! export the type of the local view on the finite volume grid geometry
- * using FVElementGeometry = ...;
- * //! export the type of the local view on the grid volume variables
- * using ElementVolumeVariables = ...;
  * //! export the type of grid view
  * using GridView = ...;
- * //! export the type used for scalar values
- * using ScalarType = ...;
- * //! export the type of the mpfa helper class
- * using MpfaHelper = ...;
  * //! export the type used for local indices
- * using LocalIndexType = ...;
- * //! export the type for the interaction volume index set
  * using IndexSet = ...;
  * //! export the type of interaction-volume local scvs
  * using LocalScvType = ...;
@@ -61,12 +47,8 @@ namespace Dumux
  * using LocalScvfType = ...;
  * //! export the type of used for the iv-local face data
  * using LocalFaceData = ...;
- * //! export the type used for iv-local matrices
- * using Matrix = ...;
- * //! export the type used for iv-local vectors
- * using Vector = ...;
- * //! export the data handle type for this iv
- * using DataHandle = ...;
+ * //! export the matrix/vector type traits to be used by the iv
+ * using MatVecTraits = ...;
  * \endcode
  */
 
@@ -78,25 +60,27 @@ namespace Dumux
  * \tparam Impl The actual implementation of the interaction volume
  * \tparam T The traits class to be used
  */
-template< class Impl, class T>
+template< class Impl, class T >
 class CCMpfaInteractionVolumeBase
 {
     // Curiously recurring template pattern
     Impl& asImp() { return static_cast<Impl&>(*this); }
     const Impl& asImp() const { return static_cast<const Impl&>(*this); }
 
-    using Problem = typename T::Problem;
-    using FVElementGeometry = typename T::FVElementGeometry;
-    using ElementVolumeVariables = typename T::ElementVolumeVariables;
-
     using GridView = typename T::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
+
+    using NodalStencilType = typename T::IndexSet::NodalGridStencilType;
+    using LocalIndexType = typename T::IndexSet::LocalIndexType;
+    using LocalScvType = typename T::LocalScvType;
+    using LocalScvfType = typename T::LocalScvfType;
 
 public:
     //! state the traits type publicly
     using Traits = T;
 
     //! Prepares everything for the assembly
+    template< class Problem, class FVElementGeometry >
     void setUpLocalScope(const typename Traits::IndexSet& indexSet,
                          const Problem& problem,
                          const FVElementGeometry& fvGeometry)
@@ -121,32 +105,32 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() funtion"); }
 
     //! returns the cell-stencil of this interaction volume
-    const typename Traits::IndexSet::GridStencilType& stencil() const { return asImp().stencil(); }
+    const NodalStencilType& stencil() const { return asImp().stencil(); }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
-    const typename Traits::LocalScvfType& localScvf(typename Traits::LocalIndexType ivLocalScvfIdx) const
-    { return asImp().localScvf(ivLocalScvfIdx); }
+    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const { return asImp().localScvf(ivLocalScvfIdx); }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
-    const typename Traits::LocalScvType& localScv(typename Traits::LocalIndexType ivLocalScvIdx) const
-    { return asImp().localScv(ivLocalScvIdx); }
+    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const { return asImp().localScv(ivLocalScvIdx); }
 
     //! returns the element in which the scv with the given local idx is embedded in
-    const Element& element(typename Traits::LocalIndexType ivLocalScvIdx) const
-    { return asImp().element(); }
+    const Element& element(LocalIndexType ivLocalScvIdx) const { return asImp().element(); }
 
     //! returns the number of interaction volumes living around a vertex
     template< class NodalIndexSet >
-    static std::size_t numInteractionVolumesAtVertex(const NodalIndexSet& nodalIndexSet)
-    { return Impl::numInteractionVolumesAtVertex(nodalIndexSet); }
+    static std::size_t numIVAtVertex(const NodalIndexSet& nodalIndexSet) { return Impl::numIVAtVertex(nodalIndexSet); }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
-    template<class IvIndexSetContainer, class ScvfIndexMap, class NodalIndexSet>
-    static void addInteractionVolumeIndexSets(IvIndexSetContainer& ivIndexSetContainer,
-                                              ScvfIndexMap& scvfIndexMap,
-                                              const NodalIndexSet& nodalIndexSet)
-    { Impl::addInteractionVolumeIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet); }
+    template< class IvIndexSetContainer,
+              class ScvfIndexMap,
+              class NodalIndexSet,
+              class FlipScvfIndexSet >
+    static void addIVIndexSets(IvIndexSetContainer& ivIndexSetContainer,
+                               ScvfIndexMap& scvfIndexMap,
+                               const NodalIndexSet& nodalIndexSet,
+                               const FlipScvfIndexSet& flipScvfIndexSet)
+    { Impl::addIVIndexSets(ivIndexSetContainer, scvfIndexMap, nodalIndexSet, flipScvfIndexSet); }
 };
 
 } // end namespace Dumux

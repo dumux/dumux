@@ -91,12 +91,10 @@ NEW_PROP_TAG(ElementFluxVariablesCache);           //!< A local vector of flux v
 NEW_PROP_TAG(GridFluxVariablesCache);              //!< The global vector of flux variable containers
 NEW_PROP_TAG(EnableGridFluxVariablesCache);        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(GridVariables);                       //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)
-NEW_PROP_TAG(MaxNumNeighborsPerScvf);              //!< The maximum number of neighboring elements allowed per scvf (for static memory allocation)
 
 /////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:
 /////////////////////////////////////////////////////////////////
-NEW_PROP_TAG(MpfaHelper);                          //!< A Helper class depending on the mpfa method and grid dimension
 NEW_PROP_TAG(PrimaryInteractionVolume);            //!< The primary interaction volume type
 NEW_PROP_TAG(SecondaryInteractionVolume);          //!< The secondary interaction volume type used e.g. on the boundaries
 NEW_PROP_TAG(DualGridNodalIndexSet);               //!< The type used for the nodal index sets of the dual grid

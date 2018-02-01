@@ -25,6 +25,8 @@
 #ifndef DUMUX_CC_MPFA_PROPERTIES_HH
 #define DUMUX_CC_MPFA_PROPERTIES_HH
 
+#include <dune/common/reservedvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/defaultmappertraits.hh>
 
@@ -64,63 +66,49 @@ SET_PROP(CCMpfaModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
 };
 
-//! Set the maximum admissible number of branches per scvf
-SET_PROP(CCMpfaModel, MaxNumNeighborsPerScvf)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-public:
-    // Per default, we allow for 8 neighbors on network/surface grids
-    static constexpr std::size_t value = dim < dimWorld ? 9 : 2;
-};
-
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
+    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
+    static constexpr int dim = GV::dimension;
+    static constexpr int dimWorld = GV::dimensionworld;
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    struct Traits
+    {
+        using GridView = GV;
+        using GridIndexType = typename GV::IndexSet::IndexType;
+        using LocalIndexType = std::uint8_t;
 
-    // Use the grid view's index type for grid indices
-    using GI = typename GridView::IndexSet::IndexType;
+        //! per default, we use dynamic data containers (iv size unknown)
+        template< class T > using NodalScvDataStorage = std::vector< T >;
+        template< class T > using NodalScvfDataStorage = std::vector< T >;
 
-    // per default, use uint8_t as iv-local index type
-    using LI = std::uint8_t;
-
-    // the specified maximum admissible number of branches per scvf
-    static constexpr int maxB = GET_PROP_VALUE(TypeTag, MaxNumNeighborsPerScvf);
-
-    // maximum admissible number of elements around a node
-    // if for a given grid this number is still not high enough,
-    // overwrite this property in your problem with a higher number
-    static constexpr int dim = GridView::dimension;
-    static constexpr int maxE = dim == 3 ? 45 : 15;
-
+        //! store data on neighbors of scvfs in static containers if possible
+        template< class T >
+        using ScvfNeighborDataStorage = typename std::conditional_t< (dim<dimWorld),
+                                                                     std::vector< T >,
+                                                                     Dune::ReservedVector< T, 2 > >;
+    };
 public:
-    using type = CCMpfaDualGridNodalIndexSet<GI, LI, dim, maxE, maxB>;
+    using type = CCMpfaDualGridNodalIndexSet< Traits >;
 };
-
-//! The mpfa helper class
-SET_TYPE_PROP(CCMpfaModel, MpfaHelper, CCMpfaHelper<TypeTag>);
 
 //! Per default, we use the dynamic mpfa-o interaction volume
 SET_PROP(CCMpfaModel, PrimaryInteractionVolume)
 {
-private:
-    //! use the default traits
-    using Traits = CCMpfaODefaultInteractionVolumeTraits< TypeTag >;
 public:
-    using type = CCMpfaOInteractionVolume< Traits >;
+    using type = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 };
 
-//! Per default, we use the dynamic mpfa-o interaction volume as secondary type
+//! Per default, we use the dynamic mpfa-o interaction volume on boundaries
 SET_PROP(CCMpfaModel, SecondaryInteractionVolume)
 {
 private:
-    //! use the default traits
-    using Traits = CCMpfaODefaultInteractionVolumeTraits< TypeTag >;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+
+    // use the default traits
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar >;
 public:
     using type = CCMpfaOInteractionVolume< Traits >;
 };
@@ -133,30 +121,27 @@ private:
     using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-
     struct Traits : public DefaultMapperTraits<GridView>
     {
         using SubControlVolume = CCSubControlVolume<GridView>;
         using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GridView>;
-        using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
         using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
-        template< class FVGridGeometry >
-        using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeometry,
-                                                                      NodalIndexSet,
-                                                                      PrimaryIV,
-                                                                      SecondaryIV >;
+        //! type definitions depending on the FVGridGeometry itself
+        template< class FVGridGeom >
+        using MpfaHelper = CCMpfaHelper< FVGridGeom >;
 
-        template< class FVGridGeometry, bool enableCache >
-        using LocalView = CCMpfaFVElementGeometry<FVGridGeometry, enableCache>;
+        template< class FVGridGeom >
+        using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeom, FVGridGeom::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
 
-        //! Per default, we use the o-method and thus the simple assembly map
-        template< class FVGridGeometry >
-        using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeometry, FVGridGeometry::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
+        template< class FVGridGeom >
+        using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeom, NodalIndexSet, PrimaryIV, SecondaryIV >;
+
+        template< class FVGridGeom, bool enableCache >
+        using LocalView = CCMpfaFVElementGeometry<FVGridGeom, enableCache>;
     };
 public:
-    using type = CCMpfaFVGridGeometry<GridView, Traits, enableCache>;
+    using type = CCMpfaFVGridGeometry<GridView, Traits, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>;
 };
 
 //! The global flux variables cache vector class

@@ -32,8 +32,6 @@
 #include <dumux/common/parameters.hh>
 #include <dumux/discretization/methods.hh>
 
-#include <dumux/discretization/methods.hh>
-
 namespace Dumux
 {
 //! forward declaration of the method-specific implementation
@@ -52,7 +50,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
@@ -95,30 +94,22 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
         using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-        using Stencil = typename DualGridNodalIndexSet::GridStencilType;
+        using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
-        using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+        using MpfaHelper = typename FVGridGeometry::MpfaHelper;
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
-        // In the current implementation of the flux variables cache we cannot make a
-        // disctinction between dynamic (e.g. mpfa-o unstructured) and static (e.g.mpfa-l)
-        // matrix and vector types, as currently the cache class can only be templated
-        // by a type tag (and there can only be one). Currently, pointers to both the
-        // primary and secondary iv data is stored. Before accessing it has to be checked
-        // whether or not the scvf is embedded in a secondary interaction volume.
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
-        using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
-        using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
-        using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
-        using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
+        using PrimaryIvDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
+        using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
-        using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
-        using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
-        using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
-        using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
+        using SecondaryIvDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle;
+        using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using SecondaryIvTij = typename SecondaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
     public:
         // export the filler type
@@ -238,11 +229,11 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (secondary type)
         const SecondaryIvTij& advectionTijSecondaryIv() const { return *secondaryTij_; }
 
-        //! The cell (& Dirichlet) pressures within this interaction volume (primary type)
-        const PrimaryIvVector& pressuresPrimaryIv(unsigned int phaseIdx) const { return *primaryPj_[phaseIdx]; }
+        //! The cell (& maybe Dirichlet) pressures within this interaction volume (primary type)
+        const PrimaryIvCellVector& pressuresPrimaryIv(unsigned int phaseIdx) const { return *primaryPj_[phaseIdx]; }
 
-        //! The cell (& Dirichlet) pressures within this interaction volume (secondary type)
-        const SecondaryIvVector& pressuresSecondaryIv(unsigned int phaseIdx) const { return *secondaryPj_[phaseIdx]; }
+        //! The cell (& maybe Dirichlet) pressures within this interaction volume (secondary type)
+        const SecondaryIvCellVector& pressuresSecondaryIv(unsigned int phaseIdx) const { return *secondaryPj_[phaseIdx]; }
 
         //! The gravitational acceleration for a phase on this scvf
         Scalar gravity(unsigned int phaseIdx) const { return g_[phaseIdx]; }
@@ -264,8 +255,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const SecondaryIvTij* secondaryTij_;
 
         //! The interaction-volume wide phase pressures pj
-        std::array<const PrimaryIvVector*, numPhases> primaryPj_;
-        std::array<const SecondaryIvVector*, numPhases> secondaryPj_;
+        std::array<const PrimaryIvCellVector*, numPhases> primaryPj_;
+        std::array<const SecondaryIvCellVector*, numPhases> secondaryPj_;
 
         //! Gravitational flux contribution on this face
         std::array< Scalar, numPhases > g_;

@@ -152,7 +152,7 @@ class PorousMediumFluxVariablesCacheImplementation<TypeTag, DiscretizationMethod
 {
     using GridIndexType = typename GET_PROP_TYPE(TypeTag, GridView)::IndexSet::IndexType;
 
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
+    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::MpfaHelper;
     static constexpr bool considerSecondary = MpfaHelper::considerSecondaryIVs();
 public:
     //! Returns whether or not this cache has been updated

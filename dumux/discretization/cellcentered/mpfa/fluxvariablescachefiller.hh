@@ -43,20 +43,22 @@ template<class TypeTag>
 class CCMpfaFluxVariablesCacheFiller
 {
     using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using Element = typename GridView::template Codim<0>::Entity;
 
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+    using FVElementGeometry = typename FVGridGeometry::LocalView;
+    using MpfaHelper = typename FVGridGeometry::MpfaHelper;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
+    using ElementFluxVariablesCache = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
 
     using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using PrimaryDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
+    using PrimaryDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
     using PrimaryLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
     using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-    using SecondaryDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
+    using SecondaryDataHandle = typename ElementFluxVariablesCache::SecondaryIvDataHandle;
     using SecondaryLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
 
     static constexpr int dim = GridView::dimension;
@@ -252,84 +254,8 @@ private:
         using AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType);
         using AdvectionFiller = typename AdvectionType::Cache::Filler;
 
-        static constexpr auto AdvectionMethod = AdvectionType::myDiscretizationMethod;
-        using LambdaFactory = TensorLambdaFactory<TypeTag, AdvectionMethod>;
-
-        // skip the following if advection doesn't use mpfa
-        if (AdvectionMethod == DiscretizationMethods::CCMpfa)
-        {
-            // get instance of the interaction volume-local assembler
-            using IVTraits = typename InteractionVolume::Traits;
-            using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
-            IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
-
-            // Use different assembly if gravity is enabled
-            static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
-
-            // Assemble T only if permeability is sol-dependent or if update is forced
-            if (forceUpdateAll || soldependentAdvection)
-            {
-                // distinguish between normal/surface grids (optimized away by compiler)
-                if (dim < dimWorld)
-                {
-                    if (enableGravity)
-                        localAssembler.assembleWithGravity( handle.advectionTout(),
-                                                            handle.advectionT(),
-                                                            handle.gravityOutside(),
-                                                            handle.gravity(),
-                                                            handle.advectionCA(),
-                                                            handle.advectionA(),
-                                                            iv,
-                                                            LambdaFactory::getAdvectionLambda() );
-
-                    else
-                        localAssembler.assemble( handle.advectionTout(),
-                                                 handle.advectionT(),
-                                                 iv,
-                                                 LambdaFactory::getAdvectionLambda() );
-                }
-
-                // normal grids
-                else
-                {
-                    if (enableGravity)
-                        localAssembler.assembleWithGravity( handle.advectionT(),
-                                                            handle.gravity(),
-                                                            handle.advectionCA(),
-                                                            iv,
-                                                            LambdaFactory::getAdvectionLambda() );
-                    else
-                        localAssembler.assemble( handle.advectionT(),
-                                                 iv,
-                                                 LambdaFactory::getAdvectionLambda() );
-                }
-            }
-
-            // (maybe) only reassemble gravity vector
-            else if (enableGravity)
-            {
-                if (dim == dimWorld)
-                    localAssembler.assembleGravity( handle.gravity(),
-                                                    iv,
-                                                    handle.advectionCA(),
-                                                    LambdaFactory::getAdvectionLambda() );
-                else
-                    localAssembler.assembleGravity( handle.gravity(),
-                                                    handle.gravityOutside(),
-                                                    iv,
-                                                    handle.advectionCA(),
-                                                    handle.advectionA(),
-                                                    LambdaFactory::getAdvectionLambda() );
-            }
-
-            // assemble pressure vectors
-            for (unsigned int pIdx = 0; pIdx < GET_PROP_VALUE(TypeTag, NumPhases); ++pIdx)
-            {
-                const auto& evv = &elemVolVars();
-                auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
-                localAssembler.assemble(handle.pressures(pIdx), iv, getPressure);
-            }
-        }
+        // fill data in the handle
+        fillAdvectionHandle(iv, handle, forceUpdateAll);
 
         // fill advection caches
         for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
@@ -384,51 +310,19 @@ private:
         using DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType);
         using DiffusionFiller = typename DiffusionType::Cache::Filler;
 
-        static constexpr auto DiffusionMethod = DiffusionType::myDiscretizationMethod;
-        using LambdaFactory = TensorLambdaFactory<TypeTag, DiffusionMethod>;
-
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
         static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-
-        // get instance of the interaction volume-local assembler
-        using IVTraits = typename InteractionVolume::Traits;
-        using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
-        IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         for (unsigned int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
         {
             for (unsigned int compIdx = 0; compIdx < numComponents; ++compIdx)
             {
-                if (phaseIdx == compIdx)
+                using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
+                if (compIdx == FluidSystem::getMainComponent(phaseIdx))
                     continue;
 
-                // solve the local system subject to the diffusion tensor (if uses mpfa)
-                if (DiffusionMethod == DiscretizationMethods::CCMpfa)
-                {
-                    // update the context in handle
-                    handle.setPhaseIndex(phaseIdx);
-                    handle.setComponentIndex(compIdx);
-
-                    // assemble T
-                    if (forceUpdateAll || soldependentDiffusion)
-                    {
-                        if (dim < dimWorld)
-                            localAssembler.assemble( handle.diffusionTout(),
-                                                     handle.diffusionT(),
-                                                     iv,
-                                                     LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
-                        else
-                            localAssembler. assemble( handle.diffusionT(),
-                                                      iv,
-                                                      LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
-                    }
-
-                    // assemble vector of mole fractions
-                    const auto& evv = &elemVolVars();
-                    auto getMoleFraction = [&evv, phaseIdx, compIdx] (auto volVarIdx)
-                                           { return (evv->operator[](volVarIdx)).moleFraction(phaseIdx, compIdx); };
-                    localAssembler.assemble(handle.moleFractions(phaseIdx, compIdx), iv, getMoleFraction);
-                }
+                // fill data in the handle
+                fillDiffusionHandle(iv, handle, forceUpdateAll, phaseIdx, compIdx);
 
                 // fill diffusion caches
                 for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
@@ -487,35 +381,8 @@ private:
         using HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType);
         using HeatConductionFiller = typename HeatConductionType::Cache::Filler;
 
-        static constexpr auto HeatConductionMethod = HeatConductionType::myDiscretizationMethod;
-        using LambdaFactory = TensorLambdaFactory<TypeTag, HeatConductionMethod>;
-
-        // maybe solve the local system subject to fourier coefficient
-        if (HeatConductionMethod == DiscretizationMethods::CCMpfa)
-        {
-            // get instance of the interaction volume-local assembler
-            using IVTraits = typename InteractionVolume::Traits;
-            using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
-            IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
-
-            if (forceUpdateAll || soldependentAdvection)
-            {
-                if (dim < dimWorld)
-                    localAssembler.assemble( handle.heatConductionTout(),
-                                             handle.heatConductionT(),
-                                             iv,
-                                             LambdaFactory::getHeatConductionLambda() );
-                else
-                    localAssembler.assemble( handle.heatConductionT(),
-                                             iv,
-                                             LambdaFactory::getHeatConductionLambda() );
-            }
-
-            // assemble vector of temperatures
-            const auto& evv = &elemVolVars();
-            auto getMoleFraction = [&evv] (auto volVarIdx) { return (evv->operator[](volVarIdx)).temperature(); };
-            localAssembler.assemble(handle.temperatures(), iv, getMoleFraction);
-        }
+        // prepare data in handle
+        fillHeatConductionHandle(iv, handle, forceUpdateAll);
 
         // fill heat conduction caches
         for (unsigned int i = 0; i < iv.localFaceData().size(); ++i)
@@ -555,6 +422,184 @@ private:
                             const std::vector<FluxVariablesCache*>& ivFluxVarCaches,
                             bool forceUpdateAll = false)
     {}
+
+    //! prepares the quantities necessary for advective fluxes in the handle
+    template< class InteractionVolume,
+              class DataHandle,
+              class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
+              typename std::enable_if_t<AdvectionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa, int> = 0 >
+    void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
+    {
+        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
+
+        // get instance of the interaction volume-local assembler
+        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
+        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
+        IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
+
+        // Use different assembly if gravity is enabled
+        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+
+        // Assemble T only if permeability is sol-dependent or if update is forced
+        if (forceUpdateAll || soldependentAdvection)
+        {
+            // distinguish between normal/surface grids (optimized away by compiler)
+            if (dim < dimWorld)
+            {
+                if (enableGravity)
+                    localAssembler.assembleWithGravity( handle.advectionTout(),
+                                                        handle.advectionT(),
+                                                        handle.gravityOutside(),
+                                                        handle.gravity(),
+                                                        handle.advectionCA(),
+                                                        handle.advectionA(),
+                                                        iv,
+                                                        LambdaFactory::getAdvectionLambda() );
+
+                else
+                    localAssembler.assemble( handle.advectionTout(),
+                                             handle.advectionT(),
+                                             iv,
+                                             LambdaFactory::getAdvectionLambda() );
+            }
+
+            // normal grids
+            else
+            {
+                if (enableGravity)
+                    localAssembler.assembleWithGravity( handle.advectionT(),
+                                                        handle.gravity(),
+                                                        handle.advectionCA(),
+                                                        iv,
+                                                        LambdaFactory::getAdvectionLambda() );
+                else
+                    localAssembler.assemble( handle.advectionT(),
+                                             iv,
+                                             LambdaFactory::getAdvectionLambda() );
+            }
+        }
+
+        // (maybe) only reassemble gravity vector
+        else if (enableGravity)
+        {
+            if (dim == dimWorld)
+                localAssembler.assembleGravity( handle.gravity(),
+                                                iv,
+                                                handle.advectionCA(),
+                                                LambdaFactory::getAdvectionLambda() );
+            else
+                localAssembler.assembleGravity( handle.gravity(),
+                                                handle.gravityOutside(),
+                                                iv,
+                                                handle.advectionCA(),
+                                                handle.advectionA(),
+                                                LambdaFactory::getAdvectionLambda() );
+        }
+
+        // assemble pressure vectors
+        for (unsigned int pIdx = 0; pIdx < GET_PROP_VALUE(TypeTag, NumPhases); ++pIdx)
+        {
+            const auto& evv = &elemVolVars();
+            auto getPressure = [&evv, pIdx] (auto volVarIdx) { return (evv->operator[](volVarIdx)).pressure(pIdx); };
+            localAssembler.assemble(handle.pressures(pIdx), iv, getPressure);
+        }
+    }
+
+    //! prepares the quantities necessary for diffusive fluxes in the handle
+    template< class InteractionVolume,
+              class DataHandle,
+              class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
+              typename std::enable_if_t<DiffusionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa, int> = 0 >
+    void fillDiffusionHandle(InteractionVolume& iv,
+                             DataHandle& handle,
+                             bool forceUpdateAll,
+                             int phaseIdx, int compIdx)
+    {
+        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
+
+        // get instance of the interaction volume-local assembler
+        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
+        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
+        IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
+
+        // solve the local system subject to the tensor and update the handle
+        handle.setPhaseIndex(phaseIdx);
+        handle.setComponentIndex(compIdx);
+
+        // assemble T
+        if (forceUpdateAll || soldependentDiffusion)
+        {
+            if (dim < dimWorld)
+                localAssembler.assemble( handle.diffusionTout(),
+                                         handle.diffusionT(),
+                                         iv,
+                                         LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
+            else
+                localAssembler. assemble( handle.diffusionT(),
+                                          iv,
+                                          LambdaFactory::getDiffusionLambda(phaseIdx, compIdx) );
+        }
+
+        // assemble vector of mole fractions
+        const auto& evv = &elemVolVars();
+        auto getMoleFraction = [&evv, phaseIdx, compIdx] (auto volVarIdx)
+                               { return (evv->operator[](volVarIdx)).moleFraction(phaseIdx, compIdx); };
+        localAssembler.assemble(handle.moleFractions(phaseIdx, compIdx), iv, getMoleFraction);
+    }
+
+    //! prepares the quantities necessary for conductive fluxes in the handle
+    template< class InteractionVolume,
+              class DataHandle,
+              class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
+              typename std::enable_if_t<HeatConductionType::myDiscretizationMethod == DiscretizationMethods::CCMpfa, int> = 0 >
+    void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll)
+    {
+        using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
+
+        // get instance of the interaction volume-local assembler
+        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
+        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
+        IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
+
+        if (forceUpdateAll || soldependentAdvection)
+        {
+            if (dim < dimWorld)
+                localAssembler.assemble( handle.heatConductionTout(),
+                                         handle.heatConductionT(),
+                                         iv,
+                                         LambdaFactory::getHeatConductionLambda() );
+            else
+                localAssembler.assemble( handle.heatConductionT(),
+                                         iv,
+                                         LambdaFactory::getHeatConductionLambda() );
+        }
+
+        // assemble vector of temperatures
+        const auto& evv = &elemVolVars();
+        auto getMoleFraction = [&evv] (auto volVarIdx) { return (evv->operator[](volVarIdx)).temperature(); };
+        localAssembler.assemble(handle.temperatures(), iv, getMoleFraction);
+    }
+
+    //! fill handle only when advection uses mpfa
+    template< class InteractionVolume,
+              class DataHandle,
+              class AdvectionType = typename GET_PROP_TYPE(TypeTag, AdvectionType),
+              typename std::enable_if_t<AdvectionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa, int> = 0 >
+    void fillAdvectionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
+
+    //! fill handle only when diffusion uses mpfa
+    template< class InteractionVolume,
+              class DataHandle,
+              class DiffusionType = typename GET_PROP_TYPE(TypeTag, MolecularDiffusionType),
+              typename std::enable_if_t<DiffusionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa, int> = 0 >
+    void fillDiffusionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll, int phaseIdx, int compIdx) {}
+
+    //! fill handle only when heat conduction uses mpfa
+    template< class InteractionVolume,
+              class DataHandle,
+              class HeatConductionType = typename GET_PROP_TYPE(TypeTag, HeatConductionType),
+              typename std::enable_if_t<HeatConductionType::myDiscretizationMethod != DiscretizationMethods::CCMpfa, int> = 0 >
+    void fillHeatConductionHandle(InteractionVolume& iv, DataHandle& handle, bool forceUpdateAll) {}
 
     const Problem* problemPtr_;
     const Element* elementPtr_;
