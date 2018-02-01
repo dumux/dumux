@@ -431,8 +431,8 @@ private:
         using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
 
         // get instance of the interaction volume-local assembler
-        using IVTraits = typename InteractionVolume::Traits;
-        using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
+        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
+        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // Use different assembly if gravity is enabled
@@ -516,8 +516,8 @@ private:
         using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
 
         // get instance of the interaction volume-local assembler
-        using IVTraits = typename InteractionVolume::Traits;
-        using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
+        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
+        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         // solve the local system subject to the tensor and update the handle
@@ -555,8 +555,8 @@ private:
         using LambdaFactory = TensorLambdaFactory<TypeTag, DiscretizationMethods::CCMpfa>;
 
         // get instance of the interaction volume-local assembler
-        using IVTraits = typename InteractionVolume::Traits;
-        using IvLocalAssembler = InteractionVolumeAssembler< IVTraits, InteractionVolume::MpfaMethod >;
+        static constexpr MpfaMethods M = InteractionVolume::MpfaMethod;
+        using IvLocalAssembler = InteractionVolumeAssembler< Problem, FVElementGeometry, ElementVolumeVariables, M >;
         IvLocalAssembler localAssembler(problem(), fvGeometry(), elemVolVars());
 
         if (forceUpdateAll || soldependentAdvection)

@@ -105,16 +105,14 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
         using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
-        using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
-        using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
-        using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
+        using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
         using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
-        using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
-        using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
-        using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
+        using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using SecondaryIvTij = typename SecondaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
@@ -198,12 +196,12 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const SecondaryIvTij& diffusionTijSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
         { return *secondaryTij_[phaseIdx][compIdx]; }
 
-        //! The cell (& Dirichlet) mole fractions within this interaction volume (primary type)
-        const PrimaryIvVector& moleFractionsPrimaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        //! The cell (& maybe Dirichlet) mole fractions within this interaction volume (primary type)
+        const PrimaryIvCellVector& moleFractionsPrimaryIv(unsigned int phaseIdx, unsigned int compIdx) const
         { return *primaryXj_[phaseIdx][compIdx]; }
 
-        //! The cell (& Dirichlet) mole fractions within this interaction volume (secondary type)
-        const SecondaryIvVector& moleFractionsSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
+        //! The cell (& maybe Dirichlet) mole fractions within this interaction volume (secondary type)
+        const SecondaryIvCellVector& moleFractionsSecondaryIv(unsigned int phaseIdx, unsigned int compIdx) const
         { return *secondaryXj_[phaseIdx][compIdx]; }
 
         //! The stencils corresponding to the transmissibilities
@@ -217,12 +215,12 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         std::array< std::array<const Stencil*, numComponents>, numPhases > stencil_;
 
         //! The transmissibilities such that f = Tij*xj
-        std::array< std::array<const PrimaryIvVector*, numComponents>, numPhases > primaryTij_;
-        std::array< std::array<const SecondaryIvVector*, numComponents>, numPhases > secondaryTij_;
+        std::array< std::array<const PrimaryIvCellVector*, numComponents>, numPhases > primaryTij_;
+        std::array< std::array<const SecondaryIvCellVector*, numComponents>, numPhases > secondaryTij_;
 
         //! The interaction-volume wide mole fractions xj
-        std::array< std::array<const PrimaryIvVector*, numComponents>, numPhases > primaryXj_;
-        std::array< std::array<const SecondaryIvVector*, numComponents>, numPhases > secondaryXj_;
+        std::array< std::array<const PrimaryIvCellVector*, numComponents>, numPhases > primaryXj_;
+        std::array< std::array<const SecondaryIvCellVector*, numComponents>, numPhases > secondaryXj_;
     };
 
 public:

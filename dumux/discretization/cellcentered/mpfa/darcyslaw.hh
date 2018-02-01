@@ -107,16 +107,14 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
         using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
-        using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
-        using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
-        using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
+        using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
         using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
-        using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
-        using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
-        using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
+        using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using SecondaryIvTij = typename SecondaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
     public:
         // export the filler type
@@ -236,11 +234,11 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         //! Coefficients for the cell (& Dirichlet) unknowns in flux expressions (secondary type)
         const SecondaryIvTij& advectionTijSecondaryIv() const { return *secondaryTij_; }
 
-        //! The cell (& Dirichlet) pressures within this interaction volume (primary type)
-        const PrimaryIvVector& pressuresPrimaryIv(unsigned int phaseIdx) const { return *primaryPj_[phaseIdx]; }
+        //! The cell (& maybe Dirichlet) pressures within this interaction volume (primary type)
+        const PrimaryIvCellVector& pressuresPrimaryIv(unsigned int phaseIdx) const { return *primaryPj_[phaseIdx]; }
 
-        //! The cell (& Dirichlet) pressures within this interaction volume (secondary type)
-        const SecondaryIvVector& pressuresSecondaryIv(unsigned int phaseIdx) const { return *secondaryPj_[phaseIdx]; }
+        //! The cell (& maybe Dirichlet) pressures within this interaction volume (secondary type)
+        const SecondaryIvCellVector& pressuresSecondaryIv(unsigned int phaseIdx) const { return *secondaryPj_[phaseIdx]; }
 
         //! The gravitational acceleration for a phase on this scvf
         Scalar gravity(unsigned int phaseIdx) const { return g_[phaseIdx]; }
@@ -262,8 +260,8 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const SecondaryIvTij* secondaryTij_;
 
         //! The interaction-volume wide phase pressures pj
-        std::array<const PrimaryIvVector*, numPhases> primaryPj_;
-        std::array<const SecondaryIvVector*, numPhases> secondaryPj_;
+        std::array<const PrimaryIvCellVector*, numPhases> primaryPj_;
+        std::array<const SecondaryIvCellVector*, numPhases> secondaryPj_;
 
         //! Gravitational flux contribution on this face
         std::array< Scalar, numPhases > g_;

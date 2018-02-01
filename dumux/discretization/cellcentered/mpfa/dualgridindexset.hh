@@ -38,7 +38,7 @@ namespace Dumux
  * \brief Nodal index set for mpfa schemes, constructed
  *        around grid vertices.
  *
- * \tparam GI The type used for indices on the grid
+ * \tparam GV The grid view type
  * \tparam LI The type used for indexing in interaction volumes
  * \tparam dim The dimension of the grid
  * \tparam maxE The maximum admissible number of elements around vertices.
@@ -46,12 +46,16 @@ namespace Dumux
  *              This is only to be specified for network grids and defaults to 1
  *              for normal grids.
  */
-template< class GI, class LI, int dim, int maxE, int maxB = 2 >
+template< class GV, class LI, int dim, int maxE, int maxB = 2 >
 class CCMpfaDualGridNodalIndexSet
 {
+    using GI = typename GV::IndexSet::IndexType;
     using DimIndexVector = Dune::ReservedVector<GI, dim>;
 
 public:
+    //! Export the grid view type
+    using GridView = GV;
+
     //! Export the used index types
     using GridIndexType = GI;
     using LocalIndexType = LI;

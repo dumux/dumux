@@ -41,20 +41,15 @@ namespace Dumux
  * \brief Specialization of the interaction volume-local
  *        assembler class for the schemes using an mpfa-o type assembly.
  *
- * \tparam IVTraits The traits class used by the interaction volume implemetation
+ * \tparam P The problem type
+ * \tparam EG The element finite volume geometry
+ * \tparam EV The element volume variables type
  */
-template< class IVTraits >
-class InteractionVolumeAssemblerImpl< IVTraits, MpfaMethods::oMethod >
-      : public InteractionVolumeAssemblerBase< IVTraits >
+template< class P, class EG, class EV >
+class InteractionVolumeAssemblerImpl< P, EG, EV, MpfaMethods::oMethod >
+      : public InteractionVolumeAssemblerBase< P, EG, EV >
 {
-    using ParentType = InteractionVolumeAssemblerBase< IVTraits >;
-
-    using LocalIndexType = typename IVTraits::LocalIndexType;
-    using Matrix = typename IVTraits::Matrix;
-    using Vector = typename IVTraits::Vector;
-
-    static constexpr int dim = IVTraits::LocalScvType::myDimension;
-    static constexpr int dimWorld = IVTraits::LocalScvType::worldDimension;
+    using ParentType = InteractionVolumeAssemblerBase< P, EG, EV >;
 
 public:
     //! Use the constructor of the base class
@@ -65,18 +60,18 @@ public:
      *        interaction volume in an mpfa-o type way.
      *
      * \tparam IV The interaction volume type implementation
-     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
      *                   which the local system is to be solved
      *
      * \param T The transmissibility matrix to be assembled
      * \param iv The interaction volume
-     * \param getTensor Lambda to evaluate the scv-wise tensors
+     * \param getT Lambda to evaluate the scv-wise tensors
      */
-    template< class IV, class GetTensor >
-    void assemble(Matrix& T, IV& iv, const GetTensor& getTensor)
+    template< class IV, class TensorFunc >
+    void assemble(typename IV::Traits::MatVecTraits::TMatrix& T, IV& iv, const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
+        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -95,19 +90,19 @@ public:
      *
      * \tparam TOutside Container to store the "outside" transmissibilities
      * \tparam IV The interaction volume type implementation
-     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
-     *                   which the local system is to be solved
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
+     *                    which the local system is to be solved
      *
      * \param outsideTij tij on "outside" faces to be assembled
      * \param T The transmissibility matrix tij to be assembled
      * \param iv The interaction volume
-     * \param getTensor Lambda to evaluate the scv-wise tensors
+     * \param getT Lambda to evaluate the scv-wise tensors
      */
-    template< class TOutside, class IV, class GetTensor >
-    void assemble(TOutside& outsideTij, Matrix& T, IV& iv, const GetTensor& getTensor)
+    template< class TOutside, class IV, class TensorFunc >
+    void assemble(TOutside& outsideTij, typename IV::Traits::MatVecTraits::TMatrix& T, IV& iv, const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
+        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -135,7 +130,8 @@ public:
                 tij = 0.0;
 
                 // add contributions from all local directions
-                for (LocalIndexType localDir = 0; localDir < dim; localDir++)
+                using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+                for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
                 {
                     // the scvf corresponding to this local direction in the scv
                     const auto& curLocalScvf = iv.localScvf(posLocalScv.scvfIdxLocal(localDir));
@@ -166,20 +162,24 @@ public:
      * \tparam GC The type of container used to store the
      *            gravitational acceleration per scvf & phase
      * \tparam IV The interaction volume type implementation
-     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
-     *                   which the local system is to be solved
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
+     *                    which the local system is to be solved
      *
      * \param T The transmissibility matrix to be assembled
      * \param g Container to assemble gravity per scvf & phase
      * \param CA Matrix to store matrix product C*A^-1
      * \param iv The mpfa-o interaction volume
-     * \param getTensor Lambda to evaluate the scv-wise tensors
+     * \param getT Lambda to evaluate the scv-wise tensors
      */
-    template< class GC, class IV, class GetTensor >
-    void assembleWithGravity(Matrix& T, GC& g, Matrix& CA, IV& iv, const GetTensor& getTensor)
+    template< class GC, class IV, class TensorFunc >
+    void assembleWithGravity(typename IV::Traits::MatVecTraits::TMatrix& T,
+                             GC& g,
+                             typename IV::Traits::MatVecTraits::CMatrix& CA,
+                             IV& iv,
+                             const TensorFunc& getT)
     {
         // assemble D into T & C into CA directly
-        assembleLocalMatrices_(iv.A(), iv.B(), CA, T, iv, getTensor);
+        assembleLocalMatrices_(iv.A(), iv.B(), CA, T, iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -191,7 +191,7 @@ public:
         }
 
         // assemble gravitational acceleration container (enforce usage of mpfa-o type version)
-        assembleGravity(g, iv, CA, getTensor);
+        assembleGravity(g, iv, CA, getT);
     }
 
     /*!
@@ -206,8 +206,8 @@ public:
      * \tparam GOut Type of container used to store gravity on "outside" faces
      * \tparam TOutside Container to store the "outside" transmissibilities
      * \tparam IV The interaction volume type implementation
-     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
-     *                   which the local system is to be solved
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
+     *                    which the local system is to be solved
      *
      * \param outsideTij tij on "outside" faces to be assembled
      * \param T The transmissibility matrix to be assembled
@@ -216,20 +216,20 @@ public:
      * \param CA Matrix to store matrix product C*A^-1
      * \param A Matrix to store the inverse A^-1
      * \param iv The mpfa-o interaction volume
-     * \param getTensor Lambda to evaluate the scv-wise tensors
+     * \param getT Lambda to evaluate the scv-wise tensors
      */
-    template< class GC, class GOut, class TOutside, class IV, class GetTensor >
+    template< class GC, class GOut, class TOutside, class IV, class TensorFunc >
     void assembleWithGravity(TOutside& outsideTij,
-                             Matrix& T,
+                             typename IV::Traits::MatVecTraits::TMatrix& T,
                              GOut& outsideG,
                              GC& g,
-                             Matrix& CA,
-                             Matrix& A,
+                             typename IV::Traits::MatVecTraits::CMatrix& CA,
+                             typename IV::Traits::MatVecTraits::AMatrix& A,
                              IV& iv,
-                             const GetTensor& getTensor)
+                             const TensorFunc& getT)
     {
         // assemble D into T directly
-        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getTensor);
+        assembleLocalMatrices_(iv.A(), iv.B(), iv.C(), T, iv, getT);
 
         // maybe solve the local system
         if (iv.numUnknowns() > 0)
@@ -259,7 +259,8 @@ public:
                 tij = 0.0;
 
                 // add contributions from all local directions
-                for (LocalIndexType localDir = 0; localDir < dim; localDir++)
+                using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+                for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
                 {
                     // the scvf corresponding to this local direction in the scv
                     const auto& curLocalScvf = iv.localScvf(posLocalScv.scvfIdxLocal(localDir));
@@ -280,7 +281,7 @@ public:
             }
         }
 
-        assembleGravity(g, outsideG, iv, CA, A, getTensor);
+        assembleGravity(g, outsideG, iv, CA, A, getT);
     }
 
     /*!
@@ -295,14 +296,15 @@ public:
      * \param getU Lambda to obtain the desired cell/Dirichlet value from grid index
      */
     template< class IV, class GetU >
-    void assemble(Vector& u, const IV& iv, const GetU& getU)
+    void assemble(typename IV::Traits::MatVecTraits::CellVector& u, const IV& iv, const GetU& getU)
     {
         // put the cell pressures first
+        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
         for (LocalIndexType i = 0; i < iv.numScvs(); ++i)
             u[i] = getU( iv.localScv(i).globalScvIndex() );
 
         // Dirichlet BCs come afterwards
-        unsigned int i = iv.numScvs();
+        LocalIndexType i = iv.numScvs();
         for (const auto& data : iv.dirichletData())
             u[i++] = getU( data.volVarIndex() );
     }
@@ -317,37 +319,40 @@ public:
      *
      * \tparam GC The type of container used to store the
      *            gravitational acceleration per scvf & phase
-     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
-     *                   which the local system is to be solved
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
+     *                    which the local system is to be solved
      *
      * \param g Container to assemble gravity per scvf & phase
      * \param iv The mpfa-o interaction volume
      * \param CA Projection matrix transforming the gravity terms in the local system of
      *        equations to the entire set of faces within the interaction volume
-     * \param getTensor Lambda to evaluate scv-wise hydraulic conductivities
+     * \param getT Lambda to evaluate scv-wise hydraulic conductivities
      */
-    template< class GC, class IV, class GetTensor >
-    void assembleGravity(GC& g, const IV& iv, const Matrix& CA, const GetTensor& getTensor)
+    template< class GC, class IV, class TensorFunc >
+    void assembleGravity(GC& g,
+                         const IV& iv,
+                         const typename IV::Traits::MatVecTraits::CMatrix& CA,
+                         const TensorFunc& getT)
     {
         //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
         //! - first index adresses the respective phases
         //! - second index adresses the face within the interaction volume
 
-        // make sure CA matrix and the g vector to have the correct size already
-        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); })
-               && "size of gravity vector does not match the number of iv-local faces!");
-        assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns() && "Matrix CA does not have the correct size");
+        // make sure g vector and CA matrix have the correct sizes already
+        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); }));
+        assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
 
         //! For each face, we...
         //! - arithmetically average the phase densities
         //! - compute the term \f$ \alpha := A \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \alpha_{outside} - \alpha_{inside} \f$
-        using Scalar = typename Vector::value_type;
+        using Scalar = typename IV::Traits::ScalarType;
+        using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
+        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
         // reset gravity containers to zero
         const auto numPhases = g.size();
-        std::vector< Vector > sum_alphas(numPhases);
-
+        std::vector< FaceVector > sum_alphas(numPhases);
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
         {
             resizeVector(sum_alphas[pIdx], iv.numUnknowns());
@@ -368,11 +373,10 @@ public:
             const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
             const auto& posVolVars = this->elemVolVars()[posGlobalScv];
             const auto& posElement = iv.element(neighborScvIndices[0]);
-            const auto tensor = getTensor(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
+            const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
-            // This function should never be called for surface grids,
-            // for which there is the specialization of this function below
-            assert(neighborScvIndices.size() <= 2 && "Scvf seems to have more than one outside scv!");
+            // On surface grids one should use the function specialization below
+            assert(neighborScvIndices.size() <= 2);
 
             std::vector< Scalar > rho(numPhases);
             const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(), tensor, gravity);
@@ -388,7 +392,7 @@ public:
                     const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
                     const auto& negVolVars = this->elemVolVars()[negGlobalScv];
                     const auto& negElement = iv.element( neighborScvIndices[1] );
-                    const auto negTensor = getTensor(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
+                    const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
 
                     const auto sum_alpha = negVolVars.extrusionFactor()
                                            * vtmv(curGlobalScvf.unitOuterNormal(), negTensor, gravity)
@@ -439,8 +443,8 @@ public:
      *            gravitational acceleration per scvf & phase
      * \tparam GOut Type of container used to store gravity on "outside" faces
      * \tparam IV The interaction volume type implementation
-     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
-     *                   which the local system is to be solved
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
+     *                    which the local system is to be solved
      *
      * \param g Container to store gravity per scvf & phase
      * \param outsideG Container to store gravity per "outside" scvf & phase
@@ -448,15 +452,15 @@ public:
      * \param CA Projection matrix transforming the gravity terms in the local system of
      *        equations to the entire set of faces within the interaction volume
      * \param A Matrix needed for the "reconstruction" of face unknowns as a function of gravity
-     * \param getTensor Lambda to evaluate scv-wise hydraulic conductivities
+     * \param getT Lambda to evaluate scv-wise hydraulic conductivities
      */
-    template< class GC, class GOut, class IV, class GetTensor >
+    template< class GC, class GOut, class IV, class TensorFunc >
     void assembleGravity(GC& g,
                          GOut& outsideG,
                          const IV& iv,
-                         const Matrix& CA,
-                         const Matrix& A,
-                         const GetTensor& getTensor)
+                         const typename IV::Traits::MatVecTraits::CMatrix& CA,
+                         const typename IV::Traits::MatVecTraits::AMatrix& A,
+                         const TensorFunc& getT)
     {
         //! We require the gravity container to be a two-dimensional vector/array type, structured as follows:
         //! - first index adresses the respective phases
@@ -467,22 +471,21 @@ public:
         //! - third index adresses the i-th "outside" face of the current face
 
         // we require the CA matrix and the gravity containers to have the correct size already
-        assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns() && "Matrix CA does not have the correct size");
-        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); })
-               && "size of gravity container does not match the number of iv-local faces!");
-        assert(std::all_of(outsideG.begin(), outsideG.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); })
-               && "Outside gravity container does not match the number of iv-local faces!");
+        assert(CA.rows() == iv.numFaces() && CA.cols() == iv.numUnknowns());
+        assert(std::all_of(g.begin(), g.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); }));
+        assert(std::all_of(outsideG.begin(), outsideG.end(), [&iv](const auto& v) { return v.size() == iv.numFaces(); }));
 
         //! For each face, we...
         //! - arithmetically average the phase densities
         //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
-        using Scalar = typename Vector::value_type;
+        using Scalar = typename IV::Traits::ScalarType;
+        using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
+        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
         // reset everything to zero
         const auto numPhases = g.size();
-        std::vector< Vector > sum_alphas(numPhases);
-
+        std::vector< FaceVector > sum_alphas(numPhases);
         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
         {
             resizeVector(sum_alphas[pIdx], iv.numUnknowns());
@@ -504,7 +507,7 @@ public:
             const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
             const auto& posVolVars = this->elemVolVars()[posGlobalScv];
             const auto& posElement = iv.element(neighborScvIndices[0]);
-            const auto tensor = getTensor(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
+            const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
             const auto alpha_inside = posVolVars.extrusionFactor()*vtmv(curGlobalScvf.unitOuterNormal(), tensor, gravity);
             const auto numOutsideFaces = curGlobalScvf.boundary() ? 0 : curGlobalScvf.numOutsideScvs();
@@ -527,11 +530,10 @@ public:
                         const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
                         const auto& negElement = iv.element( neighborScvIndices[idxInOutside] );
-                        const auto negTensor = getTensor(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
+                        const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
 
                         const auto& flipScvf = this->fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside);
-                        alpha_outside[idxInOutside] = negVolVars.extrusionFactor()
-                                                      * vtmv(flipScvf.unitOuterNormal(), negTensor, gravity);
+                        alpha_outside[idxInOutside] = negVolVars.extrusionFactor()*vtmv(flipScvf.unitOuterNormal(), negTensor, gravity);
 
                         for (unsigned int pIdx = 0; pIdx < numPhases; ++pIdx)
                         {
@@ -572,7 +574,7 @@ public:
         {
             CA.umv(sum_alphas[pIdx], g[pIdx]);
 
-            Vector AG(iv.numUnknowns());
+            FaceVector AG(iv.numUnknowns());
             A.mv(sum_alphas[pIdx], AG);
 
             // compute gravitational accelerations
@@ -588,8 +590,11 @@ public:
                 const auto& posLocalScv = iv.localScv(localScvIdx);
                 const auto& wijk = iv.omegas()[localScvfIdx][idxInOutside+1];
 
+                // make sure the given outside gravity container has the right size
+                assert(outsideG[pIdx][localScvfIdx].size() == iv.localScvf(localScvfIdx).neighboringLocalScvIndices().size());
+
                 // add contributions from all local directions
-                for (LocalIndexType localDir = 0; localDir < dim; localDir++)
+                for (LocalIndexType localDir = 0; localDir < IV::Traits::GridView::dimension; localDir++)
                 {
                     // the scvf corresponding to this local direction in the scv
                     const auto& curLocalScvf = iv.localScvf(posLocalScv.scvfIdxLocal(localDir));
@@ -616,22 +621,29 @@ private:
      * \note  The matrices are expected to have been resized beforehand.
      *
      * \tparam IV The interaction volume type implementation
-     * \tparam GetTensor Lambda to obtain the tensor w.r.t.
-     *                   which the local system is to be solved
+     * \tparam TensorFunc Lambda to obtain the tensor w.r.t.
+     *                    which the local system is to be solved
      *
      * \param A The A matrix of the iv-local equation system
      * \param B The B matrix of the iv-local equation system
      * \param C The C matrix of the iv-local flux expressions
      * \param D The D matrix of the iv-local flux expressions
      * \param iv The mpfa-o interaction volume
-     * \param getTensor Lambda to evaluate the scv-wise tensors
+     * \param getT Lambda to evaluate the scv-wise tensors
      */
-    template< class IV, class GetTensor >
-    void assembleLocalMatrices_(Matrix& A, Matrix& B, Matrix& C, Matrix& D,
-                                IV& iv, const GetTensor& getTensor)
+    template< class IV, class TensorFunc >
+    void assembleLocalMatrices_(typename IV::Traits::MatVecTraits::AMatrix& A,
+                                typename IV::Traits::MatVecTraits::BMatrix& B,
+                                typename IV::Traits::MatVecTraits::CMatrix& C,
+                                typename IV::Traits::MatVecTraits::DMatrix& D,
+                                IV& iv, const TensorFunc& getT)
     {
+        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
+        static constexpr int dim = IV::Traits::GridView::dimension;
+        static constexpr int dimWorld = IV::Traits::GridView::dimensionworld;
+
         // Matrix D is assumed to have the right size already
-        assert(D.rows() == iv.numFaces() && D.cols() == iv.numKnowns() && "Matrix D does not have the correct size");
+        assert(D.rows() == iv.numFaces() && D.cols() == iv.numKnowns());
 
         // if only Dirichlet faces are present in the iv,
         // the matrices A, B & C are undefined and D = T
@@ -652,7 +664,7 @@ private:
                 const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
                 const auto& posElement = iv.element(neighborScvIndices[0]);
-                const auto tensor = getTensor(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
+                const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
                 // the omega factors of the "positive" sub volume
                 const auto wijk = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
@@ -670,9 +682,9 @@ private:
         else
         {
             // we require the matrices A,B,C to have the correct size already
-            assert(A.rows() == iv.numUnknowns() && A.cols() == iv.numUnknowns() && "Matrix A does not have the correct size");
-            assert(B.rows() == iv.numUnknowns() && B.cols() == iv.numKnowns() && "Matrix B does not have the correct size");
-            assert(C.rows() == iv.numFaces() && C.cols() == iv.numUnknowns() && "Matrix C does not have the correct size");
+            assert(A.rows() == iv.numUnknowns() && A.cols() == iv.numUnknowns());
+            assert(B.rows() == iv.numUnknowns() && B.cols() == iv.numKnowns());
+            assert(C.rows() == iv.numFaces() && C.cols() == iv.numUnknowns());
 
             // reset matrices
             A = 0.0;
@@ -694,7 +706,7 @@ private:
                 const auto& posGlobalScv = this->fvGeometry().scv(posLocalScv.globalScvIndex());
                 const auto& posVolVars = this->elemVolVars()[posGlobalScv];
                 const auto& posElement = iv.element(neighborScvIndices[0]);
-                const auto tensor = getTensor(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
+                const auto tensor = getT(this->problem(), posElement, posVolVars, this->fvGeometry(), posGlobalScv);
 
                 // the omega factors of the "positive" sub volume
                 wijk[faceIdx][0] = computeMpfaTransmissibility(posLocalScv, curGlobalScvf, tensor, posVolVars.extrusionFactor());
@@ -740,7 +752,7 @@ private:
                         const auto& negGlobalScv = this->fvGeometry().scv(negLocalScv.globalScvIndex());
                         const auto& negVolVars = this->elemVolVars()[negGlobalScv];
                         const auto& negElement = iv.element( neighborScvIndices[idxOnScvf] );
-                        const auto negTensor = getTensor(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
+                        const auto negTensor = getT(this->problem(), negElement, negVolVars, this->fvGeometry(), negGlobalScv);
 
                         // On surface grids, use outside face for "negative" transmissibility calculation
                         const auto& scvf = dim < dimWorld ? this->fvGeometry().flipScvf(curGlobalScvf.index(), idxInOutside)

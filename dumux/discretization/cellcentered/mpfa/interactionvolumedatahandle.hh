@@ -26,7 +26,8 @@
 
 #include <vector>
 
-#include <dumux/common/properties.hh>
+#include <dune/common/dynvector.hh>
+
 #include <dumux/common/parameters.hh>
 #include <dumux/common/matrixvectorhelper.hh>
 
@@ -42,26 +43,26 @@ public:
 };
 
 //! Data handle for quantities related to advection
-template<class TypeTag, class M, class V, class LI, bool EnableAdvection>
+template<class MatVecTraits, class PhysicsTraits, bool EnableAdvection>
 class AdvectionDataHandle
 {
     // export matrix & vector types from interaction volume
-    using Matrix = M;
-    using Vector = V;
-    using LocalIndexType = LI;
-    using Scalar = typename Vector::value_type;
+    using AMatrix = typename MatVecTraits::AMatrix;
+    using CMatrix = typename MatVecTraits::CMatrix;
+    using TMatrix = typename MatVecTraits::TMatrix;
+    using CellVector = typename MatVecTraits::CellVector;
+    using FaceVector = typename MatVecTraits::FaceVector;
+    using FaceScalar = typename FaceVector::value_type;
+    using OutsideGravityStorage = std::vector< Dune::DynamicVector<FaceScalar> >;
 
-    using OutsideDataContainer = std::vector< std::vector<Vector> >;
-
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+    static constexpr int numPhases = PhysicsTraits::numPhases;
 
 public:
 
     //! prepare data handle for subsequent fill (normal grids)
-    template< class InteractionVolume, int d = dim, int dw = dimWorld, std::enable_if_t<(d==dw), int> = 0>
-    void resize(const InteractionVolume& iv)
+    template< class IV,
+              std::enable_if_t<(IV::Traits::GridView::dimension==IV::Traits::GridView::dimensionworld), int> = 0>
+    void resize(const IV& iv)
     {
         // resize transmissibility matrix & pressure vectors
         resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
@@ -69,7 +70,7 @@ public:
             resizeVector(p_[pIdx], iv.numKnowns());
 
         // maybe resize gravity container
-        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
         if (enableGravity)
         {
             resizeMatrix(CA_, iv.numFaces(), iv.numUnknowns());
@@ -80,11 +81,13 @@ public:
 
 
     //! prepare data handle for subsequent fill (surface grids)
-    template< class InteractionVolume, int d = dim, int dw = dimWorld, std::enable_if_t<(d<dw), int> = 0>
-    void resize(const InteractionVolume& iv)
+    template< class IV,
+              std::enable_if_t<(IV::Traits::GridView::dimension<IV::Traits::GridView::dimensionworld), int> = 0>
+    void resize(const IV& iv)
     {
-        static const bool enableGravity = getParamFromGroup<bool>(GET_PROP_VALUE(TypeTag, ModelParameterGroup), "Problem.EnableGravity");
+        using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
+        static const bool enableGravity = getParam<bool>("Problem.EnableGravity");
         if (!enableGravity)
         {
             resizeMatrix(T_, iv.numFaces(), iv.numKnowns());
@@ -129,66 +132,61 @@ public:
     }
 
     //! Access to the iv-wide pressure of one phase
-    const Vector& pressures(unsigned int pIdx) const { return p_[pIdx]; }
-    Vector& pressures(unsigned int pIdx) { return p_[pIdx]; }
+    const CellVector& pressures(unsigned int pIdx) const { return p_[pIdx]; }
+    CellVector& pressures(unsigned int pIdx) { return p_[pIdx]; }
 
     //! Access to the gravitational flux contributions for one phase
-    const Vector& gravity(unsigned int pIdx) const { return g_[pIdx]; }
-    Vector& gravity(unsigned int pIdx) { return g_[pIdx]; }
+    const FaceVector& gravity(unsigned int pIdx) const { return g_[pIdx]; }
+    FaceVector& gravity(unsigned int pIdx) { return g_[pIdx]; }
 
     //! Access to the gravitational flux contributions for all phases
-    const std::array< Vector, numPhases >& gravity() const { return g_; }
-    std::array< Vector, numPhases >& gravity() { return g_; }
+    const std::array< FaceVector, numPhases >& gravity() const { return g_; }
+    std::array< FaceVector, numPhases >& gravity() { return g_; }
 
     //! Projection matrix for gravitational acceleration
-    const Matrix& advectionCA() const { return CA_; }
-    Matrix& advectionCA() { return CA_; }
+    const CMatrix& advectionCA() const { return CA_; }
+    CMatrix& advectionCA() { return CA_; }
 
     //! Additional projection matrix needed on surface grids
-    const Matrix& advectionA() const { return A_; }
-    Matrix& advectionA() { return A_; }
+    const AMatrix& advectionA() const { return A_; }
+    AMatrix& advectionA() { return A_; }
 
     //! The transmissibilities associated with advective fluxes
-    const Matrix& advectionT() const { return T_; }
-    Matrix& advectionT() { return T_; }
+    const TMatrix& advectionT() const { return T_; }
+    TMatrix& advectionT() { return T_; }
 
     //! The transmissibilities for "outside" faces (used on surface grids)
-    const std::vector< std::vector<Vector> >& advectionTout() const { return outsideT_; }
-    std::vector< std::vector<Vector> >& advectionTout() { return outsideT_; }
+    const std::vector< std::vector<CellVector> >& advectionTout() const { return outsideT_; }
+    std::vector< std::vector<CellVector> >& advectionTout() { return outsideT_; }
 
     //! The gravitational acceleration for "outside" faces (used on surface grids)
-    const std::array< std::vector<Vector>, numPhases >& gravityOutside() const { return outsideG_; }
-    std::array< std::vector<Vector>, numPhases >& gravityOutside() { return outsideG_; }
+    const std::array< OutsideGravityStorage, numPhases >& gravityOutside() const { return outsideG_; }
+    std::array< OutsideGravityStorage, numPhases >& gravityOutside() { return outsideG_; }
 
     //! The gravitational acceleration for one phase on "outside" faces (used on surface grids)
-    const std::vector<Vector>& gravityOutside(unsigned int pIdx) const { return outsideG_[pIdx]; }
-    std::vector<Vector>& gravityOutside(unsigned int pIdx) { return outsideG_[pIdx]; }
+    const OutsideGravityStorage& gravityOutside(unsigned int pIdx) const { return outsideG_[pIdx]; }
+    OutsideGravityStorage& gravityOutside(unsigned int pIdx) { return outsideG_[pIdx]; }
 
 private:
-    //! advection-related variables
-    Matrix T_;                                               //!< The transmissibilities such that f_i = T_ij*p_j
-    Matrix CA_;                                              //!< Matrix to project gravitational acceleration to all scvfs
-    Matrix A_;                                               //!< Matrix additionally needed for the projection on surface grids
-    std::array< Vector, numPhases > p_;                      //!< The interaction volume-wide phase pressures
-    std::array< Vector, numPhases > g_;                      //!< The gravitational acceleration at each scvf (only for enabled gravity)
-    std::vector< std::vector<Vector> > outsideT_;            //!< The transmissibilities for "outside" faces (only on surface grids)
-    std::array< std::vector<Vector>, numPhases > outsideG_;  //!< The gravitational acceleration on "outside" faces (only on surface grids)
+    TMatrix T_;                                       //!< The transmissibilities such that f_i = T_ij*p_j
+    CMatrix CA_;                                      //!< Matrix to project gravitational acceleration to all scvfs
+    AMatrix A_;                                       //!< Matrix additionally needed for the projection on surface grids
+    std::array< CellVector, numPhases > p_;           //!< The interaction volume-wide phase pressures
+    std::array< FaceVector, numPhases > g_;           //!< The gravitational acceleration at each scvf (only for enabled gravity)
+    std::vector< std::vector<CellVector> > outsideT_; //!< The transmissibilities for "outside" faces (only on surface grids)
+    std::array< OutsideGravityStorage, numPhases > outsideG_;  //!< The gravitational acceleration on "outside" faces (only on surface grids)
 };
 
 //! Data handle for quantities related to diffusion
-template<class TypeTag, class M, class V, class LI, bool EnableDiffusion>
+template<class MatVecTraits, class PhysicsTraits, bool EnableDiffusion>
 class DiffusionDataHandle
 {
-    // export matrix & vector types from interaction volume
-    using Matrix = M;
-    using Vector = V;
-    using OutsideTContainer = std::vector< std::vector<Vector> >;
+    using TMatrix = typename MatVecTraits::TMatrix;
+    using CellVector = typename MatVecTraits::CellVector;
+    using OutsideTContainer = std::vector< std::vector<CellVector> >;
 
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
-
-    static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-    static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    static constexpr int numPhases = PhysicsTraits::numPhases;
+    static constexpr int numComponents = PhysicsTraits::numComponents;
 
 public:
     //! diffusion caches need to set phase and component index
@@ -203,20 +201,17 @@ public:
         {
             for (unsigned int cIdx = 0; cIdx < numComponents; ++cIdx)
             {
-                using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
-                if (cIdx == FluidSystem::getMainComponent(pIdx))
-                    continue;
-
                 // resize transmissibility matrix & mole fraction vector
                 resizeMatrix(T_[pIdx][cIdx], iv.numFaces(), iv.numKnowns());
                 resizeVector(xj_[pIdx][cIdx], iv.numKnowns());
 
                 // resize outsideTij on surface grids
-                if (dim < dimWorld)
+                using GridView = typename InteractionVolume::Traits::GridView;
+                if (int(GridView::dimension) < int(GridView::dimensionworld))
                 {
                     outsideT_[pIdx][cIdx].resize(iv.numFaces());
 
-                    using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
+                    using LocalIndexType = typename InteractionVolume::Traits::IndexSet::LocalIndexType;
                     for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
                     {
                         const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
@@ -230,12 +225,12 @@ public:
     }
 
     //! Access to the iv-wide mole fractions of a component in one phase
-    const Vector& moleFractions(unsigned int pIdx, unsigned int compIdx) const { return xj_[pIdx][compIdx]; }
-    Vector& moleFractions(unsigned int pIdx, unsigned int compIdx) { return xj_[pIdx][compIdx]; }
+    const CellVector& moleFractions(unsigned int pIdx, unsigned int compIdx) const { return xj_[pIdx][compIdx]; }
+    CellVector& moleFractions(unsigned int pIdx, unsigned int compIdx) { return xj_[pIdx][compIdx]; }
 
     //! The transmissibilities associated with diffusive fluxes
-    const Matrix& diffusionT() const { return T_[phaseIdx_][compIdx_]; }
-    Matrix& diffusionT() { return T_[phaseIdx_][compIdx_]; }
+    const TMatrix& diffusionT() const { return T_[phaseIdx_][compIdx_]; }
+    TMatrix& diffusionT() { return T_[phaseIdx_][compIdx_]; }
 
     //! The transmissibilities for "outside" faces (used on surface grids)
     const OutsideTContainer& diffusionTout() const { return outsideT_[phaseIdx_][compIdx_]; }
@@ -243,22 +238,19 @@ public:
 
 private:
     //! diffusion-related variables
-    unsigned int phaseIdx_;                                         //!< The phase index set for the context
-    unsigned int compIdx_;                                          //!< The component index set for the context
-    std::array< std::array<Matrix, numComponents>, numPhases > T_;  //!< The transmissibilities such that f_i = T_ij*x_j
-    std::array< std::array<Vector, numComponents>, numPhases > xj_; //!< The interaction volume-wide mole fractions
+    unsigned int phaseIdx_;                                             //!< The phase index set for the context
+    unsigned int compIdx_;                                              //!< The component index set for the context
+    std::array< std::array<TMatrix, numComponents>, numPhases > T_;     //!< The transmissibilities such that f_i = T_ij*x_j
+    std::array< std::array<CellVector, numComponents>, numPhases > xj_; //!< The interaction volume-wide mole fractions
     std::array< std::array<OutsideTContainer, numComponents>, numPhases> outsideT_;
 };
 
 //! Data handle for quantities related to heat conduction
-template<class TypeTag, class M, class V, class LI, bool EnableHeatConduction>
+template<class MatVecTraits, class PhysicsTraits, bool enableHeatConduction>
 class HeatConductionDataHandle
 {
-    using Matrix = M;
-    using Vector = V;
-
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    using TMatrix = typename MatVecTraits::TMatrix;
+    using CellVector = typename MatVecTraits::CellVector;
 
 public:
     //! prepare data handle for subsequent fill
@@ -270,11 +262,12 @@ public:
         resizeVector(Tj_, iv.numKnowns());
 
         //! resize outsideTij on surface grids
-        if (dim < dimWorld)
+        using GridView = typename InteractionVolume::Traits::GridView;
+        if (int(GridView::dimension) < int(GridView::dimensionworld))
         {
             outsideT_.resize(iv.numFaces());
 
-            using LocalIndexType = typename InteractionVolume::Traits::LocalIndexType;
+            using LocalIndexType = typename InteractionVolume::Traits::IndexSet::LocalIndexType;
             for (LocalIndexType i = 0; i < iv.numFaces(); ++i)
             {
                 const auto numNeighbors = iv.localScvf(i).neighboringLocalScvIndices().size() - 1;
@@ -286,49 +279,47 @@ public:
     }
 
     //! Access to the iv-wide temperatures
-    const Vector& temperatures() const { return Tj_; }
-    Vector& temperatures() { return Tj_; }
+    const CellVector& temperatures() const { return Tj_; }
+    CellVector& temperatures() { return Tj_; }
 
     //! The transmissibilities associated with conductive fluxes
-    const Matrix& heatConductionT() const { return T_; }
-    Matrix& heatConductionT() { return T_; }
+    const TMatrix& heatConductionT() const { return T_; }
+    TMatrix& heatConductionT() { return T_; }
 
     //! The transmissibilities for "outside" faces (used on surface grids)
-    const std::vector< std::vector<Vector> >& heatConductionTout() const { return outsideT_; }
-    std::vector< std::vector<Vector> >& heatConductionTout() { return outsideT_; }
+    const std::vector< std::vector<CellVector> >& heatConductionTout() const { return outsideT_; }
+    std::vector< std::vector<CellVector> >& heatConductionTout() { return outsideT_; }
 
 private:
     // heat conduction-related variables
-    Matrix T_;                                    //!< The transmissibilities such that f_i = T_ij*T_j
-    Vector Tj_;                                   //!< The interaction volume-wide temperatures
-    std::vector< std::vector<Vector> > outsideT_; //!< The transmissibilities for "outside" faces (only necessary on surface grids)
+    TMatrix T_;                                       //!< The transmissibilities such that f_i = T_ij*T_j
+    CellVector Tj_;                                   //!< The interaction volume-wide temperatures
+    std::vector< std::vector<CellVector> > outsideT_; //!< The transmissibilities for "outside" faces (only necessary on surface grids)
 };
 
 //! Process-dependent data handles when related process is disabled
-template<class TypeTag, class M, class V, class LI>
-class AdvectionDataHandle<TypeTag, M, V, LI, false> : public EmptyDataHandle {};
-template<class TypeTag, class M, class V, class LI>
-class DiffusionDataHandle<TypeTag, M, V, LI, false> : public EmptyDataHandle {};
-template<class TypeTag, class M, class V, class LI>
-class HeatConductionDataHandle<TypeTag, M, V, LI, false> : public EmptyDataHandle {};
+template<class MatVecTraits, class PhysicsTraits>
+class AdvectionDataHandle<MatVecTraits, PhysicsTraits, false> : public EmptyDataHandle {};
+template<class MatVecTraits, class PhysicsTraits>
+class DiffusionDataHandle<MatVecTraits, PhysicsTraits, false> : public EmptyDataHandle {};
+template<class MatVecTraits, class PhysicsTraits>
+class HeatConductionDataHandle<MatVecTraits, PhysicsTraits, false> : public EmptyDataHandle {};
 
 /*!
  * \ingroup CCMpfaDiscretization
  * \brief Class for the interaction volume data handle.
  *
- * \tparam TypeTag The problem TypeTag
- * \tparam M The type used for iv-local matrices
- * \tparam V The type used for iv-local vectors
- * \tparam LI The type used for iv-local indexing
+ * \tparam MVT The matrix/vector traits collecting type information used by the iv
+ * \tparam PT The physics traits collecting data on the physical processes to be considered
  */
-template<class TypeTag, class M, class V, class LI>
-class InteractionVolumeDataHandle : public AdvectionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableAdvection)>,
-                                    public DiffusionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>,
-                                    public HeatConductionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>
+template<class MVT, class PT>
+class InteractionVolumeDataHandle : public AdvectionDataHandle<MVT, PT, PT::enableAdvection>,
+                                    public DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>,
+                                    public HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>
 {
-    using AdvectionHandle = AdvectionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableAdvection)>;
-    using DiffusionHandle = DiffusionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion)>;
-    using HeatConductionHandle = HeatConductionDataHandle<TypeTag, M, V, LI, GET_PROP_VALUE(TypeTag, EnableEnergyBalance)>;
+    using AdvectionHandle = AdvectionDataHandle<MVT, PT, PT::enableAdvection>;
+    using DiffusionHandle = DiffusionDataHandle<MVT, PT, PT::enableMolecularDiffusion>;
+    using HeatConductionHandle = HeatConductionDataHandle<MVT, PT, PT::enableHeatConduction>;
 
 public:
     //! prepare data handles for subsequent fills

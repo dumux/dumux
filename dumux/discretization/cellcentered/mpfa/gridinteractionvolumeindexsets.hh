@@ -25,7 +25,6 @@
 #define DUMUX_DISCRETIZATION_MPFA_O_GRIDINTERACTIONVOLUME_INDEXSETS_HH
 
 #include <memory>
-#include <dumux/common/properties.hh>
 
 #include "dualgridindexset.hh"
 

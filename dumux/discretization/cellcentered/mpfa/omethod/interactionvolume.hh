@@ -24,12 +24,14 @@
 #ifndef DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUME_HH
 #define DUMUX_DISCRETIZATION_CC_MPFA_O_INTERACTIONVOLUME_HH
 
+#include <type_traits>
+
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/dynvector.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/reservedvector.hh>
 
 #include <dumux/common/math.hh>
-#include <dumux/common/properties.hh>
 #include <dumux/common/matrixvectorhelper.hh>
 
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
@@ -46,31 +48,44 @@ namespace Dumux
 //! Forward declaration of the o-method's interaction volume
 template< class Traits > class CCMpfaOInteractionVolume;
 
-//! Specialization of the default interaction volume traits class for the mpfa-o method
-template< class TypeTag >
+/*!
+ * \ingroup CCMpfaDiscretization
+ * \brief The default interaction volume traits class for the mpfa-o method.
+ *        This uses dynamic types types for matrices/vectors in order to work
+ *        on general grids. For interaction volumes known at compile time use
+ *        the static interaction volume implementation.
+ *
+ * \tparam NodalIndexSet The type used for the dual grid's nodal index sets
+ * \tparam Scalar The Type used for scalar values
+ * \tparam PhysicsTraits Traits class encapsulating info on the physical processes
+ */
+template< class NodalIndexSet, class Scalar, class PhysicsTraits >
 struct CCMpfaODefaultInteractionVolumeTraits
 {
 private:
-    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
     using GridIndexType = typename NodalIndexSet::GridIndexType;
-    static constexpr int dim = GET_PROP_TYPE(TypeTag, GridView)::dimension;
-    static constexpr int dimWorld = GET_PROP_TYPE(TypeTag, GridView)::dimensionworld;
+    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
+
+    static constexpr int dim = NodalIndexSet::GridView::dimension;
+    static constexpr int dimWorld = NodalIndexSet::GridView::dimensionworld;
+
+    //! Matrix/Vector traits to be used by the data handle
+    struct MVTraits
+    {
+        using AMatrix = Dune::DynamicMatrix< Scalar >;
+        using BMatrix = Dune::DynamicMatrix< Scalar >;
+        using CMatrix = Dune::DynamicMatrix< Scalar >;
+        using DMatrix = Dune::DynamicMatrix< Scalar >;
+        using TMatrix = Dune::DynamicMatrix< Scalar >;
+        using CellVector = Dune::DynamicVector< Scalar >;
+        using FaceVector = Dune::DynamicVector< Scalar >;
+    };
 
 public:
-    //! export the problem type (needed for iv-local assembly)
-    using Problem = typename GET_PROP_TYPE(TypeTag, Problem);
-    //! export the type of the local view on the finite volume grid geometry
-    using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
-    //! export the type of the local view on the grid volume variables
-    using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     //! export the type of grid view
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
+    using GridView = typename NodalIndexSet::GridView;
     //! export the type used for scalar values
-    using ScalarType = typename GET_PROP_TYPE(TypeTag, Scalar);
-    //! export the type of the mpfa helper class
-    using MpfaHelper = typename GET_PROP_TYPE(TypeTag, MpfaHelper);
-    //! export the type used for local indices
-    using LocalIndexType = typename NodalIndexSet::LocalIndexType;
+    using ScalarType = Scalar;
     //! export the type for the interaction volume index set
     using IndexSet = CCMpfaOInteractionVolumeIndexSet< NodalIndexSet >;
     //! export the type of interaction-volume local scvs
@@ -79,12 +94,10 @@ public:
     using LocalScvfType = CCMpfaOInteractionVolumeLocalScvf< IndexSet >;
     //! export the type of used for the iv-local face data
     using LocalFaceData = InteractionVolumeLocalFaceData<GridIndexType, LocalIndexType>;
-    //! export the type used for iv-local matrices
-    using Matrix = Dune::DynamicMatrix< ScalarType >;
-    //! export the type used for iv-local vectors
-    using Vector = Dune::DynamicVector< ScalarType >;
+    //! export the matrix/vector traits to be used by the iv
+    using MatVecTraits = MVTraits;
     //! export the data handle type for this iv
-    using DataHandle = InteractionVolumeDataHandle< TypeTag, Matrix, Vector, LocalIndexType >;
+    using DataHandle = InteractionVolumeDataHandle< MatVecTraits, PhysicsTraits >;
 };
 
 /*!
@@ -94,38 +107,38 @@ public:
  *        and can be used at boundaries and on unstructured grids.
  */
 template< class Traits >
-class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >
+class CCMpfaOInteractionVolume
+      : public CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >
 {
-    using ThisType = CCMpfaOInteractionVolume< Traits >;
-    using ParentType = CCMpfaInteractionVolumeBase< CCMpfaOInteractionVolume<Traits>, Traits >;
-
-    using Scalar = typename Traits::ScalarType;
-    using Helper = typename Traits::MpfaHelper;
-    using Problem = typename Traits::Problem;
-    using FVElementGeometry = typename Traits::FVElementGeometry;
-
     using GridView = typename Traits::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
-    static constexpr int dim = GridView::dimension;
-    using DimVector = Dune::FieldVector<Scalar, dim>;
+    using IndexSet = typename Traits::IndexSet;
+    using GridIndexType = typename IndexSet::GridIndexType;
+    using LocalIndexType = typename IndexSet::LocalIndexType;
+    using Stencil = typename IndexSet::GridStencilType;
 
-    using Matrix = typename Traits::Matrix;
+    static constexpr int dim = GridView::dimension;
+    static constexpr int dimWorld = GridView::dimensionworld;
+    using DimVector = Dune::FieldVector<typename Traits::ScalarType, dim>;
+    using FaceOmegas = typename std::conditional< (dim<dimWorld),
+                                                  std::vector<DimVector>,
+                                                  Dune::ReservedVector<DimVector, 2> >::type;
+
+    using AMatrix = typename Traits::MatVecTraits::AMatrix;
+    using BMatrix = typename Traits::MatVecTraits::BMatrix;
+    using CMatrix = typename Traits::MatVecTraits::CMatrix;
+
     using LocalScvType = typename Traits::LocalScvType;
     using LocalScvfType = typename Traits::LocalScvfType;
     using LocalFaceData = typename Traits::LocalFaceData;
 
-    using IndexSet = typename Traits::IndexSet;
-    using GridIndexType = typename GridView::IndexSet::IndexType;
-    using LocalIndexType = typename Traits::LocalIndexType;
-    using Stencil = typename IndexSet::GridStencilType;
-
+public:
     //! Data attached to scvf touching Dirichlet boundaries.
     //! For the default o-scheme, we only store the corresponding vol vars index.
     class DirichletData
     {
         GridIndexType volVarIndex_;
-
     public:
         //! Constructor
         DirichletData(const GridIndexType index) : volVarIndex_(index) {}
@@ -134,11 +147,14 @@ class CCMpfaOInteractionVolume : public CCMpfaInteractionVolumeBase< CCMpfaOInte
         GridIndexType volVarIndex() const { return volVarIndex_; }
     };
 
-public:
+    //! export the type used for transmissibility storage
+    using TransmissibilityStorage = std::vector< FaceOmegas >;
+
     //! publicly state the mpfa-scheme this interaction volume is associated with
     static constexpr MpfaMethods MpfaMethod = MpfaMethods::oMethod;
 
     //! Sets up the local scope for a given iv index set
+    template< class Problem, class FVElementGeometry >
     void setUpLocalScope(const IndexSet& indexSet,
                          const Problem& problem,
                          const FVElementGeometry& fvGeometry)
@@ -147,7 +163,7 @@ public:
         // index set of the dual grid's nodal index set
         stencil_ = &indexSet.nodalIndexSet().globalScvIndices();
 
-        // number of interaction-volume-local (= node-local for o-scheme) scvs/scvf
+        // number of interaction-volume-local scvs(=node-local for o-scheme) and scvfs
         numFaces_ = indexSet.numFaces();
         const auto numLocalScvs = indexSet.numScvs();
         const auto numGlobalScvfs = indexSet.nodalIndexSet().numScvfs();
@@ -164,29 +180,26 @@ public:
         dirichletData_.reserve(numFaces_);
         localFaceData_.reserve(numGlobalScvfs);
 
-        // set up quantities related to sub-control volumes
+        // set up stuff related to sub-control volumes
         const auto& scvIndices = indexSet.globalScvIndices();
         for (LocalIndexType scvIdxLocal = 0; scvIdxLocal < numLocalScvs; scvIdxLocal++)
         {
-            scvs_.emplace_back(Helper(),
+            elements_.emplace_back(fvGeometry.fvGridGeometry().element( scvIndices[scvIdxLocal] ));
+            scvs_.emplace_back(fvGeometry.fvGridGeometry().mpfaHelper(),
                                fvGeometry,
                                fvGeometry.scv( scvIndices[scvIdxLocal] ),
                                scvIdxLocal,
                                indexSet);
-            elements_.emplace_back(fvGeometry.fvGridGeometry().element( scvIndices[scvIdxLocal] ));
         }
 
         // keep track of the number of unknowns etc
         numUnknowns_ = 0;
         numKnowns_ = numLocalScvs;
 
-        // resize omega storage container
-        wijk_.resize(numFaces_);
-
         // set up quantitites related to sub-control volume faces
+        wijk_.resize(numFaces_);
         for (LocalIndexType faceIdxLocal = 0; faceIdxLocal < numFaces_; ++faceIdxLocal)
         {
-            // get corresponding grid scvf
             const auto& scvf = fvGeometry.scvf(indexSet.scvfIdxGlobal(faceIdxLocal));
 
             // the neighboring scvs in local indices (order: 0 - inside scv, 1..n - outside scvs)
@@ -194,6 +207,10 @@ public:
 
             // create local face data object for this face
             localFaceData_.emplace_back(faceIdxLocal, neighborScvIndicesLocal[0], scvf.index());
+
+            // we will need as many omegas as scvs around the face
+            const auto numNeighborScvs = neighborScvIndicesLocal.size();
+            wijk_[faceIdxLocal].resize(numNeighborScvs);
 
             // create iv-local scvf object
             if (scvf.boundary())
@@ -207,17 +224,10 @@ public:
                 }
                 else
                     scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isDirichlet*/false);
-
-                // on boundary faces we will only need one inside omega
-                wijk_[faceIdxLocal].resize(1);
             }
             else
             {
                 scvfs_.emplace_back(scvf, neighborScvIndicesLocal, numUnknowns_++, /*isDirichlet*/false);
-
-                // we will need as many omegas as scvs around the face
-                const auto numNeighborScvs = neighborScvIndicesLocal.size();
-                wijk_[faceIdxLocal].resize(numNeighborScvs);
 
                 // add local face data objects for the outside faces
                 for (LocalIndexType i = 1; i < numNeighborScvs; ++i)
@@ -234,8 +244,12 @@ public:
                                                         outsideLocalScvIdx, // iv-local scv index
                                                         i-1,                // scvf-local index in outside faces
                                                         flipScvf.index());  // global scvf index
+                            break; // go to next outside face
                         }
                     }
+
+                    // make sure we found it
+                    assert(localFaceData_.back().ivLocalInsideScvIndex() == outsideLocalScvIdx);
                 }
             }
         }
@@ -262,13 +276,13 @@ public:
     const Stencil& stencil() const { return *stencil_; }
 
     //! returns the grid element corresponding to a given iv-local scv idx
-    const Element& element(const LocalIndexType ivLocalScvIdx) const { return elements_[ivLocalScvIdx]; }
+    const Element& element(LocalIndexType ivLocalScvIdx) const { return elements_[ivLocalScvIdx]; }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
-    const LocalScvfType& localScvf(const LocalIndexType ivLocalScvfIdx) const { return scvfs_[ivLocalScvfIdx]; }
+    const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const { return scvfs_[ivLocalScvfIdx]; }
 
     //! returns the local scv entity corresponding to a given iv-local scv idx
-    const LocalScvType& localScv(const LocalIndexType ivLocalScvIdx) const { return scvs_[ivLocalScvIdx]; }
+    const LocalScvType& localScv(LocalIndexType ivLocalScvIdx) const { return scvs_[ivLocalScvIdx]; }
 
     //! returns a reference to the container with the local face data
     const std::vector<LocalFaceData>& localFaceData() const { return localFaceData_; }
@@ -277,26 +291,24 @@ public:
     const std::vector<DirichletData>& dirichletData() const { return dirichletData_; }
 
     //! returns the matrix associated with face unknowns in local equation system
-    const Matrix& A() const { return A_; }
-    Matrix& A() { return A_; }
+    const AMatrix& A() const { return A_; }
+    AMatrix& A() { return A_; }
 
     //! returns the matrix associated with cell unknowns in local equation system
-    const Matrix& B() const { return B_; }
-    Matrix& B() { return B_; }
+    const BMatrix& B() const { return B_; }
+    BMatrix& B() { return B_; }
 
     //! returns the matrix associated with face unknowns in flux expressions
-    const Matrix& C() const { return C_; }
-    Matrix& C() { return C_; }
+    const CMatrix& C() const { return C_; }
+    CMatrix& C() { return C_; }
 
     //! returns container storing the transmissibilities for each face & coordinate
-    const std::vector< std::vector< DimVector > >& omegas() const { return wijk_; }
-    std::vector< std::vector< DimVector > >& omegas() { return wijk_; }
+    const TransmissibilityStorage& omegas() const { return wijk_; }
+    TransmissibilityStorage& omegas() { return wijk_; }
 
     //! returns the number of interaction volumes living around a vertex
-    //! the mpfa-o scheme always constructs one iv per vertex
-    template< class NodalIndexSet >
-    static constexpr std::size_t numInteractionVolumesAtVertex(const NodalIndexSet& nodalIndexSet)
-    { return 1; }
+    template< class NI >
+    static constexpr std::size_t numInteractionVolumesAtVertex(const NI& nodalIndexSet) { return 1; }
 
     //! adds the iv index sets living around a vertex to a given container
     //! and stores the the corresponding index in a map for each scvf
@@ -332,12 +344,12 @@ private:
     std::vector<DirichletData> dirichletData_;
 
     // Matrices needed for computation of transmissibilities
-    Matrix A_;
-    Matrix B_;
-    Matrix C_;
+    AMatrix A_;
+    BMatrix B_;
+    CMatrix C_;
 
     // The omega factors are stored during assembly of local system
-    std::vector< std::vector< DimVector > > wijk_;
+    TransmissibilityStorage wijk_;
 
     // sizes involved in the local system equations
     std::size_t numFaces_;

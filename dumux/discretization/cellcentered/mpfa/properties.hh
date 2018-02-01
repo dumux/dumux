@@ -81,10 +81,7 @@ public:
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
 private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    // Use the grid view's index type for grid indices
-    using GI = typename GridView::IndexSet::IndexType;
+    using GV = typename GET_PROP_TYPE(TypeTag, GridView);
 
     // per default, use uint8_t as iv-local index type
     using LI = std::uint8_t;
@@ -95,32 +92,48 @@ private:
     // maximum admissible number of elements around a node
     // if for a given grid this number is still not high enough,
     // overwrite this property in your problem with a higher number
-    static constexpr int dim = GridView::dimension;
+    static constexpr int dim = GV::dimension;
     static constexpr int maxE = dim == 3 ? 45 : 15;
 
 public:
-    using type = CCMpfaDualGridNodalIndexSet<GI, LI, dim, maxE, maxB>;
+    using type = CCMpfaDualGridNodalIndexSet<GV, LI, dim, maxE, maxB>;
 };
 
 //! The mpfa helper class
-SET_TYPE_PROP(CCMpfaModel, MpfaHelper, CCMpfaHelper<TypeTag>);
+SET_PROP(CCMpfaModel, MpfaHelper)
+{
+private:
+    using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
+public:
+    using type = CCMpfaHelper< FVGridGeometry >;
+};
 
 //! Per default, we use the dynamic mpfa-o interaction volume
 SET_PROP(CCMpfaModel, PrimaryInteractionVolume)
 {
-private:
-    //! use the default traits
-    using Traits = CCMpfaODefaultInteractionVolumeTraits< TypeTag >;
 public:
-    using type = CCMpfaOInteractionVolume< Traits >;
+    using type = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 };
 
-//! Per default, we use the dynamic mpfa-o interaction volume as secondary type
+//! Per default, we use the mpfa-o interaction volume as secondary type
 SET_PROP(CCMpfaModel, SecondaryInteractionVolume)
 {
 private:
-    //! use the default traits
-    using Traits = CCMpfaODefaultInteractionVolumeTraits< TypeTag >;
+    using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
+    using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
+
+    // set up the physics Traits
+    struct PhysicsTraits
+    {
+        static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
+        static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
+        static constexpr bool enableHeatConduction = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+
+        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+        static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    };
+    // use the default traits
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar, PhysicsTraits >;
 public:
     using type = CCMpfaOInteractionVolume< Traits >;
 };
@@ -148,10 +161,10 @@ private:
                                                                       PrimaryIV,
                                                                       SecondaryIV >;
 
-        template< class FVGridGeometry, bool enableCache >
-        using LocalView = CCMpfaFVElementGeometry<FVGridGeometry, enableCache>;
+        template< class FVGridGeometry, bool enableGeomCache >
+        using LocalView = CCMpfaFVElementGeometry<FVGridGeometry, enableGeomCache>;
 
-        //! Per default, we use the o-method and thus the simple assembly map
+        //! Use the correct connectivity map depending on mpfa scheme (obtain from primary iv)
         template< class FVGridGeometry >
         using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeometry, FVGridGeometry::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
     };

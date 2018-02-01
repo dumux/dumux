@@ -103,16 +103,14 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
         using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
-        using PrimaryIvVector = typename PrimaryInteractionVolume::Traits::Vector;
-        using PrimaryIvMatrix = typename PrimaryInteractionVolume::Traits::Matrix;
-        using PrimaryIvTij = typename PrimaryIvMatrix::row_type;
+        using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
         using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
-        using SecondaryIvVector = typename SecondaryInteractionVolume::Traits::Vector;
-        using SecondaryIvMatrix = typename SecondaryInteractionVolume::Traits::Matrix;
-        using SecondaryIvTij = typename SecondaryIvMatrix::row_type;
+        using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;
+        using SecondaryIvTij = typename SecondaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
         static constexpr int dim = GridView::dimension;
         static constexpr int dimWorld = GridView::dimensionworld;
@@ -188,10 +186,10 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const Stencil& heatConductionStencil() const { return *stencil_; }
 
         //! The cell (& Dirichlet) temperatures within this interaction volume (primary type)
-        const PrimaryIvVector& temperaturesPrimaryIv() const { return *primaryTj_; }
+        const PrimaryIvCellVector& temperaturesPrimaryIv() const { return *primaryTj_; }
 
         //! The cell (& Dirichlet) temperatures within this interaction volume (secondary type)
-        const SecondaryIvVector& temperaturesSecondaryIv() const { return *secondaryTj_; }
+        const SecondaryIvCellVector& temperaturesSecondaryIv() const { return *secondaryTj_; }
 
         //! In the interaction volume-local system of eq we have one unknown per face.
         //! On scvfs on this face, but in "outside" (neighbor) elements of it, we have
@@ -210,8 +208,8 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         const SecondaryIvTij* secondaryTij_;
 
         //! The interaction-volume wide temperature Tj
-        const PrimaryIvVector* primaryTj_;
-        const SecondaryIvVector* secondaryTj_;
+        const PrimaryIvCellVector* primaryTj_;
+        const SecondaryIvCellVector* secondaryTj_;
     };
 
 public:

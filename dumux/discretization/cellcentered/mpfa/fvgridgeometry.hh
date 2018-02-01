@@ -346,6 +346,9 @@ public:
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;
     }
 
+    //! Returns instance of the mpfa helper type
+    MpfaHelper mpfaHelper() const { return MpfaHelper(); }
+
     //! Get a sub control volume with a global scv index
     const SubControlVolume& scv(GridIndexType scvIdx) const { return scvs_[scvIdx]; }
 
@@ -688,6 +691,9 @@ public:
         connectivityMap_.update(*this);
         std::cout << "Initializing of the connectivity map took " << timer.elapsed() << " seconds." << std::endl;
     }
+
+    //! Returns instance of the mpfa helper type
+    MpfaHelper mpfaHelper() const { return MpfaHelper(); }
 
     //! Returns the sub control volume face indices of an scv by global index.
     const std::vector<GridIndexType>& scvfIndicesOfScv(GridIndexType scvIdx) const
