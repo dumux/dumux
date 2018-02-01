@@ -39,8 +39,6 @@ namespace Dumux
  * \code
  * //! export the type of grid view
  * using GridView = ...;
- * //! export the type used for scalar values
- * using ScalarType = ...;
  * //! export the type used for local indices
  * using IndexSet = ...;
  * //! export the type of interaction-volume local scvs

@@ -346,7 +346,7 @@ public:
         //! - arithmetically average the phase densities
         //! - compute the term \f$ \alpha := A \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \alpha_{outside} - \alpha_{inside} \f$
-        using Scalar = typename IV::Traits::ScalarType;
+        using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
         using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 
@@ -479,7 +479,7 @@ public:
         //! - arithmetically average the phase densities
         //! - compute the term \f$ \alpha := \mathbf{A} \rho \ \mathbf{n}^T \mathbf{K} \mathbf{g} \f$ in each neighboring cell
         //! - compute \f$ \alpha^* = \sum{\alpha_{outside, i}} - \alpha_{inside} \f$
-        using Scalar = typename IV::Traits::ScalarType;
+        using Scalar = typename IV::Traits::MatVecTraits::TMatrix::value_type;
         using FaceVector = typename IV::Traits::MatVecTraits::FaceVector;
         using LocalIndexType = typename IV::Traits::IndexSet::LocalIndexType;
 

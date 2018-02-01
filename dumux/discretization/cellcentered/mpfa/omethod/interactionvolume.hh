@@ -84,12 +84,10 @@ private:
 public:
     //! export the type of grid view
     using GridView = typename NodalIndexSet::GridView;
-    //! export the type used for scalar values
-    using ScalarType = Scalar;
     //! export the type for the interaction volume index set
     using IndexSet = CCMpfaOInteractionVolumeIndexSet< NodalIndexSet >;
     //! export the type of interaction-volume local scvs
-    using LocalScvType = CCMpfaOInteractionVolumeLocalScv< IndexSet, ScalarType, dim, dimWorld >;
+    using LocalScvType = CCMpfaOInteractionVolumeLocalScv< IndexSet, Scalar, dim, dimWorld >;
     //! export the type of interaction-volume local scvfs
     using LocalScvfType = CCMpfaOInteractionVolumeLocalScvf< IndexSet >;
     //! export the type of used for the iv-local face data
@@ -120,7 +118,10 @@ class CCMpfaOInteractionVolume
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;
-    using DimVector = Dune::FieldVector<typename Traits::ScalarType, dim>;
+
+    //! export scalar type from T matrix and define omegas
+    using Scalar = typename Traits::MatVecTraits::TMatrix::value_type;
+    using DimVector = Dune::FieldVector<Scalar, dim>;
     using FaceOmegas = typename std::conditional< (dim<dimWorld),
                                                   std::vector<DimVector>,
                                                   Dune::ReservedVector<DimVector, 2> >::type;
