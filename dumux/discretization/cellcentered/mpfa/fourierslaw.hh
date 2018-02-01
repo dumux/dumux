@@ -102,13 +102,13 @@ class FouriersLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         // whether or not the scvf is embedded in a secondary interaction volume.
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
-        using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
+        using PrimaryIvDataHandle = typename ElementFluxVarsCache::PrimaryIvDataHandle;
         using PrimaryIvCellVector = typename PrimaryInteractionVolume::Traits::MatVecTraits::CellVector;
         using PrimaryIvTij = typename PrimaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 
         using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
         using SecondaryIvLocalFaceData = typename SecondaryInteractionVolume::Traits::LocalFaceData;
-        using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
+        using SecondaryIvDataHandle = typename ElementFluxVarsCache::SecondaryIvDataHandle;
         using SecondaryIvCellVector = typename SecondaryInteractionVolume::Traits::MatVecTraits::CellVector;
         using SecondaryIvTij = typename SecondaryInteractionVolume::Traits::MatVecTraits::TMatrix::row_type;
 

@@ -25,6 +25,7 @@
 #define DUMUX_DISCRETIZATION_CCMPFA_GRID_FLUXVARSCACHE_HH
 
 #include <dumux/common/properties.hh>
+#include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 #include <dumux/discretization/cellcentered/mpfa/fluxvariablescachefiller.hh>
 
 //! make the local view function available whenever we use this class
@@ -61,13 +62,28 @@ class CCMpfaGridFluxVariablesCache<TypeTag, true>
     using FluxVariablesCache = typename GET_PROP_TYPE(TypeTag, FluxVariablesCache);
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
 
-    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
-    using PrimaryIvDataHandle = typename PrimaryInteractionVolume::Traits::DataHandle;
-    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
-    using SecondaryIvDataHandle = typename SecondaryInteractionVolume::Traits::DataHandle;
     using FluxVariablesCacheFiller = CCMpfaFluxVariablesCacheFiller<TypeTag>;
+    using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
+    using PrimaryMatVecTraits = typename PrimaryInteractionVolume::Traits::MatVecTraits;
+    using SecondaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
+    using SecondaryMatVecTraits = typename SecondaryInteractionVolume::Traits::MatVecTraits;
+
+    //! physics traits class to define the data handles
+    struct PhysicsTraits
+    {
+        static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
+        static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
+        static constexpr bool enableHeatConduction = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
+
+        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
+        static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
+    };
 
 public:
+    // export the data handle types used
+    using PrimaryIvDataHandle = InteractionVolumeDataHandle< PrimaryMatVecTraits, PhysicsTraits >;
+    using SecondaryIvDataHandle = InteractionVolumeDataHandle< SecondaryMatVecTraits, PhysicsTraits >;
+
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
 
@@ -253,6 +269,10 @@ class CCMpfaGridFluxVariablesCache<TypeTag, false>
 public:
     //! export the type of the local view
     using LocalView = typename GET_PROP_TYPE(TypeTag, ElementFluxVariablesCache);
+
+    //! export the data handle types used by the local view
+    using PrimaryIvDataHandle = typename LocalView::PrimaryIvDataHandle;
+    using SecondaryIvDataHandle = typename LocalView::SecondaryIvDataHandle;
 
     //! The constructor
     CCMpfaGridFluxVariablesCache(const Problem& problem) : problemPtr_(&problem) {}

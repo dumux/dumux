@@ -122,18 +122,8 @@ private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
-    // set up the physics Traits
-    struct PhysicsTraits
-    {
-        static constexpr bool enableAdvection = GET_PROP_VALUE(TypeTag, EnableAdvection);
-        static constexpr bool enableMolecularDiffusion = GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion);
-        static constexpr bool enableHeatConduction = GET_PROP_VALUE(TypeTag, EnableEnergyBalance);
-
-        static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
-        static constexpr int numComponents = GET_PROP_VALUE(TypeTag, NumComponents);
-    };
     // use the default traits
-    using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar, PhysicsTraits >;
+    using Traits = CCMpfaODefaultInteractionVolumeTraits< NodalIndexSet, Scalar >;
 public:
     using type = CCMpfaOInteractionVolume< Traits >;
 };

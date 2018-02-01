@@ -49,8 +49,6 @@ namespace Dumux
  * using LocalFaceData = ...;
  * //! export the matrix/vector type traits to be used by the iv
  * using MatVecTraits = ...;
- * //! export the data handle type for this iv
- * using DataHandle = ...;
  * \endcode
  */
 

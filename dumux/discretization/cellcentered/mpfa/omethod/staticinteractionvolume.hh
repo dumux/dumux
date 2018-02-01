@@ -32,7 +32,6 @@
 #include <dumux/common/math.hh>
 #include <dumux/common/matrixvectorhelper.hh>
 
-#include <dumux/discretization/cellcentered/mpfa/interactionvolumedatahandle.hh>
 #include <dumux/discretization/cellcentered/mpfa/interactionvolumebase.hh>
 #include <dumux/discretization/cellcentered/mpfa/dualgridindexset.hh>
 #include <dumux/discretization/cellcentered/mpfa/localfacedata.hh>
@@ -56,11 +55,10 @@ template< class Traits > class CCMpfaOStaticInteractionVolume;
  *
  * \tparam NI The type used for the dual grid's nodal index sets
  * \tparam S The Type used for scalar values
- * \tparam PT Traits class encapsulating info on the physical processes
  * \tparam C The number of sub-control volumes (cells) in the ivs
  * \tparam F The number of sub-control volume faces in the ivs
  */
-template< class NI, class S, class PT, int C, int F >
+template< class NI, class S, int C, int F >
 struct CCMpfaODefaultStaticInteractionVolumeTraits
 {
 private:
@@ -95,8 +93,6 @@ public:
     using LocalFaceData = InteractionVolumeLocalFaceData<GridIndexType, LocalIndexType>;
     //! export the matrix/vector traits to be used by the iv
     using MatVecTraits = MVTraits;
-    //! export the data handle type for this iv
-    using DataHandle = InteractionVolumeDataHandle< MatVecTraits, PT >;
     //! export the number of scvs in the interaction volumes
     static constexpr int numScvs = C;
     //! export the number of scvfs in the interaction volumes
