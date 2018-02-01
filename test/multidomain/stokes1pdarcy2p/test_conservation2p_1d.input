@@ -1,0 +1,41 @@
+[StokesGrid]
+Cells0 = 16
+Positions0 = 0.0 0.4
+
+[DarcyGrid]
+UpperRight = 0.8
+LowerLeft = 0.4
+Cells = 16
+
+[Problem]
+Name = conservation2p_1d
+
+[FreeFlow]
+Velocity = -1.0e-1
+Pressure = 1e5
+Temperature = 293.15
+
+[PorousMedium]
+Pressure = 1e5
+Saturation = 0.5
+Temperature = 298.15
+
+[SpatialParams]
+Porosity = 0.41
+Permeability = 1.0e-4
+AlphaBJ = 1.0
+Swr = 0.005
+Snr = 0.01
+VgAlpha = 6.371e-4
+VgN = 8.0
+
+[TimeManager]
+DtInitial = 1
+MaxTimeStepSize = 1
+TEnd = 30
+
+[Newton]
+MaxSteps = 10
+MaxRelativeShift = 1e-4
+ResidualReduction = 1e-6
+UseLineSearch = true

@@ -1,1 +1,2 @@
 add_subdirectory(stokesdarcy1p)
+add_subdirectory(stokes1pdarcy2p)
