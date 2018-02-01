@@ -90,6 +90,7 @@ class FractureProblem : public PorousMediumFlowProblem<TypeTag>
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
 
     enum {
 
@@ -147,9 +148,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        return PrimaryVariables(0.0);
+        return NumEqVector(0.0);
     }
 
     // \}
@@ -208,9 +209,9 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        PrimaryVariables values(0.0);
+        NumEqVector values(0.0);
         if (onInlet_(globalPos)) {
             values[contiNEqIdx] = -0.04; // kg / (m * s)
         }

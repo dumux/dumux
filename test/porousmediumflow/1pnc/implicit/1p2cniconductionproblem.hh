@@ -107,7 +107,7 @@ class OnePTwoCNIConductionProblem : public PorousMediumFlowProblem<TypeTag>
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
@@ -259,8 +259,8 @@ public:
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      */
-    ResidualVector neumannAtPos(const GlobalPosition &globalPos) const
-    { return ResidualVector(0.0); }
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
+    { return NumEqVector(0.0); }
 
     // \}
 
@@ -280,8 +280,8 @@ public:
      *
      * The units must be according to either using mole or mass fractions. (mole/(m^3*s) or kg/(m^3*s))
      */
-    PrimaryVariables sourceAtPos(const GlobalPosition &globalPos) const
-    { return PrimaryVariables(0.0); }
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
+    { return NumEqVector(0.0); }
 
     /*!
      * \brief Evaluate the initial value for a control volume.

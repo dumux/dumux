@@ -105,6 +105,7 @@ class RichardsNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using ThermalConductivityModel = typename GET_PROP_TYPE(TypeTag, ThermalConductivityModel);
@@ -266,12 +267,12 @@ public:
      * \param scvf The subcontrolvolume face
      *  Negative values mean influx.
      */
-    PrimaryVariables neumann(const Element &element,
+    NumEqVector neumann(const Element &element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables values(0.0);
+        NumEqVector values(0.0);
         const auto globalPos = scvf.ipGlobal();
 
         if(globalPos[0] < eps_)

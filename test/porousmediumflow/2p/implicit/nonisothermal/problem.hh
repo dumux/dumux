@@ -121,8 +121,7 @@ class InjectionProblem2PNI : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
 
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
@@ -176,9 +175,9 @@ public:
      *               \f$ [ \textnormal{unit of primary variable} / (m^\textrm{dim} \cdot s )] \f$
      * \param globalPos The global position
      */
-    Sources sourceAtPos(const GlobalPosition &globalPos) const
+    NumEqVector sourceAtPos(const GlobalPosition &globalPos) const
     {
-        Sources values(0.0);
+        NumEqVector values(0.0);
         values = 0;
         return values;
     }
@@ -242,12 +241,12 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    NeumannFluxes neumann(const Element &element,
+    NumEqVector neumann(const Element &element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
                           const SubControlVolumeFace& scvf) const
     {
-        NeumannFluxes values(0.0);
+        NumEqVector values(0.0);
         const auto globalPos = scvf.ipGlobal();
 
         if (globalPos[1] < 13.75 + eps_ && globalPos[1] > 6.875 - eps_)

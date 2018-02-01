@@ -101,7 +101,7 @@ class SagdProblem : public PorousMediumFlowProblem<TypeTag>
     };
 
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using Element = typename GridView::template Codim<0>::Entity;
@@ -216,12 +216,12 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    NeumannFluxes neumann(const Element& element,
+    NumEqVector neumann(const Element& element,
                           const FVElementGeometry& fvGeometry,
                           const ElementVolumeVariables& elemVolVars,
                           const SubControlVolumeFace& scvf) const
     {
-        NeumannFluxes values(0.0);
+        NumEqVector values(0.0);
 
          const auto& globalPos = scvf.ipGlobal();
         // negative values for injection at injection well

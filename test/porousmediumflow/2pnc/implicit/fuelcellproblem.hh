@@ -84,7 +84,7 @@ class FuelCellProblem : public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
-    using Sources = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -167,12 +167,12 @@ public:
     { return temperature_; }
 
     //! \copydoc Dumux::FVProblem::source()
-    Sources source(const Element &element,
+    NumEqVector source(const Element &element,
                    const FVElementGeometry& fvGeometry,
                    const ElementVolumeVariables& elemVolVars,
                    const SubControlVolume &scv) const
     {
-        Sources values(0.0);
+        NumEqVector values(0.0);
         const auto& globalPos = scv.dofPosition();
 
         //reaction sources from electro chemistry

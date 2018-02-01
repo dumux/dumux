@@ -90,7 +90,7 @@ class TwoPTestProblem : public PorousMediumFlowProblem<TypeTag>
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using GlobalPosition = Dune::FieldVector<Scalar, GridView::dimensionworld>;
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Indices = typename GET_PROP_TYPE(TypeTag, Indices);
     enum {
         pwIdx = Indices::pwIdx,
@@ -161,9 +161,9 @@ public:
      * For this method, the \a values parameter stores the mass flux
      * in normal direction of each phase. Negative values mean influx.
      */
-    NeumannFluxes neumannAtPos(const GlobalPosition &globalPos) const
+    NumEqVector neumannAtPos(const GlobalPosition &globalPos) const
     {
-        NeumannFluxes values(0.0);
+        NumEqVector values(0.0);
         if (onInlet_(globalPos))
             values[contiNEqIdx] = -0.04; // kg / (m * s)
         return values;

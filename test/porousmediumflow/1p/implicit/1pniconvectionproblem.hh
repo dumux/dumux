@@ -125,7 +125,7 @@ class OnePNIConvectionProblem : public PorousMediumFlowProblem<TypeTag>
         energyEqIdx = Indices::energyEqIdx
     };
 
-    using NeumannFluxes = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using Element = typename GridView::template Codim<0>::Entity;
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -269,12 +269,12 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    NeumannFluxes neumann(const Element& element,
+    NumEqVector neumann(const Element& element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolvars,
                              const SubControlVolumeFace& scvf) const
     {
-        NeumannFluxes values(0.0);
+        NumEqVector values(0.0);
         const auto globalPos = scvf.ipGlobal();
         const auto& volVars = elemVolvars[scvf.insideScvIdx()];
 

@@ -181,6 +181,7 @@ class MaxwellStefanTestProblem : public PorousMediumFlowProblem<TypeTag>
     using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using SpatialParams = typename GET_PROP_TYPE(TypeTag, SpatialParams);
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
@@ -339,8 +340,8 @@ public:
      * \param globalPos The position for which the bc type should be evaluated
      * The units must be according to either using mole or mass fractions. (mole/(m^2*s) or kg/(m^2*s))
      */
-    PrimaryVariables neumannAtPos(const GlobalPosition& globalPos) const
-    { return PrimaryVariables(0.0); }
+    NumEqVector neumannAtPos(const GlobalPosition& globalPos) const
+    { return NumEqVector(0.0); }
 
     // \}
 

@@ -105,6 +105,7 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
     using BoundaryTypes = typename GET_PROP_TYPE(TypeTag, BoundaryTypes);
     using PrimaryVariables = typename GET_PROP_TYPE(TypeTag, PrimaryVariables);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using ElementVolumeVariables = typename GET_PROP_TYPE(TypeTag, ElementVolumeVariables);
     using FVElementGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry)::LocalView;
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
@@ -247,12 +248,12 @@ public:
      * The \a values store the mass flux of each phase normal to the boundary.
      * Negative values indicate an inflow.
      */
-    PrimaryVariables neumann(const Element &element,
+    NumEqVector neumann(const Element &element,
                              const FVElementGeometry& fvGeometry,
                              const ElementVolumeVariables& elemVolVars,
                              const SubControlVolumeFace& scvf) const
     {
-        PrimaryVariables priVars(0.0);
+        NumEqVector values(0.0);
         const auto& globalPos = fvGeometry.scv(scvf.insideScvIdx()).dofPosition();
         const Scalar massFluxInjectedPhase = massFluxInjectedPhase_ ;
 
@@ -293,15 +294,15 @@ public:
         // actually setting the fluxes
         if (onLeftBoundary_(globalPos) && this->spatialParams().inFF_(globalPos))
         {
-            priVars[conti00EqIdx + nPhaseIdx * numComponents + wCompIdx]
+            values[conti00EqIdx + nPhaseIdx * numComponents + wCompIdx]
              = -molarFlux * fluidState.moleFraction(nPhaseIdx, wCompIdx);
-            priVars[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx]
+            values[conti00EqIdx + nPhaseIdx * numComponents + nCompIdx]
              = -molarFlux * fluidState.moleFraction(nPhaseIdx, nCompIdx);
             // energy equations are specified mass specifically
-            priVars[energyEq0Idx + nPhaseIdx] = - massFluxInjectedPhase
+            values[energyEq0Idx + nPhaseIdx] = - massFluxInjectedPhase
                                                     * fluidState.enthalpy(nPhaseIdx) ;
         }
-        return priVars;
+        return values;
     }
 
     /*!
@@ -333,13 +334,13 @@ public:
      *
      *      Positive values mean that mass is created, negative ones mean that it vanishes.
      */
-    PrimaryVariables source(const Element &element,
+    NumEqVector source(const Element &element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
-        PrimaryVariables priVars(0.0);
-        return priVars;
+        NumEqVector values(0.0);
+        return values;
 
     }
 

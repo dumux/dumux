@@ -97,7 +97,7 @@ class ThermoChemProblem : public PorousMediumFlowProblem<TypeTag>
     using SubControlVolume = typename FVElementGeometry::SubControlVolume;
     using SubControlVolumeFace = typename FVElementGeometry::SubControlVolumeFace;
     using FVGridGeometry = typename GET_PROP_TYPE(TypeTag, FVGridGeometry);
-    using ResidualVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
+    using NumEqVector = typename GET_PROP_TYPE(TypeTag, NumEqVector);
     using SolutionVector = typename GET_PROP_TYPE(TypeTag, SolutionVector);
     using ElementSolutionVector = typename GET_PROP_TYPE(TypeTag, ElementSolutionVector);
     using ReactionRate =ThermoChemReaction<TypeTag>;
@@ -218,12 +218,12 @@ public:
      * Negative values indicate an inflow.
      */
 
-    ResidualVector neumann(const Element& element,
+    NumEqVector neumann(const Element& element,
                            const FVElementGeometry& fvGeometry,
                            const ElementVolumeVariables& elemVolVars,
                            const SubControlVolumeFace& scvf) const
     {
-        ResidualVector flux(0.0);
+        NumEqVector flux(0.0);
         return flux;
     }
 
@@ -280,13 +280,13 @@ public:
      * that the conserved quantity is created, negative ones mean that it vanishes.
      * E.g. for the mass balance that would be a mass rate in \f$ [ kg / (m^3 \cdot s)] \f$.
      */
-    PrimaryVariables source(const Element &element,
+    NumEqVector source(const Element &element,
                             const FVElementGeometry& fvGeometry,
                             const ElementVolumeVariables& elemVolVars,
                             const SubControlVolume &scv) const
     {
 
-        PrimaryVariables source(0.0);
+        NumEqVector source(0.0);
         const auto& volVars = elemVolVars[scv];
 
         Scalar qMass = rrate_.thermoChemReaction(volVars);
