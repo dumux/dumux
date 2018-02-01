@@ -91,7 +91,6 @@ NEW_PROP_TAG(ElementFluxVariablesCache);           //!< A local vector of flux v
 NEW_PROP_TAG(GridFluxVariablesCache);              //!< The global vector of flux variable containers
 NEW_PROP_TAG(EnableGridFluxVariablesCache);        //!< specifies if data on flux vars should be saved (faster, but more memory consuming)
 NEW_PROP_TAG(GridVariables);                       //!< The grid variables object managing variable data on the grid (volvars/fluxvars cache)
-NEW_PROP_TAG(MaxNumNeighborsPerScvf);              //!< The maximum number of neighboring elements allowed per scvf (for static memory allocation)
 
 /////////////////////////////////////////////////////////////////
 // Additional properties used by the cell-centered mpfa schemes:

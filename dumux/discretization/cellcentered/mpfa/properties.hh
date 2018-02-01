@@ -66,19 +66,6 @@ SET_PROP(CCMpfaModel, DiscretizationMethod)
     static const DiscretizationMethods value = DiscretizationMethods::CCMpfa;
 };
 
-//! Set the maximum admissible number of branches per scvf
-SET_PROP(CCMpfaModel, MaxNumNeighborsPerScvf)
-{
-private:
-    using GridView = typename GET_PROP_TYPE(TypeTag, GridView);
-    static constexpr int dim = GridView::dimension;
-    static constexpr int dimWorld = GridView::dimensionworld;
-
-public:
-    // Per default, we allow for 8 neighbors on network/surface grids
-    static constexpr std::size_t value = dim < dimWorld ? 9 : 2;
-};
-
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
