@@ -141,16 +141,6 @@ public:
         Scalar momentumFlux(0.0);
 
         const auto darcyCouplingInfo = couplingManager().stokesFaceToDarcyMap().at(scvf.dofIndex());
-        const auto& darcyTree = couplingManager().darcyProblem().boundingBoxTree();
-
-        const auto& darcyCouplingElement = darcyTree.entity(darcyCouplingInfo.darcyElementIdx);
-        DarcyFVElementGeometry darcyFvGeometry = localView(couplingManager().darcyProblem().model().globalFvGeometry());
-        darcyFvGeometry.bind(darcyCouplingElement);
-
-        auto darcyElemVolVars = localView(couplingManager().darcyProblem().model().curGlobalVolVars());
-        darcyElemVolVars.bind(darcyCouplingElement, darcyFvGeometry, couplingManager().darcyProblem().model().curSol());
-        const auto darcyVolVars = darcyElemVolVars[darcyCouplingInfo.darcyElementIdx];
-
         const auto& darcySolution = couplingManager().darcyProblem().model().curSol();
         const auto darcyPressure = darcySolution[darcyCouplingInfo.darcyElementIdx][DarcyIndices::pressureIdx];
 

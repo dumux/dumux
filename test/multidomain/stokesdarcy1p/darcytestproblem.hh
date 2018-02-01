@@ -36,7 +36,6 @@
 
 // coupling-specific includes
 #include <dumux/multidomain/subproblemproperties.hh>
-#include <dumux/multidomain/staggered-ccfv/localresidual.hh> // TODO?
 
 namespace Dumux
 {
