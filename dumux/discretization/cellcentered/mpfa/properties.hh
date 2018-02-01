@@ -106,7 +106,7 @@ public:
     using type = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 };
 
-//! Per default, we use the mpfa-o interaction volume as secondary type
+//! Per default, we use the dynamic mpfa-o interaction volume on boundaries
 SET_PROP(CCMpfaModel, SecondaryInteractionVolume)
 {
 private:
@@ -127,32 +127,27 @@ private:
     using PrimaryIV = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
     using SecondaryIV = typename GET_PROP_TYPE(TypeTag, SecondaryInteractionVolume);
 
-    static constexpr bool enableCache = GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache);
-
     struct Traits : public DefaultMapperTraits<GridView>
     {
         using SubControlVolume = CCSubControlVolume<GridView>;
         using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GridView>;
         using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
-        template< class FVGridGeometry >
-        using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeometry,
-                                                                      NodalIndexSet,
-                                                                      PrimaryIV,
-                                                                      SecondaryIV >;
+        //! type definitions depending on the FVGridGeometry itself
+        template< class FVGridGeom >
+        using MpfaHelper = CCMpfaHelper< FVGridGeom >;
 
-        template< class FVGridGeometry, bool enableGeomCache >
-        using LocalView = CCMpfaFVElementGeometry<FVGridGeometry, enableGeomCache>;
+        template< class FVGridGeom >
+        using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeom, FVGridGeom::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
 
-        template< class FVGridGeometry >
-        using MpfaHelper = CCMpfaHelper< FVGridGeometry >;
+        template< class FVGridGeom >
+        using GridIvIndexSets = CCMpfaGridInteractionVolumeIndexSets< FVGridGeom, NodalIndexSet, PrimaryIV, SecondaryIV >;
 
-        //! Use the correct connectivity map depending on mpfa scheme (obtain from primary iv)
-        template< class FVGridGeometry >
-        using ConnectivityMap = CCMpfaConnectivityMap<FVGridGeometry, FVGridGeometry::GridIVIndexSets::PrimaryInteractionVolume::MpfaMethod>;
+        template< class FVGridGeom, bool enableCache >
+        using LocalView = CCMpfaFVElementGeometry<FVGridGeom, enableCache>;
     };
 public:
-    using type = CCMpfaFVGridGeometry<GridView, Traits, enableCache>;
+    using type = CCMpfaFVGridGeometry<GridView, Traits, GET_PROP_VALUE(TypeTag, EnableFVGridGeometryCache)>;
 };
 
 //! The global flux variables cache vector class
