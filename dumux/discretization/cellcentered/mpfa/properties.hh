@@ -25,6 +25,8 @@
 #ifndef DUMUX_CC_MPFA_PROPERTIES_HH
 #define DUMUX_CC_MPFA_PROPERTIES_HH
 
+#include <dune/common/reservedvector.hh>
+
 #include <dumux/common/properties.hh>
 #include <dumux/common/defaultmappertraits.hh>
 
@@ -80,23 +82,28 @@ public:
 //! Set the index set type used on the dual grid nodes
 SET_PROP(CCMpfaModel, DualGridNodalIndexSet)
 {
-private:
     using GV = typename GET_PROP_TYPE(TypeTag, GridView);
-
-    // per default, use uint8_t as iv-local index type
-    using LI = std::uint8_t;
-
-    // the specified maximum admissible number of branches per scvf
-    static constexpr int maxB = GET_PROP_VALUE(TypeTag, MaxNumNeighborsPerScvf);
-
-    // maximum admissible number of elements around a node
-    // if for a given grid this number is still not high enough,
-    // overwrite this property in your problem with a higher number
     static constexpr int dim = GV::dimension;
-    static constexpr int maxE = dim == 3 ? 45 : 15;
+    static constexpr int dimWorld = GV::dimensionworld;
+private:
+    struct Traits
+    {
+        using GridView = GV;
+        using GridIndexType = typename GV::IndexSet::IndexType;
+        using LocalIndexType = std::uint8_t;
 
+        //! per default, we use dynamic data containers (iv size unknown)
+        template< class T > using NodalScvDataStorage = std::vector< T >;
+        template< class T > using NodalScvfDataStorage = std::vector< T >;
+
+        //! store data on neighbors of scvfs in static containers if possible
+        template< class T >
+        using ScvfNeighborDataStorage = typename std::conditional_t< (dim<dimWorld),
+                                                                     std::vector< T >,
+                                                                     Dune::ReservedVector< T, 2 > >;
+    };
 public:
-    using type = CCMpfaDualGridNodalIndexSet<GV, LI, dim, maxE, maxB>;
+    using type = CCMpfaDualGridNodalIndexSet< Traits >;
 };
 
 //! Per default, we use the dynamic mpfa-o interaction volume

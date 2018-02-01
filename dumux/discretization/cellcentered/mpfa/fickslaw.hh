@@ -92,7 +92,7 @@ class FicksLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
     class MpfaFicksLawCache
     {
         using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-        using Stencil = typename DualGridNodalIndexSet::GridStencilType;
+        using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
         using MpfaHelper = typename FVGridGeometry::MpfaHelper;
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();

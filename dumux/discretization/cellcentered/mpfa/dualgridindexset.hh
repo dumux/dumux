@@ -38,44 +38,32 @@ namespace Dumux
  * \brief Nodal index set for mpfa schemes, constructed
  *        around grid vertices.
  *
- * \tparam GV The grid view type
- * \tparam LI The type used for indexing in interaction volumes
- * \tparam dim The dimension of the grid
- * \tparam maxE The maximum admissible number of elements around vertices.
- * \tparam maxB The maximum admissible number of branches on intersections.
- *              This is only to be specified for network grids and defaults to 1
- *              for normal grids.
+ * \tparam T The traits class to be used
  */
-template< class GV, class LI, int dim, int maxE, int maxB = 2 >
+template< class T >
 class CCMpfaDualGridNodalIndexSet
 {
-    using GI = typename GV::IndexSet::IndexType;
-    using DimIndexVector = Dune::ReservedVector<GI, dim>;
+    using LI = typename T::LocalIndexType;
+    using GI = typename T::GridIndexType;
+
+    using DimLocalIndexVector = Dune::ReservedVector<LI, T::GridView::dimension>;
+    using ScvfIndicesInScvStorage = typename T::template NodalScvDataStorage< DimLocalIndexVector >;
 
 public:
-    //! Export the grid view type
-    using GridView = GV;
+    //! Export the traits type
+    using Traits = T;
 
-    //! Export the used index types
-    using GridIndexType = GI;
+    //! Export the index types used
     using LocalIndexType = LI;
-
-    //! Export the specified maximum admissible sizes
-    static constexpr int dimension = dim;
-    static constexpr int maxBranches = maxB;
-    static constexpr int maxNumElementsAtNode = maxE*(maxBranches-1);
-    static constexpr int maxNumScvfsAtNode = maxNumElementsAtNode*dim;
+    using GridIndexType = GI;
 
     //! Export the stencil types used
-    using GridStencilType = Dune::ReservedVector<GridIndexType, maxNumElementsAtNode>;
-    using LocalStencilType = Dune::ReservedVector<LocalIndexType, maxNumElementsAtNode>;
-
-    //! Export the type used for storing the global scvf indices at this node
-    using GridScvfStencilType = Dune::ReservedVector<GridIndexType, maxNumScvfsAtNode>;
+    using NodalGridStencilType = typename T::template NodalScvDataStorage< GI >;
+    using NodalLocalStencilType = typename T::template NodalScvDataStorage< LI >;
+    using NodalGridScvfStencilType = typename T::template NodalScvfDataStorage< GI >;
 
     //! Data structure to store the neighboring scv indices of an scvf (grid/local indices)
-    using ScvfNeighborIndexSet = Dune::ReservedVector<GridIndexType, maxBranches>;
-    using ScvfNeighborLocalIndexSet = Dune::ReservedVector<LocalIndexType, maxBranches>;
+    using ScvfNeighborLocalIndexSet = typename T::template ScvfNeighborDataStorage< LI >;
 
     //! Constructor
     CCMpfaDualGridNodalIndexSet() : numBoundaryScvfs_(0) {}
@@ -133,10 +121,10 @@ public:
     std::size_t numBoundaryScvfs() const { return numBoundaryScvfs_; }
 
     //! returns the grid scv indices connected to this dual grid node
-    const GridStencilType& globalScvIndices() const { return scvIndices_; }
+    const NodalGridStencilType& globalScvIndices() const { return scvIndices_; }
 
     //! returns the grid scvf indices connected to this dual grid node
-    const GridScvfStencilType& globalScvfIndices() const { return scvfIndices_; }
+    const NodalGridScvfStencilType& globalScvfIndices() const { return scvfIndices_; }
 
     //! returns whether or not the i-th scvf is on a domain boundary
     bool scvfIsOnBoundary(unsigned int i) const
@@ -183,13 +171,13 @@ public:
     }
 
 private:
-    GridStencilType scvIndices_;                                                       //!< The indices of the scvs around a dual grid node
-    Dune::ReservedVector<DimIndexVector, maxNumElementsAtNode> localScvfIndicesInScv_; //!< Maps to each scv a list of scvf indices embedded in it
+    NodalGridStencilType scvIndices_;               //!< The indices of the scvs around a dual grid node
+    ScvfIndicesInScvStorage localScvfIndicesInScv_; //!< Maps to each scv a list of scvf indices embedded in it
 
-    GridScvfStencilType scvfIndices_;                                //!< the indices of the scvfs around a dual grid node
-    std::size_t numBoundaryScvfs_;                                   //!< stores how many boundary scvfs are embedded in this dual grid node
-    Dune::ReservedVector<bool, maxNumScvfsAtNode> scvfIsOnBoundary_; //!< Maps to each scvf a boolean to indicate if it is on the boundary
-    Dune::ReservedVector<LocalIndexType, maxNumScvfsAtNode> scvfInsideScvIndices_; //!< The inside local scv index for each scvf
+    std::size_t numBoundaryScvfs_;                                         //!< stores how many boundary scvfs are embedded in this dual grid node
+    NodalGridScvfStencilType scvfIndices_;                                 //!< the indices of the scvfs around a dual grid node
+    typename T::template NodalScvfDataStorage< bool > scvfIsOnBoundary_;   //!< Maps to each scvf a boolean to indicate if it is on the boundary
+    typename T::template NodalScvfDataStorage< LI > scvfInsideScvIndices_; //!< The inside local scv index for each scvf
 };
 
 /*!
@@ -210,7 +198,7 @@ public:
 
     //! Constructor taking a grid view
     template< class GridView >
-    CCMpfaDualGridIndexSet(const GridView& gridView) : nodalIndexSets_(gridView.size(NodalIndexSet::dimension)) {}
+    CCMpfaDualGridIndexSet(const GridView& gridView) : nodalIndexSets_(gridView.size(GridView::dimension)) {}
 
     //! Access with an scvf
     template< class SubControlVolumeFace >

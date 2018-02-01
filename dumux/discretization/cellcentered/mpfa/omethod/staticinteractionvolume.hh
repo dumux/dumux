@@ -82,7 +82,7 @@ private:
 
 public:
     //! export the type of grid view
-    using GridView = typename NI::GridView;
+    using GridView = typename NI::Traits::GridView;
     //! export the type for the interaction volume index set
     using IndexSet = CCMpfaOInteractionVolumeIndexSet< NI >;
     //! export the type of interaction-volume local scvs
@@ -119,7 +119,7 @@ class CCMpfaOStaticInteractionVolume
     using IndexSet = typename Traits::IndexSet;
     using GridIndexType = typename IndexSet::GridIndexType;
     using LocalIndexType = typename IndexSet::LocalIndexType;
-    using Stencil = typename IndexSet::GridStencilType;
+    using Stencil = typename IndexSet::NodalGridStencilType;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;

@@ -47,10 +47,10 @@ public:
     using LocalIndexType = typename DualGridNodalIndexSet::LocalIndexType;
     using GridIndexType = typename DualGridNodalIndexSet::GridIndexType;
 
-    // Export the types used for local/grid stencils
-    using LocalStencilType = typename DualGridNodalIndexSet::LocalStencilType;
-    using GridStencilType = typename DualGridNodalIndexSet::GridStencilType;
-    using GridScvfStencilType = typename DualGridNodalIndexSet::GridScvfStencilType;
+    //! Export the stencil types used
+    using NodalGridStencilType = typename DualGridNodalIndexSet::NodalGridStencilType;
+    using NodalLocalStencilType = typename DualGridNodalIndexSet::NodalLocalStencilType;
+    using NodalGridScvfStencilType = typename DualGridNodalIndexSet::NodalGridScvfStencilType;
 
     //! Export the type used for the neighbor scv index sets of the scvfs
     using ScvfNeighborLocalIndexSet = typename DualGridNodalIndexSet::ScvfNeighborLocalIndexSet;
@@ -62,7 +62,8 @@ public:
     {
         const auto numNodalScvfs = nodalIndexSet.numScvfs();
 
-        // keeps track of which nodal scvfs have been handled already
+        // kee track of which nodal scvfs have been handled already
+        nodeToIvScvf_.resize(numNodalScvfs);
         std::vector<bool> isHandled(numNodalScvfs, false);
 
         // go over faces in nodal index set, check if iv-local face has been
@@ -121,13 +122,10 @@ public:
     }
 
     //! returns the corresponding nodal index set
-    const DualGridNodalIndexSet& nodalIndexSet() const { return nodalIndexSet_; }
+    const NodalIndexSet& nodalIndexSet() const { return nodalIndexSet_; }
 
     //! returns the global scv indices connected to this dual grid node
-    const GridStencilType& globalScvIndices() const { return nodalIndexSet_.globalScvIndices(); }
-
-    //! returns the global scvf indices connected to this dual grid node
-    const GridScvfStencilType& globalScvfIndices() const { return nodalIndexSet_.globalScvfIndices(); }
+    const NodalGridStencilType& globalScvIndices() const { return nodalIndexSet_.globalScvIndices(); }
 
     //! returns the number of faces in the interaction volume
     std::size_t numFaces() const { return numFaces_; }
@@ -157,23 +155,18 @@ public:
     }
 
 private:
-    //! returns the local scv index to a given global scv index
-    unsigned int findLocalScvIdx_(GridIndexType globalScvIdx) const
-    {
-        auto it = std::find( nodalIndexSet_.globalScvIndices().begin(), nodalIndexSet_.globalScvIndices().end(), globalScvIdx );
-        assert(it != nodalIndexSet_.globalScvIndices().end() && "Global scv index not found in local container!");
-        return std::distance(nodalIndexSet_.globalScvIndices().begin(), it);
-    }
-
-    const DualGridNodalIndexSet& nodalIndexSet_;
+    using NI = NodalIndexSet;
 
     std::size_t numFaces_;
-    Dune::ReservedVector< LocalIndexType, NodalIndexSet::maxNumScvfsAtNode > ivToNodeScvf_;
-    Dune::ReservedVector< LocalIndexType, NodalIndexSet::maxNumScvfsAtNode > nodeToIvScvf_;
-
+    const NI& nodalIndexSet_;
+    // Index maps from and to nodal index set. For the map to the
+    // nodal set we use the same storage type as we know the nodal
+    // has more faces, thus sufficient guaranteed here!
+    typename NI::Traits::template NodalScvfDataStorage< LocalIndexType > ivToNodeScvf_;
+    typename NI::Traits::template NodalScvfDataStorage< LocalIndexType > nodeToIvScvf_;
     // maps to each scvf a list of neighbouring scv indices
     // ordering: 0 - inside scv idx; 1..n - outside scv indices
-    Dune::ReservedVector< ScvfNeighborLocalIndexSet, NodalIndexSet::maxNumScvfsAtNode > scvfNeighborScvLocalIndices_;
+    typename NI::Traits::template NodalScvfDataStorage< ScvfNeighborLocalIndexSet > scvfNeighborScvLocalIndices_;
 };
 
 } // end namespace Dumux

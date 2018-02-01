@@ -70,6 +70,7 @@ class CCMpfaInteractionVolumeBase
     using GridView = typename T::GridView;
     using Element = typename GridView::template Codim<0>::Entity;
 
+    using NodalStencilType = typename T::IndexSet::NodalGridStencilType;
     using LocalIndexType = typename T::IndexSet::LocalIndexType;
     using LocalScvType = typename T::LocalScvType;
     using LocalScvfType = typename T::LocalScvfType;
@@ -104,7 +105,7 @@ public:
     { DUNE_THROW(Dune::NotImplemented, "Interaction volume implementation does not provide a localFaceData() funtion"); }
 
     //! returns the cell-stencil of this interaction volume
-    const typename Traits::IndexSet::GridStencilType& stencil() const { return asImp().stencil(); }
+    const NodalStencilType& stencil() const { return asImp().stencil(); }
 
     //! returns the local scvf entity corresponding to a given iv-local scvf idx
     const LocalScvfType& localScvf(LocalIndexType ivLocalScvfIdx) const { return asImp().localScvf(ivLocalScvfIdx); }

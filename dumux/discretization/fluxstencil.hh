@@ -104,7 +104,7 @@ public:
     using ScvfStencilIForJ = std::vector<IndexType>;
 
     //! The flux stencil type
-    using Stencil = typename NodalIndexSet::GridStencilType;
+    using Stencil = typename NodalIndexSet::NodalGridStencilType;
 
     //! Returns the indices of the elements required for flux calculation on an scvf.
     static const Stencil& stencil(const Element& element,

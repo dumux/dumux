@@ -64,8 +64,8 @@ private:
     using GridIndexType = typename NodalIndexSet::GridIndexType;
     using LocalIndexType = typename NodalIndexSet::LocalIndexType;
 
-    static constexpr int dim = NodalIndexSet::GridView::dimension;
-    static constexpr int dimWorld = NodalIndexSet::GridView::dimensionworld;
+    static constexpr int dim = NodalIndexSet::Traits::GridView::dimension;
+    static constexpr int dimWorld = NodalIndexSet::Traits::GridView::dimensionworld;
 
     //! Matrix/Vector traits to be used by the data handle
     struct MVTraits
@@ -81,7 +81,7 @@ private:
 
 public:
     //! export the type of grid view
-    using GridView = typename NodalIndexSet::GridView;
+    using GridView = typename NodalIndexSet::Traits::GridView;
     //! export the type for the interaction volume index set
     using IndexSet = CCMpfaOInteractionVolumeIndexSet< NodalIndexSet >;
     //! export the type of interaction-volume local scvs
@@ -110,7 +110,7 @@ class CCMpfaOInteractionVolume
     using IndexSet = typename Traits::IndexSet;
     using GridIndexType = typename IndexSet::GridIndexType;
     using LocalIndexType = typename IndexSet::LocalIndexType;
-    using Stencil = typename IndexSet::GridStencilType;
+    using Stencil = typename IndexSet::NodalGridStencilType;
 
     static constexpr int dim = GridView::dimension;
     static constexpr int dimWorld = GridView::dimensionworld;

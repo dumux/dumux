@@ -94,7 +94,7 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         static constexpr int numPhases = GET_PROP_VALUE(TypeTag, NumPhases);
 
         using DualGridNodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
-        using Stencil = typename DualGridNodalIndexSet::GridStencilType;
+        using Stencil = typename DualGridNodalIndexSet::NodalGridStencilType;
 
         using MpfaHelper = typename FVGridGeometry::MpfaHelper;
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
