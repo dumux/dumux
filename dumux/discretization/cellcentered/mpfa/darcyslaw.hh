@@ -99,12 +99,6 @@ class DarcysLawImplementation<TypeTag, DiscretizationMethods::CCMpfa>
         using MpfaHelper = typename FVGridGeometry::MpfaHelper;
         static constexpr bool considerSecondaryIVs = MpfaHelper::considerSecondaryIVs();
 
-        // In the current implementation of the flux variables cache we cannot make a
-        // disctinction between dynamic (e.g. mpfa-o unstructured) and static (e.g.mpfa-l)
-        // matrix and vector types, as currently the cache class can only be templated
-        // by a type tag (and there can only be one). Currently, pointers to both the
-        // primary and secondary iv data is stored. Before accessing it has to be checked
-        // whether or not the scvf is embedded in a secondary interaction volume.
         using PrimaryInteractionVolume = typename GET_PROP_TYPE(TypeTag, PrimaryInteractionVolume);
         using PrimaryIvLocalFaceData = typename PrimaryInteractionVolume::Traits::LocalFaceData;
         using PrimaryIvDataHandle = typename ElementFluxVariablesCache::PrimaryIvDataHandle;
