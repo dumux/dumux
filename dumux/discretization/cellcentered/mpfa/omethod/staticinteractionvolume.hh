@@ -65,8 +65,8 @@ private:
     using GridIndexType = typename NI::GridIndexType;
     using LocalIndexType = typename NI::LocalIndexType;
 
-    static constexpr int dim = NI::GridView::dimension;
-    static constexpr int dimWorld = NI::GridView::dimensionworld;
+    static constexpr int dim = NI::Traits::GridView::dimension;
+    static constexpr int dimWorld = NI::Traits::GridView::dimensionworld;
 
     //! Matrix/Vector traits to be used by the data handle
     struct MVTraits
