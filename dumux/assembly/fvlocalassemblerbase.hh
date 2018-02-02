@@ -66,20 +66,43 @@ class FVLocalAssemblerBase
 public:
 
     /*!
-     * \brief The constructor
+     * \brief The constructor. Delegates to the general constructor.
      */
     explicit FVLocalAssemblerBase(const Assembler& assembler,
                                   const Element& element,
                                   const SolutionVector& curSol)
+    : FVLocalAssemblerBase(assembler,
+                           element,
+                           curSol,
+                           localView(assembler.fvGridGeometry()),
+                           localView(assembler.gridVariables().curGridVolVars()),
+                           localView(assembler.gridVariables().prevGridVolVars()),
+                           localView(assembler.gridVariables().gridFluxVarsCache()),
+                           assembler.localResidual(),
+                           element.partitionType() == Dune::GhostEntity)
+    {}
+
+    /*!
+     * \brief The constructor. General version explicitly expecting each argument.
+     */
+    explicit FVLocalAssemblerBase(const Assembler& assembler,
+                                  const Element& element,
+                                  const SolutionVector& curSol,
+                                  const FVElementGeometry& fvGeometry,
+                                  const ElementVolumeVariables& curElemVolVars,
+                                  const ElementVolumeVariables& prevElemVolVars,
+                                  const ElementFluxVariablesCache& elemFluxVarsCache,
+                                  const LocalResidual& localResidual,
+                                  const bool elementIsGhost)
     : assembler_(assembler)
     , element_(element)
     , curSol_(curSol)
-    , fvGeometry_(localView(assembler.fvGridGeometry()))
-    , curElemVolVars_(localView(assembler.gridVariables().curGridVolVars()))
-    , prevElemVolVars_(localView(assembler.gridVariables().prevGridVolVars()))
-    , elemFluxVarsCache_(localView(assembler.gridVariables().gridFluxVarsCache()))
-    , localResidual_(assembler.localResidual())
-    , elementIsGhost_((element.partitionType() == Dune::GhostEntity))
+    , fvGeometry_(fvGeometry)
+    , curElemVolVars_(curElemVolVars)
+    , prevElemVolVars_(prevElemVolVars)
+    , elemFluxVarsCache_(elemFluxVarsCache)
+    , localResidual_(localResidual)
+    , elementIsGhost_(elementIsGhost)
     {}
 
     /*!
