@@ -32,6 +32,7 @@
 
 #include <dumux/common/exceptions.hh>
 #include <dumux/common/valgrind.hh>
+#include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 namespace Dumux {
 /*!
@@ -58,49 +59,7 @@ namespace Dumux {
  * - if the setEnthalpy parameter is true, also specific enthalpies of *all* phases
  */
 template <class Scalar, class FluidSystem>
-class FluidSystemConstraintSolver
-{
-    static constexpr int numPhases = FluidSystem::numPhases;
-
-public:
-    /*!
-     * \brief @copybrief Dumux::FluidSystemConstraintSolver
-     *
-     * \param fluidState A container with the current (physical) state of the fluid
-     * \param paramCache A container for iterative calculation of fluid composition
-     * \param setViscosity Should the viscosity be set in the fluidstate?
-     * \param setEnthalpy Should the enthalpy be set in the fluidstate?
-     */
-    template <class FluidState, class ParameterCache>
-    static void solve(FluidState & fluidState,
-                      ParameterCache & paramCache,
-                      const bool setViscosity,
-                      const bool setEnthalpy)
-    {
-
-        // In this function the actual work is done.
-        // Either tables for solubility or functional relations are used therein.
-        // One way or the other, this function needs to set all the mole fractions
-        // in the fluidstate.
-        FluidSystem::calculateEquilibriumMoleFractions(fluidState, paramCache);
-
-        for (int phaseIdx=0; phaseIdx<numPhases; phaseIdx++){
-            Scalar value = FluidSystem::density(fluidState, paramCache, phaseIdx);
-            fluidState.setDensity(phaseIdx, value);
-
-            if (setViscosity) {
-                value = FluidSystem::viscosity(fluidState, paramCache, phaseIdx);
-                fluidState.setViscosity(phaseIdx, value);
-            }
-
-            if (setEnthalpy) {
-                value = FluidSystem::enthalpy(fluidState, paramCache, phaseIdx);
-                fluidState.setEnthalpy(phaseIdx, value);
-            }
-        }
-    }
-};
-
+using FluidSystemConstraintSolver DUNE_DEPRECATED_MSG("Use MiscibleMultiPhaseComposition from dumux/material/constraintsolvers/misciblemultiphasecomposition.hh")
+= MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 } // end namespace Dumux
-
 #endif

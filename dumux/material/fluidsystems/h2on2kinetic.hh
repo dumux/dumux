@@ -129,7 +129,9 @@ public:
      *        \param calcCompIdx The component for which the composition in the other phase is to be
      *               calculated.
      */
+
     template <class FluidState>
+    DUNE_DEPRECATED_MSG("FluidSystems should not compute equilibrium mole fractionos. Please use a constraintsolver e.g. the MiscibleMultiPhaseComposition instead")
     static void calculateEquilibriumMoleFractionOtherPhase(FluidState & fluidState,
                                                     const ParameterCache & paramCache,
                                                     const unsigned int referencePhaseIdx,
@@ -259,6 +261,7 @@ public:
      *        \param paramCache A container for iterative calculation of fluid composition
      */
     template <class FluidState>
+    DUNE_DEPRECATED_MSG("FluidSystems should not compute equilibrium mole fractionos. Please use a constraintsolver e.g. the MiscibleMultiPhaseComposition instead")
     static void calculateEquilibriumMoleFractions(FluidState & fluidState,
                                                   const ParameterCache & paramCache)
     {
