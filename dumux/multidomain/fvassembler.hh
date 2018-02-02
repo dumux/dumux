@@ -91,11 +91,16 @@ private:
     };
 
     template<std::size_t id>
+    struct SubDomainAssemblerType<DiscretizationMethods::CCMpfa, id>
+    {
+        using type = SubDomainCCLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
+    };
+
+    template<std::size_t id>
     struct SubDomainAssemblerType<DiscretizationMethods::Box, id>
     {
         using type = SubDomainBoxLocalAssembler<id, SubDomainTypeTag<id>, ThisType, diffMethod, isImplicit>;
     };
-
 
     template<std::size_t id>
     using FVGridGeometry = typename std::tuple_element<id, FVGridGeometryTuple>::type::element_type;
