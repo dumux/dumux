@@ -125,6 +125,9 @@ public:
         static const Scalar up = curElemVolVars[scvf.insideScvIdx()].density()
                                  / curElemVolVars[scvf.insideScvIdx()].viscosity();
 
+        // get number of dofs on the current grid
+        const auto numDofs = fvGeometry.fvGridGeometry().gridView().size(0);
+
         const auto& fluxVarsCache = elemFluxVarsCache[scvf];
         const auto& stencil = fluxVarsCache.advectionStencil();
         if (fluxVarsCache.usesSecondaryIv())
@@ -135,10 +138,14 @@ public:
             // add partial derivatives to the respective given matrices
             for (unsigned int i = 0; i < stencil.size();++i)
             {
-                if (fluxVarsCache.advectionSwitchFluxSign())
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
-                else
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+                // do not add Dirichlet BCs flux contributions
+                if (stencil[i] < numDofs)
+                {
+                    if (fluxVarsCache.advectionSwitchFluxSign())
+                        derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
+                    else
+                        derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+                }
             }
         }
         else
@@ -149,10 +156,14 @@ public:
             // add partial derivatives to the respective given matrices
             for (unsigned int i = 0; i < stencil.size();++i)
             {
-                if (fluxVarsCache.advectionSwitchFluxSign())
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
-                else
-                    derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+                // do not add Dirichlet BCs flux contributions
+                if (stencil[i] < numDofs)
+                {
+                    if (fluxVarsCache.advectionSwitchFluxSign())
+                        derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] -= tij[i]*up;
+                    else
+                        derivativeMatrices[stencil[i]][conti0EqIdx][pressureIdx] += tij[i]*up;
+                }
             }
         }
     }
