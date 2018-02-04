@@ -1,0 +1,29 @@
+[Grid]
+File = ./single_equi.msh
+DomainMarkers = true
+
+[SpatialParams]
+BottomLayerPermeability = 1e-14
+UpperLayerPermeability = 1e-13
+FracturePermeability = 1e-7
+BottomLayerPorosity = 0.15
+UpperLayerPorosity = 0.2
+FracturePorosity = 0.6
+
+[OutputFile]
+Name = single_reference.txt
+
+[TimeLoop]
+TEnd = 1e8 # [s]
+
+[Problem]
+Name = singlefracture # name passed to the output routines
+OverPressure = 3e5
+BoundaryMoleFrac = 1e-2
+EnableGravity = false # disable gravity
+
+[LinearSolver]
+ResidualReduction = 1e-15
+
+[Vtk]
+AddVelocity = false # mpfa vel output not yet implemented

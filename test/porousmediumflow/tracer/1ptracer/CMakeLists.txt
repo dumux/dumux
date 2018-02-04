@@ -1,3 +1,5 @@
+add_subdirectory(singlefracture)
+
 dune_symlink_to_source_files(FILES "tracer.input")
 
 dune_add_test(NAME test_tracer_sequential
