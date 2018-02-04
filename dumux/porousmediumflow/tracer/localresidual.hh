@@ -206,7 +206,7 @@ public:
     }
 
     template<class PartialDerivativeMatrices, class T = TypeTag>
-    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) != DiscretizationMethods::Box, void>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCTpfa, void>
     addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
                        const Problem& problem,
                        const Element& element,
@@ -241,11 +241,57 @@ public:
         for (int compIdx = 0; compIdx < numComponents; ++compIdx)
         {
             // diffusive term
-            const auto diffDeriv = useMoles ? rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)
-                                            : rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx);
+            const auto diffDeriv = !GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion) ? 0.0
+                                   : (useMoles ? rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)
+                                               : rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx));
 
             derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII + diffDeriv);
             derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ - diffDeriv);
+        }
+    }
+
+    template<class PartialDerivativeMatrices, class T = TypeTag>
+    std::enable_if_t<GET_PROP_VALUE(T, DiscretizationMethod) == DiscretizationMethods::CCMpfa, void>
+    addFluxDerivatives(PartialDerivativeMatrices& derivativeMatrices,
+                       const Problem& problem,
+                       const Element& element,
+                       const FVElementGeometry& fvGeometry,
+                       const ElementVolumeVariables& curElemVolVars,
+                       const ElementFluxVariablesCache& elemFluxVarsCache,
+                       const SubControlVolumeFace& scvf) const
+    {
+        // advective term: we do the same for all tracer components
+        auto rho = [](const VolumeVariables& volVars)
+        { return useMoles ? volVars.molarDensity() : volVars.density(); };
+
+        // the volume flux
+        const auto volFlux = problem.spatialParams().volumeFlux(element, fvGeometry, curElemVolVars, scvf);
+
+        // the upwind weight
+        static const Scalar upwindWeight = getParam<Scalar>("Implicit.UpwindWeight");
+
+        // get the inside and outside volvars
+        const auto& insideVolVars = curElemVolVars[scvf.insideScvIdx()];
+        const auto& outsideVolVars = curElemVolVars[scvf.outsideScvIdx()];
+
+        const auto insideWeight = std::signbit(volFlux) ? (1.0 - upwindWeight) : upwindWeight;
+        const auto outsideWeight = 1.0 - insideWeight;
+        const auto advDerivII = volFlux*rho(insideVolVars)*insideWeight;
+        const auto advDerivIJ = volFlux*rho(outsideVolVars)*outsideWeight;
+
+        // // diffusive term
+        // const auto& fluxCache = elemFluxVarsCache[scvf];
+        // const auto rhoMolar = 0.5*(insideVolVars.molarDensity() + outsideVolVars.molarDensity());
+        //
+        for (int compIdx = 0; compIdx < numComponents; ++compIdx)
+        {
+        //     // diffusive term
+        //     const auto diffDeriv = !GET_PROP_VALUE(TypeTag, EnableMolecularDiffusion) ? 0.0
+        //                            : (useMoles ? rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)
+        //                                        : rhoMolar*fluxCache.diffusionTij(phaseIdx, compIdx)*FluidSystem::molarMass(compIdx));
+        //
+            derivativeMatrices[scvf.insideScvIdx()][compIdx][compIdx] += (advDerivII );//+ diffDeriv);
+            derivativeMatrices[scvf.outsideScvIdx()][compIdx][compIdx] += (advDerivIJ); // - diffDeriv);
         }
     }
 
