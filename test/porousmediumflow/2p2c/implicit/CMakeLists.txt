@@ -1,3 +1,4 @@
+add_subdirectory(mpnccomparison)
 add_input_file_links()
 
 # isothermal tests without caching
