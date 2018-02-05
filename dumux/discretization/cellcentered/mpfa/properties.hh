@@ -127,6 +127,12 @@ private:
         using SubControlVolumeFace = CCMpfaSubControlVolumeFace<GridView>;
         using NodalIndexSet = typename GET_PROP_TYPE(TypeTag, DualGridNodalIndexSet);
 
+        //! State the maximum admissible element stencil size
+        //! Per default, we use high values that are hopefully enough for all cases
+        //! We assume simplex grids where stencils can get quite large but the size is unknown
+        static constexpr int maxElementStencilSize = int(GridView::dimension) == 3 ? 150 :
+                                                     (int(GridView::dimension)<int(GridView::dimensionworld) ? 45 : 15);
+
         //! type definitions depending on the FVGridGeometry itself
         template< class FVGridGeom >
         using MpfaHelper = CCMpfaHelper< FVGridGeom >;

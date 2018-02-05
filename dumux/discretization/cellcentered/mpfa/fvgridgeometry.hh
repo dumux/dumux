@@ -98,9 +98,9 @@ public:
 
     //! export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
-    // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
-    static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
+    static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
@@ -447,9 +447,9 @@ public:
 
     //! export the discretization method this geometry belongs to
     static constexpr DiscretizationMethods discretizationMethod = DiscretizationMethods::CCMpfa;
+
     //! The maximum admissible stencil size (used for static memory allocation during assembly)
-    // TODO: Re-implement and obtain from nodal index set (for now we use a high value)
-    static constexpr int maxElementStencilSize = (dim < dimWorld || dim == 3) ? 45 : 15;
+    static constexpr int maxElementStencilSize = Traits::maxElementStencilSize;
 
     //! Constructor without indicator function for secondary interaction volumes
     //! Per default, we use the secondary IVs at branching points & boundaries
