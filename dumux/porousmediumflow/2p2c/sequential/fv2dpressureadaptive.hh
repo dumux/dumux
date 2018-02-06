@@ -1179,7 +1179,7 @@ int FV2dPressure2P2CAdaptive<TypeTag>::transmissibilityAdapter_(const Intersecti
     /**** end find 4 faces **/
 
     // create Interaction Volume object
-    FVMPFALInteractionVolume<TypeTag> interactionVolume;
+    FVMPFALInteractionVolume<TypeTag> interactionVolume(problem().gridView().grid());
 
     interactionVolume.setCenterPosition(corner1234);
 
