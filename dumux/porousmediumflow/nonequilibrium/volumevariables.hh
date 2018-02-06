@@ -34,8 +34,6 @@
 #include <dumux/porousmediumflow/volumevariables.hh>
 
 #include <dumux/material/fluidstates/nonequilibrium.hh>
-#include <dumux/material/constraintsolvers/fluidsystemcomputefromreferencephase.hh>
-#include <dumux/material/constraintsolvers/fluidsystemconstraintsolver.hh>
 #include <dumux/material/constraintsolvers/misciblemultiphasecomposition.hh>
 
 namespace Dumux
@@ -304,8 +302,7 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using AwnSurfaceParams = typename  AwnSurface::Params;
 
     using DimLessNum = DimensionlessNumbers<Scalar>;
-    //TODO: write a good constraint solver which does that right
-    using ConstraintSolver = FluidSystemConstraintSolver<Scalar, FluidSystem>;
+    using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 public:
     /*!
      * \brief Updates the volume specific interfacial area [m^2 / m^3] between the phases.
@@ -533,7 +530,7 @@ class NonEquilibriumVolumeVariablesImplementation<TypeTag, true/*enableChemicalN
     using AnsSurface = typename GET_PROP_TYPE(TypeTag, AnsSurface);
     using AnsSurfaceParams = typename  AnsSurface::Params;
 
-    using ConstraintSolver = Dumux::FluidSystemConstraintSolver<Scalar, FluidSystem>;
+    using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
 
 public:

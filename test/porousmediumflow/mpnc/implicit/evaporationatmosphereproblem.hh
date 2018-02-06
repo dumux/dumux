@@ -133,6 +133,7 @@ class EvaporationAtmosphereProblem: public PorousMediumFlowProblem<TypeTag>
     enum { numEnergyEqSolid = GET_PROP_VALUE(TypeTag, NumEnergyEqSolid)};
 
     static constexpr bool enableChemicalNonEquilibrium = GET_PROP_VALUE(TypeTag, EnableChemicalNonEquilibrium);
+    using ConstraintSolver = MiscibleMultiPhaseComposition<Scalar, FluidSystem>;
 
     // formulations
     enum {
@@ -269,7 +270,10 @@ public:
         fluidState.setTemperature(wPhaseIdx, TInitial_ ); // this value is a good one, TInject does not work
 
         // This solves the system of equations defining x=x(p,T)
-        FluidSystem::calculateEquilibriumMoleFractions(fluidState, dummyCache) ;
+        ConstraintSolver::solve(fluidState,
+                                dummyCache,
+                                /*setViscosity=*/false,
+                                /*setEnthalpy=*/false) ;
 
         // Now let's make the air phase less than fully saturated with water
         fluidState.setMoleFraction(nPhaseIdx, wCompIdx, fluidState.moleFraction(nPhaseIdx, wCompIdx)*percentOfEquil_ ) ;
@@ -418,7 +422,10 @@ private:
 
          // This solves the system of equations defining x=x(p,T)
         ParameterCache dummyCache;
-        FluidSystem::calculateEquilibriumMoleFractions(equilibriumFluidState, dummyCache) ;
+        ConstraintSolver::solve(equilibriumFluidState,
+                                dummyCache,
+                                /*setViscosity=*/false,
+                                /*setEnthalpy=*/false) ;
 
         FluidState dryFluidState(equilibriumFluidState);
         // Now let's make the air phase less than fully saturated with vapor
