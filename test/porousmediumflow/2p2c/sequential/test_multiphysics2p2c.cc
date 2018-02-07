@@ -45,7 +45,7 @@ void usage(const char *progname, const std::string &errorMsg = "")
 int main(int argc, char** argv)
 {
     try {
-        using TypeTag = TTAG(TestMultTwoPTwoCProblem);
+        using TypeTag = TTAG(TestMultTwoPTwoCTypeTag);
         using Grid = GET_PROP_TYPE(TypeTag, Grid);
         using Problem = GET_PROP_TYPE(TypeTag, Problem);
         using TimeManager = GET_PROP_TYPE(TypeTag, TimeManager);

@@ -11,7 +11,7 @@ dune_symlink_to_source_files(FILES "tubesconvergencetest.py")
 # isothermal tests
 dune_add_test(NAME test_1pcctpfa
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
@@ -20,7 +20,7 @@ dune_add_test(NAME test_1pcctpfa
 
 dune_add_test(NAME test_1pccmpfa
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCMpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestcc-reference.vtu
@@ -29,7 +29,7 @@ dune_add_test(NAME test_1pccmpfa
 
 dune_add_test(NAME test_1pbox
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePTestBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/1ptestbox-reference.vtu
@@ -39,13 +39,13 @@ dune_add_test(NAME test_1pbox
 # a gstat test (becaue it's a random permeability field we can't test against a reference solution)
 dune_add_test(NAME test_1pwithgstat
               SOURCES test_1pfv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePTestCCTpfaTypeTag
               CMAKE_GUARD HAVE_GSTAT)
 
 # non-isothermal tests
 dune_add_test(NAME test_1pnibox_conduction
               SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconduction-reference.vtu
@@ -55,7 +55,7 @@ dune_add_test(NAME test_1pnibox_conduction
 
 dune_add_test(NAME test_1pnibox_convection
               SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/1pniboxconvection-reference.vtu
@@ -65,7 +65,7 @@ dune_add_test(NAME test_1pnibox_convection
 
 dune_add_test(NAME test_1pnicctpfa_conduction
               SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCTpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconduction-reference.vtu
@@ -75,7 +75,7 @@ dune_add_test(NAME test_1pnicctpfa_conduction
 
 dune_add_test(NAME test_1pnicctpfa_convection
               SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCTpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCTpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/1pniccconvection-reference.vtu
@@ -84,7 +84,7 @@ dune_add_test(NAME test_1pnicctpfa_convection
 
 dune_add_test(NAME test_1pniccmpfa_conduction
               SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConductionCCMpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconduction-reference.vtu
@@ -93,7 +93,7 @@ dune_add_test(NAME test_1pniccmpfa_conduction
 
 dune_add_test(NAME test_1pniccmpfa_convection
               SOURCES test_1pnifv.cc
-              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCMpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=OnePNIConvectionCCMpfaTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/ccmpfa1pniconvection-reference.vtu
@@ -103,14 +103,14 @@ dune_add_test(NAME test_1pniccmpfa_convection
 # dim < dimWorld tests with Dune::Foamgrid<1,3>
 dune_add_test(NAME test_1pcctpfa_network1d3d
               SOURCES test_1pfv_network1d3d.cc
-              COMPILE_DEFINITIONS TYPETAG=TubesTestCCTpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=TubesTestCCTpfaTypeTag
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ./tubesconvergencetest.py
               CMD_ARGS test_1pcctpfa_network1d3d test_1pfv_network1d3d.input -Problem.Name test_1pcctpfa_network1d3d)
 
 dune_add_test(NAME test_1pbox_network1d3d
               SOURCES test_1pfv_network1d3d.cc
-              COMPILE_DEFINITIONS TYPETAG=TubesTestBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=TubesTestBoxTypeTag
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ./tubesconvergencetest.py
               CMD_ARGS test_1pbox_network1d3d test_1pfv_network1d3d.input -Problem.Name test_1pbox_network1d3d)
@@ -118,7 +118,7 @@ dune_add_test(NAME test_1pbox_network1d3d
 # dim < dimWorld tests with Dune::Foamgrid<2,3>
 dune_add_test(NAME test_1pbox_fracture2d3d
               SOURCES test_1pfv_fracture2d3d.cc
-              COMPILE_DEFINITIONS TYPETAG=FractureBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=FractureBoxTypeTag
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -128,7 +128,7 @@ dune_add_test(NAME test_1pbox_fracture2d3d
 
 dune_add_test(NAME test_1pcctpfa_fracture2d3d
               SOURCES test_1pfv_fracture2d3d.cc
-              COMPILE_DEFINITIONS TYPETAG=FractureCCTpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=FractureCCTpfaTypeTag
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
@@ -138,7 +138,7 @@ dune_add_test(NAME test_1pcctpfa_fracture2d3d
 
 dune_add_test(NAME test_1pccmpfa_fracture2d3d
               SOURCES test_1pfv_fracture2d3d.cc
-              COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaProblem
+              COMPILE_DEFINITIONS TYPETAG=FractureCCMpfaTypeTag
               CMAKE_GUARD dune-foamgrid_FOUND
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy

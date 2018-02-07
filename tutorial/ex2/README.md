@@ -121,13 +121,13 @@ Most types in DuMuX are properties that can be changed just like the material la
 
 ```c++
 // note that every property struct knows about TypeTag
-SET_PROP(Injection2p2cProblem, LocalResidual)
+SET_PROP(Injection2p2cTypeTag, LocalResidual)
 {
     using type = MyCompositionalLocalResidual<TypeTag>;
 };
 
 // or using the convenience macro
-SET_TYPE_PROP(Injection2p2cProblem, LocalResidual,
+SET_TYPE_PROP(Injection2p2cTypeTag, LocalResidual,
               MyCompositionalLocalResidual<TypeTag>);
 ```
 

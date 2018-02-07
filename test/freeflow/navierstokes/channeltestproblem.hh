@@ -40,13 +40,13 @@ class ChannelTestProblem;
 namespace Properties
 {
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(ChannelTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 #else
-NEW_TYPE_TAG(ChannelTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNI));
+NEW_TYPE_TAG(ChannelTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNI));
 #endif
 
 // the fluid system
-SET_PROP(ChannelTestProblem, FluidSystem)
+SET_PROP(ChannelTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
 #if NONISOTHERMAL
@@ -57,21 +57,21 @@ SET_PROP(ChannelTestProblem, FluidSystem)
 };
 
 // Set the grid type
-SET_TYPE_PROP(ChannelTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ChannelTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ChannelTestProblem, Problem, Dumux::ChannelTestProblem<TypeTag> );
+SET_TYPE_PROP(ChannelTestTypeTag, Problem, Dumux::ChannelTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(ChannelTestTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(ChannelTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelTestProblem, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(ChannelTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(ChannelTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 
 #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(ChannelTestTypeTag, EnableInertiaTerms, true);
 #else
-SET_BOOL_PROP(ChannelTestProblem, EnableInertiaTerms, false);
+SET_BOOL_PROP(ChannelTestTypeTag, EnableInertiaTerms, false);
 #endif
 }
 

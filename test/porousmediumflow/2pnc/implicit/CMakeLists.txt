@@ -21,7 +21,7 @@ dune_add_test(NAME test_2pnc_tpfa
 
 dune_add_test(NAME test_cc2pnc_maxwellstefan
               SOURCES test_cc2pnc_diffusion.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionProblem DIFFUSIONTYPE=MaxwellStefansLaw<TypeTag>
+              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionTypeTag DIFFUSIONTYPE=MaxwellStefansLaw<TypeTag>
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/2pncdiffusioncc-reference.vtu
@@ -30,7 +30,7 @@ dune_add_test(NAME test_cc2pnc_maxwellstefan
 
 dune_add_test(NAME test_cc2pnc_fickslaw
               SOURCES test_cc2pnc_diffusion.cc
-              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionProblem DIFFUSIONTYPE=FicksLaw<TypeTag>
+              COMPILE_DEFINITIONS TYPETAG=TwoPNCDiffusionTypeTag DIFFUSIONTYPE=FicksLaw<TypeTag>
               COMMAND  ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/2pncdiffusioncc-reference.vtu

@@ -51,15 +51,15 @@ class RichardsLensProblem;
 // Specify the properties for the lens problem
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(Richards, RichardsLensSpatialParams));
-NEW_TYPE_TAG(RichardsLensBoxProblem, INHERITS_FROM(BoxModel, RichardsLensProblem));
-NEW_TYPE_TAG(RichardsLensCCProblem, INHERITS_FROM(CCTpfaModel, RichardsLensProblem));
+NEW_TYPE_TAG(RichardsLensTypeTag, INHERITS_FROM(Richards, RichardsLensSpatialParams));
+NEW_TYPE_TAG(RichardsLensBoxTypeTag, INHERITS_FROM(BoxModel, RichardsLensTypeTag));
+NEW_TYPE_TAG(RichardsLensCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsLensTypeTag));
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsLensTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsLensProblem, Problem, RichardsLensProblem<TypeTag>);
+SET_TYPE_PROP(RichardsLensTypeTag, Problem, RichardsLensProblem<TypeTag>);
 } // end namespace Dumux
 
 /*!

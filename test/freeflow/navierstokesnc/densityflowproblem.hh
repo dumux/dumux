@@ -41,15 +41,15 @@ class DensityDrivenFlowProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DensityDrivenFlowProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(DensityDrivenFlowTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 
 NEW_PROP_TAG(FluidSystem);
 
 // Select the fluid system
-SET_TYPE_PROP(DensityDrivenFlowProblem, FluidSystem,
+SET_TYPE_PROP(DensityDrivenFlowTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, false*/>);
 
-SET_PROP(DensityDrivenFlowProblem, PhaseIdx)
+SET_PROP(DensityDrivenFlowTypeTag, PhaseIdx)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -57,25 +57,25 @@ public:
     static constexpr int value = FluidSystem::wPhaseIdx;
 };
 
-SET_INT_PROP(DensityDrivenFlowProblem, ReplaceCompEqIdx, 0);
+SET_INT_PROP(DensityDrivenFlowTypeTag, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(DensityDrivenFlowProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DensityDrivenFlowTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(DensityDrivenFlowProblem, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
+SET_TYPE_PROP(DensityDrivenFlowTypeTag, Problem, Dumux::DensityDrivenFlowProblem<TypeTag> );
 
-SET_BOOL_PROP(DensityDrivenFlowProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(DensityDrivenFlowProblem, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(DensityDrivenFlowProblem, UseMoles, true);
+SET_BOOL_PROP(DensityDrivenFlowTypeTag, UseMoles, true);
 
 #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(DensityDrivenFlowProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableInertiaTerms, true);
 #else
-SET_BOOL_PROP(DensityDrivenFlowProblem, EnableInertiaTerms, false);
+SET_BOOL_PROP(DensityDrivenFlowTypeTag, EnableInertiaTerms, false);
 #endif
 }
 

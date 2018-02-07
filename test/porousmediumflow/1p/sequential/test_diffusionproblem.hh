@@ -51,14 +51,14 @@ class TestDiffusionProblem;
 namespace Properties
 {
 //// set the types for the 2PFA FV method
-NEW_TYPE_TAG(FVVelocity2PTestProblem, INHERITS_FROM(FVPressureTwoP, TestDiffusionSpatialParams));
-SET_TYPE_PROP(FVVelocity2PTestProblem, Problem, TestDiffusionProblem<TypeTag>);
+NEW_TYPE_TAG(FVVelocity2PTestTypeTag, INHERITS_FROM(FVPressureTwoP, TestDiffusionSpatialParams));
+SET_TYPE_PROP(FVVelocity2PTestTypeTag, Problem, TestDiffusionProblem<TypeTag>);
 
 // Set the grid type
-SET_TYPE_PROP(FVVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(FVVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the fluid system
-SET_PROP(FVVelocity2PTestProblem, FluidSystem)
+SET_PROP(FVVelocity2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
@@ -67,15 +67,15 @@ SET_PROP(FVVelocity2PTestProblem, FluidSystem)
 };
 
 // set the types for the MPFA-O FV method
-NEW_TYPE_TAG(FVMPFAOVelocity2PTestProblem, INHERITS_FROM(FvMpfaO2dPressureTwoP, TestDiffusionSpatialParams));
-//SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, ILUnBiCGSTABBackend);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, LinearSolver, SSORBiCGSTABBackend);
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Problem, TestDiffusionProblem<TypeTag>);
+NEW_TYPE_TAG(FVMPFAOVelocity2PTestTypeTag, INHERITS_FROM(FvMpfaO2dPressureTwoP, TestDiffusionSpatialParams));
+//SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, LinearSolver, ILUnBiCGSTABBackend);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, LinearSolver, SSORBiCGSTABBackend);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Problem, TestDiffusionProblem<TypeTag>);
 // Set the grid type
-SET_TYPE_PROP(FVMPFAOVelocity2PTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(FVMPFAOVelocity2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the fluid system
-SET_PROP(FVMPFAOVelocity2PTestProblem, FluidSystem)
+SET_PROP(FVMPFAOVelocity2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
@@ -84,14 +84,14 @@ SET_PROP(FVMPFAOVelocity2PTestProblem, FluidSystem)
 };
 
 // set the types for the mimetic FD method
-NEW_TYPE_TAG(MimeticPressure2PTestProblem, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
-SET_TYPE_PROP(MimeticPressure2PTestProblem, Problem, TestDiffusionProblem<TypeTag>);
+NEW_TYPE_TAG(MimeticPressure2PTestTypeTag, INHERITS_FROM(MimeticPressureTwoP, TestDiffusionSpatialParams));
+SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Problem, TestDiffusionProblem<TypeTag>);
 
 // Set the grid type
-SET_TYPE_PROP(MimeticPressure2PTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(MimeticPressure2PTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the fluid system
-SET_PROP(MimeticPressure2PTestProblem, FluidSystem)
+SET_PROP(MimeticPressure2PTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;

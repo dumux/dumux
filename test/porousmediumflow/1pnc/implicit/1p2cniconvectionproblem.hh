@@ -43,31 +43,31 @@ class OnePTwoCNIConvectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCNIConvectionProblem, INHERITS_FROM(OnePNCNI));
-NEW_TYPE_TAG(OnePTwoCNIConvectionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConvectionProblem));
-NEW_TYPE_TAG(OnePTwoCNIConvectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConvectionProblem));
-NEW_TYPE_TAG(OnePTwoCNIConvectionBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCNIConvectionProblem));
+NEW_TYPE_TAG(OnePTwoCNIConvectionTypeTag, INHERITS_FROM(OnePNCNI));
+NEW_TYPE_TAG(OnePTwoCNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConvectionTypeTag));
+NEW_TYPE_TAG(OnePTwoCNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConvectionTypeTag));
+NEW_TYPE_TAG(OnePTwoCNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, OnePTwoCNIConvectionTypeTag));
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCNIConvectionProblem, Problem, OnePTwoCNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, Problem, OnePTwoCNIConvectionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCNIConvectionProblem,
+SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCNIConvectionProblem, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConvectionTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCNIConvectionProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCNIConvectionTypeTag, UseMoles, true);
 }
 
 

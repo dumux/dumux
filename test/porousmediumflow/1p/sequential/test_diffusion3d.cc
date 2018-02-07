@@ -68,7 +68,7 @@ int start(int argc,
     // parse the command line arguments and input file
     ////////////////////////////////////////////////////////////
 
-    using TypeTag = TTAG(DiffusionTestProblem);
+    using TypeTag = TTAG(DiffusionTestTypeTag);
 
     auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TypeTag, ModelDefaultParameters)::defaultParams(p);};
     Parameters::init(argc, argv, defaultParams, usage);
@@ -111,7 +111,7 @@ int start(int argc,
     // finite volume TPFA test problem
     /////////////////////////////////////////////////////////////////////
 
-    using FVTypeTag = TTAG(FVTestProblem);
+    using FVTypeTag = TTAG(FVTestTypeTag);
     using FVProblem = GET_PROP_TYPE(FVTypeTag, Problem);
     auto fvDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(FVTypeTag, ModelDefaultParameters)::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, fvDefaultParams, usage);
@@ -139,7 +139,7 @@ int start(int argc,
     // finite volume MPFA-L test problem
     /////////////////////////////////////////////////////////////////////
 
-    using MPFALTypeTag = TTAG(FVMPFAL3DTestProblem);
+    using MPFALTypeTag = TTAG(FVMPFAL3DTestTypeTag);
     using MPFALProblem = GET_PROP_TYPE(MPFALTypeTag, Problem);
     auto mpfalDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MPFALTypeTag, ModelDefaultParameters)::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, mpfalDefaultParams, usage);
@@ -167,7 +167,7 @@ int start(int argc,
     // mimetic finite difference test problem
     /////////////////////////////////////////////////////////////////////
 
-    using MimeticTypeTag = TTAG(MimeticTestProblem);
+    using MimeticTypeTag = TTAG(MimeticTestTypeTag);
     using MimeticProblem = GET_PROP_TYPE(MimeticTypeTag, Problem);
     auto mimeticDefaultParams = [] (Dune::ParameterTree& p) {GET_PROP(MimeticTypeTag, ModelDefaultParameters)::defaultParams(p);};
     Dumux::Parameters::init(argc, argv, mimeticDefaultParams, usage);

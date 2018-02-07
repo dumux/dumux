@@ -45,27 +45,27 @@ class OnePTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(IncompressibleTestProblem, INHERITS_FROM(CCTpfaModel, OneP));
+NEW_TYPE_TAG(IncompressibleTestTypeTag, INHERITS_FROM(CCTpfaModel, OneP));
 
 // Set the grid type
-SET_TYPE_PROP(IncompressibleTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(IncompressibleTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem type
-SET_TYPE_PROP(IncompressibleTestProblem, Problem, OnePTestProblem<TypeTag>);
-SET_TYPE_PROP(IncompressibleTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag>);
-SET_TYPE_PROP(IncompressibleTestProblem, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
+SET_TYPE_PROP(IncompressibleTestTypeTag, Problem, OnePTestProblem<TypeTag>);
+SET_TYPE_PROP(IncompressibleTestTypeTag, SpatialParams, OnePTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(IncompressibleTestTypeTag, LocalResidual, OnePIncompressibleLocalResidual<TypeTag>);
 
 // the fluid system
-SET_PROP(IncompressibleTestProblem, FluidSystem)
+SET_PROP(IncompressibleTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
 };
 
 // Enable caching
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(IncompressibleTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(IncompressibleTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(IncompressibleTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(IncompressibleTestTypeTag, EnableFVGridGeometryCache, true);
 
 } // end namespace Properties
 

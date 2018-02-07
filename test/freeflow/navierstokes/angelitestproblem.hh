@@ -38,10 +38,10 @@ class AngeliTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(AngeliTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(AngeliTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(AngeliTestProblem, FluidSystem)
+SET_PROP(AngeliTestTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -50,17 +50,17 @@ public:
 };
 
 // Set the grid type
-SET_TYPE_PROP(AngeliTestProblem, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(AngeliTestTypeTag, Grid, Dune::YaspGrid<2, Dune::EquidistantOffsetCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(AngeliTestProblem, Problem, Dumux::AngeliTestProblem<TypeTag> );
+SET_TYPE_PROP(AngeliTestTypeTag, Problem, Dumux::AngeliTestProblem<TypeTag> );
 
-SET_BOOL_PROP(AngeliTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(AngeliTestTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(AngeliTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(AngeliTestProblem, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(AngeliTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(AngeliTestTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(AngeliTestProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(AngeliTestTypeTag, EnableInertiaTerms, true);
 }
 
 /*!

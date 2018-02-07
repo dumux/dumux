@@ -46,21 +46,21 @@ class TestDiffusion3DProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(DiffusionTestProblem, INHERITS_FROM(SequentialTwoP, TestDiffusionSpatialParams3d));
+NEW_TYPE_TAG(DiffusionTestTypeTag, INHERITS_FROM(SequentialTwoP, TestDiffusionSpatialParams3d));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(DiffusionTestTypeTag, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
-SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::UGGrid<3>);
+SET_TYPE_PROP(DiffusionTestTypeTag, Grid, Dune::UGGrid<3>);
 #else
-SET_TYPE_PROP(DiffusionTestProblem, Grid, Dune::YaspGrid<3>);
+SET_TYPE_PROP(DiffusionTestTypeTag, Grid, Dune::YaspGrid<3>);
 #endif
 
-SET_TYPE_PROP(DiffusionTestProblem, Problem, TestDiffusion3DProblem<TypeTag>);
+SET_TYPE_PROP(DiffusionTestTypeTag, Problem, TestDiffusion3DProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(DiffusionTestProblem, FluidSystem)
+SET_PROP(DiffusionTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
@@ -69,23 +69,23 @@ SET_PROP(DiffusionTestProblem, FluidSystem)
 };
 
 #if HAVE_SUPERLU
-SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, SuperLUBackend);
+SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, SuperLUBackend);
 #else
-SET_TYPE_PROP(DiffusionTestProblem, LinearSolver, ILUnRestartedGMResBackend);
-SET_INT_PROP(DiffusionTestProblem, LinearSolverGMResRestart, 80);
-SET_INT_PROP(DiffusionTestProblem, LinearSolverMaxIterations, 1000);
-SET_SCALAR_PROP(DiffusionTestProblem, LinearSolverResidualReduction, 1e-8);
-SET_SCALAR_PROP(DiffusionTestProblem, LinearSolverPreconditionerIterations, 1);
+SET_TYPE_PROP(DiffusionTestTypeTag, LinearSolver, ILUnRestartedGMResBackend);
+SET_INT_PROP(DiffusionTestTypeTag, LinearSolverGMResRestart, 80);
+SET_INT_PROP(DiffusionTestTypeTag, LinearSolverMaxIterations, 1000);
+SET_SCALAR_PROP(DiffusionTestTypeTag, LinearSolverResidualReduction, 1e-8);
+SET_SCALAR_PROP(DiffusionTestTypeTag, LinearSolverPreconditionerIterations, 1);
 #endif
 
 // set the types for the 2PFA FV method
-NEW_TYPE_TAG(FVTestProblem, INHERITS_FROM(FVPressureTwoP, DiffusionTestProblem));
+NEW_TYPE_TAG(FVTestTypeTag, INHERITS_FROM(FVPressureTwoP, DiffusionTestTypeTag));
 
 // set the types for the MPFA-L FV method
-NEW_TYPE_TAG(FVMPFAL3DTestProblem, INHERITS_FROM(FvMpfaL3dPressureTwoP, DiffusionTestProblem));
+NEW_TYPE_TAG(FVMPFAL3DTestTypeTag, INHERITS_FROM(FvMpfaL3dPressureTwoP, DiffusionTestTypeTag));
 
 // set the types for the mimetic FD method
-NEW_TYPE_TAG(MimeticTestProblem, INHERITS_FROM(MimeticPressureTwoP, DiffusionTestProblem));
+NEW_TYPE_TAG(MimeticTestTypeTag, INHERITS_FROM(MimeticPressureTwoP, DiffusionTestTypeTag));
 }
 
 /*!

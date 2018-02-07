@@ -45,23 +45,23 @@ template <class TypeTag> class ExerciseThreeProblemTwoPTwoC;
 
 namespace Properties {
 // Create a new type tag for the problem
-NEW_TYPE_TAG(ExerciseThreeProblemTwoPTwoC, INHERITS_FROM(TwoPTwoC, ExerciseThreeSpatialParams));
-NEW_TYPE_TAG(ExerciseThreeProblemBoxTwoPTwoC, INHERITS_FROM(BoxModel, ExerciseThreeProblemTwoPTwoC));
+NEW_TYPE_TAG(ExerciseThreeTwoPTwoCTypeTag, INHERITS_FROM(TwoPTwoC, ExerciseThreeSpatialParams));
+NEW_TYPE_TAG(ExerciseThreeBoxTwoPTwoCTypeTag, INHERITS_FROM(BoxModel, ExerciseThreeTwoPTwoCTypeTag));
 
 // Set the "Problem" property
-SET_TYPE_PROP(ExerciseThreeProblemTwoPTwoC, Problem, ExerciseThreeProblemTwoPTwoC<TypeTag>);
+SET_TYPE_PROP(ExerciseThreeTwoPTwoCTypeTag, Problem, ExerciseThreeProblemTwoPTwoC<TypeTag>);
 
 // Set grid and the grid creator to be used
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(ExerciseThreeProblemTwoPTwoC, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(ExerciseThreeTwoPTwoCTypeTag, Grid, Dune::ALUGrid</*dim=*/2, 2, Dune::cube, Dune::nonconforming>);
 #elif HAVE_UG
-SET_TYPE_PROP(ExerciseThreeProblemTwoPTwoC, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(ExerciseThreeTwoPTwoCTypeTag, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(ExerciseThreeProblemTwoPTwoC, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ExerciseThreeTwoPTwoCTypeTag, Grid, Dune::YaspGrid<2>);
 #endif // HAVE_DUNE_ALUGRID
 
  // The fluid system property
-SET_PROP(ExerciseThreeProblemTwoPTwoC, FluidSystem)
+SET_PROP(ExerciseThreeTwoPTwoCTypeTag, FluidSystem)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);

@@ -58,15 +58,15 @@ class RichardsAnalyticalProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsAnalyticalProblem, INHERITS_FROM(Richards, RichardsAnalyticalSpatialParams));
-NEW_TYPE_TAG(RichardsAnalyticalBoxProblem, INHERITS_FROM(BoxModel, RichardsAnalyticalProblem));
-NEW_TYPE_TAG(RichardsAnalyticalCCProblem, INHERITS_FROM(CCTpfaModel, RichardsAnalyticalProblem));
+NEW_TYPE_TAG(RichardsAnalyticalTypeTag, INHERITS_FROM(Richards, RichardsAnalyticalSpatialParams));
+NEW_TYPE_TAG(RichardsAnalyticalBoxTypeTag, INHERITS_FROM(BoxModel, RichardsAnalyticalTypeTag));
+NEW_TYPE_TAG(RichardsAnalyticalCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsAnalyticalTypeTag));
 
 // Use 2d YaspGrid
-SET_TYPE_PROP(RichardsAnalyticalProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsAnalyticalTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the physical problem to be solved
-SET_TYPE_PROP(RichardsAnalyticalProblem, Problem, RichardsAnalyticalProblem<TypeTag>);
+SET_TYPE_PROP(RichardsAnalyticalTypeTag, Problem, RichardsAnalyticalProblem<TypeTag>);
 } // end namespace Dumux
 
 /*!

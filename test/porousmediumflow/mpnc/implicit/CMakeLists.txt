@@ -3,7 +3,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_mpnc_box
               SOURCES test_mpnc_obstacle_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=ObstacleBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=ObstacleBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/obstaclebox-reference.vtu
@@ -12,7 +12,7 @@ dune_add_test(NAME test_mpnc_box
 
 dune_add_test(NAME test_mpnc_tpfa
               SOURCES test_mpnc_obstacle_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=ObstacleCCProblem
+              COMPILE_DEFINITIONS TYPETAG=ObstacleCCTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/obstaclecc-reference.vtu
@@ -21,7 +21,7 @@ dune_add_test(NAME test_mpnc_tpfa
 # build target for the full kinetic test problem
 dune_add_test(NAME test_mpnckinetic_box
               SOURCES test_boxmpnckinetic.cc
-              COMPILE_DEFINITIONS TYPETAG=EvaporationAtmosphereBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=EvaporationAtmosphereBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/evaporationatmosphere-reference.vtu
@@ -32,7 +32,7 @@ dune_add_test(NAME test_mpnckinetic_box
 dune_add_test(COMPILE_ONLY # since it currently fails miserably with very different results on different machines
               NAME test_mpncthermalnonequil_box
               SOURCES test_boxmpncthermalnonequil.cc
-              COMPILE_DEFINITIONS TYPETAG=CombustionProblemOneComponentBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=CombustionOneComponentBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/combustion-reference.vtp

@@ -43,31 +43,31 @@ class OnePTwoCNIConductionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTwoCNIConductionProblem, INHERITS_FROM(OnePNCNI));
-NEW_TYPE_TAG(OnePTwoCNIConductionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConductionProblem));
-NEW_TYPE_TAG(OnePTwoCNIConductionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConductionProblem));
-NEW_TYPE_TAG(OnePTwoCNIConductionBoxProblem, INHERITS_FROM(BoxModel, OnePTwoCNIConductionProblem));
+NEW_TYPE_TAG(OnePTwoCNIConductionTypeTag, INHERITS_FROM(OnePNCNI));
+NEW_TYPE_TAG(OnePTwoCNIConductionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTwoCNIConductionTypeTag));
+NEW_TYPE_TAG(OnePTwoCNIConductionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTwoCNIConductionTypeTag));
+NEW_TYPE_TAG(OnePTwoCNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, OnePTwoCNIConductionTypeTag));
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(OnePTwoCNIConductionProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(OnePTwoCNIConductionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(OnePTwoCNIConductionProblem, Problem, OnePTwoCNIConductionProblem<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, Problem, OnePTwoCNIConductionProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(OnePTwoCNIConductionProblem,
+SET_TYPE_PROP(OnePTwoCNIConductionTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), true>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTwoCNIConductionProblem, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePTwoCNIConductionTypeTag, SpatialParams, OnePNCTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(OnePTwoCNIConductionProblem, UseMoles, true);
+SET_BOOL_PROP(OnePTwoCNIConductionTypeTag, UseMoles, true);
 }
 
 

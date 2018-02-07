@@ -90,8 +90,8 @@ int main(int argc, char** argv) try
 
     // define the type tag for this problem
     // TYPETAG is set in CMakeLists.txt as compile time definition
-    // alternatively you could write `using TypeTag = TTAG(ExerciseThreeProblemBoxTwoP);`
-    // then, for the 2p2c problem you have to change this line to `using TypeTag = TTAG(ExerciseThreeProblemBoxTwoP);`
+    // alternatively you could write `using TypeTag = TTAG(ExerciseThreeBoxTwoPTypeTag);`
+    // then, for the 2p2c problem you have to change this line to `using TypeTag = TTAG(ExerciseThreeBoxTwoPTypeTag);`
     // and recompile the executable
     using TypeTag = TTAG(TYPETAG);
 

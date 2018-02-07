@@ -48,22 +48,22 @@ class RichardsNIConductionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsNIConductionProblem, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
-NEW_TYPE_TAG(RichardsNIConductionBoxProblem, INHERITS_FROM(BoxModel, RichardsNIConductionProblem));
-NEW_TYPE_TAG(RichardsNIConductionCCProblem, INHERITS_FROM(CCTpfaModel, RichardsNIConductionProblem));
+NEW_TYPE_TAG(RichardsNIConductionTypeTag, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
+NEW_TYPE_TAG(RichardsNIConductionBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIConductionTypeTag));
+NEW_TYPE_TAG(RichardsNIConductionCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIConductionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIConductionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsNIConductionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIConductionProblem, Problem,
+SET_TYPE_PROP(RichardsNIConductionTypeTag, Problem,
               RichardsNIConductionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConductionProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(RichardsNIConductionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIConductionProblem,
+SET_TYPE_PROP(RichardsNIConductionTypeTag,
               SpatialParams,
               RichardsNISpatialParams<TypeTag>);
 }

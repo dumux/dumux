@@ -64,30 +64,30 @@ class EvaporationAtmosphereProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(EvaporationAtmosphereProblem,
+NEW_TYPE_TAG(EvaporationAtmosphereTypeTag,
              INHERITS_FROM(MPNCNonequil, EvaporationAtmosphereSpatialParams));
-NEW_TYPE_TAG(EvaporationAtmosphereBoxProblem, INHERITS_FROM(BoxModel, EvaporationAtmosphereProblem));
+NEW_TYPE_TAG(EvaporationAtmosphereBoxTypeTag, INHERITS_FROM(BoxModel, EvaporationAtmosphereTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(EvaporationAtmosphereProblem, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Grid, Dune::YaspGrid<2, Dune::TensorProductCoordinates<typename GET_PROP_TYPE(TypeTag, Scalar), 2> >);
 
 // Set the problem property
-SET_TYPE_PROP(EvaporationAtmosphereProblem,
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
               Problem,
               EvaporationAtmosphereProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(EvaporationAtmosphereProblem,
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag,
               FluidSystem,
               FluidSystems::H2ON2Kinetic<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_INT_PROP(EvaporationAtmosphereProblem,
+SET_INT_PROP(EvaporationAtmosphereTypeTag,
              PressureFormulation,
              MpNcPressureFormulation::leastWettingFirst);
 
 // Set the type used for scalar values
-SET_TYPE_PROP(EvaporationAtmosphereProblem, Scalar, double);
+SET_TYPE_PROP(EvaporationAtmosphereTypeTag, Scalar, double);
 }
 
 /*!

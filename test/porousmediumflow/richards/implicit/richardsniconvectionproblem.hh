@@ -50,22 +50,22 @@ class RichardsNIConvectionProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsNIConvectionProblem, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
-NEW_TYPE_TAG(RichardsNIConvectionBoxProblem, INHERITS_FROM(BoxModel, RichardsNIConvectionProblem));
-NEW_TYPE_TAG(RichardsNIConvectionCCProblem, INHERITS_FROM(CCTpfaModel, RichardsNIConvectionProblem));
+NEW_TYPE_TAG(RichardsNIConvectionTypeTag, INHERITS_FROM(RichardsNI, RichardsNISpatialParams));
+NEW_TYPE_TAG(RichardsNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, RichardsNIConvectionTypeTag));
+NEW_TYPE_TAG(RichardsNIConvectionCCTypeTag, INHERITS_FROM(CCTpfaModel, RichardsNIConvectionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(RichardsNIConvectionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(RichardsNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(RichardsNIConvectionProblem, Problem,
+SET_TYPE_PROP(RichardsNIConvectionTypeTag, Problem,
               RichardsNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(RichardsNIConvectionProblem, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(RichardsNIConvectionTypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(RichardsNIConvectionProblem,
+SET_TYPE_PROP(RichardsNIConvectionTypeTag,
               SpatialParams,
               RichardsNISpatialParams<TypeTag>);
 }

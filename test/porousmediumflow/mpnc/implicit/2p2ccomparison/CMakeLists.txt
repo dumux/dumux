@@ -2,7 +2,7 @@ add_input_file_links()
 
 dune_add_test(NAME test_mpnc_comparison_box
               SOURCES test_mpnc_comparison_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=MPNCComparisonBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=MPNCComparisonBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/mpnc_2p2c_box-reference.vtu
@@ -11,7 +11,7 @@ dune_add_test(NAME test_mpnc_comparison_box
 
 dune_add_test(NAME test_mpnc_comparison_tpfa
               SOURCES test_mpnc_comparison_fv.cc
-              COMPILE_DEFINITIONS TYPETAG=MPNCComparisonCCProblem
+              COMPILE_DEFINITIONS TYPETAG=MPNCComparisonCCTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS  --script fuzzy
                         --files ${CMAKE_SOURCE_DIR}/test/references/mpnc_2p2c_tpfa-reference.vtu
