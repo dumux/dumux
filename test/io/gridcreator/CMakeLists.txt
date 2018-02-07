@@ -1,4 +1,5 @@
 add_input_file_links()
+dune_symlink_to_source_files(FILES grids)
 
 dune_add_test(NAME test_gridcreator_gmsh
               SOURCES test_gridcreator_gmsh.cc
