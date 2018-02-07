@@ -39,30 +39,30 @@ class DoneaTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(DoneaTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(DoneaTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(DoneaTestProblem, FluidSystem)
+SET_PROP(DoneaTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(DoneaTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(DoneaTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(DoneaTestProblem, Problem, Dumux::DoneaTestProblem<TypeTag> );
+SET_TYPE_PROP(DoneaTestTypeTag, Problem, Dumux::DoneaTestProblem<TypeTag> );
 
-SET_BOOL_PROP(DoneaTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(DoneaTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(DoneaTestProblem, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableInertiaTerms, true);
 #else
-SET_BOOL_PROP(DoneaTestProblem, EnableInertiaTerms, false);
+SET_BOOL_PROP(DoneaTestTypeTag, EnableInertiaTerms, false);
 #endif
 }
 

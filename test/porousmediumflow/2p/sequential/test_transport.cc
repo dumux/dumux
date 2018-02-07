@@ -60,6 +60,6 @@ void usage(const char *progName, const std::string &errorMsg)
 ////////////////////////
 int main(int argc, char** argv)
 {
-    using ProblemTypeTag = TTAG(TransportTestProblem);
+    using ProblemTypeTag = TTAG(TransportTestTypeTag);
     return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }

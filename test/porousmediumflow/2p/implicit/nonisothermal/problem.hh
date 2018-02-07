@@ -50,18 +50,18 @@ namespace Dumux {
 template <class TypeTag> class InjectionProblem2PNI;
 
 namespace Properties {
-NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(TwoPNI, InjectionSpatialParams));
-NEW_TYPE_TAG(InjectionBoxProblem2PNI, INHERITS_FROM(BoxModel, InjectionProblem2PNI));
-NEW_TYPE_TAG(InjectionCCProblem2PNI, INHERITS_FROM(CCTpfaModel, InjectionProblem2PNI));
+NEW_TYPE_TAG(Injection2PNITypeTag, INHERITS_FROM(TwoPNI, InjectionSpatialParams));
+NEW_TYPE_TAG(InjectionBox2PNITypeTag, INHERITS_FROM(BoxModel, Injection2PNITypeTag));
+NEW_TYPE_TAG(InjectionCC2PNITypeTag, INHERITS_FROM(CCTpfaModel, Injection2PNITypeTag));
 
 // Obtain grid type from COMPILE_DEFINITIONS
-SET_TYPE_PROP(InjectionProblem2PNI, Grid, GRIDTYPE);
+SET_TYPE_PROP(Injection2PNITypeTag, Grid, GRIDTYPE);
 
 // Set the problem property
-SET_TYPE_PROP(InjectionProblem2PNI, Problem, InjectionProblem2PNI<TypeTag>);
+SET_TYPE_PROP(Injection2PNITypeTag, Problem, InjectionProblem2PNI<TypeTag>);
 
 // Use the same fluid system as the 2p2c injection problem
-SET_TYPE_PROP(InjectionProblem2PNI, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
+SET_TYPE_PROP(Injection2PNITypeTag, FluidSystem, FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), false>);
 } // namespace Properties
 
 /*!

@@ -69,14 +69,14 @@ int main(int argc, char** argv)
     using namespace Dumux;
 
     try {
-        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TTAG(ThreeDTwoPTestProblem), ModelDefaultParameters)::defaultParams(p);};
+        auto defaultParams = [] (Dune::ParameterTree& p) {GET_PROP(TTAG(ThreeDTwoPTestTypeTag), ModelDefaultParameters)::defaultParams(p);};
         Parameters::init(argc, argv, defaultParams, usage);
 
         const auto modelType = getParam<std::string>("ModelType", "MPFAL");
 
         if (modelType == "FV")
         {
-            using ProblemTypeTag = TTAG(FVTwoPTestProblem);
+            using ProblemTypeTag = TTAG(FVTwoPTestTypeTag);
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Standard finite volume TPFA model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
         }
         else if (modelType == "FVAdaptive")
         {
-            using ProblemTypeTag = TTAG(FVAdaptiveTwoPTestProblem);
+            using ProblemTypeTag = TTAG(FVAdaptiveTwoPTestTypeTag);
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Adapative finite volume TPFA model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
         }
         else if (modelType == "MPFAL")
         {
-            using ProblemTypeTag = TTAG(MPFALTwoPTestProblem);
+            using ProblemTypeTag = TTAG(MPFALTwoPTestTypeTag);
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Standard finite volume MPFA-L model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
         }
         else if (modelType == "MPFALAdaptive")
         {
-            using ProblemTypeTag = TTAG(MPFALAdaptiveTwoPTestProblem);
+            using ProblemTypeTag = TTAG(MPFALAdaptiveTwoPTestTypeTag);
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Adapative finite volume MPFA-L model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 #if PROBLEM != 1
         else if (modelType == "Mimetic")
         {
-            using ProblemTypeTag = TTAG(MimeticTwoPTestProblem);
+            using ProblemTypeTag = TTAG(MimeticTwoPTestTypeTag);
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Standard mimetic finite difference model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
         }
         else if (modelType == "MimeticAdaptive")
         {
-            using ProblemTypeTag = TTAG(MimeticAdaptiveTwoPTestProblem);
+            using ProblemTypeTag = TTAG(MimeticAdaptiveTwoPTestTypeTag);
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Adaptive mimetic finite difference model" << std::endl;
             std::cout<<"##########################################" << std::endl;
@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 #endif
         else
         {
-            using ProblemTypeTag = TTAG(MPFALTwoPTestProblem);
+            using ProblemTypeTag = TTAG(MPFALTwoPTestTypeTag);
             std::cout<<"##########################################" << std::endl;
             std::cout<<"Unknown model type " << modelType << ", default to" << std::endl;
             std::cout<<"Standard finite volume MPFA-L model" << std::endl;

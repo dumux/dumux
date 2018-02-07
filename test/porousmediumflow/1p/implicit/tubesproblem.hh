@@ -45,21 +45,21 @@ class TubesTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TubesTestProblem, INHERITS_FROM(OneP));
-NEW_TYPE_TAG(TubesTestCCTpfaProblem, INHERITS_FROM(CCTpfaModel, TubesTestProblem));
-NEW_TYPE_TAG(TubesTestBoxProblem, INHERITS_FROM(BoxModel, TubesTestProblem));
+NEW_TYPE_TAG(TubesTestTypeTag, INHERITS_FROM(OneP));
+NEW_TYPE_TAG(TubesTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, TubesTestTypeTag));
+NEW_TYPE_TAG(TubesTestBoxTypeTag, INHERITS_FROM(BoxModel, TubesTestTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(TubesTestProblem, Grid, Dune::FoamGrid<1, 3>);
+SET_TYPE_PROP(TubesTestTypeTag, Grid, Dune::FoamGrid<1, 3>);
 
 // Set the problem property
-SET_TYPE_PROP(TubesTestProblem, Problem, TubesTestProblem<TypeTag>);
+SET_TYPE_PROP(TubesTestTypeTag, Problem, TubesTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TubesTestProblem, SpatialParams, TubesTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(TubesTestTypeTag, SpatialParams, TubesTestSpatialParams<TypeTag>);
 
 // the fluid system
-SET_PROP(TubesTestProblem, FluidSystem)
+SET_PROP(TubesTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;

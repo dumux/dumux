@@ -53,25 +53,25 @@ class ObstacleProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ObstacleProblem, INHERITS_FROM(MPNC, ObstacleSpatialParams));
-NEW_TYPE_TAG(ObstacleBoxProblem, INHERITS_FROM(BoxModel, ObstacleProblem));
-NEW_TYPE_TAG(ObstacleCCProblem, INHERITS_FROM(CCTpfaModel, ObstacleProblem));
+NEW_TYPE_TAG(ObstacleTypeTag, INHERITS_FROM(MPNC, ObstacleSpatialParams));
+NEW_TYPE_TAG(ObstacleBoxTypeTag, INHERITS_FROM(BoxModel, ObstacleTypeTag));
+NEW_TYPE_TAG(ObstacleCCTypeTag, INHERITS_FROM(CCTpfaModel, ObstacleTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(ObstacleProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ObstacleTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ObstacleProblem,
+SET_TYPE_PROP(ObstacleTypeTag,
               Problem,
               ObstacleProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(ObstacleProblem,
+SET_TYPE_PROP(ObstacleTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(ObstacleProblem, Scalar, double);
+SET_TYPE_PROP(ObstacleTypeTag, Scalar, double);
 
 }
 

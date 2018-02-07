@@ -47,27 +47,27 @@ class OnePNIConvectionProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(OnePNIConvectionProblem, INHERITS_FROM(OnePNI));
-NEW_TYPE_TAG(OnePNIConvectionBoxProblem, INHERITS_FROM(BoxModel, OnePNIConvectionProblem));
-NEW_TYPE_TAG(OnePNIConvectionCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePNIConvectionProblem));
-NEW_TYPE_TAG(OnePNIConvectionCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePNIConvectionProblem));
+NEW_TYPE_TAG(OnePNIConvectionTypeTag, INHERITS_FROM(OnePNI));
+NEW_TYPE_TAG(OnePNIConvectionBoxTypeTag, INHERITS_FROM(BoxModel, OnePNIConvectionTypeTag));
+NEW_TYPE_TAG(OnePNIConvectionCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePNIConvectionTypeTag));
+NEW_TYPE_TAG(OnePNIConvectionCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePNIConvectionTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(OnePNIConvectionProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(OnePNIConvectionTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePNIConvectionProblem, Problem, OnePNIConvectionProblem<TypeTag>);
+SET_TYPE_PROP(OnePNIConvectionTypeTag, Problem, OnePNIConvectionProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(OnePNIConvectionProblem, FluidSystem,
+SET_TYPE_PROP(OnePNIConvectionTypeTag, FluidSystem,
               FluidSystems::LiquidPhase<typename GET_PROP_TYPE(TypeTag, Scalar),
                                                            H2O<typename GET_PROP_TYPE(TypeTag, Scalar)> >);
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePNIConvectionProblem, SpatialParams, OnePNISpatialParams<TypeTag>);
+SET_TYPE_PROP(OnePNIConvectionTypeTag, SpatialParams, OnePNISpatialParams<TypeTag>);
 
 // Set the model parameter group for the mpfa case (velocity disabled in input file)
-SET_STRING_PROP(OnePNIConvectionCCMpfaProblem, ModelParameterGroup, "MpfaTest");
+SET_STRING_PROP(OnePNIConvectionCCMpfaTypeTag, ModelParameterGroup, "MpfaTest");
 } // end namespace Properties
 
 

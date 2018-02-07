@@ -42,28 +42,28 @@ class OnePTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(OneP, OnePTestSpatialParams));
-NEW_TYPE_TAG(OnePTestBoxProblem, INHERITS_FROM(BoxModel, OnePTestProblem));
-NEW_TYPE_TAG(OnePTestCCTpfaProblem, INHERITS_FROM(CCTpfaModel, OnePTestProblem));
-NEW_TYPE_TAG(OnePTestCCMpfaProblem, INHERITS_FROM(CCMpfaModel, OnePTestProblem));
+NEW_TYPE_TAG(OnePTestTypeTag, INHERITS_FROM(OneP, OnePTestSpatialParams));
+NEW_TYPE_TAG(OnePTestBoxTypeTag, INHERITS_FROM(BoxModel, OnePTestTypeTag));
+NEW_TYPE_TAG(OnePTestCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, OnePTestTypeTag));
+NEW_TYPE_TAG(OnePTestCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, OnePTestTypeTag));
 
 // the fluid system
-SET_PROP(OnePTestProblem, FluidSystem)
+SET_PROP(OnePTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<2>);
-//SET_TYPE_PROP(OnePTestProblem, Grid, Dune::UGGrid<2>);
-//SET_TYPE_PROP(OnePTestProblem, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::YaspGrid<2>);
+//SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::UGGrid<2>);
+//SET_TYPE_PROP(OnePTestTypeTag, Grid, Dune::ALUGrid<2, 2, Dune::cube, Dune::nonconforming>);
 
 // Set the problem property
-SET_TYPE_PROP(OnePTestProblem, Problem, OnePTestProblem<TypeTag> );
+SET_TYPE_PROP(OnePTestTypeTag, Problem, OnePTestProblem<TypeTag> );
 
 // Set the spatial parameters
-SET_TYPE_PROP(OnePTestProblem, SpatialParams, OnePTestSpatialParams<TypeTag> );
+SET_TYPE_PROP(OnePTestTypeTag, SpatialParams, OnePTestSpatialParams<TypeTag> );
 }
 
 /*!

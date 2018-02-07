@@ -57,20 +57,20 @@ class MPFATwoPTestProblem;
 namespace Properties
 {
 
-NEW_TYPE_TAG(MPFATwoPTestProblem, INHERITS_FROM(SequentialModel, Test2PSpatialParams));
+NEW_TYPE_TAG(MPFATwoPTestTypeTag, INHERITS_FROM(SequentialModel, Test2PSpatialParams));
 
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(MPFATwoPTestTypeTag, Grid, Dune::UGGrid<2>);
 #else
-SET_TYPE_PROP(MPFATwoPTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(MPFATwoPTestTypeTag, Grid, Dune::YaspGrid<2>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(MPFATwoPTestProblem, Problem, MPFATwoPTestProblem<TypeTag>);
+SET_TYPE_PROP(MPFATwoPTestTypeTag, Problem, MPFATwoPTestProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(MPFATwoPTestProblem, FluidSystem)
+SET_PROP(MPFATwoPTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
@@ -83,17 +83,17 @@ SET_PROP(MPFATwoPTestProblem, FluidSystem)
 };
 
 #if PROBLEM == 1
-SET_INT_PROP(MPFATwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pnsw);
+SET_INT_PROP(MPFATwoPTestTypeTag, Formulation, SequentialTwoPCommonIndices::pnsw);
 #endif
 
-SET_TYPE_PROP(MPFATwoPTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
-SET_TYPE_PROP(MPFATwoPTestProblem, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
+SET_TYPE_PROP(MPFATwoPTestTypeTag, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(MPFATwoPTestTypeTag, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
 
-NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
-NEW_TYPE_TAG(FVAdaptiveTwoPTestProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));
-NEW_TYPE_TAG(MPFAOTwoPTestProblem, INHERITS_FROM(FvMpfaO2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
-NEW_TYPE_TAG(MPFALTwoPTestProblem, INHERITS_FROM(FvMpfaL2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestProblem));
-NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestProblem));
+NEW_TYPE_TAG(FVTwoPTestTypeTag, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestTypeTag));
+NEW_TYPE_TAG(FVAdaptiveTwoPTestTypeTag, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestTypeTag));
+NEW_TYPE_TAG(MPFAOTwoPTestTypeTag, INHERITS_FROM(FvMpfaO2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestTypeTag));
+NEW_TYPE_TAG(MPFALTwoPTestTypeTag, INHERITS_FROM(FvMpfaL2dPressureTwoP, FVTransportTwoP, IMPESTwoP, MPFATwoPTestTypeTag));
+NEW_TYPE_TAG(MPFALAdaptiveTwoPTestTypeTag, INHERITS_FROM(FvMpfaL2dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, MPFATwoPTestTypeTag));
 
 }
 

@@ -58,18 +58,18 @@ class Test3D2PProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(ThreeDTwoPTestProblem, INHERITS_FROM(SequentialModel, Test3d2pSpatialParams));
+NEW_TYPE_TAG(ThreeDTwoPTestTypeTag, INHERITS_FROM(SequentialModel, Test3d2pSpatialParams));
 
 // Set the grid type
 #if HAVE_DUNE_ALUGRID
-SET_TYPE_PROP(ThreeDTwoPTestProblem, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
+SET_TYPE_PROP(ThreeDTwoPTestTypeTag, Grid, Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>);
 #endif
 
 // Set the problem property
-SET_TYPE_PROP(ThreeDTwoPTestProblem, Problem, Test3D2PProblem<TypeTag>);
+SET_TYPE_PROP(ThreeDTwoPTestTypeTag, Problem, Test3D2PProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(ThreeDTwoPTestProblem, FluidSystem)
+SET_PROP(ThreeDTwoPTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
@@ -78,11 +78,11 @@ SET_PROP(ThreeDTwoPTestProblem, FluidSystem)
 };
 
 #if PROBLEM == 1
-SET_INT_PROP(ThreeDTwoPTestProblem, Formulation, SequentialTwoPCommonIndices::pnSw);
+SET_INT_PROP(ThreeDTwoPTestTypeTag, Formulation, SequentialTwoPCommonIndices::pnSw);
 #endif
 
 // Set the spatial parameters
-SET_PROP(ThreeDTwoPTestProblem, SpatialParams)
+SET_PROP(ThreeDTwoPTestTypeTag, SpatialParams)
 {
 private:
     using Grid = typename GET_PROP_TYPE(TypeTag, Grid);
@@ -93,17 +93,17 @@ public:
 };
 
 #if PROBLEM == 1
-SET_TYPE_PROP(ThreeDTwoPTestProblem, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
+SET_TYPE_PROP(ThreeDTwoPTestTypeTag, EvalCflFluxFunction, EvalCflFluxCoats<TypeTag>);
 #endif
 
-SET_TYPE_PROP(ThreeDTwoPTestProblem, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
+SET_TYPE_PROP(ThreeDTwoPTestTypeTag, AdaptionIndicator, GridAdaptionIndicator2PLocal<TypeTag>);
 
-NEW_TYPE_TAG(FVTwoPTestProblem, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTestProblem));
-NEW_TYPE_TAG(FVAdaptiveTwoPTestProblem, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTestProblem));
-NEW_TYPE_TAG(MPFALTwoPTestProblem, INHERITS_FROM(FvMpfaL3dPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTestProblem));
-NEW_TYPE_TAG(MPFALAdaptiveTwoPTestProblem, INHERITS_FROM(FvMpfaL3dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTestProblem));
-NEW_TYPE_TAG(MimeticTwoPTestProblem, INHERITS_FROM(MimeticPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTestProblem));
-NEW_TYPE_TAG(MimeticAdaptiveTwoPTestProblem, INHERITS_FROM(MimeticPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTestProblem));
+NEW_TYPE_TAG(FVTwoPTestTypeTag, INHERITS_FROM(FVPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTestTypeTag));
+NEW_TYPE_TAG(FVAdaptiveTwoPTestTypeTag, INHERITS_FROM(FVPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTestTypeTag));
+NEW_TYPE_TAG(MPFALTwoPTestTypeTag, INHERITS_FROM(FvMpfaL3dPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTestTypeTag));
+NEW_TYPE_TAG(MPFALAdaptiveTwoPTestTypeTag, INHERITS_FROM(FvMpfaL3dPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTestTypeTag));
+NEW_TYPE_TAG(MimeticTwoPTestTypeTag, INHERITS_FROM(MimeticPressureTwoP, FVTransportTwoP, IMPESTwoP, ThreeDTwoPTestTypeTag));
+NEW_TYPE_TAG(MimeticAdaptiveTwoPTestTypeTag, INHERITS_FROM(MimeticPressureTwoPAdaptive, FVTransportTwoP, IMPESTwoPAdaptive, ThreeDTwoPTestTypeTag));
 }
 
 /*!

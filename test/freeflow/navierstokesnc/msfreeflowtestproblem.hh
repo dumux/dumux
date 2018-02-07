@@ -43,33 +43,33 @@ class MaxwellStefanNCTestProblem;
 namespace Properties {
 
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(MaxwellStefanNCTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(MaxwellStefanNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 #else
-NEW_TYPE_TAG(MaxwellStefanNCTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
+NEW_TYPE_TAG(MaxwellStefanNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
 #endif
 
 NEW_PROP_TAG(FluidSystem);
 
-SET_INT_PROP(MaxwellStefanNCTestProblem, ReplaceCompEqIdx, 0);
+SET_INT_PROP(MaxwellStefanNCTestTypeTag, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(MaxwellStefanNCTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MaxwellStefanNCTestProblem, Problem, Dumux::MaxwellStefanNCTestProblem<TypeTag> );
+SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, Problem, Dumux::MaxwellStefanNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(MaxwellStefanNCTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(MaxwellStefanNCTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(MaxwellStefanNCTestProblem, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
-SET_BOOL_PROP(MaxwellStefanNCTestProblem, UseMoles, true);
+SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, UseMoles, true);
 
 // #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(MaxwellStefanNCTestProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(MaxwellStefanNCTestTypeTag, EnableInertiaTerms, true);
 
 //! Here we set FicksLaw or MaxwellStefansLaw
-SET_TYPE_PROP(MaxwellStefanNCTestProblem, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
+SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, MolecularDiffusionType, MaxwellStefansLaw<TypeTag>);
 
 
 /*!
@@ -170,7 +170,7 @@ public:
     }
 };
 
-SET_TYPE_PROP(MaxwellStefanNCTestProblem, FluidSystem, MaxwellStefanFluidSystem<TypeTag>);
+SET_TYPE_PROP(MaxwellStefanNCTestTypeTag, FluidSystem, MaxwellStefanFluidSystem<TypeTag>);
 
 } //end namespace Property
 /*!

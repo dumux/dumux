@@ -46,35 +46,35 @@ class CombustionProblemOneComponent;
 
 namespace Properties
 {
-NEW_TYPE_TAG(CombustionProblemOneComponent, INHERITS_FROM(MPNCNonequil, CombustionSpatialParams));
-NEW_TYPE_TAG(CombustionProblemOneComponentBoxProblem, INHERITS_FROM(BoxModel, CombustionProblemOneComponent));
+NEW_TYPE_TAG(CombustionOneComponentTypeTag, INHERITS_FROM(MPNCNonequil, CombustionSpatialParams));
+NEW_TYPE_TAG(CombustionOneComponentBoxTypeTag, INHERITS_FROM(BoxModel, CombustionOneComponentTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(CombustionProblemOneComponent, Grid, Dune::OneDGrid);
+SET_TYPE_PROP(CombustionOneComponentTypeTag, Grid, Dune::OneDGrid);
 
 // Set the problem property
-SET_TYPE_PROP(CombustionProblemOneComponent,
+SET_TYPE_PROP(CombustionOneComponentTypeTag,
                Problem,
                CombustionProblemOneComponent<TypeTag>);
 
-SET_TYPE_PROP(CombustionProblemOneComponent,
+SET_TYPE_PROP(CombustionOneComponentTypeTag,
               FluidSystem,
               FluidSystems::PureWaterSimpleFluidSystem<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 //! Set the default pressure formulation: either pw first or pn first
-SET_INT_PROP(CombustionProblemOneComponent,
+SET_INT_PROP(CombustionOneComponentTypeTag,
         PressureFormulation,
         MpNcPressureFormulation::mostWettingFirst);
 
 // Set the type used for scalar values
-SET_TYPE_PROP(CombustionProblemOneComponent, Scalar, double );
+SET_TYPE_PROP(CombustionOneComponentTypeTag, Scalar, double );
 // quad / double
 
 // Specify whether diffusion is enabled
-SET_BOOL_PROP(CombustionProblemOneComponent, EnableMolecularDiffusion, false);
+SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableMolecularDiffusion, false);
 
 //! Franz Lindners simple lumping
-SET_PROP(CombustionProblemOneComponent, ThermalConductivityModel)
+SET_PROP(CombustionOneComponentTypeTag, ThermalConductivityModel)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -83,7 +83,7 @@ public:
     using type = ThermalConductivitySimpleFluidLumping<TypeTag, Scalar, Indices>;
 };
 
-SET_PROP(CombustionProblemOneComponent, FluidState)
+SET_PROP(CombustionOneComponentTypeTag, FluidState)
 {
 private:
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
@@ -94,12 +94,12 @@ public:
 //#################
 //changes from the default settings which also assume chemical non-equilibrium
 //set the number of energyequations we want to use
-SET_INT_PROP(CombustionProblemOneComponent, NumEnergyEqFluid, 1);
-SET_INT_PROP(CombustionProblemOneComponent, NumEnergyEqSolid, 1);
+SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqFluid, 1);
+SET_INT_PROP(CombustionOneComponentTypeTag, NumEnergyEqSolid, 1);
 
 // by default chemical non equilibrium is enabled in the nonequil model, switch that off here
-SET_BOOL_PROP(CombustionProblemOneComponent, EnableChemicalNonEquilibrium, false);
-SET_INT_PROP(CombustionProblemOneComponent, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)+GET_PROP_VALUE(TypeTag, NumPhases));
+SET_BOOL_PROP(CombustionOneComponentTypeTag, EnableChemicalNonEquilibrium, false);
+SET_INT_PROP(CombustionOneComponentTypeTag, NumEqBalance, GET_PROP_VALUE(TypeTag, NumPhases)+GET_PROP_VALUE(TypeTag, NumPhases));
 //#################
 
 }

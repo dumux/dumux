@@ -44,7 +44,7 @@ In this part of the exercise we will consider a system consisting of two immisci
  Additionally we derive from the _ExerciseThreeSpatialParams_ _TypeTag_ in order to set all the types related to the spatial parameters also for our new _TypeTag_ _ExerciseThreeProblem_. In this case, only one property is set for _ExerciseThreeSpatialParams_ (see lines 43 to 60 in `spatialparams.hh`). Alternatively, we could have defined this also here in the problem without defining a new type tag for the spatial parameters. However, in case you want to define several properties related to the spatial parameters it is good practice to define a separate _TypeTag_ and derive from this, as it is done here.
 
 ```c++
-NEW_TYPE_TAG(ExerciseThreeProblem, INHERITS_FROM(BoxTwoP, ExerciseThreeSpatialParams));
+NEW_TYPE_TAG(ExerciseThreeTypeTag, INHERITS_FROM(BoxTwoP, ExerciseThreeSpatialParams));
 ```
 
 As wetting phase we want to use water and we want to precompute tables on which the properties are then interpolated in order to save computational time. Thus, in a first step we have to include the following headers:
@@ -80,7 +80,7 @@ which creates a _liquid phase_ from a given component. Finally, using all of the
 
 ```c++
 // we use the immiscible fluid system here
-SET_PROP(ExerciseThreeProblem, FluidSystem)
+SET_PROP(ExerciseThreeTypeTag, FluidSystem)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -136,7 +136,7 @@ Uncomment the line for the corresponding executable in the `CMakeLists.txt` file
 ```cmake
 dune_add_test(NAME exercise3_a
               SOURCES exercise3.cc
-              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeProblemBoxTwoP
+              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeBoxTwoPTypeTag
               CMD_ARGS exercise3_a.input)
 ```
 
@@ -173,7 +173,7 @@ The problem file for this part of the exercise is `2p2cproblem.hh`. We now want 
 
 ```c++
 // Create a new type tag for the problem
-NEW_TYPE_TAG(ExerciseThreeProblem, INHERITS_FROM(BoxTwoPTwoC, ExerciseThreeSpatialParams));
+NEW_TYPE_TAG(ExerciseThreeTypeTag, INHERITS_FROM(BoxTwoPTwoC, ExerciseThreeSpatialParams));
 ```
 
 The new fluid system is to be implemented in the file `fluidsystems/h2omycompressiblecomponent.hh`. This is already included in the problem and the fluid system property is set accordingly.
@@ -185,7 +185,7 @@ The new fluid system is to be implemented in the file `fluidsystems/h2omycompres
 
 ```c++
 // The fluid system property
-SET_PROP(ExerciseThreeProblem, FluidSystem)
+SET_PROP(ExerciseThreeTypeTag, FluidSystem)
 {
 private:
    typedef typename GET_PROP_TYPE(TypeTag, Scalar) Scalar;
@@ -215,7 +215,7 @@ Implement this dependency in the _density()_ method in the fluid system. In orde
 ```cmake
 dune_add_test(NAME exercise3_b
               SOURCES exercise3.cc
-              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeProblemBoxTwoPTwoC
+              COMPILE_DEFINITIONS TYPETAG=ExerciseThreeBoxTwoPTwoCTypeTag
               CMD_ARGS exercise3_b.input)
 ```
 

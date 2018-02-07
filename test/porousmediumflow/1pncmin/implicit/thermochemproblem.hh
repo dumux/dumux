@@ -44,28 +44,28 @@ class ThermoChemProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ThermoChemProblem, INHERITS_FROM(OnePNCMinNI, ThermoChemSpatialParams));
-NEW_TYPE_TAG(ThermoChemBoxProblem, INHERITS_FROM(BoxModel, ThermoChemProblem));
+NEW_TYPE_TAG(ThermoChemTypeTag, INHERITS_FROM(OnePNCMinNI, ThermoChemSpatialParams));
+NEW_TYPE_TAG(ThermoChemBoxTypeTag, INHERITS_FROM(BoxModel, ThermoChemTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(ThermoChemProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ThermoChemTypeTag, Grid, Dune::YaspGrid<2>);
 // Set the problem property
-SET_TYPE_PROP(ThermoChemProblem, Problem, ThermoChemProblem<TypeTag>);
+SET_TYPE_PROP(ThermoChemTypeTag, Problem, ThermoChemProblem<TypeTag>);
 // Set fluid configuration
-SET_PROP(ThermoChemProblem, FluidSystem)
+SET_PROP(ThermoChemTypeTag, FluidSystem)
 { /*private:*/
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::ModifiedSteamN2CaO2H2<Scalar>;
 };
 
 // // Enable velocity output
-// SET_BOOL_PROP(ThermoChemProblem, VtkAddVelocity, false);
+// SET_BOOL_PROP(ThermoChemTypeTag, VtkAddVelocity, false);
 
 // Set the spatial parameters
-SET_TYPE_PROP(ThermoChemProblem, SpatialParams, ThermoChemSpatialParams<TypeTag>);
+SET_TYPE_PROP(ThermoChemTypeTag, SpatialParams, ThermoChemSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(ThermoChemProblem, UseMoles, true);
+SET_BOOL_PROP(ThermoChemTypeTag, UseMoles, true);
 }
 
 /*!

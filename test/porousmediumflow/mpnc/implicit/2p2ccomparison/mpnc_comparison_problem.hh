@@ -50,30 +50,30 @@ class MPNCComparisonProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(MPNCComparisonProblem, INHERITS_FROM(MPNC, MPNCComparisonSpatialParams));
-NEW_TYPE_TAG(MPNCComparisonBoxProblem, INHERITS_FROM(BoxModel, MPNCComparisonProblem));
-NEW_TYPE_TAG(MPNCComparisonCCProblem, INHERITS_FROM(CCTpfaModel, MPNCComparisonProblem));
+NEW_TYPE_TAG(MPNCComparisonTypeTag, INHERITS_FROM(MPNC, MPNCComparisonSpatialParams));
+NEW_TYPE_TAG(MPNCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, MPNCComparisonTypeTag));
+NEW_TYPE_TAG(MPNCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, MPNCComparisonTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(MPNCComparisonProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(MPNCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(MPNCComparisonProblem,
+SET_TYPE_PROP(MPNCComparisonTypeTag,
               Problem,
               MPNCComparisonProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(MPNCComparisonProblem,
+SET_TYPE_PROP(MPNCComparisonTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(MPNCComparisonProblem, Scalar, double);
+SET_TYPE_PROP(MPNCComparisonTypeTag, Scalar, double);
 
-SET_BOOL_PROP(MPNCComparisonProblem, EnableMolecularDiffusion, true);
+SET_BOOL_PROP(MPNCComparisonTypeTag, EnableMolecularDiffusion, true);
 
-SET_BOOL_PROP(MPNCComparisonProblem, UseMoles, true);
-SET_TYPE_PROP(MPNCComparisonProblem, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields<TypeTag>);
+SET_BOOL_PROP(MPNCComparisonTypeTag, UseMoles, true);
+SET_TYPE_PROP(MPNCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields<TypeTag>);
 
 }
 

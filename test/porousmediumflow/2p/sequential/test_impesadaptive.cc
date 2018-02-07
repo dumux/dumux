@@ -53,7 +53,7 @@ void usage(const char *progName, const std::string &errorMsg)
 
 int main(int argc, char** argv)
 {
-        using ProblemTypeTag = TTAG(TestIMPESAdaptiveProblem);
+        using ProblemTypeTag = TTAG(TestIMPESAdaptiveTypeTag);
         return Dumux::start<ProblemTypeTag>(argc, argv, usage);
 }
 #else

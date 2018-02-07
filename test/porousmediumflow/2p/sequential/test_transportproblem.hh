@@ -48,16 +48,16 @@ class TestTransportProblem;
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(TransportTestProblem, INHERITS_FROM(FVTransportTwoP, TestTransportSpatialParams));
+NEW_TYPE_TAG(TransportTestTypeTag, INHERITS_FROM(FVTransportTwoP, TestTransportSpatialParams));
 
 // Set the grid type
-SET_TYPE_PROP(TransportTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TransportTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TransportTestProblem, Problem, TestTransportProblem<TypeTag>);
+SET_TYPE_PROP(TransportTestTypeTag, Problem, TestTransportProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(TransportTestProblem, FluidSystem)
+SET_PROP(TransportTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
@@ -65,7 +65,7 @@ SET_PROP(TransportTestProblem, FluidSystem)
     using type = FluidSystems::TwoPImmiscible<Scalar, WettingPhase, NonwettingPhase>;
 };
 
-SET_INT_PROP(TransportTestProblem, VelocityFormulation, SequentialTwoPCommonIndices::velocityTotal);
+SET_INT_PROP(TransportTestTypeTag, VelocityFormulation, SequentialTwoPCommonIndices::velocityTotal);
 }
 
 /*!

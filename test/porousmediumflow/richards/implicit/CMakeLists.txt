@@ -1,10 +1,10 @@
 add_input_file_links()
 
 add_executable(test_richards_tpfa EXCLUDE_FROM_ALL test_richardslens_fv.cc)
-target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCCProblem)
+target_compile_definitions(test_richards_tpfa PUBLIC TYPETAG=RichardsLensCCTypeTag)
 
 add_executable(test_richards_box EXCLUDE_FROM_ALL test_richardslens_fv.cc)
-target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBoxProblem)
+target_compile_definitions(test_richards_box PUBLIC TYPETAG=RichardsLensBoxTypeTag)
 
 if(MPI_FOUND)
 dune_add_test(NAME test_richards_box_parallel
@@ -42,7 +42,7 @@ dune_add_test(TARGET test_richards_tpfa
 # comparison to analytical solution - only with cc
 dune_add_test(SOURCES test_ccrichardsanalytical.cc
               NAME test_ccrichardsanalytical
-              COMPILE_DEFINITIONS TYPETAG=RichardsAnalyticalCCProblem
+              COMPILE_DEFINITIONS TYPETAG=RichardsAnalyticalCCTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsanalyticalcc-reference.vtu
@@ -51,7 +51,7 @@ dune_add_test(SOURCES test_ccrichardsanalytical.cc
 # non-isothermal tests
 dune_add_test(SOURCES test_richardsniconvection_fv.cc
               NAME test_boxrichardsniconvection
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectionbox-reference.vtu
@@ -61,7 +61,7 @@ dune_add_test(SOURCES test_richardsniconvection_fv.cc
 
 dune_add_test(SOURCES test_richardsniconvection_fv.cc
               NAME test_ccrichardsniconvection
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionCCProblem
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConvectionCCTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconvectioncc-reference.vtu
@@ -70,7 +70,7 @@ dune_add_test(SOURCES test_richardsniconvection_fv.cc
 
 dune_add_test(SOURCES test_richardsniconduction_fv.cc
               NAME test_boxrichardsniconduction
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBoxProblem
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionBoxTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductionbox-reference.vtu
@@ -80,7 +80,7 @@ dune_add_test(SOURCES test_richardsniconduction_fv.cc
 
 dune_add_test(SOURCES test_richardsniconduction_fv.cc
               NAME test_ccrichardsniconduction
-              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCCProblem
+              COMPILE_DEFINITIONS TYPETAG=RichardsNIConductionCCTypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/richardsniconductioncc-reference.vtu

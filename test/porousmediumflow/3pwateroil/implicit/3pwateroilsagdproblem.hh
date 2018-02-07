@@ -43,23 +43,23 @@ class SagdProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(SagdProblem, INHERITS_FROM(ThreePWaterOilNI, SagdSpatialParams));
-NEW_TYPE_TAG(ThreePWaterOilSagdBoxProblem, INHERITS_FROM(BoxModel, SagdProblem));
+NEW_TYPE_TAG(SagdTypeTag, INHERITS_FROM(ThreePWaterOilNI, SagdSpatialParams));
+NEW_TYPE_TAG(ThreePWaterOilSagdBoxTypeTag, INHERITS_FROM(BoxModel, SagdTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(SagdProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(SagdTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(SagdProblem, Problem, Dumux::SagdProblem<TypeTag>);
+SET_TYPE_PROP(SagdTypeTag, Problem, Dumux::SagdProblem<TypeTag>);
 
 // Set the fluid system
-SET_TYPE_PROP(SagdProblem,
+SET_TYPE_PROP(SagdTypeTag,
               FluidSystem,
               Dumux::FluidSystems::H2OHeavyOil<typename GET_PROP_TYPE(TypeTag, Scalar)>);
 
-SET_BOOL_PROP(SagdProblem, OnlyGasPhaseCanDisappear, true);
+SET_BOOL_PROP(SagdTypeTag, OnlyGasPhaseCanDisappear, true);
 
-SET_BOOL_PROP(SagdProblem, UseMoles, true);
+SET_BOOL_PROP(SagdTypeTag, UseMoles, true);
 }
 
 

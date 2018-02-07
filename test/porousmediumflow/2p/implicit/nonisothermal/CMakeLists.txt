@@ -4,7 +4,7 @@ dune_add_test(SOURCES test_2pni_fv.cc
               NAME test_2pni_box_simplex
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
-              COMPILE_DEFINITIONS TYPETAG=InjectionBoxProblem2PNI
+              COMPILE_DEFINITIONS TYPETAG=InjectionBox2PNITypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-simplex-reference.vtu
@@ -14,7 +14,7 @@ dune_add_test(SOURCES test_2pni_fv.cc
 dune_add_test(SOURCES test_2pni_fv.cc
               NAME test_2pni_box_cube
               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
-              COMPILE_DEFINITIONS TYPETAG=InjectionBoxProblem2PNI
+              COMPILE_DEFINITIONS TYPETAG=InjectionBox2PNITypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnibox-cube-reference.vtu
@@ -25,7 +25,7 @@ dune_add_test(SOURCES test_2pni_fv.cc
               NAME test_2pni_tpfa_simplex
               CMAKE_GUARD dune-uggrid_FOUND
               COMPILE_DEFINITIONS GRIDTYPE=Dune::UGGrid<2>
-              COMPILE_DEFINITIONS TYPETAG=InjectionCCProblem2PNI
+              COMPILE_DEFINITIONS TYPETAG=InjectionCC2PNITypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-simplex-reference.vtu
@@ -35,7 +35,7 @@ dune_add_test(SOURCES test_2pni_fv.cc
 dune_add_test(SOURCES test_2pni_fv.cc
               NAME test_2pni_tpfa_cube
               COMPILE_DEFINITIONS GRIDTYPE=Dune::YaspGrid<2>
-              COMPILE_DEFINITIONS TYPETAG=InjectionCCProblem2PNI
+              COMPILE_DEFINITIONS TYPETAG=InjectionCC2PNITypeTag
               COMMAND ${CMAKE_SOURCE_DIR}/bin/testing/runtest.py
               CMD_ARGS --script fuzzy
                        --files ${CMAKE_SOURCE_DIR}/test/references/injection2pnicc-cube-reference.vtu

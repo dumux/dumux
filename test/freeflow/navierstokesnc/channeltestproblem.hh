@@ -43,18 +43,18 @@ namespace Properties
 {
 
 #if !NONISOTHERMAL
-NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
+NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNC));
 #else
-NEW_TYPE_TAG(ChannelNCTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
+NEW_TYPE_TAG(ChannelNCTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokesNCNI));
 #endif
 
 NEW_PROP_TAG(FluidSystem);
 
 // Select the fluid system
-SET_TYPE_PROP(ChannelNCTestProblem, FluidSystem,
+SET_TYPE_PROP(ChannelNCTestTypeTag, FluidSystem,
               FluidSystems::H2OAir<typename GET_PROP_TYPE(TypeTag, Scalar)/*, SimpleH2O<typename GET_PROP_TYPE(TypeTag, Scalar)>, true*/>);
 
-SET_PROP(ChannelNCTestProblem, PhaseIdx)
+SET_PROP(ChannelNCTestTypeTag, PhaseIdx)
 {
 private:
     using FluidSystem = typename GET_PROP_TYPE(TypeTag, FluidSystem);
@@ -62,26 +62,26 @@ public:
     static constexpr int value = FluidSystem::wPhaseIdx;
 };
 
-SET_INT_PROP(ChannelNCTestProblem, ReplaceCompEqIdx, 0);
+SET_INT_PROP(ChannelNCTestTypeTag, ReplaceCompEqIdx, 0);
 
 // Set the grid type
-SET_TYPE_PROP(ChannelNCTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ChannelNCTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ChannelNCTestProblem, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
+SET_TYPE_PROP(ChannelNCTestTypeTag, Problem, Dumux::ChannelNCTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ChannelNCTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(ChannelNCTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ChannelNCTestProblem, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 // Enable gravity
-SET_BOOL_PROP(ChannelNCTestProblem, UseMoles, true);
+SET_BOOL_PROP(ChannelNCTestTypeTag, UseMoles, true);
 
 // #if ENABLE_NAVIERSTOKES
-SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, true);
+SET_BOOL_PROP(ChannelNCTestTypeTag, EnableInertiaTerms, true);
 // #else
-// SET_BOOL_PROP(ChannelNCTestProblem, EnableInertiaTerms, false);
+// SET_BOOL_PROP(ChannelNCTestTypeTag, EnableInertiaTerms, false);
 // #endif
 }
 

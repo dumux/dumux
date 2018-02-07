@@ -47,19 +47,19 @@ class FractureProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(FractureProblem, INHERITS_FROM(TwoP, FractureSpatialParams));
-NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureProblem));
-NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureProblem));
-NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureProblem));
+NEW_TYPE_TAG(FractureTypeTag, INHERITS_FROM(TwoP, FractureSpatialParams));
+NEW_TYPE_TAG(FractureBoxTypeTag, INHERITS_FROM(BoxModel, FractureTypeTag));
+NEW_TYPE_TAG(FractureCCTpfaTypeTag, INHERITS_FROM(CCTpfaModel, FractureTypeTag));
+NEW_TYPE_TAG(FractureCCMpfaTypeTag, INHERITS_FROM(CCMpfaModel, FractureTypeTag));
 
 // set the grid property
-SET_TYPE_PROP(FractureProblem, Grid, Dune::FoamGrid<2, 3>);
+SET_TYPE_PROP(FractureTypeTag, Grid, Dune::FoamGrid<2, 3>);
 
 // Set the problem property
-SET_TYPE_PROP(FractureProblem, Problem, Dumux::FractureProblem<TypeTag>);
+SET_TYPE_PROP(FractureTypeTag, Problem, Dumux::FractureProblem<TypeTag>);
 
 // Set the fluid system
-SET_PROP(FractureProblem, FluidSystem)
+SET_PROP(FractureTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using WettingPhase = FluidSystems::LiquidPhase<Scalar, SimpleH2O<Scalar> >;
@@ -68,12 +68,12 @@ SET_PROP(FractureProblem, FluidSystem)
 };
 
 // Use global caching
-SET_BOOL_PROP(FractureProblem, EnableFVGridGeometryCache, true);
-SET_BOOL_PROP(FractureProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(FractureProblem, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(FractureTypeTag, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(FractureTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(FractureTypeTag, EnableGridFluxVariablesCache, true);
 
 // permeablility is solution-independent
-SET_BOOL_PROP(FractureProblem, SolutionDependentAdvection, false);
+SET_BOOL_PROP(FractureTypeTag, SolutionDependentAdvection, false);
 }
 
 /*!

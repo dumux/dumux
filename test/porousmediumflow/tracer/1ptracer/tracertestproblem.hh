@@ -44,26 +44,26 @@ class TracerTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TracerTestProblem, INHERITS_FROM(Tracer));
-NEW_TYPE_TAG(TracerTestCCProblem, INHERITS_FROM(CCTpfaModel, TracerTestProblem));
+NEW_TYPE_TAG(TracerTestTypeTag, INHERITS_FROM(Tracer));
+NEW_TYPE_TAG(TracerTestCCTypeTag, INHERITS_FROM(CCTpfaModel, TracerTestTypeTag));
 
 // enable caching
-SET_BOOL_PROP(TracerTestProblem, EnableGridVolumeVariablesCache, true);
-SET_BOOL_PROP(TracerTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(TracerTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(TracerTestTypeTag, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(TracerTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(TracerTestTypeTag, EnableFVGridGeometryCache, true);
 
 // Set the grid type
-SET_TYPE_PROP(TracerTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TracerTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TracerTestProblem, Problem, TracerTestProblem<TypeTag>);
+SET_TYPE_PROP(TracerTestTypeTag, Problem, TracerTestProblem<TypeTag>);
 
 // Set the spatial parameters
-SET_TYPE_PROP(TracerTestProblem, SpatialParams, TracerTestSpatialParams<TypeTag>);
+SET_TYPE_PROP(TracerTestTypeTag, SpatialParams, TracerTestSpatialParams<TypeTag>);
 
 // Define whether mole(true) or mass (false) fractions are used
-SET_BOOL_PROP(TracerTestProblem, UseMoles, false);
-SET_BOOL_PROP(TracerTestCCProblem, SolutionDependentMolecularDiffusion, false);
+SET_BOOL_PROP(TracerTestTypeTag, UseMoles, false);
+SET_BOOL_PROP(TracerTestCCTypeTag, SolutionDependentMolecularDiffusion, false);
 
 //! A simple fluid system with one tracer component
 template<class TypeTag>
@@ -110,7 +110,7 @@ public:
     { return 0.0; }
 };
 
-SET_TYPE_PROP(TracerTestProblem, FluidSystem, TracerFluidSystem<TypeTag>);
+SET_TYPE_PROP(TracerTestTypeTag, FluidSystem, TracerFluidSystem<TypeTag>);
 
 } // end namespace Properties
 

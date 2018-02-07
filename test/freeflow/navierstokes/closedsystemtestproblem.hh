@@ -38,25 +38,25 @@ class ClosedSystemTestProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(ClosedSystemTestProblem, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
+NEW_TYPE_TAG(ClosedSystemTestTypeTag, INHERITS_FROM(StaggeredFreeFlowModel, NavierStokes));
 
 // the fluid system
-SET_PROP(ClosedSystemTestProblem, FluidSystem)
+SET_PROP(ClosedSystemTestTypeTag, FluidSystem)
 {
     using Scalar = typename GET_PROP_TYPE(TypeTag, Scalar);
     using type = FluidSystems::LiquidPhase<Scalar, Components::Constant<1, Scalar> >;
 };
 
 // Set the grid type
-SET_TYPE_PROP(ClosedSystemTestProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(ClosedSystemTestTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(ClosedSystemTestProblem, Problem, Dumux::ClosedSystemTestProblem<TypeTag> );
+SET_TYPE_PROP(ClosedSystemTestTypeTag, Problem, Dumux::ClosedSystemTestProblem<TypeTag> );
 
-SET_BOOL_PROP(ClosedSystemTestProblem, EnableFVGridGeometryCache, true);
+SET_BOOL_PROP(ClosedSystemTestTypeTag, EnableFVGridGeometryCache, true);
 
-SET_BOOL_PROP(ClosedSystemTestProblem, EnableGridFluxVariablesCache, true);
-SET_BOOL_PROP(ClosedSystemTestProblem, EnableGridVolumeVariablesCache, true);
+SET_BOOL_PROP(ClosedSystemTestTypeTag, EnableGridFluxVariablesCache, true);
+SET_BOOL_PROP(ClosedSystemTestTypeTag, EnableGridVolumeVariablesCache, true);
 
 }
 

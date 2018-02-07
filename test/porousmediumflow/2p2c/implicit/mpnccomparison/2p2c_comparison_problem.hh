@@ -49,30 +49,30 @@ class TwoPTwoCComparisonProblem;
 
 namespace Properties
 {
-NEW_TYPE_TAG(TwoPTwoCComparisonProblem, INHERITS_FROM(TwoPTwoC, TwoPTwoCComparisonSpatialParams));
-NEW_TYPE_TAG(TwoPTwoCComparisonBoxProblem, INHERITS_FROM(BoxModel, TwoPTwoCComparisonProblem));
-NEW_TYPE_TAG(TwoPTwoCComparisonCCProblem, INHERITS_FROM(CCTpfaModel, TwoPTwoCComparisonProblem));
+NEW_TYPE_TAG(TwoPTwoCComparisonTypeTag, INHERITS_FROM(TwoPTwoC, TwoPTwoCComparisonSpatialParams));
+NEW_TYPE_TAG(TwoPTwoCComparisonBoxTypeTag, INHERITS_FROM(BoxModel, TwoPTwoCComparisonTypeTag));
+NEW_TYPE_TAG(TwoPTwoCComparisonCCTypeTag, INHERITS_FROM(CCTpfaModel, TwoPTwoCComparisonTypeTag));
 
 // Set the grid type
-SET_TYPE_PROP(TwoPTwoCComparisonProblem, Grid, Dune::YaspGrid<2>);
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Grid, Dune::YaspGrid<2>);
 
 // Set the problem property
-SET_TYPE_PROP(TwoPTwoCComparisonProblem,
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
               Problem,
               TwoPTwoCComparisonProblem<TypeTag>);
 
 // Set fluid configuration
-SET_TYPE_PROP(TwoPTwoCComparisonProblem,
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag,
               FluidSystem,
               FluidSystems::H2ON2<typename GET_PROP_TYPE(TypeTag, Scalar), /*useComplexRelations=*/false>);
 
 // decide which type to use for floating values (double / quad)
-SET_TYPE_PROP(TwoPTwoCComparisonProblem, Scalar, double);
-SET_INT_PROP(TwoPTwoCComparisonProblem, Formulation, TwoPTwoCFormulation::pnsw);
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, Scalar, double);
+SET_INT_PROP(TwoPTwoCComparisonTypeTag, Formulation, TwoPTwoCFormulation::pnsw);
 
-SET_BOOL_PROP(TwoPTwoCComparisonProblem, UseMoles, true);
+SET_BOOL_PROP(TwoPTwoCComparisonTypeTag, UseMoles, true);
 
-SET_TYPE_PROP(TwoPTwoCComparisonProblem, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields<TypeTag>);
+SET_TYPE_PROP(TwoPTwoCComparisonTypeTag, VtkOutputFields, TwoPTwoCMPNCVtkOutputFields<TypeTag>);
 }
 
 
