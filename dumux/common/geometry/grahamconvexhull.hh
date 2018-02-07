@@ -150,9 +150,9 @@ grahamConvexHull2d3d(std::vector<Dune::FieldVector<ctype, 3>>& points)
             // make sure the queue doesn't get empty
             if (convexHull.size() == 1)
             {
-                // before we reach size-2 there has to be a good candidate
+                // before we reach i=size-1 there has to be a good candidate
                 // as not all points are colinear (a non-zero plane normal exists)
-                assert(i < points.size()-2);
+                assert(i < points.size()-1);
                 p = points[i++];
             }
             else
