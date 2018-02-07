@@ -156,7 +156,7 @@ SET_BOOL_PROP(Richards, EnableAdvection, true);
 SET_BOOL_PROP(Richards, EnableWaterDiffusionInAir, false);
 
 //! we need to set this to true so that we can calculate the WaterDiffusionInAir whenever we want and still use the same fluxVarsCache for all models
-SET_BOOL_PROP(Richards, EnableMolecularDiffusion, true);
+SET_BOOL_PROP(Richards, EnableMolecularDiffusion, GET_PROP_VALUE(TypeTag, EnableWaterDiffusionInAir));
 
 //! Use the model after Millington (1961) for the effective diffusivity
 SET_TYPE_PROP(Richards, EffectiveDiffusivityModel,
