@@ -115,34 +115,35 @@ public:
             moleFracOutside[compIdx] = xOutside;
         }
 
-        const auto insideScvIdx = scvf.insideScvIdx();
-        const auto& insideScv = fvGeometry.scv(insideScvIdx);
-        const auto outsideScvIdx = scvf.outsideScvIdx();
-        const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
-
-        //now we have to do the tpfa: J_i = J_j which leads to: tij(xi -xj) = -rho Bi^-1 omegai(x*-xi) with x* = (omegai Bi^-1 + omegaj Bj^-1)^-1 (xi omegai Bi^-1 + xj omegaj Bj^-1) with i inside and j outside
-        reducedDiffusionMatrixInside = setupMSMatrix_(problem, element, fvGeometry, insideVolVars, insideScv, phaseIdx);
-
-        reducedDiffusionMatrixOutside = setupMSMatrix_(problem, element, fvGeometry, outsideVolVars, outsideScv, phaseIdx);
-
         //we cannot solve that if the matrix is 0 everywhere
         if(!(insideVolVars.saturation(phaseIdx) == 0 || outsideVolVars.saturation(phaseIdx) == 0))
         {
-
-
+            const auto insideScvIdx = scvf.insideScvIdx();
+            const auto& insideScv = fvGeometry.scv(insideScvIdx);
             const Scalar omegai = calculateOmega_(scvf,
                                                 insideScv,
                                                 insideVolVars.extrusionFactor());
+
+            //now we have to do the tpfa: J_i = J_j which leads to: tij(xi -xj) = -rho Bi^-1 omegai(x*-xi) with x* = (omegai Bi^-1 + omegaj Bj^-1)^-1 (xi omegai Bi^-1 + xj omegaj Bj^-1) with i inside and j outside
+            reducedDiffusionMatrixInside = setupMSMatrix_(problem, element, fvGeometry, insideVolVars, insideScv, phaseIdx);
+
             //if on boundary
             if (scvf.boundary() || scvf.numOutsideScvs() > 1)
             {
                 moleFracOutside -= moleFracInside;
                 reducedDiffusionMatrixInside.solve(reducedFlux, moleFracOutside);
                 reducedFlux *= omegai;
+
+
             }
-            else
+            else //we need outside cells as well if we are not on the boundary
             {
                 Scalar omegaj;
+                const auto outsideScvIdx = scvf.outsideScvIdx();
+                const auto& outsideScv = fvGeometry.scv(outsideScvIdx);
+
+                reducedDiffusionMatrixOutside = setupMSMatrix_(problem, element, fvGeometry, outsideVolVars, outsideScv, phaseIdx);
+
                 if (dim == dimWorld)
                     // assume the normal vector from outside is anti parallel so we save flipping a vector
                     omegaj = -1.0*calculateOmega_(scvf,
