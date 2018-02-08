@@ -128,8 +128,7 @@ public:
             }
         };
 
-
-        // // for the coupling blocks
+        // for the coupling blocks
         using namespace Dune::Hybrid;
         forEach(integralRange(Dune::Hybrid::size(jacRow)), [&](auto&& i)
         {
@@ -341,7 +340,6 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        // const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
         auto&& curElemVolVars = this->curElemVolVars();
         const auto& curSol = this->curSol()[domainI];
 
@@ -381,8 +379,6 @@ public:
                     // update the volume variables and compute element residual
                     elemSol[scv.indexInElement()][pvIdx] = priVar;
                     curVolVars.update(elemSol, this->problem(), element, scv);
-                    // this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol[scv.indexInElement()], this->assembler());
-                    this->couplingManager().updateCouplingContext(domainI, domainI, scv.dofIndex(), elemSol[scv.indexInElement()], this->assembler());
                     return this->evalLocalResidual();
                 };
 
@@ -409,9 +405,6 @@ public:
                 // restore the original element solution
                 elemSol[scv.indexInElement()][pvIdx] = curSol[scv.dofIndex()][pvIdx];
 
-                // restore the undeflected state of the coupling context
-                // this->couplingManager().updateCouplingContext(domainI, domainI, element, elemSol[scv.indexInElement()], this->assembler());
-                this->couplingManager().updateCouplingContext(domainI, domainI, scv.dofIndex(), elemSol[scv.indexInElement()], this->assembler());
                 // TODO additional dof dependencies
             }
         }
@@ -436,9 +429,6 @@ public:
         // get some aliases for convenience
         const auto& element = this->element();
         const auto& fvGeometry = this->fvGeometry();
-        // const auto& fvGridGeometry = fvGeometry.fvGridGeometry();
-        // auto&& curElemVolVars = this->curElemVolVars();
-        // auto&& elemFluxVarsCache = this->elemFluxVarsCache();
 
         // // get stencil informations
         const auto& stencil = this->couplingManager().couplingStencil(element, domainI, domainJ);
@@ -451,7 +441,6 @@ public:
         {
             const auto& curSol = this->curSol()[domainJ];
             const auto origPriVarsJ = curSol[globalJ];
-
 
             for (int pvIdx = 0; pvIdx < JacobianBlock::block_type::cols; ++pvIdx)
             {
@@ -468,30 +457,27 @@ public:
             // update the global stiffness matrix with the current partial derivatives
             for (auto&& scvJ : scvs(fvGeometry))
             {
-                  for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
-                  {
-                      // A[i][col][eqIdx][pvIdx] is the rate of change of
-                      // the residual of equation 'eqIdx' at dof 'i'
-                      // depending on the primary variable 'pvIdx' at dof
-                      // 'col'.
-                      A[scvJ.dofIndex()][globalJ][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
+                for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
+                {
+                    // A[i][col][eqIdx][pvIdx] is the rate of change of
+                    // the residual of equation 'eqIdx' at dof 'i'
+                    // depending on the primary variable 'pvIdx' at dof
+                    // 'col'.
+
+                    // If the dof is coupled by a Dirichlet condition,
+                    // set the derived value only once (i.e. overwrite existing values).
+                    // For other dofs, add the contribution of the partial derivative.
+                    const auto bcTypes = this->elemBcTypes()[scvJ.indexInElement()];
+                    if (bcTypes.isDirichlet(eqIdx))
+                        A[scvJ.dofIndex()][globalJ][eqIdx][pvIdx] = partialDerivs[scvJ.indexInElement()][eqIdx];
+                    else
+                        A[scvJ.dofIndex()][globalJ][eqIdx][pvIdx] += partialDerivs[scvJ.indexInElement()][eqIdx];
                   }
             }
                 // restore the undeflected state of the coupling context
                 this->couplingManager().updateCouplingContext(domainI, domainJ, globalJ, origPriVarsJ, this->assembler());
             }
         }
-        //
-        // // restore original state of the flux vars cache in case of global caching.
-        // // This has to be done in order to guarantee that everything is in an undeflected
-        // // state before the assembly of another element is called. In the case of local caching
-        // // this is obsolete because the elemFluxVarsCache used here goes out of scope after this.
-        // // We only have to do this for the last primary variable, for all others the flux var cache
-        // // is updated with the correct element volume variables before residual evaluations
-        // if (enableGridFluxVarsCache)
-        //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, gridVariables.gridFluxVarsCache());
-        // else
-        //     this->couplingManager().updateSelf(domainI, element, fvGeometry, curElemVolVars, elemFluxVarsCache);
     }
 
     template<class JacobianMatrixDiagBlock, class GridVariables>
