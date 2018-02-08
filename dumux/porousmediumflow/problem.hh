@@ -57,6 +57,7 @@ public:
      */
     PorousMediumFlowProblem(std::shared_ptr<const FVGridGeometry> fvGridGeometry)
     : ParentType(fvGridGeometry)
+    , gravity_(0.0)
     , spatialParams_(std::make_shared<SpatialParams>(this->asImp_()))
     {
         // TODO: spatial params init?
